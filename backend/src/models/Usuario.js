@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Clinica = require('./Clinica');
 
-const Clinica = sequelize.define('Clinica', {
+const Usuario = sequelize.define('Usuario', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -23,11 +24,24 @@ const Clinica = sequelize.define('Clinica', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  telefono: {
-    type: DataTypes.STRING,
-    allowNull: true,
+  rol: {
+    type: DataTypes.ENUM(
+      'superadmin',
+      'admin',
+      'veterinario',
+      'recepcionista',
+      'auxiliar',
+      'facturador'
+    ),
+    allowNull: false,
+    defaultValue: 'recepcionista',
   },
-  direccion: {
+  rolesAdicionales: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: [],
+    comment: 'Roles adicionales para usuarios que desempenan multiples funciones',
+  },
+  telefono: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -47,9 +61,21 @@ const Clinica = sequelize.define('Clinica', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  clinicaId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: Clinica,
+      key: 'id',
+    },
+    comment: 'Null solo para superadmin',
+  },
 }, {
-  tableName: 'clinicas',
+  tableName: 'usuarios',
   timestamps: true,
 });
 
-module.exports = Clinica;
+Clinica.hasMany(Usuario, { foreignKey: 'clinicaId' });
+Usuario.belongsTo(Clinica, { foreignKey: 'clinicaId' });
+
+module.exports = Usuario;

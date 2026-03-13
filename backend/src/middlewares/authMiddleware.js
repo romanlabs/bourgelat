@@ -10,11 +10,28 @@ const verificarToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.clinica = decoded;
+    req.usuario = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Token invalido o expirado' });
   }
 };
 
-module.exports = { verificarToken };
+const verificarRol = (...rolesPermitidos) => {
+  return (req, res, next) => {
+    const { rol, rolesAdicionales = [] } = req.usuario;
+    const todosLosRoles = [rol, ...rolesAdicionales];
+
+    const tienePermiso = rolesPermitidos.some(r => todosLosRoles.includes(r));
+
+    if (!tienePermiso) {
+      return res.status(403).json({ 
+        message: 'No tienes permiso para realizar esta accion' 
+      });
+    }
+
+    next();
+  };
+};
+
+module.exports = { verificarToken, verificarRol };
