@@ -125,4 +125,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { registro, login };
+module.exports = { registro, login }; 

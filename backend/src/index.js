@@ -14,6 +14,9 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 
+const usuarioRoutes = require('./routes/usuarioRoutes');
+app.use('/api/usuarios', usuarioRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a VetNova API' });
 });
