@@ -17,6 +17,11 @@ app.use('/api/auth', authRoutes);
 const usuarioRoutes = require('./routes/usuarioRoutes');
 app.use('/api/usuarios', usuarioRoutes);
 
+const propietarioRoutes = require('./routes/propietarioRoutes');
+const mascotaRoutes = require('./routes/mascotaRoutes');
+app.use('/api/propietarios', propietarioRoutes);
+app.use('/api/mascotas', mascotaRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a VetNova API' });
 });
