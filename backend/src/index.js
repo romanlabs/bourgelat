@@ -34,6 +34,9 @@ app.use('/api/inventario', inventarioRoutes);
 const facturaRoutes = require('./routes/facturaRoutes');
 app.use('/api/facturas', facturaRoutes);
 
+const reporteRoutes = require('./routes/reporteRoutes');
+app.use('/api/reportes', reporteRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a VetNova API' });
 });
