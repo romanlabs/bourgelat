@@ -22,6 +22,9 @@ const mascotaRoutes = require('./routes/mascotaRoutes');
 app.use('/api/propietarios', propietarioRoutes);
 app.use('/api/mascotas', mascotaRoutes);
 
+const citaRoutes = require('./routes/citaRoutes');
+app.use('/api/citas', citaRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a VetNova API' });
 });

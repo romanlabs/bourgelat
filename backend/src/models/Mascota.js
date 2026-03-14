@@ -17,6 +17,11 @@ const Mascota = sequelize.define('Mascota', {
     type: DataTypes.ENUM('perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'),
     allowNull: false,
   },
+  especieDetalle: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Detalle cuando especie es otro, ej: jaguar, boa, loro',
+  },
   raza: {
     type: DataTypes.STRING,
     allowNull: true,
