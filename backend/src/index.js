@@ -11,6 +11,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+const { idempotencia } = require('./middlewares/idempotenciaMiddleware');
+app.use(idempotencia);
 
 app.use('/api/auth', authRoutes);
 
@@ -39,6 +41,9 @@ app.use('/api/reportes', reporteRoutes);
 
 const suscripcionRoutes = require('./routes/suscripcionRoutes');
 app.use('/api/suscripciones', suscripcionRoutes);
+
+const antecedenteRoutes = require('./routes/antecedenteRoutes');
+app.use('/api/antecedentes', antecedenteRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a VetNova API' });
