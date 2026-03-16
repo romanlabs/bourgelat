@@ -6,7 +6,7 @@ const Usuario = require('../models/Usuario');
 
 const registro = async (req, res) => {
   try {
-    const { nombre, email, password, telefono, direccion } = req.body;
+    const { nombre, email, password, telefono, direccion, ciudad, departamento, nit } = req.body;
 
     if (!nombre || !email || !password) {
       return res.status(400).json({ message: 'Nombre, email y password son obligatorios' });
@@ -30,6 +30,9 @@ const registro = async (req, res) => {
       password: passwordHash,
       telefono,
       direccion,
+      ciudad,
+      departamento,
+      nit,
     });
 
     const token = jwt.sign(

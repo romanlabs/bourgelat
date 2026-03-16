@@ -31,6 +31,24 @@ const Clinica = sequelize.define('Clinica', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  ciudad: {
+  type: DataTypes.STRING,
+  allowNull: true,
+  },
+  departamento: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  nit: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
+  },
+  logo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'URL del logo en Cloudinary',
+  },
   activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
