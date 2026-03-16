@@ -2,10 +2,13 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'motion/react'
 import {
-  Stethoscope, Menu, X, Check, Calendar, FileText,
-  Package, Receipt, BarChart3, Users, Shield, Zap,
-  Globe, Clock, ArrowRight, ChevronRight, Heart,
-  Star, Quote, PawPrint, Pill, Syringe, Scissors, Fish
+  PawPrint, Heart, Stethoscope, Pill, Syringe, Scissors,
+  Fish, Activity, Thermometer, Microscope, FlaskConical,
+  Bone, Bird, Dog, Rabbit, Turtle, HeartPulse, Dna,
+  TestTube, Bandage, ClipboardPlus, Shield, Sparkles, Eye,
+  Calendar, FileText, Package, Receipt, Check, ArrowRight,
+  ChevronRight, Globe, Clock, Zap, Star, Quote, Menu, X,
+  BarChart3, Users,
 } from 'lucide-react'
 
 const Spotlight = () => {
@@ -92,37 +95,159 @@ const TypingText = () => {
   return <span className="text-sky-500">{displayed}<span className="animate-pulse">|</span></span>
 }
 
-const FloatingIcons = () => {
-  const items = [
-    { icon: PawPrint, x: 8, y: 15, size: 22, duration: 12, delay: 0 },
-    { icon: PawPrint, x: 85, y: 25, size: 18, duration: 15, delay: 2 },
-    { icon: PawPrint, x: 20, y: 70, size: 20, duration: 10, delay: 1 },
-    { icon: PawPrint, x: 75, y: 65, size: 22, duration: 13, delay: 3 },
-    { icon: PawPrint, x: 92, y: 50, size: 18, duration: 14, delay: 0.5 },
-    { icon: Heart, x: 15, y: 35, size: 18, duration: 14, delay: 1.8 },
-    { icon: Heart, x: 70, y: 40, size: 16, duration: 10, delay: 4 },
-    { icon: Heart, x: 50, y: 85, size: 20, duration: 11, delay: 1.5 },
-    { icon: Stethoscope, x: 30, y: 20, size: 20, duration: 16, delay: 1 },
-    { icon: Stethoscope, x: 65, y: 15, size: 18, duration: 12, delay: 3.5 },
-    { icon: Pill, x: 40, y: 75, size: 18, duration: 11, delay: 0.8 },
-    { icon: Pill, x: 88, y: 80, size: 20, duration: 13, delay: 2.2 },
-    { icon: Syringe, x: 55, y: 30, size: 18, duration: 15, delay: 0.3 },
-    { icon: Scissors, x: 25, y: 88, size: 16, duration: 12, delay: 2.8 },
-    { icon: Fish, x: 5, y: 45, size: 18, duration: 9, delay: 2.5 },
+const ICONS = [
+  // ── Capa trasera ─────────────────────────────────────────────────────────
+  { icon: PawPrint,     x: 3,   y: 10,  size: 16, opacity: 0.22, color: 'text-sky-400',  anim: 'float', duration: 18, delay: 0,   glow: false },
+  { icon: Pill,         x: 96,  y: 15,  size: 15, opacity: 0.20, color: 'text-sky-300',  anim: 'float', duration: 22, delay: 2,   glow: false },
+  { icon: Heart,        x: 7,   y: 78,  size: 15, opacity: 0.20, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 1,   glow: false },
+  { icon: Fish,         x: 90,  y: 72,  size: 16, opacity: 0.20, color: 'text-cyan-300', anim: 'float', duration: 19, delay: 3,   glow: false },
+  { icon: Scissors,     x: 50,  y: 5,   size: 14, opacity: 0.18, color: 'text-sky-300',  anim: 'spin',  duration: 30, delay: 0,   glow: false },
+  { icon: Turtle,       x: 15,  y: 92,  size: 15, opacity: 0.20, color: 'text-cyan-400', anim: 'float', duration: 24, delay: 4,   glow: false },
+  { icon: Bird,         x: 82,  y: 88,  size: 15, opacity: 0.19, color: 'text-sky-300',  anim: 'float', duration: 21, delay: 1.5, glow: false },
+  { icon: Bandage,      x: 35,  y: 95,  size: 14, opacity: 0.18, color: 'text-sky-400',  anim: 'float', duration: 17, delay: 2.5, glow: false },
+  { icon: Dna,          x: 65,  y: 92,  size: 14, opacity: 0.19, color: 'text-cyan-300', anim: 'spin',  duration: 28, delay: 5,   glow: false },
+  { icon: Eye,          x: 43,  y: 88,  size: 14, opacity: 0.18, color: 'text-sky-300',  anim: 'pulse', duration: 18, delay: 1,   glow: false },
+  { icon: Rabbit,       x: 58,  y: 96,  size: 15, opacity: 0.19, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 3.5, glow: false },
+  { icon: Syringe,      x: 77,  y: 95,  size: 14, opacity: 0.18, color: 'text-cyan-300', anim: 'float', duration: 22, delay: 0.5, glow: false },
+  { icon: TestTube,     x: 2,   y: 60,  size: 15, opacity: 0.19, color: 'text-sky-300',  anim: 'spin',  duration: 26, delay: 2,   glow: false },
+  { icon: Thermometer,  x: 97,  y: 55,  size: 14, opacity: 0.18, color: 'text-cyan-400', anim: 'pulse', duration: 20, delay: 3,   glow: false },
+  { icon: Bone,         x: 72,  y: 5,   size: 15, opacity: 0.19, color: 'text-sky-300',  anim: 'float', duration: 19, delay: 1.2, glow: false },
+  { icon: FlaskConical, x: 25,  y: 5,   size: 14, opacity: 0.18, color: 'text-cyan-300', anim: 'float', duration: 23, delay: 4,   glow: false },
+  { icon: Dog,          x: 12,  y: 15,  size: 15, opacity: 0.20, color: 'text-sky-400',  anim: 'float', duration: 21, delay: 1.7, glow: false },
+  { icon: Stethoscope,  x: 88,  y: 8,   size: 15, opacity: 0.19, color: 'text-cyan-300', anim: 'float', duration: 25, delay: 3.3, glow: false },
+  { icon: Microscope,   x: 47,  y: 2,   size: 14, opacity: 0.18, color: 'text-sky-300',  anim: 'float', duration: 22, delay: 0.9, glow: false },
+  { icon: ClipboardPlus,x: 60,  y: 90,  size: 15, opacity: 0.19, color: 'text-sky-400',  anim: 'float', duration: 18, delay: 2.1, glow: false },
+  { icon: Shield,       x: 30,  y: 8,   size: 14, opacity: 0.18, color: 'text-cyan-400', anim: 'float', duration: 20, delay: 4.5, glow: false },
+  { icon: PawPrint,     x: 93,  y: 35,  size: 15, opacity: 0.20, color: 'text-sky-300',  anim: 'float', duration: 23, delay: 1.4, glow: false },
+  { icon: Heart,        x: 20,  y: 6,   size: 14, opacity: 0.19, color: 'text-cyan-300', anim: 'pulse', duration: 19, delay: 3.8, glow: false },
+  { icon: Fish,         x: 5,   y: 95,  size: 15, opacity: 0.18, color: 'text-sky-400',  anim: 'float', duration: 21, delay: 0.6, glow: false },
+  { icon: Pill,         x: 75,  y: 3,   size: 14, opacity: 0.19, color: 'text-sky-300',  anim: 'float', duration: 17, delay: 2.9, glow: false },
+  { icon: Turtle,       x: 40,  y: 98,  size: 15, opacity: 0.18, color: 'text-cyan-400', anim: 'float', duration: 24, delay: 5.2, glow: false },
+
+  // ── Capa media ───────────────────────────────────────────────────────────
+  { icon: PawPrint,     x: 20,  y: 20,  size: 21, opacity: 0.28, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 0.5, glow: false },
+  { icon: Stethoscope,  x: 78,  y: 18,  size: 21, opacity: 0.26, color: 'text-sky-500',  anim: 'float', duration: 22, delay: 1.2, glow: false },
+  { icon: Rabbit,       x: 10,  y: 50,  size: 20, opacity: 0.25, color: 'text-cyan-400', anim: 'float', duration: 24, delay: 2,   glow: false },
+  { icon: Dog,          x: 88,  y: 45,  size: 20, opacity: 0.25, color: 'text-sky-400',  anim: 'float', duration: 21, delay: 0.8, glow: false },
+  { icon: Activity,     x: 55,  y: 14,  size: 19, opacity: 0.26, color: 'text-sky-500',  anim: 'pulse', duration: 16, delay: 0.5, glow: false },
+  { icon: FlaskConical, x: 30,  y: 72,  size: 19, opacity: 0.25, color: 'text-cyan-400', anim: 'float', duration: 19, delay: 3.2, glow: false },
+  { icon: Microscope,   x: 68,  y: 70,  size: 19, opacity: 0.25, color: 'text-sky-400',  anim: 'float', duration: 23, delay: 1.8, glow: false },
+  { icon: TestTube,     x: 45,  y: 80,  size: 18, opacity: 0.23, color: 'text-cyan-300', anim: 'spin',  duration: 32, delay: 0,   glow: false },
+  { icon: ClipboardPlus,x: 92,  y: 32,  size: 18, opacity: 0.22, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 4,   glow: false },
+  { icon: Bone,         x: 5,   y: 35,  size: 19, opacity: 0.23, color: 'text-sky-300',  anim: 'float', duration: 22, delay: 2.8, glow: false },
+  { icon: Thermometer,  x: 75,  y: 55,  size: 17, opacity: 0.22, color: 'text-cyan-400', anim: 'pulse', duration: 18, delay: 1,   glow: false },
+  { icon: Shield,       x: 25,  y: 45,  size: 17, opacity: 0.21, color: 'text-sky-400',  anim: 'float', duration: 25, delay: 3.5, glow: false },
+  { icon: Bird,         x: 42,  y: 22,  size: 19, opacity: 0.24, color: 'text-sky-300',  anim: 'float', duration: 21, delay: 2,   glow: false },
+  { icon: Syringe,      x: 63,  y: 52,  size: 18, opacity: 0.23, color: 'text-cyan-400', anim: 'float', duration: 18, delay: 1.5, glow: false },
+  { icon: Turtle,       x: 52,  y: 65,  size: 17, opacity: 0.22, color: 'text-sky-300',  anim: 'float', duration: 24, delay: 0.7, glow: false },
+  { icon: Dna,          x: 35,  y: 38,  size: 18, opacity: 0.21, color: 'text-cyan-300', anim: 'spin',  duration: 29, delay: 3,   glow: false },
+  { icon: Fish,         x: 18,  y: 75,  size: 18, opacity: 0.22, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 4.5, glow: false },
+  { icon: Pill,         x: 83,  y: 60,  size: 17, opacity: 0.21, color: 'text-sky-300',  anim: 'float', duration: 19, delay: 2.3, glow: false },
+  { icon: PawPrint,     x: 33,  y: 50,  size: 17, opacity: 0.22, color: 'text-sky-400',  anim: 'drift', duration: 26, delay: 1.3, glow: false },
+  { icon: Rabbit,       x: 62,  y: 20,  size: 16, opacity: 0.21, color: 'text-cyan-400', anim: 'drift', duration: 23, delay: 3.1, glow: false },
+  { icon: Dog,          x: 8,   y: 88,  size: 18, opacity: 0.22, color: 'text-sky-400',  anim: 'drift', duration: 20, delay: 1.1, glow: false },
+
+  // ── Capa frontal con glow ─────────────────────────────────────────────────
+  { icon: PawPrint,     x: 14,  y: 62,  size: 28, opacity: 0.38, color: 'text-sky-400',  anim: 'float', duration: 22, delay: 0,   glow: true },
+  { icon: HeartPulse,   x: 82,  y: 30,  size: 28, opacity: 0.36, color: 'text-sky-500',  anim: 'pulse', duration: 20, delay: 0,   glow: true },
+  { icon: Stethoscope,  x: 38,  y: 58,  size: 27, opacity: 0.35, color: 'text-cyan-400', anim: 'float', duration: 24, delay: 1.5, glow: true },
+  { icon: Syringe,      x: 60,  y: 36,  size: 25, opacity: 0.33, color: 'text-sky-400',  anim: 'float', duration: 21, delay: 2.2, glow: true },
+  { icon: Heart,        x: 70,  y: 78,  size: 27, opacity: 0.33, color: 'text-sky-500',  anim: 'pulse', duration: 22, delay: 0.8, glow: true },
+  { icon: Sparkles,     x: 48,  y: 46,  size: 23, opacity: 0.30, color: 'text-cyan-300', anim: 'spin',  duration: 26, delay: 0,   glow: true },
+  { icon: Dog,          x: 22,  y: 28,  size: 25, opacity: 0.32, color: 'text-sky-400',  anim: 'float', duration: 20, delay: 3,   glow: true },
+  { icon: Microscope,   x: 88,  y: 60,  size: 25, opacity: 0.32, color: 'text-cyan-400', anim: 'float', duration: 23, delay: 1,   glow: true },
+  { icon: Bone,         x: 55,  y: 82,  size: 23, opacity: 0.30, color: 'text-sky-400',  anim: 'float', duration: 19, delay: 2.5, glow: true },
+  { icon: FlaskConical, x: 5,   y: 20,  size: 23, opacity: 0.29, color: 'text-cyan-400', anim: 'float', duration: 22, delay: 1.8, glow: true },
+]
+ 
+const getAnimation = (anim, i) => {
+  const dir = i % 8
+  const xPaths = [
+    [-8, 5, -3, 10, -6, 8, -8],
+    [6, -10, 8, -4, 10, -6, 6],
+    [-5, 8, -10, 4, -8, 6, -5],
+    [10, -6, 4, -8, 6, -10, 10],
+    [-6, 10, -8, 6, -4, 8, -6],
+    [4, -8, 10, -6, 8, -4, 4],
+    [-10, 4, -6, 8, -10, 6, -10],
+    [8, -4, 6, -10, 4, -8, 8],
   ]
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {items.map((item, i) => (
-        <motion.div key={i} className="absolute"
-          style={{ left: `${item.x}%`, top: `${item.y}%` }}
-          animate={{ y: [-15, 15, -15], x: [-8, 8, -8], rotate: [-10, 10, -10] }}
-          transition={{ duration: item.duration, delay: item.delay, repeat: Infinity, ease: 'easeInOut' }}>
-          <item.icon style={{ width: item.size, height: item.size }} className="text-sky-400 opacity-20" />
-        </motion.div>
-      ))}
-    </div>
-  )
+  const yPaths = [
+    [-6, 10, -8, 4, -10, 6, -6],
+    [8, -4, 6, -10, 8, -6, 8],
+    [-10, 6, -4, 8, -6, 10, -10],
+    [4, -8, 10, -6, 4, -10, 4],
+    [-8, 6, -10, 8, -4, 6, -8],
+    [10, -6, 4, -8, 10, -4, 10],
+    [-4, 8, -6, 10, -8, 4, -4],
+    [6, -10, 8, -4, 6, -8, 6],
+  ]
+  switch (anim) {
+    case 'float':
+    case 'drift':
+      return {
+        animate: {
+          x: xPaths[dir],
+          y: yPaths[dir],
+          rotate: [-4, 4, -3, 5, -4],
+        },
+        transition: { ease: 'easeInOut', repeat: Infinity },
+      }
+    case 'spin':
+      return {
+        animate: {
+          rotate: [0, 360],
+          x: xPaths[dir].map(v => v * 0.6),
+          y: yPaths[dir].map(v => v * 0.6),
+        },
+        transition: { ease: 'linear', repeat: Infinity },
+      }
+    case 'pulse':
+      return {
+        animate: {
+          scale: [1, 1.15, 1, 1.1, 1],
+          x: xPaths[dir].map(v => v * 0.7),
+          y: yPaths[dir].map(v => v * 0.7),
+        },
+        transition: { ease: 'easeInOut', repeat: Infinity },
+      }
+    default:
+      return {
+        animate: { x: xPaths[0], y: yPaths[0] },
+        transition: { ease: 'easeInOut', repeat: Infinity },
+      }
+  }
 }
+ 
+const FloatingIcons = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+    {ICONS.map((item, i) => {
+      const { animate, transition } = getAnimation(item.anim, i)
+      return (
+        <motion.div
+          key={i}
+          className="absolute"
+          style={{ left: `${item.x}%`, top: `${item.y}%` }}
+          animate={animate}
+          transition={{ ...transition, duration: item.duration, delay: item.delay }}
+        >
+          {item.glow && (
+            <div
+              className="absolute inset-0 rounded-full blur-xl -z-10 bg-sky-400"
+              style={{ opacity: item.opacity * 0.6, transform: 'scale(2.5)' }}
+            />
+          )}
+          <item.icon
+            style={{ width: item.size, height: item.size, opacity: item.opacity }}
+            className={item.color}
+            strokeWidth={1.5}
+          />
+        </motion.div>
+      )
+    })}
+  </div>
+)
+
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
@@ -180,7 +305,22 @@ const Hero = () => {
   const { scrollY } = useScroll()
   const y = useTransform(scrollY, [0, 400], [0, -60])
   return (
-    <section className="relative pt-28 pb-20 px-6 overflow-hidden bg-gradient-to-b from-white via-sky-50/50 to-sky-100/30 min-h-screen flex items-center">
+    <section className="relative pt-28 pb-20 px-6 overflow-hidden min-h-screen flex items-center"
+      style={{ background: 'linear-gradient(to bottom, #ffffff, #f0f9ff, #dbeafe)' }}>
+
+      {/* Cuadrícula con degradado */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `
+          linear-gradient(rgba(14,165,233,0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(14,165,233,0.08) 1px, transparent 1px),
+          linear-gradient(rgba(14,165,233,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(14,165,233,0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: '40px 40px, 40px 40px, 8px 8px, 8px 8px',
+        maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 70%, black 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.7) 70%, black 100%)',
+      }} />
+
       <FloatingIcons />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-sky-200 opacity-25 rounded-full blur-3xl" />
@@ -196,7 +336,7 @@ const Hero = () => {
             </div>
           </FadeUp>
           <FadeUp delay={0.1}>
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 leading-tight mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 leading-tight mb-6" style={{ minHeight: '280px' }}>
               Gestiona tu clínica<br />veterinaria con <TypingText />
             </h1>
           </FadeUp>
@@ -248,6 +388,10 @@ const LogosCarrusel = () => (
       <p className="text-center text-sm font-semibold text-slate-400 uppercase tracking-widest">Clínicas que confían en VetNova</p>
     </div>
     <div className="relative">
+      <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+        style={{ background: 'linear-gradient(to right, white, transparent)' }} />
+      <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+        style={{ background: 'linear-gradient(to left, white, transparent)' }} />
       <motion.div animate={{ x: ['0%', '-50%'] }} transition={{ duration: 25, repeat: Infinity, ease: 'linear' }} className="flex gap-12 whitespace-nowrap">
         {[...LOGOS, ...LOGOS].map((logo, i) => (
           <div key={i} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-50 border border-sky-100">
@@ -272,6 +416,19 @@ const colorMap = {
   cyan: { bg: 'bg-cyan-50', border: 'border-cyan-200', active: 'bg-cyan-500', check: 'bg-cyan-100 text-cyan-600' },
   indigo: { bg: 'bg-indigo-50', border: 'border-indigo-200', active: 'bg-indigo-500', check: 'bg-indigo-100 text-indigo-600' },
 }
+
+const WaveDivider = ({ fromColor = '#ffffff', toColor = '#f0f9ff', flip = false }) => (
+  <div style={{ background: fromColor, lineHeight: 0 }}>
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg"
+      style={{ display: 'block', transform: flip ? 'scaleY(-1)' : 'none' }}>
+      <path
+        d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,60 L0,60 Z"
+        fill={toColor}
+      />
+    </svg>
+  </div>
+)
+
 
 const Funcionalidades = () => {
   const [activeTab, setActiveTab] = useState('citas')
@@ -328,7 +485,7 @@ const Funcionalidades = () => {
 }
 
 const PorQue = () => (
-  <section id="por-que" className="py-24 px-6 bg-gradient-to-b from-sky-50 to-white">
+  <section id="por-que" className="py-24 px-6" style={{ background: '#f0f9ff' }}>
     <div className="max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <ScaleIn className="order-2 lg:order-1">
@@ -371,7 +528,7 @@ const TESTIMONIOS = [
 ]
 
 const Testimonios = () => (
-  <section id="testimonios" className="py-24 px-6 bg-white">
+  <section id="testimonios" className="py-24 px-6" style={{ background: '#ffffff' }}>
     <div className="max-w-7xl mx-auto">
       <FadeUp className="text-center mb-16">
         <p className="text-sky-500 font-semibold text-sm uppercase tracking-widest mb-3">Testimonios</p>
@@ -404,7 +561,7 @@ const PLANES = [
 ]
 
 const Planes = () => (
-  <section id="planes" className="py-24 px-6 bg-sky-50/50">
+  <section id="planes" className="py-24 px-6" style={{ background: '#f0f9ff' }}>
     <div className="max-w-7xl mx-auto">
       <FadeUp className="text-center mb-16">
         <p className="text-sky-500 font-semibold text-sm uppercase tracking-widest mb-3">Planes</p>
@@ -442,6 +599,11 @@ const Planes = () => (
 
 const CTAFinal = () => (
   <section className="py-24 px-6 relative overflow-hidden bg-gradient-to-br from-sky-500 via-sky-600 to-blue-700">
+    <div style={{ position: 'absolute', top: -1, left: 0, right: 0, lineHeight: 0 }}>
+  <svg viewBox="0 0 1440 60" style={{ display: 'block' }}>
+    <path d="M0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,0 L0,0 Z" fill="#ffffff" />
+  </svg>
+</div>
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-cyan-300 opacity-10 rounded-full blur-3xl" />
@@ -484,17 +646,22 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="font-sans antialiased">
-      <Spotlight />
-      <Navbar />
-      <Hero />
-      <LogosCarrusel />
-      <Funcionalidades />
-      <PorQue />
-      <Testimonios />
-      <Planes />
-      <CTAFinal />
-      <Footer />
-    </div>
-  )
+  <div className="font-sans antialiased">
+    <Spotlight />
+    <Navbar />
+    <Hero />
+    <LogosCarrusel />
+    <Funcionalidades />
+    <WaveDivider fromColor="#ffffff" toColor="#f0f9ff" />
+    <PorQue />
+    <WaveDivider fromColor="#ffffff" toColor="#f0f9ff" flip={true} />
+    <Testimonios />
+    <WaveDivider fromColor="#ffffff" toColor="#f0f9ff" />
+    <Planes />
+    <WaveDivider fromColor="#f0f9ff" toColor="#ffffff" />
+    <CTAFinal />
+    
+    <Footer />
+  </div>
+)
 }
