@@ -8,7 +8,7 @@ import {
   TestTube, Bandage, ClipboardPlus, Shield, Sparkles, Eye,
   Calendar, FileText, Package, Receipt, Check, ArrowRight,
   ChevronRight, Globe, Clock, Zap, Star, Quote, Menu, X,
-  BarChart3, Users,
+  BarChart3, Users, Building2,
 } from 'lucide-react'
 
 const Spotlight = () => {
@@ -429,6 +429,47 @@ const WaveDivider = ({ fromColor = '#ffffff', toColor = '#f0f9ff', flip = false 
   </div>
 )
 
+const ComoComienzo = () => (
+  <section className="py-24 px-6" style={{ background: '#ffffff' }}>
+    <div className="max-w-5xl mx-auto">
+      <FadeUp className="text-center mb-16">
+        <p className="text-sky-500 font-semibold text-sm uppercase tracking-widest mb-3">Proceso</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Empieza en 3 pasos</h2>
+        <p className="text-slate-500 text-lg">Sin instalaciones, sin configuraciones complejas.</p>
+      </FadeUp>
+      <div className="relative">
+        <div className="absolute top-10 left-0 right-0 h-0.5 bg-sky-100 hidden lg:block" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {[
+            { step: '01', icon: Building2, title: 'Registra tu clínica', desc: 'Crea tu cuenta en menos de 2 minutos. Solo necesitas tu nombre, email y contraseña.' },
+            { step: '02', icon: Users, title: 'Agrega tu equipo', desc: 'Invita a tus veterinarios, recepcionistas y auxiliares. Cada rol tiene sus propios permisos.' },
+            { step: '03', icon: Stethoscope, title: 'Empieza a gestionar', desc: 'Agenda citas, registra historias clínicas y controla tu inventario desde el primer día.' },
+          ].map((item, i) => (
+            <FadeUp key={item.step} delay={i * 0.15}>
+              <div className="relative flex flex-col items-center text-center">
+                <div className="relative mb-6">
+                  <div className="w-20 h-20 rounded-2xl bg-sky-50 border-2 border-sky-200 flex items-center justify-center shadow-lg shadow-sky-100 z-10 relative">
+                    <item.icon className="w-9 h-9 text-sky-500" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-md">
+                    {item.step}
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                <p className="text-slate-500 leading-relaxed">{item.desc}</p>
+              </div>
+            </FadeUp>
+          ))}
+        </div>
+      </div>
+      <FadeUp delay={0.4} className="text-center mt-14">
+        <Link to="/registro" className="group inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-semibold px-8 py-4 rounded-2xl transition-all shadow-xl shadow-sky-500/30 hover:-translate-y-1">
+          Crear mi cuenta gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </FadeUp>
+    </div>
+  </section>
+)
 
 const Funcionalidades = () => {
   const [activeTab, setActiveTab] = useState('citas')
@@ -651,6 +692,7 @@ export default function LandingPage() {
     <Navbar />
     <Hero />
     <LogosCarrusel />
+    <ComoComienzo />
     <Funcionalidades />
     <WaveDivider fromColor="#ffffff" toColor="#f0f9ff" />
     <PorQue />
