@@ -6,14 +6,21 @@ export const authApi = {
     return data
   },
 
-  registro: async ({ nombre, email, password, telefono, direccion }) => {
+  registro: async ({ nombre, email, password, telefono, direccion, ciudad, departamento, nit }) => {
     const { data } = await api.post('/auth/registro', {
-      nombre,
-      email,
-      password,
-      telefono,
-      direccion,
+      nombre, email, password,
+      telefono, direccion, ciudad, departamento, nit,
     })
+    return data
+  },
+
+  logout: async (refreshToken) => {
+    const { data } = await api.post('/auth/logout', { refreshToken })
+    return data
+  },
+
+  refresh: async (refreshToken) => {
+    const { data } = await api.post('/auth/refresh', { refreshToken })
     return data
   },
 }

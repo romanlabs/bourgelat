@@ -4,29 +4,36 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      token: null,
+      accessToken: null,
+      refreshToken: null,
       clinica: null,
       isAuthenticated: false,
 
-      setAuth: ({ token, clinica }) => set({
-        token,
+      setAuth: ({ accessToken, refreshToken, clinica }) => set({
+        accessToken,
+        refreshToken,
         clinica,
         isAuthenticated: true,
       }),
 
+      setAccessToken: (accessToken) => set({ accessToken }),
+
       clearAuth: () => set({
-        token: null,
+        accessToken: null,
+        refreshToken: null,
         clinica: null,
         isAuthenticated: false,
       }),
 
-      getToken: () => get().token,
+      getToken: () => get().accessToken,
+      getRefreshToken: () => get().refreshToken,
     }),
     {
-      name: 'vetnova-auth',
+      name: 'tarazed-auth',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        token: state.token,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         clinica: state.clinica,
         isAuthenticated: state.isAuthenticated,
       }),

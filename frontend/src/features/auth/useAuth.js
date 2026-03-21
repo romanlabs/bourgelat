@@ -12,7 +12,8 @@ export const useLogin = () => {
     mutationFn: authApi.login,
     onSuccess: (data) => {
       setAuth({
-        token: data.token,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
         clinica: data.clinica,
       })
       toast.success(`Bienvenido, ${data.clinica.nombre}`)
@@ -33,7 +34,8 @@ export const useRegistro = () => {
     mutationFn: authApi.registro,
     onSuccess: (data) => {
       setAuth({
-        token: data.token,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
         clinica: data.clinica,
       })
       toast.success('¡Clínica registrada exitosamente!')
@@ -49,11 +51,21 @@ export const useRegistro = () => {
 export const useLogout = () => {
   const navigate = useNavigate()
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const getRefreshToken = useAuthStore((s) => s.getRefreshToken)
 
-  const logout = () => {
-    clearAuth()
-    toast.info('Sesión cerrada')
-    navigate('/login', { replace: true })
+  const logout = async () => {
+    try {
+      const refreshToken = getRefreshToken()
+      if (refreshToken) {
+        await authApi.logout(refreshToken)
+      }
+    } catch (error) {
+      // Limpiar igual aunque falle
+    } finally {
+      clearAuth()
+      toast.info('Sesión cerrada')
+      navigate('/login', { replace: true })
+    }
   }
 
   return { logout }
