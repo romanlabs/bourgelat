@@ -8,7 +8,8 @@ const winston = require('winston')
 const sequelize = require('./config/database')
 const { limitadorGeneral, limitadorAuth } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
-const { limpiarTokensVencidos, limpiarLogsAntiguos } = require('./jobs/limpiezaTokens')
+const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
+
 dotenv.config()
 
 // ── Logger ─────────────────────────────────────────────────
@@ -72,6 +73,7 @@ const facturaRoutes = require('./routes/facturaRoutes')
 const reporteRoutes = require('./routes/reporteRoutes')
 const suscripcionRoutes = require('./routes/suscripcionRoutes')
 const antecedenteRoutes = require('./routes/antecedenteRoutes')
+const auditoriaRoutes = require('./routes/auditoriaRoutes')
 
 app.use('/api/auth', limitadorAuth, authRoutes)
 app.use('/api/usuarios', usuarioRoutes)
@@ -84,8 +86,6 @@ app.use('/api/facturas', facturaRoutes)
 app.use('/api/reportes', reporteRoutes)
 app.use('/api/suscripciones', suscripcionRoutes)
 app.use('/api/antecedentes', antecedenteRoutes)
-
-const auditoriaRoutes = require('./routes/auditoriaRoutes')
 app.use('/api/auditoria', auditoriaRoutes)
 
 // ── Ruta base ──────────────────────────────────────────────
@@ -125,10 +125,11 @@ sequelize.authenticate()
     // ── Jobs de limpieza ─────────────────────────────────
     limpiarTokensVencidos()
     limpiarLogsAntiguos()
+    limpiarIdempotencia()
     setInterval(limpiarTokensVencidos, 24 * 60 * 60 * 1000)
     setInterval(limpiarLogsAntiguos, 24 * 60 * 60 * 1000)
+    setInterval(limpiarIdempotencia, 24 * 60 * 60 * 1000)
   })
-  
   .catch((error) => {
     logger.error('Error conectando a la base de datos:', error)
   })

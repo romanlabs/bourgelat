@@ -56,11 +56,10 @@ const Propietario = sequelize.define('Propietario', {
   tableName: 'propietarios',
   timestamps: true,
   indexes: [
-    {
-      unique: true,
-      fields: ['numeroDocumento', 'clinicaId'],
-    },
-  ],
+  { fields: ['numeroDocumento', 'clinicaId'], unique: true },
+  { fields: ['clinicaId', 'activo'] },
+  { fields: ['telefono'] },
+],
 });
 
 Clinica.hasMany(Propietario, { foreignKey: 'clinicaId' });

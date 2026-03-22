@@ -1,34 +1,82 @@
-const idempotencias = new Map();
+const { DataTypes, Op } = require('sequelize')
+const sequelize = require('../config/database')
 
-const idempotencia = (req, res, next) => {
-  const claveIdempotencia = req.headers['idempotency-key'];
+const IdempotenciaKey = sequelize.define('IdempotenciaKey', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  clave: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  status: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  respuesta: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+  },
+  expiracion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+}, {
+  tableName: 'idempotencia_keys',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['clave'] },
+    { fields: ['expiracion'] },
+  ],
+})
 
-  // Si no viene clave de idempotencia, continua normal
-  if (!claveIdempotencia) return next();
+const idempotencia = async (req, res, next) => {
+  const claveIdempotencia = req.headers['idempotency-key']
 
-  // Si ya existe esa clave, devolver la respuesta anterior
-  if (idempotencias.has(claveIdempotencia)) {
-    const respuestaAnterior = idempotencias.get(claveIdempotencia);
-    return res.status(respuestaAnterior.status).json(respuestaAnterior.data);
+  if (!claveIdempotencia) return next()
+
+  try {
+    // Buscar si ya existe esa clave
+    const existente = await IdempotenciaKey.findOne({
+      where: {
+        clave: claveIdempotencia,
+        expiracion: { [Op.gt]: new Date() },
+      },
+    })
+
+    if (existente) {
+      return res.status(existente.status).json(existente.respuesta)
+    }
+
+    // Interceptar la respuesta para guardarla
+    const jsonOriginal = res.json.bind(res)
+    res.json = async (data) => {
+      try {
+        const expiracion = new Date()
+        expiracion.setHours(expiracion.getHours() + 24)
+
+        await IdempotenciaKey.create({
+          clave: claveIdempotencia,
+          status: res.statusCode,
+          respuesta: data,
+          expiracion,
+        })
+      } catch (error) {
+        // No interrumpir si falla el guardado
+        console.error('Error guardando idempotencia:', error.message)
+      }
+      return jsonOriginal(data)
+    }
+
+    next()
+  } catch (error) {
+    console.error('Error en middleware de idempotencia:', error.message)
+    next()
   }
+}
 
-  // Interceptar la respuesta para guardarla
-  const jsonOriginal = res.json.bind(res);
-  res.json = (data) => {
-    idempotencias.set(claveIdempotencia, {
-      status: res.statusCode,
-      data,
-    });
-
-    // Limpiar despues de 24 horas
-    setTimeout(() => {
-      idempotencias.delete(claveIdempotencia);
-    }, 24 * 60 * 60 * 1000);
-
-    return jsonOriginal(data);
-  };
-
-  next();
-};
-
-module.exports = { idempotencia };
+module.exports = { idempotencia, IdempotenciaKey }

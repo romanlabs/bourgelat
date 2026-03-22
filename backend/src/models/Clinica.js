@@ -68,6 +68,11 @@ const Clinica = sequelize.define('Clinica', {
 }, {
   tableName: 'clinicas',
   timestamps: true,
+  indexes: [
+  { fields: ['email'], unique: true },
+  { fields: ['nit'], unique: true },
+  { fields: ['activo'] },
+]
 });
 
 module.exports = Clinica;

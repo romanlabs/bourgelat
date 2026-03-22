@@ -74,6 +74,11 @@ const MovimientoInventario = sequelize.define('MovimientoInventario', {
   tableName: 'movimientos_inventario',
   timestamps: true,
   updatedAt: false,
+  indexes: [
+  { fields: ['productoId'] },
+  { fields: ['clinicaId', 'createdAt'] },
+  { fields: ['motivo'] },
+]
 });
 
 Producto.hasMany(MovimientoInventario, { foreignKey: 'productoId', as: 'movimientos' });

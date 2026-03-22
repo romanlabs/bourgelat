@@ -45,6 +45,12 @@ const RefreshToken = sequelize.define('RefreshToken', {
   tableName: 'refresh_tokens',
   timestamps: true,
   updatedAt: false,
+  indexes: [
+  { fields: ['token'] },
+  { fields: ['clinicaId'] },
+  { fields: ['expiracion'] },
+  { fields: ['revocado'] },
+]
 })
 
 Clinica.hasMany(RefreshToken, { foreignKey: 'clinicaId' })

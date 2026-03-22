@@ -42,3 +42,21 @@ const limpiarLogsAntiguos = async () => {
 }
 
 module.exports = { limpiarTokensVencidos, limpiarLogsAntiguos }
+const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
+
+const limpiarIdempotencia = async () => {
+  try {
+    const eliminados = await IdempotenciaKey.destroy({
+      where: {
+        expiracion: { [Op.lt]: new Date() },
+      },
+    })
+    if (eliminados > 0) {
+      console.log(`[Limpieza] ${eliminados} claves de idempotencia eliminadas`)
+    }
+  } catch (error) {
+    console.error('[Limpieza] Error al limpiar idempotencia:', error.message)
+  }
+}
+
+module.exports = { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia }

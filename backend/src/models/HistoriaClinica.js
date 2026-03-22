@@ -139,11 +139,17 @@ const HistoriaClinica = sequelize.define('HistoriaClinica', {
       key: 'id',
     },
   },
-}, {
+},  {
   tableName: 'historias_clinicas',
   timestamps: true,
   updatedAt: false,
   comment: 'Las historias clinicas son inmutables una vez bloqueadas',
+  indexes: [
+    { fields: ['mascotaId', 'clinicaId'] },
+    { fields: ['clinicaId', 'fechaConsulta'] },
+    { fields: ['veterinarioId'] },
+    { fields: ['citaId'] },
+  ],
 });
 
 Mascota.hasMany(HistoriaClinica, { foreignKey: 'mascotaId', as: 'historias' });

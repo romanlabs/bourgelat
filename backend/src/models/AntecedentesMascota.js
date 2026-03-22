@@ -79,6 +79,10 @@ const AntecedentesMascota = sequelize.define('AntecedentesMascota', {
 }, {
   tableName: 'antecedentes_mascota',
   timestamps: true,
+  indexes: [
+  { fields: ['mascotaId'], unique: true },
+  { fields: ['clinicaId'] },
+]
 });
 
 Mascota.hasOne(AntecedentesMascota, { foreignKey: 'mascotaId', as: 'antecedentes' });

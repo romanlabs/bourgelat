@@ -82,6 +82,12 @@ const Mascota = sequelize.define('Mascota', {
 }, {
   tableName: 'mascotas',
   timestamps: true,
+  indexes: [
+  { fields: ['propietarioId'] },
+  { fields: ['clinicaId', 'activo'] },
+  { fields: ['microchip'] },
+  { fields: ['clinicaId', 'especie'] },
+]
 });
 
 Propietario.hasMany(Mascota, { foreignKey: 'propietarioId' });

@@ -60,6 +60,12 @@ const AuditoriaLog = sequelize.define('AuditoriaLog', {
   tableName: 'auditoria_logs',
   timestamps: true,
   updatedAt: false,
+  indexes: [
+  { fields: ['clinicaId', 'createdAt'] },
+  { fields: ['accion'] },
+  { fields: ['entidad', 'entidadId'] },
+  { fields: ['resultado'] },
+]
 })
 
 module.exports = AuditoriaLog

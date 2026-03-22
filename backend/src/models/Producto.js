@@ -98,6 +98,11 @@ const Producto = sequelize.define('Producto', {
 }, {
   tableName: 'productos',
   timestamps: true,
+  indexes: [
+  { fields: ['clinicaId', 'categoria'] },
+  { fields: ['clinicaId', 'activo'] },
+  { fields: ['codigoBarras'] },
+]
 });
 
 Clinica.hasMany(Producto, { foreignKey: 'clinicaId' });

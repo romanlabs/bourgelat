@@ -92,6 +92,12 @@ const Factura = sequelize.define('Factura', {
 }, {
   tableName: 'facturas',
   timestamps: true,
+  indexes: [
+  { fields: ['clinicaId', 'estado'] },
+  { fields: ['clinicaId', 'fecha'] },
+  { fields: ['propietarioId'] },
+  { fields: ['numero', 'clinicaId'], unique: true },
+]
 });
 
 Propietario.hasMany(Factura, { foreignKey: 'propietarioId', as: 'facturas' });

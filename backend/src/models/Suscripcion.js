@@ -71,6 +71,11 @@ const Suscripcion = sequelize.define('Suscripcion', {
 }, {
   tableName: 'suscripciones',
   timestamps: true,
+  indexes: [
+  { fields: ['clinicaId', 'estado'] },
+  { fields: ['fechaFin'] },
+  { fields: ['plan'] },
+]
 });
 
 Clinica.hasMany(Suscripcion, { foreignKey: 'clinicaId', as: 'suscripciones' });

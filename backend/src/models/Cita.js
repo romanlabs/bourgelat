@@ -103,10 +103,12 @@ const Cita = sequelize.define('Cita', {
   tableName: 'citas',
   timestamps: true,
   indexes: [
-    {
-      fields: ['fecha', 'veterinarioId', 'clinicaId'],
-    },
-  ],
+  { fields: ['fecha', 'veterinarioId', 'clinicaId'] },
+  { fields: ['clinicaId', 'estado'] },
+  { fields: ['clinicaId', 'fecha'] },
+  { fields: ['propietarioId'] },
+  { fields: ['mascotaId'] },
+]
 });
 
 Mascota.hasMany(Cita, { foreignKey: 'mascotaId', as: 'mascota' });

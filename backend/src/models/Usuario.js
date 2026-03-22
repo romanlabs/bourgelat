@@ -73,6 +73,11 @@ const Usuario = sequelize.define('Usuario', {
 }, {
   tableName: 'usuarios',
   timestamps: true,
+  indexes: [
+  { fields: ['email'], unique: true },
+  { fields: ['clinicaId', 'activo'] },
+  { fields: ['clinicaId', 'rol'] },
+]
 });
 
 Clinica.hasMany(Usuario, { foreignKey: 'clinicaId' });

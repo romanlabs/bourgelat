@@ -56,6 +56,10 @@ const FacturaItem = sequelize.define('FacturaItem', {
   tableName: 'factura_items',
   timestamps: true,
   updatedAt: false,
+  indexes: [
+  { fields: ['facturaId'] },
+  { fields: ['productoId'] },
+]
 });
 
 Factura.hasMany(FacturaItem, { foreignKey: 'facturaId', as: 'items' });
