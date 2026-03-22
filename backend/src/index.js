@@ -90,7 +90,7 @@ app.use('/api/auditoria', auditoriaRoutes)
 
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ message: 'Bienvenido a Tarazed API' })
+  res.json({ message: 'Bienvenido a Bourgelat API' })
 })
 
 // ── Ruta no encontrada ─────────────────────────────────────
