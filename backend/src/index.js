@@ -3,7 +3,7 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 const helmet = require('helmet')
 const hpp = require('hpp')
-const xss = require('xss-clean')
+//const xss = require('xss-clean')
 const winston = require('winston')
 const sequelize = require('./config/database')
 const { limitadorGeneral, limitadorAuth } = require('./middlewares/rateLimitMiddleware')
@@ -31,7 +31,7 @@ const app = express()
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet())
 app.use(hpp())
-app.use(xss())
+//app.use(xss())
 
 // ── CORS ───────────────────────────────────────────────────
 app.use(cors({
@@ -119,7 +119,7 @@ sequelize.authenticate()
   .then(() => {
     logger.info('Tablas sincronizadas')
     app.listen(PORT, () => {
-      logger.info(`Servidor Tarazed corriendo en el puerto ${PORT}`)
+      logger.info(`Servidor Bourgelat corriendo en el puerto ${PORT}`);
     })
 
     // ── Jobs de limpieza ─────────────────────────────────

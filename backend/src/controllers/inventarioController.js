@@ -5,50 +5,65 @@ const MovimientoInventario = require('../models/MovimientoInventario');
 
 const crearProducto = async (req, res) => {
   try {
+
+    console.log("USUARIO TOKEN:", req.usuario);
+
     const {
       nombre, descripcion, categoria, subcategoria, unidadMedida,
       precioCompra, precioVenta, stock, stockMinimo,
       fechaVencimiento, lote, laboratorio, requiereFormula,
     } = req.body;
+
     const { id: clinicaId } = req.usuario;
 
     if (!nombre || !categoria || !unidadMedida) {
-      return res.status(400).json({ message: 'Nombre, categoria y unidad de medida son obligatorios' });
+      return res.status(400).json({
+        message: 'Nombre, categoria y unidad de medida son obligatorios'
+      });
     }
 
     const producto = await Producto.create({
-      nombre, descripcion, categoria, subcategoria, unidadMedida,
+      nombre,
+      descripcion,
+      categoria,
+      subcategoria,
+      unidadMedida,
       precioCompra: precioCompra || 0,
       precioVenta: precioVenta || 0,
       stock: stock || 0,
       stockMinimo: stockMinimo || 5,
-      fechaVencimiento, lote, laboratorio,
+      fechaVencimiento,
+      lote,
+      laboratorio,
       requiereFormula: requiereFormula || false,
       clinicaId,
     });
 
-    // Si viene con stock inicial registrar movimiento
-    if (stock && stock > 0) {
-      await MovimientoInventario.create({
-        tipo: 'entrada',
-        cantidad: stock,
-        stockAnterior: 0,
-        stockNuevo: stock,
-        motivo: 'compra',
-        observaciones: 'Stock inicial',
-        precioUnitario: precioCompra || 0,
-        productoId: producto.id,
-        usuarioId: req.body.usuarioId || req.usuario.id,
-        clinicaId,
-      });
-    }
+   if (stock && stock > 0) {
+  await MovimientoInventario.create({
+    tipo: 'entrada',
+    cantidad: stock,
+    stockAnterior: 0,
+    stockNuevo: stock,
+    motivo: 'compra',
+    observaciones: 'Stock inicial',
+    precioUnitario: precioCompra || 0,
+    productoId: producto.id,
+    usuarioId: req.usuario.id,
+    clinicaId,
+  });
+}
 
     res.status(201).json({
       message: 'Producto creado exitosamente',
       producto,
     });
+
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({
+      message: 'Error en el servidor',
+      error: error.message
+    });
   }
 };
 
@@ -264,7 +279,99 @@ const obtenerAlertas = async (req, res) => {
   }
 };
 
+const obtenerProductoPorBarcode = async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { id: clinicaId } = req.usuario;
+
+    const producto = await Producto.findOne({
+      where: {
+        codigoBarras: codigo,
+        clinicaId,
+        activo: true
+      },
+      attributes: [
+        'id',
+        'nombre',
+        'precioVenta',
+        'stock',
+        'categoria',
+        'requiereFormula'
+      ]
+    });
+
+    if (!producto) {
+      return res.status(404).json({
+        message: 'Producto no encontrado'
+      });
+    }
+
+    if (producto.stock <= 0) {
+      return res.status(400).json({
+        message: 'Producto sin stock'
+      });
+    }
+
+    res.json({
+      producto
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error en servidor',
+      error: error.message
+    });
+  }
+};
+
+const obtenerMovimientos = async (req, res) => {
+  try {
+
+    const { id: clinicaId } = req.usuario;
+
+    const { productoId, tipo, pagina = 1, limite = 20 } = req.query;
+
+    const where = { clinicaId };
+
+    if (productoId) where.productoId = productoId;
+    if (tipo) where.tipo = tipo;
+
+    const offset = (pagina - 1) * limite;
+
+    const { count, rows } = await MovimientoInventario.findAndCountAll({
+      where,
+      limit: parseInt(limite),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']],
+      include: [{
+      model: Producto,
+      as: 'producto',
+      attributes: ['id','nombre','categoria']
+      }]
+    });
+
+    res.json({
+      total: count,
+      paginas: Math.ceil(count / limite),
+      paginaActual: parseInt(pagina),
+      movimientos: rows
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error en servidor',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
-  crearProducto, obtenerProductos, obtenerProducto,
-  editarProducto, registrarMovimiento, obtenerAlertas,
+  crearProducto,
+  obtenerProductos,
+  obtenerProducto,
+  editarProducto,
+  registrarMovimiento,
+  obtenerAlertas,
+  obtenerProductoPorBarcode,
+  obtenerMovimientos 
 };

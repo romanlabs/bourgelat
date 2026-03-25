@@ -29,7 +29,7 @@ export const useAuthStore = create(
       getRefreshToken: () => get().refreshToken,
     }),
     {
-      name: 'tarazed-auth',
+      name: 'bourgelat-auth',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         accessToken: state.accessToken,

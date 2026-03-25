@@ -21,25 +21,26 @@ const Producto = sequelize.define('Producto', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  categoria: {
-    type: DataTypes.ENUM(
-      'medicamento',
-      'vacuna',
-      'insumo',
-      'alimento',
-      'accesorio',
-      'antiparasitario',
-      'suplemento',
-      'otro'
-    ),
-    subcategoria: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'Subcategoria personalizada por la clinica, ej: ropa, transportadores, arena',
-  },
-    allowNull: false,
-    defaultValue: 'medicamento',
-  },
+ categoria: {
+  type: DataTypes.ENUM(
+    'medicamento',
+    'vacuna',
+    'insumo',
+    'alimento',
+    'accesorio',
+    'antiparasitario',
+    'suplemento',
+    'otro'
+  ),
+  allowNull: false,
+  defaultValue: 'medicamento',
+},
+
+subcategoria: {
+  type: DataTypes.STRING,
+  allowNull: true,
+  comment: 'Subcategoria personalizada por la clinica'
+},
   unidadMedida: {
     type: DataTypes.STRING,
     allowNull: false,
