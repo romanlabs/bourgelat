@@ -7,7 +7,7 @@ const { Op } = require('sequelize')
 router.get('/', verificarToken, verificarRol('superadmin', 'admin'), async (req, res) => {
   try {
     const { pagina = 1, limite = 50, accion, desde, hasta } = req.query
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const where = { clinicaId }
 

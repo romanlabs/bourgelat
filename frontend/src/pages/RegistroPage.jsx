@@ -123,7 +123,7 @@ useEffect(() => {
             <div className="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center mx-auto mb-6 shadow-2xl">
               <Stethoscope className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-3">VetNova</h1>
+            <h1 className="text-3xl font-bold text-white mb-3">Bourgelat</h1>
             <p className="text-white/50 text-sm max-w-xs">
               Registra tu clínica en 3 simples pasos
             </p>
@@ -159,7 +159,7 @@ useEffect(() => {
               <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">VetNova</span>
+              <span className="text-lg font-bold text-white">Bourgelat</span>
             </div>
 
             {/* Pasos mobile */}

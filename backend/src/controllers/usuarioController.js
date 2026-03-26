@@ -5,7 +5,7 @@ const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const crearUsuario = async (req, res) => {
   try {
     const { nombre, email, password, rol, rolesAdicionales, telefono } = req.body
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     if (!nombre || !email || !password || !rol) {
       return res.status(400).json({ message: 'Nombre, email, password y rol son obligatorios' })
@@ -64,7 +64,7 @@ const crearUsuario = async (req, res) => {
 
 const obtenerUsuarios = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const usuarios = await Usuario.findAll({
       where: { clinicaId },
@@ -81,7 +81,7 @@ const obtenerUsuarios = async (req, res) => {
 const obtenerUsuario = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const usuario = await Usuario.findOne({
       where: { id, clinicaId },
@@ -101,7 +101,7 @@ const obtenerUsuario = async (req, res) => {
 const editarUsuario = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
     const { nombre, telefono, rol, rolesAdicionales } = req.body
 
     const usuario = await Usuario.findOne({ where: { id, clinicaId } })
@@ -160,7 +160,7 @@ const editarUsuario = async (req, res) => {
 const toggleUsuario = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const usuario = await Usuario.findOne({ where: { id, clinicaId } })
 

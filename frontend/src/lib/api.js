@@ -73,7 +73,6 @@ api.interceptors.response.use(
         )
 
         useAuthStore.getState().setAccessToken(data.accessToken)
-        useAuthStore.getState().setAccessToken(data.accessToken)
 
         // Guardar también el nuevo refreshToken
         useAuthStore.setState({

@@ -10,7 +10,7 @@ const Producto = require('../models/Producto');
 
 const reporteIngresos = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { fechaInicio, fechaFin } = req.query;
 
     if (!fechaInicio || !fechaFin) {
@@ -57,7 +57,7 @@ const reporteIngresos = async (req, res) => {
 
 const reporteCitas = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { fechaInicio, fechaFin } = req.query;
 
     if (!fechaInicio || !fechaFin) {
@@ -101,7 +101,7 @@ const reporteCitas = async (req, res) => {
 
 const reporteInventario = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const productos = await Producto.findAll({
       where: { clinicaId, activo: true },
@@ -136,7 +136,7 @@ const reporteInventario = async (req, res) => {
 
 const dashboardGeneral = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);

@@ -3,9 +3,11 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 const helmet = require('helmet')
 const hpp = require('hpp')
-//const xss = require('xss-clean')
+const xss = require('xss-clean')
 const winston = require('winston')
 const sequelize = require('./config/database')
+const { appConfig } = require('./config/app')
+const { runPendingMigrations } = require('./config/migrations')
 const { limitadorGeneral, limitadorAuth } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
@@ -27,15 +29,24 @@ const logger = winston.createLogger({
 })
 
 const app = express()
+app.set('trust proxy', appConfig.trustProxy)
 
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet())
 app.use(hpp())
-//app.use(xss())
+if (appConfig.enableXssClean) {
+  app.use(xss())
+}
 
 // ── CORS ───────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || appConfig.frontendOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    return callback(new Error('Origen no permitido por CORS'))
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
@@ -74,6 +85,7 @@ const reporteRoutes = require('./routes/reporteRoutes')
 const suscripcionRoutes = require('./routes/suscripcionRoutes')
 const antecedenteRoutes = require('./routes/antecedenteRoutes')
 const auditoriaRoutes = require('./routes/auditoriaRoutes')
+const integracionFacturacionRoutes = require('./routes/integracionFacturacionRoutes')
 
 app.use('/api/auth', limitadorAuth, authRoutes)
 app.use('/api/usuarios', usuarioRoutes)
@@ -87,10 +99,34 @@ app.use('/api/reportes', reporteRoutes)
 app.use('/api/suscripciones', suscripcionRoutes)
 app.use('/api/antecedentes', antecedenteRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
+app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
 
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a Bourgelat API' })
+})
+
+app.get('/health', async (req, res) => {
+  try {
+    await sequelize.authenticate()
+
+    res.json({
+      status: 'ok',
+      service: 'bourgelat-backend',
+      environment: appConfig.nodeEnv,
+      database: 'reachable',
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      service: 'bourgelat-backend',
+      environment: appConfig.nodeEnv,
+      database: 'unreachable',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    })
+  }
 })
 
 // ── Ruta no encontrada ─────────────────────────────────────
@@ -109,15 +145,42 @@ app.use((err, req, res, next) => {
 })
 
 // ── Conexión DB y arranque ─────────────────────────────────
-const PORT = process.env.PORT || 3000
+const PORT = appConfig.port
+
+const sincronizarBaseDeDatos = async () => {
+  if (!appConfig.enableDbSync) {
+    logger.info('Sincronizacion automatica de base de datos desactivada')
+    return
+  }
+
+  logger.warn({
+    mensaje: 'Sincronizacion automatica habilitada',
+    alter: appConfig.enableDbAlter,
+    entorno: appConfig.nodeEnv,
+  })
+
+  await sequelize.sync({ alter: appConfig.enableDbAlter })
+}
+
+const ejecutarMigracionesPendientes = async () => {
+  if (!appConfig.enableDbMigrations) {
+    logger.info('Ejecucion automatica de migraciones desactivada')
+    return
+  }
+
+  await runPendingMigrations(logger)
+}
 
 sequelize.authenticate()
   .then(() => {
     logger.info('Conexión a la base de datos exitosa')
-    return sequelize.sync({ alter: true })
+    return ejecutarMigracionesPendientes()
   })
   .then(() => {
-    logger.info('Tablas sincronizadas')
+    return sincronizarBaseDeDatos()
+  })
+  .then(() => {
+    logger.info('Inicializacion de base de datos completada')
     app.listen(PORT, () => {
       logger.info(`Servidor Bourgelat corriendo en el puerto ${PORT}`);
     })

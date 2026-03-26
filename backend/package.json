@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "node src/config/smokeTest.js",
+    "migrate": "node src/config/runMigrations.js",
+    "migrate:status": "node src/config/runMigrations.js status"
   },
   "keywords": [],
   "author": "",

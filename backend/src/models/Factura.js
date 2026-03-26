@@ -65,6 +65,61 @@ const Factura = sequelize.define('Factura', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  proveedorElectronico: {
+    type: DataTypes.ENUM('factus'),
+    allowNull: true,
+  },
+  estadoElectronico: {
+    type: DataTypes.ENUM('no_aplica', 'pendiente', 'enviada', 'validada', 'rechazada', 'error'),
+    allowNull: false,
+    defaultValue: 'no_aplica',
+  },
+  documentoElectronico: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Codigo de documento del proveedor, ej. 01 factura de venta',
+  },
+  rangoNumeracionId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  referenciaExterna: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'ID o referencia devuelta por el proveedor de facturacion electronica',
+  },
+  cufe: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  fechaEnvioElectronico: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  fechaValidacionElectronica: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  urlPdfElectronico: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  urlXmlElectronico: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  mensajeElectronico: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  payloadElectronico: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+  respuestaElectronica: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
   propietarioId: {
     type: DataTypes.UUID,
     allowNull: false,

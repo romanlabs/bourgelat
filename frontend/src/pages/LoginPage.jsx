@@ -31,7 +31,7 @@ export default function LoginPage() {
         {/* Imagen de fondo */}
         <img
           src={loginHero}
-          alt="VetNova"
+          alt="Bourgelat"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
         {/* Overlay oscuro degradado */}
@@ -45,7 +45,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">VetNova</span>
+            <span className="text-xl font-bold text-white">Bourgelat</span>
           </div>
 
           {/* Texto inferior */}
@@ -92,11 +92,11 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
               <Stethoscope className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">VetNova</span>
+            <span className="text-xl font-bold text-white">Bourgelat</span>
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-1">Bienvenido de nuevo</h2>
-          <p className="text-white/40 text-sm mb-8">Ingresa a tu clínica en VetNova</p>
+          <p className="text-white/40 text-sm mb-8">Ingresa a tu clínica en Bourgelat</p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
             {/* Email */}
@@ -153,3 +153,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

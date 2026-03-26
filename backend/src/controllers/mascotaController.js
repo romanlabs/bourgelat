@@ -7,7 +7,7 @@ const crearMascota = async (req, res) => {
       nombre, especie, raza, sexo, fechaNacimiento,
       peso, color, esterilizado, microchip, observaciones, propietarioId
     } = req.body;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     if (!nombre || !especie || !propietarioId) {
       return res.status(400).json({ message: 'Nombre, especie y propietario son obligatorios' });
@@ -35,7 +35,7 @@ const crearMascota = async (req, res) => {
 
 const obtenerMascotas = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { buscar, especie, pagina = 1, limite = 10 } = req.query;
     const { Op } = require('sequelize');
 
@@ -77,7 +77,7 @@ const obtenerMascotas = async (req, res) => {
 const obtenerMascota = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const mascota = await Mascota.findOne({
       where: { id, clinicaId },
@@ -100,7 +100,7 @@ const obtenerMascota = async (req, res) => {
 const editarMascota = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { nombre, raza, sexo, fechaNacimiento, peso, color, esterilizado, microchip, observaciones } = req.body;
 
     const mascota = await Mascota.findOne({ where: { id, clinicaId } });
@@ -126,7 +126,7 @@ const editarMascota = async (req, res) => {
 const desactivarMascota = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const mascota = await Mascota.findOne({ where: { id, clinicaId } });
 

@@ -557,7 +557,7 @@ const Footer = () => (
           </p>
         </div>
         {[
-          { title:'Producto', links:['Funcionalidades','Planes','Seguridad','Novedades'] },
+          { title:'Producto', links:[{ label:'Planes', to:'/planes' }, { label:'Nosotros', to:'/nosotros' }, { label:'Iniciar sesion', to:'/login' }, { label:'Registro', to:'/registro' }] },
           { title:'Empresa',  links:['Quiénes somos','Blog','Contacto','Trabaja con nosotros'] },
           { title:'Legal',    links:['Privacidad','Términos de uso','Política de cookies'] },
         ].map(col => (

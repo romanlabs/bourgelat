@@ -98,7 +98,7 @@ const crearSuscripcion = async (req, res) => {
 
 const obtenerSuscripcionActiva = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const suscripcion = await Suscripcion.findOne({
       where: { clinicaId, estado: 'activa' },
@@ -132,7 +132,7 @@ const obtenerSuscripcionActiva = async (req, res) => {
 
 const obtenerHistorialSuscripciones = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const suscripciones = await Suscripcion.findAll({
       where: { clinicaId },

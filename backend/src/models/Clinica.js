@@ -44,6 +44,47 @@ const Clinica = sequelize.define('Clinica', {
     allowNull: true,
     unique: true,
   },
+  razonSocial: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  nombreComercial: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  tipoPersona: {
+    type: DataTypes.ENUM('persona_natural', 'persona_juridica'),
+    allowNull: false,
+    defaultValue: 'persona_juridica',
+  },
+  digitoVerificacion: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  codigoPostal: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  municipioId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'ID de municipio segun tablas de referencia DIAN/Factus',
+  },
+  tipoDocumentoFacturacionId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'ID de tipo de documento en tablas de referencia del proveedor',
+  },
+  organizacionJuridicaId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Equivale a legal_organization_id en Factus',
+  },
+  tributoId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Equivale a tribute_id en Factus',
+  },
   logo: {
     type: DataTypes.STRING,
     allowNull: true,

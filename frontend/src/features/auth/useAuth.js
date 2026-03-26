@@ -14,9 +14,10 @@ export const useLogin = () => {
       setAuth({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
+        usuario: data.usuario,
         clinica: data.clinica,
       })
-      toast.success(`Bienvenido, ${data.clinica.nombre}`)
+      toast.success(`Bienvenido, ${data.usuario?.nombre || data.clinica?.nombre || 'Bourgelat'}`)
       navigate('/dashboard', { replace: true })
     },
     onError: (error) => {
@@ -36,6 +37,7 @@ export const useRegistro = () => {
       setAuth({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
+        usuario: data.usuario,
         clinica: data.clinica,
       })
       toast.success('¡Clínica registrada exitosamente!')
@@ -59,7 +61,7 @@ export const useLogout = () => {
       if (refreshToken) {
         await authApi.logout(refreshToken)
       }
-    } catch (error) {
+    } catch {
       // Limpiar igual aunque falle
     } finally {
       clearAuth()

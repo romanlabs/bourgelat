@@ -16,7 +16,7 @@ const crearHistoria = async (req, res) => {
       mascotaId, propietarioId, citaId, veterinarioId,
     } = req.body
 
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     if (!motivoConsulta || !diagnostico || !tratamiento || !mascotaId || !propietarioId || !veterinarioId) {
       return res.status(400).json({
@@ -84,7 +84,7 @@ const crearHistoria = async (req, res) => {
 const obtenerHistoriasMascota = async (req, res) => {
   try {
     const { mascotaId } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId } })
     if (!mascota) {
@@ -112,7 +112,7 @@ const obtenerHistoriasMascota = async (req, res) => {
 const obtenerHistoria = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const historia = await HistoriaClinica.findOne({
       where: { id, clinicaId },
@@ -137,7 +137,7 @@ const obtenerHistoria = async (req, res) => {
 const editarHistoria = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const historia = await HistoriaClinica.findOne({ where: { id, clinicaId } })
 
@@ -205,7 +205,7 @@ const editarHistoria = async (req, res) => {
 const bloquearHistoria = async (req, res) => {
   try {
     const { id } = req.params
-    const { id: clinicaId } = req.usuario
+    const { clinicaId } = req.usuario
 
     const historia = await HistoriaClinica.findOne({ where: { id, clinicaId } })
 

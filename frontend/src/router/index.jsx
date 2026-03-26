@@ -7,6 +7,10 @@ const RegistroPage  = lazy(() => import('@/pages/RegistroPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
+const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
+const PrivacidadPage = lazy(() => import('@/pages/PrivacidadPage'))
+const TerminosPage   = lazy(() => import('@/pages/TerminosPage'))
+const CookiesPage    = lazy(() => import('@/pages/CookiesPage'))
 
 const Loader = () => (
   <div className="min-h-screen bg-[var(--color-sidebar)] flex items-center justify-center">
@@ -30,6 +34,10 @@ const router = createBrowserRouter([
   },
   { path: '/',       element: <Suspense fallback={<Loader />}><LandingPage /></Suspense> },
   { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
+  { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
+  { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
+  { path: '/terminos', element: <Suspense fallback={<Loader />}><TerminosPage /></Suspense> },
+  { path: '/cookies', element: <Suspense fallback={<Loader />}><CookiesPage /></Suspense> },
   { path: '*',       element: <Navigate to="/" replace /> },
 ])
 

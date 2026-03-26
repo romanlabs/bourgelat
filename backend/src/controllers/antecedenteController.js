@@ -4,7 +4,7 @@ const Mascota = require('../models/Mascota');
 const obtenerOCrearAntecedentes = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId } });
     if (!mascota) {
@@ -36,7 +36,7 @@ const obtenerOCrearAntecedentes = async (req, res) => {
 const agregarAlergia = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { tipo, descripcion, reaccion, fecha } = req.body;
 
     if (!tipo || !descripcion) {
@@ -68,7 +68,7 @@ const agregarAlergia = async (req, res) => {
 const agregarCirugia = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { nombre, fecha, veterinario, observaciones } = req.body;
 
     if (!nombre || !fecha) {
@@ -100,7 +100,7 @@ const agregarCirugia = async (req, res) => {
 const agregarVacuna = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { nombre, fecha, proximaDosis, lote, laboratorio } = req.body;
 
     if (!nombre || !fecha) {
@@ -133,7 +133,7 @@ const agregarVacuna = async (req, res) => {
 const agregarCondicionCronica = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { nombre, fechaDiagnostico, tratamientoActual } = req.body;
 
     if (!nombre) {
@@ -164,7 +164,7 @@ const agregarCondicionCronica = async (req, res) => {
 const actualizarGenerales = async (req, res) => {
   try {
     const { mascotaId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { esterilizado, fechaEsterilizacion, observacionesGenerales, medicamentosActuales } = req.body;
 
     const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });

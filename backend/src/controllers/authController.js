@@ -5,6 +5,12 @@ const { Op } = require('sequelize')
 const Clinica = require('../models/Clinica')
 const Usuario = require('../models/Usuario')
 const RefreshToken = require('../models/RefreshToken')
+const { appConfig } = require('../config/app')
+const {
+  setAuthCookies,
+  clearAuthCookies,
+  obtenerRefreshTokenRequest,
+} = require('../config/cookies')
 
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 
@@ -24,19 +30,87 @@ const generarRefreshToken = (payload) => {
   })
 }
 
-const guardarRefreshToken = async ({ token, clinicaId, usuarioId, ip, userAgent }) => {
-
+const calcularFechaExpiracionRefresh = () => {
   const expiracion = new Date()
-  expiracion.setDate(expiracion.getDate() + 7)
+  expiracion.setMilliseconds(
+    expiracion.getMilliseconds() + appConfig.cookies.refreshMaxAgeMs
+  )
+  return expiracion
+}
 
+const estaTemporalmenteBloqueado = (usuario) => {
+  return Boolean(
+    usuario?.bloqueadoHasta &&
+    new Date(usuario.bloqueadoHasta).getTime() > Date.now()
+  )
+}
+
+const registrarIntentoFallido = async (usuario) => {
+  const intentosFallidos = (usuario.intentosFallidos || 0) + 1
+  const data = { intentosFallidos }
+
+  if (intentosFallidos >= appConfig.auth.maxIntentosFallidos) {
+    const bloqueadoHasta = new Date()
+    bloqueadoHasta.setMinutes(
+      bloqueadoHasta.getMinutes() + appConfig.auth.minutosBloqueo
+    )
+
+    data.bloqueadoHasta = bloqueadoHasta
+    data.intentosFallidos = 0
+  }
+
+  await usuario.update(data)
+}
+
+const limpiarEstadoAccesoUsuario = async (usuario) => {
+  await usuario.update({
+    intentosFallidos: 0,
+    bloqueadoHasta: null,
+    ultimoAcceso: new Date(),
+  })
+}
+
+const guardarRefreshToken = async ({ token, clinicaId, usuarioId, ip, userAgent }) => {
   await RefreshToken.create({
     token,
-    expiracion,
+    expiracion: calcularFechaExpiracionRefresh(),
     clinicaId: clinicaId || null,
     usuarioId: usuarioId || null,
     ip,
     userAgent
   })
+}
+
+const serializarClinica = (clinica) => {
+  if (!clinica) return null
+
+  return {
+    id: clinica.id,
+    nombre: clinica.nombre,
+    email: clinica.email,
+    telefono: clinica.telefono,
+    direccion: clinica.direccion,
+    ciudad: clinica.ciudad,
+    departamento: clinica.departamento,
+    nit: clinica.nit,
+    logo: clinica.logo,
+    activo: clinica.activo,
+  }
+}
+
+const serializarUsuario = (usuario) => {
+  if (!usuario) return null
+
+  return {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    email: usuario.email,
+    rol: usuario.rol,
+    rolesAdicionales: usuario.rolesAdicionales || [],
+    clinicaId: usuario.clinicaId,
+    telefono: usuario.telefono,
+    activo: usuario.activo,
+  }
 }
 
 /* =========================================================
@@ -55,7 +129,16 @@ const registro = async (req, res) => {
       direccion,
       ciudad,
       departamento,
-      nit
+      nit,
+      razonSocial,
+      nombreComercial,
+      tipoPersona,
+      digitoVerificacion,
+      codigoPostal,
+      municipioId,
+      tipoDocumentoFacturacionId,
+      organizacionJuridicaId,
+      tributoId
     } = req.body
 
     if (!nombre || !email || !password) {
@@ -91,7 +174,16 @@ const registro = async (req, res) => {
       direccion,
       ciudad,
       departamento,
-      nit
+      nit,
+      razonSocial,
+      nombreComercial,
+      tipoPersona: tipoPersona || 'persona_juridica',
+      digitoVerificacion,
+      codigoPostal,
+      municipioId,
+      tipoDocumentoFacturacionId,
+      organizacionJuridicaId,
+      tributoId
     })
 
     /* CREAR USUARIO ADMIN AUTOMÁTICO */
@@ -108,7 +200,8 @@ const registro = async (req, res) => {
     const payload = {
       id: usuarioAdmin.id,
       clinicaId: clinica.id,
-      rol: usuarioAdmin.rol
+      rol: usuarioAdmin.rol,
+      rolesAdicionales: usuarioAdmin.rolesAdicionales || []
     }
 
     const accessToken = generarAccessToken(payload)
@@ -117,6 +210,7 @@ const registro = async (req, res) => {
     await guardarRefreshToken({
       token: refreshToken,
       clinicaId: clinica.id,
+      usuarioId: usuarioAdmin.id,
       ip: req.ip,
       userAgent: req.headers['user-agent']
     })
@@ -132,11 +226,14 @@ const registro = async (req, res) => {
 
     delete clinica.dataValues.password
 
+    setAuthCookies(res, { accessToken, refreshToken })
+
     res.status(201).json({
       message: 'Clínica registrada exitosamente',
       accessToken,
       refreshToken,
-      clinica
+      usuario: serializarUsuario(usuarioAdmin),
+      clinica: serializarClinica(clinica)
     })
 
   } catch (error) {
@@ -165,7 +262,11 @@ const login = async (req, res) => {
     }
 
     const usuario = await Usuario.findOne({
-      where: { email }
+      where: { email },
+      include: [{
+        model: Clinica,
+        attributes: ['id', 'nombre', 'email', 'telefono', 'direccion', 'ciudad', 'departamento', 'nit', 'logo', 'activo']
+      }]
     })
 
     if (!usuario) {
@@ -189,9 +290,16 @@ const login = async (req, res) => {
       })
     }
 
+    if (estaTemporalmenteBloqueado(usuario)) {
+      return res.status(423).json({
+        message: `Usuario bloqueado temporalmente hasta ${new Date(usuario.bloqueadoHasta).toISOString()}`
+      })
+    }
+
     const passwordValido = await bcrypt.compare(password, usuario.password)
 
     if (!passwordValido) {
+      await registrarIntentoFallido(usuario)
 
       await registrarAuditoria({
         accion: 'LOGIN_FALLIDO',
@@ -207,10 +315,13 @@ const login = async (req, res) => {
       })
     }
 
+    await limpiarEstadoAccesoUsuario(usuario)
+
     const payload = {
       id: usuario.id,
       clinicaId: usuario.clinicaId,
-      rol: usuario.rol
+      rol: usuario.rol,
+      rolesAdicionales: usuario.rolesAdicionales || []
     }
 
     const accessToken = generarAccessToken(payload)
@@ -233,17 +344,14 @@ const login = async (req, res) => {
       resultado: 'exitoso'
     })
 
+    setAuthCookies(res, { accessToken, refreshToken })
+
     res.json({
       message: 'Login exitoso',
       accessToken,
       refreshToken,
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
-        clinicaId: usuario.clinicaId
-      }
+      usuario: serializarUsuario(usuario),
+      clinica: serializarClinica(usuario.Clinica)
     })
 
   } catch (error) {
@@ -263,7 +371,7 @@ const refresh = async (req, res) => {
 
   try {
 
-    const { refreshToken } = req.body
+    const refreshToken = obtenerRefreshTokenRequest(req)
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -299,7 +407,8 @@ const refresh = async (req, res) => {
     const payload = {
       id: decoded.id,
       clinicaId: decoded.clinicaId,
-      rol: decoded.rol
+      rol: decoded.rol,
+      rolesAdicionales: decoded.rolesAdicionales || []
     }
 
     const nuevoAccessToken = generarAccessToken(payload)
@@ -311,6 +420,11 @@ const refresh = async (req, res) => {
       usuarioId: tokenDB.usuarioId,
       ip: req.ip,
       userAgent: req.headers['user-agent']
+    })
+
+    setAuthCookies(res, {
+      accessToken: nuevoAccessToken,
+      refreshToken: nuevoRefreshToken
     })
 
     res.json({
@@ -334,7 +448,7 @@ const logout = async (req, res) => {
 
   try {
 
-    const { refreshToken } = req.body
+    const refreshToken = obtenerRefreshTokenRequest(req)
 
     if (refreshToken) {
 
@@ -344,8 +458,76 @@ const logout = async (req, res) => {
       )
     }
 
+    clearAuthCookies(res)
+
     res.json({
       message: 'Sesión cerrada exitosamente'
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: 'Error servidor',
+      error: error.message
+    })
+  }
+}
+
+const logoutAll = async (req, res) => {
+
+  try {
+
+    await RefreshToken.update(
+      { revocado: true },
+      { where: { usuarioId: req.auth?.usuarioId || req.usuario.id, revocado: false } }
+    )
+
+    clearAuthCookies(res)
+
+    await registrarAuditoria({
+      accion: 'LOGOUT_ALL',
+      entidad: 'Usuario',
+      entidadId: req.auth?.usuarioId || req.usuario.id,
+      descripcion: 'Cierre de todas las sesiones activas',
+      req,
+      resultado: 'exitoso'
+    })
+
+    res.json({
+      message: 'Todas las sesiones fueron cerradas exitosamente'
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: 'Error servidor',
+      error: error.message
+    })
+  }
+}
+
+const me = async (req, res) => {
+
+  try {
+
+    const usuario = await Usuario.findOne({
+      where: { id: req.auth?.usuarioId || req.usuario.id },
+      attributes: { exclude: ['password'] },
+      include: [{
+        model: Clinica,
+        attributes: ['id', 'nombre', 'email', 'telefono', 'direccion', 'ciudad', 'departamento', 'nit', 'logo', 'activo']
+      }]
+    })
+
+    if (!usuario) {
+      return res.status(404).json({
+        message: 'Usuario no encontrado'
+      })
+    }
+
+    res.json({
+      usuario: serializarUsuario(usuario),
+      clinica: serializarClinica(usuario.Clinica)
     })
 
   } catch (error) {
@@ -361,5 +543,7 @@ module.exports = {
   registro,
   login,
   refresh,
-  logout
+  logout,
+  logoutAll,
+  me
 }

@@ -10,7 +10,7 @@ const crearCita = async (req, res) => {
       fecha, horaInicio, horaFin, motivo, tipoCita,
       observaciones, mascotaId, propietarioId, veterinarioId
     } = req.body;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     if (!fecha || !horaInicio || !horaFin || !motivo || !mascotaId || !propietarioId || !veterinarioId) {
       return res.status(400).json({ message: 'Todos los campos obligatorios deben completarse' });
@@ -91,7 +91,7 @@ const crearCita = async (req, res) => {
 
 const obtenerCitas = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { fecha, veterinarioId, estado, pagina = 1, limite = 20 } = req.query;
 
     const where = { clinicaId };
@@ -128,7 +128,7 @@ const obtenerCitas = async (req, res) => {
 const obtenerCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const cita = await Cita.findOne({
       where: { id, clinicaId },
@@ -152,7 +152,7 @@ const obtenerCita = async (req, res) => {
 const actualizarEstadoCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { estado, motivoCancelacion } = req.body;
 
     const estadosValidos = ['programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio'];
@@ -183,7 +183,7 @@ const actualizarEstadoCita = async (req, res) => {
 const reprogramarCita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { fecha, horaInicio, horaFin } = req.body;
 
     if (!fecha || !horaInicio || !horaFin) {

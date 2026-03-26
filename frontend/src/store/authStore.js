@@ -6,12 +6,14 @@ export const useAuthStore = create(
     (set, get) => ({
       accessToken: null,
       refreshToken: null,
+      usuario: null,
       clinica: null,
       isAuthenticated: false,
 
-      setAuth: ({ accessToken, refreshToken, clinica }) => set({
+      setAuth: ({ accessToken, refreshToken, usuario, clinica }) => set({
         accessToken,
         refreshToken,
+        usuario,
         clinica,
         isAuthenticated: true,
       }),
@@ -21,6 +23,7 @@ export const useAuthStore = create(
       clearAuth: () => set({
         accessToken: null,
         refreshToken: null,
+        usuario: null,
         clinica: null,
         isAuthenticated: false,
       }),
@@ -34,6 +37,7 @@ export const useAuthStore = create(
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        usuario: state.usuario,
         clinica: state.clinica,
         isAuthenticated: state.isAuthenticated,
       }),

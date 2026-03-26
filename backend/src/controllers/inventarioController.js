@@ -5,16 +5,13 @@ const MovimientoInventario = require('../models/MovimientoInventario');
 
 const crearProducto = async (req, res) => {
   try {
-
-    console.log("USUARIO TOKEN:", req.usuario);
-
     const {
       nombre, descripcion, categoria, subcategoria, unidadMedida,
       precioCompra, precioVenta, stock, stockMinimo,
       fechaVencimiento, lote, laboratorio, requiereFormula,
     } = req.body;
 
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     if (!nombre || !categoria || !unidadMedida) {
       return res.status(400).json({
@@ -69,7 +66,7 @@ const crearProducto = async (req, res) => {
 
 const obtenerProductos = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { buscar, categoria, bajoStock, pagina = 1, limite = 20 } = req.query;
 
     const where = { clinicaId, activo: true };
@@ -131,7 +128,7 @@ const obtenerProductos = async (req, res) => {
 const obtenerProducto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const producto = await Producto.findOne({
       where: { id, clinicaId },
@@ -156,7 +153,7 @@ const obtenerProducto = async (req, res) => {
 const editarProducto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const {
       nombre, descripcion, categoria, subcategoria, unidadMedida,
       precioCompra, precioVenta, stockMinimo,
@@ -186,7 +183,7 @@ const editarProducto = async (req, res) => {
 const registrarMovimiento = async (req, res) => {
   try {
     const { id: productoId } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { tipo, cantidad, motivo, observaciones, precioUnitario } = req.body;
 
     if (!tipo || !cantidad || !motivo) {
@@ -237,7 +234,7 @@ const registrarMovimiento = async (req, res) => {
 
 const obtenerAlertas = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const hoy = new Date();
     const en30dias = new Date();
     en30dias.setDate(en30dias.getDate() + 30);
@@ -282,7 +279,7 @@ const obtenerAlertas = async (req, res) => {
 const obtenerProductoPorBarcode = async (req, res) => {
   try {
     const { codigo } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const producto = await Producto.findOne({
       where: {
@@ -327,7 +324,7 @@ const obtenerProductoPorBarcode = async (req, res) => {
 const obtenerMovimientos = async (req, res) => {
   try {
 
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const { productoId, tipo, pagina = 1, limite = 20 } = req.query;
 

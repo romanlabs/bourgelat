@@ -4,8 +4,12 @@ const Mascota = require('../models/Mascota');
 
 const crearPropietario = async (req, res) => {
   try {
-    const { nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad } = req.body;
-    const { id: clinicaId } = req.usuario;
+    const {
+      nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad,
+      razonSocial, nombreComercial, tipoPersona, digitoVerificacion, codigoPostal,
+      municipioId, tipoDocumentoFacturacionId, organizacionJuridicaId, tributoId,
+    } = req.body;
+    const { clinicaId } = req.usuario;
 
     if (!nombre || !numeroDocumento || !telefono) {
       return res.status(400).json({ message: 'Nombre, documento y telefono son obligatorios' });
@@ -26,6 +30,15 @@ const crearPropietario = async (req, res) => {
       telefono,
       direccion,
       ciudad,
+      razonSocial,
+      nombreComercial,
+      tipoPersona: tipoPersona || 'persona_natural',
+      digitoVerificacion,
+      codigoPostal,
+      municipioId,
+      tipoDocumentoFacturacionId,
+      organizacionJuridicaId,
+      tributoId,
       clinicaId,
     });
 
@@ -40,7 +53,7 @@ const crearPropietario = async (req, res) => {
 
 const obtenerPropietarios = async (req, res) => {
   try {
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
     const { buscar, pagina = 1, limite = 10 } = req.query;
 
     const where = { clinicaId };
@@ -82,7 +95,7 @@ const obtenerPropietarios = async (req, res) => {
 const obtenerPropietario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
+    const { clinicaId } = req.usuario;
 
     const propietario = await Propietario.findOne({
       where: { id, clinicaId },
@@ -106,8 +119,12 @@ const obtenerPropietario = async (req, res) => {
 const editarPropietario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id: clinicaId } = req.usuario;
-    const { nombre, email, telefono, direccion, ciudad } = req.body;
+    const { clinicaId } = req.usuario;
+    const {
+      nombre, email, telefono, direccion, ciudad,
+      razonSocial, nombreComercial, tipoPersona, digitoVerificacion, codigoPostal,
+      municipioId, tipoDocumentoFacturacionId, organizacionJuridicaId, tributoId,
+    } = req.body;
 
     const propietario = await Propietario.findOne({ where: { id, clinicaId } });
 
@@ -115,7 +132,22 @@ const editarPropietario = async (req, res) => {
       return res.status(404).json({ message: 'Propietario no encontrado' });
     }
 
-    await propietario.update({ nombre, email, telefono, direccion, ciudad });
+    await propietario.update({
+      nombre,
+      email,
+      telefono,
+      direccion,
+      ciudad,
+      razonSocial,
+      nombreComercial,
+      tipoPersona,
+      digitoVerificacion,
+      codigoPostal,
+      municipioId,
+      tipoDocumentoFacturacionId,
+      organizacionJuridicaId,
+      tributoId,
+    });
 
     res.json({
       message: 'Propietario actualizado exitosamente',

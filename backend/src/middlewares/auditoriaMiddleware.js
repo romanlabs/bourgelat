@@ -20,8 +20,8 @@ const registrarAuditoria = async ({
       datosNuevos,
       ip: req?.ip || null,
       userAgent: req?.headers?.['user-agent'] || null,
-      clinicaId: req?.usuario?.id || null,
-      usuarioId: req?.usuario?.usuarioId || null,
+      clinicaId: req?.auth?.clinicaId || req?.usuario?.clinicaId || null,
+      usuarioId: req?.auth?.usuarioId || req?.usuario?.id || null,
       resultado,
     })
   } catch (error) {
