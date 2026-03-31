@@ -1,16 +1,40 @@
-const express = require('express');
-const router = express.Router();
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const express = require('express')
+
 const {
   reporteIngresos,
   reporteCitas,
   reporteInventario,
   dashboardGeneral,
-} = require('../controllers/reporteController');
+} = require('../controllers/reporteController')
+const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
 
-router.get('/dashboard', verificarToken, verificarRol('admin', 'superadmin'), dashboardGeneral);
-router.get('/ingresos', verificarToken, verificarRol('admin', 'superadmin', 'facturador'), reporteIngresos);
-router.get('/citas', verificarToken, verificarRol('admin', 'superadmin', 'veterinario'), reporteCitas);
-router.get('/inventario', verificarToken, verificarRol('admin', 'superadmin', 'auxiliar'), reporteInventario);
+const router = express.Router()
 
-module.exports = router;
+router.get('/dashboard', verificarToken, verificarRol('admin', 'superadmin'), dashboardGeneral)
+
+router.get(
+  '/ingresos',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador'),
+  requerirFuncionalidades('facturacion_interna', 'reportes_operativos'),
+  reporteIngresos
+)
+
+router.get(
+  '/citas',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'veterinario'),
+  requerirFuncionalidades('reportes_operativos'),
+  reporteCitas
+)
+
+router.get(
+  '/inventario',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirFuncionalidades('inventario', 'reportes_operativos'),
+  reporteInventario
+)
+
+module.exports = router

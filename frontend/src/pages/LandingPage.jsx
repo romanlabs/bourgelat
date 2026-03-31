@@ -1,11 +1,15 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'motion/react'
+import landingHeroConsultation from '@/assets/auth/landing-hero-consultation.webp'
+import registerDetail from '@/assets/auth/register-detail.webp'
 import {
   Stethoscope, ArrowRight, ChevronRight, Menu, X, Monitor,
   Calendar, FileText, Package, Receipt, BarChart3,
-  Shield, Clock, Layers, Bell, Globe, Check,
+  Shield, Clock, Layers, Bell, Globe,
 } from 'lucide-react'
+
+void motion
 
 // ─── PALETA ──────────────────────────────────────────────────────────────────
 
@@ -102,20 +106,47 @@ const BrowserChrome = ({ url }) => (
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const navItems = [
+    { label: 'Plataforma', section: 'funcionalidades' },
+    { label: 'Flujo diario', section: 'operacion' },
+    { label: 'Planes', to: '/planes' },
+    { label: 'Contacto', section: 'contacto' },
+  ]
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', fn)
     return () => window.removeEventListener('scroll', fn)
   }, [])
-  const go = id => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); setOpen(false) }
+
+  const go = id => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    setOpen(false)
+  }
 
   return (
-    <motion.nav initial={{ y: -72, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, transition: 'all 0.3s',
-        ...(scrolled ? { background: 'rgba(5,16,31,0.90)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', borderBottom: '1px solid rgba(255,255,255,0.08)' } : { background: 'transparent' }) }}>
+    <motion.nav
+      initial={{ y: -72, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 200,
+        transition: 'all 0.3s',
+        ...(scrolled
+          ? {
+              background: 'rgba(5,16,31,0.90)',
+              backdropFilter: 'blur(22px)',
+              WebkitBackdropFilter: 'blur(22px)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+            }
+          : { background: 'transparent' }),
+      }}
+    >
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px', height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-
-        {/* ── LOGO — reemplaza con <img src="/logo.svg" style={{ height:32 }} /> ── */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${T.teal}, ${T.cyan})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(13,148,136,0.35)' }}>
             <Stethoscope style={{ width: 17, height: 17, color: '#fff' }} strokeWidth={1.5} />
@@ -124,33 +155,71 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex" style={{ alignItems: 'center', gap: 36 }}>
-          {[['Funcionalidades','funcionalidades'],['Por qué','por-que'],['Planes','planes'],['Contacto','contacto']].map(([l,id]) => (
-            <button key={id} onClick={() => go(id)} style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 0.2s' }}
-              onMouseEnter={e => e.target.style.color='#fff'} onMouseLeave={e => e.target.style.color='rgba(255,255,255,0.55)'}>{l}</button>
+          {navItems.map((item) => (
+            item.to ? (
+              <Link
+                key={item.label}
+                to={item.to}
+                style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.section}
+                onClick={() => go(item.section)}
+                style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 0.2s' }}
+                onMouseEnter={(event) => { event.target.style.color = '#fff' }}
+                onMouseLeave={(event) => { event.target.style.color = 'rgba(255,255,255,0.55)' }}
+              >
+                {item.label}
+              </button>
+            )
           ))}
         </div>
 
         <div className="hidden md:flex" style={{ alignItems: 'center', gap: 10 }}>
-          <Link to="/login" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.50)', textDecoration: 'none', padding: '8px 16px' }}>Iniciar sesión</Link>
+          <Link to="/login" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.50)', textDecoration: 'none', padding: '8px 16px' }}>Iniciar sesion</Link>
           <Link to="/registro" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 700, color: T.navy, background: `linear-gradient(135deg, ${T.cyan}, ${T.cyanLt})`, padding: '10px 22px', borderRadius: 9, textDecoration: 'none', boxShadow: '0 4px 18px rgba(34,211,238,0.24)' }}>
-            Empieza gratis
+            Crear cuenta
           </Link>
         </div>
 
-        <button onClick={() => setOpen(v=>!v)} className="md:hidden" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', padding: 8 }}>
-          {open ? <X style={{ width:20,height:20 }}/> : <Menu style={{ width:20,height:20 }}/>}
+        <button onClick={() => setOpen((value) => !value)} className="md:hidden" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', padding: 8 }}>
+          {open ? <X style={{ width: 20, height: 20 }} /> : <Menu style={{ width: 20, height: 20 }} />}
         </button>
       </div>
 
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity:0,y:-8 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0,y:-8 }}
-            style={{ background:'rgba(5,16,31,0.97)', backdropFilter:'blur(22px)', borderTop:'1px solid rgba(255,255,255,0.08)', padding:'20px 28px', display:'flex', flexDirection:'column', gap:18 }}>
-            {[['Funcionalidades','funcionalidades'],['Por qué Bourgelat','por-que'],['Planes','planes'],['Contacto','contacto']].map(([l,id]) => (
-              <button key={id} onClick={() => go(id)} style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, fontWeight:500, color:'rgba(255,255,255,0.70)', background:'none', border:'none', cursor:'pointer', textAlign:'left', padding:0 }}>{l}</button>
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            style={{ background: 'rgba(5,16,31,0.97)', backdropFilter: 'blur(22px)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}
+          >
+            {navItems.map((item) => (
+              item.to ? (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.section}
+                  onClick={() => go(item.section)}
+                  style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.70)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                >
+                  {item.label}
+                </button>
+              )
             ))}
-            <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, fontWeight:700, color:T.navy, background:`linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding:'13px 20px', borderRadius:9, textDecoration:'none', textAlign:'center', marginTop:4 }}>
-              Empieza gratis
+            <Link to="/registro" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 700, color: T.navy, background: `linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding: '13px 20px', borderRadius: 9, textDecoration: 'none', textAlign: 'center', marginTop: 4 }}>
+              Crear cuenta
             </Link>
           </motion.div>
         )}
@@ -241,11 +310,29 @@ const Hero = () => {
 
 // ─── LOGOS ────────────────────────────────────────────────────────────────────
 
+void Hero
+void LogoSlot
+
 const LogosBar = () => (
   <section style={{ background: T.navyMid, borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '28px 28px' }}>
-    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 26, justifyContent: 'center' }}>
-      <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Confían en Bourgelat</span>
-      {[1,2,3,4,5,6].map(n => <LogoSlot key={n} n={n} />)}
+    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, justifyContent: 'center' }}>
+      <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        Operacion conectada
+      </span>
+      {[
+        'Recepcion y agenda',
+        'Propietarios y mascotas',
+        'Historia clinica',
+        'Inventario',
+        'Caja y facturacion',
+        'Reportes',
+      ].map((item) => (
+        <div key={item} style={{ ...glass({ borderRadius: 999, padding: '10px 16px', background: 'rgba(255,255,255,0.06)' }) }}>
+          <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.68)' }}>
+            {item}
+          </span>
+        </div>
+      ))}
     </div>
   </section>
 )
@@ -253,11 +340,11 @@ const LogosBar = () => (
 // ─── FEATURES ─────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id:'agenda',     label:'Agenda',           icon:Calendar,  url:'agenda',      body:'Citas online con recordatorio automático por WhatsApp. Control de disponibilidad por veterinario y vista semanal del equipo completo.' },
-  { id:'historia',   label:'Historia clínica', icon:FileText,  url:'historias',   body:'Anamnesis, diagnósticos SOAP, vacunas, medicamentos y archivos. Todo registrado y firmado en menos de 3 minutos.' },
-  { id:'inventario', label:'Inventario',       icon:Package,   url:'inventario',  body:'Control de medicamentos, insumos y productos. Alertas de stock mínimo y vencimiento antes de que se convierta en un problema.' },
-  { id:'factura',    label:'Facturación',      icon:Receipt,   url:'facturacion', body:'Facturas electrónicas DIAN directamente desde la plataforma. Cobros, abonos y cuentas por cobrar sin salir del sistema.' },
-  { id:'reportes',   label:'Reportes',         icon:BarChart3, url:'reportes',    body:'Dashboard con ingresos, citas por médico y productos más vendidos. Sin exportar a Excel. Sin esperar al contador.' },
+  { id:'agenda',     label:'Agenda',           icon:Calendar,  url:'agenda',      body:'Agenda de citas por veterinario, estados de atencion y reprogramacion sin perder el ritmo de recepcion.' },
+  { id:'historia',   label:'Historia clinica', icon:FileText,  url:'historias',   body:'Motivo de consulta, diagnostico, tratamiento, antecedentes y evolucion del paciente en un solo expediente.' },
+  { id:'inventario', label:'Inventario',       icon:Package,   url:'inventario',  body:'Medicamentos, insumos y movimientos conectados a la operacion para evitar faltantes en consulta y farmacia.' },
+  { id:'factura',    label:'Caja y facturacion', icon:Receipt, url:'facturacion', body:'Cobro, factura interna y facturacion electronica desde el mismo flujo cuando la clinica lo necesita.' },
+  { id:'reportes',   label:'Reportes',         icon:BarChart3, url:'reportes',    body:'Vista general de ingresos, citas, inventario y actividad diaria para decidir con informacion de la clinica.' },
 ]
 const DURATION = 5200
 
@@ -267,10 +354,15 @@ const Features = () => {
   const [auto, setAuto] = useState(true)
   const rafRef = useRef(null)
   const t0Ref = useRef(null)
+  const progressRef = useRef(0)
+
+  useEffect(() => {
+    progressRef.current = progress
+  }, [progress])
 
   useEffect(() => {
     if (!auto) return
-    t0Ref.current = Date.now() - (progress/100)*DURATION
+    t0Ref.current = Date.now() - (progressRef.current / 100) * DURATION
     const tick = () => {
       const p = Math.min(((Date.now()-t0Ref.current)/DURATION)*100, 100)
       setProgress(p)
@@ -291,10 +383,10 @@ const Features = () => {
         <FadeUp style={{ textAlign:'center', marginBottom:60 }}>
           <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.cyan, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Funcionalidades</p>
           <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:'#fff', lineHeight:1.06, letterSpacing:'-2px', margin:'0 0 18px' }}>
-            Todo lo que tu clínica necesita,<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>en una sola plataforma</em>
+            La plataforma que conecta<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>recepcion, consulta y caja</em>
           </h2>
           <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:'rgba(255,255,255,0.42)', lineHeight:1.65, maxWidth:460, margin:'0 auto' }}>
-            Sin integraciones forzadas. Sin módulos extra. Sin sorpresas en la factura.
+            Bourgelat esta pensado para la jornada completa de la clinica, no para resolver una sola pantalla bonita.
           </p>
         </FadeUp>
 
@@ -342,7 +434,7 @@ const Features = () => {
                 <h3 style={{ fontFamily:'Cormorant Garamond', fontSize:36, fontWeight:700, color:'#fff', letterSpacing:'-1px', lineHeight:1.1, margin:'0 0 16px' }}>{TABS[active].label}</h3>
                 <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, color:'rgba(255,255,255,0.48)', lineHeight:1.72, margin:'0 0 30px' }}>{TABS[active].body}</p>
                 <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:13, fontWeight:700, color:T.cyanLt, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6, borderBottom:'1.5px solid rgba(34,211,238,0.28)', paddingBottom:3 }}>
-                  Ver en acción <ArrowRight style={{ width:13,height:13 }}/>
+                  Crear cuenta principal <ArrowRight style={{ width:13,height:13 }}/>
                 </Link>
               </motion.div>
             </AnimatePresence>
@@ -389,20 +481,20 @@ const Why = () => (
       <FadeUp style={{ textAlign:'center', marginBottom:64 }}>
         <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.teal, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Por qué Bourgelat</p>
         <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:T.text, lineHeight:1.06, letterSpacing:'-2px', margin:'0 0 18px' }}>
-          Construido para la veterinaria<br /><em style={{ fontStyle:'italic', color:T.teal }}>latinoamericana</em>
+          Hecho para la operacion real<br /><em style={{ fontStyle:'italic', color:T.teal }}>de una clinica veterinaria</em>
         </h2>
         <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:T.muted, lineHeight:1.65, maxWidth:540, margin:'0 auto' }}>
-          Los grandes competidores cobran en dólares y no entienden cómo trabaja una clínica en Colombia. Nosotros sí.
+          Desde la recepcion hasta el cierre del dia, cada modulo responde a flujos que ya existen en tu equipo.
         </p>
       </FadeUp>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {[
-          { icon:Globe,   title:'Todas las especies',       body:'Perros, gatos, aves, reptiles, conejos y fauna silvestre. Sin restricción por especie en ningún plan.' },
-          { icon:Shield,  title:'Historias inmutables',     body:'Cada edición queda auditada. Historial compatible con inspecciones ICA y auditorías internas.' },
-          { icon:Clock,   title:'< 3 min por consulta',     body:'Plantillas de anamnesis rápidas, autocompletado de diagnósticos y firma digital en segundos.' },
-          { icon:Layers,  title:'Roles granulares',         body:'Veterinario, recepcionista, auxiliar y admin. Cada persona ve solo lo que necesita.' },
-          { icon:Receipt, title:'Factura electrónica DIAN', body:'Integración directa. Emite facturas sin salir del sistema ni usar otro software.' },
-          { icon:Bell,    title:'Sin límites de volumen',   body:'Pacientes, citas y usuarios sin tope. Pagas por funcionalidades, no por cuánto usas.' },
+          { icon:Globe,   title:'Propietarios y mascotas conectados', body:'La cita, la historia y la factura comparten el mismo contexto del tutor y del paciente.' },
+          { icon:Shield,  title:'Historias con trazabilidad',         body:'Bloqueo de historias, auditoria de cambios y seguimiento clinico sin perder el contexto de la consulta.' },
+          { icon:Clock,   title:'Menos tiempo en digitacion',         body:'La informacion queda lista para consulta, seguimiento y cobro sin abrir varias herramientas.' },
+          { icon:Layers,  title:'Roles por clinica',                  body:'Admin, veterinario, auxiliar y facturador con acceso segun la responsabilidad real de cada perfil.' },
+          { icon:Receipt, title:'Caja y factura en el mismo flujo',   body:'Consulta, cobro y facturacion electronica cuando aplique, sin rehacer los mismos datos dos veces.' },
+          { icon:Bell,    title:'Inventario mas vigilado',            body:'Productos, insumos y movimientos visibles para que el faltante no aparezca cuando ya tienes al paciente en mesa.' },
         ].map((item,i) => {
           const Icon = item.icon
           return (
@@ -426,20 +518,20 @@ const Why = () => (
 // ─── CÓMO FUNCIONA ────────────────────────────────────────────────────────────
 
 const How = () => (
-  <section style={{ background:T.navyLt, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
+  <section id="operacion" style={{ background:T.navyLt, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
     <MeshBg />
     <div style={{ maxWidth:940, margin:'0 auto', position:'relative', zIndex:1 }}>
       <FadeUp style={{ textAlign:'center', marginBottom:72 }}>
         <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.cyan, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Comenzar</p>
         <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:'#fff', lineHeight:1.06, letterSpacing:'-2px', margin:0 }}>
-          Activo en 10 minutos,<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>sin instalaciones</em>
+          Arranca con una cuenta principal<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>y entra a operar mas rapido</em>
         </h2>
       </FadeUp>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
-          { n:'01', title:'Crea tu cuenta',      body:'Solo nombre, correo y contraseña. Sin tarjeta de crédito. Sin burocracia. Listo en 60 segundos.' },
-          { n:'02', title:'Configura tu equipo', body:'Invita a tus veterinarios y recepcionistas. Cada rol tiene los permisos exactos que necesita.' },
-          { n:'03', title:'Empieza a gestionar', body:'Agenda tu primera cita, crea el perfil de un paciente y ve el dashboard en tiempo real.' },
+          { n:'01', title:'Registra la clinica',       body:'Nombre comercial, responsable, correo institucional y datos basicos para dejar creada la cuenta principal.' },
+          { n:'02', title:'Define el acceso seguro',  body:'El administrador entra con correo propio y una contrasena fuerte validada desde el registro.' },
+          { n:'03', title:'Entra y organiza la operacion', body:'Desde el dashboard podras ordenar agenda, pacientes, historias, caja e inventario desde el primer acceso.' },
         ].map((s,i) => (
           <FadeUp key={s.n} delay={i*0.13}>
             <motion.div whileHover={{ y:-5 }}
@@ -455,7 +547,7 @@ const How = () => (
       </div>
       <FadeUp delay={0.42} style={{ textAlign:'center', marginTop:60 }}>
         <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, fontWeight:700, color:T.navy, background:`linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding:'15px 36px', borderRadius:11, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 8px 30px rgba(34,211,238,0.24)' }}>
-          Crear mi cuenta gratis <ArrowRight style={{ width:16,height:16 }}/>
+          Crear cuenta de la clinica <ArrowRight style={{ width:16,height:16 }}/>
         </Link>
       </FadeUp>
     </div>
@@ -469,36 +561,54 @@ const Testimonials = () => (
     <div style={{ position:'absolute', top:'-8%', left:'50%', transform:'translateX(-50%)', width:700, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(13,148,136,0.05) 0%, transparent 70%)', pointerEvents:'none' }} />
     <div style={{ maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1 }}>
       <FadeUp style={{ textAlign:'center', marginBottom:64 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.teal, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Veterinarios reales</p>
+        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.teal, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Momentos clave del dia</p>
         <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:T.text, lineHeight:1.06, letterSpacing:'-2px', margin:0 }}>
-          Lo que dicen quienes<br /><em style={{ fontStyle:'italic', color:T.teal }}>ya cambiaron</em>
+          Pensado para escenas que si pasan<br /><em style={{ fontStyle:'italic', color:T.teal }}>en una clinica veterinaria</em>
         </h2>
       </FadeUp>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { quote:'"El registro de consultas pasó de 8 minutos a menos de 3. Ahora veo 4 pacientes más por día sin quedarme hasta las 8pm."',           name:'Dra. [Nombre Apellido]', clinic:'[Clínica Veterinaria]', city:'Bogotá' },
-          { quote:'"Finalmente un software que no cobra en dólares y tiene soporte real en español. Las historias son lo que necesitábamos para la inspección ICA."', name:'Dr. [Nombre Apellido]',  clinic:'[Clínica Veterinaria]', city:'Medellín' },
-          { quote:'"En 15 minutos teníamos todo el equipo funcionando. Sin contratar a nadie. El equipo de Bourgelat nos acompañó todo el tiempo."',      name:'[Nombre Apellido]',     clinic:'[Clínica Veterinaria]', city:'Cali' },
-        ].map((t,i) => (
+          {
+            area: 'Recepcion',
+            title: 'Agenda clara desde la primera llamada',
+            body: 'La recepcion puede ver el estado de cada cita, reprogramar sin desorden y abrir el contexto del paciente antes de que llegue.',
+            points: ['Citas por veterinario', 'Estados visibles', 'Tutor y mascota en contexto'],
+          },
+          {
+            area: 'Consulta',
+            title: 'Historia completa mientras atiendes',
+            body: 'Durante la consulta el veterinario registra motivo, diagnostico, tratamiento y antecedentes sin perder continuidad clinica.',
+            points: ['Evolucion del paciente', 'Historial trazable', 'Menos doble digitacion'],
+          },
+          {
+            area: 'Cierre de caja',
+            title: 'Cobro y seguimiento sin repetir datos',
+            body: 'Al finalizar, la informacion ya esta lista para caja, factura y seguimiento sin volver a escribir lo mismo en otro sistema.',
+            points: ['Caja conectada', 'Factura integrada', 'Base lista para reportes'],
+          },
+        ].map((card,i) => (
           <FadeUp key={i} delay={i*0.09}>
             <div style={{ background:'#fff', border:`1px solid ${T.border}`, borderRadius:16, padding:'32px', display:'flex', flexDirection:'column', height:'100%', boxSizing:'border-box', boxShadow:'0 4px 20px rgba(13,148,136,0.04)' }}>
-              <div style={{ display:'flex', gap:3, marginBottom:22 }}>
-                {[...Array(5)].map((_,j) => <span key={j} style={{ color:T.amber, fontSize:15 }}>★</span>)}
+              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'9px 14px', borderRadius:999, background:'rgba(13,148,136,0.08)', border:'1px solid rgba(13,148,136,0.12)', marginBottom:22, width:'fit-content' }}>
+                <span style={{ width:8, height:8, borderRadius:'50%', background:T.teal }} />
+                <span style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, fontWeight:700, color:T.teal, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+                  {card.area}
+                </span>
               </div>
-              <p style={{ fontFamily:'Cormorant Garamond', fontSize:21, fontStyle:'italic', color:T.text, lineHeight:1.58, margin:'0 0 32px', flex:1 }}>{t.quote}</p>
-              <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-                {/*
-                  ── FOTO REAL ────────────────────────────────────────────────
-                  <img src="/fotos/testiN.jpg" style={{ width:46,height:46,borderRadius:'50%',objectFit:'cover' }} />
-                  ─────────────────────────────────────────────────────────────
-                */}
-                <div style={{ width:46, height:46, borderRadius:'50%', background:`linear-gradient(135deg,${T.teal}18,${T.cyan}18)`, border:`1.5px dashed ${T.teal}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <span style={{ fontFamily:'Plus Jakarta Sans', fontSize:9, color:T.teal }}>Foto</span>
-                </div>
-                <div>
-                  <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, fontWeight:700, color:T.text, margin:0 }}>{t.name}</p>
-                  <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:T.muted, margin:'3px 0 0' }}>{t.clinic} · {t.city}</p>
-                </div>
+              <h3 style={{ fontFamily:'Cormorant Garamond', fontSize:32, color:T.text, lineHeight:1.02, letterSpacing:'-1px', margin:'0 0 16px' }}>
+                {card.title}
+              </h3>
+              <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, color:T.muted, lineHeight:1.72, margin:'0 0 24px' }}>
+                {card.body}
+              </p>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:'auto' }}>
+                {card.points.map((point) => (
+                  <div key={point} style={{ padding:'8px 12px', borderRadius:999, background:'#f5f7f9', border:'1px solid #e3e8ee' }}>
+                    <span style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, fontWeight:600, color:'#415062' }}>
+                      {point}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </FadeUp>
@@ -520,14 +630,14 @@ const CTA = () => (
           <Stethoscope style={{ width:28,height:28,color:'#fff' }} strokeWidth={1.5}/>
         </div>
         <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(44px,7.5vw,80px)', fontWeight:700, color:'#fff', lineHeight:1.02, letterSpacing:'-3px', margin:'0 0 22px' }}>
-          Tu clínica merece<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>el mejor software.</em>
+          Lista para centralizar<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>la operacion de tu clinica.</em>
         </h2>
         <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:'rgba(255,255,255,0.42)', lineHeight:1.65, maxWidth:460, margin:'0 auto 52px' }}>
-          Sin tarjeta de crédito. Sin contratos anuales. Empieza gratis y activa solo lo que necesitas.
+          Crea la cuenta principal, deja lista la base de acceso y empieza a organizar agenda, pacientes, historias, caja e inventario.
         </p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:14, justifyContent:'center' }}>
           <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:16, fontWeight:700, color:T.navy, background:`linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding:'16px 36px', borderRadius:12, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 10px 36px rgba(34,211,238,0.27)' }}>
-            Registrar mi clínica <ArrowRight style={{ width:17,height:17 }}/>
+            Registrar mi clinica <ArrowRight style={{ width:17,height:17 }}/>
           </Link>
           <a href="mailto:hola@bourgelat.co" style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, fontWeight:600, color:'rgba(255,255,255,0.58)', ...glass({ padding:'16px 30px', borderRadius:12 }), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8 }}>
             Hablar con el equipo
@@ -553,22 +663,40 @@ const Footer = () => (
             <span style={{ fontFamily:'Cormorant Garamond', fontSize:20, fontWeight:700, color:'#fff', letterSpacing:'-0.3px' }}>Bourgelat</span>
           </div>
           <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.27)', lineHeight:1.72, margin:0 }}>
-            Software de gestión clínica para veterinarios en Colombia. Historias, citas, inventario y facturación DIAN.
+            Software para clinicas veterinarias en Colombia. Agenda, pacientes, historias, inventario, caja y reportes en un mismo entorno.
           </p>
         </div>
         {[
-          { title:'Producto', links:[{ label:'Planes', to:'/planes' }, { label:'Nosotros', to:'/nosotros' }, { label:'Iniciar sesion', to:'/login' }, { label:'Registro', to:'/registro' }] },
-          { title:'Empresa',  links:['Quiénes somos','Blog','Contacto','Trabaja con nosotros'] },
-          { title:'Legal',    links:['Privacidad','Términos de uso','Política de cookies'] },
+          { title:'Producto', links:[{ label:'Plataforma', to:'/' }, { label:'Planes', to:'/planes' }, { label:'Iniciar sesion', to:'/login' }, { label:'Registro', to:'/registro' }] },
+          { title:'Empresa', links:[{ label:'Nosotros', to:'/nosotros' }, { label:'Contacto', href:'mailto:hola@bourgelat.co' }, { label:'Hablar con el equipo', href:'mailto:hola@bourgelat.co?subject=Quiero%20conocer%20Bourgelat' }] },
+          { title:'Legal', links:[{ label:'Privacidad', to:'/privacidad' }, { label:'Terminos de uso', to:'/terminos' }, { label:'Politica de cookies', to:'/cookies' }] },
         ].map(col => (
           <div key={col.title}>
             <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.22)', letterSpacing:'0.10em', textTransform:'uppercase', margin:'0 0 18px' }}>{col.title}</p>
-            {col.links.map(l => <p key={l} style={{ fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.38)', margin:'0 0 12px', cursor:'pointer' }}>{l}</p>)}
+            {col.links.map((link) => (
+              link.to ? (
+                <Link
+                  key={`${col.title}-${link.label}`}
+                  to={link.to}
+                  style={{ display:'block', fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.38)', margin:'0 0 12px', textDecoration:'none' }}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={`${col.title}-${link.label}`}
+                  href={link.href}
+                  style={{ display:'block', fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.38)', margin:'0 0 12px', textDecoration:'none' }}
+                >
+                  {link.label}
+                </a>
+              )
+            ))}
           </div>
         ))}
       </div>
       <div style={{ borderTop:'1px solid rgba(255,255,255,0.05)', paddingTop:24, display:'flex', flexWrap:'wrap', justifyContent:'space-between', gap:10 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:'rgba(255,255,255,0.17)', margin:0 }}>© 2026 Bourgelat SAS · Bogotá, Colombia</p>
+        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:'rgba(255,255,255,0.17)', margin:0 }}>© 2026 Bourgelat · Operacion veterinaria en Colombia</p>
         <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:'rgba(255,255,255,0.17)', margin:0 }}>hola@bourgelat.co</p>
       </div>
     </div>
@@ -576,6 +704,306 @@ const Footer = () => (
 )
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
+
+const LandingHero = () => {
+  const { scrollY } = useScroll()
+  const imgY = useTransform(scrollY, [0, 600], [0, 40])
+  const cardY = useTransform(scrollY, [0, 600], [0, 24])
+  const bgY = useTransform(scrollY, [0, 600], [0, -35])
+
+  return (
+    <section
+      style={{
+        background: T.navy,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '130px 28px 90px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <motion.div style={{ position: 'absolute', inset: 0, y: bgY }}>
+        <MeshBg />
+      </motion.div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.92fr)] xl:gap-16">
+          <div>
+            <FadeUp>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  ...glass({ borderRadius: 100, padding: '7px 20px', marginBottom: 40 }),
+                }}
+              >
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: T.cyan,
+                    display: 'inline-block',
+                    boxShadow: `0 0 8px ${T.cyan}`,
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: T.cyanLt,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Operacion veterinaria en Colombia
+                </span>
+              </div>
+            </FadeUp>
+
+            <FadeUp delay={0.08}>
+              <h1
+                style={{
+                  fontFamily: 'Cormorant Garamond',
+                  fontSize: 'clamp(50px,8vw,96px)',
+                  fontWeight: 700,
+                  color: '#fff',
+                  lineHeight: 1.01,
+                  letterSpacing: '-3px',
+                  margin: '0 0 24px',
+                  maxWidth: 720,
+                }}
+              >
+                Gestion clinica clara para una atencion mas humana.
+              </h1>
+            </FadeUp>
+
+            <FadeUp delay={0.16}>
+              <p
+                style={{
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 18,
+                  color: 'rgba(255,255,255,0.56)',
+                  lineHeight: 1.72,
+                  margin: '0 0 42px',
+                  maxWidth: 560,
+                }}
+              >
+                Agenda, pacientes, historia clinica, inventario, caja y seguimiento en un mismo entorno. Pensado para clinicas veterinarias que quieren orden, trazabilidad y confianza desde la primera cita.
+              </p>
+            </FadeUp>
+
+            <FadeUp delay={0.22}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 42 }}>
+                <Link
+                  to="/registro"
+                  style={{
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: T.navy,
+                    background: `linear-gradient(135deg, ${T.cyan}, ${T.cyanLt})`,
+                    padding: '15px 32px',
+                    borderRadius: 11,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: '0 8px 32px rgba(34,211,238,0.28)',
+                  }}
+                >
+                  Crear cuenta principal <ArrowRight style={{ width: 16, height: 16 }} />
+                </Link>
+                <button
+                  onClick={() => document.getElementById('operacion')?.scrollIntoView({ behavior: 'smooth' })}
+                  style={{
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.72)',
+                    ...glass({ padding: '15px 28px', borderRadius: 11 }),
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  Ver flujo completo <ChevronRight style={{ width: 16, height: 16 }} />
+                </button>
+              </div>
+            </FadeUp>
+
+            <FadeUp delay={0.3}>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {[
+                  { n: '< 3 min', label: 'para registrar una consulta completa' },
+                  { n: '1 historia', label: 'para mantener trazabilidad clinica' },
+                  { n: '1 flujo', label: 'desde la consulta hasta el seguimiento' },
+                ].map((item) => (
+                  <div key={item.n} style={{ ...glass({ borderRadius: 16, padding: '18px 22px' }) }}>
+                    <div
+                      style={{
+                        fontFamily: 'Cormorant Garamond',
+                        fontSize: 34,
+                        fontWeight: 700,
+                        color: T.cyanLt,
+                        letterSpacing: '-1px',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {item.n}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 12,
+                        color: 'rgba(255,255,255,0.42)',
+                        marginTop: 7,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
+          </div>
+
+          <FadeUp delay={0.18}>
+            <motion.div style={{ y: imgY }}>
+              <div className="relative min-h-[560px] lg:min-h-[660px]">
+                <div
+                  style={{
+                    ...glass({
+                      background: 'rgba(255,255,255,0.08)',
+                      borderRadius: 30,
+                      padding: 14,
+                      boxShadow: '0 48px 120px rgba(0,0,0,0.38)',
+                    }),
+                  }}
+                >
+                  <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 24, minHeight: 560 }}>
+                    <img
+                      src={landingHeroConsultation}
+                      alt="Veterinario conversando con la tutora mientras revisa a su perro en consulta"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg,rgba(7,16,27,0.04)_0%,rgba(7,16,27,0.18)_42%,rgba(7,16,27,0.72)_100%)',
+                      }}
+                    />
+
+                    <div style={{ position: 'absolute', top: 20, left: 20, right: 20, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                      {['Recepcion y agenda', 'Consulta y evolucion', 'Caja y seguimiento'].map((item) => (
+                        <div key={item} style={{ ...glass({ borderRadius: 999, padding: '9px 14px', background: 'rgba(255,255,255,0.12)' }) }}>
+                          <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, fontWeight: 600, color: '#fff' }}>
+                            {item}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="absolute left-4 right-4 top-[108px] md:right-auto md:w-[340px] lg:-left-10 lg:top-[162px] lg:w-[380px] xl:-left-14">
+                  <div style={{ ...glass({ borderRadius: 26, padding: '20px 22px 18px', background: 'rgba(9,18,29,0.72)', boxShadow: '0 28px 60px rgba(0,0,0,0.26)' }) }}>
+                    <p
+                      style={{
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: T.cyanLt,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        margin: 0,
+                      }}
+                    >
+                      Experiencia para el cliente
+                    </p>
+                    <h2
+                      style={{
+                        fontFamily: 'Cormorant Garamond',
+                        fontSize: 34,
+                        lineHeight: 0.98,
+                        letterSpacing: '-1.5px',
+                        color: '#fff',
+                        margin: '12px 0 10px',
+                      }}
+                    >
+                      Orden para tu equipo, confianza para el tutor.
+                    </h2>
+                    <p
+                      style={{
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 14,
+                        lineHeight: 1.7,
+                        color: 'rgba(255,255,255,0.68)',
+                        margin: 0,
+                        maxWidth: 320,
+                      }}
+                    >
+                      Agenda, consulta, cobro y seguimiento en una experiencia mas clara y profesional para todo el frente de atencion.
+                    </p>
+                  </div>
+                </div>
+
+                <motion.div className="hidden lg:block" style={{ position: 'absolute', left: 0, right: '18%', bottom: -54, y: cardY }}>
+                  <div style={{ background: '#f8fafc', borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.28)' }}>
+                    <BrowserChrome url="app.bourgelat.co/dashboard" />
+                    <Shot label="Vista general de agenda, pacientes y caja" aspect="16/8" dark={false} />
+                  </div>
+                </motion.div>
+
+                <motion.div className="hidden xl:block" style={{ position: 'absolute', top: 28, right: -18, y: cardY }}>
+                  <div style={{ width: 240, ...glass({ background: 'rgba(8,22,42,0.76)', borderRadius: 24, padding: 12 }) }}>
+                    <div style={{ overflow: 'hidden', borderRadius: 18 }}>
+                      <img
+                        src={registerDetail}
+                        alt="Paciente felino en atencion clinica"
+                        style={{ width: '100%', height: 128, objectFit: 'cover', display: 'block' }}
+                      />
+                    </div>
+                    <p
+                      style={{
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: T.cyanLt,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        margin: '12px 0 8px',
+                      }}
+                    >
+                      Bienestar y seguimiento
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        color: 'rgba(255,255,255,0.68)',
+                        margin: 0,
+                      }}
+                    >
+                      Procesos mas amables para caninos, felinos y sus tutores.
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </FadeUp>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function LandingPage() {
   useEffect(() => {
@@ -588,7 +1016,7 @@ export default function LandingPage() {
   return (
     <div style={{ fontFamily:'Plus Jakarta Sans, sans-serif' }}>
       <Navbar />
-      <Hero />
+      <LandingHero />
       <LogosBar />
       <Features />
       <Grad from={T.navyMid} to={T.cream} />

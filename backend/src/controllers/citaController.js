@@ -4,6 +4,12 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
 
+const esProfesionalVeterinario = (usuario) =>
+  usuario &&
+  usuario.activo &&
+  (usuario.rol === 'veterinario' ||
+    (Array.isArray(usuario.rolesAdicionales) && usuario.rolesAdicionales.includes('veterinario')));
+
 const crearCita = async (req, res) => {
   try {
     const {
@@ -31,9 +37,9 @@ const crearCita = async (req, res) => {
 
     // Verificar que el veterinario pertenece a la clinica
     const veterinario = await Usuario.findOne({
-      where: { id: veterinarioId, clinicaId }
+      where: { id: veterinarioId, clinicaId, activo: true }
     });
-    if (!veterinario) {
+    if (!esProfesionalVeterinario(veterinario)) {
       return res.status(404).json({ message: 'Veterinario no encontrado' });
     }
 
@@ -60,9 +66,20 @@ const crearCita = async (req, res) => {
     }
 
     // Verificar que la mascota y propietario pertenecen a la clinica
-    const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId } });
+    const propietario = await Propietario.findOne({ where: { id: propietarioId, clinicaId } });
+    if (!propietario) {
+      return res.status(404).json({ message: 'Propietario no encontrado' });
+    }
+
+    const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
     if (!mascota) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
+
+    if (mascota.propietarioId !== propietario.id) {
+      return res.status(400).json({
+        message: 'La mascota seleccionada no pertenece al tutor indicado'
+      });
     }
 
     const cita = await Cita.create({
@@ -92,12 +109,14 @@ const crearCita = async (req, res) => {
 const obtenerCitas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { fecha, veterinarioId, estado, pagina = 1, limite = 20 } = req.query;
+    const { fecha, veterinarioId, mascotaId, propietarioId, estado, pagina = 1, limite = 20 } = req.query;
 
     const where = { clinicaId };
 
     if (fecha) where.fecha = fecha;
     if (veterinarioId) where.veterinarioId = veterinarioId;
+    if (mascotaId) where.mascotaId = mascotaId;
+    if (propietarioId) where.propietarioId = propietarioId;
     if (estado) where.estado = estado;
 
     const offset = (pagina - 1) * limite;
@@ -188,6 +207,18 @@ const reprogramarCita = async (req, res) => {
 
     if (!fecha || !horaInicio || !horaFin) {
       return res.status(400).json({ message: 'Fecha y horario son obligatorios' });
+    }
+
+    if (horaFin <= horaInicio) {
+      return res.status(400).json({ message: 'La hora de fin debe ser mayor a la hora de inicio' });
+    }
+
+    const fechaCita = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    if (fechaCita < hoy) {
+      return res.status(400).json({ message: 'No se puede reprogramar una cita a una fecha pasada' });
     }
 
     const cita = await Cita.findOne({ where: { id, clinicaId } });

@@ -1,493 +1,858 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'motion/react'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import { AnimatePresence, motion } from 'motion/react'
 import {
-  Stethoscope, Check, X, ChevronDown, ArrowRight,
-  Calendar, FileText, Package, Receipt, BarChart3,
-  Users, Shield, Zap, Lock, Bell, Layers, Sparkles,
+  ArrowRight,
+  BarChart3,
+  Calendar,
+  Check,
+  ChevronDown,
+  FileText,
+  Package,
+  Receipt,
+  Shield,
+  Sparkles,
+  Stethoscope,
+  Users,
+  X,
 } from 'lucide-react'
 
-const TABLA_FEATURES = [
-  {
-    categoria: 'Agenda',
-    icon: Calendar,
-    items: [
-      { label: 'Agenda de citas',                    basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Anti-solapamiento por veterinario',  basico: true,  profesional: true,  enterprise: true  },
-      { label: '6 estados de cita',                  basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Reprogramación de citas',            basico: true,  profesional: true,  enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Historia clínica',
-    icon: FileText,
-    items: [
-      { label: 'Historia clínica digital',           basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Examen físico con constantes',       basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Antecedentes del paciente',          basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Historia inmutable al bloquear',     basico: true,  profesional: true,  enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Inventario',
-    icon: Package,
-    items: [
-      { label: 'Inventario básico',                  basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Alertas de stock mínimo',            basico: false, profesional: true,  enterprise: true  },
-      { label: 'Control de vencimientos',            basico: false, profesional: true,  enterprise: true  },
-      { label: 'Trazabilidad por lote',              basico: false, profesional: true,  enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Facturación',
-    icon: Receipt,
-    items: [
-      { label: 'Facturación completa',               basico: false, profesional: true,  enterprise: true  },
-      { label: 'Descuento automático de stock',      basico: false, profesional: true,  enterprise: true  },
-      { label: 'Múltiples métodos de pago',          basico: false, profesional: true,  enterprise: true  },
-      { label: 'Exportar PDF',                       basico: false, profesional: true,  enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Reportes',
-    icon: BarChart3,
-    items: [
-      { label: 'Dashboard general',                  basico: false, profesional: true,  enterprise: true  },
-      { label: 'Reporte de ingresos',                basico: false, profesional: true,  enterprise: true  },
-      { label: 'Reporte de citas',                   basico: false, profesional: true,  enterprise: true  },
-      { label: 'Reporte de inventario',              basico: false, profesional: true,  enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Equipo y acceso',
-    icon: Users,
-    items: [
-      { label: 'Usuarios ilimitados',                basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Roles granulares',                   basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Multisede',                          basico: false, profesional: false, enterprise: true  },
-      { label: 'Acceso API',                         basico: false, profesional: false, enterprise: true  },
-    ],
-  },
-  {
-    categoria: 'Soporte',
-    icon: Shield,
-    items: [
-      { label: 'Soporte por email',                  basico: true,  profesional: true,  enterprise: true  },
-      { label: 'Soporte prioritario',                basico: false, profesional: false, enterprise: true  },
-      { label: 'Onboarding personalizado',           basico: false, profesional: false, enterprise: true  },
-    ],
-  },
-]
+import PublicPageShell from '@/components/shared/PublicPageShell'
 
-const PLANES_DATA = [
+void motion
+
+const PLANES = [
   {
-    key: 'basico',
-    nombre: 'Básico',
-    tagline: 'Para empezar con el pie derecho',
-    precio_mensual: 99000,
-    precio_anual: 79000,
-    color: 'teal',
-    features: ['Agenda de citas', 'Historia clínica', 'Inventario básico', 'Propietarios y mascotas', 'Usuarios ilimitados'],
+    key: 'inicio',
+    nombre: 'Inicio Gratis',
+    subtitulo: 'Para digitalizar lo esencial',
+    resumen:
+      'Empieza sin friccion, ordena agenda y pacientes, y valida si Bourgelat encaja con el ritmo real de tu clinica.',
+    precioMensual: 0,
+    precioAnual: 0,
+    badge: 'Acceso permanente',
+    cta: 'Crear cuenta gratis',
+    to: '/registro',
+    limites: ['1 sede', '2 usuarios', '250 mascotas activas', '1 GB base'],
+    incluye: [
+      'Agenda de citas',
+      'Propietarios y mascotas',
+      'Historia clinica basica',
+      'Antecedentes del paciente',
+      'Roles operativos base',
+    ],
+    nota:
+      'No incluye inventario completo, caja, facturacion interna ni facturacion electronica.',
+  },
+  {
+    key: 'clinica',
+    nombre: 'Clinica',
+    subtitulo: 'Operacion diaria ordenada',
+    resumen:
+      'Pensado para clinicas pequenas y medianas que ya necesitan operar agenda, consulta, inventario y caja en el mismo sistema.',
+    precioMensual: 99000,
+    precioAnual: 79000,
+    badge: 'Primer plan pago',
+    cta: 'Elegir plan Clinica',
+    to: '/registro',
+    limites: ['1 sede', '5 usuarios', '2.500 mascotas activas', '5 GB base'],
+    incluye: [
+      'Todo lo de Inicio Gratis',
+      'Inventario operativo',
+      'Caja y facturacion interna',
+      'Dashboard basico',
+      'Reportes operativos',
+    ],
+    nota:
+      'Aun no incluye facturacion electronica; esta pensado para estabilizar la operacion diaria.',
   },
   {
     key: 'profesional',
     nombre: 'Profesional',
-    tagline: 'Para clínicas que quieren crecer',
-    precio_mensual: 199000,
-    precio_anual: 159000,
-    color: 'cyan',
+    subtitulo: 'Control clinico, administrativo y fiscal',
+    resumen:
+      'El plan principal para clinicas que quieren centralizar consulta, cobro, reportes y facturacion electronica en un solo flujo.',
+    precioMensual: 189000,
+    precioAnual: 159000,
+    badge: 'Mas elegido',
     popular: true,
-    features: ['Todo lo del Básico', 'Facturación completa', 'Reportes y dashboard', 'Control de inventario avanzado', 'Exportar PDF'],
+    cta: 'Elegir plan Profesional',
+    to: '/registro',
+    limites: ['1 sede', '12 usuarios', '10.000 mascotas activas', '20 GB base'],
+    incluye: [
+      'Todo lo de Clinica',
+      'Facturacion electronica',
+      'Inventario avanzado',
+      'Reportes completos',
+      'Exportables y cierre mas solido',
+    ],
+    nota:
+      'Es el plan recomendado para una operacion ya madura que necesita mas trazabilidad y control financiero.',
   },
   {
-    key: 'enterprise',
-    nombre: 'Enterprise',
-    tagline: 'Para cadenas y grupos veterinarios',
-    precio_mensual: 399000,
-    precio_anual: 319000,
-    color: 'slate',
-    features: ['Todo lo del Profesional', 'Multisede', 'Soporte prioritario', 'Onboarding personalizado', 'Acceso API'],
+    key: 'personalizado',
+    nombre: 'Personalizado',
+    subtitulo: 'Acompanamiento segun alcance',
+    resumen:
+      'Para clinicas que necesitan una propuesta comercial con mas acompanamiento de implementacion, migracion y configuracion.',
+    precioMensual: null,
+    precioAnual: null,
+    badge: 'Cotizacion guiada',
+    cta: 'Hablar con el equipo',
+    href: 'mailto:hola@bourgelat.co?subject=Quiero%20cotizar%20Bourgelat',
+    limites: ['Volumen a medida', 'Usuarios segun alcance', 'Migracion guiada', 'Acompanamiento comercial'],
+    incluye: [
+      'Base de Profesional',
+      'Revision del caso comercial',
+      'Acompanamiento de migracion',
+      'Activacion orientada',
+      'Seguimiento inicial con el equipo',
+    ],
+    nota:
+      'No es humo tecnico: se cotiza segun alcance, volumen y nivel de acompanamiento que realmente necesita la clinica.',
+  },
+]
+
+const TRIAL_STEPS = [
+  {
+    numero: '01',
+    titulo: 'Prueba de 14 dias',
+    cuerpo:
+      'La entrada recomendada es una prueba guiada con el alcance de Profesional para evaluar agenda, inventario, caja y reportes.',
+  },
+  {
+    numero: '02',
+    titulo: 'Decides con uso real',
+    cuerpo:
+      'Al terminar la prueba, la clinica ya habra visto su flujo diario con datos reales y podra decidir con mas criterio.',
+  },
+  {
+    numero: '03',
+    titulo: 'Continua gratis o escala',
+    cuerpo:
+      'Si aun no estas lista para pagar, puedes continuar en Inicio Gratis. Si ya necesitas operar completo, subes de plan.',
+  },
+]
+
+const COMPARISON_SECTIONS = [
+  {
+    titulo: 'Operacion base',
+    icon: Calendar,
+    rows: [
+      {
+        label: 'Agenda de citas',
+        values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Propietarios y mascotas',
+        values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Historia clinica y antecedentes',
+        values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Bloqueo y trazabilidad clinica',
+        values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+      },
+    ],
+  },
+  {
+    titulo: 'Operacion administrativa',
+    icon: Receipt,
+    rows: [
+      {
+        label: 'Inventario operativo',
+        values: { inicio: false, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Caja y facturacion interna',
+        values: { inicio: false, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Reportes operativos',
+        values: { inicio: false, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Facturacion electronica',
+        values: { inicio: false, clinica: false, profesional: true, personalizado: true },
+      },
+    ],
+  },
+  {
+    titulo: 'Capacidad y crecimiento',
+    icon: Users,
+    rows: [
+      {
+        label: 'Usuarios incluidos',
+        type: 'text',
+        values: { inicio: '2', clinica: '5', profesional: '12', personalizado: 'A medida' },
+      },
+      {
+        label: 'Mascotas activas',
+        type: 'text',
+        values: { inicio: '250', clinica: '2.500', profesional: '10.000', personalizado: 'A medida' },
+      },
+      {
+        label: 'Almacenamiento base',
+        type: 'text',
+        values: { inicio: '1 GB', clinica: '5 GB', profesional: '20 GB', personalizado: 'Segun alcance' },
+      },
+      {
+        label: 'Reporte completo y exportables',
+        values: { inicio: false, clinica: false, profesional: true, personalizado: true },
+      },
+    ],
+  },
+  {
+    titulo: 'Acompanamiento',
+    icon: Shield,
+    rows: [
+      {
+        label: 'Soporte por email',
+        values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+      },
+      {
+        label: 'Soporte prioritario comercial',
+        values: { inicio: false, clinica: false, profesional: false, personalizado: true },
+      },
+      {
+        label: 'Acompanamiento de migracion',
+        values: { inicio: false, clinica: false, profesional: false, personalizado: true },
+      },
+      {
+        label: 'Onboarding guiado',
+        values: { inicio: false, clinica: false, profesional: false, personalizado: true },
+      },
+    ],
   },
 ]
 
 const FAQS = [
-  { pregunta: '¿Puedo cambiar de plan en cualquier momento?', respuesta: 'Sí. Puedes subir o bajar de plan cuando quieras. El cambio aplica desde el siguiente ciclo de facturación sin penalizaciones.' },
-  { pregunta: '¿Hay límite de mascotas o propietarios?', respuesta: 'No. Ningún plan tiene límite de mascotas, propietarios ni usuarios. Pagas por funcionalidades, no por volumen de datos.' },
-  { pregunta: '¿Qué pasa con mis datos si cancelo?', respuesta: 'Tus datos permanecen disponibles para exportar durante 30 días después de cancelar. Después se eliminan de forma segura.' },
-  { pregunta: '¿El plan anual tiene descuento?', respuesta: 'Sí. El plan anual tiene un descuento del 20% respecto al precio mensual. Se cobra una sola vez al año.' },
-  { pregunta: '¿Qué especies soporta Bourgelat?', respuesta: 'Todas. Perros, gatos, aves, reptiles, conejos, fauna silvestre y cualquier otra especie. Sin restricciones en ningún plan.' },
-  { pregunta: '¿Mis datos están seguros?', respuesta: 'Sí. Usamos cifrado en tránsito, autenticación con tokens de corta duración, auditoría de cada acción y copias de seguridad automáticas.' },
+  {
+    pregunta: 'Que incluye la prueba de 14 dias?',
+    respuesta:
+      'La propuesta comercial se apoya en una prueba guiada con alcance de Profesional para que la clinica vea agenda, consulta, inventario, caja y reportes antes de decidir.',
+  },
+  {
+    pregunta: 'Que pasa cuando termina la prueba?',
+    respuesta:
+      'La clinica puede elegir continuar en Inicio Gratis con limites claros o subir a Clinica o Profesional si ya necesita operar completo.',
+  },
+  {
+    pregunta: 'Puedo empezar gratis y pasar a un plan pago despues?',
+    respuesta:
+      'Si. La idea del freemium es quitar friccion de entrada sin obligarte a pagar antes de comprobar el valor del sistema en tu operacion.',
+  },
+  {
+    pregunta: 'Hay permanencia o tarjeta de credito obligatoria?',
+    respuesta:
+      'No. La estructura propuesta busca una entrada simple y una conversion por valor, no por amarre contractual.',
+  },
+  {
+    pregunta: 'Como funcionan los limites del plan Inicio Gratis?',
+    respuesta:
+      'Se limita la cantidad de usuarios, mascotas activas y almacenamiento para que el plan siga siendo util, pero no sustituya el valor del plan pago.',
+  },
+  {
+    pregunta: 'Que especies soporta Bourgelat?',
+    respuesta:
+      'La operacion esta pensada para clinicas veterinarias y consultorios que atienden caninos, felinos y otras especies sin restringir el tipo de paciente por plan.',
+  },
 ]
 
-const formatCOP = (precio) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(precio)
+const themeByPlan = {
+  inicio: {
+    glow: 'shadow-[0_26px_70px_rgba(20,184,166,0.16)]',
+    border: 'border-teal-400/25',
+    badge: 'bg-teal-300/12 text-teal-100',
+    button: 'bg-teal-300 text-slate-950 hover:bg-teal-200',
+    highlighted: 'bg-teal-300/10',
+    check: 'text-teal-200',
+    gradient: 'linear-gradient(145deg, rgba(17,94,89,0.95), rgba(8,47,73,0.94))',
+  },
+  clinica: {
+    glow: 'shadow-[0_26px_70px_rgba(45,212,191,0.14)]',
+    border: 'border-cyan-400/25',
+    badge: 'bg-cyan-300/12 text-cyan-100',
+    button: 'bg-cyan-300 text-slate-950 hover:bg-cyan-200',
+    highlighted: 'bg-cyan-300/10',
+    check: 'text-cyan-200',
+    gradient: 'linear-gradient(145deg, rgba(12,74,110,0.96), rgba(15,118,110,0.92))',
+  },
+  profesional: {
+    glow: 'shadow-[0_28px_80px_rgba(103,232,249,0.18)]',
+    border: 'border-sky-300/35',
+    badge: 'bg-sky-200/14 text-sky-100',
+    button: 'bg-white text-slate-950 hover:bg-slate-100',
+    highlighted: 'bg-sky-300/12',
+    check: 'text-sky-100',
+    gradient: 'linear-gradient(145deg, rgba(14,116,144,0.98), rgba(14,165,233,0.78))',
+  },
+  personalizado: {
+    glow: 'shadow-[0_26px_70px_rgba(148,163,184,0.14)]',
+    border: 'border-slate-300/20',
+    badge: 'bg-slate-200/12 text-slate-100',
+    button: 'bg-slate-200 text-slate-950 hover:bg-white',
+    highlighted: 'bg-slate-300/10',
+    check: 'text-slate-100',
+    gradient: 'linear-gradient(145deg, rgba(30,41,59,0.98), rgba(51,65,85,0.92))',
+  },
+}
 
-const THEME = {
-  teal:  { card: 'from-teal-500 to-teal-600',   ring: 'ring-teal-400',  glow: 'shadow-teal-500/40',  badge: 'bg-teal-100 text-teal-700',  btn: 'bg-teal-600 hover:bg-teal-700', check: 'text-teal-400' },
-  cyan:  { card: 'from-cyan-500 to-teal-600',    ring: 'ring-cyan-400',  glow: 'shadow-cyan-500/40',  badge: 'bg-cyan-100 text-cyan-700',   btn: 'bg-cyan-600 hover:bg-cyan-700',  check: 'text-cyan-300' },
-  slate: { card: 'from-slate-600 to-slate-800',  ring: 'ring-slate-400', glow: 'shadow-slate-500/30', badge: 'bg-slate-100 text-slate-700', btn: 'bg-slate-700 hover:bg-slate-800', check: 'text-slate-300' },
+const formatCOP = (value) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value)
+
+const renderPrice = (plan, anual) => {
+  if (plan.precioMensual === null) {
+    return {
+      value: 'Cotizar',
+      note: 'Segun alcance y acompanamiento',
+    }
+  }
+
+  if (plan.precioMensual === 0) {
+    return {
+      value: '$0',
+      note: 'Sin tarjeta de credito',
+    }
+  }
+
+  return {
+    value: formatCOP(anual ? plan.precioAnual : plan.precioMensual),
+    note: anual ? 'por mes, cobro anual' : 'por mes, cobro mensual',
+  }
 }
 
 const FAQItem = ({ pregunta, respuesta }) => {
   const [open, setOpen] = useState(false)
+
   return (
-    <motion.div layout className="border border-slate-200/60 rounded-2xl overflow-hidden backdrop-blur-sm bg-white/60">
-      <button onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-slate-50/80 transition-colors">
-        <span className="font-semibold text-slate-800 text-sm pr-4">{pregunta}</span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25, ease: 'easeInOut' }}>
-          <ChevronDown className="w-4 h-4 text-teal-500 flex-shrink-0" />
+    <motion.div
+      layout
+      className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04] backdrop-blur-xl"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition hover:bg-white/[0.03]"
+      >
+        <span className="text-sm font-semibold text-white md:text-[15px]">{pregunta}</span>
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="shrink-0 text-cyan-200"
+        >
+          <ChevronDown className="h-4 w-4" />
         </motion.div>
       </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}>
-            <p className="px-6 pb-5 text-slate-500 text-sm leading-relaxed border-t border-slate-100 pt-4">
+
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+          >
+            <p className="border-t border-white/8 px-6 pb-5 pt-4 text-sm leading-7 text-slate-300">
               {respuesta}
             </p>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
     </motion.div>
   )
 }
 
-export default function PlanesPage() {
-  const [anual, setAnual] = useState(false)
-  const [seleccionado, setSeleccionado] = useState('profesional')
+const PlanCTA = ({ plan, className }) => {
+  if (plan.href) {
+    return (
+      <a href={plan.href} className={className}>
+        {plan.cta}
+        <ArrowRight className="h-4 w-4" />
+      </a>
+    )
+  }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f0fdfa 0%, #ecfdf5 30%, #f0f9ff 60%, #e0f2fe 100%)' }}>
+    <Link to={plan.to} className={className}>
+      {plan.cta}
+      <ArrowRight className="h-4 w-4" />
+    </Link>
+  )
+}
 
-      {/* Fondo decorativo */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, #0d9488, transparent)' }} />
-        <div className="absolute top-1/3 -left-40 w-80 h-80 rounded-full opacity-15 blur-3xl" style={{ background: 'radial-gradient(circle, #0891b2, transparent)' }} />
-        <div className="absolute -bottom-20 right-1/3 w-72 h-72 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(circle, #0f766e, transparent)' }} />
-        {/* Grid sutil */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(#0d9488 1px, transparent 1px), linear-gradient(90deg, #0d9488 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }} />
-      </div>
+export default function PlanesPage() {
+  const [anual, setAnual] = useState(false)
+  const [selected, setSelected] = useState('profesional')
 
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/40 backdrop-blur-xl"
-        style={{ background: 'rgba(240,253,250,0.85)' }}>
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <motion.div whileHover={{ rotate: [0, -10, 10, 0], scale: 1.05 }} transition={{ duration: 0.4 }}
-              className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center shadow-md shadow-teal-600/30">
-              <Stethoscope className="w-4 h-4 text-white" />
-            </motion.div>
-            <span className="font-bold text-slate-900 text-lg tracking-tight group-hover:text-teal-700 transition-colors">
-              Bourgelat
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors px-4 py-2">
-              Iniciar sesión
-            </Link>
-            <Link to="/registro"
-              className="text-sm font-semibold bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg transition-all shadow-md shadow-teal-600/25 hover:-translate-y-px">
-              Registrarse gratis
-            </Link>
+  return (
+    <PublicPageShell
+      eyebrow="Planes Bourgelat"
+      title="Planes claros para crecer con orden"
+      description="Empieza gratis, valida el flujo de tu clinica y escala solo cuando de verdad necesites mas operacion, mas control o mas acompanamiento."
+    >
+      <section className="mb-12 rounded-[32px] border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(8,47,73,0.9),rgba(15,23,42,0.96),rgba(6,78,59,0.88))] p-6 shadow-[0_30px_90px_rgba(8,47,73,0.28)] md:p-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/18 bg-cyan-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+              <Sparkles className="h-3.5 w-3.5" />
+              Entrada recomendada
+            </div>
+            <h2
+              className="max-w-3xl text-4xl leading-none text-white md:text-5xl"
+              style={{ fontFamily: 'Cormorant Garamond' }}
+            >
+              Prueba guiada de 14 dias y luego una version gratuita que si aporta valor.
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200/85">
+              El modelo recomendado para Bourgelat no es un gratis ilimitado. Es una entrada
+              profesional para que la clinica vea el flujo completo y luego decida entre seguir en
+              Inicio Gratis o subir a un plan pago con mas operacion y mas control.
+            </p>
+          </div>
+
+          <div className="grid gap-3 rounded-[28px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl">
+            {[
+              { label: '14 dias', body: 'con alcance de Profesional' },
+              { label: 'Sin tarjeta', body: 'la decision viene despues' },
+              { label: 'Sin friccion', body: 'puedes seguir en Inicio Gratis' },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-[22px] border border-white/8 bg-slate-950/35 px-4 py-4"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100/75">
+                  {item.label}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-200">{item.body}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </nav>
+      </section>
 
-      <div className="relative z-10 pt-28 pb-24 px-6">
-        <div className="max-w-7xl mx-auto">
+      <section className="mb-10 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+            Oferta recomendada
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+            La diferencia entre planes ya no esta en promesas infladas: esta en la profundidad de
+            la operacion que la clinica puede sostener con Bourgelat.
+          </p>
+        </div>
 
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="text-center mb-16">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border border-teal-200/60 backdrop-blur-sm"
-              style={{ background: 'rgba(204,251,241,0.6)' }}>
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              <span className="text-teal-700 text-xs font-semibold tracking-wide">Elige tu plan</span>
-            </motion.div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-5 tracking-tight"
-              style={{ background: 'linear-gradient(135deg, #134e4a, #0f766e, #0891b2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Simple y transparente
-            </h1>
-            <p className="text-slate-500 text-xl max-w-lg mx-auto mb-10">
-              Un precio justo para cada etapa de tu clínica. Sin cobros en dólares.
-            </p>
+        <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] p-1 backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => setAnual(false)}
+            className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+              !anual ? 'bg-white text-slate-950' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Mensual
+          </button>
+          <button
+            type="button"
+            onClick={() => setAnual(true)}
+            className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+              anual ? 'bg-white text-slate-950' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            Anual
+          </button>
+          <span className="rounded-full bg-cyan-300/15 px-3 py-2 text-xs font-semibold text-cyan-100">
+            hasta 20% menos
+          </span>
+        </div>
+      </section>
 
-            {/* Toggle */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-2xl border border-teal-200/50 backdrop-blur-sm"
-              style={{ background: 'rgba(204,251,241,0.4)' }}>
-              <motion.button onClick={() => setAnual(false)} layout
-                className={`relative px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors ${!anual ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
-                {!anual && (
-                  <motion.div layoutId="toggle-bg" className="absolute inset-0 rounded-xl bg-white shadow-sm"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
-                )}
-                <span className="relative z-10">Mensual</span>
-              </motion.button>
-              <motion.button onClick={() => setAnual(true)} layout
-                className={`relative px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 ${anual ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
-                {anual && (
-                  <motion.div layoutId="toggle-bg" className="absolute inset-0 rounded-xl bg-white shadow-sm"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
-                )}
-                <span className="relative z-10">Anual</span>
-                <span className="relative z-10 bg-teal-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">-20%</span>
-              </motion.button>
-            </div>
-          </motion.div>
+      <section className="mb-20 grid gap-6 xl:grid-cols-4">
+        {PLANES.map((plan, index) => {
+          const active = selected === plan.key
+          const theme = themeByPlan[plan.key]
+          const price = renderPrice(plan, anual)
 
-          {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-            {PLANES_DATA.map((plan, i) => {
-              const theme = THEME[plan.color]
-              const precio = anual ? plan.precio_anual : plan.precio_mensual
-              const isSelected = seleccionado === plan.key
-              return (
-                <motion.div key={plan.key}
-                  initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                  onClick={() => setSeleccionado(plan.key)}
-                  className="cursor-pointer">
-                  <motion.div
-                    animate={{
-                      scale: isSelected ? 1.03 : 1,
-                      y: isSelected ? -6 : 0,
-                    }}
-                    transition={{ type: 'spring', bounce: 0.3, duration: 0.5 }}
-                    className={`relative rounded-3xl overflow-hidden transition-all duration-300 ${
-                      isSelected
-                        ? `ring-2 ${theme.ring} shadow-2xl ${theme.glow}`
-                        : 'ring-1 ring-white/60 shadow-lg hover:shadow-xl'
-                    }`}>
-
-                    {/* Fondo de la card */}
-                    {isSelected ? (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${theme.card} opacity-100`} />
-                    ) : (
-                      <div className="absolute inset-0 backdrop-blur-xl" style={{ background: 'rgba(255,255,255,0.7)' }} />
-                    )}
-
-                    {/* Badge popular */}
-                    {plan.popular && (
-                      <div className="absolute top-4 right-4 z-20">
-                        <motion.div animate={{ scale: isSelected ? [1, 1.1, 1] : 1 }}
-                          transition={{ duration: 1.5, repeat: isSelected ? Infinity : 0 }}
-                          className={`text-xs font-bold px-3 py-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-700'}`}>
-                          MÁS POPULAR
-                        </motion.div>
-                      </div>
-                    )}
-
-                    <div className="relative z-10 p-8">
-                      <h3 className={`text-2xl font-bold mb-1 tracking-tight ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                        {plan.nombre}
-                      </h3>
-                      <p className={`text-sm mb-8 ${isSelected ? 'text-white/70' : 'text-slate-400'}`}>
-                        {plan.tagline}
-                      </p>
-
-                      <AnimatePresence mode="wait">
-                        <motion.div key={anual ? 'a' : 'm'}
-                          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                          transition={{ duration: 0.2 }} className="mb-1">
-                          <span className={`text-5xl font-bold tracking-tighter ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                            {formatCOP(precio)}
-                          </span>
-                          <span className={`text-sm ml-2 ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>/ mes</span>
-                        </motion.div>
-                      </AnimatePresence>
-
-                      {anual && (
-                        <p className={`text-xs mb-6 ${isSelected ? 'text-white/50' : 'text-slate-400'}`}>
-                          Facturado anualmente
-                        </p>
-                      )}
-                      {!anual && <div className="mb-6" />}
-
-                      <Link to="/registro" onClick={e => e.stopPropagation()}
-                        className={`block text-center font-bold py-3.5 rounded-2xl mb-8 transition-all text-sm ${
-                          isSelected
-                            ? 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30'
-                            : `${theme.btn} text-white shadow-md`
-                        }`}>
-                        Empezar gratis →
-                      </Link>
-
-                      <ul className="flex flex-col gap-3">
-                        {plan.features.map(f => (
-                          <li key={f} className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              isSelected ? 'bg-white/20' : 'bg-teal-50'
-                            }`}>
-                              <Check className={`w-3 h-3 ${isSelected ? 'text-white' : 'text-teal-600'}`} />
-                            </div>
-                            <span className={`text-sm ${isSelected ? 'text-white/90' : 'text-slate-600'}`}>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )
-            })}
-          </div>
-
-          {/* Tabla comparativa */}
-          <motion.div initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.7 }} className="mb-24">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight">Comparativa completa</h2>
-              <p className="text-slate-500">Selecciona un plan arriba para resaltarlo en la tabla</p>
-            </div>
-
-            <div className="rounded-3xl overflow-hidden border border-white/60 shadow-xl backdrop-blur-sm"
-              style={{ background: 'rgba(255,255,255,0.7)' }}>
-
-              {/* Header tabla */}
-              <div className="grid grid-cols-4 border-b border-slate-100">
-                <div className="p-5" />
-                {PLANES_DATA.map((plan, i) => {
-                  const isSelected = seleccionado === plan.key
-                  const theme = THEME[plan.color]
-                  return (
-                    <motion.div key={plan.key}
-                      animate={{ backgroundColor: isSelected ? undefined : 'transparent' }}
-                      onClick={() => setSeleccionado(plan.key)}
-                      className={`p-5 text-center cursor-pointer transition-all relative ${
-                        isSelected ? `bg-gradient-to-b ${theme.card}` : 'hover:bg-slate-50'
-                      }`}>
-                      <p className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-700'}`}>{plan.nombre}</p>
-                      <p className={`text-xs mt-1 ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>
-                        {formatCOP(anual ? plan.precio_anual : plan.precio_mensual)}/mes
-                      </p>
-                    </motion.div>
-                  )
-                })}
-              </div>
-
-              {/* Categorías y filas */}
-              {TABLA_FEATURES.map((categoria, ci) => (
-                <div key={categoria.categoria}>
-                  <div className="grid grid-cols-4 border-b border-slate-100/80" style={{ background: 'rgba(240,253,250,0.5)' }}>
-                    <div className="p-3 col-span-4 flex items-center gap-2.5 px-5">
-                      <div className="w-6 h-6 rounded-lg bg-teal-100 flex items-center justify-center">
-                        <categoria.icon className="w-3.5 h-3.5 text-teal-600" />
-                      </div>
-                      <span className="text-xs font-bold text-teal-700 uppercase tracking-widest">
-                        {categoria.categoria}
-                      </span>
-                    </div>
+          return (
+            <motion.article
+              key={plan.key}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: index * 0.06 }}
+              onClick={() => setSelected(plan.key)}
+              className={`relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[32px] border bg-white/[0.03] p-8 backdrop-blur-xl transition duration-300 ${theme.border} ${active ? `${theme.glow} ring-1 ring-white/16` : 'hover:bg-white/[0.05]'}`}
+              style={{ backgroundImage: active ? theme.gradient : 'linear-gradient(145deg, rgba(15,23,42,0.88), rgba(17,24,39,0.92))' }}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_36%)] opacity-80" />
+              <div className="relative z-10 flex h-full flex-col">
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${theme.badge}`}>
+                    <Stethoscope className="h-3.5 w-3.5" />
+                    {plan.badge}
                   </div>
-                  {categoria.items.map((item, ii) => (
-                    <div key={item.label}
-                      className={`grid grid-cols-4 border-b border-slate-100/50 ${ii % 2 === 0 ? '' : ''}`}
-                      style={{ background: ii % 2 === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(248,250,252,0.4)' }}>
-                      <div className="p-4 px-5 text-sm text-slate-600 font-medium">{item.label}</div>
-                      {[
-                        { tiene: item.basico,       key: 'basico' },
-                        { tiene: item.profesional,  key: 'profesional' },
-                        { tiene: item.enterprise,   key: 'enterprise' },
-                      ].map(({ tiene, key }) => {
-                        const isSelected = seleccionado === key
-                        const theme = THEME[PLANES_DATA.find(p => p.key === key).color]
-                        return (
-                          <div key={key}
-                            className={`p-4 flex justify-center items-center transition-colors ${
-                              isSelected ? `bg-gradient-to-b ${theme.card} bg-opacity-10` : ''
-                            }`}
-                            style={isSelected ? { background: 'rgba(13,148,136,0.08)' } : {}}>
-                            {tiene
-                              ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5 }}>
-                                  <Check className={`w-4 h-4 ${isSelected ? 'text-teal-600' : 'text-teal-400'}`} />
-                                </motion.div>
-                              : <X className="w-4 h-4 text-slate-200" />
-                            }
-                          </div>
-                        )
-                      })}
+                  {plan.popular ? (
+                    <span className="rounded-full border border-white/14 bg-white/12 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
+                      Mas elegido
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mb-6">
+                  <h2
+                    className="text-[38px] leading-none text-white"
+                    style={{ fontFamily: 'Cormorant Garamond' }}
+                  >
+                    {plan.nombre}
+                  </h2>
+                  <p className="mt-3 text-sm font-medium text-cyan-100/78">{plan.subtitulo}</p>
+                  <p className="mt-4 text-sm leading-7 text-slate-200/86">{plan.resumen}</p>
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-semibold tracking-tight text-white">
+                      {price.value}
+                    </span>
+                    {plan.precioMensual !== null ? (
+                      <span className="pb-1 text-sm text-slate-200/70">/ mes</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm text-slate-300/70">{price.note}</p>
+                </div>
+
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {plan.limites.map((limit) => (
+                    <span
+                      key={limit}
+                      className="rounded-full border border-white/10 bg-slate-950/28 px-3 py-2 text-xs font-medium text-slate-200/85"
+                    >
+                      {limit}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mb-7 space-y-3">
+                  {plan.incluye.map((item) => (
+                    <div key={item} className="flex items-start gap-3 text-sm leading-6 text-white/92">
+                      <Check className={`mt-1 h-4 w-4 shrink-0 ${theme.check}`} />
+                      <span>{item}</span>
                     </div>
                   ))}
                 </div>
-              ))}
 
-              {/* CTA en tabla */}
-              <div className="grid grid-cols-4" style={{ background: 'rgba(240,253,250,0.6)' }}>
+                <div className="mb-7 rounded-[24px] border border-white/10 bg-slate-950/28 p-4">
+                  <p className="text-sm leading-7 text-slate-200/80">{plan.nota}</p>
+                </div>
+
+                <div className="mt-auto">
+                  <PlanCTA
+                    plan={plan}
+                    className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold transition ${theme.button}`}
+                  />
+                </div>
+              </div>
+            </motion.article>
+          )
+        })}
+      </section>
+
+      <section className="mb-20 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl md:p-8">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+            Como se entra al producto
+          </p>
+          <h2
+            className="mt-3 text-4xl text-white md:text-5xl"
+            style={{ fontFamily: 'Cormorant Garamond' }}
+          >
+            Una ruta comercial que no devalua la marca.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-slate-300">
+            El freemium tiene sentido si se usa para captacion y no para regalar toda la operacion.
+            Por eso la propuesta combina prueba guiada, permanencia gratuita util y escalamiento por
+            valor real.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {TRIAL_STEPS.map((step, index) => (
+            <motion.div
+              key={step.numero}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.06, duration: 0.4 }}
+              className="rounded-[28px] border border-white/10 bg-slate-950/32 p-6"
+            >
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-300/10 text-cyan-100">
+                <span
+                  className="text-2xl leading-none"
+                  style={{ fontFamily: 'Cormorant Garamond' }}
+                >
+                  {step.numero}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-white">{step.titulo}</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300">{step.cuerpo}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-20">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+            Comparativa comercial
+          </p>
+          <h2
+            className="mt-3 text-4xl text-white md:text-5xl"
+            style={{ fontFamily: 'Cormorant Garamond' }}
+          >
+            Lo que si cambia entre un plan y otro.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-slate-300">
+            La tabla ya no gira alrededor de modulos inflados. Se enfoca en capacidad operativa,
+            profundidad administrativa y nivel de acompanamiento.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-xl">
+          <div className="overflow-x-auto">
+            <div className="min-w-[980px]">
+              <div className="grid grid-cols-[260px_repeat(4,minmax(0,1fr))] border-b border-white/8">
                 <div className="p-5" />
-                {PLANES_DATA.map((plan) => {
-                  const theme = THEME[plan.color]
-                  const isSelected = seleccionado === plan.key
+                {PLANES.map((plan) => {
+                  const active = selected === plan.key
+                  const price = renderPrice(plan, anual)
                   return (
-                    <div key={plan.key} className="p-4 flex justify-center">
-                      <Link to="/registro"
-                        className={`text-xs font-bold px-5 py-2.5 rounded-xl transition-all ${
-                          isSelected
-                            ? `${theme.btn} text-white shadow-md`
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}>
-                        Empezar gratis
-                      </Link>
-                    </div>
+                    <button
+                      type="button"
+                      key={plan.key}
+                      onClick={() => setSelected(plan.key)}
+                      className={`border-l border-white/8 px-4 py-5 text-left transition ${active ? 'bg-white/[0.08]' : 'hover:bg-white/[0.03]'}`}
+                    >
+                      <p className="text-sm font-semibold text-white">{plan.nombre}</p>
+                      <p className="mt-1 text-xs text-slate-300/70">{price.value}</p>
+                    </button>
                   )
                 })}
               </div>
-            </div>
-          </motion.div>
 
-          {/* FAQ */}
-          <motion.div initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.7 }} className="max-w-2xl mx-auto mb-24">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight">Preguntas frecuentes</h2>
-              <p className="text-slate-500">Todo lo que necesitas saber antes de empezar</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              {FAQS.map((faq, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
-                  <FAQItem pregunta={faq.pregunta} respuesta={faq.respuesta} />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+              {COMPARISON_SECTIONS.map((section) => {
+                const Icon = section.icon
+                return (
+                  <div key={section.titulo}>
+                    <div className="grid grid-cols-[260px_repeat(4,minmax(0,1fr))] border-b border-white/8 bg-cyan-300/[0.07]">
+                      <div className="col-span-5 flex items-center gap-3 px-5 py-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-300/12 text-cyan-100">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/82">
+                          {section.titulo}
+                        </span>
+                      </div>
+                    </div>
 
-          {/* CTA Final */}
-          <motion.div initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} transition={{ duration: 0.7 }}
-            className="relative text-center rounded-3xl overflow-hidden p-16">
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488, #0891b2)' }} />
-            <div className="absolute inset-0 opacity-10" style={{
-              backgroundImage: 'linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }} />
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20"
-              style={{ background: 'radial-gradient(circle, #5eead4, transparent)' }} />
-            <div className="relative z-10">
-              <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ duration: 4, repeat: Infinity }}
-                className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center mx-auto mb-6">
-                <Stethoscope className="w-7 h-7 text-white" />
-              </motion.div>
-              <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
-                Tu clínica, tu ritmo.
-              </h2>
-              <p className="text-teal-100 text-lg mb-10 max-w-md mx-auto">
-                Sin tarjeta de crédito. Sin contratos. Empieza gratis y escala cuando quieras.
-              </p>
-              <Link to="/registro"
-                className="inline-flex items-center gap-2 bg-white text-teal-700 font-bold px-8 py-4 rounded-2xl hover:bg-teal-50 transition-all shadow-2xl hover:-translate-y-0.5 text-base">
-                Crear mi cuenta gratis <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </motion.div>
+                    {section.rows.map((row) => (
+                      <div
+                        key={row.label}
+                        className="grid grid-cols-[260px_repeat(4,minmax(0,1fr))] border-b border-white/8"
+                      >
+                        <div className="px-5 py-4 text-sm font-medium text-slate-200">
+                          {row.label}
+                        </div>
 
+                        {PLANES.map((plan) => {
+                          const active = selected === plan.key
+                          const value = row.values[plan.key]
+                          const isText = row.type === 'text'
+
+                          return (
+                            <div
+                              key={`${row.label}-${plan.key}`}
+                              className={`flex items-center justify-center border-l border-white/8 px-4 py-4 text-center ${active ? themeByPlan[plan.key].highlighted : ''}`}
+                            >
+                              {isText ? (
+                                <span className="text-sm font-medium text-slate-100">{value}</span>
+                              ) : value ? (
+                                <Check className="h-4 w-4 text-cyan-100" />
+                              ) : (
+                                <X className="h-4 w-4 text-slate-500" />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section className="mb-20 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+            Logica del freemium
+          </p>
+          <h2
+            className="mt-3 text-4xl text-white md:text-5xl"
+            style={{ fontFamily: 'Cormorant Garamond' }}
+          >
+            El gratis debe captar, no reemplazar el pago.
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                icon: FileText,
+                title: 'Lo que si se regala',
+                body:
+                  'Agenda, pacientes, historia clinica y una base operativa suficiente para que la clinica pruebe orden real.',
+              },
+              {
+                icon: Package,
+                title: 'Lo que se reserva al pago',
+                body:
+                  'Inventario, caja, facturacion y reportes porque ahi es donde Bourgelat resuelve dolor mas profundo y valor mas claro.',
+              },
+              {
+                icon: BarChart3,
+                title: 'Lo que convierte',
+                body:
+                  'Cuando la clinica ya opera en serio, el upgrade deja de sentirse como venta y se vuelve una necesidad natural.',
+              },
+              {
+                icon: Users,
+                title: 'Lo que protege el margen',
+                body:
+                  'Los limites por usuarios, mascotas activas y almacenamiento hacen que Inicio Gratis siga siendo util sin canibalizar Clinica o Profesional.',
+              },
+            ].map((item) => {
+              const Icon = item.icon
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-[26px] border border-white/10 bg-slate-950/28 p-5"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-300/12 text-cyan-100">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">{item.body}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-white/10 bg-[linear-gradient(160deg,rgba(14,116,144,0.18),rgba(15,23,42,0.94),rgba(8,47,73,0.9))] p-6 backdrop-blur-xl md:p-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/16 bg-cyan-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+            <Sparkles className="h-3.5 w-3.5" />
+            Plan recomendado
+          </div>
+          <h3
+            className="mt-4 text-4xl leading-none text-white"
+            style={{ fontFamily: 'Cormorant Garamond' }}
+          >
+            Profesional
+          </h3>
+          <p className="mt-4 text-sm leading-7 text-slate-200/82">
+            Es el plan que mejor cuenta la propuesta de valor completa de Bourgelat: consulta,
+            inventario, caja, reportes y facturacion electronica dentro del mismo flujo.
+          </p>
+
+          <div className="mt-6 space-y-3">
+            {[
+              'Muestra el valor real del producto.',
+              'No obliga a vender multisede ni API antes de tiempo.',
+              'Sirve como plan ancla para subir desde Inicio Gratis o Clinica.',
+            ].map((item) => (
+              <div key={item} className="flex items-start gap-3 text-sm leading-6 text-white/90">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-cyan-100" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+
+          <PlanCTA
+            plan={PLANES.find((plan) => plan.key === 'profesional')}
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+          />
+        </div>
+      </section>
+
+      <section className="mb-20">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+            Preguntas frecuentes
+          </p>
+          <h2
+            className="mt-3 text-4xl text-white md:text-5xl"
+            style={{ fontFamily: 'Cormorant Garamond' }}
+          >
+            Lo importante antes de publicar la oferta.
+          </h2>
+        </div>
+
+        <div className="grid gap-3">
+          {FAQS.map((faq, index) => (
+            <motion.div
+              key={faq.pregunta}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.35, delay: index * 0.05 }}
+            >
+              <FAQItem pregunta={faq.pregunta} respuesta={faq.respuesta} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-[36px] border border-cyan-300/18 bg-[linear-gradient(135deg,rgba(8,47,73,0.92),rgba(15,23,42,0.98),rgba(6,95,70,0.88))] p-8 shadow-[0_30px_90px_rgba(8,47,73,0.26)] md:p-12">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/75">
+              Siguiente conversion
+            </p>
+            <h2
+              className="mt-3 text-4xl text-white md:text-5xl"
+              style={{ fontFamily: 'Cormorant Garamond' }}
+            >
+              Registro claro, prueba guiada y un plan gratis que no se ve improvisado.
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-8 text-slate-200/84">
+              La narrativa comercial y la suscripcion inicial ya quedaron alineadas. El siguiente
+              paso que mas valor aporta es aplicar los limites del plan dentro de usuarios,
+              pacientes, almacenamiento y otros modulos clave del producto.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Link
+              to="/registro"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+            >
+              Crear cuenta principal
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="mailto:hola@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.12]"
+            >
+              Hablar con el equipo
+            </a>
+          </div>
+        </div>
+      </section>
+    </PublicPageShell>
   )
 }

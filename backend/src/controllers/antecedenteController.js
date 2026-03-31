@@ -1,30 +1,39 @@
 const AntecedentesMascota = require('../models/AntecedentesMascota');
 const Mascota = require('../models/Mascota');
 
+const obtenerOMaterializarAntecedentes = async ({ mascotaId, clinicaId }) => {
+  const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
+
+  if (!mascota) {
+    return { mascota: null, antecedentes: null };
+  }
+
+  let antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+
+  if (!antecedentes) {
+    antecedentes = await AntecedentesMascota.create({
+      mascotaId,
+      clinicaId,
+      alergias: [],
+      enfermedadesPrevias: [],
+      cirugias: [],
+      vacunas: [],
+      condicionesCronicas: [],
+      medicamentosActuales: [],
+    });
+  }
+
+  return { mascota, antecedentes };
+};
+
 const obtenerOCrearAntecedentes = async (req, res) => {
   try {
     const { mascotaId } = req.params;
     const { clinicaId } = req.usuario;
 
-    const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
     if (!mascota) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
-    }
-
-    let antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
-
-    // Si no existe lo crea automaticamente
-    if (!antecedentes) {
-      antecedentes = await AntecedentesMascota.create({
-        mascotaId,
-        clinicaId,
-        alergias: [],
-        enfermedadesPrevias: [],
-        cirugias: [],
-        vacunas: [],
-        condicionesCronicas: [],
-        medicamentosActuales: [],
-      });
     }
 
     res.json({ antecedentes });
@@ -43,7 +52,10 @@ const agregarAlergia = async (req, res) => {
       return res.status(400).json({ message: 'Tipo y descripcion son obligatorios' });
     }
 
-    const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
     if (!antecedentes) {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }
@@ -75,7 +87,10 @@ const agregarCirugia = async (req, res) => {
       return res.status(400).json({ message: 'Nombre y fecha son obligatorios' });
     }
 
-    const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
     if (!antecedentes) {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }
@@ -107,7 +122,10 @@ const agregarVacuna = async (req, res) => {
       return res.status(400).json({ message: 'Nombre y fecha son obligatorios' });
     }
 
-    const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
     if (!antecedentes) {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }
@@ -140,7 +158,10 @@ const agregarCondicionCronica = async (req, res) => {
       return res.status(400).json({ message: 'Nombre es obligatorio' });
     }
 
-    const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
     if (!antecedentes) {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }
@@ -167,7 +188,10 @@ const actualizarGenerales = async (req, res) => {
     const { clinicaId } = req.usuario;
     const { esterilizado, fechaEsterilizacion, observacionesGenerales, medicamentosActuales } = req.body;
 
-    const antecedentes = await AntecedentesMascota.findOne({ where: { mascotaId, clinicaId } });
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
     if (!antecedentes) {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }

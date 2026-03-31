@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Clinica = require('./Clinica');
+const { PLAN_KEYS } = require('../config/planes')
 
 const Suscripcion = sequelize.define('Suscripcion', {
   id: {
@@ -9,14 +10,14 @@ const Suscripcion = sequelize.define('Suscripcion', {
     primaryKey: true,
   },
   plan: {
-    type: DataTypes.ENUM('basico', 'profesional', 'enterprise'),
+    type: DataTypes.ENUM(...PLAN_KEYS),
     allowNull: false,
-    defaultValue: 'basico',
+    defaultValue: 'inicio',
   },
   estado: {
     type: DataTypes.ENUM('activa', 'vencida', 'cancelada', 'prueba'),
     allowNull: false,
-    defaultValue: 'prueba',
+    defaultValue: 'activa',
   },
   fechaInicio: {
     type: DataTypes.DATEONLY,

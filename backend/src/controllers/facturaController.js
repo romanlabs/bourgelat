@@ -8,6 +8,11 @@ const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
 const { solicitarTokenFactus, validarFacturaFactus } = require('../factusService')
+const {
+  obtenerNombrePlan,
+  obtenerSuscripcionActivaClinica,
+  suscripcionTieneFuncionalidad,
+} = require('../services/suscripcionService')
 
 const METODOS_PAGO_FACTUS = {
   efectivo: '10',
@@ -407,6 +412,20 @@ const crearFactura = async (req, res) => {
       return res.status(400).json({ message: 'Propietario e items son obligatorios' })
     }
 
+    if (emitirElectronica) {
+      const { suscripcion } = await obtenerSuscripcionActivaClinica(clinicaId)
+
+      if (!suscripcionTieneFuncionalidad(suscripcion, 'facturacion_electronica')) {
+        await transaction.rollback()
+        return res.status(403).json({
+          message: `Tu plan ${obtenerNombrePlan(suscripcion.plan)} no incluye facturacion electronica. Crea la factura interna y cambia de plan para emitirla electronicamente.`,
+          code: 'PLAN_FEATURE_REQUIRED',
+          plan: suscripcion.plan,
+          funcionalidadesFaltantes: ['facturacion_electronica'],
+        })
+      }
+    }
+
     const propietario = await Propietario.findOne({
       where: { id: propietarioId, clinicaId },
       transaction,
@@ -523,7 +542,7 @@ const crearFactura = async (req, res) => {
 const obtenerFacturas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario
-    const { fechaInicio, fechaFin, estado, pagina = 1, limite = 20 } = req.query
+    const { fechaInicio, fechaFin, estado, pagina = 1, limite = 20, buscar } = req.query
 
     const where = { clinicaId }
     if (estado) where.estado = estado
@@ -531,25 +550,84 @@ const obtenerFacturas = async (req, res) => {
       where.fecha = { [Op.between]: [fechaInicio, fechaFin] }
     }
 
+    const textoBusqueda = limpiarTexto(buscar)
+    if (textoBusqueda) {
+      where[Op.or] = [
+        { numero: { [Op.iLike]: `%${textoBusqueda}%` } },
+        { '$propietario.nombre$': { [Op.iLike]: `%${textoBusqueda}%` } },
+        { '$usuario.nombre$': { [Op.iLike]: `%${textoBusqueda}%` } },
+      ]
+    }
+
     const limiteNumero = parseInt(limite, 10)
     const paginaNumero = parseInt(pagina, 10)
     const offset = (paginaNumero - 1) * limiteNumero
 
-    const { count, rows } = await Factura.findAndCountAll({
-      where,
-      limit: limiteNumero,
-      offset,
-      order: [['createdAt', 'DESC']],
-      include: [
-        { model: Propietario, as: 'propietario', attributes: ['id', 'nombre'] },
-        { model: Usuario, as: 'usuario', attributes: ['id', 'nombre'] },
-      ],
-    })
+    const includeListado = [
+      { model: Propietario, as: 'propietario', attributes: ['id', 'nombre'], required: false },
+      { model: Usuario, as: 'usuario', attributes: ['id', 'nombre'], required: false },
+    ]
+    const includeResumen = textoBusqueda
+      ? [
+          { model: Propietario, as: 'propietario', attributes: [], required: false },
+          { model: Usuario, as: 'usuario', attributes: [], required: false },
+        ]
+      : []
+
+    const [{ count, rows }, resumenEstadosRows, resumenElectronicoRows] = await Promise.all([
+      Factura.findAndCountAll({
+        where,
+        limit: limiteNumero,
+        offset,
+        order: [['createdAt', 'DESC']],
+        include: includeListado,
+        distinct: true,
+        subQuery: false,
+      }),
+      Factura.findAll({
+        attributes: [
+          'estado',
+          [sequelize.fn('COUNT', sequelize.col('Factura.id')), 'cantidad'],
+          [sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col('Factura.total')), 0), 'monto'],
+        ],
+        where,
+        include: includeResumen,
+        group: ['Factura.estado'],
+        raw: true,
+        subQuery: false,
+      }),
+      Factura.findAll({
+        attributes: [
+          'estadoElectronico',
+          [sequelize.fn('COUNT', sequelize.col('Factura.id')), 'cantidad'],
+        ],
+        where,
+        include: includeResumen,
+        group: ['Factura.estadoElectronico'],
+        raw: true,
+        subQuery: false,
+      }),
+    ])
+
+    const resumenEstados = resumenEstadosRows.reduce((acc, row) => {
+      acc[row.estado] = {
+        cantidad: Number(row.cantidad || 0),
+        monto: convertirANumero(row.monto, 0),
+      }
+      return acc
+    }, {})
+
+    const resumenElectronico = resumenElectronicoRows.reduce((acc, row) => {
+      acc[row.estadoElectronico] = Number(row.cantidad || 0)
+      return acc
+    }, {})
 
     res.json({
       total: count,
       paginas: Math.ceil(count / limiteNumero),
       paginaActual: paginaNumero,
+      resumenEstados,
+      resumenElectronico,
       facturas: rows,
     })
   } catch (error) {
@@ -796,6 +874,14 @@ const anularFactura = async (req, res) => {
     if (factura.estado === 'anulada') {
       await transaction.rollback()
       return res.status(400).json({ message: 'La factura ya esta anulada' })
+    }
+
+    if (factura.estadoElectronico === 'validada' && factura.cufe) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message:
+          'La factura ya fue validada electronicamente. Para revertirla se requiere una nota credito o un flujo tributario controlado.',
+      })
     }
 
     for (const item of factura.items) {

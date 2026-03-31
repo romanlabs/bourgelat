@@ -1,7 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const { parseBoolean, parseNumber } = require('./app')
+const { parseBoolean, parseNumber, normalizeSameSite } = require('./app')
 
 test('parseBoolean maneja valores truthy y falsy comunes', () => {
   assert.equal(parseBoolean('true', false), true)
@@ -15,4 +15,10 @@ test('parseNumber retorna fallback cuando el valor no es numerico', () => {
   assert.equal(parseNumber('42', 10), 42)
   assert.equal(parseNumber(undefined, 10), 10)
   assert.equal(parseNumber('abc', 10), 10)
+})
+
+test('normalizeSameSite conserva solo valores permitidos', () => {
+  assert.equal(normalizeSameSite('Strict', 'lax'), 'strict')
+  assert.equal(normalizeSameSite('none', 'lax'), 'none')
+  assert.equal(normalizeSameSite('invalido', 'lax'), 'lax')
 })

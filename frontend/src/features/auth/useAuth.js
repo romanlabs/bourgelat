@@ -4,6 +4,11 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from './authApi'
 
+const obtenerMensajeError = (error, fallback) =>
+  error.response?.data?.errores?.[0]?.mensaje ||
+  error.response?.data?.message ||
+  fallback
+
 export const useLogin = () => {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -12,17 +17,17 @@ export const useLogin = () => {
     mutationFn: authApi.login,
     onSuccess: (data) => {
       setAuth({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
         usuario: data.usuario,
         clinica: data.clinica,
+        suscripcion: data.suscripcion || null,
       })
       toast.success(`Bienvenido, ${data.usuario?.nombre || data.clinica?.nombre || 'Bourgelat'}`)
-      navigate('/dashboard', { replace: true })
+      navigate(data.usuario?.rol === 'superadmin' ? '/superadmin' : '/dashboard', {
+        replace: true,
+      })
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || 'Error al iniciar sesión'
-      toast.error(mensaje)
+      toast.error(obtenerMensajeError(error, 'Error al iniciar sesion'))
     },
   })
 }
@@ -35,17 +40,15 @@ export const useRegistro = () => {
     mutationFn: authApi.registro,
     onSuccess: (data) => {
       setAuth({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
         usuario: data.usuario,
         clinica: data.clinica,
+        suscripcion: data.suscripcion || null,
       })
-      toast.success('¡Clínica registrada exitosamente!')
+      toast.success('Clinica registrada exitosamente')
       navigate('/dashboard', { replace: true })
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.message || 'Error al registrar la clínica'
-      toast.error(mensaje)
+      toast.error(obtenerMensajeError(error, 'Error al registrar la clinica'))
     },
   })
 }
@@ -53,20 +56,19 @@ export const useRegistro = () => {
 export const useLogout = () => {
   const navigate = useNavigate()
   const clearAuth = useAuthStore((s) => s.clearAuth)
-  const getRefreshToken = useAuthStore((s) => s.getRefreshToken)
 
   const logout = async () => {
     try {
-      const refreshToken = getRefreshToken()
-      if (refreshToken) {
-        await authApi.logout(refreshToken)
-      }
+      await authApi.logout()
     } catch {
-      // Limpiar igual aunque falle
+      // Limpiar igual aunque falle el cierre remoto.
     } finally {
       clearAuth()
-      toast.info('Sesión cerrada')
-      navigate('/login', { replace: true })
+      toast.info('Sesion cerrada')
+      navigate('/login', {
+        replace: true,
+        state: { clearedAt: Date.now() },
+      })
     }
   }
 

@@ -1,11 +1,13 @@
 const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
+const { validarCupoSuscripcion } = require('../services/suscripcionService')
+const { MASCOTAS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads')
 
 const crearMascota = async (req, res) => {
   try {
     const {
       nombre, especie, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones, propietarioId
+      peso, color, esterilizado, microchip, observaciones, propietarioId, fotoPerfil
     } = req.body;
     const { clinicaId } = req.usuario;
 
@@ -18,9 +20,27 @@ const crearMascota = async (req, res) => {
       return res.status(404).json({ message: 'Propietario no encontrado' });
     }
 
+    const cupoMascotas = await validarCupoSuscripcion({
+      clinicaId,
+      campoLimite: 'limiteMascotas',
+      modelo: Mascota,
+      where: { clinicaId, activo: true },
+    })
+
+    if (!cupoMascotas.permitido) {
+      return res.status(403).json({
+        message: `Tu plan ${cupoMascotas.nombrePlan} permite hasta ${cupoMascotas.limite} mascotas activas. Desactiva una o cambia de plan para continuar.`,
+        code: 'PLAN_LIMIT_REACHED',
+        plan: cupoMascotas.suscripcion.plan,
+        recurso: 'mascotas',
+        limite: cupoMascotas.limite,
+        usoActual: cupoMascotas.usoActual,
+      })
+    }
+
     const mascota = await Mascota.create({
       nombre, especie, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones,
+      peso, color, esterilizado, microchip, observaciones, fotoPerfil,
       propietarioId, clinicaId,
     });
 
@@ -31,6 +51,26 @@ const crearMascota = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
+};
+
+const subirFotoMascota = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      message: 'Selecciona una imagen para continuar.',
+    });
+  }
+
+  const relativePath = `${MASCOTAS_SUBDIR}/${req.file.filename}`;
+
+  return res.status(201).json({
+    message: 'Foto cargada exitosamente',
+    fotoPerfil: buildPublicUploadUrl(req, relativePath),
+    archivo: {
+      nombre: req.file.originalname,
+      tamano: req.file.size,
+      mimeType: req.file.mimetype,
+    },
+  });
 };
 
 const obtenerMascotas = async (req, res) => {
@@ -101,7 +141,18 @@ const editarMascota = async (req, res) => {
   try {
     const { id } = req.params;
     const { clinicaId } = req.usuario;
-    const { nombre, raza, sexo, fechaNacimiento, peso, color, esterilizado, microchip, observaciones } = req.body;
+    const {
+      nombre,
+      raza,
+      sexo,
+      fechaNacimiento,
+      peso,
+      color,
+      esterilizado,
+      microchip,
+      observaciones,
+      fotoPerfil,
+    } = req.body;
 
     const mascota = await Mascota.findOne({ where: { id, clinicaId } });
 
@@ -111,7 +162,7 @@ const editarMascota = async (req, res) => {
 
     await mascota.update({
       nombre, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones,
+      peso, color, esterilizado, microchip, observaciones, fotoPerfil,
     });
 
     res.json({
@@ -142,4 +193,4 @@ const desactivarMascota = async (req, res) => {
   }
 };
 
-module.exports = { crearMascota, obtenerMascotas, obtenerMascota, editarMascota, desactivarMascota };
+module.exports = { crearMascota, subirFotoMascota, obtenerMascotas, obtenerMascota, editarMascota, desactivarMascota };

@@ -3,6 +3,13 @@ const sequelize = require('../config/database');
 const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
 
+const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento'];
+
+const buildMedicationPresentation = (producto) =>
+  [producto.subcategoria, producto.unidadMedida, producto.laboratorio]
+    .filter((value) => String(value || '').trim().length > 0)
+    .join(' | ');
+
 const crearProducto = async (req, res) => {
   try {
     const {
@@ -321,6 +328,65 @@ const obtenerProductoPorBarcode = async (req, res) => {
   }
 };
 
+const obtenerCatalogoMedicamentos = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario;
+    const { buscar, pagina = 1, limite = 8 } = req.query;
+
+    const where = {
+      clinicaId,
+      activo: true,
+      categoria: { [Op.in]: MEDICATION_CATEGORIES },
+      stock: { [Op.gt]: 0 },
+    };
+
+    if (buscar) {
+      where[Op.or] = [
+        { nombre: { [Op.iLike]: `%${buscar}%` } },
+        { laboratorio: { [Op.iLike]: `%${buscar}%` } },
+        { subcategoria: { [Op.iLike]: `%${buscar}%` } },
+        { descripcion: { [Op.iLike]: `%${buscar}%` } },
+      ];
+    }
+
+    const offset = (Number(pagina) - 1) * Number(limite);
+
+    const { count, rows } = await Producto.findAndCountAll({
+      where,
+      attributes: [
+        'id',
+        'nombre',
+        'categoria',
+        'subcategoria',
+        'unidadMedida',
+        'laboratorio',
+        'descripcion',
+        'stock',
+        'precioVenta',
+        'requiereFormula',
+      ],
+      limit: Number(limite),
+      offset,
+      order: [['nombre', 'ASC']],
+    });
+
+    res.json({
+      total: count,
+      paginas: Math.ceil(count / Number(limite)),
+      paginaActual: Number(pagina),
+      productos: rows.map((producto) => ({
+        ...producto.toJSON(),
+        presentacionReferencia: buildMedicationPresentation(producto),
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error en el servidor',
+      error: error.message,
+    });
+  }
+};
+
 const obtenerMovimientos = async (req, res) => {
   try {
 
@@ -370,5 +436,6 @@ module.exports = {
   registrarMovimiento,
   obtenerAlertas,
   obtenerProductoPorBarcode,
+  obtenerCatalogoMedicamentos,
   obtenerMovimientos 
 };

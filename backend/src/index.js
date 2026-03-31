@@ -8,9 +8,13 @@ const winston = require('winston')
 const sequelize = require('./config/database')
 const { appConfig } = require('./config/app')
 const { runPendingMigrations } = require('./config/migrations')
+const { validateRuntimeConfig } = require('./config/validateRuntimeConfig')
 const { limitadorGeneral, limitadorAuth } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
+const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
+const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
+const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR } = require('./config/uploads')
 
 dotenv.config()
 
@@ -27,6 +31,26 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'logs/actividad.log' }),
   ],
 })
+
+const runtimeConfigReport = validateRuntimeConfig()
+
+runtimeConfigReport.warnings.forEach((mensaje) => {
+  logger.warn({
+    contexto: 'runtime-config',
+    mensaje,
+  })
+})
+
+if (runtimeConfigReport.errors.length > 0) {
+  runtimeConfigReport.errors.forEach((mensaje) => {
+    logger.error({
+      contexto: 'runtime-config',
+      mensaje,
+    })
+  })
+
+  throw new Error('Configuracion insegura o incompleta para iniciar Bourgelat')
+}
 
 const app = express()
 app.set('trust proxy', appConfig.trustProxy)
@@ -58,9 +82,27 @@ app.use(limitadorGeneral)
 // ── Body parsing ───────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(
+  UPLOADS_PUBLIC_PATH,
+  express.static(UPLOADS_ROOT_DIR, {
+    index: false,
+    maxAge: appConfig.isProduction ? '7d' : 0,
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+
+      if (appConfig.isProduction) {
+        res.setHeader('Cache-Control', 'public, max-age=604800')
+      } else {
+        res.setHeader('Cache-Control', 'no-cache')
+      }
+    },
+  })
+)
 
 // ── Idempotencia ───────────────────────────────────────────
+app.use(sanitizarRespuestasErrorInterno)
 app.use(idempotencia)
+app.use(protegerOrigenCookieAuth)
 
 // ── Log de peticiones ──────────────────────────────────────
 app.use((req, res, next) => {
@@ -75,6 +117,7 @@ app.use((req, res, next) => {
 // ── Rutas ──────────────────────────────────────────────────
 const authRoutes = require('./routes/authRoutes')
 const usuarioRoutes = require('./routes/usuarioRoutes')
+const clinicaRoutes = require('./routes/clinicaRoutes')
 const propietarioRoutes = require('./routes/propietarioRoutes')
 const mascotaRoutes = require('./routes/mascotaRoutes')
 const citaRoutes = require('./routes/citaRoutes')
@@ -86,9 +129,11 @@ const suscripcionRoutes = require('./routes/suscripcionRoutes')
 const antecedenteRoutes = require('./routes/antecedenteRoutes')
 const auditoriaRoutes = require('./routes/auditoriaRoutes')
 const integracionFacturacionRoutes = require('./routes/integracionFacturacionRoutes')
+const superadminRoutes = require('./routes/superadminRoutes')
 
 app.use('/api/auth', limitadorAuth, authRoutes)
 app.use('/api/usuarios', usuarioRoutes)
+app.use('/api/clinica', clinicaRoutes)
 app.use('/api/propietarios', propietarioRoutes)
 app.use('/api/mascotas', mascotaRoutes)
 app.use('/api/citas', citaRoutes)
@@ -100,6 +145,7 @@ app.use('/api/suscripciones', suscripcionRoutes)
 app.use('/api/antecedentes', antecedenteRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
 app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
+app.use('/api/superadmin', superadminRoutes)
 
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -123,7 +169,6 @@ app.get('/health', async (req, res) => {
       service: 'bourgelat-backend',
       environment: appConfig.nodeEnv,
       database: 'unreachable',
-      error: error.message,
       timestamp: new Date().toISOString(),
     })
   }

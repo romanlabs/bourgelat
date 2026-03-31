@@ -2,33 +2,35 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   /* ─── Tipografía ─────────────────────────────────── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Geist Variable', system-ui, -apple-system, sans-serif;
 
   /* ─── Colores base ───────────────────────────────── */
-  --color-background: #f8f9fb;
-  --color-foreground: #0f1117;
+  --color-background: #f4f8fc;
+  --color-foreground: #12324b;
 
-  --color-muted: #f0f1f5;
-  --color-muted-foreground: #6b7280;
+  --color-muted: #edf4f9;
+  --color-muted-foreground: #5d7487;
 
-  --color-border: #e2e4ea;
+  --color-border: #d8e4ef;
 
   /* ─── Sidebar oscuro ─────────────────────────────── */
-  --color-sidebar: #0d1117;
-  --color-sidebar-foreground: #f0f2f5;
-  --color-sidebar-muted: #6b7280;
-  --color-sidebar-border: #1e2433;
-  --color-sidebar-accent: #161b27;
+  --color-sidebar: #12324b;
+  --color-sidebar-foreground: #f5f9fc;
+  --color-sidebar-muted: #89a0b1;
+  --color-sidebar-border: #22445f;
+  --color-sidebar-accent: #1a4968;
 
   /* ─── Acento principal — esmeralda ───────────────── */
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
+  --color-emerald-400: #6ccbc4;
+  --color-emerald-500: #47b7ae;
+  --color-emerald-600: #2f9f95;
 
   /* ─── Destructivo ────────────────────────────────── */
   --color-destructive: #ef4444;
@@ -69,41 +71,38 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
+  --background: #f4f8fc;
+  --foreground: #12324b;
+  --card: #ffffff;
+  --card-foreground: #12324b;
+  --popover: #ffffff;
+  --popover-foreground: #12324b;
+  --primary: #1f6fb2;
+  --primary-foreground: #f7fbff;
+  --secondary: #e8f1f8;
+  --secondary-foreground: #12324b;
+  --muted: #edf4f9;
+  --muted-foreground: #5d7487;
+  --accent: #e4f2fb;
+  --accent-foreground: #12324b;
+  --destructive: #d9534f;
+  --border: #d8e4ef;
+  --input: #d8e4ef;
+  --ring: #90bddc;
+  --chart-1: #1f6fb2;
+  --chart-2: #4c9fca;
+  --chart-3: #47b7ae;
+  --chart-4: #9ed4ea;
+  --chart-5: #d7ebf7;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --sidebar: oklch(0.1 0.02 240);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.18 0.02 240);
+  --sidebar: #12324b;
+  --sidebar-foreground: #f5f9fc;
+  --sidebar-primary: #1f6fb2;
+  --sidebar-primary-foreground: #f7fbff;
+  --sidebar-accent: #1a4968;
+  --sidebar-accent-foreground: #f5f9fc;
+  --sidebar-border: #22445f;
+  --sidebar-ring: #90bddc;
 }
 
 .dark {
@@ -180,7 +179,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
+  --color-emerald-400: #6ccbc4;
+  --color-emerald-500: #47b7ae;
+  --color-emerald-600: #2f9f95;
 }

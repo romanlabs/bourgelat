@@ -1,6 +1,10 @@
 const { Sequelize } = require('sequelize')
 require('dotenv').config()
 
+const dbSslEnabled = process.env.DB_SSL === 'true'
+const dbSslRejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
+const dbSslCa = process.env.DB_SSL_CA ? process.env.DB_SSL_CA.replace(/\\n/g, '\n') : undefined
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -17,9 +21,10 @@ const sequelize = new Sequelize(
       idle: 10000,
     },
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' ? {
+      ssl: dbSslEnabled ? {
         require: true,
-        rejectUnauthorized: false,
+        rejectUnauthorized: dbSslRejectUnauthorized,
+        ...(dbSslCa ? { ca: dbSslCa } : {}),
       } : false,
       statement_timeout: 10000,
       idle_in_transaction_session_timeout: 10000,

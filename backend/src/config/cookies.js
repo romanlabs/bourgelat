@@ -68,12 +68,22 @@ const clearAuthCookies = (res) => {
 }
 
 const obtenerRefreshTokenRequest = (req) => {
-  if (req.body?.refreshToken) {
+  const cookies = parseCookies(req.headers?.cookie || '')
+  const refreshTokenCookie = cookies[appConfig.cookies.refreshTokenName] || null
+
+  if (refreshTokenCookie) {
+    return refreshTokenCookie
+  }
+
+  if (
+    appConfig.cookies.allowRefreshTokenInBody &&
+    typeof req.body?.refreshToken === 'string' &&
+    req.body.refreshToken.trim()
+  ) {
     return req.body.refreshToken
   }
 
-  const cookies = parseCookies(req.headers?.cookie || '')
-  return cookies[appConfig.cookies.refreshTokenName] || null
+  return null
 }
 
 const obtenerAccessTokenRequest = (req) => {

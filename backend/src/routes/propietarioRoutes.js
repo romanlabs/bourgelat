@@ -17,8 +17,8 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
   validar,
 ], crearPropietario)
 
-router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'), obtenerPropietarios)
-router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'), obtenerPropietario)
+router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario', 'facturador'), obtenerPropietarios)
+router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario', 'facturador'), obtenerPropietario)
 
 router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), [
   body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),

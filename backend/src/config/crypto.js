@@ -1,7 +1,18 @@
 const crypto = require('crypto')
 
 const resolverClave = () => {
-  const secret = process.env.INTEGRACIONES_SECRET || process.env.JWT_SECRET || 'bourgelat-dev-secret'
+  const secret = process.env.INTEGRACIONES_SECRET || process.env.JWT_SECRET
+
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'INTEGRACIONES_SECRET o JWT_SECRET son obligatorios en produccion para cifrar integraciones'
+      )
+    }
+
+    return crypto.createHash('sha256').update('bourgelat-dev-secret').digest()
+  }
+
   return crypto.createHash('sha256').update(secret).digest()
 }
 
