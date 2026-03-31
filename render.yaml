@@ -1,0 +1,279 @@
+previews:
+  generation: off
+
+services:
+  - type: web
+    name: bourgelat-api
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile.prod
+    autoDeployTrigger: commit
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 60
+    domains:
+      - api.bourgelat.co
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    disk:
+      name: uploads
+      mountPath: /app/uploads
+      sizeGB: 10
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: bourgelat-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: bourgelat-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: bourgelat-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: bourgelat-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bourgelat-postgres
+          property: password
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "true"
+      - key: DB_RUN_MIGRATIONS
+        value: "true"
+      - key: DB_SYNC
+        value: "false"
+      - key: DB_ALTER
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://app.bourgelat.co
+      - key: FRONTEND_URLS
+        value: https://app.bourgelat.co,https://bourgelat.co
+      - key: PUBLIC_UPLOADS_BASE_URL
+        value: https://api.bourgelat.co/uploads
+      - key: TRUST_PROXY
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: INTEGRACIONES_SECRET
+        generateValue: true
+      - key: ENABLE_XSS_CLEAN
+        value: "true"
+      - key: EXPOSE_INTERNAL_ERRORS
+        value: "false"
+      - key: AUTH_MAX_FAILED_ATTEMPTS
+        value: "5"
+      - key: AUTH_LOCK_MINUTES
+        value: "15"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "100"
+      - key: AUTH_RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: AUTH_RATE_LIMIT_MAX
+        value: "10"
+      - key: AUTH_COOKIE_ENABLED
+        value: "true"
+      - key: REQUIRE_ORIGIN_FOR_COOKIE_AUTH
+        value: "true"
+      - key: ALLOW_REFRESH_TOKEN_IN_BODY
+        value: "false"
+      - key: COOKIE_SAME_SITE
+        value: lax
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ACCESS_COOKIE_NAME
+        value: bourgelat_access_token
+      - key: REFRESH_COOKIE_NAME
+        value: bourgelat_refresh_token
+      - key: ACCESS_COOKIE_MAX_AGE_MS
+        value: "900000"
+      - key: REFRESH_COOKIE_MAX_AGE_MS
+        value: "604800000"
+      - key: FACTUS_ACTIVA
+        value: "false"
+      - key: FACTUS_AMBIENTE
+        value: production
+
+  - type: web
+    name: bourgelat-web
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerContext: frontend
+    dockerfilePath: frontend/Dockerfile.prod
+    autoDeployTrigger: commit
+    healthCheckPath: /healthz
+    domains:
+      - bourgelat.co
+      - app.bourgelat.co
+    buildFilter:
+      paths:
+        - frontend/**
+        - render.yaml
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.bourgelat.co/api
+
+  - type: web
+    name: bourgelat-api-staging
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile.prod
+    autoDeployTrigger: commit
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 60
+    domains:
+      - api-staging.bourgelat.co
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: bourgelat-postgres-staging
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: bourgelat-postgres-staging
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: bourgelat-postgres-staging
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: bourgelat-postgres-staging
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bourgelat-postgres-staging
+          property: password
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "true"
+      - key: DB_RUN_MIGRATIONS
+        value: "true"
+      - key: DB_SYNC
+        value: "false"
+      - key: DB_ALTER
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://staging.bourgelat.co
+      - key: FRONTEND_URLS
+        value: https://staging.bourgelat.co
+      - key: PUBLIC_UPLOADS_BASE_URL
+        value: https://api-staging.bourgelat.co/uploads
+      - key: TRUST_PROXY
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: INTEGRACIONES_SECRET
+        generateValue: true
+      - key: ENABLE_XSS_CLEAN
+        value: "true"
+      - key: EXPOSE_INTERNAL_ERRORS
+        value: "false"
+      - key: AUTH_MAX_FAILED_ATTEMPTS
+        value: "5"
+      - key: AUTH_LOCK_MINUTES
+        value: "15"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "100"
+      - key: AUTH_RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: AUTH_RATE_LIMIT_MAX
+        value: "10"
+      - key: AUTH_COOKIE_ENABLED
+        value: "true"
+      - key: REQUIRE_ORIGIN_FOR_COOKIE_AUTH
+        value: "true"
+      - key: ALLOW_REFRESH_TOKEN_IN_BODY
+        value: "false"
+      - key: COOKIE_SAME_SITE
+        value: lax
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ACCESS_COOKIE_NAME
+        value: bourgelat_access_token
+      - key: REFRESH_COOKIE_NAME
+        value: bourgelat_refresh_token
+      - key: ACCESS_COOKIE_MAX_AGE_MS
+        value: "900000"
+      - key: REFRESH_COOKIE_MAX_AGE_MS
+        value: "604800000"
+      - key: FACTUS_ACTIVA
+        value: "false"
+      - key: FACTUS_AMBIENTE
+        value: sandbox
+
+  - type: web
+    name: bourgelat-web-staging
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: frontend
+    dockerfilePath: frontend/Dockerfile.prod
+    autoDeployTrigger: commit
+    healthCheckPath: /healthz
+    domains:
+      - staging.bourgelat.co
+    buildFilter:
+      paths:
+        - frontend/**
+        - render.yaml
+    envVars:
+      - key: VITE_API_URL
+        value: https://api-staging.bourgelat.co/api
+
+databases:
+  - name: bourgelat-postgres
+    databaseName: bourgelat_prod
+    user: bourgelat_app
+    plan: basic-256mb
+    region: oregon
+    postgresMajorVersion: "18"
+    ipAllowList: []
+
+  - name: bourgelat-postgres-staging
+    databaseName: bourgelat_staging
+    user: bourgelat_staging
+    plan: free
+    region: oregon
+    postgresMajorVersion: "18"
+    ipAllowList: []

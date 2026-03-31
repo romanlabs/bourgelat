@@ -5,6 +5,7 @@
 - `app.bourgelat.co`: frontend
 - `api.bourgelat.co`: backend
 - `staging.bourgelat.co`: pruebas internas
+- `api-staging.bourgelat.co`: backend de pruebas
 
 ## Ajustes recomendados en Cloudflare
 - Activar `DNSSEC`
@@ -13,6 +14,7 @@
 - Activar `WAF`
 - Configurar reglas de rate limit para `/api/auth/*`
 - Proteger `staging` con `Cloudflare Access`
+- Proteger `api-staging` con `Cloudflare Access` o limitarlo al frontend de pruebas
 - Si es posible, ocultar el origen con `Cloudflare Tunnel`
 
 ## Ajustes recomendados en Bourgelat

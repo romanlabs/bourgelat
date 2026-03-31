@@ -14,8 +14,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: ./frontend/Dockerfile.prod
+      context: ./frontend
+      dockerfile: Dockerfile.prod
       args:
         VITE_API_URL: https://api.bourgelat.co/api
     restart: unless-stopped

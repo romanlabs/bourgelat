@@ -1,6 +1,7 @@
 # Checklist Render + Cloudflare para Bourgelat
 
 ## 1. En Render
+- Importar el repositorio con `render.yaml` para levantar produccion y staging desde el Blueprint.
 - Crear un servicio `backend` desde Docker.
 - Crear un servicio `frontend` desde Docker.
 - Crear una base de datos PostgreSQL gestionada.
@@ -10,6 +11,7 @@
 - Desactivar `DB_SYNC` y `DB_ALTER`.
 - Mantener `DB_RUN_MIGRATIONS=true`.
 - Generar secretos nuevos con `npm run secrets:generate` en `backend`.
+- Revisar los secretos generados automaticamente por Render para `JWT_SECRET`, `JWT_REFRESH_SECRET` e `INTEGRACIONES_SECRET`.
 
 ## 2. Variables clave del backend
 - `NODE_ENV=production`
