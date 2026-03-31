@@ -1,1033 +1,836 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
-import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'motion/react'
 import landingHeroConsultation from '@/assets/auth/landing-hero-consultation.webp'
 import registerDetail from '@/assets/auth/register-detail.webp'
 import {
-  Stethoscope, ArrowRight, ChevronRight, Menu, X, Monitor,
-  Calendar, FileText, Package, Receipt, BarChart3,
-  Shield, Clock, Layers, Bell, Globe,
+  ArrowRight,
+  Bell,
+  Calendar,
+  Check,
+  Globe,
+  HeartPulse,
+  Layers,
+  Mail,
+  Menu,
+  Package,
+  PawPrint,
+  Receipt,
+  Shield,
+  Stethoscope,
+  X,
 } from 'lucide-react'
 
-void motion
+const NAV_ITEMS = [
+  { label: 'Experiencia', href: '#experiencia' },
+  { label: 'Flujo', href: '#flujo' },
+  { label: 'Planes', href: '#planes' },
+  { label: 'Contacto', href: '#contacto' },
+]
 
-// ─── PALETA ──────────────────────────────────────────────────────────────────
+const EXPERIENCE_CARDS = [
+  {
+    icon: Calendar,
+    title: 'Recepcion que no pierde el ritmo',
+    body:
+      'Agenda, confirmaciones y llegada del paciente en una experiencia clara para recepcion y auxiliares.',
+    points: ['Citas visibles', 'Recordatorios utiles', 'Menos llamadas repetidas'],
+  },
+  {
+    icon: HeartPulse,
+    title: 'Consulta con historia y contexto',
+    body:
+      'El veterinario entra a la cita con antecedentes, evolucion y seguimiento en el mismo recorrido.',
+    points: ['Historia clinica', 'Observaciones utiles', 'Continuidad por paciente'],
+  },
+  {
+    icon: Receipt,
+    title: 'Caja y cierre sin doble trabajo',
+    body:
+      'Cobro, inventario y cierre del dia se sienten conectados, no como tareas sueltas al final de la jornada.',
+    points: ['Caja ordenada', 'Inventario conectado', 'Mas trazabilidad'],
+  },
+]
 
-const T = {
-  navy:    '#05101f',
-  navyMid: '#0a1f38',
-  navyLt:  '#0f2d50',
-  teal:    '#0d9488',
-  cyan:    '#22d3ee',
-  cyanLt:  '#67e8f9',
-  amber:   '#f59e0b',
-  cream:   '#f8fafc',
-  text:    '#0f172a',
-  muted:   '#64748b',
-  border:  '#e2e8f0',
-  gBorder: 'rgba(255,255,255,0.14)',
-}
+const FLOW_STEPS = [
+  {
+    step: '01',
+    title: 'Agenda y recepcion',
+    body:
+      'Desde la primera llamada hasta la llegada a consulta, el equipo ve el mismo contexto y el mismo horario.',
+  },
+  {
+    step: '02',
+    title: 'Consulta y evolucion',
+    body:
+      'La historia clinica deja de vivir en hojas sueltas: cada visita, antecedente y observacion queda en un mismo hilo.',
+  },
+  {
+    step: '03',
+    title: 'Cobro y seguimiento',
+    body:
+      'El cierre administrativo queda amarrado al caso real para que la clinica cobre, reponga y haga seguimiento sin friccion.',
+  },
+]
 
-const glass = (extra = {}) => ({
-  background: 'rgba(255,255,255,0.07)',
-  backdropFilter: 'blur(18px)',
-  WebkitBackdropFilter: 'blur(18px)',
-  border: '1px solid rgba(255,255,255,0.14)',
-  ...extra,
-})
+const PRODUCT_PANELS = [
+  {
+    icon: Layers,
+    title: 'Una sola plataforma',
+    body:
+      'Agenda, pacientes, historia clinica, inventario, caja y reportes dentro de una misma experiencia.',
+  },
+  {
+    icon: Bell,
+    title: 'Menos olvidos',
+    body:
+      'Recordatorios, proximos pasos y tareas visibles para que el equipo no dependa de memoria o chats dispersos.',
+  },
+  {
+    icon: Package,
+    title: 'Operacion mas solida',
+    body:
+      'Lo clinico y lo administrativo se sienten conectados, asi que el trabajo diario deja mas orden que desgaste.',
+  },
+  {
+    icon: Globe,
+    title: 'Pensado para Colombia',
+    body:
+      'Facturacion electronica DIAN disponible en los planes Profesional y Personalizado, sin meter esa complejidad en la venta.',
+  },
+]
 
-// ─── FADE UP ──────────────────────────────────────────────────────────────────
+const PLAN_PREVIEW = [
+  {
+    name: 'Inicio Gratis',
+    subtitle: 'Para digitalizar lo esencial',
+    price: 'COP 0',
+    note: 'Agenda, pacientes e historia clinica para empezar con orden.',
+  },
+  {
+    name: 'Clinica',
+    subtitle: 'Para operar el dia completo',
+    price: 'COP 99.000/mes',
+    note: 'Inventario, caja y reportes para una clinica que ya necesita control operativo.',
+  },
+  {
+    name: 'Profesional',
+    subtitle: 'El plan principal',
+    price: 'COP 189.000/mes',
+    note: 'Incluye facturacion electronica DIAN y una operacion mas completa.',
+    featured: true,
+  },
+  {
+    name: 'Personalizado',
+    subtitle: 'Para migracion y acompanamiento',
+    price: 'Cotizacion guiada',
+    note: 'Cuando la clinica necesita una implementacion mas acompasada con el equipo.',
+  },
+]
 
-const FadeUp = ({ children, delay = 0, className = '', style = {} }) => {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-40px' })
+const footerLinks = [
+  { label: 'Planes', to: '/planes' },
+  { label: 'Nosotros', to: '/nosotros' },
+  { label: 'Privacidad', to: '/privacidad' },
+  { label: 'Terminos', to: '/terminos' },
+  { label: 'Cookies', to: '/cookies' },
+]
+
+function BrandMark({ dark = false }) {
   return (
-    <motion.div ref={ref} className={className} style={style}
-      initial={{ opacity: 0, y: 30 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay }}>
-      {children}
-    </motion.div>
+    <div className="flex items-center gap-3">
+      <div
+        className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-[0_18px_40px_rgba(92,206,198,0.2)] ${
+          dark
+            ? 'bg-white/12 text-white'
+            : 'bg-[linear-gradient(135deg,#8fe0da,#b8eff0)] text-[#082033]'
+        }`}
+      >
+        <Stethoscope className="h-5 w-5" />
+      </div>
+      <div>
+        <p className={`text-lg font-semibold tracking-[-0.03em] ${dark ? 'text-white' : 'text-[#0f2437]'}`}>
+          Bourgelat
+        </p>
+        <p
+          className={`text-[11px] uppercase tracking-[0.22em] ${
+            dark ? 'text-white/50' : 'text-[#5a7188]'
+          }`}
+        >
+          software veterinario para Colombia
+        </p>
+      </div>
+    </div>
   )
 }
 
-// ─── MESH BACKGROUND ──────────────────────────────────────────────────────────
-
-const MeshBg = () => (
-  <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-    <div style={{ position: 'absolute', width: 700, height: 700, borderRadius: '50%', top: '-20%', left: '-12%', background: 'radial-gradient(circle, rgba(13,148,136,0.18) 0%, transparent 65%)' }} />
-    <div style={{ position: 'absolute', width: 550, height: 550, borderRadius: '50%', top: '5%', right: '-8%', background: 'radial-gradient(circle, rgba(34,211,238,0.12) 0%, transparent 65%)' }} />
-    <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', bottom: '0', left: '35%', background: 'radial-gradient(circle, rgba(15,45,80,0.75) 0%, transparent 70%)' }} />
-    <div style={{ position: 'absolute', width: 350, height: 350, borderRadius: '50%', bottom: '15%', right: '10%', background: 'radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 65%)' }} />
-    {/* Grid sutil */}
-    <div style={{ position: 'absolute', inset: 0, opacity: 0.055, backgroundImage: 'linear-gradient(rgba(34,211,238,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.5) 1px, transparent 1px)', backgroundSize: '62px 62px' }} />
-  </div>
-)
-
-// ─── SCREENSHOT SLOT ─────────────────────────────────────────────────────────
-// Reemplaza con: <img src="/screenshots/xxx.png" style={{ width:'100%', display:'block' }} />
-
-const Shot = ({ label, file = '', aspect = '16/9', dark = true }) => (
-  <div style={{ aspectRatio: aspect, background: dark ? 'linear-gradient(150deg,rgba(10,31,56,0.97),rgba(5,16,31,0.99))' : 'linear-gradient(150deg,#f1f5f9,#e2eaf3)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', borderRadius: 'inherit' }}>
-    <div style={{ position: 'absolute', inset: 0, opacity: 0.28, backgroundImage: `radial-gradient(circle, ${dark ? 'rgba(34,211,238,0.18)' : 'rgba(13,148,136,0.14)'} 1px, transparent 1px)`, backgroundSize: '26px 26px' }} />
-    <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '2rem' }}>
-      <Monitor style={{ width: 28, height: 28, color: dark ? 'rgba(34,211,238,0.22)' : T.muted, marginBottom: 10 }} strokeWidth={1.2} />
-      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 13, fontWeight: 600, margin: 0, color: dark ? 'rgba(255,255,255,0.20)' : T.muted }}>{label}</p>
-      {file && <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, margin: '6px 0 0', color: dark ? 'rgba(255,255,255,0.09)' : T.border, fontStyle: 'italic' }}>{file}</p>}
+function SectionHeading({ eyebrow, title, body, dark = false, center = false }) {
+  return (
+    <div className={`${center ? 'mx-auto text-center' : ''} max-w-3xl`}>
+      <p
+        className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${
+          dark ? 'text-[#91e7e0]' : 'text-[#3c7d8d]'
+        }`}
+      >
+        {eyebrow}
+      </p>
+      <h2
+        className={`mt-4 text-4xl leading-none tracking-[-0.05em] sm:text-5xl md:text-6xl ${
+          dark ? 'text-white' : 'text-[#10263a]'
+        }`}
+        style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+      >
+        {title}
+      </h2>
+      <p
+        className={`mt-5 text-base leading-8 sm:text-lg ${
+          dark ? 'text-white/72' : 'text-[#51697d]'
+        }`}
+      >
+        {body}
+      </p>
     </div>
-  </div>
-)
+  )
+}
 
-// ─── LOGO SLOT ────────────────────────────────────────────────────────────────
-// Reemplaza con: <img src="/logos/clinicaX.svg" style={{ height:30, opacity:0.40, filter:'brightness(0) invert(1)', objectFit:'contain' }} />
-
-const LogoSlot = ({ n }) => (
-  <div style={{ height: 32, minWidth: 108, borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-    <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, color: 'rgba(255,255,255,0.16)' }}>Logo {n}</span>
-  </div>
-)
-
-// ─── BROWSER CHROME ───────────────────────────────────────────────────────────
-
-const BrowserChrome = ({ url }) => (
-  <div style={{ ...glass({ background: 'rgba(8,22,42,0.88)' }), borderBottom: '1px solid rgba(255,255,255,0.09)', padding: '11px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-    <div style={{ display: 'flex', gap: 6 }}>
-      {['#e06060','#e0b560','rgba(255,255,255,0.18)'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-    </div>
-    <div style={{ flex: 1, ...glass({ borderRadius: 6, padding: '4px 13px', display: 'flex', alignItems: 'center', gap: 8 }) }}>
-      <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.teal }} />
-      <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, color: 'rgba(255,255,255,0.26)' }}>{url}</span>
-    </div>
-  </div>
-)
-
-// ─── NAVBAR ───────────────────────────────────────────────────────────────────
-
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false)
+function LandingNav() {
   const [open, setOpen] = useState(false)
-  const navItems = [
-    { label: 'Plataforma', section: 'funcionalidades' },
-    { label: 'Flujo diario', section: 'operacion' },
-    { label: 'Planes', to: '/planes' },
-    { label: 'Contacto', section: 'contacto' },
-  ]
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', fn)
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
-
-  const go = id => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-    setOpen(false)
-  }
 
   return (
-    <motion.nav
-      initial={{ y: -72, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 200,
-        transition: 'all 0.3s',
-        ...(scrolled
-          ? {
-              background: 'rgba(5,16,31,0.90)',
-              backdropFilter: 'blur(22px)',
-              WebkitBackdropFilter: 'blur(22px)',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
-            }
-          : { background: 'transparent' }),
-      }}
-    >
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px', height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${T.teal}, ${T.cyan})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(13,148,136,0.35)' }}>
-            <Stethoscope style={{ width: 17, height: 17, color: '#fff' }} strokeWidth={1.5} />
-          </div>
-          <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>Bourgelat</span>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#06111c]/78 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
+        <Link to="/" className="no-underline">
+          <BrandMark dark />
         </Link>
 
-        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 36 }}>
-          {navItems.map((item) => (
-            item.to ? (
-              <Link
-                key={item.label}
-                to={item.to}
-                style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <button
-                key={item.section}
-                onClick={() => go(item.section)}
-                style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 0.2s' }}
-                onMouseEnter={(event) => { event.target.style.color = '#fff' }}
-                onMouseLeave={(event) => { event.target.style.color = 'rgba(255,255,255,0.55)' }}
-              >
-                {item.label}
-              </button>
-            )
+        <nav className="hidden items-center gap-8 lg:flex">
+          {NAV_ITEMS.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="text-sm font-medium text-white/62 no-underline transition hover:text-white"
+            >
+              {item.label}
+            </a>
           ))}
-        </div>
+        </nav>
 
-        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 10 }}>
-          <Link to="/login" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.50)', textDecoration: 'none', padding: '8px 16px' }}>Iniciar sesion</Link>
-          <Link to="/registro" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 700, color: T.navy, background: `linear-gradient(135deg, ${T.cyan}, ${T.cyanLt})`, padding: '10px 22px', borderRadius: 9, textDecoration: 'none', boxShadow: '0 4px 18px rgba(34,211,238,0.24)' }}>
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link
+            to="/login"
+            className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/72 no-underline transition hover:border-white/20 hover:text-white"
+          >
+            Iniciar sesion
+          </Link>
+          <Link
+            to="/registro"
+            className="inline-flex items-center gap-2 rounded-full bg-[#effaf8] px-5 py-2.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
+          >
             Crear cuenta
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <button onClick={() => setOpen((value) => !value)} className="md:hidden" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', padding: 8 }}>
-          {open ? <X style={{ width: 20, height: 20 }} /> : <Menu style={{ width: 20, height: 20 }} />}
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-white lg:hidden"
+          aria-label="Abrir menu"
+        >
+          {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            style={{ background: 'rgba(5,16,31,0.97)', backdropFilter: 'blur(22px)', borderTop: '1px solid rgba(255,255,255,0.08)', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}
-          >
-            {navItems.map((item) => (
-              item.to ? (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={() => setOpen(false)}
-                  style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <button
-                  key={item.section}
-                  onClick={() => go(item.section)}
-                  style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.70)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
-                >
-                  {item.label}
-                </button>
-              )
+      {open ? (
+        <div className="border-t border-white/10 bg-[#06111c] px-5 py-5 lg:hidden">
+          <div className="flex flex-col gap-4">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="text-sm font-medium text-white/78 no-underline"
+              >
+                {item.label}
+              </a>
             ))}
-            <Link to="/registro" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 14, fontWeight: 700, color: T.navy, background: `linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding: '13px 20px', borderRadius: 9, textDecoration: 'none', textAlign: 'center', marginTop: 4 }}>
-              Crear cuenta
-            </Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
-  )
-}
-
-// ─── HERO ─────────────────────────────────────────────────────────────────────
-
-const Hero = () => {
-  const { scrollY } = useScroll()
-  const imgY = useTransform(scrollY, [0,600], [0,60])
-  const bgY  = useTransform(scrollY, [0,600], [0,-35])
-  return (
-    <section style={{ background: T.navy, minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '130px 28px 90px', position: 'relative', overflow: 'hidden' }}>
-      <motion.div style={{ position: 'absolute', inset: 0, y: bgY }}><MeshBg /></motion.div>
-
-      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
-
-        <FadeUp>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...glass({ borderRadius: 100, padding: '7px 20px', marginBottom: 48 }) }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.cyan, display: 'inline-block', boxShadow: `0 0 8px ${T.cyan}` }} />
-            <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, fontWeight: 700, color: T.cyanLt, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Software veterinario · Colombia</span>
-          </div>
-        </FadeUp>
-
-        <FadeUp delay={0.08}>
-          <h1 style={{ fontFamily: 'Cormorant Garamond', fontSize: 'clamp(52px,8vw,100px)', fontWeight: 700, color: '#fff', lineHeight: 1.02, letterSpacing: '-3px', margin: '0 0 28px', maxWidth: 860 }}>
-            Cada consulta,{' '}<span style={{ color: T.cyan }}>registrada.</span><br />
-            Cada cita,{' '}<em style={{ fontStyle: 'italic', color: 'rgba(255,255,255,0.55)' }}>sin complicaciones.</em>
-          </h1>
-        </FadeUp>
-
-        <FadeUp delay={0.16}>
-          <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 18, color: 'rgba(255,255,255,0.48)', lineHeight: 1.72, margin: '0 0 52px', maxWidth: 520 }}>
-            Citas, historias clínicas, inventario y facturación DIAN — todo en una plataforma. Hecho para veterinarios en Colombia.
-          </p>
-        </FadeUp>
-
-        <FadeUp delay={0.22}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 72 }}>
-            <Link to="/registro" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 700, color: T.navy, background: `linear-gradient(135deg, ${T.cyan}, ${T.cyanLt})`, padding: '15px 32px', borderRadius: 11, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 32px rgba(34,211,238,0.28)' }}>
-              Empieza gratis <ArrowRight style={{ width:16,height:16 }}/>
-            </Link>
-            <button onClick={() => document.getElementById('funcionalidades')?.scrollIntoView({ behavior:'smooth' })}
-              style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.65)', ...glass({ padding: '15px 28px', borderRadius: 11 }), cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              Ver cómo funciona <ChevronRight style={{ width:16,height:16 }}/>
-            </button>
-          </div>
-        </FadeUp>
-
-        {/* Stat pills de vidrio */}
-        <FadeUp delay={0.30}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 80 }}>
-            {[
-              { n: '< 3 min', label: 'por consulta completa' },
-              { n: 'Todas',   label: 'las especies' },
-              { n: 'DIAN',    label: 'facturación incluida' },
-            ].map(s => (
-              <div key={s.n} style={{ ...glass({ borderRadius: 14, padding: '18px 26px' }) }}>
-                <div style={{ fontFamily: 'Cormorant Garamond', fontSize: 34, fontWeight: 700, color: T.cyanLt, letterSpacing: '-1px', lineHeight: 1 }}>{s.n}</div>
-                <div style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, color: 'rgba(255,255,255,0.36)', marginTop: 7 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </FadeUp>
-
-        {/* Dashboard — reemplaza con screenshot */}
-        <FadeUp delay={0.36}>
-          <motion.div style={{ y: imgY }}>
-            <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 60px 140px rgba(0,0,0,0.60), 0 0 0 1px rgba(34,211,238,0.08)' }}>
-              <BrowserChrome url="app.bourgelat.co/dashboard" />
-              {/*
-                ── REEMPLAZA CON TU SCREENSHOT ──────────────────────────────────
-                <img src="/screenshots/dashboard.png" alt="Dashboard Bourgelat"
-                  style={{ width:'100%', display:'block' }} />
-                ─────────────────────────────────────────────────────────────────
-              */}
-              <Shot label="Screenshot del dashboard" file="/screenshots/dashboard.png" aspect="16/7" />
+            <div className="mt-2 flex flex-col gap-3">
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/72 no-underline"
+              >
+                Iniciar sesion
+              </Link>
+              <Link
+                to="/registro"
+                onClick={() => setOpen(false)}
+                className="rounded-full bg-[#effaf8] px-4 py-3 text-center text-sm font-semibold text-[#0d2435] no-underline"
+              >
+                Crear cuenta
+              </Link>
             </div>
-          </motion.div>
-        </FadeUp>
-      </div>
-    </section>
+          </div>
+        </div>
+      ) : null}
+    </header>
   )
 }
 
-// ─── LOGOS ────────────────────────────────────────────────────────────────────
-
-void Hero
-void LogoSlot
-
-const LogosBar = () => (
-  <section style={{ background: T.navyMid, borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '28px 28px' }}>
-    <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, justifyContent: 'center' }}>
-      <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.10em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-        Operacion conectada
-      </span>
-      {[
-        'Recepcion y agenda',
-        'Propietarios y mascotas',
-        'Historia clinica',
-        'Inventario',
-        'Caja y facturacion',
-        'Reportes',
-      ].map((item) => (
-        <div key={item} style={{ ...glass({ borderRadius: 999, padding: '10px 16px', background: 'rgba(255,255,255,0.06)' }) }}>
-          <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.68)' }}>
-            {item}
-          </span>
-        </div>
-      ))}
-    </div>
-  </section>
-)
-
-// ─── FEATURES ─────────────────────────────────────────────────────────────────
-
-const TABS = [
-  { id:'agenda',     label:'Agenda',           icon:Calendar,  url:'agenda',      body:'Agenda de citas por veterinario, estados de atencion y reprogramacion sin perder el ritmo de recepcion.' },
-  { id:'historia',   label:'Historia clinica', icon:FileText,  url:'historias',   body:'Motivo de consulta, diagnostico, tratamiento, antecedentes y evolucion del paciente en un solo expediente.' },
-  { id:'inventario', label:'Inventario',       icon:Package,   url:'inventario',  body:'Medicamentos, insumos y movimientos conectados a la operacion para evitar faltantes en consulta y farmacia.' },
-  { id:'factura',    label:'Caja y facturacion', icon:Receipt, url:'facturacion', body:'Cobro, factura interna y facturacion electronica desde el mismo flujo cuando la clinica lo necesita.' },
-  { id:'reportes',   label:'Reportes',         icon:BarChart3, url:'reportes',    body:'Vista general de ingresos, citas, inventario y actividad diaria para decidir con informacion de la clinica.' },
-]
-const DURATION = 5200
-
-const Features = () => {
-  const [active, setActive] = useState(0)
-  const [progress, setProgress] = useState(0)
-  const [auto, setAuto] = useState(true)
-  const rafRef = useRef(null)
-  const t0Ref = useRef(null)
-  const progressRef = useRef(0)
-
-  useEffect(() => {
-    progressRef.current = progress
-  }, [progress])
-
-  useEffect(() => {
-    if (!auto) return
-    t0Ref.current = Date.now() - (progressRef.current / 100) * DURATION
-    const tick = () => {
-      const p = Math.min(((Date.now()-t0Ref.current)/DURATION)*100, 100)
-      setProgress(p)
-      if (p >= 100) { setActive(a=>(a+1)%TABS.length); setProgress(0); t0Ref.current=Date.now() }
-      rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [auto, active])
-
-  const pick = i => { cancelAnimationFrame(rafRef.current); setActive(i); setProgress(0); setAuto(false) }
-
+function HeroPreview() {
   return (
-    <section id="funcionalidades" style={{ background: T.navyMid, padding: '110px 28px', position: 'relative', overflow: 'hidden' }}>
-      <MeshBg />
-      <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+    <div className="relative">
+      <div className="overflow-hidden rounded-[34px] border border-white/10 bg-white/6 p-3 shadow-[0_40px_120px_rgba(3,10,18,0.42)]">
+        <div className="relative min-h-[520px] overflow-hidden rounded-[28px]">
+          <img
+            src={landingHeroConsultation}
+            alt="Veterinario conversando con la tutora mientras revisa a su perro en consulta"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,17,28,0.08)_0%,rgba(6,17,28,0.3)_40%,rgba(6,17,28,0.86)_100%)]" />
 
-        <FadeUp style={{ textAlign:'center', marginBottom:60 }}>
-          <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.cyan, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Funcionalidades</p>
-          <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:'#fff', lineHeight:1.06, letterSpacing:'-2px', margin:'0 0 18px' }}>
-            La plataforma que conecta<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>recepcion, consulta y caja</em>
-          </h2>
-          <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:'rgba(255,255,255,0.42)', lineHeight:1.65, maxWidth:460, margin:'0 auto' }}>
-            Bourgelat esta pensado para la jornada completa de la clinica, no para resolver una sola pantalla bonita.
-          </p>
-        </FadeUp>
-
-        {/* ── GLASS PILLS ─────────────────────────────────────────────────── */}
-        <FadeUp>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center', marginBottom:52 }}>
-            {TABS.map((f,i) => {
-              const Icon = f.icon
-              const on = active === i
-              return (
-                <button key={f.id} onClick={() => pick(i)} style={{
-                  position:'relative', overflow:'hidden',
-                  fontFamily:'Plus Jakarta Sans', fontSize:13, fontWeight:600,
-                  padding:'11px 22px', borderRadius:100, cursor:'pointer',
-                  display:'inline-flex', alignItems:'center', gap:7,
-                  transition:'all 0.25s ease',
-                  // GLASS — inactivo: vidrio neutro / activo: vidrio con tinte cyan
-                  background: on ? 'rgba(34,211,238,0.11)' : 'rgba(255,255,255,0.05)',
-                  backdropFilter:'blur(18px)', WebkitBackdropFilter:'blur(18px)',
-                  border: on ? '1.5px solid rgba(34,211,238,0.38)' : '1px solid rgba(255,255,255,0.11)',
-                  color: on ? T.cyanLt : 'rgba(255,255,255,0.48)',
-                  boxShadow: on ? '0 4px 22px rgba(34,211,238,0.14), inset 0 1px 0 rgba(255,255,255,0.10)' : 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                }}>
-                  <Icon style={{ width:14, height:14 }} strokeWidth={1.8} />
-                  <span style={{ position:'relative', zIndex:1 }}>{f.label}</span>
-                  {/* Barra de progreso estilo vidrio iluminado */}
-                  {auto && on && (
-                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg, rgba(34,211,238,0.16), rgba(103,232,249,0.06))', transformOrigin:'left', transform:`scaleX(${progress/100})`, transition:'transform 50ms linear' }} />
-                  )}
-                </button>
-              )
-            })}
+          <div className="absolute left-5 top-5 flex flex-wrap gap-2">
+            {['Recepcion', 'Consulta', 'Caja', 'Seguimiento'].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/14 bg-white/12 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white"
+              >
+                {item}
+              </span>
+            ))}
           </div>
-        </FadeUp>
 
-        {/* Grid: panel info + screenshot */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
-          <FadeUp>
-            <AnimatePresence mode="wait">
-              <motion.div key={active+'i'} initial={{ opacity:0, x:-16 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-16 }} transition={{ duration:0.3 }}
-                style={{ ...glass({ borderRadius:18, padding:'36px', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.28)' }) }}>
-                <div style={{ width:52, height:52, borderRadius:14, background:`linear-gradient(135deg,${T.teal},${T.cyan})`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:24, boxShadow:'0 6px 20px rgba(13,148,136,0.32)' }}>
-                  {(() => { const Icon=TABS[active].icon; return <Icon style={{ width:25,height:25,color:'#fff' }} strokeWidth={1.5}/> })()}
-                </div>
-                <h3 style={{ fontFamily:'Cormorant Garamond', fontSize:36, fontWeight:700, color:'#fff', letterSpacing:'-1px', lineHeight:1.1, margin:'0 0 16px' }}>{TABS[active].label}</h3>
-                <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, color:'rgba(255,255,255,0.48)', lineHeight:1.72, margin:'0 0 30px' }}>{TABS[active].body}</p>
-                <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:13, fontWeight:700, color:T.cyanLt, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6, borderBottom:'1.5px solid rgba(34,211,238,0.28)', paddingBottom:3 }}>
-                  Crear cuenta principal <ArrowRight style={{ width:13,height:13 }}/>
-                </Link>
-              </motion.div>
-            </AnimatePresence>
-          </FadeUp>
-
-          <div className="lg:col-span-2">
-            <FadeUp delay={0.08}>
-              <AnimatePresence mode="wait">
-                <motion.div key={active+'s'} initial={{ opacity:0, scale:0.98 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
-                  <div style={{ borderRadius:16, overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.50), 0 0 0 1px rgba(34,211,238,0.07)' }}>
-                    <BrowserChrome url={`app.bourgelat.co/${TABS[active].url}`} />
-                    {/*
-                      ── REEMPLAZA CON SCREENSHOT ──────────────────────────────
-                      <img src={`/screenshots/${TABS[active].id}.png`}
-                        alt={TABS[active].label}
-                        style={{ width:'100%', display:'block' }} />
-                      ─────────────────────────────────────────────────────────
-                    */}
-                    <Shot label={`Screenshot: ${TABS[active].label}`} file={`/screenshots/${TABS[active].id}.png`} />
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </FadeUp>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── GRADIENTE SEPARADOR ──────────────────────────────────────────────────────
-
-const Grad = ({ from, to }) => (
-  <div style={{ background:`linear-gradient(to bottom, ${from}, ${to})`, height:80, pointerEvents:'none' }} />
-)
-
-// ─── POR QUÉ ──────────────────────────────────────────────────────────────────
-
-const Why = () => (
-  <section id="por-que" style={{ background:T.cream, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
-    <div style={{ position:'absolute', top:'-10%', right:'-5%', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)', pointerEvents:'none' }} />
-    <div style={{ position:'absolute', bottom:0, left:'-8%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(34,211,238,0.05) 0%, transparent 70%)', pointerEvents:'none' }} />
-    <div style={{ maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1 }}>
-      <FadeUp style={{ textAlign:'center', marginBottom:64 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.teal, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Por qué Bourgelat</p>
-        <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:T.text, lineHeight:1.06, letterSpacing:'-2px', margin:'0 0 18px' }}>
-          Hecho para la operacion real<br /><em style={{ fontStyle:'italic', color:T.teal }}>de una clinica veterinaria</em>
-        </h2>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:T.muted, lineHeight:1.65, maxWidth:540, margin:'0 auto' }}>
-          Desde la recepcion hasta el cierre del dia, cada modulo responde a flujos que ya existen en tu equipo.
-        </p>
-      </FadeUp>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {[
-          { icon:Globe,   title:'Propietarios y mascotas conectados', body:'La cita, la historia y la factura comparten el mismo contexto del tutor y del paciente.' },
-          { icon:Shield,  title:'Historias con trazabilidad',         body:'Bloqueo de historias, auditoria de cambios y seguimiento clinico sin perder el contexto de la consulta.' },
-          { icon:Clock,   title:'Menos tiempo en digitacion',         body:'La informacion queda lista para consulta, seguimiento y cobro sin abrir varias herramientas.' },
-          { icon:Layers,  title:'Roles por clinica',                  body:'Admin, veterinario, auxiliar y facturador con acceso segun la responsabilidad real de cada perfil.' },
-          { icon:Receipt, title:'Caja y factura en el mismo flujo',   body:'Consulta, cobro y facturacion electronica cuando aplique, sin rehacer los mismos datos dos veces.' },
-          { icon:Bell,    title:'Inventario mas vigilado',            body:'Productos, insumos y movimientos visibles para que el faltante no aparezca cuando ya tienes al paciente en mesa.' },
-        ].map((item,i) => {
-          const Icon = item.icon
-          return (
-            <FadeUp key={item.title} delay={i*0.07}>
-              <motion.div whileHover={{ y:-5, boxShadow:'0 18px 50px rgba(13,148,136,0.09)' }}
-                style={{ background:'#fff', border:`1px solid ${T.border}`, borderRadius:16, padding:'30px 28px', transition:'all 0.25s' }}>
-                <div style={{ width:48, height:48, borderRadius:13, background:`linear-gradient(135deg,${T.teal}18,${T.cyan}18)`, border:`1px solid ${T.teal}20`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:22 }}>
-                  <Icon style={{ width:22,height:22,color:T.teal }} strokeWidth={1.5}/>
-                </div>
-                <h3 style={{ fontFamily:'Plus Jakarta Sans', fontSize:16, fontWeight:700, color:T.text, margin:'0 0 10px', letterSpacing:'-0.3px' }}>{item.title}</h3>
-                <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, color:T.muted, lineHeight:1.72, margin:0 }}>{item.body}</p>
-              </motion.div>
-            </FadeUp>
-          )
-        })}
-      </div>
-    </div>
-  </section>
-)
-
-// ─── CÓMO FUNCIONA ────────────────────────────────────────────────────────────
-
-const How = () => (
-  <section id="operacion" style={{ background:T.navyLt, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
-    <MeshBg />
-    <div style={{ maxWidth:940, margin:'0 auto', position:'relative', zIndex:1 }}>
-      <FadeUp style={{ textAlign:'center', marginBottom:72 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.cyan, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Comenzar</p>
-        <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:'#fff', lineHeight:1.06, letterSpacing:'-2px', margin:0 }}>
-          Arranca con una cuenta principal<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>y entra a operar mas rapido</em>
-        </h2>
-      </FadeUp>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[
-          { n:'01', title:'Registra la clinica',       body:'Nombre comercial, responsable, correo institucional y datos basicos para dejar creada la cuenta principal.' },
-          { n:'02', title:'Define el acceso seguro',  body:'El administrador entra con correo propio y una contrasena fuerte validada desde el registro.' },
-          { n:'03', title:'Entra y organiza la operacion', body:'Desde el dashboard podras ordenar agenda, pacientes, historias, caja e inventario desde el primer acceso.' },
-        ].map((s,i) => (
-          <FadeUp key={s.n} delay={i*0.13}>
-            <motion.div whileHover={{ y:-5 }}
-              style={{ ...glass({ borderRadius:18, padding:'36px 28px', textAlign:'center', boxShadow:'inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 50px rgba(0,0,0,0.24)' }) }}>
-              <div style={{ width:66, height:66, borderRadius:18, background:'rgba(34,211,238,0.09)', backdropFilter:'blur(12px)', border:'1px solid rgba(34,211,238,0.22)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px' }}>
-                <span style={{ fontFamily:'Cormorant Garamond', fontSize:32, fontWeight:700, color:T.cyanLt, lineHeight:1 }}>{s.n}</span>
-              </div>
-              <h3 style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, fontWeight:700, color:'#fff', margin:'0 0 12px', letterSpacing:'-0.3px' }}>{s.title}</h3>
-              <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, color:'rgba(255,255,255,0.44)', lineHeight:1.72, margin:0 }}>{s.body}</p>
-            </motion.div>
-          </FadeUp>
-        ))}
-      </div>
-      <FadeUp delay={0.42} style={{ textAlign:'center', marginTop:60 }}>
-        <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, fontWeight:700, color:T.navy, background:`linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding:'15px 36px', borderRadius:11, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 8px 30px rgba(34,211,238,0.24)' }}>
-          Crear cuenta de la clinica <ArrowRight style={{ width:16,height:16 }}/>
-        </Link>
-      </FadeUp>
-    </div>
-  </section>
-)
-
-// ─── TESTIMONIOS ──────────────────────────────────────────────────────────────
-
-const Testimonials = () => (
-  <section style={{ background:T.cream, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
-    <div style={{ position:'absolute', top:'-8%', left:'50%', transform:'translateX(-50%)', width:700, height:450, borderRadius:'50%', background:'radial-gradient(circle, rgba(13,148,136,0.05) 0%, transparent 70%)', pointerEvents:'none' }} />
-    <div style={{ maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1 }}>
-      <FadeUp style={{ textAlign:'center', marginBottom:64 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:T.teal, letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 18px' }}>Momentos clave del dia</p>
-        <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(38px,5.5vw,64px)', fontWeight:700, color:T.text, lineHeight:1.06, letterSpacing:'-2px', margin:0 }}>
-          Pensado para escenas que si pasan<br /><em style={{ fontStyle:'italic', color:T.teal }}>en una clinica veterinaria</em>
-        </h2>
-      </FadeUp>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          {
-            area: 'Recepcion',
-            title: 'Agenda clara desde la primera llamada',
-            body: 'La recepcion puede ver el estado de cada cita, reprogramar sin desorden y abrir el contexto del paciente antes de que llegue.',
-            points: ['Citas por veterinario', 'Estados visibles', 'Tutor y mascota en contexto'],
-          },
-          {
-            area: 'Consulta',
-            title: 'Historia completa mientras atiendes',
-            body: 'Durante la consulta el veterinario registra motivo, diagnostico, tratamiento y antecedentes sin perder continuidad clinica.',
-            points: ['Evolucion del paciente', 'Historial trazable', 'Menos doble digitacion'],
-          },
-          {
-            area: 'Cierre de caja',
-            title: 'Cobro y seguimiento sin repetir datos',
-            body: 'Al finalizar, la informacion ya esta lista para caja, factura y seguimiento sin volver a escribir lo mismo en otro sistema.',
-            points: ['Caja conectada', 'Factura integrada', 'Base lista para reportes'],
-          },
-        ].map((card,i) => (
-          <FadeUp key={i} delay={i*0.09}>
-            <div style={{ background:'#fff', border:`1px solid ${T.border}`, borderRadius:16, padding:'32px', display:'flex', flexDirection:'column', height:'100%', boxSizing:'border-box', boxShadow:'0 4px 20px rgba(13,148,136,0.04)' }}>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'9px 14px', borderRadius:999, background:'rgba(13,148,136,0.08)', border:'1px solid rgba(13,148,136,0.12)', marginBottom:22, width:'fit-content' }}>
-                <span style={{ width:8, height:8, borderRadius:'50%', background:T.teal }} />
-                <span style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, fontWeight:700, color:T.teal, letterSpacing:'0.08em', textTransform:'uppercase' }}>
-                  {card.area}
-                </span>
-              </div>
-              <h3 style={{ fontFamily:'Cormorant Garamond', fontSize:32, color:T.text, lineHeight:1.02, letterSpacing:'-1px', margin:'0 0 16px' }}>
-                {card.title}
+          <div className="absolute bottom-5 left-5 right-5 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[26px] border border-white/12 bg-[#091827]/72 p-5 backdrop-blur-xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8fe0da]">
+                Consulta activa
+              </p>
+              <h3
+                className="mt-3 text-3xl leading-none tracking-[-0.04em] text-white"
+                style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              >
+                Todo el contexto, sin abrir cinco ventanas.
               </h3>
-              <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:14, color:T.muted, lineHeight:1.72, margin:'0 0 24px' }}>
-                {card.body}
-              </p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:'auto' }}>
-                {card.points.map((point) => (
-                  <div key={point} style={{ padding:'8px 12px', borderRadius:999, background:'#f5f7f9', border:'1px solid #e3e8ee' }}>
-                    <span style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, fontWeight:600, color:'#415062' }}>
-                      {point}
-                    </span>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Antecedentes visibles', 'Notas del dia', 'Proximo paso claro'].map((item) => (
+                  <div
+                    key={item}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-2 text-sm text-white/78"
+                  >
+                    <Check className="h-3.5 w-3.5 text-[#91e7e0]" />
+                    {item}
                   </div>
                 ))}
               </div>
             </div>
-          </FadeUp>
-        ))}
-      </div>
-    </div>
-  </section>
-)
 
-// ─── CTA FINAL ────────────────────────────────────────────────────────────────
-
-const CTA = () => (
-  <section id="contacto" style={{ background:T.navy, padding:'110px 28px', position:'relative', overflow:'hidden' }}>
-    <MeshBg />
-    <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(13,148,136,0.11) 0%, transparent 70%)', pointerEvents:'none' }} />
-    <div style={{ maxWidth:680, margin:'0 auto', textAlign:'center', position:'relative', zIndex:1 }}>
-      <FadeUp>
-        <div style={{ width:58, height:58, borderRadius:16, background:`linear-gradient(135deg,${T.teal},${T.cyan})`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 36px', boxShadow:'0 8px 28px rgba(13,148,136,0.35)' }}>
-          <Stethoscope style={{ width:28,height:28,color:'#fff' }} strokeWidth={1.5}/>
-        </div>
-        <h2 style={{ fontFamily:'Cormorant Garamond', fontSize:'clamp(44px,7.5vw,80px)', fontWeight:700, color:'#fff', lineHeight:1.02, letterSpacing:'-3px', margin:'0 0 22px' }}>
-          Lista para centralizar<br /><em style={{ fontStyle:'italic', color:T.cyanLt }}>la operacion de tu clinica.</em>
-        </h2>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:17, color:'rgba(255,255,255,0.42)', lineHeight:1.65, maxWidth:460, margin:'0 auto 52px' }}>
-          Crea la cuenta principal, deja lista la base de acceso y empieza a organizar agenda, pacientes, historias, caja e inventario.
-        </p>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:14, justifyContent:'center' }}>
-          <Link to="/registro" style={{ fontFamily:'Plus Jakarta Sans', fontSize:16, fontWeight:700, color:T.navy, background:`linear-gradient(135deg,${T.cyan},${T.cyanLt})`, padding:'16px 36px', borderRadius:12, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8, boxShadow:'0 10px 36px rgba(34,211,238,0.27)' }}>
-            Registrar mi clinica <ArrowRight style={{ width:17,height:17 }}/>
-          </Link>
-          <a href="mailto:hola@bourgelat.co" style={{ fontFamily:'Plus Jakarta Sans', fontSize:15, fontWeight:600, color:'rgba(255,255,255,0.58)', ...glass({ padding:'16px 30px', borderRadius:12 }), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8 }}>
-            Hablar con el equipo
-          </a>
-        </div>
-      </FadeUp>
-    </div>
-  </section>
-)
-
-// ─── FOOTER ───────────────────────────────────────────────────────────────────
-
-const Footer = () => (
-  <footer style={{ background:'#030b14', padding:'60px 28px 32px', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-    <div style={{ maxWidth:1100, margin:'0 auto' }}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10" style={{ marginBottom:50 }}>
-        <div>
-          {/* ── LOGO — reemplaza con <img src="/logo.svg" style={{ height:30 }} /> ── */}
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:`linear-gradient(135deg,${T.teal},${T.cyan})`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Stethoscope style={{ width:15,height:15,color:'#fff' }} strokeWidth={1.5}/>
-            </div>
-            <span style={{ fontFamily:'Cormorant Garamond', fontSize:20, fontWeight:700, color:'#fff', letterSpacing:'-0.3px' }}>Bourgelat</span>
-          </div>
-          <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.27)', lineHeight:1.72, margin:0 }}>
-            Software para clinicas veterinarias en Colombia. Agenda, pacientes, historias, inventario, caja y reportes en un mismo entorno.
-          </p>
-        </div>
-        {[
-          { title:'Producto', links:[{ label:'Plataforma', to:'/' }, { label:'Planes', to:'/planes' }, { label:'Iniciar sesion', to:'/login' }, { label:'Registro', to:'/registro' }] },
-          { title:'Empresa', links:[{ label:'Nosotros', to:'/nosotros' }, { label:'Contacto', href:'mailto:hola@bourgelat.co' }, { label:'Hablar con el equipo', href:'mailto:hola@bourgelat.co?subject=Quiero%20conocer%20Bourgelat' }] },
-          { title:'Legal', links:[{ label:'Privacidad', to:'/privacidad' }, { label:'Terminos de uso', to:'/terminos' }, { label:'Politica de cookies', to:'/cookies' }] },
-        ].map(col => (
-          <div key={col.title}>
-            <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.22)', letterSpacing:'0.10em', textTransform:'uppercase', margin:'0 0 18px' }}>{col.title}</p>
-            {col.links.map((link) => (
-              link.to ? (
-                <Link
-                  key={`${col.title}-${link.label}`}
-                  to={link.to}
-                  style={{ display:'block', fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.38)', margin:'0 0 12px', textDecoration:'none' }}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={`${col.title}-${link.label}`}
-                  href={link.href}
-                  style={{ display:'block', fontFamily:'Plus Jakarta Sans', fontSize:13, color:'rgba(255,255,255,0.38)', margin:'0 0 12px', textDecoration:'none' }}
-                >
-                  {link.label}
-                </a>
-              )
-            ))}
-          </div>
-        ))}
-      </div>
-      <div style={{ borderTop:'1px solid rgba(255,255,255,0.05)', paddingTop:24, display:'flex', flexWrap:'wrap', justifyContent:'space-between', gap:10 }}>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:'rgba(255,255,255,0.17)', margin:0 }}>© 2026 Bourgelat · Operacion veterinaria en Colombia</p>
-        <p style={{ fontFamily:'Plus Jakarta Sans', fontSize:12, color:'rgba(255,255,255,0.17)', margin:0 }}>hola@bourgelat.co</p>
-      </div>
-    </div>
-  </footer>
-)
-
-// ─── EXPORT ───────────────────────────────────────────────────────────────────
-
-const LandingHero = () => {
-  const { scrollY } = useScroll()
-  const imgY = useTransform(scrollY, [0, 600], [0, 40])
-  const cardY = useTransform(scrollY, [0, 600], [0, 24])
-  const bgY = useTransform(scrollY, [0, 600], [0, -35])
-
-  return (
-    <section
-      style={{
-        background: T.navy,
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '130px 28px 90px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <motion.div style={{ position: 'absolute', inset: 0, y: bgY }}>
-        <MeshBg />
-      </motion.div>
-
-      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.92fr)] xl:gap-16">
-          <div>
-            <FadeUp>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  ...glass({ borderRadius: 100, padding: '7px 20px', marginBottom: 40 }),
-                }}
-              >
-                <span
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: T.cyan,
-                    display: 'inline-block',
-                    boxShadow: `0 0 8px ${T.cyan}`,
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: T.cyanLt,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Operacion veterinaria en Colombia
+            <div className="rounded-[26px] border border-white/12 bg-[#eff5fb] p-5 text-[#11293c] shadow-[0_16px_44px_rgba(5,15,27,0.18)]">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f7487]">
+                  Cierre del dia
+                </p>
+                <span className="rounded-full bg-[#dff4ef] px-2.5 py-1 text-[11px] font-semibold text-[#24544f]">
+                  estable
                 </span>
               </div>
-            </FadeUp>
-
-            <FadeUp delay={0.08}>
-              <h1
-                style={{
-                  fontFamily: 'Cormorant Garamond',
-                  fontSize: 'clamp(50px,8vw,96px)',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.01,
-                  letterSpacing: '-3px',
-                  margin: '0 0 24px',
-                  maxWidth: 720,
-                }}
-              >
-                Gestion clinica clara para una atencion mas humana.
-              </h1>
-            </FadeUp>
-
-            <FadeUp delay={0.16}>
-              <p
-                style={{
-                  fontFamily: 'Plus Jakarta Sans',
-                  fontSize: 18,
-                  color: 'rgba(255,255,255,0.56)',
-                  lineHeight: 1.72,
-                  margin: '0 0 42px',
-                  maxWidth: 560,
-                }}
-              >
-                Agenda, pacientes, historia clinica, inventario, caja y seguimiento en un mismo entorno. Pensado para clinicas veterinarias que quieren orden, trazabilidad y confianza desde la primera cita.
-              </p>
-            </FadeUp>
-
-            <FadeUp delay={0.22}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 42 }}>
-                <Link
-                  to="/registro"
-                  style={{
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: T.navy,
-                    background: `linear-gradient(135deg, ${T.cyan}, ${T.cyanLt})`,
-                    padding: '15px 32px',
-                    borderRadius: 11,
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    boxShadow: '0 8px 32px rgba(34,211,238,0.28)',
-                  }}
-                >
-                  Crear cuenta principal <ArrowRight style={{ width: 16, height: 16 }} />
-                </Link>
-                <button
-                  onClick={() => document.getElementById('operacion')?.scrollIntoView({ behavior: 'smooth' })}
-                  style={{
-                    fontFamily: 'Plus Jakarta Sans',
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: 'rgba(255,255,255,0.72)',
-                    ...glass({ padding: '15px 28px', borderRadius: 11 }),
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                  }}
-                >
-                  Ver flujo completo <ChevronRight style={{ width: 16, height: 16 }} />
-                </button>
-              </div>
-            </FadeUp>
-
-            <FadeUp delay={0.3}>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="mt-4 grid gap-3">
                 {[
-                  { n: '< 3 min', label: 'para registrar una consulta completa' },
-                  { n: '1 historia', label: 'para mantener trazabilidad clinica' },
-                  { n: '1 flujo', label: 'desde la consulta hasta el seguimiento' },
-                ].map((item) => (
-                  <div key={item.n} style={{ ...glass({ borderRadius: 16, padding: '18px 22px' }) }}>
-                    <div
-                      style={{
-                        fontFamily: 'Cormorant Garamond',
-                        fontSize: 34,
-                        fontWeight: 700,
-                        color: T.cyanLt,
-                        letterSpacing: '-1px',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {item.n}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 12,
-                        color: 'rgba(255,255,255,0.42)',
-                        marginTop: 7,
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {item.label}
-                    </div>
+                  ['Agenda', 'Citas confirmadas y sin cruces'],
+                  ['Caja', 'Cobro y trazabilidad en el mismo flujo'],
+                  ['Seguimiento', 'Pendientes visibles antes de salir'],
+                ].map(([label, text]) => (
+                  <div key={label} className="rounded-[20px] border border-[#d6e3ed] bg-white p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#648299]">
+                      {label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[#24435c]">{text}</p>
                   </div>
                 ))}
               </div>
-            </FadeUp>
+            </div>
           </div>
-
-          <FadeUp delay={0.18}>
-            <motion.div style={{ y: imgY }}>
-              <div className="relative min-h-[560px] lg:min-h-[660px]">
-                <div
-                  style={{
-                    ...glass({
-                      background: 'rgba(255,255,255,0.08)',
-                      borderRadius: 30,
-                      padding: 14,
-                      boxShadow: '0 48px 120px rgba(0,0,0,0.38)',
-                    }),
-                  }}
-                >
-                  <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 24, minHeight: 560 }}>
-                    <img
-                      src={landingHeroConsultation}
-                      alt="Veterinario conversando con la tutora mientras revisa a su perro en consulta"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg,rgba(7,16,27,0.04)_0%,rgba(7,16,27,0.18)_42%,rgba(7,16,27,0.72)_100%)',
-                      }}
-                    />
-
-                    <div style={{ position: 'absolute', top: 20, left: 20, right: 20, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                      {['Recepcion y agenda', 'Consulta y evolucion', 'Caja y seguimiento'].map((item) => (
-                        <div key={item} style={{ ...glass({ borderRadius: 999, padding: '9px 14px', background: 'rgba(255,255,255,0.12)' }) }}>
-                          <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: 12, fontWeight: 600, color: '#fff' }}>
-                            {item}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute left-4 right-4 top-[108px] md:right-auto md:w-[340px] lg:-left-10 lg:top-[162px] lg:w-[380px] xl:-left-14">
-                  <div style={{ ...glass({ borderRadius: 26, padding: '20px 22px 18px', background: 'rgba(9,18,29,0.72)', boxShadow: '0 28px 60px rgba(0,0,0,0.26)' }) }}>
-                    <p
-                      style={{
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: T.cyanLt,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        margin: 0,
-                      }}
-                    >
-                      Experiencia para el cliente
-                    </p>
-                    <h2
-                      style={{
-                        fontFamily: 'Cormorant Garamond',
-                        fontSize: 34,
-                        lineHeight: 0.98,
-                        letterSpacing: '-1.5px',
-                        color: '#fff',
-                        margin: '12px 0 10px',
-                      }}
-                    >
-                      Orden para tu equipo, confianza para el tutor.
-                    </h2>
-                    <p
-                      style={{
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                        color: 'rgba(255,255,255,0.68)',
-                        margin: 0,
-                        maxWidth: 320,
-                      }}
-                    >
-                      Agenda, consulta, cobro y seguimiento en una experiencia mas clara y profesional para todo el frente de atencion.
-                    </p>
-                  </div>
-                </div>
-
-                <motion.div className="hidden lg:block" style={{ position: 'absolute', left: 0, right: '18%', bottom: -54, y: cardY }}>
-                  <div style={{ background: '#f8fafc', borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.28)' }}>
-                    <BrowserChrome url="app.bourgelat.co/dashboard" />
-                    <Shot label="Vista general de agenda, pacientes y caja" aspect="16/8" dark={false} />
-                  </div>
-                </motion.div>
-
-                <motion.div className="hidden xl:block" style={{ position: 'absolute', top: 28, right: -18, y: cardY }}>
-                  <div style={{ width: 240, ...glass({ background: 'rgba(8,22,42,0.76)', borderRadius: 24, padding: 12 }) }}>
-                    <div style={{ overflow: 'hidden', borderRadius: 18 }}>
-                      <img
-                        src={registerDetail}
-                        alt="Paciente felino en atencion clinica"
-                        style={{ width: '100%', height: 128, objectFit: 'cover', display: 'block' }}
-                      />
-                    </div>
-                    <p
-                      style={{
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: T.cyanLt,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        margin: '12px 0 8px',
-                      }}
-                    >
-                      Bienestar y seguimiento
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        color: 'rgba(255,255,255,0.68)',
-                        margin: 0,
-                      }}
-                    >
-                      Procesos mas amables para caninos, felinos y sus tutores.
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          </FadeUp>
         </div>
       </div>
-    </section>
+
+      <div className="absolute -bottom-12 -right-4 hidden w-[240px] rounded-[28px] border border-[#d4e3ef] bg-white p-3 shadow-[0_24px_70px_rgba(8,25,39,0.18)] xl:block">
+        <div className="overflow-hidden rounded-[22px]">
+          <img
+            src={registerDetail}
+            alt="Paciente felino en una consulta veterinaria"
+            className="h-36 w-full object-cover"
+          />
+        </div>
+        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5f7a8f]">
+          Bienestar y seguimiento
+        </p>
+        <p className="mt-2 text-sm leading-6 text-[#27425a]">
+          Una experiencia mas ordenada para el equipo tambien se siente mejor para el tutor y para
+          el paciente.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function FeatureMockup() {
+  return (
+    <div className="rounded-[34px] border border-[#d6e3ee] bg-white p-5 shadow-[0_26px_80px_rgba(8,25,39,0.08)]">
+      <div className="rounded-[26px] border border-[#dce7f0] bg-[#f7fafc] p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#608093]">
+              Vista diaria
+            </p>
+            <h3
+              className="mt-2 text-3xl leading-none tracking-[-0.04em] text-[#10263a]"
+              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+            >
+              La operacion se siente conectada.
+            </h3>
+          </div>
+          <div className="rounded-full bg-[#e6f7f3] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#27625d]">
+            lista para trabajar
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="rounded-[24px] bg-[#0c1d2d] p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91e7e0]">
+                    Agenda del dia
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">Consulta, hospitalizacion y control</p>
+                </div>
+                <Calendar className="h-5 w-5 text-[#91e7e0]" />
+              </div>
+              <div className="mt-4 space-y-3">
+                {[
+                  '08:00 - Control posoperatorio',
+                  '10:30 - Examen general felino',
+                  '15:00 - Seguimiento respiratorio',
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-sm text-white/78"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[22px] border border-[#d5e3ed] bg-white p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
+                  Inventario
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#28445a]">
+                  Reposiciones y consumos ligados a la actividad real de la clinica.
+                </p>
+              </div>
+              <div className="rounded-[22px] border border-[#d5e3ed] bg-white p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
+                  Reportes
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#28445a]">
+                  Mas visibilidad para revisar operacion, caja y capacidad del equipo.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[24px] border border-[#d5e3ed] bg-white p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
+                    Paciente
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[#143149]">
+                    Luna · control respiratorio
+                  </p>
+                </div>
+                <PawPrint className="h-5 w-5 text-[#3b7b87]" />
+              </div>
+              <div className="mt-4 space-y-3">
+                {[
+                  ['Motivo', 'Seguimiento posterior a consulta previa'],
+                  ['Observacion', 'Tutor informado y proximo control programado'],
+                  ['Estado', 'Listo para pasar a caja y seguimiento'],
+                ].map(([label, text]) => (
+                  <div key={label} className="rounded-[18px] bg-[#f5f8fb] px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
+                      {label}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-6 text-[#27425a]">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] bg-[linear-gradient(135deg,#0d3b4a,#12314a)] p-5 text-white shadow-[0_16px_44px_rgba(6,23,35,0.22)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9debe4]">
+                Facturacion DIAN
+              </p>
+              <p className="mt-3 text-sm leading-6 text-white/80">
+                Disponible en los planes Profesional y Personalizado para completar un flujo mas
+                serio y mas confiable.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
 export default function LandingPage() {
   useEffect(() => {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap'
-    document.head.appendChild(link)
-    document.title = 'Bourgelat — Software veterinario para clínicas en Colombia'
+    document.title = 'Bourgelat | Software veterinario para clinicas en Colombia'
+    window.scrollTo(0, 0)
   }, [])
+
   return (
-    <div style={{ fontFamily:'Plus Jakarta Sans, sans-serif' }}>
-      <Navbar />
-      <LandingHero />
-      <LogosBar />
-      <Features />
-      <Grad from={T.navyMid} to={T.cream} />
-      <Why />
-      <Grad from={T.cream} to={T.navyLt} />
-      <How />
-      <Grad from={T.navyLt} to={T.cream} />
-      <Testimonials />
-      <Grad from={T.cream} to={T.navy} />
-      <CTA />
-      <Footer />
+    <div className="min-h-screen bg-[#f4f7fb] text-[#112739]">
+      <LandingNav />
+
+      <section className="relative overflow-hidden bg-[#06111c] text-white">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute left-[-10rem] top-[-8rem] h-[30rem] w-[30rem] rounded-full bg-[#1c5d63]/40 blur-3xl" />
+          <div className="absolute right-[-10rem] top-24 h-[28rem] w-[28rem] rounded-full bg-[#163d66]/38 blur-3xl" />
+          <div className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-[#11443e]/24 blur-3xl" />
+          <div
+            className="absolute inset-0 opacity-[0.08]"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
+              backgroundSize: '72px 72px',
+              maskImage: 'radial-gradient(circle at top, black 16%, transparent 76%)',
+            }}
+          />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-5 pb-24 pt-16 sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
+          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.98fr)] lg:gap-14">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/7 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#91e7e0]">
+                <span className="h-2 w-2 rounded-full bg-[#91e7e0]" />
+                software veterinario para Colombia
+              </div>
+
+              <h1
+                className="mt-6 max-w-3xl text-5xl leading-[0.92] tracking-[-0.06em] sm:text-6xl lg:text-7xl"
+                style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              >
+                La clinica que atiende bien tambien deberia operar bien.
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
+                Bourgelat organiza agenda, historia clinica, inventario, caja y seguimiento en una
+                sola experiencia. Menos friccion para el equipo, mas confianza para el tutor y mas
+                claridad para dirigir la clinica.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/registro"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#effaf8] px-6 py-3.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
+                >
+                  Crear cuenta principal
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/planes"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/6 px-6 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/10"
+                >
+                  Ver planes
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                {[
+                  ['Entrada clara', 'Registro simple y puesta en marcha sin una asesoria eterna.'],
+                  ['Flujo conectado', 'Recepcion, consulta, caja y seguimiento bajo el mismo contexto.'],
+                  ['Escala natural', 'Facturacion electronica DIAN en Profesional y Personalizado.'],
+                ].map(([title, body]) => (
+                  <div
+                    key={title}
+                    className="rounded-[24px] border border-white/10 bg-white/6 p-4 backdrop-blur-xl"
+                  >
+                    <p className="text-sm font-semibold text-white">{title}</p>
+                    <p className="mt-2 text-sm leading-6 text-white/62">{body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <HeroPreview />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-[#d7e4ee] bg-white">
+        <div className="mx-auto grid max-w-7xl gap-5 px-5 py-5 sm:px-6 md:grid-cols-3 lg:px-8">
+          {[
+            ['Consultorios que quieren orden desde el inicio', Calendar],
+            ['Clinicas que ya necesitan caja, inventario y control', Layers],
+            ['Equipos que quieren una experiencia mas intuitiva para todos', Shield],
+          ].map((item) => {
+            const Icon = item[1]
+
+            return (
+              <div
+                key={item[0]}
+                className="flex items-center gap-3 rounded-[22px] border border-[#d8e4ee] bg-[#f7fafc] px-4 py-4"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e5f4f3] text-[#245e5a]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium leading-6 text-[#28435b]">{item[0]}</p>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <section id="experiencia" className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+        <SectionHeading
+          eyebrow="Experiencia"
+          title="Una plataforma que se entiende mas rapido y acompana mejor el dia."
+          body="La referencia ya no es una web llena de texto. La promesa es simple: mostrar por que el trabajo diario se siente mas ligero cuando la operacion tiene orden, criterio y continuidad."
+        />
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {EXPERIENCE_CARDS.map((card) => {
+            const Icon = card.icon
+            return (
+              <article
+                key={card.title}
+                className="rounded-[32px] border border-[#d6e3ee] bg-white p-6 shadow-[0_22px_70px_rgba(8,25,39,0.06)]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#edf5fb] text-[#466f87]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3
+                  className="mt-6 text-3xl leading-none tracking-[-0.04em] text-[#10263a]"
+                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                >
+                  {card.title}
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-[#5a7185]">{card.body}</p>
+
+                <div className="mt-6 space-y-3">
+                  {card.points.map((point) => (
+                    <div
+                      key={point}
+                      className="flex items-start gap-3 text-sm leading-6 text-[#24435c]"
+                    >
+                      <Check className="mt-1 h-4 w-4 shrink-0 text-[#2c7d7a]" />
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section id="flujo" className="bg-[#edf4f8]">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:grid lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-8 lg:py-24">
+          <div>
+            <SectionHeading
+              eyebrow="Flujo diario"
+              title="Del primer agendamiento al cierre del dia, sin perder contexto."
+              body="La inspiracion correcta de un buen SaaS es esta: recepcion, consulta y administracion trabajando sobre el mismo hilo para que la operacion se vea mas profesional y sea mas facil de sostener."
+            />
+
+            <div className="mt-10 space-y-5">
+              {FLOW_STEPS.map((step) => (
+                <div
+                  key={step.step}
+                  className="rounded-[30px] border border-[#d7e4ee] bg-white px-6 py-5 shadow-[0_18px_60px_rgba(8,25,39,0.05)]"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf5fb] text-[#3a6d87]">
+                      <span className="text-sm font-semibold">{step.step}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#12283c]">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-7 text-[#567185]">{step.body}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-12 lg:mt-0">
+            <FeatureMockup />
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+        <SectionHeading
+          eyebrow="Plataforma"
+          title="Lo importante esta conectado, pero la interfaz sigue siendo amable."
+          body="Una web premium no necesita exagerar. Necesita jerarquia, ritmo visual y un mensaje facil de entender para quien atiende, cobra y dirige la clinica."
+          center
+        />
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {PRODUCT_PANELS.map((panel) => {
+            const Icon = panel.icon
+            return (
+              <article
+                key={panel.title}
+                className="rounded-[28px] border border-[#d7e4ee] bg-white p-6 shadow-[0_18px_55px_rgba(8,25,39,0.06)]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#edf5fb] text-[#3a6d87]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3
+                  className="mt-6 text-[30px] leading-none tracking-[-0.04em] text-[#10263a]"
+                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                >
+                  {panel.title}
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-[#567185]">{panel.body}</p>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section id="planes" className="bg-[#07131f] text-white">
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Planes"
+            title="Empieza simple y crece cuando tu operacion de verdad lo pida."
+            body="Ahora la conversacion es mucho mas clara para un cliente: que incluye cada etapa, cuando entra la DIAN y cual suele ser el siguiente paso natural para una clinica."
+            dark
+            center
+          />
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-4">
+            {PLAN_PREVIEW.map((plan) => (
+              <article
+                key={plan.name}
+                className={`rounded-[30px] border p-6 ${
+                  plan.featured
+                    ? 'border-[#91e7e0]/40 bg-[linear-gradient(160deg,rgba(15,49,74,0.96),rgba(11,31,50,0.98),rgba(12,57,65,0.98))] shadow-[0_32px_90px_rgba(10,34,48,0.36)]'
+                    : 'border-white/10 bg-white/6'
+                }`}
+              >
+                <p
+                  className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                    plan.featured ? 'text-[#91e7e0]' : 'text-white/55'
+                  }`}
+                >
+                  {plan.subtitle}
+                </p>
+                <h3
+                  className="mt-4 text-4xl leading-none tracking-[-0.04em]"
+                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                >
+                  {plan.name}
+                </h3>
+                <p className="mt-4 text-lg font-semibold text-white">{plan.price}</p>
+                <p
+                  className={`mt-4 text-sm leading-7 ${
+                    plan.featured ? 'text-white/84' : 'text-white/68'
+                  }`}
+                >
+                  {plan.note}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+            <Link
+              to="/planes"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#effaf8] px-6 py-3.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
+            >
+              Ver comparativa completa
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              to="/registro"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/6 px-6 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/10"
+            >
+              Crear cuenta principal
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="contacto" className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
+        <div className="overflow-hidden rounded-[38px] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-8 text-white shadow-[0_36px_120px_rgba(7,20,32,0.24)] md:p-12">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#91e7e0]">
+                Contacto
+              </p>
+              <h2
+                className="mt-4 text-5xl leading-[0.94] tracking-[-0.05em] text-white md:text-6xl"
+                style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              >
+                Una web bonita ayuda. Una experiencia clara es lo que convierte.
+              </h2>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-white/74">
+                Bourgelat tiene que sentirse robusto, rapido y confiable desde la primera visita.
+                Este ya es un paso en esa direccion: menos ruido, mejor jerarquia y una promesa
+                comercial mucho mas facil de entender para una clinica real.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <Link
+                to="/registro"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-[#effaf8]"
+              >
+                Crear cuenta principal
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="mailto:hola@bourgelat.co"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/8 px-6 py-4 text-sm font-semibold text-white no-underline transition hover:bg-white/12"
+              >
+                <Mail className="h-4 w-4" />
+                hola@bourgelat.co
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#d7e4ee] bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-10 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div className="max-w-xl">
+            <BrandMark />
+            <p className="mt-4 text-sm leading-7 text-[#5a7185]">
+              Software para clinicas veterinarias que quieren una operacion mas clara, mas humana y
+              mas confiable desde la recepcion hasta el cierre del dia.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            {footerLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-sm font-medium text-[#49647b] no-underline transition hover:text-[#10263a]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </footer>
     </div>
   )
-} 
+}
