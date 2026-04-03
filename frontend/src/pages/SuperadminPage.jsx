@@ -33,7 +33,7 @@ import { useAuthStore } from '@/store/authStore'
 
 const ESTADO_SUSCRIPCION_LABELS = {
   activa: 'Activas',
-  prueba: 'En prueba',
+  prueba: 'Temporal',
   vencida: 'Vencidas',
   cancelada: 'Canceladas',
   sin_suscripcion: 'Sin suscripcion',
@@ -132,7 +132,7 @@ export default function SuperadminPage() {
   return (
     <SuperadminShell
       title="Control global de Bourgelat"
-      description="Esta consola es tuya como operador del software. Aqui ves adopcion, facturacion, pruebas por vencer y los puntos sensibles de DIAN o integraciones antes de que afecten a una clinica."
+      description="Esta consola es tuya como operador del software. Aqui ves adopcion, facturacion, activaciones temporales por vencer y los puntos sensibles de DIAN o integraciones antes de que afecten a una clinica."
       currentKey="resumen"
       asideNote="Si solo tu cuenta tiene el rol `superadmin`, solo tu veras esta consola. Los administradores de clinica siguen entrando a su propio backoffice."
       headerBadge={
@@ -173,9 +173,9 @@ export default function SuperadminPage() {
           />
           <KpiCard
             icon={CalendarClock}
-            label="Pruebas por vencer"
+            label="Vigencias por vencer"
             value={formatNumber(resumenQuery.data?.resumen?.pruebasPorVencer || 0)}
-            helper={`${formatNumber(resumenQuery.data?.resumen?.pruebasActivas || 0)} pruebas activas en seguimiento.`}
+            helper={`${formatNumber(resumenQuery.data?.resumen?.pruebasActivas || 0)} activaciones temporales en seguimiento.`}
             tone="text-amber-700"
           />
           <KpiCard
@@ -205,7 +205,7 @@ export default function SuperadminPage() {
           />
           <DonutCard
             title="Estado de suscripciones"
-            subtitle="Te muestra cuantas clinicas estan activas y cuantas siguen en prueba."
+            subtitle="Te muestra cuantas clinicas estan activas y cuantas siguen en activacion temporal."
             data={estadoSuscripcionData}
             centerLabel="Estados"
             centerValue={formatNumber(
@@ -305,8 +305,8 @@ export default function SuperadminPage() {
 
       <section id="gobierno" className="grid gap-5 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <DataTable
-          title="Pruebas por vencer"
-          subtitle="Las cuentas que requieren accion comercial tuya antes de caer a Inicio Gratis."
+          title="Activaciones temporales por vencer"
+          subtitle="Las cuentas que requieren accion comercial tuya antes de pasar a Esencial."
           columns={[
             { key: 'clinicaNombre', label: 'Clinica' },
             { key: 'contacto', label: 'Contacto' },
@@ -331,7 +331,7 @@ export default function SuperadminPage() {
             },
           ]}
           rows={resumenQuery.data?.listas?.pruebasPorVencer || []}
-          emptyTitle="No hay pruebas cercanas a vencerse."
+          emptyTitle="No hay activaciones temporales cercanas a vencerse."
           emptyBody="Cuando el pipeline este sano, esta tabla deberia mantenerse corta."
         />
 
@@ -407,7 +407,7 @@ export default function SuperadminPage() {
                     <span className="font-semibold text-slate-950">
                       {formatNumber(resumenQuery.data?.listas?.pruebasPorVencer?.length || 0)}
                     </span>{' '}
-                    cuentas que requieren seguimiento antes de perder momentum.
+                    cuentas que requieren seguimiento antes de perder ritmo comercial.
                   </p>
                 </div>
                 <Waypoints className="h-5 w-5 text-cyan-700" />

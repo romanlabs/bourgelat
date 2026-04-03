@@ -1,6 +1,6 @@
 const PLAN_KEYS = ['inicio', 'clinica', 'profesional', 'personalizado']
-const TRIAL_DAYS = 14
-const FREE_PLAN_END_DATE = '2099-12-31'
+const DEFAULT_INITIAL_PLAN = 'inicio'
+const ESSENTIAL_PLAN_END_DATE = '2099-12-31'
 
 const formatDateOnly = (date = new Date()) => {
   const year = date.getFullYear()
@@ -20,9 +20,9 @@ const addDaysDateOnly = (days, baseDate = new Date()) =>
 
 const PLANES = {
   inicio: {
-    nombre: 'Inicio Gratis',
+    nombre: 'Esencial',
     descripcion:
-      'Para clinicas que necesitan ordenar agenda y pacientes antes de pasar a una operacion mas completa.',
+      'Para consultorios y clinicas que necesitan ordenar agenda, pacientes e historia clinica desde una base simple y clara.',
     precioMensual: 0,
     precioAnual: 0,
     limiteUsuarios: 2,
@@ -163,23 +163,13 @@ const construirSuscripcion = ({
   }
 }
 
-const crearSuscripcionPruebaInicial = (clinicaId) =>
+const crearSuscripcionEsencial = (clinicaId) =>
   construirSuscripcion({
     clinicaId,
-    plan: 'profesional',
-    estado: 'prueba',
-    fechaInicio: formatDateOnly(),
-    fechaFin: addDaysDateOnly(TRIAL_DAYS),
-    precio: 0,
-  })
-
-const crearSuscripcionInicioGratis = (clinicaId) =>
-  construirSuscripcion({
-    clinicaId,
-    plan: 'inicio',
+    plan: DEFAULT_INITIAL_PLAN,
     estado: 'activa',
     fechaInicio: formatDateOnly(),
-    fechaFin: FREE_PLAN_END_DATE,
+    fechaFin: ESSENTIAL_PLAN_END_DATE,
     precio: 0,
   })
 
@@ -202,12 +192,11 @@ module.exports = {
   PLAN_KEYS,
   PLANES,
   PLANES_PUBLICOS,
-  TRIAL_DAYS,
-  FREE_PLAN_END_DATE,
+  DEFAULT_INITIAL_PLAN,
+  ESSENTIAL_PLAN_END_DATE,
   formatDateOnly,
   addDaysDateOnly,
   obtenerPlan,
   construirSuscripcion,
-  crearSuscripcionPruebaInicial,
-  crearSuscripcionInicioGratis,
+  crearSuscripcionEsencial,
 }

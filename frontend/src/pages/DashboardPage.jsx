@@ -1,23 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   ArrowRight,
   BarChart3,
   Boxes,
   CalendarClock,
-  ChevronDown,
   CircleAlert,
-  History,
-  LogOut,
+  LayoutDashboard,
   PawPrint,
   Receipt,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Stethoscope,
   Users,
   Wallet,
 } from 'lucide-react'
+import AdminShell from '@/components/layout/AdminShell'
+import { agendaApi } from '@/features/agenda/agendaApi'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
@@ -28,14 +30,11 @@ import {
   EmptyModuleState,
   KpiCard,
   LinePanel,
-  MiniDonutChart,
-  SidebarTabButton,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
 import {
   CITA_ESTADO_LABELS,
   CITA_TIPO_LABELS,
-  FEATURE_LABELS,
   PAYMENT_METHOD_LABELS,
   PLAN_META,
   formatCurrency,
@@ -49,26 +48,59 @@ import {
   objectToChartData,
   toNumber,
 } from '@/features/dashboard/dashboardUtils'
-import { useLogout } from '@/features/auth/useAuth'
+import { finanzasApi } from '@/features/finanzas/finanzasApi'
+import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
-  { id: 'resumen', label: 'Resumen', icon: Stethoscope },
+  { id: 'resumen', label: 'Command Center', icon: LayoutDashboard },
   { id: 'agenda', label: 'Agenda', icon: CalendarClock },
-  { id: 'ingresos', label: 'Ingresos', icon: Wallet },
+  { id: 'ingresos', label: 'Caja', icon: Wallet },
   { id: 'inventario', label: 'Inventario', icon: Boxes },
   { id: 'pacientes', label: 'Pacientes', icon: PawPrint },
   { id: 'plan', label: 'Plan y control', icon: ShieldCheck },
 ]
 
-const TAB_GROUPS = [
-  { key: 'lectura', label: 'Lectura diaria', items: ['resumen', 'agenda', 'pacientes'] },
-  { key: 'gestion', label: 'Gestion y control', items: ['ingresos', 'inventario', 'plan'] },
-]
-
-const TAB_BY_ID = Object.fromEntries(TABS.map((tab) => [tab.id, tab]))
+const TAB_DETAILS = {
+  resumen: {
+    title: 'Command Center',
+    description: 'Lo que el administrador necesita leer primero para operar sin perder tiempo.',
+  },
+  agenda: {
+    title: 'Agenda y demanda',
+    description: 'Citas, asistencia y comportamiento operativo del periodo actual.',
+  },
+  ingresos: {
+    title: 'Caja e ingresos',
+    description: 'Facturacion, ticket promedio y seguimiento de caja.',
+  },
+  inventario: {
+    title: 'Inventario y riesgo',
+    description: 'Productos criticos, categorias activas y valor inventariado.',
+  },
+  pacientes: {
+    title: 'Base clinica',
+    description: 'Capacidad, pacientes activos y acceso directo al modulo operativo.',
+  },
+  plan: {
+    title: 'Plan y continuidad',
+    description: 'Vigencia, capacidades y funcionalidades activas del plan actual.',
+  },
+}
 
 const EMPTY_LIST = []
+const EMPTY_RECORD = {}
+const PRIMARY_BUTTON =
+  'inline-flex items-center gap-2 rounded-xl bg-teal-600 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700'
+const SECONDARY_BUTTON =
+  'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50'
+
+const serializeDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
@@ -79,21 +111,336 @@ const formatAuditAction = (value) =>
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 
+const formatTime = (value) => {
+  if (!value) return 'Sin hora'
+  return String(value).slice(0, 5)
+}
+
+const getAppointmentTone = (estado) => {
+  if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (estado === 'en_curso') return 'border-sky-200 bg-sky-50 text-sky-700'
+  if (estado === 'confirmada') return 'border-cyan-200 bg-cyan-50 text-cyan-700'
+  if (estado === 'cancelada' || estado === 'no_asistio') {
+    return 'border-red-200 bg-red-50 text-red-700'
+  }
+  return 'border-amber-200 bg-amber-50 text-amber-700'
+}
+
 const buildCapacityChart = (used, limit, label) => {
   if (limit === null || limit === undefined) {
     return {
       centerValue: 'Sin limite',
-      rows: [{ key: 'abierto', name: label, value: 1, color: '#0f766e' }],
+      rows: [{ key: 'abierto', name: label, value: 1, color: '#0d9488' }],
     }
   }
 
   return {
     centerValue: `${getUsagePercentage(used, limit)}%`,
     rows: [
-      { key: 'en_uso', name: 'En uso', value: used, color: '#0f4c81' },
+      { key: 'en_uso', name: 'En uso', value: used, color: '#0f766e' },
       { key: 'disponible', name: 'Disponible', value: Math.max(limit - used, 0), color: '#cbd5e1' },
     ],
   }
+}
+
+const buildHourlyAppointmentSeries = (appointments) => {
+  const buckets = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00']
+
+  return buckets.map((bucket) => {
+    const total = appointments.filter((appointment) => {
+      const hour = Number.parseInt(String(appointment.horaInicio || '0').slice(0, 2), 10)
+      const bucketHour = Number.parseInt(bucket.slice(0, 2), 10)
+      return Number.isFinite(hour) && hour <= bucketHour
+    }).length
+
+    return { label: bucket.slice(0, 2), value: total }
+  })
+}
+
+const buildInventorySparkline = (products) =>
+  [...products]
+    .filter((product) => Number(product.stock || 0) <= Number(product.stockMinimo || 0))
+    .sort((left, right) => {
+      const leftGap = Number(left.stockMinimo || 0) - Number(left.stock || 0)
+      const rightGap = Number(right.stockMinimo || 0) - Number(right.stock || 0)
+      return rightGap - leftGap
+    })
+    .slice(0, 6)
+    .map((product) => ({
+      label: String(product.nombre || 'Stock').slice(0, 6),
+      value: Math.max(Number(product.stockMinimo || 0) - Number(product.stock || 0), 0),
+    }))
+
+const buildStatusSparkline = (record, labels = {}) =>
+  Object.entries(record || {}).map(([key, value]) => ({
+    label: String(labels[key] || key).slice(0, 6),
+    value: Number(value || 0),
+  }))
+
+const buildHistoryHref = (appointment) =>
+  `/historias?mascotaId=${appointment?.mascota?.id || ''}&propietarioId=${appointment?.propietario?.id || ''}&citaId=${appointment?.id || ''}`
+
+const buildBillingHref = (appointment) =>
+  `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`
+
+function SparklineTooltip({ active, payload, label, formatter }) {
+  if (!active || !payload?.length) return null
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg">
+      {label ? <p className="font-semibold text-slate-900">{label}</p> : null}
+      <p className="mt-1 text-slate-500">
+        {formatter ? formatter(payload[0]?.value) : payload[0]?.value}
+      </p>
+    </div>
+  )
+}
+
+function CommandPanel({ title, subtitle, action, className = '', children }) {
+  return (
+    <section className={cn('rounded-2xl border border-slate-200/60 bg-white shadow-sm', className)}>
+      <div className="flex flex-col gap-3 border-b border-slate-200/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">{title}</p>
+          {subtitle ? <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p> : null}
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </section>
+  )
+}
+
+function CommandKpiCard({
+  label,
+  value,
+  helper,
+  icon,
+  data,
+  color = '#0d9488',
+  formatter,
+  className = '',
+}) {
+  const rawId = useId().replaceAll(':', '')
+  const chartData = data?.length ? data : [{ label: '0', value: 0 }]
+  const Icon = icon
+
+  return (
+    <div className={cn('rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm', className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</p>
+          <p className="mt-3 text-3xl font-bold text-slate-900">{value}</p>
+        </div>
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+          <Icon className="h-5 w-5" />
+        </span>
+      </div>
+
+      <p className="mt-2 text-xs text-slate-400">{helper}</p>
+
+      <div className="mt-4 h-16">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="5%" stopColor={color} stopOpacity={0.34} />
+                <stop offset="95%" stopColor={color} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              fill={`url(#${rawId})`}
+              strokeWidth={2.2}
+              dot={false}
+              activeDot={{ r: 3 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
+function TacticalAlertStrip({ alerts }) {
+  if (alerts.length === 0) return null
+
+  return (
+    <section className="rounded-2xl border border-red-200 bg-red-50/90 px-5 py-4 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="flex items-center gap-3 text-red-800">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+            <ShieldAlert className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide">Tira tactica 8:00 AM</p>
+            <p className="mt-1 text-sm text-red-700">
+              Solo aparece cuando hay algo que puede romper la operacion de hoy.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid flex-1 gap-3 lg:grid-cols-3">
+          {alerts.map((alert) => (
+            <div key={alert.id} className="rounded-2xl border border-red-200/80 bg-white/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-red-900">{alert.title}</p>
+                <StatusPill tone="border-red-200 bg-red-100 text-red-700">Urgente</StatusPill>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-red-800">{alert.detail}</p>
+              <Link to={alert.to} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-red-900">
+                {alert.actionLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
+  return (
+    <section className="rounded-2xl border border-slate-200/60 bg-white p-2 shadow-sm">
+      <div className="flex flex-wrap gap-2">
+        {TABS.map((tab) => {
+          const Icon = tab.icon
+          const active = tab.id === activeTab
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex min-w-[180px] flex-1 items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition',
+                active ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
+              )}
+            >
+              <span className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-xl',
+                    active ? 'bg-white/10 text-teal-200' : 'bg-slate-100 text-slate-600'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold">{tab.label}</span>
+                  <span className={cn('mt-1 block text-xs', active ? 'text-slate-300' : 'text-slate-400')}>
+                    {TAB_DETAILS[tab.id].description}
+                  </span>
+                </span>
+              </span>
+
+              {tabBadges[tab.id] ? (
+                <span
+                  className={cn(
+                    'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+                    active ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-500'
+                  )}
+                >
+                  {tabBadges[tab.id]}
+                </span>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="h-20 animate-pulse rounded-2xl border border-slate-200/60 bg-slate-50" />
+        ))}
+      </div>
+    )
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
+        <p className="text-sm font-semibold text-slate-900">Sin citas pendientes para hoy</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Cuando entren pacientes a la agenda, este puente mostrara acciones directas para atender y
+          cobrar sin navegar de mas.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="hidden grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] gap-4 px-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:grid">
+        <span>Hora</span>
+        <span>Paciente</span>
+        <span>Profesional</span>
+        <span>Estado</span>
+        <span className="text-right">Acciones</span>
+      </div>
+
+      {rows.map((appointment) => (
+        <div
+          key={appointment.id}
+          className="grid gap-4 rounded-2xl border border-slate-200/70 bg-white p-4 transition hover:bg-slate-50 md:grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] md:items-center"
+        >
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{formatTime(appointment.horaInicio)}</p>
+            <p className="mt-1 text-xs text-slate-400">{appointment.tipoCita || 'Consulta'}</p>
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">
+              {appointment.mascota?.nombre || 'Paciente sin nombre'}
+            </p>
+            <p className="mt-1 truncate text-sm text-slate-500">
+              {appointment.propietario?.nombre || 'Tutor pendiente'} · {appointment.mascota?.especie || 'Sin especie'}
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-slate-700">
+              {appointment.veterinario?.nombre || 'Profesional por asignar'}
+            </p>
+            <p className="mt-1 truncate text-xs text-slate-400">
+              {appointment.motivo || 'Sin motivo registrado'}
+            </p>
+          </div>
+
+          <StatusPill tone={getAppointmentTone(appointment.estado)}>
+            {CITA_ESTADO_LABELS[appointment.estado] || appointment.estado || 'Programada'}
+          </StatusPill>
+
+          <div className="flex flex-wrap justify-end gap-2">
+            <Link
+              to={canUseHistories ? buildHistoryHref(appointment) : '/planes'}
+              className={PRIMARY_BUTTON}
+            >
+              <Stethoscope className="h-4 w-4" />
+              {canUseHistories ? 'Atender' : 'Activar historias'}
+            </Link>
+            <Link
+              to={canUseBilling ? buildBillingHref(appointment) : '/planes'}
+              className={SECONDARY_BUTTON}
+            >
+              <Receipt className="h-4 w-4" />
+              {canUseBilling ? 'Cobrar' : 'Activar caja'}
+            </Link>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
@@ -149,20 +496,14 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('resumen')
-  const [openSidebarGroups, setOpenSidebarGroups] = useState(() =>
-    TAB_GROUPS.reduce((acc, group) => {
-      acc[group.key] = group.items.includes('resumen') || group.key === 'lectura'
-      return acc
-    }, {})
-  )
   const usuario = useAuthStore((state) => state.usuario)
   const clinica = useAuthStore((state) => state.clinica)
   const suscripcionPersistida = useAuthStore((state) => state.suscripcion)
   const setSuscripcion = useAuthStore((state) => state.setSuscripcion)
-  const { logout } = useLogout()
 
   const esAdministrador = ['admin', 'superadmin'].includes(usuario?.rol)
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
+  const hoy = useMemo(() => serializeDate(new Date()), [])
 
   useEffect(() => {
     document.title = 'Dashboard | Bourgelat'
@@ -196,6 +537,9 @@ export default function DashboardPage() {
     esAdministrador && featureSet.has('facturacion_interna') && featureSet.has('reportes_operativos')
   const puedeVerInventario =
     esAdministrador && featureSet.has('inventario') && featureSet.has('reportes_operativos')
+  const puedeAbrirAgenda = esAdministrador && featureSet.has('citas')
+  const puedeAbrirHistorias = esAdministrador && featureSet.has('historias')
+  const puedeAbrirCaja = esAdministrador && featureSet.has('facturacion_interna')
 
   const ingresosQuery = useQuery({
     queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
@@ -215,6 +559,26 @@ export default function DashboardPage() {
     queryKey: ['dashboard-inventario'],
     queryFn: dashboardApi.obtenerReporteInventario,
     enabled: puedeVerInventario,
+    placeholderData: (previousData) => previousData,
+  })
+
+  const agendaHoyQuery = useQuery({
+    queryKey: ['dashboard-citas-hoy-detalle', hoy],
+    queryFn: () => agendaApi.obtenerCitas({ fecha: hoy, pagina: 1, limite: 40 }),
+    enabled: puedeAbrirAgenda,
+    placeholderData: (previousData) => previousData,
+  })
+
+  const facturacionEstadoQuery = useQuery({
+    queryKey: ['dashboard-facturacion-estado', rangoMes.fechaInicio, rangoMes.fechaFin],
+    queryFn: () =>
+      finanzasApi.obtenerFacturas({
+        fechaInicio: rangoMes.fechaInicio,
+        fechaFin: rangoMes.fechaFin,
+        pagina: 1,
+        limite: 1,
+      }),
+    enabled: puedeVerIngresos,
     placeholderData: (previousData) => previousData,
   })
 
@@ -333,7 +697,15 @@ export default function DashboardPage() {
 
   const patientCapacity = buildCapacityChart(mascotasActivas, limiteMascotas, 'Pacientes')
   const userCapacity = buildCapacityChart(usuariosActivos, limiteUsuarios, 'Usuarios')
-  const totalFacturasMes = ingresosQuery.data?.totalFacturas || 0
+  const citasHoyRows = useMemo(() => agendaHoyQuery.data?.citas ?? EMPTY_LIST, [agendaHoyQuery.data?.citas])
+  const resumenElectronico = useMemo(
+    () => facturacionEstadoQuery.data?.resumenElectronico ?? EMPTY_RECORD,
+    [facturacionEstadoQuery.data?.resumenElectronico]
+  )
+  const dianErrores =
+    Number(resumenElectronico.rechazada || 0) + Number(resumenElectronico.error || 0)
+  const dianPendientes =
+    Number(resumenElectronico.pendiente || 0) + Number(resumenElectronico.enviada || 0)
 
   const capacityRows = [
     {
@@ -364,12 +736,34 @@ export default function DashboardPage() {
   const adminAlerts = useMemo(() => {
     const rows = []
 
+    if (citasPendientesHoy > 0) {
+      rows.push({
+        id: 'agenda-pendiente',
+        area: 'Agenda',
+        estado: 'Pendiente',
+        detalle: `${formatNumber(citasPendientesHoy)} pacientes siguen programados y aun no salen al flujo de atencion.`,
+        actionTo: '/agenda',
+        actionLabel: 'Abrir agenda',
+      })
+    }
+
+    if (dianPendientes > 0) {
+      rows.push({
+        id: 'dian-pendiente',
+        area: 'Facturacion',
+        estado: 'Seguimiento',
+        detalle: `${formatNumber(dianPendientes)} facturas siguen pendientes o enviadas sin validacion final.`,
+        actionTo: '/finanzas',
+        actionLabel: 'Revisar DIAN',
+      })
+    }
+
     if (typeof diasRestantes === 'number' && diasRestantes <= 5) {
       rows.push({
-        id: 'trial',
+        id: 'vigencia',
         area: 'Plan',
         estado: 'Atencion',
-        detalle: `Quedan ${diasRestantes} dias de prueba para la clinica.`,
+        detalle: `Quedan ${diasRestantes} dias para el cierre de la vigencia actual.`,
         actionTo: '/planes',
         actionLabel: 'Ver planes',
       })
@@ -414,7 +808,7 @@ export default function DashboardPage() {
         area: 'Inventario',
         estado: 'Prioridad',
         detalle: `${alertasInventario} productos requieren atencion por stock bajo.`,
-        actionTo: '/dashboard',
+        actionTo: '/inventario',
         actionLabel: 'Revisar inventario',
       })
     }
@@ -431,510 +825,355 @@ export default function DashboardPage() {
     }
 
     return rows
-  }, [advertenciaPlan, alertasInventario, cupoMascotas, cupoUsuarios, diasRestantes, limiteMascotas, limiteUsuarios])
+  }, [
+    advertenciaPlan,
+    alertasInventario,
+    citasPendientesHoy,
+    cupoMascotas,
+    cupoUsuarios,
+    dianPendientes,
+    diasRestantes,
+    limiteMascotas,
+    limiteUsuarios,
+  ])
+
+  const tacticalAlerts = useMemo(() => {
+    const rows = []
+
+    if (typeof diasRestantes === 'number' && diasRestantes <= 7) {
+      rows.push({
+        id: 'vigencia',
+        title: 'Plan por vencer',
+        detail: `Quedan ${diasRestantes} dias para el cierre de la vigencia actual. Conviene resolver esto antes de afectar continuidad.`,
+        to: '/planes',
+        actionLabel: 'Revisar plan',
+      })
+    }
+
+    if (alertasInventario > 0) {
+      rows.push({
+        id: 'inventario',
+        title: 'Inventario critico',
+        detail: `${formatNumber(alertasInventario)} productos estan por debajo del minimo y pueden trabar ventas o tratamientos hoy.`,
+        to: '/inventario',
+        actionLabel: 'Ver inventario',
+      })
+    }
+
+    if (dianErrores > 0) {
+      rows.push({
+        id: 'dian',
+        title: 'Errores DIAN / Factus',
+        detail: `${formatNumber(dianErrores)} facturas quedaron rechazadas o con error tecnico. Requieren revision antes del siguiente corte.`,
+        to: '/finanzas',
+        actionLabel: 'Abrir caja',
+      })
+    }
+
+    return rows
+  }, [alertasInventario, dianErrores, diasRestantes])
+
+  const sparklineIngresos = useMemo(
+    () =>
+      ingresosPorDia.slice(-10).map((item) => ({
+        label: item.fecha,
+        value: Number(item.total || 0),
+      })),
+    [ingresosPorDia]
+  )
+
+  const sparklineAgenda = useMemo(
+    () => buildHourlyAppointmentSeries(citasHoyRows),
+    [citasHoyRows]
+  )
+
+  const sparklineInventario = useMemo(
+    () => buildInventorySparkline(inventarioQuery.data?.productos || []),
+    [inventarioQuery.data?.productos]
+  )
+
+  const sparklineDian = useMemo(
+    () =>
+      buildStatusSparkline(resumenElectronico, {
+        validada: 'Valida',
+        pendiente: 'Pendte',
+        enviada: 'Enviad',
+        rechazada: 'Rechaz',
+        error: 'Error',
+      }),
+    [resumenElectronico]
+  )
+
+  const todayBridgeRows = useMemo(
+    () =>
+      [...citasHoyRows]
+        .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
+        .slice(0, 8),
+    [citasHoyRows]
+  )
 
   if (!esAdministrador) {
     return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
   }
 
-  const renderSummaryTab = () => {
-    const agendaResueltas = Math.max(citasHoy - citasPendientesHoy, 0)
-    const agendaProgress = citasHoy > 0 ? getUsagePercentage(agendaResueltas, citasHoy) : 100
-    const diasConMovimiento = ingresosPorDia.filter((item) => Number(item.total || 0) > 0).length
-    const diasTotalesConLectura = ingresosPorDia.length
-    const finanzasProgress =
-      diasTotalesConLectura > 0 ? getUsagePercentage(diasConMovimiento, diasTotalesConLectura) : 0
-    const capacidadUsuarios =
-      limiteUsuarios === null ? null : getUsagePercentage(usuariosActivos, limiteUsuarios)
-    const capacidadPacientes =
-      limiteMascotas === null ? null : getUsagePercentage(mascotasActivas, limiteMascotas)
-
-    const focoCapacidad =
-      capacidadUsuarios === null && capacidadPacientes === null
-        ? null
-        : capacidadPacientes === null
-          ? {
-              label: 'Usuarios',
-              percentage: capacidadUsuarios,
-              used: usuariosActivos,
-              available: Math.max(cupoUsuarios, 0),
-            }
-          : capacidadUsuarios === null || capacidadPacientes >= capacidadUsuarios
-            ? {
-                label: 'Pacientes',
-                percentage: capacidadPacientes,
-                used: mascotasActivas,
-                available: Math.max(cupoMascotas, 0),
-              }
-            : {
-                label: 'Usuarios',
-                percentage: capacidadUsuarios,
-                used: usuariosActivos,
-                available: Math.max(cupoUsuarios, 0),
-              }
-
-    const focusCards = [
-      {
-        id: 'agenda',
-        label: 'Agenda del dia',
-        resumen: `${formatNumber(citasHoy)} citas registradas hoy`,
-        detalle:
-          citasPendientesHoy > 0
-            ? `${formatNumber(citasPendientesHoy)} siguen pendientes de atencion o confirmacion.`
-            : 'La agenda no tiene pendientes criticos en este corte.',
-        to: '/agenda',
-        actionLabel: 'Abrir agenda',
-        chart: {
-          centerLabel: citasHoy > 0 ? 'Al dia' : 'Libre',
-          centerValue: citasHoy > 0 ? `${agendaProgress}%` : 'Sin carga',
-          data:
-            citasHoy > 0
-              ? [
-                  { key: 'al_dia', name: 'Al dia', value: agendaResueltas, color: '#0f4c81' },
-                  { key: 'pendientes', name: 'Pendientes', value: citasPendientesHoy, color: '#cbd5e1' },
-                ]
-              : [{ key: 'sin_citas', name: 'Sin citas', value: 1, color: '#cbd5e1' }],
-        },
-      },
-      {
-        id: 'finanzas',
-        label: 'Flujo financiero',
-        resumen: puedeVerIngresos
-          ? `${formatCurrency(ingresosMesActual)} acumulados en el mes`
-          : 'Caja y reportes no incluidos en el plan actual',
-        detalle: puedeVerIngresos
-          ? 'Revisa metodos de pago, facturas recientes y ticket promedio desde Finanzas.'
-          : 'Conviene revisar el plan si la clinica ya necesita lectura financiera diaria.',
-        to: puedeVerIngresos ? '/finanzas' : '/planes',
-        actionLabel: puedeVerIngresos ? 'Abrir finanzas' : 'Revisar planes',
-        chart: puedeVerIngresos
-          ? {
-              centerLabel: totalFacturasMes > 0 ? 'Movimiento' : 'Mes',
-              centerValue: totalFacturasMes > 0 ? `${finanzasProgress}%` : 'Activo',
-              data:
-                diasTotalesConLectura > 0
-                  ? [
-                      { key: 'con_movimiento', name: 'Dias con movimiento', value: diasConMovimiento, color: '#0f4c81' },
-                      {
-                        key: 'sin_movimiento',
-                        name: 'Dias sin movimiento',
-                        value: Math.max(diasTotalesConLectura - diasConMovimiento, 0),
-                        color: '#cbd5e1',
-                      },
-                    ]
-                  : [{ key: 'sin_lectura', name: 'Sin lectura', value: 1, color: '#cbd5e1' }],
-            }
-          : {
-              centerLabel: 'Caja',
-              centerValue: 'Plan',
-              data: [{ key: 'bloqueado', name: 'Bloqueado', value: 1, color: '#cbd5e1' }],
-            },
-      },
-      {
-        id: 'capacidad',
-        label: 'Capacidad operativa',
-        resumen:
-          limiteUsuarios === null && limiteMascotas === null
-            ? 'La operacion no tiene cupos restringidos'
-            : `Usuarios ${limiteUsuarios === null ? 'sin limite' : formatNumber(Math.max(cupoUsuarios, 0))} disponibles / Pacientes ${limiteMascotas === null ? 'sin limite' : formatNumber(Math.max(cupoMascotas, 0))}`,
-        detalle:
-          limiteUsuarios === null && limiteMascotas === null
-            ? 'Aun asi conviene revisar equipo y crecimiento desde Usuarios y Plan.'
-            : 'Si el cupo baja demasiado, la continuidad de la clinica empieza a depender del plan.',
-        to:
-          limiteUsuarios !== null && cupoUsuarios <= 2
-            ? '/usuarios'
-            : limiteMascotas !== null && cupoMascotas <= 10
-              ? '/pacientes'
-              : '/planes',
-        actionLabel:
-          limiteUsuarios !== null && cupoUsuarios <= 2
-            ? 'Revisar usuarios'
-            : limiteMascotas !== null && cupoMascotas <= 10
-              ? 'Revisar pacientes'
-              : 'Ver plan',
-        chart:
-          focoCapacidad === null
-            ? {
-                centerLabel: 'Plan',
-                centerValue: 'Libre',
-                data: [{ key: 'abierto', name: 'Sin limite', value: 1, color: '#cbd5e1' }],
-              }
-            : {
-                centerLabel: focoCapacidad.label,
-                centerValue: `${focoCapacidad.percentage}%`,
-                data: [
-                  { key: 'en_uso', name: 'En uso', value: focoCapacidad.used, color: '#0f172a' },
-                  { key: 'disponible', name: 'Disponible', value: focoCapacidad.available, color: '#cbd5e1' },
-                ],
-              },
-      },
-    ]
-
-    const quickLinks = [
-      {
-        id: 'pacientes',
-        label: 'Pacientes y tutores',
-        detail: 'Registrar tutores, abrir fichas y mantener la base activa.',
-        to: '/pacientes',
-      },
-      {
-        id: 'historias',
-        label: 'Historias clinicas',
-        detail: 'Continuar consulta, diagnostico y tratamiento sin pasar por varias vistas.',
-        to: '/historias',
-      },
-      {
-        id: 'usuarios',
-        label: 'Usuarios y permisos',
-        detail: 'Crear equipo, revisar cupos y corregir roles sin salir del backoffice.',
-        to: '/usuarios',
-      },
-      {
-        id: 'configuracion',
-        label: 'Configuracion de clinica',
-        detail: 'Actualizar identidad, contacto institucional y ficha fiscal.',
-        to: '/configuracion',
-      },
-    ]
-
-    const moduleGroups = [
-      {
-        id: 'operacion',
-        title: 'Operacion diaria',
-        subtitle: 'Lo que el equipo usa en atencion, consulta y seguimiento.',
-        items: [
-          {
-            id: 'agenda',
-            label: 'Agenda',
-            description: 'Programacion diaria, confirmaciones y reprogramaciones del equipo.',
-            to: '/agenda',
-          },
-          {
-            id: 'pacientes',
-            label: 'Pacientes',
-            description: 'Base activa para tutores, mascotas y acceso rapido a la ficha.',
-            to: '/pacientes',
-          },
-          {
-            id: 'historias',
-            label: 'Historias y antecedentes',
-            description: 'Consulta, tratamiento y contexto clinico permanente del paciente.',
-            to: '/historias',
-          },
-        ],
-      },
-      {
-        id: 'administracion',
-        title: 'Gestion administrativa',
-        subtitle: 'Finanzas, inventario y equipo en una lectura mas ordenada.',
-        items: [
-          {
-            id: 'finanzas',
-            label: 'Finanzas',
-            description: 'Facturas, ingresos, caja y emision electronica cuando aplique.',
-            to: '/finanzas',
-          },
-          {
-            id: 'inventario',
-            label: 'Inventario',
-            description: 'Stock, vencimientos, movimientos y categorias activas.',
-            to: '/inventario',
-          },
-          {
-            id: 'usuarios',
-            label: 'Usuarios',
-            description: 'Altas, permisos, estado del equipo y continuidad administrativa.',
-            to: '/usuarios',
-          },
-        ],
-      },
-      {
-        id: 'control',
-        title: 'Control y soporte',
-        subtitle: 'Lo que sostiene trazabilidad, configuracion y crecimiento comercial.',
-        items: [
-          {
-            id: 'configuracion',
-            label: 'Clinica',
-            description: 'Identidad institucional, contacto visible y perfil fiscal.',
-            to: '/configuracion',
-          },
-          {
-            id: 'auditoria',
-            label: 'Auditoria',
-            description: 'Actividad reciente, eventos fallidos y cambios sensibles.',
-            to: '/auditoria',
-          },
-          {
-            id: 'planes',
-            label: 'Plan y capacidad',
-            description: 'Vigencia, funcionalidades incluidas y decision de upgrade.',
-            to: '/planes',
-          },
-        ],
-      },
-    ]
-
+  const renderSummaryOverview = () => {
     return (
-      <div className="space-y-5">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_400px]">
-          <DashboardPanel
-            title="Lo primero que conviene revisar"
-            subtitle="Tres señales rapidas para saber si hoy la clinica necesita atencion operativa, comercial o administrativa."
-            action={
-              <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
-                Corte del dia
-              </StatusPill>
-            }
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              {focusCards.map((card) => (
-                <div
-                  key={card.id}
-                  className={`border border-slate-200 bg-white px-4 py-4 ${
-                    card.id === 'capacidad' ? 'md:col-span-2' : ''
-                  }`}
-                >
-                  <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_92px] sm:items-start">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        {card.label}
-                      </p>
-                      <p className="mt-3 text-base font-semibold text-slate-950">{card.resumen}</p>
-                      <p className="mt-3 text-sm leading-6 text-slate-700">{card.detalle}</p>
-                    </div>
-                    <div className="justify-self-start sm:justify-self-end">
-                      <MiniDonutChart
-                        data={card.chart.data}
-                        centerLabel={card.chart.centerLabel}
-                        centerValue={card.chart.centerValue}
-                      />
-                    </div>
-                  </div>
-                  <Link
-                    to={card.to}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-950 hover:text-slate-700"
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-12">
+        {tacticalAlerts.length > 0 ? (
+          <div className="lg:col-span-12">
+            <TacticalAlertStrip alerts={tacticalAlerts} />
+          </div>
+        ) : null}
+
+        <CommandKpiCard
+          className="lg:col-span-3"
+          label="Ingresos del periodo"
+          value={formatCurrency(ingresosMesActual)}
+          helper="Lectura financiera del mes actual, con tendencia diaria."
+          icon={Wallet}
+          data={sparklineIngresos}
+          color="#0d9488"
+          formatter={formatCurrency}
+        />
+        <CommandKpiCard
+          className="lg:col-span-3"
+          label="Citas de hoy"
+          value={formatNumber(citasHoy)}
+          helper={`${formatNumber(citasPendientesHoy)} pendientes al corte del dia.`}
+          icon={CalendarClock}
+          data={sparklineAgenda}
+          color="#0f4c81"
+          formatter={formatNumber}
+        />
+        <CommandKpiCard
+          className="lg:col-span-3"
+          label="Alertas de stock"
+          value={formatNumber(alertasInventario)}
+          helper="Productos por debajo del minimo o en vigilancia inmediata."
+          icon={Boxes}
+          data={sparklineInventario}
+          color="#ea580c"
+          formatter={formatNumber}
+        />
+        <CommandKpiCard
+          className="lg:col-span-3"
+          label="Control DIAN"
+          value={formatNumber(dianErrores)}
+          helper={
+            puedeVerIngresos
+              ? `${formatNumber(dianPendientes)} facturas siguen pendientes o enviadas.`
+              : 'Activa caja y reportes para leer el estado de emision.'
+          }
+          icon={ShieldAlert}
+          data={sparklineDian}
+          color="#7c3aed"
+          formatter={formatNumber}
+        />
+
+        <CommandPanel
+          className="lg:col-span-8"
+          title="Puente operativo"
+          subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
+          action={
+            <Link to="/agenda" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
+              Ver agenda completa
+            </Link>
+          }
+        >
+          <OperationalBridge
+            rows={todayBridgeRows}
+            loading={agendaHoyQuery.isLoading}
+            canUseHistories={puedeAbrirHistorias}
+            canUseBilling={puedeAbrirCaja}
+          />
+        </CommandPanel>
+
+        <CommandPanel
+          className="lg:col-span-4"
+          title="Radar del dia"
+          subtitle="La lectura rapida que deberia resolver el administrador antes de las 8:15."
+          action={<StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>}
+        >
+          <div className="space-y-3">
+            {adminAlerts.slice(0, 4).map((alert) => (
+              <div key={alert.id} className="rounded-2xl border border-slate-200/70 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusPill
+                    tone={
+                      alert.estado === 'Prioridad'
+                        ? 'border-red-200 bg-red-50 text-red-700'
+                        : alert.estado === 'Cupo bajo'
+                          ? 'border-amber-200 bg-amber-50 text-amber-700'
+                          : alert.estado === 'Estable'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-sky-200 bg-sky-50 text-sky-700'
+                    }
                   >
-                    {card.actionLabel}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+                    {alert.estado}
+                  </StatusPill>
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {alert.area}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{alert.detalle}</p>
+                <Link to={alert.actionTo} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  {alert.actionLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+
+        <div className="lg:col-span-7">
+          {puedeVerIngresos ? (
+            <LinePanel
+              title="Ingresos del periodo"
+              subtitle={`Movimiento del ${formatShortDate(rangoMes.fechaInicio)} al ${formatShortDate(rangoMes.fechaFin)}.`}
+              data={ingresosPorDia}
+              dataKey="total"
+              color="#0d9488"
+              formatter={formatCurrency}
+              emptyMessage="Todavia no hay movimiento financiero en el periodo actual."
+            />
+          ) : (
+            <EmptyModuleState
+              title="Caja y reportes financieros no disponibles"
+              body="Activa facturacion interna y reportes operativos para ver ingresos, ticket promedio y metodos de pago."
+              ctaLabel="Revisar planes"
+            />
+          )}
+        </div>
+
+        <CommandPanel
+          className="lg:col-span-5"
+          title="Caja del corte"
+          subtitle="Las ultimas facturas del periodo y su forma de pago."
+          action={
+            <Link to="/finanzas" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
+              Abrir caja
+            </Link>
+          }
+        >
+          {invoiceRows.length > 0 ? (
+            <div className="space-y-3">
+              {invoiceRows.slice(0, 5).map((row) => (
+                <div
+                  key={row.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{row.numero}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {row.fecha} · {row.metodoPago}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900">{row.total}</p>
                 </div>
               ))}
             </div>
-          </DashboardPanel>
-
-          <DashboardPanel
-            title="Accesos frecuentes"
-            subtitle="Tareas que suelen abrir primero administracion, recepcion o gerencia."
-          >
-            <div className="grid gap-3">
-              {quickLinks.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.to}
-                  className="flex items-start justify-between gap-4 border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-cyan-500 hover:bg-white"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.detail}</p>
-                  </div>
-                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-cyan-700" />
-                </Link>
-              ))}
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
+              <p className="text-sm font-semibold text-slate-900">Aun no hay facturas en el periodo</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Cuando caja empiece a moverse, aqui veras las ultimas emisiones sin salir del panel.
+              </p>
             </div>
-          </DashboardPanel>
-        </div>
+          )}
+        </CommandPanel>
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Wallet}
-            label="Ingresos del mes"
-            value={formatCurrency(ingresosMesActual)}
-            helper="Total acumulado del mes actual segun facturas emitidas o pagadas."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={CalendarClock}
-            label="Citas de hoy"
-            value={formatNumber(citasHoy)}
-            helper={`${formatNumber(citasPendientesHoy)} pendientes al corte del dia.`}
-            tone="text-cyan-700"
-          />
-          <KpiCard
-            icon={PawPrint}
-            label="Pacientes activos"
-            value={formatNumber(mascotasActivas)}
-            helper={`${formatNumber(propietariosActivos)} propietarios activos registrados.`}
-            tone="text-sky-700"
-          />
-          <KpiCard
-            icon={Boxes}
-            label="Alertas de inventario"
-            value={formatNumber(alertasInventario)}
-            helper="Productos por debajo del stock minimo registrado."
-            tone="text-amber-700"
-          />
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-3">
-          {moduleGroups.map((group) => (
-            <DashboardPanel key={group.id} title={group.title} subtitle={group.subtitle}>
-              <div className="space-y-3">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.to}
-                    className="flex items-start justify-between gap-4 border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-cyan-500 hover:bg-white"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-                    </div>
-                    <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-cyan-700" />
-                  </Link>
-                ))}
-              </div>
-            </DashboardPanel>
-          ))}
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_420px]">
-        {puedeVerIngresos ? (
-          <LinePanel
-            title="Comportamiento diario de ingresos"
-            subtitle={`Movimiento del ${formatShortDate(rangoMes.fechaInicio)} al ${formatShortDate(rangoMes.fechaFin)}.`}
-            data={ingresosPorDia}
-            dataKey="total"
-            color="#0f4c81"
-            formatter={formatCurrency}
-            emptyMessage="Aun no hay ingresos registrados en el periodo actual."
-          />
-        ) : (
-          <EmptyModuleState
-            title="Ingresos no disponibles en el plan actual"
-            body="Para ver la evolucion financiera del mes y las facturas emitidas necesitas caja activa y reportes operativos."
-            ctaLabel="Revisar planes"
-          />
-        )}
-
-        <DonutCard
-          title="Capacidad de pacientes"
-          subtitle="Uso administrativo del cupo permitido por la suscripcion actual."
-          data={patientCapacity.rows}
-          centerLabel="Uso del plan"
-          centerValue={patientCapacity.centerValue}
-          formatter={(value) => formatNumber(value)}
-          emptyMessage="No hay datos de capacidad disponibles."
-        />
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <DataTable
-          title="Alertas administrativas"
-          subtitle="Lo que conviene revisar primero antes de pasar al detalle operativo."
-          rows={adminAlerts}
-          columns={[
-            { key: 'area', label: 'Area' },
-            { key: 'estado', label: 'Estado' },
-            { key: 'detalle', label: 'Detalle' },
-            {
-              key: 'accion',
-              label: 'Accion',
-              render: (row) => (
-                <Link to={row.actionTo} className="text-sm font-semibold text-cyan-700 hover:text-cyan-800">
-                  {row.actionLabel}
-                </Link>
-              ),
-            },
-          ]}
-          emptyTitle="Sin alertas relevantes"
-          emptyBody="No hay alertas para mostrar en este momento."
-        />
-
-        <DataTable
-          title="Ultimas facturas del mes"
-          subtitle="Factura, fecha, total y metodo de pago visibles sin salir del panel."
-          rows={invoiceRows}
-          columns={[
-            { key: 'numero', label: 'Factura' },
-            { key: 'fecha', label: 'Fecha' },
-            { key: 'metodoPago', label: 'Metodo' },
-            { key: 'total', label: 'Total' },
-          ]}
-          emptyTitle="Aun no hay facturas en el mes"
-          emptyBody="Cuando el flujo de caja empiece a moverse, aqui veras las ultimas facturas emitidas."
+        <CommandPanel
+          className="lg:col-span-7"
+          title="Trazabilidad reciente"
+          subtitle="Cambios y acciones del equipo que conviene tener a la vista."
           action={
-            puedeVerIngresos ? (
-              <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700">
-                Caja activa
-              </StatusPill>
-            ) : null
-          }
-        />
-        </div>
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <DataTable
-          title="Actividad reciente"
-          subtitle="Cambios y eventos del sistema registrados en el corte actual."
-          rows={recentAuditRows}
-          columns={[
-            { key: 'fecha', label: 'Fecha' },
-            { key: 'accion', label: 'Accion' },
-            { key: 'responsable', label: 'Responsable' },
-            {
-              key: 'resultado',
-              label: 'Resultado',
-              render: (row) => (
-                <StatusPill
-                  tone={
-                    row.resultado === 'fallido'
-                      ? 'border-red-200 bg-red-50 text-red-700'
-                      : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  }
-                >
-                  {row.resultado}
-                </StatusPill>
-              ),
-            },
-          ]}
-          emptyTitle="Aun no hay actividad registrada"
-          emptyBody="Cuando el equipo cree, edite o valide procesos del sistema, aqui veras la traza reciente."
-          action={
-            <Link to="/auditoria" className="text-sm font-semibold text-cyan-700 hover:text-cyan-800">
-              Ver modulo
+            <Link to="/auditoria" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
+              Abrir auditoria
             </Link>
           }
-        />
-
-        <DashboardPanel
-          title="Control interno"
-          subtitle="Trazabilidad rapida para administracion y soporte."
-          action={<History className="h-4 w-4 text-cyan-700" />}
         >
-          <div className="space-y-4">
-            <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-              La auditoria ya registra accesos, cambios de usuarios, movimientos sensibles y eventos fallidos sin salir del backoffice.
+          {recentAuditRows.length > 0 ? (
+            <div className="space-y-3">
+              {recentAuditRows.slice(0, 5).map((row) => (
+                <div
+                  key={row.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{row.accion}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {row.responsable} · {row.fecha}
+                    </p>
+                  </div>
+                  <StatusPill
+                    tone={
+                      row.resultado === 'fallido'
+                        ? 'border-red-200 bg-red-50 text-red-700'
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    }
+                  >
+                    {row.resultado}
+                  </StatusPill>
+                </div>
+              ))}
             </div>
-            <div className="grid gap-3">
-              <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                Eventos del corte: <span className="font-semibold text-slate-950">{formatNumber(auditoriaRecienteQuery.data?.resumen?.totalEventos || 0)}</span>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
+              <p className="text-sm font-semibold text-slate-900">Sin actividad reciente</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                La auditoria mostrara aqui los eventos mas recientes del sistema y del equipo.
+              </p>
+            </div>
+          )}
+        </CommandPanel>
+
+        <CommandPanel
+          className="lg:col-span-5"
+          title="Control del plan"
+          subtitle="Capacidad, vigencia y decisiones comerciales que pueden impactar operacion."
+        >
+          <div className="grid gap-3">
+            <div className="rounded-2xl border border-slate-200/70 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
+                {typeof diasRestantes === 'number' ? (
+                  <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
+                    {diasRestantes} dias restantes
+                  </StatusPill>
+                ) : null}
               </div>
-              <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                Fallidos del corte: <span className="font-semibold text-slate-950">{formatNumber(auditoriaRecienteQuery.data?.resumen?.totalFallidos || 0)}</span>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {advertenciaPlan || 'La suscripcion no tiene alertas comerciales criticas.'}
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  Pacientes
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {limiteMascotas === null ? 'Sin limite' : formatNumber(Math.max(cupoMascotas, 0))}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  Usuarios
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {limiteUsuarios === null ? 'Sin limite' : formatNumber(Math.max(cupoUsuarios, 0))}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
               </div>
             </div>
-            <Link
-              to="/auditoria"
-              className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Abrir auditoria completa
+
+            <Link to="/planes" className={cn(SECONDARY_BUTTON, 'justify-center')}>
+              Gestionar plan
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-        </DashboardPanel>
-        </div>
+        </CommandPanel>
       </div>
     )
   }
@@ -1304,7 +1543,7 @@ export default function DashboardPage() {
             <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
             {typeof diasRestantes === 'number' ? (
               <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
-                {diasRestantes} dias de prueba
+                {diasRestantes} dias restantes
               </StatusPill>
             ) : null}
           </div>
@@ -1392,7 +1631,7 @@ export default function DashboardPage() {
   )
 
   const activeView = {
-    resumen: renderSummaryTab(),
+    resumen: renderSummaryOverview(),
     agenda: renderAgendaTab(),
     ingresos: renderIngresosTab(),
     inventario: renderInventarioTab(),
@@ -1400,171 +1639,91 @@ export default function DashboardPage() {
     plan: renderPlanTab(),
   }[activeTab]
 
-  const sidebarBadges = {
-    resumen: adminAlerts.length > 0 ? `${adminAlerts.length}` : null,
+  const tabBadges = {
+    resumen: tacticalAlerts.length > 0 ? `${tacticalAlerts.length}` : null,
     agenda: citasHoy > 0 ? `${citasHoy}` : null,
-    ingresos: puedeVerIngresos ? null : 'Plan',
+    ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
     inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
     pacientes: limiteMascotas !== null ? `${Math.max(cupoMascotas, 0)}` : null,
     plan: typeof diasRestantes === 'number' ? `${diasRestantes}d` : null,
   }
 
+  const queryErrors = [
+    suscripcionQuery.isError
+      ? getErrorMessage(
+          suscripcionQuery.error,
+          'No fue posible cargar la suscripcion activa de la clinica.'
+        )
+      : null,
+    dashboardQuery.isError
+      ? getErrorMessage(
+          dashboardQuery.error,
+          'No fue posible cargar el resumen administrativo del dashboard.'
+        )
+      : null,
+    agendaHoyQuery.isError
+      ? getErrorMessage(
+          agendaHoyQuery.error,
+          'No fue posible cargar el detalle de la agenda de hoy.'
+        )
+      : null,
+    facturacionEstadoQuery.isError
+      ? getErrorMessage(
+          facturacionEstadoQuery.error,
+          'No fue posible leer el estado de facturacion electronica.'
+        )
+      : null,
+  ].filter(Boolean)
+
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="mx-auto max-w-[1600px] px-4 py-4 sm:px-6 lg:px-8">
-        <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="border border-slate-900 bg-slate-950 px-4 py-5 text-white shadow-sm">
-            <div className="border-b border-slate-800 pb-5">
-              <div className="flex h-12 w-12 items-center justify-center border border-slate-700 bg-slate-900 text-cyan-200">
-                <Stethoscope className="h-5 w-5" />
-              </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Panel administrativo
-              </p>
-              <h1 className="mt-3 text-2xl font-semibold text-white">{nombreClinica}</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                {ubicacionClinica || 'Ubicacion pendiente por completar'}
-              </p>
+    <AdminShell
+      currentKey="dashboard"
+      title="Dashboard administrativo"
+      description="Un command center para priorizar operacion, caja, inventario y continuidad sin perder tiempo en pantallas saturadas."
+      headerBadge={
+        <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+          Corte {formatShortDate(rangoMes.fechaFin)}
+        </StatusPill>
+      }
+      actions={
+        typeof diasRestantes === 'number' ? (
+          <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
+            {diasRestantes} dias restantes
+          </StatusPill>
+        ) : null
+      }
+      showQuickActions
+      asideNote="Lee el tablero, detecta el frente critico y entra al modulo correcto solo cuando ya sabes que accion tomar."
+    >
+      <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
+
+      {queryErrors.length > 0 ? (
+        <div className="space-y-3">
+          {queryErrors.map((message) => (
+            <div
+              key={message}
+              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 shadow-sm"
+            >
+              {message}
             </div>
-
-            <div className="mt-5 space-y-3">
-              {TAB_GROUPS.map((group) => {
-                const isOpen = openSidebarGroups[group.key] || group.items.includes(activeTab)
-                const groupTabs = group.items.map((itemId) => TAB_BY_ID[itemId]).filter(Boolean)
-
-                return (
-                  <div key={group.key} className="border border-slate-800 bg-slate-950">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenSidebarGroups((current) => ({
-                          ...current,
-                          [group.key]: !current[group.key],
-                        }))
-                      }
-                      className="flex w-full items-center justify-between px-3 py-3 text-left"
-                    >
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                        {group.label}
-                      </span>
-                      <ChevronDown
-                        className={`h-4 w-4 text-slate-500 transition ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-
-                    {isOpen ? (
-                      <div className="space-y-3 border-t border-slate-800 p-3">
-                        {groupTabs.map((tab) => (
-                          <SidebarTabButton
-                            key={tab.id}
-                            icon={tab.icon}
-                            label={tab.label}
-                            active={activeTab === tab.id}
-                            badge={sidebarBadges[tab.id]}
-                            onClick={() => setActiveTab(tab.id)}
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-6 space-y-3 border-t border-slate-800 pt-5">
-              <div className="border border-slate-800 bg-slate-900 px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                  Plan actual
-                </p>
-                <p className="mt-2 text-sm font-semibold text-white">{metaPlan.nombre}</p>
-              </div>
-              <Link
-                to="/pacientes"
-                className="inline-flex w-full items-center justify-center gap-2 border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-800"
-              >
-                Abrir pacientes
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className="inline-flex w-full items-center justify-center gap-2 border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-900"
-              >
-                <LogOut className="h-4 w-4" />
-                Cerrar sesion
-              </button>
-            </div>
-          </aside>
-
-          <div className="space-y-5">
-            <header className="border border-slate-200 bg-white px-5 py-5 shadow-sm">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Vista ejecutiva
-                  </p>
-                  <h2 className="mt-3 text-3xl font-semibold text-slate-950">
-                    Lo importante primero: operacion, ingresos y control.
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                    Este dashboard ya no intenta adornar la pantalla. Organiza lo financiero, lo
-                    operativo y lo comercial por pestañas para que el equipo vea rapido lo que de
-                    verdad necesita gestionar.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
-                  {typeof diasRestantes === 'number' ? (
-                    <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
-                      {diasRestantes} dias
-                    </StatusPill>
-                  ) : null}
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
-                    Corte {formatShortDate(rangoMes.fechaFin)}
-                  </StatusPill>
-                </div>
-              </div>
-            </header>
-
-            {(suscripcionQuery.isError || dashboardQuery.isError) ? (
-              <div className="grid gap-4">
-                {suscripcionQuery.isError ? (
-                  <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                    {getErrorMessage(
-                      suscripcionQuery.error,
-                      'No fue posible cargar la suscripcion activa de la clinica.'
-                    )}
-                  </div>
-                ) : null}
-                {dashboardQuery.isError ? (
-                  <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                    {getErrorMessage(
-                      dashboardQuery.error,
-                      'No fue posible cargar el resumen administrativo del dashboard.'
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
-              <DashboardPanel
-                title="Cargando dashboard"
-                subtitle="Estamos reuniendo el corte administrativo de la clinica."
-              >
-                <div className="grid gap-4 xl:grid-cols-4">
-                  {[0, 1, 2, 3].map((item) => (
-                    <div key={item} className="h-40 animate-pulse border border-slate-200 bg-slate-50" />
-                  ))}
-                </div>
-              </DashboardPanel>
-            ) : (
-              activeView
-            )}
-          </div>
+          ))}
         </div>
-      </div>
-    </div>
+      ) : null}
+
+      {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-12">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-44 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-3"
+            />
+          ))}
+          <div className="h-72 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-8" />
+          <div className="h-72 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-4" />
+        </div>
+      ) : (
+        activeView
+      )}
+    </AdminShell>
   )
 }

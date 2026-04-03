@@ -8,7 +8,7 @@ const Usuario = require('../models/Usuario')
 const RefreshToken = require('../models/RefreshToken')
 const Suscripcion = require('../models/Suscripcion')
 const { appConfig } = require('../config/app')
-const { crearSuscripcionPruebaInicial } = require('../config/planes')
+const { crearSuscripcionEsencial } = require('../config/planes')
 const {
   setAuthCookies,
   clearAuthCookies,
@@ -298,10 +298,9 @@ const registro = async (req, res) => {
         { transaction }
       )
 
-      const suscripcion = await Suscripcion.create(
-        crearSuscripcionPruebaInicial(clinica.id),
-        { transaction }
-      )
+      const suscripcion = await Suscripcion.create(crearSuscripcionEsencial(clinica.id), {
+        transaction,
+      })
 
       const payload = {
         id: usuarioAdmin.id,

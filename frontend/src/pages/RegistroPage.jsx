@@ -113,7 +113,7 @@ const STEPS = [
   {
     label: 'Seguridad',
     short: 'Acceso',
-    title: 'Protege la cuenta principal con una clave robusta.',
+    title: 'Protege la cuenta de acceso con una clave robusta.',
     description: 'Al finalizar, la clinica quedara lista para ingresar al sistema con el acceso principal.',
     note: 'La contrasena debe cumplir las mismas reglas en la interfaz y en el backend antes de enviar el registro.',
   },
@@ -139,7 +139,7 @@ const READY_ITEMS = [
   {
     icon: ShieldCheck,
     title: 'Acceso seguro desde el inicio',
-    body: 'La cuenta principal queda protegida con reglas coherentes en todo el sistema.',
+    body: 'La cuenta de acceso queda protegida con reglas coherentes en todo el sistema.',
   },
 ]
 
@@ -456,7 +456,7 @@ export default function RegistroPage() {
                 <div className="absolute inset-0 flex flex-col justify-between p-5 sm:p-6">
                   <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f3e5d9] backdrop-blur-md sm:px-4 sm:py-2 sm:text-[11px] sm:tracking-[0.16em]">
                     <Sparkles className="h-3.5 w-3.5" />
-                    Cuenta principal
+                    Cuenta de acceso
                   </div>
 
                   <div>
@@ -467,7 +467,7 @@ export default function RegistroPage() {
                       className="mt-3 max-w-[8ch] text-[26px] leading-[0.98] tracking-[-0.04em] text-white sm:max-w-[9ch] sm:text-[34px] lg:text-[38px]"
                       style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
                     >
-                      Activa la cuenta principal
+                      Activa la cuenta de la clinica
                     </h1>
                     <p className="mt-3 max-w-[28ch] text-[13px] leading-6 text-white/76 sm:text-sm sm:leading-7">
                       Registra la sede, el responsable y el acceso inicial para empezar a operar.
@@ -544,13 +544,13 @@ export default function RegistroPage() {
                 <div className="max-w-4xl">
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e5dfd7] bg-[#fcfaf7] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7c847d]">
                     <span className="h-2 w-2 rounded-full bg-[#84a393]" />
-                    Registro de cuenta principal
+                    Registro de la clinica
                   </div>
                   <h2
                     className="mt-5 max-w-3xl text-[34px] leading-[0.96] tracking-[-0.04em] text-[#1f2521] sm:text-[46px] lg:text-[58px]"
                     style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
                   >
-                    Crea la cuenta principal con datos reales y una configuracion clara desde el primer ingreso.
+                    Crea la cuenta de la clinica con datos reales y una configuracion clara desde el primer ingreso.
                   </h2>
                   <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[#59655d]">
                     Registraremos la informacion base de la clinica, el contacto administrativo y el acceso inicial para que puedas empezar a operar sin fricciones.
@@ -771,7 +771,7 @@ export default function RegistroPage() {
                         />
                       </InputShell>
                       <p className="mt-2 text-sm text-[#5d6760]">
-                        Este correo se usara para iniciar sesion y administrar la cuenta principal.
+                        Este correo se usara para iniciar sesion y administrar la cuenta de la clinica.
                       </p>
                     </div>
 
@@ -877,7 +877,7 @@ export default function RegistroPage() {
                           />
                         </InputShell>
                         <p className="mt-2 text-sm text-[#5d6760]">
-                          Esta confirmacion debe escribirse manualmente para evitar errores al duplicar la clave principal.
+                          Esta confirmacion debe escribirse manualmente para evitar errores al duplicar la clave de acceso.
                         </p>
                       </div>
                     </div>
@@ -895,7 +895,7 @@ export default function RegistroPage() {
                             Requisitos de seguridad
                           </p>
                           <p className="mt-2 text-sm leading-6 text-[#58615a]">
-                            Verifica estos puntos antes de continuar. La contrasena debe cumplirlos para guardar la cuenta principal.
+                            Verifica estos puntos antes de continuar. La contrasena debe cumplirlos para guardar la cuenta de acceso.
                           </p>
                           <div className="mt-4 grid gap-3 sm:grid-cols-2">
                             {passwordChecks.map((rule) => (
@@ -938,7 +938,7 @@ export default function RegistroPage() {
               ? 'Usa el nombre con el que tu clinica se presenta a clientes, documentos y procesos internos.'
               : paso === 1
                 ? 'Este contacto sera el punto principal para notificaciones, acceso y comunicaciones de la operacion diaria.'
-                : 'Al completar este bloque, la cuenta principal quedara lista para ingresar al sistema con una contrasena segura.'}
+                : 'Al completar este bloque, la cuenta de acceso quedara lista para ingresar al sistema con una contrasena segura.'}
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -968,7 +968,7 @@ export default function RegistroPage() {
                 disabled={isPending}
                 className="h-14 rounded-full bg-[linear-gradient(135deg,#2d465d_0%,#547a6e_54%,#c59c7e_100%)] px-8 text-sm font-semibold text-white shadow-[0_20px_42px_rgba(45,70,93,0.22)] transition hover:opacity-95 lg:min-w-[240px]"
               >
-                {isPending ? 'Creando cuenta principal...' : 'Crear cuenta de la clinica'}
+                {isPending ? 'Creando cuenta de la clinica...' : 'Crear cuenta de la clinica'}
                 {!isPending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
               </Button>
             )}

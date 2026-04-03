@@ -1,0 +1,61 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#06111C" />
+  <circle cx="160" cy="120" r="180" fill="#1C5D63" fill-opacity="0.42" />
+  <circle cx="1080" cy="130" r="220" fill="#163D66" fill-opacity="0.38" />
+  <circle cx="720" cy="600" r="220" fill="#11443E" fill-opacity="0.28" />
+  <g opacity="0.08">
+    <path d="M0 84H1200" stroke="white" />
+    <path d="M0 168H1200" stroke="white" />
+    <path d="M0 252H1200" stroke="white" />
+    <path d="M0 336H1200" stroke="white" />
+    <path d="M0 420H1200" stroke="white" />
+    <path d="M0 504H1200" stroke="white" />
+    <path d="M0 588H1200" stroke="white" />
+    <path d="M120 0V630" stroke="white" />
+    <path d="M240 0V630" stroke="white" />
+    <path d="M360 0V630" stroke="white" />
+    <path d="M480 0V630" stroke="white" />
+    <path d="M600 0V630" stroke="white" />
+    <path d="M720 0V630" stroke="white" />
+    <path d="M840 0V630" stroke="white" />
+    <path d="M960 0V630" stroke="white" />
+    <path d="M1080 0V630" stroke="white" />
+  </g>
+  <rect x="84" y="84" width="96" height="96" rx="28" fill="url(#logoGradient)" />
+  <path d="M124 117C124 109.82 129.82 104 137 104C144.18 104 150 109.82 150 117C150 124.18 144.18 130 137 130C129.82 130 124 124.18 124 117Z" fill="#082033" />
+  <path d="M131 137H143V171H131V137Z" fill="#082033" />
+  <path d="M112 150C112 145.582 115.582 142 120 142H154C158.418 142 162 145.582 162 150V158H112V150Z" fill="#082033" />
+  <text x="220" y="148" fill="white" font-family="Georgia, 'Times New Roman', serif" font-size="78" font-weight="700" letter-spacing="-2">
+    Bourgelat
+  </text>
+  <text x="220" y="205" fill="#91E7E0" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="6">
+    SOFTWARE VETERINARIO PARA COLOMBIA
+  </text>
+  <text x="84" y="314" fill="white" font-family="Georgia, 'Times New Roman', serif" font-size="70" font-weight="700" letter-spacing="-2">
+    Agenda, historia clinica, inventario y caja
+  </text>
+  <text x="84" y="386" fill="rgba(255,255,255,0.78)" font-family="Arial, Helvetica, sans-serif" font-size="32">
+    Una sola plataforma para clinicas veterinarias que quieren operar mejor.
+  </text>
+  <g>
+    <rect x="84" y="454" width="242" height="54" rx="27" fill="#EFFAF8" />
+    <text x="120" y="488" fill="#0D2435" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">
+      Crear cuenta
+    </text>
+    <text x="296" y="488" fill="#0D2435" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">
+      -&gt;
+    </text>
+  </g>
+  <g>
+    <rect x="350" y="454" width="304" height="54" rx="27" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)" />
+    <text x="390" y="488" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">
+      Facturacion DIAN disponible
+    </text>
+  </g>
+  <defs>
+    <linearGradient id="logoGradient" x1="84" y1="84" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8FE0DA" />
+      <stop offset="1" stop-color="#B8EFF0" />
+    </linearGradient>
+  </defs>
+</svg>

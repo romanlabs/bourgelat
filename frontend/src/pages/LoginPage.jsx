@@ -35,7 +35,7 @@ const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 const MODULES = [
   { icon: CalendarClock, label: 'Agenda' },
   { icon: HeartPulse, label: 'Pacientes' },
-  { icon: ReceiptText, label: 'Facturacion DIAN' },
+  { icon: ReceiptText, label: 'Facturacion electronica' },
 ]
 
 function SurfaceField({ icon, error, action, children }) {
@@ -154,7 +154,7 @@ export default function LoginPage() {
               to="/registro"
               className="inline-flex items-center gap-2 rounded-full bg-[#eef4ef] px-4 py-2 text-sm font-semibold text-[#183127] no-underline transition hover:bg-white"
             >
-              Crear cuenta principal
+              Crear cuenta
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <div className="relative">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e5ee] bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5b7d97]">
                 <span className="h-2 w-2 rounded-full bg-[#86b6a6]" />
-                Portal de ingreso
+                Portal de acceso
               </div>
 
               <h1
@@ -290,7 +290,7 @@ export default function LoginPage() {
               <div className="mt-6 border-t border-[#d9e5ee] pt-5 text-sm text-[#5f7284]">
                 Primera vez en Bourgelat?{' '}
                 <Link to="/registro" className="font-semibold text-[#214864] no-underline hover:text-[#13263a]">
-                  Configurar la cuenta principal de la clinica
+                  Crear la cuenta de tu clinica
                 </Link>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function LoginPage() {
 
               <div className="absolute left-6 right-6 top-6 flex flex-wrap gap-2">
                 <InsightPill icon={PawPrint}>Caninos y felinos</InsightPill>
-                <InsightPill icon={Building2}>Clinica principal</InsightPill>
+                <InsightPill icon={Building2}>Cuenta de clinica</InsightPill>
               </div>
 
               <div className="absolute left-6 top-24 w-[250px] rounded-[24px] border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
@@ -325,7 +325,7 @@ export default function LoginPage() {
                   Agenda, historia y caja dentro del mismo recorrido.
                 </p>
                 <p className="mt-2 text-sm leading-6 text-white/68">
-                  Menos capas sobre la imagen, mas contexto clinico y una escena mas limpia.
+                  El acceso mantiene el mismo criterio de orden y contexto del resto de la plataforma.
                 </p>
               </div>
 

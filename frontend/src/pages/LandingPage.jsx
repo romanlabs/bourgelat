@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import landingHeroConsultation from '@/assets/auth/landing-hero-consultation.webp'
-import registerDetail from '@/assets/auth/register-detail.webp'
 import {
   ArrowRight,
   Bell,
@@ -95,16 +94,16 @@ const PRODUCT_PANELS = [
     icon: Globe,
     title: 'Pensado para Colombia',
     body:
-      'Facturacion electronica DIAN disponible en los planes Profesional y Personalizado, sin meter esa complejidad en la venta.',
+      'Facturacion electronica DIAN disponible cuando la clinica ya necesita ese nivel de operacion.',
   },
 ]
 
 const PLAN_PREVIEW = [
   {
-    name: 'Inicio Gratis',
-    subtitle: 'Para digitalizar lo esencial',
-    price: 'COP 0',
-    note: 'Agenda, pacientes e historia clinica para empezar con orden.',
+    name: 'Esencial',
+    subtitle: 'Para empezar con orden',
+    price: 'Sin cargo mensual',
+    note: 'Agenda, pacientes e historia clinica para arrancar con una base clara.',
   },
   {
     name: 'Clinica',
@@ -194,12 +193,89 @@ function SectionHeading({ eyebrow, title, body, dark = false, center = false }) 
 
 function LandingNav() {
   const [open, setOpen] = useState(false)
+  const [navTheme, setNavTheme] = useState('dark')
+  const headerRef = useRef(null)
+
+  useEffect(() => {
+    const parseRgbChannels = (value) => {
+      const match = value.match(/\d+(\.\d+)?/g)
+
+      if (!match || match.length < 3) {
+        return null
+      }
+
+      return [Number(match[0]), Number(match[1]), Number(match[2])]
+    }
+
+    const isLightColor = (rgb) => {
+      const [r, g, b] = rgb
+      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      return luminance > 150
+    }
+
+    const syncNavTheme = () => {
+      // Keep the top-of-page header in dark mode to avoid the initial gray flash.
+      if (window.scrollY < 120) {
+        setNavTheme('dark')
+        return
+      }
+
+      const probeX = Math.max(Math.min(window.innerWidth / 2, window.innerWidth - 1), 0)
+      const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 76
+      const probeY = Math.max(Math.min(Math.round(headerHeight + 10), window.innerHeight - 1), 0)
+      const elements = document.elementsFromPoint(probeX, probeY)
+
+      for (const element of elements) {
+        if (!(element instanceof HTMLElement)) {
+          continue
+        }
+
+        if (element === headerRef.current || headerRef.current?.contains(element)) {
+          continue
+        }
+
+        const style = window.getComputedStyle(element)
+        const background = style.backgroundColor
+
+        if (!background || background === 'transparent' || background.includes('rgba(0, 0, 0, 0)')) {
+          continue
+        }
+
+        const rgb = parseRgbChannels(background)
+
+        if (rgb) {
+          setNavTheme(isLightColor(rgb) ? 'light' : 'dark')
+          return
+        }
+      }
+
+      setNavTheme(window.scrollY > 36 ? 'light' : 'dark')
+    }
+
+    syncNavTheme()
+    window.addEventListener('scroll', syncNavTheme, { passive: true })
+    window.addEventListener('resize', syncNavTheme)
+
+    return () => {
+      window.removeEventListener('scroll', syncNavTheme)
+      window.removeEventListener('resize', syncNavTheme)
+    }
+  }, [])
+
+  const isLight = navTheme === 'light'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#06111c]/78 backdrop-blur-xl">
+    <header
+      ref={headerRef}
+      className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-colors duration-300 ${
+        isLight
+          ? 'border-[#c9dcea] bg-[rgba(229,244,251,0.82)] shadow-[0_14px_38px_rgba(11,34,50,0.08)]'
+          : 'border-white/18 bg-[rgba(4,12,20,0.72)] shadow-[0_16px_46px_rgba(3,11,19,0.34)]'
+      }`}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
         <Link to="/" className="no-underline">
-          <BrandMark dark />
+          <BrandMark dark={!isLight} />
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
@@ -207,7 +283,11 @@ function LandingNav() {
             <a
               key={item.label}
               href={item.href}
-              className="text-sm font-medium text-white/62 no-underline transition hover:text-white"
+              className={`rounded-full px-4 py-2 text-sm font-medium no-underline transition-colors ${
+                isLight
+                  ? 'text-[#173048] hover:bg-[#eef4f7] hover:text-[#0d2435]'
+                  : 'text-white/90 hover:bg-white/8 hover:text-[#91e7e0]'
+              }`}
             >
               {item.label}
             </a>
@@ -217,13 +297,21 @@ function LandingNav() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             to="/login"
-            className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/72 no-underline transition hover:border-white/20 hover:text-white"
+            className={`rounded-full border px-4 py-2 text-sm font-semibold no-underline transition-colors ${
+              isLight
+                ? 'border-[#b8cad9] bg-white/70 text-[#10273a] hover:border-[#a8bfd1] hover:bg-white'
+                : 'border-white/28 bg-[rgba(6,18,31,0.32)] text-white hover:border-white/45 hover:bg-white/12'
+            }`}
           >
             Iniciar sesion
           </Link>
           <Link
             to="/registro"
-            className="inline-flex items-center gap-2 rounded-full bg-[#effaf8] px-5 py-2.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold no-underline transition-colors ${
+              isLight
+                ? 'border border-[#cfe6e2] bg-[#e9f7f3] text-[#0d2435] shadow-[0_12px_30px_rgba(143,224,218,0.14)] hover:bg-[#f2fbf9]'
+                : 'border border-[#dff0ee] bg-[#effaf8] text-[#0d2435] shadow-[0_14px_34px_rgba(143,224,218,0.18)] hover:bg-white'
+            }`}
           >
             Crear cuenta
             <ArrowRight className="h-4 w-4" />
@@ -233,7 +321,11 @@ function LandingNav() {
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-white lg:hidden"
+          className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-colors lg:hidden ${
+            isLight
+              ? 'border-[#d4e0ea] text-[#173048] hover:bg-[#f4f8fb]'
+              : 'border-white/18 text-white hover:bg-white/8'
+          }`}
           aria-label="Abrir menu"
         >
           {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -241,14 +333,22 @@ function LandingNav() {
       </div>
 
       {open ? (
-        <div className="border-t border-white/10 bg-[#06111c] px-5 py-5 lg:hidden">
+        <div
+          className={`border-t px-5 py-5 lg:hidden ${
+            isLight ? 'border-[#dce6ef] bg-white' : 'border-white/10 bg-[#06111c]'
+          }`}
+        >
           <div className="flex flex-col gap-4">
             {NAV_ITEMS.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="text-sm font-medium text-white/78 no-underline"
+                className={`rounded-full px-4 py-3 text-sm font-medium no-underline transition-colors ${
+                  isLight
+                    ? 'text-[#173048] hover:bg-[#f4f8fb]'
+                    : 'text-white/90 hover:bg-white/8'
+                }`}
               >
                 {item.label}
               </a>
@@ -257,14 +357,22 @@ function LandingNav() {
               <Link
                 to="/login"
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/72 no-underline"
+                className={`rounded-full border px-4 py-3 text-center text-sm font-semibold no-underline transition-colors ${
+                  isLight
+                    ? 'border-[#b8cad9] bg-white/70 text-[#10273a] hover:bg-white'
+                    : 'border-white/28 bg-[rgba(6,18,31,0.32)] text-white hover:bg-white/12'
+                }`}
               >
                 Iniciar sesion
               </Link>
               <Link
                 to="/registro"
                 onClick={() => setOpen(false)}
-                className="rounded-full bg-[#effaf8] px-4 py-3 text-center text-sm font-semibold text-[#0d2435] no-underline"
+                className={`rounded-full px-4 py-3 text-center text-sm font-semibold no-underline transition-colors ${
+                  isLight
+                    ? 'border border-[#cfe6e2] bg-[#e9f7f3] text-[#0d2435] hover:bg-[#f2fbf9]'
+                    : 'border border-[#dff0ee] bg-[#effaf8] text-[#0d2435] hover:bg-white'
+                }`}
               >
                 Crear cuenta
               </Link>
@@ -279,42 +387,47 @@ function LandingNav() {
 function HeroPreview() {
   return (
     <div className="relative">
-      <div className="overflow-hidden rounded-[34px] border border-white/10 bg-white/6 p-3 shadow-[0_40px_120px_rgba(3,10,18,0.42)]">
-        <div className="relative min-h-[520px] overflow-hidden rounded-[28px]">
+      <div className="overflow-hidden rounded-[34px] border border-white/10 bg-[#0a1824] p-4 shadow-[0_32px_100px_rgba(3,10,18,0.34)]">
+        <div className="relative min-h-[520px] overflow-hidden rounded-[28px] border border-white/10 bg-[#08131d]">
           <img
             src={landingHeroConsultation}
             alt="Veterinario conversando con la tutora mientras revisa a su perro en consulta"
             className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,17,28,0.08)_0%,rgba(6,17,28,0.3)_40%,rgba(6,17,28,0.86)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,17,28,0.12)_0%,rgba(6,17,28,0.28)_38%,rgba(6,17,28,0.88)_100%)]" />
+          <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(6,17,28,0.4)_0%,transparent_100%)]" />
 
           <div className="absolute left-5 top-5 flex flex-wrap gap-2">
-            {['Recepcion', 'Consulta', 'Caja', 'Seguimiento'].map((item) => (
+            {['Recepcion', 'Consulta', 'Cierre'].map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-white/14 bg-white/12 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white"
+                className="rounded-full border border-white/14 bg-[#0d2435]/52 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/92 backdrop-blur-sm"
               >
                 {item}
               </span>
             ))}
           </div>
 
-          <div className="absolute bottom-5 left-5 right-5 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[26px] border border-white/12 bg-[#091827]/72 p-5 backdrop-blur-xl">
+          <div className="absolute bottom-5 left-5 right-5 grid gap-4 lg:grid-cols-[minmax(0,1.18fr)_minmax(280px,0.82fr)]">
+            <div className="rounded-[26px] border border-white/12 bg-[#091827]/78 p-6 backdrop-blur-xl">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8fe0da]">
                 Consulta activa
               </p>
               <h3
-                className="mt-3 text-3xl leading-none tracking-[-0.04em] text-white"
+                className="mt-3 max-w-lg text-3xl leading-none tracking-[-0.04em] text-white"
                 style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
               >
                 Todo el contexto, sin abrir cinco ventanas.
               </h3>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <p className="mt-4 max-w-md text-sm leading-6 text-white/70">
+                La cita, los antecedentes y el siguiente paso aparecen en el mismo lugar para que
+                la consulta se sienta ordenada desde el inicio.
+              </p>
+              <div className="mt-5 grid gap-3 sm:max-w-[23rem]">
                 {['Antecedentes visibles', 'Notas del dia', 'Proximo paso claro'].map((item) => (
                   <div
                     key={item}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-2 text-sm text-white/78"
+                    className="inline-flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-sm text-white/84"
                   >
                     <Check className="h-3.5 w-3.5 text-[#91e7e0]" />
                     {item}
@@ -323,49 +436,40 @@ function HeroPreview() {
               </div>
             </div>
 
-            <div className="rounded-[26px] border border-white/12 bg-[#eff5fb] p-5 text-[#11293c] shadow-[0_16px_44px_rgba(5,15,27,0.18)]">
+            <div className="rounded-[26px] border border-[#d6e3ed] bg-[#f4f8fb] p-5 text-[#11293c] shadow-[0_16px_44px_rgba(5,15,27,0.14)]">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f7487]">
-                  Cierre del dia
-                </p>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f7487]">
+                    Operacion del dia
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-[#17324a]">Agenda y caja sin cruces</p>
+                </div>
                 <span className="rounded-full bg-[#dff4ef] px-2.5 py-1 text-[11px] font-semibold text-[#24544f]">
                   estable
                 </span>
               </div>
-              <div className="mt-4 grid gap-3">
+              <div className="mt-5 space-y-4">
                 {[
-                  ['Agenda', 'Citas confirmadas y sin cruces'],
-                  ['Caja', 'Cobro y trazabilidad en el mismo flujo'],
-                  ['Seguimiento', 'Pendientes visibles antes de salir'],
+                  ['Agenda', 'Citas confirmadas y ordenadas'],
+                  ['Caja', 'Cobro conectado con la consulta'],
+                  ['Seguimiento', 'Pendientes visibles antes del cierre'],
                 ].map(([label, text]) => (
-                  <div key={label} className="rounded-[20px] border border-[#d6e3ed] bg-white p-4">
+                  <div
+                    key={label}
+                    className="flex items-start justify-between gap-4 border-b border-[#d9e4ec] pb-4 last:border-b-0 last:pb-0"
+                  >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#648299]">
                       {label}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[#24435c]">{text}</p>
+                    <p className="max-w-[190px] text-right text-sm leading-6 text-[#24435c]">
+                      {text}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="absolute -bottom-12 -right-4 hidden w-[240px] rounded-[28px] border border-[#d4e3ef] bg-white p-3 shadow-[0_24px_70px_rgba(8,25,39,0.18)] xl:block">
-        <div className="overflow-hidden rounded-[22px]">
-          <img
-            src={registerDetail}
-            alt="Paciente felino en una consulta veterinaria"
-            className="h-36 w-full object-cover"
-          />
-        </div>
-        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5f7a8f]">
-          Bienestar y seguimiento
-        </p>
-        <p className="mt-2 text-sm leading-6 text-[#27425a]">
-          Una experiencia mas ordenada para el equipo tambien se siente mejor para el tutor y para
-          el paciente.
-        </p>
       </div>
     </div>
   )
@@ -448,7 +552,7 @@ function FeatureMockup() {
                     Paciente
                   </p>
                   <p className="mt-2 text-lg font-semibold text-[#143149]">
-                    Luna · control respiratorio
+                    Luna - control respiratorio
                   </p>
                 </div>
                 <PawPrint className="h-5 w-5 text-[#3b7b87]" />
@@ -471,7 +575,7 @@ function FeatureMockup() {
 
             <div className="rounded-[24px] bg-[linear-gradient(135deg,#0d3b4a,#12314a)] p-5 text-white shadow-[0_16px_44px_rgba(6,23,35,0.22)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9debe4]">
-                Facturacion DIAN
+                Facturacion electronica
               </p>
               <p className="mt-3 text-sm leading-6 text-white/80">
                 Disponible en los planes Profesional y Personalizado para completar un flujo mas
@@ -537,7 +641,7 @@ export default function LandingPage() {
                   to="/registro"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#effaf8] px-6 py-3.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
                 >
-                  Crear cuenta principal
+                  Crear cuenta
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -599,7 +703,7 @@ export default function LandingPage() {
         <SectionHeading
           eyebrow="Experiencia"
           title="Una plataforma que se entiende mas rapido y acompana mejor el dia."
-          body="La referencia ya no es una web llena de texto. La promesa es simple: mostrar por que el trabajo diario se siente mas ligero cuando la operacion tiene orden, criterio y continuidad."
+          body="Cada modulo esta pensado para que recepcion, consulta y caja entiendan rapido que hacer y que sigue despues."
         />
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
@@ -644,7 +748,7 @@ export default function LandingPage() {
             <SectionHeading
               eyebrow="Flujo diario"
               title="Del primer agendamiento al cierre del dia, sin perder contexto."
-              body="La inspiracion correcta de un buen SaaS es esta: recepcion, consulta y administracion trabajando sobre el mismo hilo para que la operacion se vea mas profesional y sea mas facil de sostener."
+              body="La clinica trabaja sobre el mismo contexto desde la cita hasta el cobro, asi que se reducen repeticiones, olvidos y pasos manuales."
             />
 
             <div className="mt-10 space-y-5">
@@ -677,7 +781,7 @@ export default function LandingPage() {
         <SectionHeading
           eyebrow="Plataforma"
           title="Lo importante esta conectado, pero la interfaz sigue siendo amable."
-          body="Una web premium no necesita exagerar. Necesita jerarquia, ritmo visual y un mensaje facil de entender para quien atiende, cobra y dirige la clinica."
+          body="El sistema conecta lo clinico, lo administrativo y el seguimiento sin recargar la lectura del equipo."
           center
         />
 
@@ -709,8 +813,8 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-24">
           <SectionHeading
             eyebrow="Planes"
-            title="Empieza simple y crece cuando tu operacion de verdad lo pida."
-            body="Ahora la conversacion es mucho mas clara para un cliente: que incluye cada etapa, cuando entra la DIAN y cual suele ser el siguiente paso natural para una clinica."
+            title="Planes claros para cada etapa de la clinica."
+            body="Empieza con una base ordenada, suma operacion diaria cuando la necesites y llega a DIAN cuando el flujo ya lo pida."
             dark
             center
           />
@@ -762,7 +866,7 @@ export default function LandingPage() {
               to="/registro"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/6 px-6 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/10"
             >
-              Crear cuenta principal
+              Crear cuenta
             </Link>
           </div>
         </div>
@@ -779,12 +883,11 @@ export default function LandingPage() {
                 className="mt-4 text-5xl leading-[0.94] tracking-[-0.05em] text-white md:text-6xl"
                 style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
               >
-                Una web bonita ayuda. Una experiencia clara es lo que convierte.
+                Agenda una conversacion cuando quieras revisar tu caso.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/74">
-                Bourgelat tiene que sentirse robusto, rapido y confiable desde la primera visita.
-                Este ya es un paso en esa direccion: menos ruido, mejor jerarquia y una promesa
-                comercial mucho mas facil de entender para una clinica real.
+                Si quieres validar encaje, migracion, DIAN o el plan correcto para tu equipo,
+                conversemos y lo aterrizamos contigo.
               </p>
             </div>
 
@@ -793,7 +896,7 @@ export default function LandingPage() {
                 to="/registro"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-[#effaf8]"
               >
-                Crear cuenta principal
+                Crear cuenta
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a

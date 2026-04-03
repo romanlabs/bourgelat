@@ -1,6 +1,6 @@
 export const PLAN_META = {
   inicio: {
-    nombre: 'Inicio Gratis',
+    nombre: 'Esencial',
     tone: 'bg-slate-100 text-slate-700 border-slate-200',
     accent: '#0f172a',
   },

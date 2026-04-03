@@ -1,7 +1,12 @@
 const { Op } = require('sequelize')
 
 const Suscripcion = require('../models/Suscripcion')
-const { PLANES_PUBLICOS, crearSuscripcionInicioGratis, formatDateOnly } = require('../config/planes')
+const {
+  DEFAULT_INITIAL_PLAN,
+  PLANES_PUBLICOS,
+  crearSuscripcionEsencial,
+  formatDateOnly,
+} = require('../config/planes')
 
 const ESTADOS_VIGENTES = ['activa', 'prueba']
 
@@ -19,11 +24,11 @@ const obtenerSuscripcionVigenteRegistrada = async (clinicaId, transaction) =>
     transaction,
   })
 
-const asegurarInicioGratis = async (clinicaId, transaction) => {
+const asegurarPlanEsencial = async (clinicaId, transaction) => {
   const existente = await Suscripcion.findOne({
     where: {
       clinicaId,
-      plan: 'inicio',
+      plan: DEFAULT_INITIAL_PLAN,
       estado: 'activa',
     },
     order: [['createdAt', 'DESC']],
@@ -34,7 +39,7 @@ const asegurarInicioGratis = async (clinicaId, transaction) => {
     return existente
   }
 
-  return Suscripcion.create(crearSuscripcionInicioGratis(clinicaId), { transaction })
+  return Suscripcion.create(crearSuscripcionEsencial(clinicaId), { transaction })
 }
 
 const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) => {
@@ -45,11 +50,11 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
   const suscripcionVigente = await obtenerSuscripcionVigenteRegistrada(clinicaId, transaction)
 
   if (!suscripcionVigente) {
-    const inicioGratis = await asegurarInicioGratis(clinicaId, transaction)
+    const planEsencial = await asegurarPlanEsencial(clinicaId, transaction)
     return {
-      suscripcion: inicioGratis,
+      suscripcion: planEsencial,
       downgraded: false,
-      advertencia: 'No existia una suscripcion vigente y se activo Inicio Gratis.',
+      advertencia: 'No existia una suscripcion vigente y se activo Esencial.',
     }
   }
 
@@ -57,13 +62,12 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
 
   if (suscripcionVigente.fechaFin < hoy) {
     await suscripcionVigente.update({ estado: 'vencida' }, { transaction })
-    const inicioGratis = await asegurarInicioGratis(clinicaId, transaction)
+    const planEsencial = await asegurarPlanEsencial(clinicaId, transaction)
 
     return {
-      suscripcion: inicioGratis,
+      suscripcion: planEsencial,
       downgraded: true,
-      advertencia:
-        'La suscripcion anterior vencio y la clinica continuo en Inicio Gratis.',
+      advertencia: 'La suscripcion anterior vencio y la clinica continuo en Esencial.',
     }
   }
 
@@ -72,7 +76,7 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
     downgraded: false,
     advertencia:
       suscripcionVigente.estado === 'prueba'
-        ? `Tu prueba termina el ${suscripcionVigente.fechaFin}`
+        ? `La activacion temporal termina el ${suscripcionVigente.fechaFin}`
         : null,
   }
 }
@@ -129,7 +133,7 @@ module.exports = {
   obtenerNombrePlan,
   obtenerSuscripcionActivaClinica,
   obtenerSuscripcionVigenteRegistrada,
-  asegurarInicioGratis,
+  asegurarPlanEsencial,
   suscripcionTieneFuncionalidad,
   obtenerLimiteNumerico,
   validarCupoSuscripcion,

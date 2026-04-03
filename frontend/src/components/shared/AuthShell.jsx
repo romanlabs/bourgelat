@@ -36,7 +36,7 @@ const EXPERIENCES = {
   },
   register: {
     eyebrow: 'Alta de la clinica',
-    title: 'Crear la cuenta principal con datos limpios y estructura clara.',
+    title: 'Crear la cuenta de la clinica con datos limpios y estructura clara.',
     description:
       'El registro se reorganiza como una admision: primero la institucion, luego el responsable y al final la seguridad de acceso.',
     bullets: [
@@ -53,7 +53,7 @@ const EXPERIENCES = {
       {
         icon: BadgeCheck,
         title: 'Base lista para operar',
-        body: 'La cuenta principal queda preparada para entrar directo al sistema.',
+        body: 'La cuenta de acceso queda preparada para entrar directo al sistema.',
       },
     ],
     footerLabel: 'Flujo guiado',

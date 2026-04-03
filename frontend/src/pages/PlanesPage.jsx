@@ -16,14 +16,14 @@ import PublicPageShell from '@/components/shared/PublicPageShell'
 const PLANES = [
   {
     key: 'inicio',
-    nombre: 'Inicio Gratis',
-    subtitulo: 'Para digitalizar lo esencial',
+    nombre: 'Esencial',
+    subtitulo: 'Para empezar con orden',
     resumen:
       'Ideal para consultorios o clinicas que quieren ordenar agenda, pacientes e historia clinica sin empezar por una configuracion pesada.',
     precioMensual: 0,
     precioAnual: 0,
-    badge: 'Entrada simple',
-    cta: 'Crear cuenta gratis',
+    badge: 'Base operativa',
+    cta: 'Crear cuenta',
     to: '/registro',
     limites: ['1 sede', '2 usuarios', '250 mascotas activas', '1 GB base'],
     incluye: [
@@ -47,7 +47,7 @@ const PLANES = [
     to: '/registro',
     limites: ['1 sede', '5 usuarios', '2.500 mascotas activas', '5 GB base'],
     incluye: [
-      'Todo lo de Inicio Gratis',
+      'Todo lo de Esencial',
       'Inventario operativo',
       'Caja y facturacion interna',
       'Dashboard basico',
@@ -133,7 +133,7 @@ const PLAN_MATCH = [
   {
     title: 'Si estas digitalizando por primera vez',
     body:
-      'Inicio Gratis te deja ordenar agenda, pacientes e historia clinica sin meterte de una en un despliegue mas grande.',
+      'Esencial te deja ordenar agenda, pacientes e historia clinica sin meterte de una en un despliegue mas grande.',
   },
   {
     title: 'Si ya cobras, compras y controlas stock todos los dias',
@@ -154,7 +154,7 @@ const FAQS = [
       'La facturacion electronica DIAN aparece en Profesional y Personalizado. En la pagina de venta solo necesitas entender eso; la implementacion interna se gestiona despues.',
   },
   {
-    pregunta: 'Puedo empezar gratis y subir despues?',
+    pregunta: 'Puedo empezar con Esencial y subir despues?',
     respuesta:
       'Si. La idea es que una clinica pueda empezar con orden y subir de plan cuando la operacion diaria ya pida mas control.',
   },
@@ -172,7 +172,7 @@ const FAQS = [
 
 function formatPrice(value) {
   if (value === null) return 'Cotizacion guiada'
-  if (value === 0) return 'COP 0'
+  if (value === 0) return 'Sin cargo mensual'
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -223,7 +223,7 @@ export default function PlanesPage() {
     <PublicPageShell
       eyebrow="Planes Bourgelat"
       title="Planes que se entienden rapido y crecen con la clinica."
-      description="La comparativa ahora esta escrita para un cliente real: que incluye cada etapa, cuando entra la DIAN y cual suele ser el siguiente paso natural segun el nivel de operacion."
+      description="Compara lo necesario para elegir bien: que incluye cada etapa, cuando entra la DIAN y cual suele ser el siguiente paso natural segun el nivel de operacion."
     >
       <section className="mb-10 rounded-[32px] border border-[#d6e3ee] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-6 text-white shadow-[0_30px_100px_rgba(6,22,35,0.18)] md:p-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
@@ -236,7 +236,7 @@ export default function PlanesPage() {
               className="mt-5 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
               style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
             >
-              Empieza simple. Sube cuando tu operacion ya pida mas control.
+              Planes claros para cada momento de la clinica.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-8 text-white/76 md:text-base">
               No necesitas aprender una estructura complicada para decidir. Lo importante es saber
@@ -306,7 +306,13 @@ export default function PlanesPage() {
               </p>
               <p className="mt-5 text-3xl font-semibold">
                 {formatPrice(price)}
-                {price !== null ? <span className={`ml-1 text-sm font-medium ${highlighted ? 'text-white/62' : 'text-[#68839a]'}`}>/mes</span> : null}
+                {price !== null && price !== 0 ? (
+                  <span
+                    className={`ml-1 text-sm font-medium ${highlighted ? 'text-white/62' : 'text-[#68839a]'}`}
+                  >
+                    /mes
+                  </span>
+                ) : null}
               </p>
               <p className={`mt-4 text-sm leading-7 ${highlighted ? 'text-white/82' : 'text-[#48647b]'}`}>
                 {plan.resumen}
@@ -386,7 +392,7 @@ export default function PlanesPage() {
             {[
               'Muestra el valor real del producto.',
               'No obliga a vender complejidad demasiado pronto.',
-              'Se siente como una evolucion natural desde Inicio o Clinica.',
+              'Se siente como una evolucion natural desde Esencial o Clinica.',
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 text-sm leading-6 text-white/86">
                 <Check className="mt-1 h-4 w-4 shrink-0 text-[#9debe4]" />
@@ -470,12 +476,11 @@ export default function PlanesPage() {
               className="mt-4 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
               style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
             >
-              La pagina ya le habla mejor a la clinica. El siguiente clic deberia ser mas natural.
+              Cuando el plan correcto esta claro, el siguiente paso debe ser simple.
             </h2>
             <p className="mt-5 max-w-2xl text-sm leading-8 text-white/78 md:text-base">
-              Con esta version, la comparativa se siente mas sobria, mas comprable y mucho menos
-              cargada de texto interno. Ahora el cliente entiende rapido si esta empezando, operando
-              el dia completo o buscando una implementacion mas guiada.
+              Crea la cuenta de tu clinica o escribe al equipo si necesitas revisar migracion,
+              implementacion o una propuesta mas acompasada.
             </p>
           </div>
 
@@ -484,7 +489,7 @@ export default function PlanesPage() {
               to="/registro"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-semibold text-[#10263a] no-underline transition hover:bg-[#effaf8]"
             >
-              Crear cuenta principal
+              Crear cuenta
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
