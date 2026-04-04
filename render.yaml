@@ -77,7 +77,7 @@ services:
       - key: INTEGRACIONES_SECRET
         generateValue: true
       - key: ENABLE_XSS_CLEAN
-        value: "true"
+        value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
         value: "false"
       - key: AUTH_MAX_FAILED_ATTEMPTS
@@ -206,7 +206,7 @@ services:
       - key: INTEGRACIONES_SECRET
         generateValue: true
       - key: ENABLE_XSS_CLEAN
-        value: "true"
+        value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
         value: "false"
       - key: AUTH_MAX_FAILED_ATTEMPTS

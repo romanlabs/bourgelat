@@ -50,7 +50,7 @@ const appConfig = {
   enableDbSync: parseBoolean(process.env.DB_SYNC, !isProduction),
   enableDbAlter: parseBoolean(process.env.DB_ALTER, !isProduction),
   allowDbSyncBootstrap: parseBoolean(process.env.ALLOW_DB_SYNC_BOOTSTRAP, false),
-  enableXssClean: parseBoolean(process.env.ENABLE_XSS_CLEAN, isProduction),
+  enableXssClean: parseBoolean(process.env.ENABLE_XSS_CLEAN, false),
   auth: {
     maxIntentosFallidos: parseNumber(process.env.AUTH_MAX_FAILED_ATTEMPTS, 5),
     minutosBloqueo: parseNumber(process.env.AUTH_LOCK_MINUTES, 15),
