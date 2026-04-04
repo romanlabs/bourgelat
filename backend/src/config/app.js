@@ -49,6 +49,7 @@ const appConfig = {
   enableDbMigrations: parseBoolean(process.env.DB_RUN_MIGRATIONS, true),
   enableDbSync: parseBoolean(process.env.DB_SYNC, !isProduction),
   enableDbAlter: parseBoolean(process.env.DB_ALTER, !isProduction),
+  allowDbSyncBootstrap: parseBoolean(process.env.ALLOW_DB_SYNC_BOOTSTRAP, false),
   enableXssClean: parseBoolean(process.env.ENABLE_XSS_CLEAN, isProduction),
   auth: {
     maxIntentosFallidos: parseNumber(process.env.AUTH_MAX_FAILED_ATTEMPTS, 5),

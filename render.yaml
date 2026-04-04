@@ -56,6 +56,8 @@ services:
         value: "false"
       - key: DB_ALTER
         value: "false"
+      - key: ALLOW_DB_SYNC_BOOTSTRAP
+        value: "false"
       - key: FRONTEND_URL
         value: https://app.bourgelat.co
       - key: FRONTEND_URLS
@@ -182,6 +184,8 @@ services:
       - key: DB_SYNC
         value: "false"
       - key: DB_ALTER
+        value: "false"
+      - key: ALLOW_DB_SYNC_BOOTSTRAP
         value: "false"
       - key: FRONTEND_URL
         value: https://staging.bourgelat.co

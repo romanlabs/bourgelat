@@ -98,8 +98,20 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
     errors.push('REQUIRE_ORIGIN_FOR_COOKIE_AUTH debe ser true en produccion.')
   }
 
-  if (config.enableDbSync || config.enableDbAlter) {
-    errors.push('DB_SYNC y DB_ALTER deben permanecer desactivados en produccion.')
+  if (config.enableDbAlter) {
+    errors.push('DB_ALTER debe permanecer desactivado en produccion.')
+  }
+
+  if (config.enableDbSync && !config.allowDbSyncBootstrap) {
+    errors.push(
+      'DB_SYNC debe permanecer desactivado en produccion, excepto durante un bootstrap inicial con ALLOW_DB_SYNC_BOOTSTRAP=true.'
+    )
+  }
+
+  if (config.enableDbSync && config.allowDbSyncBootstrap) {
+    warnings.push(
+      'DB_SYNC esta habilitado en produccion bajo modo bootstrap. Desactivalo despues de sembrar la base inicial.'
+    )
   }
 
   if (!config.enableXssClean) {
