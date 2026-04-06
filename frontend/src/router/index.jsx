@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { lazy, Suspense, useLayoutEffect } from 'react'
+import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
@@ -38,6 +39,28 @@ const ScrollManager = () => {
   return <Outlet />
 }
 
+const APP_HOSTS = new Set(['app.bourgelat.co', 'staging.bourgelat.co'])
+
+const HostAwareHome = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const usuario = useAuthStore((state) => state.usuario)
+  const hostname = window.location.hostname.toLowerCase()
+
+  if (APP_HOSTS.has(hostname)) {
+    if (isAuthenticated) {
+      return <Navigate to={usuario?.rol === 'superadmin' ? '/superadmin' : '/dashboard'} replace />
+    }
+
+    return <Navigate to="/login" replace />
+  }
+
+  return (
+    <Suspense fallback={<Loader />}>
+      <LandingPage />
+    </Suspense>
+  )
+}
+
 const router = createBrowserRouter([
   {
     element: <ScrollManager />,
@@ -65,7 +88,7 @@ const router = createBrowserRouter([
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage /></Suspense> },
         ],
       },
-      { path: '/',       element: <Suspense fallback={<Loader />}><LandingPage /></Suspense> },
+      { path: '/',       element: <HostAwareHome /> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
