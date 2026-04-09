@@ -13,6 +13,28 @@ const parseNumber = (value, defaultValue) => {
   return Number.isNaN(parsed) ? defaultValue : parsed
 }
 
+const parseTrustProxy = (value, defaultValue = false, isProduction = false) => {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue
+  }
+
+  const normalized = String(value).trim().toLowerCase()
+
+  if (/^\d+$/.test(normalized)) {
+    return Number.parseInt(normalized, 10)
+  }
+
+  if (['true', 'yes', 'si', 'on'].includes(normalized)) {
+    return isProduction ? 1 : true
+  }
+
+  if (['false', 'no', 'off'].includes(normalized)) {
+    return false
+  }
+
+  return value
+}
+
 const splitCsv = (value, fallback = []) => {
   if (!value) return fallback
 
@@ -44,7 +66,7 @@ const appConfig = {
   nodeEnv,
   isProduction,
   port: parseNumber(process.env.PORT, 3000),
-  trustProxy: parseBoolean(process.env.TRUST_PROXY, isProduction),
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY, isProduction ? 1 : false, isProduction),
   frontendOrigins,
   enableDbMigrations: parseBoolean(process.env.DB_RUN_MIGRATIONS, true),
   enableDbSync: parseBoolean(process.env.DB_SYNC, !isProduction),
@@ -85,5 +107,6 @@ module.exports = {
   appConfig,
   parseBoolean,
   parseNumber,
+  parseTrustProxy,
   normalizeSameSite,
 }

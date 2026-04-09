@@ -79,7 +79,7 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
   }
 
   if (!config.trustProxy) {
-    errors.push('TRUST_PROXY debe ser true en produccion detras de Cloudflare/Render.')
+    errors.push('TRUST_PROXY debe estar habilitado en produccion detras de Cloudflare/Render.')
   }
 
   if (!config.cookies.secure) {

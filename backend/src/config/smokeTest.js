@@ -60,7 +60,7 @@ const run = () => {
   const configValida = validateRuntimeConfig(
     {
       isProduction: true,
-      trustProxy: true,
+      trustProxy: 1,
       frontendOrigins: ['https://app.bourgelat.co'],
       enableDbSync: false,
       enableDbAlter: false,

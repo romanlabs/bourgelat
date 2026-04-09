@@ -65,7 +65,7 @@ services:
       - key: PUBLIC_UPLOADS_BASE_URL
         value: https://api.bourgelat.co/uploads
       - key: TRUST_PROXY
-        value: "true"
+        value: "1"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -194,7 +194,7 @@ services:
       - key: PUBLIC_UPLOADS_BASE_URL
         value: https://api-staging.bourgelat.co/uploads
       - key: TRUST_PROXY
-        value: "true"
+        value: "1"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
