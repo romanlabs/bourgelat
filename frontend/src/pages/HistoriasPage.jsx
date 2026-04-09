@@ -18,6 +18,7 @@ import { historiasApi } from '@/features/historias/historiasApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const BLOCK_OPTIONS = [
   { value: 'todos', label: 'Todas' },
@@ -220,12 +221,12 @@ export default function HistoriasPage() {
   const [form, setForm] = useState(() => createDefaultForm())
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
 
-  const rolPermitido = ['admin', 'superadmin', 'veterinario', 'auxiliar'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
   const featureSet = new Set(
     Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   )
   const puedeVerHistorias = featureSet.has('historias')
-  const puedeEditarHistorias = ['admin', 'superadmin', 'veterinario'].includes(usuario?.rol)
+  const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   const puedeConsultarInventarioClinico = featureSet.has('inventario')
 
   useEffect(() => {

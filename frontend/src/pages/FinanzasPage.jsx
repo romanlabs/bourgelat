@@ -40,6 +40,7 @@ import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -280,7 +281,7 @@ export default function FinanzasPage() {
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const deferredOwnerSearch = useDeferredValue(ownerSearch)
   const deferredProductSearch = useDeferredValue(productSearch)
-  const rolPermitido = ['admin', 'superadmin', 'facturador', 'recepcionista', 'auxiliar', 'veterinario'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'facturador', 'recepcionista', 'auxiliar', 'veterinario'])
   const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   const puedeVerFinanzas =
     rolPermitido &&
@@ -290,8 +291,8 @@ export default function FinanzasPage() {
   const puedeEmitirElectronica =
     puedeVerFinanzas &&
     funcionalidades.includes('facturacion_electronica') &&
-    ['admin', 'superadmin', 'facturador'].includes(usuario?.rol)
-  const puedeAnular = ['admin', 'superadmin'].includes(usuario?.rol)
+    hasAnyRole(usuario, ['admin', 'superadmin', 'facturador'])
+  const puedeAnular = hasAnyRole(usuario, ['admin', 'superadmin'])
   const emisionAutomaticaActiva = puedeEmitirElectronica
 
   useEffect(() => {

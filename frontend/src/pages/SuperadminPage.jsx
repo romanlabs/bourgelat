@@ -30,6 +30,7 @@ import {
   objectToChartData,
 } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
+import { hasRole } from '@/lib/permissions'
 
 const ESTADO_SUSCRIPCION_LABELS = {
   activa: 'Activas',
@@ -91,7 +92,7 @@ export default function SuperadminPage() {
     staleTime: 60 * 1000,
   })
 
-  const esSuperadmin = usuario?.rol === 'superadmin'
+  const esSuperadmin = hasRole(usuario, 'superadmin')
 
   const planData = useMemo(
     () =>

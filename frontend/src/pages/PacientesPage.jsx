@@ -15,6 +15,7 @@ import {
 import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/dashboardUtils'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const SPECIES_OPTIONS = [
   { value: 'todas', label: 'Todas las especies' },
@@ -120,17 +121,13 @@ export default function PacientesPage() {
 
   const buscarMascotaDiferida = useDeferredValue(buscarMascota.trim())
   const ownerSearchDiferida = useDeferredValue(ownerSearch.trim())
-  const rolPermitido = ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'].includes(
-    usuario?.rol
-  )
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
   const featureSet = new Set(
     Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   )
   const puedeVerModulo = featureSet.has('mascotas') && featureSet.has('propietarios')
-  const puedeCrearTutor = ['admin', 'superadmin', 'recepcionista', 'auxiliar'].includes(usuario?.rol)
-  const puedeCrearPaciente = ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'].includes(
-    usuario?.rol
-  )
+  const puedeCrearTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
+  const puedeCrearPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
 
   useEffect(() => {
     document.title = 'Pacientes | Bourgelat'

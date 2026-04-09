@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
+import { hasRole } from '@/lib/permissions'
 import { authApi } from './authApi'
 
 const obtenerMensajeError = (error, fallback) =>
@@ -22,7 +23,7 @@ export const useLogin = () => {
         suscripcion: data.suscripcion || null,
       })
       toast.success(`Bienvenido, ${data.usuario?.nombre || data.clinica?.nombre || 'Bourgelat'}`)
-      navigate(data.usuario?.rol === 'superadmin' ? '/superadmin' : '/dashboard', {
+      navigate(hasRole(data.usuario, 'superadmin') ? '/superadmin' : '/dashboard', {
         replace: true,
       })
     },

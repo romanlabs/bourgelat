@@ -25,7 +25,7 @@ router.get(
 router.put(
   '/factus',
   verificarToken,
-  verificarRol('superadmin'),
+  verificarRol('admin', 'superadmin'),
   requiereFacturacionElectronica,
   [
     body('ambiente')
@@ -48,7 +48,7 @@ router.put(
 router.post(
   '/factus/sincronizar',
   verificarToken,
-  verificarRol('superadmin'),
+  verificarRol('admin', 'superadmin'),
   requiereFacturacionElectronica,
   sincronizarFactus
 )
@@ -56,7 +56,7 @@ router.post(
 router.post(
   '/factus/probar',
   verificarToken,
-  verificarRol('superadmin'),
+  verificarRol('admin', 'superadmin'),
   requiereFacturacionElectronica,
   probarConexionFactus
 )

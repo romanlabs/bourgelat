@@ -34,6 +34,7 @@ import {
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -151,20 +152,16 @@ export default function AgendaPage() {
   const [rescheduleForm, setRescheduleForm] = useState(DEFAULT_RESCHEDULE_FORM)
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
-  const rolPermitido = ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'].includes(
-    usuario?.rol
-  )
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
   const featureSet = new Set(
     Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   )
   const puedeVerAgenda = featureSet.has('citas')
-  const puedeProgramar = ['admin', 'superadmin', 'recepcionista', 'veterinario'].includes(usuario?.rol)
-  const puedeGestionarEstado = ['admin', 'superadmin', 'recepcionista', 'veterinario'].includes(
-    usuario?.rol
-  )
-  const puedeReprogramar = ['admin', 'superadmin', 'recepcionista'].includes(usuario?.rol)
+  const puedeProgramar = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario'])
+  const puedeGestionarEstado = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario'])
+  const puedeReprogramar = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista'])
   const puedeVerAnalitica =
-    ['admin', 'superadmin', 'veterinario'].includes(usuario?.rol) &&
+    hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario']) &&
     featureSet.has('reportes_operativos')
 
   useEffect(() => {

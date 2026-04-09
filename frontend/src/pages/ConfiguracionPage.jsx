@@ -20,6 +20,7 @@ import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { configuracionApi } from '@/features/configuracion/configuracionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const PERSON_TYPE_OPTIONS = [
   { value: 'persona_juridica', label: 'Persona juridica' },
@@ -1282,10 +1283,10 @@ export default function ConfiguracionPage() {
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const setClinica = useAuthStore((state) => state.setClinica)
 
-  const rolPermitido = ['admin', 'superadmin'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
   const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   const puedeVerFacturacionElectronica = funcionalidades.includes('facturacion_electronica')
-  const puedeEditarFacturacionElectronica = usuario?.rol === 'superadmin'
+  const puedeEditarFacturacionElectronica = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   useEffect(() => {
     document.title = 'Configuracion | Bourgelat'

@@ -3,6 +3,7 @@ const sequelize = require('../config/database')
 const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
+const MovimientoInventario = require('../models/MovimientoInventario')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
@@ -75,15 +76,22 @@ const desdeCentavos = (valor) => redondear(valor / 100, 2)
 
 const formatearPorcentaje = (valor) => redondear(valor, 6)
 
-const generarNumeroFactura = async (clinicaId) => {
+const generarNumeroFactura = async (clinicaId, transaction) => {
+  await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+    replacements: { lockKey: `factura:${clinicaId}` },
+    transaction,
+  })
+
   const ultima = await Factura.findOne({
     where: { clinicaId },
     order: [['createdAt', 'DESC']],
+    transaction,
   })
 
   if (!ultima) return 'FAC-0001'
 
-  const numero = parseInt(ultima.numero.split('-')[1], 10) + 1
+  const match = String(ultima.numero || '').match(/(\d+)$/)
+  const numero = (match ? parseInt(match[1], 10) : 0) + 1
   return `FAC-${String(numero).padStart(4, '0')}`
 }
 
@@ -441,13 +449,33 @@ const crearFactura = async (req, res) => {
     const itemsCalculados = []
 
     for (const item of items) {
-      if (!item.descripcion || !item.precioUnitario || !item.cantidad) {
+      const cantidad = convertirANumero(item.cantidad, NaN)
+      const precioUnitario = convertirANumero(item.precioUnitario, NaN)
+      const descuentoItem = convertirANumero(item.descuento, 0)
+
+      if (
+        !limpiarTexto(item.descripcion) ||
+        !Number.isFinite(cantidad) ||
+        cantidad <= 0 ||
+        !Number.isFinite(precioUnitario) ||
+        precioUnitario < 0 ||
+        descuentoItem < 0
+      ) {
         await transaction.rollback()
-        return res.status(400).json({ message: 'Cada item debe tener descripcion, precio y cantidad' })
+        return res.status(400).json({
+          message: 'Cada item debe tener descripcion, cantidad valida, precio no negativo y descuento valido',
+        })
       }
 
       let producto = null
       if (item.tipo === 'producto' && item.productoId) {
+        if (!Number.isInteger(cantidad)) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `La cantidad de producto debe ser entera: ${item.descripcion}`,
+          })
+        }
+
         producto = await Producto.findOne({
           where: { id: item.productoId, clinicaId },
           transaction,
@@ -459,22 +487,29 @@ const crearFactura = async (req, res) => {
           return res.status(404).json({ message: `Producto no encontrado: ${item.descripcion}` })
         }
 
-        if (producto.stock < item.cantidad) {
+        if (Number(producto.stock) < cantidad) {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
         }
       }
 
-      const itemSubtotal = (item.precioUnitario * item.cantidad) - (item.descuento || 0)
+      const itemSubtotal = Math.max((precioUnitario * cantidad) - descuentoItem, 0)
       subtotal += itemSubtotal
-      itemsCalculados.push({ ...item, subtotal: itemSubtotal, producto })
+      itemsCalculados.push({
+        ...item,
+        cantidad,
+        precioUnitario,
+        descuento: descuentoItem,
+        subtotal: itemSubtotal,
+        producto,
+      })
     }
 
-    const descuento = descuentoGeneral || 0
+    const descuento = Math.min(convertirANumero(descuentoGeneral, 0), subtotal)
     const baseGravable = subtotal - descuento
     const impuesto = 0
     const total = baseGravable + impuesto
-    const numero = await generarNumeroFactura(clinicaId)
+    const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
       numero,
@@ -508,10 +543,26 @@ const crearFactura = async (req, res) => {
       }, { transaction })
 
       if (item.tipo === 'producto' && item.producto) {
+        const stockAnterior = Number(item.producto.stock)
+        const stockNuevo = stockAnterior - item.cantidad
+
         await item.producto.update(
-          { stock: item.producto.stock - item.cantidad },
+          { stock: stockNuevo },
           { transaction }
         )
+
+        await MovimientoInventario.create({
+          tipo: 'salida',
+          cantidad: item.cantidad,
+          stockAnterior,
+          stockNuevo,
+          motivo: 'venta',
+          observaciones: `Salida por factura ${numero}`,
+          precioUnitario: item.precioUnitario,
+          productoId: item.producto.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction })
       }
     }
 
@@ -893,10 +944,27 @@ const anularFactura = async (req, res) => {
         })
 
         if (producto) {
+          const cantidad = convertirANumero(item.cantidad)
+          const stockAnterior = Number(producto.stock)
+          const stockNuevo = stockAnterior + cantidad
+
           await producto.update(
-            { stock: producto.stock + convertirANumero(item.cantidad) },
+            { stock: stockNuevo },
             { transaction }
           )
+
+          await MovimientoInventario.create({
+            tipo: 'entrada',
+            cantidad,
+            stockAnterior,
+            stockNuevo,
+            motivo: 'devolucion',
+            observaciones: `Reingreso por anulacion de factura ${factura.numero}`,
+            precioUnitario: item.precioUnitario,
+            productoId: producto.id,
+            usuarioId: req.usuario.id,
+            clinicaId,
+          }, { transaction })
         }
       }
     }

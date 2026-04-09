@@ -49,6 +49,7 @@ import {
   toNumber,
 } from '@/features/dashboard/dashboardUtils'
 import { finanzasApi } from '@/features/finanzas/finanzasApi'
+import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 
@@ -501,7 +502,7 @@ export default function DashboardPage() {
   const suscripcionPersistida = useAuthStore((state) => state.suscripcion)
   const setSuscripcion = useAuthStore((state) => state.setSuscripcion)
 
-  const esAdministrador = ['admin', 'superadmin'].includes(usuario?.rol)
+  const esAdministrador = hasAnyRole(usuario, ['admin', 'superadmin'])
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const hoy = useMemo(() => serializeDate(new Date()), [])
 

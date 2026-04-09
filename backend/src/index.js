@@ -55,6 +55,28 @@ if (runtimeConfigReport.errors.length > 0) {
 const app = express()
 app.set('trust proxy', appConfig.trustProxy)
 
+app.get('/health', async (req, res) => {
+  try {
+    await sequelize.authenticate()
+
+    res.json({
+      status: 'ok',
+      service: 'bourgelat-backend',
+      environment: appConfig.nodeEnv,
+      database: 'reachable',
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      service: 'bourgelat-backend',
+      environment: appConfig.nodeEnv,
+      database: 'unreachable',
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet())
 app.use(hpp())

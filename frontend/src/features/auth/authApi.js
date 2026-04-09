@@ -42,4 +42,11 @@ export const authApi = {
     const { data } = await api.post('/auth/refresh')
     return data
   },
+
+  me: async () => {
+    const { data } = await api.get('/auth/me', {
+      skipAuthRedirect: true,
+    })
+    return data
+  },
 }

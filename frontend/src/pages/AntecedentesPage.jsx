@@ -15,6 +15,7 @@ import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtil
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -106,8 +107,8 @@ export default function AntecedentesPage() {
   const [vacunaForm, setVacunaForm] = useState(DEFAULT_VACUNA_FORM)
   const [condicionForm, setCondicionForm] = useState(DEFAULT_CONDICION_FORM)
 
-  const rolPermitido = ['admin', 'superadmin', 'veterinario', 'auxiliar'].includes(usuario?.rol)
-  const puedeEditar = ['admin', 'superadmin', 'veterinario'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
+  const puedeEditar = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   const featureSet = new Set(
     Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   )

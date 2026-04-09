@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } fr
 import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
+import { hasRole } from '@/lib/permissions'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const RegistroPage  = lazy(() => import('@/pages/RegistroPage'))
@@ -48,7 +49,7 @@ const HostAwareHome = () => {
 
   if (APP_HOSTS.has(hostname)) {
     if (isAuthenticated) {
-      return <Navigate to={usuario?.rol === 'superadmin' ? '/superadmin' : '/dashboard'} replace />
+      return <Navigate to={hasRole(usuario, 'superadmin') ? '/superadmin' : '/dashboard'} replace />
     }
 
     return <Navigate to="/login" replace />

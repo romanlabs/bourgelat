@@ -20,6 +20,7 @@ import {
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const CATEGORY_OPTIONS = [
   { value: 'todas', label: 'Todas las categorias' },
@@ -100,7 +101,7 @@ export default function InventarioPage() {
   const [selectedProduct, setSelectedProduct] = useState(null)
 
   const busquedaDiferida = useDeferredValue(buscar.trim())
-  const rolPermitido = ['admin', 'superadmin', 'auxiliar'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   const puedeVerInventario =
     rolPermitido &&
     Array.isArray(suscripcion?.funcionalidades) &&

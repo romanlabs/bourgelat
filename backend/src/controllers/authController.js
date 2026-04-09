@@ -15,6 +15,7 @@ const {
   obtenerRefreshTokenRequest,
 } = require('../config/cookies')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
+const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -147,6 +148,13 @@ const serializarUsuario = (usuario) => {
     telefono: usuario.telefono,
     activo: usuario.activo,
   }
+}
+
+const obtenerSuscripcionSesion = async (clinicaId) => {
+  if (!clinicaId) return null
+
+  const { suscripcion } = await obtenerSuscripcionActivaClinica(clinicaId)
+  return suscripcion
 }
 
 const responderErrorInterno = (res, mensaje = 'Error interno del servidor') =>
@@ -473,11 +481,13 @@ const login = async (req, res) => {
     })
 
     setAuthCookies(res, { accessToken, refreshToken })
+    const suscripcion = await obtenerSuscripcionSesion(usuario.clinicaId)
 
     res.json({
       message: 'Login exitoso',
       usuario: serializarUsuario(usuario),
       clinica: serializarClinica(usuario.Clinica),
+      suscripcion,
     })
   } catch (error) {
     responderErrorInterno(res, 'Error servidor')
@@ -662,9 +672,12 @@ const me = async (req, res) => {
       })
     }
 
+    const suscripcion = await obtenerSuscripcionSesion(usuario.clinicaId)
+
     res.json({
       usuario: serializarUsuario(usuario),
       clinica: serializarClinica(usuario.Clinica),
+      suscripcion,
     })
   } catch (error) {
     responderErrorInterno(res, 'Error servidor')

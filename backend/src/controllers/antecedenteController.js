@@ -1,5 +1,7 @@
 const AntecedentesMascota = require('../models/AntecedentesMascota');
 const Mascota = require('../models/Mascota');
+const crypto = require('crypto');
+const { formatDateOnlyLocal } = require('../utils/dateOnly');
 
 const obtenerOMaterializarAntecedentes = async ({ mascotaId, clinicaId }) => {
   const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
@@ -61,11 +63,11 @@ const agregarAlergia = async (req, res) => {
     }
 
     const nuevaAlergia = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       tipo,
       descripcion,
       reaccion,
-      fecha: fecha || new Date().toISOString().split('T')[0],
+      fecha: fecha || formatDateOnlyLocal(),
     };
 
     const alergias = [...antecedentes.alergias, nuevaAlergia];
@@ -96,7 +98,7 @@ const agregarCirugia = async (req, res) => {
     }
 
     const nuevaCirugia = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nombre,
       fecha,
       veterinario,
@@ -131,7 +133,7 @@ const agregarVacuna = async (req, res) => {
     }
 
     const nuevaVacuna = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nombre,
       fecha,
       proximaDosis,
@@ -167,7 +169,7 @@ const agregarCondicionCronica = async (req, res) => {
     }
 
     const nuevaCondicion = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nombre,
       fechaDiagnostico,
       tratamientoActual,

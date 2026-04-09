@@ -7,6 +7,7 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
+const { formatDateOnlyLocal } = require('../utils/dateOnly');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -140,7 +141,7 @@ const dashboardGeneral = async (req, res) => {
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-    const fechaHoy = hoy.toISOString().split('T')[0];
+    const fechaHoy = formatDateOnlyLocal(hoy);
 
     // Citas de hoy
     const citasHoy = await Cita.count({

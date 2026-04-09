@@ -4,6 +4,7 @@ const { body } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { formatDateOnlyLocal, isValidDateOnly } = require('../utils/dateOnly')
 const {
   obtenerHistorias,
   crearHistoria,
@@ -41,16 +42,11 @@ const hasMedicationValue = (item = {}) =>
 const validateFollowUpDate = (value) => {
   if (!value) return true
 
-  const fecha = new Date(value)
-  if (Number.isNaN(fecha.getTime())) {
+  if (!isValidDateOnly(value)) {
     throw new Error('La fecha de control no es valida')
   }
 
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
-  fecha.setHours(0, 0, 0, 0)
-
-  if (fecha < hoy) {
+  if (value < formatDateOnlyLocal()) {
     throw new Error('La proxima consulta no puede quedar en una fecha pasada')
   }
 

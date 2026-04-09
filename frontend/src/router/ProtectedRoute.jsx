@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { hasRole } from '@/lib/permissions'
 
 export const ProtectedRoute = () => {
   const location = useLocation()
@@ -10,7 +11,7 @@ export const ProtectedRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  const esSuperadmin = usuario?.rol === 'superadmin'
+  const esSuperadmin = hasRole(usuario, 'superadmin')
 
   if (esSuperadmin && !location.pathname.startsWith('/superadmin')) {
     return <Navigate to="/superadmin" replace />
@@ -28,7 +29,7 @@ export const PublicOnlyRoute = () => {
   const usuario = useAuthStore((s) => s.usuario)
 
   if (isAuthenticated) {
-    return <Navigate to={usuario?.rol === 'superadmin' ? '/superadmin' : '/dashboard'} replace />
+    return <Navigate to={hasRole(usuario, 'superadmin') ? '/superadmin' : '/dashboard'} replace />
   }
 
   return <Outlet />

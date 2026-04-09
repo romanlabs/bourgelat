@@ -25,15 +25,12 @@ const getMascotasUploadsDir = () => {
 }
 
 const generateUploadFilename = (originalName = '', mimeType = '') => {
-  const extensionFromName = path.extname(originalName).toLowerCase()
-
   const extension =
-    extensionFromName ||
-    (mimeType === 'image/png'
+    mimeType === 'image/png'
       ? '.png'
       : mimeType === 'image/webp'
         ? '.webp'
-        : '.jpg')
+        : '.jpg'
 
   return `${Date.now()}-${crypto.randomUUID()}${extension}`
 }

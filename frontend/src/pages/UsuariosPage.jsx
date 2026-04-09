@@ -25,6 +25,7 @@ import {
 import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/dashboardUtils'
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Administrador' },
@@ -74,12 +75,9 @@ const normalizeRoles = (roles, primaryRole) =>
 
 const getRoleLabel = (role) => ROLE_LABELS[role] || role || 'Sin rol'
 
-const hasAdminAccess = (user) =>
-  user?.rol === 'admin' || (Array.isArray(user?.rolesAdicionales) && user.rolesAdicionales.includes('admin'))
+const hasAdminAccess = (user) => hasAnyRole(user, ['admin'])
 
-const hasVeterinaryAccess = (user) =>
-  user?.rol === 'veterinario' ||
-  (Array.isArray(user?.rolesAdicionales) && user.rolesAdicionales.includes('veterinario'))
+const hasVeterinaryAccess = (user) => hasAnyRole(user, ['veterinario'])
 
 const buildEditForm = (user) => ({
   id: user?.id || '',
@@ -228,7 +226,7 @@ export default function UsuariosPage() {
   const busquedaDiferida = useDeferredValue(buscar.trim().toLowerCase())
   const roleFeatureEnabled =
     Array.isArray(suscripcion?.funcionalidades) && suscripcion.funcionalidades.includes('roles_base')
-  const rolPermitido = ['admin', 'superadmin'].includes(usuario?.rol)
+  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
   const puedeVerModulo = rolPermitido && roleFeatureEnabled
 
   useEffect(() => {

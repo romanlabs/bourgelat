@@ -3,6 +3,7 @@ const Cita = require('../models/Cita');
 const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
+const { isPastDateOnly, isValidDateOnly } = require('../utils/dateOnly');
 
 const esProfesionalVeterinario = (usuario) =>
   usuario &&
@@ -27,11 +28,12 @@ const crearCita = async (req, res) => {
       return res.status(400).json({ message: 'La hora de fin debe ser mayor a la hora de inicio' });
     }
 
-    // Verificar que la fecha no sea en el pasado
-    const fechaCita = new Date(fecha);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    if (fechaCita < hoy) {
+    if (!isValidDateOnly(fecha)) {
+      return res.status(400).json({ message: 'Fecha no valida' });
+    }
+
+    // Comparar DATEONLY como texto evita desfases UTC en zonas como Colombia.
+    if (isPastDateOnly(fecha)) {
       return res.status(400).json({ message: 'No se puede agendar una cita en una fecha pasada' });
     }
 
@@ -213,11 +215,11 @@ const reprogramarCita = async (req, res) => {
       return res.status(400).json({ message: 'La hora de fin debe ser mayor a la hora de inicio' });
     }
 
-    const fechaCita = new Date(fecha);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    if (!isValidDateOnly(fecha)) {
+      return res.status(400).json({ message: 'Fecha no valida' });
+    }
 
-    if (fechaCita < hoy) {
+    if (isPastDateOnly(fecha)) {
       return res.status(400).json({ message: 'No se puede reprogramar una cita a una fecha pasada' });
     }
 

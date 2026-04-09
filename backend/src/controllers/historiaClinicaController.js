@@ -6,6 +6,7 @@ const Cita = require('../models/Cita')
 const Producto = require('../models/Producto')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { Op } = require('sequelize')
+const { isValidDateOnly } = require('../utils/dateOnly')
 
 const HYDRATION_STATES = [
   'normal',
@@ -166,8 +167,7 @@ const attachMedicationInventoryData = async (medicamentos, clinicaId) => {
 const normalizeFollowUpDate = (value) => {
   if (!value) return undefined
 
-  const fecha = new Date(value)
-  if (Number.isNaN(fecha.getTime())) {
+  if (!isValidDateOnly(value)) {
     return undefined
   }
 

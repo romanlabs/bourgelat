@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const { DataTypes, Op } = require('sequelize')
 const sequelize = require('../config/database')
 
@@ -39,11 +40,21 @@ const idempotencia = async (req, res, next) => {
 
   if (!claveIdempotencia) return next()
 
+  const partesClave = [
+    req.method,
+    req.originalUrl || req.url || '/',
+    String(claveIdempotencia).trim(),
+  ]
+  const claveScoped = crypto
+    .createHash('sha256')
+    .update(partesClave.join(':'))
+    .digest('hex')
+
   try {
     // Buscar si ya existe esa clave
     const existente = await IdempotenciaKey.findOne({
       where: {
-        clave: claveIdempotencia,
+        clave: claveScoped,
         expiracion: { [Op.gt]: new Date() },
       },
     })
@@ -60,7 +71,7 @@ const idempotencia = async (req, res, next) => {
         expiracion.setHours(expiracion.getHours() + 24)
 
         await IdempotenciaKey.create({
-          clave: claveIdempotencia,
+          clave: claveScoped,
           status: res.statusCode,
           respuesta: data,
           expiracion,

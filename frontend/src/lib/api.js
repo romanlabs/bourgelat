@@ -25,6 +25,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const solicitudOriginal = error.config
+    const omitirRedireccionAuth = solicitudOriginal?.skipAuthRedirect
 
     if (
       error.response?.status === 401 &&
@@ -54,7 +55,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         procesarCola(refreshError)
         useAuthStore.getState().clearAuth()
-        window.location.replace('/login')
+        if (!omitirRedireccionAuth) {
+          window.location.replace('/login')
+        }
         return Promise.reject(refreshError)
       } finally {
         refrescando = false
@@ -63,7 +66,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       useAuthStore.getState().clearAuth()
-      window.location.replace('/login')
+      if (!omitirRedireccionAuth) {
+        window.location.replace('/login')
+      }
     }
 
     return Promise.reject(error)
