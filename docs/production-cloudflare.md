@@ -19,7 +19,8 @@
 
 ## Ajustes recomendados en Bourgelat
 - `COOKIE_SECURE=true`
-- `TRUST_PROXY=true`
+- `TRUST_PROXY=1`
+- `DB_SSL_REJECT_UNAUTHORIZED=false` cuando se use Render Postgres con certificado self-signed
 - `FRONTEND_URLS=https://app.bourgelat.co,https://bourgelat.co`
 - `PUBLIC_UPLOADS_BASE_URL=https://api.bourgelat.co/uploads`
 - `DB_SYNC=false`

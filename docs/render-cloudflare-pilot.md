@@ -30,10 +30,12 @@
 - `FRONTEND_URL=https://app.bourgelat.co`
 - `FRONTEND_URLS=https://app.bourgelat.co,https://bourgelat.co`
 - `PUBLIC_UPLOADS_BASE_URL=https://api.bourgelat.co/uploads`
-- `TRUST_PROXY=true`
+- `TRUST_PROXY=1`
+- `DB_SSL_REJECT_UNAUTHORIZED=false` cuando Render Postgres presente certificado self-signed
 - `COOKIE_SECURE=true`
 - `DB_SYNC=false`
 - `DB_ALTER=false`
+- `ALLOW_DB_SYNC_BOOTSTRAP=false`
 - Backend staging:
 - `FRONTEND_URL=https://staging.bourgelat.co`
 - `FRONTEND_URLS=https://staging.bourgelat.co`

@@ -8,7 +8,7 @@
 - `api-staging.bourgelat.co`: backend/API de staging
 
 ## Recomendacion de hosting
-### Opcion recomendada
+### Opcion recomendada para el backend y la base de datos
 - `Render`
 
 ### Por que
@@ -16,6 +16,10 @@
 - Tiene PostgreSQL gestionado.
 - Permite red interna entre app y base de datos.
 - Facilita un primer despliegue serio sin meterte en AWS crudo.
+
+### Nota sobre frontend
+- Vercel puede ser buena opcion para experimentar con landing/frontends muy visuales y previews rapidos.
+- No es necesario migrar Bourgelat completo a Vercel mientras el backend, Postgres y despliegue Docker funcionen bien en Render.
 
 ## Recomendacion de Cloudflare
 - Usar Cloudflare para todo lo posible en el borde:
