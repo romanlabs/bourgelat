@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { HeartPulse, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
@@ -98,6 +98,9 @@ export default function AntecedentesPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const prefillAppliedRef = useRef(false)
+  const mascotaIdPrefill = searchParams.get('mascotaId') || ''
 
   const [petSearch, setPetSearch] = useState('')
   const [selectedPet, setSelectedPet] = useState(null)
@@ -117,6 +120,43 @@ export default function AntecedentesPage() {
   useEffect(() => {
     document.title = 'Antecedentes | Bourgelat'
   }, [])
+
+  useEffect(() => {
+    if (!rolPermitido || !puedeVerAntecedentes || !mascotaIdPrefill || prefillAppliedRef.current) {
+      return
+    }
+
+    let cancelled = false
+
+    const hydrateFromQuery = async () => {
+      try {
+        const data = await pacientesApi.obtenerMascota(mascotaIdPrefill)
+        if (cancelled) return
+
+        const mascota = data?.mascota
+        if (!mascota) {
+          return
+        }
+
+        prefillAppliedRef.current = true
+        setSelectedPet({
+          ...mascota,
+          Propietario: mascota.Propietario,
+        })
+        setGeneralDraft(null)
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(error, 'No fue posible precargar el paciente para antecedentes.'))
+        }
+      }
+    }
+
+    hydrateFromQuery()
+
+    return () => {
+      cancelled = true
+    }
+  }, [rolPermitido, puedeVerAntecedentes, mascotaIdPrefill])
 
   const mascotasQuery = useQuery({
     queryKey: ['antecedentes-mascotas-selector', petSearch.trim()],
@@ -242,6 +282,9 @@ export default function AntecedentesPage() {
     setCirugiaForm(DEFAULT_CIRUGIA_FORM)
     setVacunaForm(DEFAULT_VACUNA_FORM)
     setCondicionForm(DEFAULT_CONDICION_FORM)
+    if (searchParams.get('mascotaId')) {
+      setSearchParams({})
+    }
   }
 
   const updateGeneralDraft = (field, value) => {

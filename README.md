@@ -44,6 +44,7 @@ docker compose up --build
 
 ## Documentacion
 
+- [Colaboracion y Git workflow](CONTRIBUTING.md)
 - [Arquitectura](docs/architecture.md)
 - [Piloto Render + Cloudflare](docs/render-cloudflare-pilot.md)
 - [Checklist Render + Cloudflare](docs/render-cloudflare-checklist.md)
