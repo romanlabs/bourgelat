@@ -1,6 +1,6 @@
 const IntegracionFacturacion = require('../models/IntegracionFacturacion')
 const { descifrarTexto } = require('./crypto')
-const { obtenerBaseUrlFactus, obtenerConfiguracionFactusEnv } = require('../factusService')
+const { obtenerBaseUrlFactus, obtenerConfiguracionFactusEnv } = require('../services/factusService')
 
 const serializarIntegracionFactus = (integracion) => {
   if (!integracion) return null

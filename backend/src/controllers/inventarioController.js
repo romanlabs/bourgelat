@@ -4,11 +4,34 @@ const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
 
 const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento'];
+const MOVEMENT_REASON_ALIASES = {
+  ajuste: 'ajuste_inventario',
+  consumo_interno: 'uso_clinico',
+};
 
 const buildMedicationPresentation = (producto) =>
   [producto.subcategoria, producto.unidadMedida, producto.laboratorio]
     .filter((value) => String(value || '').trim().length > 0)
     .join(' | ');
+
+const normalizarNumero = (valor, valorPorDefecto = 0) => {
+  if (valor === undefined || valor === null || valor === '') {
+    return valorPorDefecto;
+  }
+
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : Number.NaN;
+};
+
+const normalizarEntero = (valor, valorPorDefecto = 0) => {
+  const numero = normalizarNumero(valor, valorPorDefecto);
+  return Number.isFinite(numero) ? Math.trunc(numero) : Number.NaN;
+};
+
+const normalizarMotivoMovimiento = (motivo) => {
+  const motivoNormalizado = String(motivo || '').trim().toLowerCase();
+  return MOVEMENT_REASON_ALIASES[motivoNormalizado] || motivoNormalizado;
+};
 
 const crearProducto = async (req, res) => {
   try {
@@ -26,37 +49,56 @@ const crearProducto = async (req, res) => {
       });
     }
 
-    const producto = await Producto.create({
-      nombre,
-      descripcion,
-      categoria,
-      subcategoria,
-      unidadMedida,
-      precioCompra: precioCompra || 0,
-      precioVenta: precioVenta || 0,
-      stock: stock || 0,
-      stockMinimo: stockMinimo || 5,
-      fechaVencimiento,
-      lote,
-      laboratorio,
-      requiereFormula: requiereFormula || false,
-      clinicaId,
-    });
+    const stockInicial = normalizarEntero(stock, 0);
+    const stockMinimoNormalizado = normalizarEntero(stockMinimo, 5);
+    const precioCompraNormalizado = normalizarNumero(precioCompra, 0);
+    const precioVentaNormalizado = normalizarNumero(precioVenta, 0);
 
-   if (stock && stock > 0) {
-  await MovimientoInventario.create({
-    tipo: 'entrada',
-    cantidad: stock,
-    stockAnterior: 0,
-    stockNuevo: stock,
-    motivo: 'compra',
-    observaciones: 'Stock inicial',
-    precioUnitario: precioCompra || 0,
-    productoId: producto.id,
-    usuarioId: req.usuario.id,
-    clinicaId,
-  });
-}
+    if (
+      [stockInicial, stockMinimoNormalizado, precioCompraNormalizado, precioVentaNormalizado].some(
+        (valor) => Number.isNaN(valor) || valor < 0
+      )
+    ) {
+      return res.status(400).json({
+        message: 'Stock, stock minimo y precios deben ser numeros validos mayores o iguales a 0'
+      });
+    }
+
+    const producto = await sequelize.transaction(async (transaction) => {
+      const nuevoProducto = await Producto.create({
+        nombre: String(nombre).trim(),
+        descripcion,
+        categoria,
+        subcategoria,
+        unidadMedida,
+        precioCompra: precioCompraNormalizado,
+        precioVenta: precioVentaNormalizado,
+        stock: stockInicial,
+        stockMinimo: stockMinimoNormalizado,
+        fechaVencimiento,
+        lote,
+        laboratorio,
+        requiereFormula: Boolean(requiereFormula),
+        clinicaId,
+      }, { transaction });
+
+      if (stockInicial > 0) {
+        await MovimientoInventario.create({
+          tipo: 'entrada',
+          cantidad: stockInicial,
+          stockAnterior: 0,
+          stockNuevo: stockInicial,
+          motivo: 'compra',
+          observaciones: 'Stock inicial',
+          precioUnitario: precioCompraNormalizado,
+          productoId: nuevoProducto.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction });
+      }
+
+      return nuevoProducto;
+    });
 
     res.status(201).json({
       message: 'Producto creado exitosamente',
@@ -137,21 +179,24 @@ const obtenerProducto = async (req, res) => {
     const { id } = req.params;
     const { clinicaId } = req.usuario;
 
-    const producto = await Producto.findOne({
-      where: { id, clinicaId },
-      include: [{
-        model: MovimientoInventario,
-        as: 'movimientos',
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-      }],
-    });
+    const producto = await Producto.findOne({ where: { id, clinicaId, activo: true } });
 
     if (!producto) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    res.json({ producto });
+    const movimientos = await MovimientoInventario.findAll({
+      where: { productoId: id, clinicaId },
+      limit: 10,
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      producto: {
+        ...producto.toJSON(),
+        movimientos,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -172,9 +217,25 @@ const editarProducto = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
+    const precioCompraNormalizado = normalizarNumero(precioCompra, producto.precioCompra);
+    const precioVentaNormalizado = normalizarNumero(precioVenta, producto.precioVenta);
+    const stockMinimoNormalizado = normalizarEntero(stockMinimo, producto.stockMinimo);
+
+    if (
+      [precioCompraNormalizado, precioVentaNormalizado, stockMinimoNormalizado].some(
+        (valor) => Number.isNaN(valor) || valor < 0
+      )
+    ) {
+      return res.status(400).json({
+        message: 'Precio compra, precio venta y stock minimo deben ser numeros validos mayores o iguales a 0'
+      });
+    }
+
     await producto.update({
       nombre, descripcion, categoria, subcategoria, unidadMedida,
-      precioCompra, precioVenta, stockMinimo,
+      precioCompra: precioCompraNormalizado,
+      precioVenta: precioVentaNormalizado,
+      stockMinimo: stockMinimoNormalizado,
       fechaVencimiento, lote, laboratorio, requiereFormula,
     });
 
@@ -192,50 +253,116 @@ const registrarMovimiento = async (req, res) => {
     const { id: productoId } = req.params;
     const { clinicaId } = req.usuario;
     const { tipo, cantidad, motivo, observaciones, precioUnitario } = req.body;
+    const cantidadNormalizada = normalizarEntero(cantidad, Number.NaN);
+    const precioUnitarioNormalizado = normalizarNumero(precioUnitario, 0);
+    const motivoNormalizado = normalizarMotivoMovimiento(motivo);
 
     if (!tipo || !cantidad || !motivo) {
       return res.status(400).json({ message: 'Tipo, cantidad y motivo son obligatorios' });
     }
 
-    if (cantidad <= 0) {
+    if (Number.isNaN(cantidadNormalizada) || cantidadNormalizada <= 0) {
       return res.status(400).json({ message: 'La cantidad debe ser mayor a 0' });
     }
 
-    const producto = await Producto.findOne({ where: { id: productoId, clinicaId } });
+    if (Number.isNaN(precioUnitarioNormalizado) || precioUnitarioNormalizado < 0) {
+      return res.status(400).json({ message: 'El precio unitario debe ser un numero valido mayor o igual a 0' });
+    }
+
+    if (!['entrada', 'salida', 'ajuste'].includes(tipo)) {
+      return res.status(400).json({ message: 'Tipo de movimiento no valido' });
+    }
+
+    let respuesta;
+
+    try {
+      respuesta = await sequelize.transaction(async (transaction) => {
+        const producto = await Producto.findOne({
+          where: { id: productoId, clinicaId },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        });
+
+        if (!producto) {
+          return { status: 404, body: { message: 'Producto no encontrado' } };
+        }
+
+        const stockAnterior = Number(producto.stock);
+        let stockNuevo;
+        let cantidadMovimiento = cantidadNormalizada;
+
+        if (tipo === 'entrada') {
+          stockNuevo = stockAnterior + cantidadNormalizada;
+        } else if (tipo === 'salida') {
+          if (cantidadNormalizada > stockAnterior) {
+            return { status: 400, body: { message: 'Stock insuficiente' } };
+          }
+          stockNuevo = stockAnterior - cantidadNormalizada;
+        } else {
+          stockNuevo = cantidadNormalizada;
+          cantidadMovimiento = Math.abs(stockNuevo - stockAnterior);
+        }
+
+        await producto.update({ stock: stockNuevo }, { transaction });
+
+        const movimiento = await MovimientoInventario.create({
+          tipo,
+          cantidad: cantidadMovimiento,
+          stockAnterior,
+          stockNuevo,
+          motivo: motivoNormalizado,
+          observaciones,
+          precioUnitario: precioUnitarioNormalizado,
+          productoId,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction });
+
+        return {
+          status: 201,
+          body: {
+            message: 'Movimiento registrado exitosamente',
+            stockAnterior,
+            stockNuevo,
+            movimiento,
+          },
+        };
+      });
+    } catch (error) {
+      if (error?.name === 'SequelizeDatabaseError' || error?.name === 'SequelizeValidationError') {
+        return res.status(400).json({
+          message: 'El motivo o los datos del movimiento no son validos para inventario',
+        });
+      }
+
+      throw error;
+    }
+
+    return res.status(respuesta.status).json(respuesta.body);
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+const eliminarProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clinicaId } = req.usuario;
+
+    const producto = await Producto.findOne({ where: { id, clinicaId, activo: true } });
+
     if (!producto) {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    const stockAnterior = producto.stock;
-    let stockNuevo;
+    await producto.update({ activo: false });
 
-    if (tipo === 'entrada') {
-      stockNuevo = stockAnterior + cantidad;
-    } else if (tipo === 'salida') {
-      if (cantidad > stockAnterior) {
-        return res.status(400).json({ message: 'Stock insuficiente' });
-      }
-      stockNuevo = stockAnterior - cantidad;
-    } else {
-      stockNuevo = cantidad;
-    }
-
-    await producto.update({ stock: stockNuevo });
-
-    const movimiento = await MovimientoInventario.create({
-      tipo, cantidad, stockAnterior, stockNuevo,
-      motivo, observaciones, precioUnitario,
-      productoId, usuarioId: req.usuario.id, clinicaId,
-    });
-
-    res.status(201).json({
-      message: 'Movimiento registrado exitosamente',
-      stockAnterior,
-      stockNuevo,
-      movimiento,
+    return res.json({
+      message: 'Producto desactivado exitosamente',
+      producto,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    return res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
 };
 
@@ -433,6 +560,7 @@ module.exports = {
   obtenerProductos,
   obtenerProducto,
   editarProducto,
+  eliminarProducto,
   registrarMovimiento,
   obtenerAlertas,
   obtenerProductoPorBarcode,

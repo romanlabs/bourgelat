@@ -238,6 +238,7 @@ export default function PacientesPage() {
   const totalPropietarios = propietariosResumenQuery.data?.total || 0
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
   const historiasDisponibles = featureSet.has('historias')
+  const antecedentesDisponibles = featureSet.has('antecedentes')
   const speciesData = useMemo(() => {
     const record = mascotas.reduce((acc, pet) => {
       acc[pet.especie] = (acc[pet.especie] || 0) + 1
@@ -255,10 +256,21 @@ export default function PacientesPage() {
         especie: getSpeciesLabel(mascota.especie),
         tutor: mascota.Propietario?.nombre || 'Sin tutor',
         contacto: mascota.Propietario?.telefono || 'Sin telefono',
-        ficha: historiasDisponibles ? 'Lista para historia clinica' : 'Historia no incluida',
+        ficha:
+          historiasDisponibles && antecedentesDisponibles
+            ? 'Lista para historia y antecedentes'
+            : historiasDisponibles
+              ? 'Lista para historia clinica'
+              : antecedentesDisponibles
+                ? 'Lista para antecedentes'
+                : 'Ficha clinica no incluida',
+        historiasTo: historiasDisponibles
+          ? `/historias?mascotaId=${mascota.id}&propietarioId=${mascota.Propietario?.id || ''}`
+          : '',
+        antecedentesTo: antecedentesDisponibles ? `/antecedentes?mascotaId=${mascota.id}` : '',
         raw: mascota,
       })),
-    [historiasDisponibles, mascotas]
+    [antecedentesDisponibles, historiasDisponibles, mascotas]
   )
 
   const handleCreateOwner = (event) => {
@@ -566,6 +578,30 @@ export default function PacientesPage() {
                         {row.raw.raza || 'Sin raza'}
                         {' · '}
                         {formatWeight(row.raw.peso)}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'acciones',
+                    label: 'Acciones',
+                    render: (row) => (
+                      <div className="flex flex-wrap gap-2">
+                        {row.historiasTo ? (
+                          <Link
+                            to={row.historiasTo}
+                            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-slate-800"
+                          >
+                            Historia
+                          </Link>
+                        ) : null}
+                        {row.antecedentesTo ? (
+                          <Link
+                            to={row.antecedentesTo}
+                            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Antecedentes
+                          </Link>
+                        ) : null}
                       </div>
                     ),
                   },
