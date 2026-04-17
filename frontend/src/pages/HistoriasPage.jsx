@@ -1,6 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { FileText, Lock, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
@@ -207,6 +207,10 @@ export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const prefillAppliedRef = useRef(false)
+  const mascotaIdPrefill = searchParams.get('mascotaId') || ''
+  const citaIdPrefill = searchParams.get('citaId') || ''
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const [pagina, setPagina] = useState(1)
@@ -232,6 +236,49 @@ export default function HistoriasPage() {
   useEffect(() => {
     document.title = 'Historias clinicas | Bourgelat'
   }, [])
+
+  useEffect(() => {
+    if (!rolPermitido || !puedeVerHistorias || !mascotaIdPrefill || prefillAppliedRef.current) {
+      return
+    }
+
+    let cancelled = false
+
+    const hydrateFromQuery = async () => {
+      try {
+        const data = await pacientesApi.obtenerMascota(mascotaIdPrefill)
+        if (cancelled) return
+
+        const mascota = data?.mascota
+        if (!mascota) {
+          return
+        }
+
+        prefillAppliedRef.current = true
+        setSelectedPet({
+          ...mascota,
+          Propietario: mascota.Propietario,
+        })
+        setSelectedHistory(null)
+        setPagina(1)
+        setForm((current) => ({
+          ...createDefaultForm(),
+          veterinarioId: current.veterinarioId,
+          citaId: citaIdPrefill || '',
+        }))
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(error, 'No fue posible precargar el paciente desde la agenda.'))
+        }
+      }
+    }
+
+    hydrateFromQuery()
+
+    return () => {
+      cancelled = true
+    }
+  }, [rolPermitido, puedeVerHistorias, mascotaIdPrefill, citaIdPrefill])
 
   const historiasQuery = useQuery({
     queryKey: [
@@ -353,6 +400,19 @@ export default function HistoriasPage() {
   const preferredVetId =
     veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
 
+  useEffect(() => {
+    if (!citaIdPrefill || !selectedPet?.id) return
+
+    setForm((current) => (
+      current.citaId === citaIdPrefill
+        ? current
+        : {
+            ...current,
+            citaId: citaIdPrefill,
+          }
+    ))
+  }, [citaIdPrefill, selectedPet?.id])
+
   const historiasRows = historias.map((historia) => ({
     id: historia.id,
     fecha: new Intl.DateTimeFormat('es-CO', {
@@ -412,6 +472,9 @@ export default function HistoriasPage() {
     setSelectedHistory(null)
     setForm(createDefaultForm())
     setPagina(1)
+    if (searchParams.get('mascotaId') || searchParams.get('citaId') || searchParams.get('propietarioId')) {
+      setSearchParams({})
+    }
   }
 
   const buildPayload = () => {

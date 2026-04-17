@@ -8,7 +8,7 @@ const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
-const { solicitarTokenFactus, validarFacturaFactus } = require('../factusService')
+const { solicitarTokenFactus, validarFacturaFactus } = require('../services/factusService')
 const {
   obtenerNombrePlan,
   obtenerSuscripcionActivaClinica,

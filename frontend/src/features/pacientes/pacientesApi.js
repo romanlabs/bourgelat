@@ -6,6 +6,11 @@ const cleanParams = (params) =>
   )
 
 export const pacientesApi = {
+  async obtenerMascota(mascotaId) {
+    const { data } = await api.get(`/mascotas/${mascotaId}`)
+    return data
+  },
+
   async obtenerMascotas({ buscar, especie, pagina = 1, limite = 8 } = {}) {
     const { data } = await api.get('/mascotas', {
       params: cleanParams({ buscar, especie, pagina, limite }),

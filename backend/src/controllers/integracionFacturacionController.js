@@ -8,7 +8,7 @@ const {
   obtenerUnidadesMedidaFactus,
   obtenerTributosProductosFactus,
   solicitarTokenFactus,
-} = require('../factusService')
+} = require('../services/factusService')
 const {
   serializarIntegracionFactus,
   serializarConfiguracionLocalFactus,

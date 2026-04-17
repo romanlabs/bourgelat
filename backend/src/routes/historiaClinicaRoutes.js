@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { body } = require('express-validator')
+const { body, param, query } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -117,6 +117,22 @@ router.get(
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'),
   requerirFuncionalidades('historias'),
+  [
+    query('mascotaId').optional().isUUID().withMessage('Mascota no valida'),
+    query('veterinarioId').optional().isUUID().withMessage('Veterinario no valido'),
+    query('bloqueada').optional().isIn(['true', 'false']).withMessage('bloqueada debe ser true o false'),
+    query('fechaInicio').optional().custom(validateFollowUpDate),
+    query('fechaFin').optional().custom((value) => {
+      if (!value) return true
+      if (!isValidDateOnly(value)) {
+        throw new Error('La fecha final no es valida')
+      }
+      return true
+    }),
+    query('pagina').optional().isInt({ min: 1 }).withMessage('La pagina debe ser un entero mayor a 0'),
+    query('limite').optional().isInt({ min: 1, max: 100 }).withMessage('El limite debe ser un entero entre 1 y 100'),
+    validar,
+  ],
   obtenerHistorias
 )
 
@@ -165,6 +181,10 @@ router.get(
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'),
   requerirFuncionalidades('historias'),
+  [
+    param('mascotaId').isUUID().withMessage('Mascota no valida'),
+    validar,
+  ],
   obtenerHistoriasMascota
 )
 
@@ -173,6 +193,10 @@ router.get(
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'),
   requerirFuncionalidades('historias'),
+  [
+    param('id').isUUID().withMessage('Historia clinica no valida'),
+    validar,
+  ],
   obtenerHistoria
 )
 
@@ -182,6 +206,7 @@ router.put(
   verificarRol('veterinario', 'admin', 'superadmin'),
   requerirFuncionalidades('historias'),
   [
+    param('id').isUUID().withMessage('Historia clinica no valida'),
     body('motivoConsulta')
       .optional()
       .notEmpty()
@@ -222,6 +247,10 @@ router.patch(
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin'),
   requerirFuncionalidades('historias'),
+  [
+    param('id').isUUID().withMessage('Historia clinica no valida'),
+    validar,
+  ],
   bloquearHistoria
 )
 

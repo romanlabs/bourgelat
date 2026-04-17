@@ -40,7 +40,23 @@ const MOVEMENT_TYPE_OPTIONS = [
   { value: 'salida', label: 'Salida' },
   { value: 'ajuste', label: 'Ajuste' },
 ]
-const MOVEMENT_REASON_OPTIONS = ['compra', 'venta', 'ajuste', 'consumo_interno', 'vencimiento', 'devolucion']
+const MOVEMENT_REASON_OPTIONS = {
+  entrada: [
+    { value: 'compra', label: 'Compra' },
+    { value: 'devolucion', label: 'Devolucion' },
+    { value: 'otro', label: 'Otro' },
+  ],
+  salida: [
+    { value: 'venta', label: 'Venta' },
+    { value: 'uso_clinico', label: 'Uso clinico' },
+    { value: 'vencimiento', label: 'Vencimiento' },
+    { value: 'otro', label: 'Otro' },
+  ],
+  ajuste: [
+    { value: 'ajuste_inventario', label: 'Ajuste de inventario' },
+    { value: 'otro', label: 'Otro' },
+  ],
+}
 
 const DEFAULT_PRODUCT_FORM = {
   nombre: '',
@@ -55,6 +71,20 @@ const DEFAULT_PRODUCT_FORM = {
   laboratorio: '',
   requiereFormula: false,
 }
+
+const buildProductForm = (producto) => ({
+  nombre: producto?.nombre || '',
+  categoria: producto?.categoria || 'medicamento',
+  unidadMedida: producto?.unidadMedida || 'unidad',
+  stock: '',
+  stockMinimo: producto?.stockMinimo != null ? String(producto.stockMinimo) : '5',
+  precioCompra: producto?.precioCompra != null ? String(producto.precioCompra) : '',
+  precioVenta: producto?.precioVenta != null ? String(producto.precioVenta) : '',
+  fechaVencimiento: producto?.fechaVencimiento || '',
+  lote: producto?.lote || '',
+  laboratorio: producto?.laboratorio || '',
+  requiereFormula: Boolean(producto?.requiereFormula),
+})
 
 const DEFAULT_MOVEMENT_FORM = {
   productoId: '',
@@ -99,8 +129,10 @@ export default function InventarioPage() {
   const [productoForm, setProductoForm] = useState(DEFAULT_PRODUCT_FORM)
   const [movementForm, setMovementForm] = useState(DEFAULT_MOVEMENT_FORM)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [editingProduct, setEditingProduct] = useState(null)
 
   const busquedaDiferida = useDeferredValue(buscar.trim())
+  const motivosDisponibles = MOVEMENT_REASON_OPTIONS[movementForm.tipo] || MOVEMENT_REASON_OPTIONS.entrada
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   const puedeVerInventario =
     rolPermitido &&
@@ -140,6 +172,12 @@ export default function InventarioPage() {
     placeholderData: (previousData) => previousData,
   })
 
+  const productoDetalleQuery = useQuery({
+    queryKey: ['inventario-producto-detalle', selectedProduct?.id],
+    queryFn: () => inventarioApi.obtenerProducto(selectedProduct.id),
+    enabled: puedeVerInventario && Boolean(selectedProduct?.id),
+  })
+
   const movimientosQuery = useQuery({
     queryKey: ['inventario-movimientos', paginaMovimientos],
     queryFn: () => inventarioApi.obtenerMovimientos({ pagina: paginaMovimientos, limite: 10 }),
@@ -153,12 +191,54 @@ export default function InventarioPage() {
       toast.success(data?.message || 'Producto creado exitosamente')
       setProductoForm(DEFAULT_PRODUCT_FORM)
       queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-producto-detalle'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-inventario'] })
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear el producto.'))
+    },
+  })
+
+  const editarProductoMutation = useMutation({
+    mutationFn: ({ productoId, payload }) => inventarioApi.editarProducto(productoId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Producto actualizado exitosamente')
+      setProductoForm(DEFAULT_PRODUCT_FORM)
+      setEditingProduct(null)
+      queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-producto-detalle'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-inventario'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible actualizar el producto.'))
+    },
+  })
+
+  const eliminarProductoMutation = useMutation({
+    mutationFn: inventarioApi.eliminarProducto,
+    onSuccess: (data, productoId) => {
+      toast.success(data?.message || 'Producto desactivado exitosamente')
+      if (editingProduct?.id === productoId) {
+        setEditingProduct(null)
+        setProductoForm(DEFAULT_PRODUCT_FORM)
+      }
+      if (selectedProduct?.id === productoId) {
+        setSelectedProduct(null)
+        setMovementForm(DEFAULT_MOVEMENT_FORM)
+      }
+      queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-producto-detalle'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-movimientos'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-inventario'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible desactivar el producto.'))
     },
   })
 
@@ -169,6 +249,7 @@ export default function InventarioPage() {
       setMovementForm(DEFAULT_MOVEMENT_FORM)
       setSelectedProduct(null)
       queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
+      queryClient.invalidateQueries({ queryKey: ['inventario-producto-detalle'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-movimientos'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
@@ -257,6 +338,25 @@ export default function InventarioPage() {
     [movimientosQuery.data?.movimientos]
   )
 
+  const detalleProducto = productoDetalleQuery.data?.producto || selectedProduct
+  const detalleMovimientosRows = useMemo(
+    () =>
+      (productoDetalleQuery.data?.producto?.movimientos || []).map((movimiento) => ({
+        id: movimiento.id,
+        fecha: new Intl.DateTimeFormat('es-CO', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(movimiento.createdAt)),
+        tipo: movimiento.tipo,
+        motivo: movimiento.motivo.replaceAll('_', ' '),
+        cantidad: formatNumber(movimiento.cantidad),
+        cambio: `${movimiento.stockAnterior} -> ${movimiento.stockNuevo}`,
+      })),
+    [productoDetalleQuery.data?.producto?.movimientos]
+  )
+
   const handleCreateProduct = (event) => {
     event.preventDefault()
 
@@ -265,11 +365,10 @@ export default function InventarioPage() {
       return
     }
 
-    crearProductoMutation.mutate({
+    const payload = {
       nombre: productoForm.nombre.trim(),
       categoria: productoForm.categoria,
       unidadMedida: productoForm.unidadMedida,
-      stock: productoForm.stock ? Number(productoForm.stock) : 0,
       stockMinimo: productoForm.stockMinimo ? Number(productoForm.stockMinimo) : 5,
       precioCompra: productoForm.precioCompra ? Number(productoForm.precioCompra) : 0,
       precioVenta: productoForm.precioVenta ? Number(productoForm.precioVenta) : 0,
@@ -277,6 +376,19 @@ export default function InventarioPage() {
       lote: productoForm.lote.trim() || undefined,
       laboratorio: productoForm.laboratorio.trim() || undefined,
       requiereFormula: productoForm.requiereFormula,
+    }
+
+    if (editingProduct) {
+      editarProductoMutation.mutate({
+        productoId: editingProduct.id,
+        payload,
+      })
+      return
+    }
+
+    crearProductoMutation.mutate({
+      ...payload,
+      stock: productoForm.stock ? Number(productoForm.stock) : 0,
     })
   }
 
@@ -303,6 +415,22 @@ export default function InventarioPage() {
         precioUnitario: movementForm.precioUnitario ? Number(movementForm.precioUnitario) : 0,
       },
     })
+  }
+
+  const handleEditProduct = (producto) => {
+    setEditingProduct(producto)
+    setProductoForm(buildProductForm(producto))
+  }
+
+  const handleCancelEditProduct = () => {
+    setEditingProduct(null)
+    setProductoForm(DEFAULT_PRODUCT_FORM)
+  }
+
+  const handleDeleteProduct = (producto) => {
+    const confirmed = window.confirm(`Se desactivara "${producto.nombre}" del inventario activo. ¿Deseas continuar?`)
+    if (!confirmed) return
+    eliminarProductoMutation.mutate(producto.id)
   }
 
   if (!rolPermitido) {
@@ -507,21 +635,46 @@ export default function InventarioPage() {
                   },
                   {
                     key: 'accion',
-                    label: 'Movimiento',
+                    label: 'Acciones',
                     render: (row) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedProduct(row.raw)
-                          setMovementForm((current) => ({
-                            ...current,
-                            productoId: row.raw.id,
-                          }))
-                        }}
-                        className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                      >
-                        Registrar
-                      </button>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProduct(row.raw)
+                            setMovementForm((current) => ({
+                              ...DEFAULT_MOVEMENT_FORM,
+                              tipo: current.tipo,
+                              motivo: (MOVEMENT_REASON_OPTIONS[current.tipo] || MOVEMENT_REASON_OPTIONS.entrada)[0].value,
+                              productoId: row.raw.id,
+                            }))
+                          }}
+                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                        >
+                          Movimiento
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProduct(row.raw)}
+                          className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                        >
+                          Ver detalle
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditProduct(row.raw)}
+                          className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(row.raw)}
+                          className="text-sm font-semibold text-red-700 hover:text-red-800"
+                        >
+                          Desactivar
+                        </button>
+                      </div>
                     ),
                   },
                 ]}
@@ -562,8 +715,12 @@ export default function InventarioPage() {
 
             <div className="space-y-5">
               <DashboardPanel
-                title="Crear producto"
-                subtitle="Alta rapida para dejar el inventario listo sin salir de la pantalla."
+                title={editingProduct ? 'Editar producto' : 'Crear producto'}
+                subtitle={
+                  editingProduct
+                    ? 'Ajusta los datos del producto. El stock se modifica desde movimientos.'
+                    : 'Alta rapida para dejar el inventario listo sin salir de la pantalla.'
+                }
                 action={<PackagePlus className="h-4 w-4 text-cyan-700" />}
               >
                 <form className="grid gap-4" onSubmit={handleCreateProduct}>
@@ -599,14 +756,20 @@ export default function InventarioPage() {
                     </select>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={productoForm.stock}
-                      onChange={(event) => setProductoForm((current) => ({ ...current, stock: event.target.value }))}
-                      placeholder="Stock inicial"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
+                    {!editingProduct ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={productoForm.stock}
+                        onChange={(event) => setProductoForm((current) => ({ ...current, stock: event.target.value }))}
+                        placeholder="Stock inicial"
+                        className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      />
+                    ) : (
+                      <div className="flex h-11 items-center border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                        Stock actual: {formatNumber(editingProduct.stock || 0)}
+                      </div>
+                    )}
                     <input
                       type="number"
                       min="0"
@@ -666,13 +829,32 @@ export default function InventarioPage() {
                     />
                     Requiere formula
                   </label>
-                  <button
-                    type="submit"
-                    disabled={crearProductoMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {crearProductoMutation.isPending ? 'Guardando...' : 'Guardar producto'}
-                  </button>
+                  {editingProduct ? (
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={editarProductoMutation.isPending}
+                        className="flex-1 border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {editarProductoMutation.isPending ? 'Guardando...' : 'Actualizar producto'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEditProduct}
+                        className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={crearProductoMutation.isPending}
+                      className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {crearProductoMutation.isPending ? 'Guardando...' : 'Guardar producto'}
+                    </button>
+                  )}
                 </form>
               </DashboardPanel>
 
@@ -684,8 +866,10 @@ export default function InventarioPage() {
                   <div className="border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600">
                     {selectedProduct ? (
                       <>
-                        <p className="font-semibold text-slate-900">{selectedProduct.nombre}</p>
-                        <p>{selectedProduct.categoria}</p>
+                        <p className="font-semibold text-slate-900">{detalleProducto?.nombre || selectedProduct.nombre}</p>
+                        <p>
+                          {(detalleProducto?.categoria || selectedProduct.categoria)} · Stock actual {formatNumber(detalleProducto?.stock || selectedProduct.stock || 0)}
+                        </p>
                       </>
                     ) : (
                       'Selecciona un producto desde la tabla para registrar el movimiento.'
@@ -694,7 +878,14 @@ export default function InventarioPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <select
                       value={movementForm.tipo}
-                      onChange={(event) => setMovementForm((current) => ({ ...current, tipo: event.target.value }))}
+                      onChange={(event) => {
+                        const nextType = event.target.value
+                        setMovementForm((current) => ({
+                          ...current,
+                          tipo: nextType,
+                          motivo: (MOVEMENT_REASON_OPTIONS[nextType] || MOVEMENT_REASON_OPTIONS.entrada)[0].value,
+                        }))
+                      }}
                       className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
                     >
                       {MOVEMENT_TYPE_OPTIONS.map((option) => (
@@ -708,9 +899,9 @@ export default function InventarioPage() {
                       onChange={(event) => setMovementForm((current) => ({ ...current, motivo: event.target.value }))}
                       className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
                     >
-                      {MOVEMENT_REASON_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
+                      {motivosDisponibles.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
@@ -722,7 +913,7 @@ export default function InventarioPage() {
                       step="1"
                       value={movementForm.cantidad}
                       onChange={(event) => setMovementForm((current) => ({ ...current, cantidad: event.target.value }))}
-                      placeholder="Cantidad"
+                      placeholder={movementForm.tipo === 'ajuste' ? 'Nuevo stock final' : 'Cantidad'}
                       className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
                     />
                     <input
@@ -749,6 +940,53 @@ export default function InventarioPage() {
                     {registrarMovimientoMutation.isPending ? 'Registrando...' : 'Registrar movimiento'}
                   </button>
                 </form>
+              </DashboardPanel>
+
+              <DashboardPanel
+                title="Detalle del producto"
+                subtitle="Resumen rapido y ultimos movimientos del producto seleccionado."
+              >
+                {selectedProduct ? (
+                  <div className="grid gap-4">
+                    <div className="grid gap-3 border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Producto</p>
+                        <p className="mt-1 font-semibold text-slate-900">{detalleProducto?.nombre || selectedProduct.nombre}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Stock actual</p>
+                        <p className="mt-1 font-semibold text-slate-900">{formatNumber(detalleProducto?.stock || selectedProduct.stock || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Stock minimo</p>
+                        <p className="mt-1">{formatNumber(detalleProducto?.stockMinimo || selectedProduct.stockMinimo || 0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Laboratorio / lote</p>
+                        <p className="mt-1">{detalleProducto?.laboratorio || '-'} / {detalleProducto?.lote || '-'}</p>
+                      </div>
+                    </div>
+
+                    <DataTable
+                      title="Ultimos movimientos del producto"
+                      subtitle="Trazabilidad rapida de entradas, salidas y ajustes recientes."
+                      rows={detalleMovimientosRows}
+                      columns={[
+                        { key: 'fecha', label: 'Fecha' },
+                        { key: 'tipo', label: 'Tipo' },
+                        { key: 'motivo', label: 'Motivo' },
+                        { key: 'cantidad', label: 'Cantidad' },
+                        { key: 'cambio', label: 'Cambio' },
+                      ]}
+                      emptyTitle="Sin movimientos recientes"
+                      emptyBody="Este producto aun no tiene trazabilidad registrada."
+                    />
+                  </div>
+                ) : (
+                  <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                    Selecciona un producto desde la tabla para ver su detalle y los ultimos movimientos.
+                  </div>
+                )}
               </DashboardPanel>
             </div>
           </div>

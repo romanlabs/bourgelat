@@ -32,6 +32,11 @@ export const inventarioApi = {
     return data
   },
 
+  async obtenerProducto(productoId) {
+    const { data } = await api.get(`/inventario/${productoId}`)
+    return data
+  },
+
   async obtenerProductoPorBarcode(codigo) {
     const { data } = await api.get(`/inventario/barcode/${encodeURIComponent(codigo)}`)
     return data
@@ -39,6 +44,16 @@ export const inventarioApi = {
 
   async crearProducto(payload) {
     const { data } = await api.post('/inventario', payload)
+    return data
+  },
+
+  async editarProducto(productoId, payload) {
+    const { data } = await api.put(`/inventario/${productoId}`, payload)
+    return data
+  },
+
+  async eliminarProducto(productoId) {
+    const { data } = await api.delete(`/inventario/${productoId}`)
     return data
   },
 
