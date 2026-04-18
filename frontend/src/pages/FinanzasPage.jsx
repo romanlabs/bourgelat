@@ -17,6 +17,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ErrorBanner } from '@/components/shared'
 import {
   DashboardPanel,
   DataTable,
@@ -722,19 +723,23 @@ export default function FinanzasPage() {
           {ingresosQuery.isError || facturasQuery.isError || facturaDetalleQuery.isError ? (
             <div className="grid gap-4">
               {ingresosQuery.isError ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(ingresosQuery.error, 'No fue posible cargar el reporte de ingresos del periodo.')}
-                </div>
+                <ErrorBanner
+                  variant="amber"
+                  message={getErrorMessage(ingresosQuery.error, 'No fue posible cargar el reporte de ingresos del periodo.')}
+                  onRetry={() => ingresosQuery.refetch()}
+                />
               ) : null}
               {facturasQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                  {getErrorMessage(facturasQuery.error, 'No fue posible cargar la tabla administrativa de facturas.')}
-                </div>
+                <ErrorBanner
+                  message={getErrorMessage(facturasQuery.error, 'No fue posible cargar la tabla administrativa de facturas.')}
+                  onRetry={() => facturasQuery.refetch()}
+                />
               ) : null}
               {facturaDetalleQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                  {getErrorMessage(facturaDetalleQuery.error, 'No fue posible cargar el detalle de la factura seleccionada.')}
-                </div>
+                <ErrorBanner
+                  message={getErrorMessage(facturaDetalleQuery.error, 'No fue posible cargar el detalle de la factura seleccionada.')}
+                  onRetry={() => facturaDetalleQuery.refetch()}
+                />
               ) : null}
             </div>
           ) : null}
@@ -1185,6 +1190,7 @@ export default function FinanzasPage() {
             <DataTable
               title="Facturas del periodo"
               subtitle="Busca por numero, cliente o responsable y abre el detalle para operar."
+              loading={facturasQuery.isLoading}
               rows={facturasRows}
               columns={[
                 { key: 'numero', label: 'Factura' },

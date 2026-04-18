@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { CircleAlert, PackagePlus, ShieldCheck, Sparkles, Boxes } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ConfirmDialog, ErrorBanner, FieldError, LoadingButton } from '@/components/shared'
 import {
   DashboardPanel,
   DataTable,
@@ -97,8 +98,11 @@ export default function InventarioPage() {
   const [paginaProductos, setPaginaProductos] = useState(1)
   const [paginaMovimientos, setPaginaMovimientos] = useState(1)
   const [productoForm, setProductoForm] = useState(DEFAULT_PRODUCT_FORM)
+  const [productoErrors, setProductoErrors] = useState({})
   const [movementForm, setMovementForm] = useState(DEFAULT_MOVEMENT_FORM)
+  const [movementErrors, setMovementErrors] = useState({})
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [confirmMovement, setConfirmMovement] = useState(false)
 
   const busquedaDiferida = useDeferredValue(buscar.trim())
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
@@ -152,6 +156,7 @@ export default function InventarioPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Producto creado exitosamente')
       setProductoForm(DEFAULT_PRODUCT_FORM)
+      setProductoErrors({})
       queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
@@ -167,6 +172,7 @@ export default function InventarioPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Movimiento registrado exitosamente')
       setMovementForm(DEFAULT_MOVEMENT_FORM)
+      setMovementErrors({})
       setSelectedProduct(null)
       queryClient.invalidateQueries({ queryKey: ['inventario-productos'] })
       queryClient.invalidateQueries({ queryKey: ['inventario-movimientos'] })
@@ -257,11 +263,32 @@ export default function InventarioPage() {
     [movimientosQuery.data?.movimientos]
   )
 
+  const validateProductoNombre = (value = productoForm.nombre) => {
+    const error = value.trim() ? '' : 'El nombre del producto es requerido.'
+    setProductoErrors((prev) => ({ ...prev, nombre: error }))
+    return !error
+  }
+
+  const validateMovementCantidad = (value = movementForm.cantidad) => {
+    const error =
+      !value || Number(value) <= 0 ? 'La cantidad debe ser mayor a 0.' : ''
+    setMovementErrors((prev) => ({ ...prev, cantidad: error }))
+    return !error
+  }
+
+  const validateMovementProducto = (value = movementForm.productoId) => {
+    const error = value ? '' : 'Selecciona un producto de la tabla.'
+    setMovementErrors((prev) => ({ ...prev, productoId: error }))
+    return !error
+  }
+
   const handleCreateProduct = (event) => {
     event.preventDefault()
 
-    if (!productoForm.nombre.trim() || !productoForm.categoria || !productoForm.unidadMedida) {
-      toast.error('Completa nombre, categoria y unidad de medida.')
+    if (!validateProductoNombre() || !productoForm.categoria || !productoForm.unidadMedida) {
+      if (!productoForm.categoria || !productoForm.unidadMedida) {
+        toast.error('Completa categoria y unidad de medida.')
+      }
       return
     }
 
@@ -282,27 +309,26 @@ export default function InventarioPage() {
 
   const handleRegisterMovement = (event) => {
     event.preventDefault()
+    const productoOk = validateMovementProducto()
+    const cantidadOk = validateMovementCantidad()
+    if (!productoOk || !cantidadOk) return
+    setConfirmMovement(true)
+  }
 
-    if (!movementForm.productoId) {
-      toast.error('Selecciona un producto antes de registrar el movimiento.')
-      return
-    }
-
-    if (!movementForm.cantidad || Number(movementForm.cantidad) <= 0) {
-      toast.error('La cantidad del movimiento debe ser mayor a 0.')
-      return
-    }
-
-    registrarMovimientoMutation.mutate({
-      productoId: movementForm.productoId,
-      payload: {
-        tipo: movementForm.tipo,
-        cantidad: Number(movementForm.cantidad),
-        motivo: movementForm.motivo,
-        observaciones: movementForm.observaciones.trim() || undefined,
-        precioUnitario: movementForm.precioUnitario ? Number(movementForm.precioUnitario) : 0,
+  const handleConfirmMovement = () => {
+    registrarMovimientoMutation.mutate(
+      {
+        productoId: movementForm.productoId,
+        payload: {
+          tipo: movementForm.tipo,
+          cantidad: Number(movementForm.cantidad),
+          motivo: movementForm.motivo,
+          observaciones: movementForm.observaciones.trim() || undefined,
+          precioUnitario: movementForm.precioUnitario ? Number(movementForm.precioUnitario) : 0,
+        },
       },
-    })
+      { onSettled: () => setConfirmMovement(false) },
+    )
   }
 
   if (!rolPermitido) {
@@ -340,14 +366,30 @@ export default function InventarioPage() {
           {reporteQuery.isError || productosQuery.isError || alertasQuery.isError || movimientosQuery.isError ? (
             <div className="grid gap-4">
               {reporteQuery.isError ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(reporteQuery.error, 'No fue posible cargar el resumen de inventario.')}
-                </div>
+                <ErrorBanner
+                  variant="amber"
+                  message={getErrorMessage(reporteQuery.error, 'No fue posible cargar el resumen de inventario.')}
+                  onRetry={() => reporteQuery.refetch()}
+                />
               ) : null}
               {productosQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                  {getErrorMessage(productosQuery.error, 'No fue posible cargar la tabla de productos.')}
-                </div>
+                <ErrorBanner
+                  message={getErrorMessage(productosQuery.error, 'No fue posible cargar la tabla de productos.')}
+                  onRetry={() => productosQuery.refetch()}
+                />
+              ) : null}
+              {alertasQuery.isError ? (
+                <ErrorBanner
+                  variant="amber"
+                  message={getErrorMessage(alertasQuery.error, 'No fue posible cargar las alertas de inventario.')}
+                  onRetry={() => alertasQuery.refetch()}
+                />
+              ) : null}
+              {movimientosQuery.isError ? (
+                <ErrorBanner
+                  message={getErrorMessage(movimientosQuery.error, 'No fue posible cargar el historial de movimientos.')}
+                  onRetry={() => movimientosQuery.refetch()}
+                />
               ) : null}
             </div>
           ) : null}
@@ -396,6 +438,7 @@ export default function InventarioPage() {
             <DataTable
               title="Alertas prioritarias"
               subtitle="Lo que conviene revisar primero antes de abrir el detalle completo."
+              loading={alertasQuery.isLoading}
               rows={alertsRows.slice(0, 10)}
               columns={[
                 {
@@ -474,6 +517,7 @@ export default function InventarioPage() {
               <DataTable
                 title="Productos activos"
                 subtitle="Base operativa del inventario."
+                loading={productosQuery.isLoading}
                 rows={productosRows}
                 columns={[
                   { key: 'nombre', label: 'Producto' },
@@ -567,13 +611,20 @@ export default function InventarioPage() {
                 action={<PackagePlus className="h-4 w-4 text-cyan-700" />}
               >
                 <form className="grid gap-4" onSubmit={handleCreateProduct}>
-                  <input
-                    type="text"
-                    value={productoForm.nombre}
-                    onChange={(event) => setProductoForm((current) => ({ ...current, nombre: event.target.value }))}
-                    placeholder="Nombre del producto"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      value={productoForm.nombre}
+                      onChange={(event) => {
+                        setProductoForm((current) => ({ ...current, nombre: event.target.value }))
+                        if (productoErrors.nombre) validateProductoNombre(event.target.value)
+                      }}
+                      onBlur={() => validateProductoNombre()}
+                      placeholder="Nombre del producto"
+                      className={`h-11 w-full border bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 ${productoErrors.nombre ? 'border-red-400' : 'border-slate-200'}`}
+                    />
+                    <FieldError message={productoErrors.nombre} />
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <select
                       value={productoForm.categoria}
@@ -666,13 +717,14 @@ export default function InventarioPage() {
                     />
                     Requiere formula
                   </label>
-                  <button
+                  <LoadingButton
                     type="submit"
-                    disabled={crearProductoMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    loading={crearProductoMutation.isPending}
+                    loadingLabel="Guardando..."
+                    className="w-full border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
-                    {crearProductoMutation.isPending ? 'Guardando...' : 'Guardar producto'}
-                  </button>
+                    Guardar producto
+                  </LoadingButton>
                 </form>
               </DashboardPanel>
 
@@ -681,15 +733,18 @@ export default function InventarioPage() {
                 subtitle="Entrada, salida o ajuste sobre el producto seleccionado."
               >
                 <form className="grid gap-4" onSubmit={handleRegisterMovement}>
-                  <div className="border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600">
-                    {selectedProduct ? (
-                      <>
-                        <p className="font-semibold text-slate-900">{selectedProduct.nombre}</p>
-                        <p>{selectedProduct.categoria}</p>
-                      </>
-                    ) : (
-                      'Selecciona un producto desde la tabla para registrar el movimiento.'
-                    )}
+                  <div>
+                    <div className={`border bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600 ${movementErrors.productoId ? 'border-red-400' : 'border-slate-200'}`}>
+                      {selectedProduct ? (
+                        <>
+                          <p className="font-semibold text-slate-900">{selectedProduct.nombre}</p>
+                          <p>{selectedProduct.categoria}</p>
+                        </>
+                      ) : (
+                        'Selecciona un producto desde la tabla para registrar el movimiento.'
+                      )}
+                    </div>
+                    <FieldError message={movementErrors.productoId} />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <select
@@ -716,15 +771,22 @@ export default function InventarioPage() {
                     </select>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={movementForm.cantidad}
-                      onChange={(event) => setMovementForm((current) => ({ ...current, cantidad: event.target.value }))}
-                      placeholder="Cantidad"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
+                    <div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={movementForm.cantidad}
+                        onChange={(event) => {
+                          setMovementForm((current) => ({ ...current, cantidad: event.target.value }))
+                          if (movementErrors.cantidad) validateMovementCantidad(event.target.value)
+                        }}
+                        onBlur={() => validateMovementCantidad()}
+                        placeholder="Cantidad"
+                        className={`h-11 w-full border bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 ${movementErrors.cantidad ? 'border-red-400' : 'border-slate-200'}`}
+                      />
+                      <FieldError message={movementErrors.cantidad} />
+                    </div>
                     <input
                       type="number"
                       min="0"
@@ -741,13 +803,14 @@ export default function InventarioPage() {
                     placeholder="Observaciones del movimiento"
                     className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
                   />
-                  <button
+                  <LoadingButton
                     type="submit"
-                    disabled={registrarMovimientoMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    loading={registrarMovimientoMutation.isPending}
+                    loadingLabel="Registrando..."
+                    className="w-full border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
-                    {registrarMovimientoMutation.isPending ? 'Registrando...' : 'Registrar movimiento'}
-                  </button>
+                    Registrar movimiento
+                  </LoadingButton>
                 </form>
               </DashboardPanel>
             </div>
@@ -756,6 +819,7 @@ export default function InventarioPage() {
           <DataTable
             title="Ultimos movimientos"
             subtitle="Traza administrativa del cambio de stock."
+            loading={movimientosQuery.isLoading}
             rows={movimientosRows}
             columns={[
               { key: 'fecha', label: 'Fecha' },
@@ -804,6 +868,21 @@ export default function InventarioPage() {
           ) : null}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmMovement}
+        onOpenChange={setConfirmMovement}
+        title="Confirmar movimiento de stock"
+        description={
+          selectedProduct
+            ? `Se registrara un movimiento de ${movementForm.tipo} de ${movementForm.cantidad} ${selectedProduct.unidadMedida || 'unidades'} sobre ${selectedProduct.nombre}. Esta accion no se puede deshacer.`
+            : 'Confirma el movimiento de inventario.'
+        }
+        confirmLabel="Confirmar movimiento"
+        variant="default"
+        loading={registrarMovimientoMutation.isPending}
+        onConfirm={handleConfirmMovement}
+      />
     </AdminShell>
   )
 }

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { FileText, Lock, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ErrorBanner } from '@/components/shared'
 import {
   DashboardPanel,
   DataTable,
@@ -614,14 +615,17 @@ export default function HistoriasPage() {
           {historiasQuery.isError || veterinariosQuery.isError ? (
             <div className="grid gap-4">
               {historiasQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                  {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
-                </div>
+                <ErrorBanner
+                  message={getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
+                  onRetry={() => historiasQuery.refetch()}
+                />
               ) : null}
               {veterinariosQuery.isError ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
-                </div>
+                <ErrorBanner
+                  variant="amber"
+                  message={getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
+                  onRetry={() => veterinariosQuery.refetch()}
+                />
               ) : null}
             </div>
           ) : null}
@@ -726,6 +730,7 @@ export default function HistoriasPage() {
               <DataTable
                 title="Historias"
                 subtitle="Vista administrativa y clinica de las consultas documentadas."
+                loading={historiasQuery.isLoading}
                 rows={historiasRows}
                 columns={[
                   { key: 'fecha', label: 'Fecha' },

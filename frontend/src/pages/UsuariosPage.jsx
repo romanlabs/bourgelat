@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ErrorBanner } from '@/components/shared'
 import {
   DashboardPanel,
   DataTable,
@@ -497,9 +498,10 @@ export default function UsuariosPage() {
       ) : (
         <div className="space-y-5">
           {usuariosQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-              {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clinica.')}
-            </div>
+            <ErrorBanner
+              message={getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clinica.')}
+              onRetry={() => usuariosQuery.refetch()}
+            />
           ) : null}
 
           <DashboardPanel
@@ -675,6 +677,7 @@ export default function UsuariosPage() {
               <DataTable
                 title="Usuarios"
                 subtitle="Vista operativa del equipo actual."
+                loading={usuariosQuery.isLoading}
                 rows={tableRows}
                 columns={[
                   {
