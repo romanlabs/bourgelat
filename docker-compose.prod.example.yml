@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    ports:
+      - "3000:3000"
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: https://api.bourgelat.co/api
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"
+
+volumes:
+  backend-uploads:
+  backend-logs:

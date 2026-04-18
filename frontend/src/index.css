@@ -1,0 +1,179 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/700.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   CSS VARIABLES — tema claro
+   Paleta: verde clínico (primary) + azul sidebar + grises cálidos
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  /* Fondos */
+  --background:            42 30% 98%;   /* warm-50 con mínimo calor */
+  --foreground:            25 20% 15%;   /* casi negro cálido */
+
+  /* Superficies */
+  --card:                  0 0% 100%;
+  --card-foreground:       25 20% 15%;
+  --popover:               0 0% 100%;
+  --popover-foreground:    25 20% 15%;
+
+  /* Verde clínico como color primario */
+  --primary:               160 84% 39%; /* clinical-500 → #10b981 */
+  --primary-foreground:    0 0% 100%;   /* blanco sobre verde */
+
+  /* Secundario — verde muy claro para superficies sutiles */
+  --secondary:             152 60% 94%;
+  --secondary-foreground:  163 78% 20%;
+
+  /* Muted — grises cálidos */
+  --muted:                 40 20% 95%;
+  --muted-foreground:      30 10% 45%;
+
+  /* Acento — azul para interactividad */
+  --accent:                214 80% 95%;
+  --accent-foreground:     221 70% 35%;
+
+  /* Destructivo */
+  --destructive:           2 72% 55%;
+  --destructive-foreground:0 0% 100%;
+
+  /* Bordes e inputs */
+  --border:                40 15% 88%;
+  --input:                 40 15% 88%;
+  --ring:                  160 70% 55%;  /* focus ring verde */
+
+  /* Gráficas — verde clínico → azul → warm tones */
+  --chart-1:               160 84% 39%; /* clinical-500 */
+  --chart-2:               221 83% 53%; /* blue-500     */
+  --chart-3:               38 92% 50%;  /* amber        */
+  --chart-4:               160 60% 65%; /* clinical-300 */
+  --chart-5:               221 60% 75%; /* blue-300     */
+
+  /* Radio base */
+  --radius: 0.625rem;
+
+  /* Sidebar — azul marino oscuro (no cambia) */
+  --sidebar:                    206 61% 18%;
+  --sidebar-foreground:         206 54% 97%;
+  --sidebar-primary:            160 84% 45%; /* clinical más claro para contraste */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent:             204 60% 25%;
+  --sidebar-accent-foreground:  206 54% 97%;
+  --sidebar-border:             207 47% 25%;
+  --sidebar-ring:               160 70% 55%;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MODO OSCURO
+   ───────────────────────────────────────────────────────────────── */
+.dark {
+  --background:            220 20% 8%;
+  --foreground:            40 15% 95%;
+
+  --card:                  220 18% 12%;
+  --card-foreground:       40 15% 95%;
+  --popover:               220 18% 12%;
+  --popover-foreground:    40 15% 95%;
+
+  --primary:               160 70% 48%; /* clinical más brillante en dark */
+  --primary-foreground:    0 0% 100%;
+
+  --secondary:             220 15% 18%;
+  --secondary-foreground:  40 15% 90%;
+
+  --muted:                 220 15% 18%;
+  --muted-foreground:      40 10% 55%;
+
+  --accent:                220 15% 18%;
+  --accent-foreground:     40 15% 90%;
+
+  --destructive:           0 63% 40%;
+  --destructive-foreground:0 0% 98%;
+
+  --border:                220 15% 20%;
+  --input:                 220 15% 20%;
+  --ring:                  160 65% 50%;
+
+  --chart-1:               160 70% 55%;
+  --chart-2:               221 75% 65%;
+  --chart-3:               38 85% 60%;
+  --chart-4:               160 50% 40%;
+  --chart-5:               221 55% 45%;
+
+  --sidebar:               220 18% 10%;
+  --sidebar-foreground:    40 15% 92%;
+  --sidebar-primary:       160 70% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent:        220 18% 16%;
+  --sidebar-accent-foreground:  40 15% 90%;
+  --sidebar-border:        220 18% 18%;
+  --sidebar-ring:          160 65% 50%;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BASE
+   ───────────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    box-sizing: border-box;
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    margin: 0;
+    @apply bg-background font-sans text-foreground antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar       { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TIPOGRAFÍA — clases semánticas
+   Uso: <h1 class="heading-1">, <p class="body-text">, etc.
+   Alternativa Tailwind: text-h1, text-h2, text-body, text-caption
+   ───────────────────────────────────────────────────────────────── */
+@layer components {
+  .heading-1 {
+    @apply text-h1 font-bold tracking-tight;
+  }
+  .heading-2 {
+    @apply text-h2 font-semibold tracking-tight;
+  }
+  .heading-3 {
+    @apply text-h3 font-semibold;
+  }
+  .heading-4 {
+    @apply text-h4 font-semibold;
+  }
+  .body-text {
+    @apply text-body font-normal;
+  }
+  .small-text {
+    @apply text-small font-normal;
+  }
+  .caption-text {
+    @apply text-caption font-medium text-muted-foreground;
+  }
+  .mono-text {
+    @apply text-mono font-mono;
+  }
+}
