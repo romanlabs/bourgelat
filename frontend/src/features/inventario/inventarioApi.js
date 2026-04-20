@@ -13,9 +13,9 @@ export const inventarioApi = {
     return data
   },
 
-  async obtenerProductos({ buscar, categoria, bajoStock, pagina = 1, limite = 20 } = {}) {
+  async obtenerProductos({ buscar, categoria, bajoStock, agotados, pagina = 1, limite = 20 } = {}) {
     const { data } = await api.get('/inventario', {
-      params: cleanParams({ buscar, categoria, bajoStock, pagina, limite }),
+      params: cleanParams({ buscar, categoria, bajoStock, agotados, pagina, limite }),
     })
     return data
   },

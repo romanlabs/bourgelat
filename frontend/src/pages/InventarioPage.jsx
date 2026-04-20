@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { CircleAlert, PackagePlus, ShieldCheck, Sparkles, Boxes } from 'lucide-react'
+import { CircleAlert, PackagePlus, ShieldCheck, Sparkles, Boxes, LayoutGrid, List } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { ConfirmDialog, ErrorBanner, FieldError, LoadingButton } from '@/components/shared'
 import {
@@ -94,7 +94,8 @@ export default function InventarioPage() {
   const queryClient = useQueryClient()
   const [buscar, setBuscar] = useState('')
   const [categoria, setCategoria] = useState('todas')
-  const [bajoStock, setBajoStock] = useState(false)
+  const [filtroStock, setFiltroStock] = useState('todos')
+  const [vistaCards, setVistaCards] = useState(false)
   const [paginaProductos, setPaginaProductos] = useState(1)
   const [paginaMovimientos, setPaginaMovimientos] = useState(1)
   const [productoForm, setProductoForm] = useState(DEFAULT_PRODUCT_FORM)
@@ -124,12 +125,13 @@ export default function InventarioPage() {
   })
 
   const productosQuery = useQuery({
-    queryKey: ['inventario-productos', busquedaDiferida, categoria, bajoStock, paginaProductos],
+    queryKey: ['inventario-productos', busquedaDiferida, categoria, filtroStock, paginaProductos],
     queryFn: () =>
       inventarioApi.obtenerProductos({
         buscar: busquedaDiferida || undefined,
         categoria: categoria !== 'todas' ? categoria : undefined,
-        bajoStock: bajoStock ? 'true' : undefined,
+        bajoStock: filtroStock === 'bajo_stock' ? 'true' : undefined,
+        agotados: filtroStock === 'agotados' ? 'true' : undefined,
         pagina: paginaProductos,
         limite: 12,
       }),
@@ -236,7 +238,8 @@ export default function InventarioPage() {
         id: producto.id,
         nombre: producto.nombre,
         categoria: producto.categoria,
-        stock: `${producto.stock}/${producto.stockMinimo}`,
+        stockActual: Number(producto.stock || 0),
+        stockMinimo: Number(producto.stockMinimo || 0),
         valor: formatCurrency(Number(producto.precioVenta || 0) * Number(producto.stock || 0)),
         laboratorio: producto.laboratorio || '-',
         alertas: producto.alertas || [],
@@ -472,7 +475,7 @@ export default function InventarioPage() {
               title="Productos"
               subtitle="Busca, filtra y selecciona un producto para registrar movimiento."
               action={
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <input
                     type="text"
                     value={buscar}
@@ -497,81 +500,208 @@ export default function InventarioPage() {
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBajoStock((current) => !current)
-                      setPaginaProductos(1)
-                    }}
-                    className={`border px-4 py-2 text-sm font-semibold transition ${
-                      bajoStock
-                        ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    Bajo stock
-                  </button>
+                  <div className="flex border border-slate-200">
+                    {[
+                      { value: 'todos', label: 'Todos' },
+                      { value: 'bajo_stock', label: 'Bajo stock' },
+                      { value: 'agotados', label: 'Agotados' },
+                    ].map((opcion) => (
+                      <button
+                        key={opcion.value}
+                        type="button"
+                        onClick={() => {
+                          setFiltroStock(opcion.value)
+                          setPaginaProductos(1)
+                        }}
+                        className={`px-3 py-2 text-sm font-semibold transition first:border-0 border-l border-slate-200 ${
+                          filtroStock === opcion.value
+                            ? opcion.value === 'agotados'
+                              ? 'bg-red-50 text-red-700'
+                              : opcion.value === 'bajo_stock'
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-slate-950 text-white'
+                            : 'bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {opcion.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex border border-slate-200 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => setVistaCards(false)}
+                      className={`p-2 transition ${!vistaCards ? 'bg-slate-950 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                      title="Vista tabla"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVistaCards(true)}
+                      className={`p-2 border-l border-slate-200 transition ${vistaCards ? 'bg-slate-950 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                      title="Vista tarjetas"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               }
             >
-              <DataTable
-                title="Productos activos"
-                subtitle="Base operativa del inventario."
-                loading={productosQuery.isLoading}
-                rows={productosRows}
-                columns={[
-                  { key: 'nombre', label: 'Producto' },
-                  { key: 'categoria', label: 'Categoria' },
-                  { key: 'stock', label: 'Stock' },
-                  { key: 'valor', label: 'Valor' },
-                  {
-                    key: 'alertas',
-                    label: 'Alertas',
-                    render: (row) =>
-                      row.alertas.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {row.alertas.map((alerta) => (
-                            <StatusPill
-                              key={`${row.id}-${alerta}`}
-                              tone={
-                                alerta === 'vencido'
-                                  ? 'border-red-200 bg-red-50 text-red-700'
-                                  : alerta === 'proximo_vencimiento'
-                                    ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                    : 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                              }
+              {vistaCards ? (
+                productosQuery.isLoading ? (
+                  <div className="py-8 text-center text-sm text-slate-500">Cargando productos...</div>
+                ) : productosRows.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm font-semibold text-slate-700">No hay productos para este filtro</p>
+                    <p className="mt-1 text-sm text-slate-500">Ajusta la busqueda o crea el primer producto desde el panel derecho.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {productosRows.map((row) => {
+                      const pct = row.stockMinimo > 0 ? Math.min((row.stockActual / row.stockMinimo) * 100, 100) : 100
+                      const sinStock = row.stockActual === 0
+                      const bajoMinimo = row.stockActual <= row.stockMinimo
+                      const barColor = sinStock ? 'bg-red-500' : bajoMinimo ? 'bg-amber-400' : 'bg-emerald-500'
+                      return (
+                        <div
+                          key={row.id}
+                          className={`border bg-white p-4 flex flex-col gap-3 ${sinStock ? 'border-red-200' : bajoMinimo ? 'border-amber-200' : 'border-slate-200'}`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-900">{row.nombre}</p>
+                              <p className="text-xs text-slate-500 capitalize">{row.categoria}</p>
+                            </div>
+                            {(sinStock || bajoMinimo) && (
+                              <StatusPill tone={sinStock ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>
+                                {sinStock ? 'Agotado' : 'Bajo stock'}
+                              </StatusPill>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-slate-500">
+                              <span>Stock</span>
+                              <span className="font-semibold text-slate-700">{row.stockActual} / {row.stockMinimo}</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={`h-full rounded-full transition-all ${barColor}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                          {row.alertas.filter((a) => a !== 'bajo_stock').length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {row.alertas.filter((a) => a !== 'bajo_stock').map((alerta) => (
+                                <StatusPill
+                                  key={alerta}
+                                  tone={
+                                    alerta === 'vencido'
+                                      ? 'border-red-200 bg-red-50 text-red-700'
+                                      : 'border-amber-200 bg-amber-50 text-amber-700'
+                                  }
+                                >
+                                  {alerta.replaceAll('_', ' ')}
+                                </StatusPill>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+                            <span className="text-xs text-slate-500">{row.valor}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedProduct(row.raw)
+                                setMovementForm((current) => ({ ...current, productoId: row.raw.id }))
+                              }}
+                              className="text-xs font-semibold text-cyan-700 hover:text-cyan-800"
                             >
-                              {alerta.replaceAll('_', ' ')}
-                            </StatusPill>
-                          ))}
+                              Registrar movimiento
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-slate-400">Sin alertas</span>
+                      )
+                    })}
+                  </div>
+                )
+              ) : (
+                <DataTable
+                  title="Productos activos"
+                  subtitle="Base operativa del inventario."
+                  loading={productosQuery.isLoading}
+                  rows={productosRows}
+                  columns={[
+                    { key: 'nombre', label: 'Producto' },
+                    { key: 'categoria', label: 'Categoria' },
+                    {
+                      key: 'stock',
+                      label: 'Stock',
+                      render: (row) => {
+                        const pct = row.stockMinimo > 0 ? Math.min((row.stockActual / row.stockMinimo) * 100, 100) : 100
+                        const sinStock = row.stockActual === 0
+                        const bajoMinimo = row.stockActual <= row.stockMinimo
+                        const barColor = sinStock ? 'bg-red-500' : bajoMinimo ? 'bg-amber-400' : 'bg-emerald-500'
+                        return (
+                          <div className="flex min-w-[140px] items-center gap-2">
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                              <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="shrink-0 text-xs text-slate-600">{row.stockActual}/{row.stockMinimo}</span>
+                          </div>
+                        )
+                      },
+                    },
+                    { key: 'valor', label: 'Valor' },
+                    {
+                      key: 'alertas',
+                      label: 'Alertas',
+                      render: (row) =>
+                        row.alertas.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {row.alertas.map((alerta) => (
+                              <StatusPill
+                                key={`${row.id}-${alerta}`}
+                                tone={
+                                  alerta === 'vencido'
+                                    ? 'border-red-200 bg-red-50 text-red-700'
+                                    : alerta === 'proximo_vencimiento'
+                                      ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                      : 'border-amber-200 bg-amber-50 text-amber-700'
+                                }
+                              >
+                                {alerta.replaceAll('_', ' ')}
+                              </StatusPill>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">Sin alertas</span>
+                        ),
+                    },
+                    {
+                      key: 'accion',
+                      label: 'Movimiento',
+                      render: (row) => (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProduct(row.raw)
+                            setMovementForm((current) => ({
+                              ...current,
+                              productoId: row.raw.id,
+                            }))
+                          }}
+                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                        >
+                          Registrar
+                        </button>
                       ),
-                  },
-                  {
-                    key: 'accion',
-                    label: 'Movimiento',
-                    render: (row) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedProduct(row.raw)
-                          setMovementForm((current) => ({
-                            ...current,
-                            productoId: row.raw.id,
-                          }))
-                        }}
-                        className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                      >
-                        Registrar
-                      </button>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay productos para este filtro"
-                emptyBody="Ajusta la busqueda o crea el primer producto desde el panel derecho."
-              />
+                    },
+                  ]}
+                  emptyTitle="No hay productos para este filtro"
+                  emptyBody="Ajusta la busqueda o crea el primer producto desde el panel derecho."
+                />
+              )}
 
               {(productosQuery.data?.paginas || 1) > 1 ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">

@@ -2,12 +2,11 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { FileText, Lock, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { FileText, Lock, Plus, Search, ShieldCheck, Stethoscope, Syringe, Scissors, ChevronDown, ChevronUp, CalendarClock } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { ErrorBanner } from '@/components/shared'
 import {
   DashboardPanel,
-  DataTable,
   DonutCard,
   EmptyModuleState,
   KpiCard,
@@ -219,6 +218,7 @@ export default function HistoriasPage() {
   const [medicationSearch, setMedicationSearch] = useState('')
   const [selectedPet, setSelectedPet] = useState(null)
   const [selectedHistory, setSelectedHistory] = useState(null)
+  const [expandedHistoriaId, setExpandedHistoriaId] = useState(null)
   const [form, setForm] = useState(() => createDefaultForm())
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
 
@@ -354,21 +354,23 @@ export default function HistoriasPage() {
   const preferredVetId =
     veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
 
-  const historiasRows = historias.map((historia) => ({
-    id: historia.id,
-    fecha: new Intl.DateTimeFormat('es-CO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(new Date(historia.fechaConsulta)),
-    paciente: historia.mascota?.nombre || 'Paciente',
-    tutor: historia.propietario?.nombre || 'Sin tutor',
-    profesional: historia.veterinario?.nombre || 'Sin profesional',
-    diagnostico: historia.diagnostico,
-    proximaConsulta: historia.proximaConsulta ? formatLongDate(historia.proximaConsulta) : 'Sin control',
-    bloqueada: historia.bloqueada,
-    raw: historia,
-  }))
+
+  const getEventType = (historia) => {
+    const text = `${historia.motivoConsulta || ''} ${historia.diagnostico || ''}`.toLowerCase()
+    if (text.includes('vacun')) return 'vacuna'
+    if (text.includes('cirug') || text.includes('quirurg') || text.includes('operaci')) return 'cirugia'
+    return 'consulta'
+  }
+
+  const proximasVacunas = useMemo(() => {
+    const hoy = new Date()
+    const limite = new Date(hoy.getTime() + 60 * 24 * 60 * 60 * 1000)
+    return historias.filter((h) => {
+      if (!h.proximaConsulta) return false
+      const fecha = new Date(h.proximaConsulta)
+      return fecha >= hoy && fecha <= limite
+    }).sort((a, b) => new Date(a.proximaConsulta) - new Date(b.proximaConsulta))
+  }, [historias])
 
   const historiasBloqueadas = historias.filter((item) => item.bloqueada).length
   const conControl = historias.filter((item) => item.proximaConsulta).length
@@ -673,8 +675,8 @@ export default function HistoriasPage() {
             />
 
             <DashboardPanel
-              title="Listado clinico"
-              subtitle="Consulta recientes por paciente, profesional, periodo y estado de bloqueo."
+              title="Timeline clinico"
+              subtitle="Cronologia de consultas, vacunas y cirugias del paciente seleccionado."
               action={
                 <div className="flex flex-wrap gap-3">
                   <input
@@ -727,50 +729,161 @@ export default function HistoriasPage() {
                 </div>
               }
             >
-              <DataTable
-                title="Historias"
-                subtitle="Vista administrativa y clinica de las consultas documentadas."
-                loading={historiasQuery.isLoading}
-                rows={historiasRows}
-                columns={[
-                  { key: 'fecha', label: 'Fecha' },
-                  { key: 'paciente', label: 'Paciente' },
-                  { key: 'tutor', label: 'Tutor' },
-                  { key: 'profesional', label: 'Profesional' },
-                  { key: 'proximaConsulta', label: 'Control' },
-                  {
-                    key: 'bloqueada',
-                    label: 'Estado',
-                    render: (row) => (
-                      <StatusPill tone={buildHistoryStatusTone(row.bloqueada)}>
-                        {row.bloqueada ? 'Bloqueada' : 'Editable'}
-                      </StatusPill>
-                    ),
-                  },
-                  {
-                    key: 'accion',
-                    label: 'Detalle',
-                    render: (row) => (
+              {proximasVacunas.length > 0 && (
+                <div className="mb-5 border border-amber-200 bg-amber-50 px-4 py-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <CalendarClock className="h-4 w-4 text-amber-600" />
+                    <p className="text-sm font-semibold text-amber-800">
+                      Controles proximos — {proximasVacunas.length} {proximasVacunas.length === 1 ? 'paciente' : 'pacientes'}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {proximasVacunas.map((h) => (
                       <button
+                        key={h.id}
                         type="button"
-                        onClick={() => loadHistory(row.id)}
-                        className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                        onClick={() => loadHistory(h.id)}
+                        className="flex items-start justify-between border border-amber-200 bg-white px-3 py-2 text-left transition hover:bg-amber-50"
                       >
-                        Ver
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{h.mascota?.nombre || 'Paciente'}</p>
+                          <p className="text-xs text-slate-500">{h.motivoConsulta?.slice(0, 40) || 'Sin motivo'}</p>
+                        </div>
+                        <span className="ml-3 shrink-0 text-xs font-semibold text-amber-700">
+                          {formatLongDate(h.proximaConsulta)}
+                        </span>
                       </button>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay historias para este filtro"
-                emptyBody="Ajusta el periodo, el profesional o el paciente para encontrar una consulta existente."
-                action={
-                  selectedPet ? (
-                    <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
-                      {selectedPet.nombre}
-                    </StatusPill>
-                  ) : null
-                }
-              />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {historiasQuery.isLoading ? (
+                <div className="space-y-4 py-2">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="h-8 w-8 rounded-full bg-slate-200 animate-pulse" />
+                        <div className="mt-1 w-px flex-1 bg-slate-200" />
+                      </div>
+                      <div className="flex-1 pb-6">
+                        <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
+                        <div className="mt-2 h-16 rounded bg-slate-100 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : historias.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="text-sm font-semibold text-slate-700">No hay historias para este filtro</p>
+                  <p className="mt-1 text-sm text-slate-500">Ajusta el periodo, el profesional o el paciente para encontrar una consulta existente.</p>
+                </div>
+              ) : (
+                <div className="relative">
+                  {historias.map((historia, index) => {
+                    const tipo = getEventType(historia)
+                    const isLast = index === historias.length - 1
+                    const isExpanded = expandedHistoriaId === historia.id
+                    const EventIcon = tipo === 'vacuna' ? Syringe : tipo === 'cirugia' ? Scissors : Stethoscope
+                    const iconTone = tipo === 'vacuna'
+                      ? 'bg-violet-100 text-violet-700 border-violet-200'
+                      : tipo === 'cirugia'
+                        ? 'bg-rose-100 text-rose-700 border-rose-200'
+                        : 'bg-cyan-100 text-cyan-700 border-cyan-200'
+
+                    return (
+                      <div key={historia.id} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${iconTone}`}>
+                            <EventIcon className="h-4 w-4" />
+                          </div>
+                          {!isLast && <div className="mt-1 w-px flex-1 bg-slate-200" />}
+                        </div>
+
+                        <div className={`flex-1 ${isLast ? 'pb-0' : 'pb-6'}`}>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                              {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(historia.fechaConsulta))}
+                            </span>
+                            <StatusPill tone={buildHistoryStatusTone(historia.bloqueada)}>
+                              {historia.bloqueada ? 'Bloqueada' : 'Editable'}
+                            </StatusPill>
+                            {!selectedPet && (
+                              <span className="text-xs text-slate-500">{historia.mascota?.nombre}</span>
+                            )}
+                          </div>
+
+                          <div className={`border bg-white ${historia.bloqueada ? 'border-slate-200' : 'border-slate-200'}`}>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedHistoriaId(isExpanded ? null : historia.id)}
+                              className="flex w-full items-start justify-between px-4 py-3 text-left transition hover:bg-slate-50"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-slate-900 truncate">
+                                  {historia.motivoConsulta || 'Sin motivo de consulta'}
+                                </p>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                  {historia.veterinario?.nombre || 'Sin profesional'}
+                                  {historia.propietario?.nombre ? ` · ${historia.propietario.nombre}` : ''}
+                                </p>
+                              </div>
+                              {isExpanded
+                                ? <ChevronUp className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                                : <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                              }
+                            </button>
+
+                            {isExpanded && (
+                              <div className="border-t border-slate-200 px-4 py-4 space-y-3">
+                                {historia.diagnostico && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Diagnostico</p>
+                                    <p className="text-sm text-slate-700">{historia.diagnostico}</p>
+                                  </div>
+                                )}
+                                {historia.tratamiento && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Tratamiento</p>
+                                    <p className="text-sm text-slate-700">{historia.tratamiento}</p>
+                                  </div>
+                                )}
+                                {Array.isArray(historia.medicamentos) && historia.medicamentos.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Medicamentos</p>
+                                    <ul className="space-y-1">
+                                      {historia.medicamentos.map((med, idx) => (
+                                        <li key={idx} className="text-sm text-slate-700">
+                                          {typeof med === 'string' ? med : [med.nombre, med.dosis, med.frecuencia].filter(Boolean).join(' · ')}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {historia.proximaConsulta && (
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Proximo control</p>
+                                    <p className="text-sm text-amber-700 font-semibold">{formatLongDate(historia.proximaConsulta)}</p>
+                                  </div>
+                                )}
+                                <div className="flex justify-end pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => loadHistory(historia.id)}
+                                    className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                                  >
+                                    Abrir historia completa
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
               {(historiasQuery.data?.paginas || 1) > 1 ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
