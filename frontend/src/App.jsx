@@ -5,6 +5,7 @@ import { AppRouter } from '@/router'
 import { useEffect, useState } from 'react'
 import { authApi } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
+import AppErrorBoundary from '@/components/shared/AppErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,16 +94,18 @@ function AuthBootstrap({ children }) {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthBootstrap>
-        <AppRouter />
-      </AuthBootstrap>
-      <Toaster
-        position="bottom-right"
-        richColors
-        closeButton
-        theme="dark"
-      />
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthBootstrap>
+          <AppRouter />
+        </AuthBootstrap>
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          theme="dark"
+        />
+      </QueryClientProvider>
+    </AppErrorBoundary>
   )
 }

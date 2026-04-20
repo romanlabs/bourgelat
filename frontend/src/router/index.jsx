@@ -3,6 +3,7 @@ import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 import { hasRole } from '@/lib/permissions'
+import RouteErrorPage from '@/components/shared/RouteErrorPage'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const RegistroPage  = lazy(() => import('@/pages/RegistroPage'))
@@ -65,6 +66,7 @@ const HostAwareHome = () => {
 const router = createBrowserRouter([
   {
     element: <ScrollManager />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         element: <PublicOnlyRoute />,
