@@ -14,6 +14,7 @@ import {
   Search,
   SendHorizontal,
   ShieldCheck,
+  TrendingUp,
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
@@ -276,6 +277,7 @@ export default function FinanzasPage() {
     metodoPago: 'efectivo',
     observaciones: '',
     descuentoGeneral: '0',
+    ivaPorcentaje: '0',
     items: [createBlankInvoiceItem()],
   })
 
@@ -398,6 +400,7 @@ export default function FinanzasPage() {
         metodoPago: 'efectivo',
         observaciones: '',
         descuentoGeneral: '0',
+        ivaPorcentaje: '0',
         items: [createBlankInvoiceItem()],
       })
       setOwnerSearch('')
@@ -487,13 +490,18 @@ export default function FinanzasPage() {
       return acc + Math.max(cantidad * precio - descuento, 0)
     }, 0)
     const descuentoGeneral = Math.max(toAmount(invoiceForm.descuentoGeneral), 0)
+    const baseGravable = Math.max(subtotal - descuentoGeneral, 0)
+    const ivaPct = Math.max(Math.min(toAmount(invoiceForm.ivaPorcentaje), 100), 0)
+    const iva = Math.round(baseGravable * (ivaPct / 100) * 100) / 100
 
     return {
       subtotal,
       descuentoGeneral,
-      total: Math.max(subtotal - descuentoGeneral, 0),
+      iva,
+      ivaPct,
+      total: baseGravable + iva,
     }
-  }, [invoiceForm.descuentoGeneral, invoiceForm.items])
+  }, [invoiceForm.descuentoGeneral, invoiceForm.ivaPorcentaje, invoiceForm.items])
 
   const handleBuscar = (event) => {
     event.preventDefault()
@@ -650,6 +658,7 @@ export default function FinanzasPage() {
       metodoPago: invoiceForm.metodoPago,
       observaciones: invoiceForm.observaciones.trim() || undefined,
       descuentoGeneral: toAmount(invoiceForm.descuentoGeneral),
+      ivaPorcentaje: Math.max(Math.min(toAmount(invoiceForm.ivaPorcentaje), 100), 0),
       emitirElectronica: emisionAutomaticaActiva,
       items: itemsValidos,
     })
@@ -744,34 +753,34 @@ export default function FinanzasPage() {
             </div>
           ) : null}
 
-          <div className="grid gap-4 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              icon={Wallet}
-              label="Ingresos del mes"
-              value={formatCurrency(ingresosQuery.data?.totalIngresos || 0)}
-              helper="Suma total del periodo en curso para el cierre administrativo."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={Receipt}
-              label="Facturas emitidas"
-              value={formatNumber(resumenEstados.emitida?.cantidad || 0)}
-              helper="Documentos listos para cobro o seguimiento financiero."
+              icon={TrendingUp}
+              label="Total emitido"
+              value={formatCurrency((resumenEstados.emitida?.monto || 0) + (resumenEstados.pagada?.monto || 0))}
+              helper="Suma de facturas emitidas y pagadas en el periodo."
               tone="text-cyan-700"
             />
             <KpiCard
               icon={ShieldCheck}
-              label="Facturas pagadas"
-              value={formatNumber(resumenEstados.pagada?.cantidad || 0)}
-              helper="Documentos ya cerrados dentro del periodo actual."
+              label="Total cobrado"
+              value={formatCurrency(resumenEstados.pagada?.monto || 0)}
+              helper="Monto efectivamente recaudado en facturas pagadas."
               tone="text-emerald-700"
+            />
+            <KpiCard
+              icon={Wallet}
+              label="Por cobrar"
+              value={formatCurrency(resumenEstados.emitida?.monto || 0)}
+              helper="Facturas emitidas pendientes de pago."
+              tone="text-amber-700"
             />
             <KpiCard
               icon={CircleAlert}
               label="Pendientes electronicos"
               value={formatNumber(pendientesElectronicos)}
               helper="Facturas con emision pendiente, rechazada o con error tecnico."
-              tone="text-amber-700"
+              tone="text-red-600"
             />
           </div>
 
@@ -936,6 +945,22 @@ export default function FinanzasPage() {
                       value={invoiceForm.descuentoGeneral}
                       onChange={(event) =>
                         setInvoiceForm((current) => ({ ...current, descuentoGeneral: event.target.value }))
+                      }
+                      className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      IVA (%)
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={invoiceForm.ivaPorcentaje}
+                      onChange={(event) =>
+                        setInvoiceForm((current) => ({ ...current, ivaPorcentaje: event.target.value }))
                       }
                       className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
                     />
@@ -1150,6 +1175,12 @@ export default function FinanzasPage() {
                       {formatCurrency(invoiceTotals.descuentoGeneral)}
                     </span>
                   </div>
+                  {invoiceTotals.ivaPct > 0 && (
+                    <div className="flex items-center justify-between gap-4 border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm text-slate-700">
+                      <span className="font-medium text-cyan-700">IVA ({invoiceTotals.ivaPct}%)</span>
+                      <span className="font-semibold text-cyan-800">{formatCurrency(invoiceTotals.iva)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-4 border border-slate-900 bg-slate-950 px-4 py-3 text-sm text-slate-100">
                     <span className="font-medium text-slate-300">Total estimado</span>
                     <span className="font-semibold">{formatCurrency(invoiceTotals.total)}</span>

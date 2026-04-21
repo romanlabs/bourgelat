@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  AlertTriangle,
   Boxes,
   Building2,
   CalendarClock,
+  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Clock,
   Command,
   FileText,
   HeartPulse,
@@ -19,11 +22,18 @@ import {
   ShieldCheck,
   Stethoscope,
   Users,
+  Wifi,
+  WifiOff,
+  Zap,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { PLAN_META } from '@/features/dashboard/dashboardUtils'
 import { useLogout } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { inventarioApi } from '@/features/inventario/inventarioApi'
+import { finanzasApi } from '@/features/finanzas/finanzasApi'
+import { configuracionApi } from '@/features/configuracion/configuracionApi'
 
 const SIDEBAR_STORAGE_KEY = 'bourgelat-admin-sidebar-collapsed'
 
@@ -153,6 +163,99 @@ function QuickActionLink({ item }) {
   )
 }
 
+function NotifBadge({ count, to, icon: Icon, label }) {
+  if (!count) return null
+  return (
+    <Link
+      to={to}
+      title={label}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+    >
+      <Icon className="h-4 w-4" />
+      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+        {count > 99 ? '99+' : count}
+      </span>
+    </Link>
+  )
+}
+
+function Breadcrumbs({ items }) {
+  if (!items?.length) return null
+  return (
+    <nav className="flex items-center gap-1 text-xs text-slate-400">
+      {items.map((crumb, index) => (
+        <span key={index} className="flex items-center gap-1">
+          {index > 0 && <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" />}
+          {crumb.to ? (
+            <Link to={crumb.to} className="transition hover:text-slate-600">
+              {crumb.label}
+            </Link>
+          ) : (
+            <span className="font-medium text-slate-600">{crumb.label}</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  )
+}
+
+function PlanVencimientoChip({ dias }) {
+  if (dias === null) return null
+  if (dias <= 0) return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-red-500/15 px-2 py-1 text-[10px] font-semibold text-red-300">
+      <Clock className="h-3 w-3" /> Vencido
+    </span>
+  )
+  if (dias <= 7) return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-red-500/15 px-2 py-1 text-[10px] font-semibold text-red-300">
+      <Clock className="h-3 w-3" /> {dias}d restantes
+    </span>
+  )
+  if (dias <= 30) return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 px-2 py-1 text-[10px] font-semibold text-amber-300">
+      <Clock className="h-3 w-3" /> {dias}d restantes
+    </span>
+  )
+  return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-teal-500/15 px-2 py-1 text-[10px] font-semibold text-teal-300">
+      <Clock className="h-3 w-3" /> {dias}d restantes
+    </span>
+  )
+}
+
+function FactusStatusChip({ factusData }) {
+  if (!factusData) return null
+  const creds = factusData.configuracionEfectiva?.credencialesCompletas
+  const activa = factusData.integracion?.activa
+  const estado = factusData.integracion?.ultimoEstadoChequeo
+
+  if (!creds || !activa) {
+    return (
+      <Link
+        to="/configuracion"
+        className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-2 py-1.5 text-[10px] font-semibold text-slate-400 transition hover:text-slate-200"
+      >
+        <WifiOff className="h-3 w-3" /> Factus sin configurar
+      </Link>
+    )
+  }
+  if (estado === 'exitoso') {
+    return (
+      <div className="flex items-center gap-1.5 rounded-lg bg-teal-500/10 px-2 py-1.5 text-[10px] font-semibold text-teal-300">
+        <Wifi className="h-3 w-3" /> Factus activo
+      </div>
+    )
+  }
+  return (
+    <Link
+      to="/configuracion"
+      className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold text-amber-300 transition hover:text-amber-200"
+    >
+      <Zap className="h-3 w-3" /> Factus con error
+    </Link>
+  )
+}
+
 export default function AdminShell({
   currentKey,
   title,
@@ -161,6 +264,7 @@ export default function AdminShell({
   actions,
   headerBadge,
   asideNote,
+  breadcrumbs,
   quickActions = DEFAULT_QUICK_ACTIONS,
   showQuickActions = false,
 }) {
@@ -170,7 +274,6 @@ export default function AdminShell({
   const { logout } = useLogout()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
-
     try {
       return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
     } catch {
@@ -185,6 +288,45 @@ export default function AdminShell({
       // noop
     }
   }, [isSidebarCollapsed])
+
+  const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
+  const tieneInventario = funcionalidades.includes('inventario')
+  const tieneFinanzas = funcionalidades.includes('facturacion_interna')
+  const tieneFactusElectronica = funcionalidades.includes('facturacion_electronica')
+
+  const diasRestantes = useMemo(() => {
+    if (!suscripcion?.fechaFin) return null
+    return Math.ceil((new Date(suscripcion.fechaFin) - new Date()) / (1000 * 60 * 60 * 24))
+  }, [suscripcion?.fechaFin])
+
+  const { data: alertasData } = useQuery({
+    queryKey: ['global-alertas-inventario'],
+    queryFn: inventarioApi.obtenerAlertas,
+    enabled: tieneInventario,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    retry: false,
+  })
+
+  const { data: facturasData } = useQuery({
+    queryKey: ['global-facturas-resumen'],
+    queryFn: () => finanzasApi.obtenerFacturas({ limite: 1 }),
+    enabled: tieneFinanzas,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+    retry: false,
+  })
+
+  const { data: factusData } = useQuery({
+    queryKey: ['global-factus-status'],
+    queryFn: configuracionApi.obtenerConfiguracionFacturacion,
+    enabled: tieneFactusElectronica,
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  })
+
+  const stockAlertas = (alertasData?.bajoStock?.total || 0)
+  const facturasPendientes = facturasData?.resumenEstados?.emitida?.cantidad || 0
 
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
@@ -328,12 +470,26 @@ export default function AdminShell({
                     </>
                   ) : (
                     <>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Plan actual
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-white">{plan.nombre}</p>
-                      </div>
+                      <Link
+                        to="/planes"
+                        className="block rounded-xl border border-slate-800 bg-slate-900/90 p-3 transition hover:border-slate-700"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            Plan actual
+                          </p>
+                          <ShieldCheck className="h-3.5 w-3.5 text-slate-600" />
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-white">{plan.nombre}</p>
+                          <PlanVencimientoChip dias={diasRestantes} />
+                        </div>
+                        {tieneFactusElectronica && factusData ? (
+                          <div className="mt-2">
+                            <FactusStatusChip factusData={factusData} />
+                          </div>
+                        ) : null}
+                      </Link>
 
                       <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
                         <div className="flex items-center gap-3">
@@ -370,7 +526,8 @@ export default function AdminShell({
             <header className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
               <div className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0 xl:max-w-[460px]">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <Breadcrumbs items={breadcrumbs} />
+                  <div className={cn('flex flex-wrap items-center gap-2', breadcrumbs?.length ? 'mt-1' : '')}>
                     <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
                     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Backoffice Bourgelat
@@ -395,6 +552,18 @@ export default function AdminShell({
                 </button>
 
                 <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                  <NotifBadge
+                    count={stockAlertas}
+                    to="/inventario"
+                    icon={AlertTriangle}
+                    label={`${stockAlertas} producto${stockAlertas !== 1 ? 's' : ''} con stock bajo`}
+                  />
+                  <NotifBadge
+                    count={facturasPendientes}
+                    to="/finanzas"
+                    icon={Receipt}
+                    label={`${facturasPendientes} factura${facturasPendientes !== 1 ? 's' : ''} pendiente${facturasPendientes !== 1 ? 's' : ''} de pago`}
+                  />
                   {headerBadge ? headerBadge : null}
                   {actions}
                 </div>

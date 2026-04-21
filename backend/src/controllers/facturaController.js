@@ -408,6 +408,7 @@ const crearFactura = async (req, res) => {
       metodoPago,
       observaciones,
       descuentoGeneral,
+      ivaPorcentaje = 0,
       usuarioId,
       emitirElectronica = false,
       documentoElectronico = '01',
@@ -507,7 +508,8 @@ const crearFactura = async (req, res) => {
 
     const descuento = Math.min(convertirANumero(descuentoGeneral, 0), subtotal)
     const baseGravable = subtotal - descuento
-    const impuesto = 0
+    const ivaPct = Math.max(Math.min(convertirANumero(ivaPorcentaje, 0), 100), 0)
+    const impuesto = Math.round(baseGravable * (ivaPct / 100) * 100) / 100
     const total = baseGravable + impuesto
     const numero = await generarNumeroFactura(clinicaId, transaction)
 

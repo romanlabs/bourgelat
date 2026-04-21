@@ -6,12 +6,11 @@ import {
   ChevronDown,
   Shield,
   Sparkles,
-  Stethoscope,
-  Users,
   X,
 } from 'lucide-react'
 
 import PublicPageShell from '@/components/shared/PublicPageShell'
+import { useAuthStore } from '@/store/authStore'
 
 const PLANES = [
   {
@@ -43,7 +42,7 @@ const PLANES = [
     precioMensual: 99000,
     precioAnual: 79000,
     badge: 'Operacion diaria',
-    cta: 'Elegir plan Clinica',
+    cta: 'Contratar ahora',
     to: '/registro',
     limites: ['1 sede', '5 usuarios', '2.500 mascotas activas', '5 GB base'],
     incluye: [
@@ -64,7 +63,7 @@ const PLANES = [
     precioAnual: 159000,
     badge: 'Mas elegido',
     popular: true,
-    cta: 'Elegir plan Profesional',
+    cta: 'Contratar ahora',
     to: '/registro',
     limites: ['1 sede', '12 usuarios', '10.000 mascotas activas', '20 GB base'],
     incluye: [
@@ -180,19 +179,54 @@ function formatPrice(value) {
   }).format(value)
 }
 
-function PlanCTA({ plan, className }) {
+function WompiBadge({ highlighted }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+        highlighted ? 'bg-white/10 text-white/72' : 'bg-[#eef5fb] text-[#4a6d85]'
+      }`}
+    >
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+      </svg>
+      Pago seguro · Wompi
+    </span>
+  )
+}
+
+function PlanCTA({ plan, highlighted, isActivePlan, className }) {
+  if (isActivePlan) {
+    return (
+      <div className="mt-7 space-y-2">
+        <div
+          className={`inline-flex w-full cursor-default items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold opacity-60 ${
+            highlighted ? 'bg-white text-[#10263a]' : 'bg-[#10263a] text-white'
+          }`}
+        >
+          Plan activo
+        </div>
+        {plan.precioMensual > 0 && <WompiBadge highlighted={highlighted} />}
+      </div>
+    )
+  }
+
   if (plan.href) {
     return (
-      <a href={plan.href} className={className}>
-        {plan.cta}
-      </a>
+      <div className="mt-7 space-y-2">
+        <a href={plan.href} className={className}>
+          {plan.cta}
+        </a>
+      </div>
     )
   }
 
   return (
-    <Link to={plan.to} className={className}>
-      {plan.cta}
-    </Link>
+    <div className="mt-7 space-y-2">
+      <Link to={plan.to} className={className}>
+        {plan.cta}
+      </Link>
+      {plan.precioMensual > 0 && <WompiBadge highlighted={highlighted} />}
+    </div>
   )
 }
 
@@ -218,6 +252,8 @@ function FAQItem({ pregunta, respuesta }) {
 
 export default function PlanesPage() {
   const [anual, setAnual] = useState(false)
+  const suscripcion = useAuthStore((state) => state.suscripcion)
+  const planActivo = suscripcion?.plan ?? null
 
   return (
     <PublicPageShell
@@ -276,11 +312,12 @@ export default function PlanesPage() {
       <section className="mb-20 grid gap-6 xl:grid-cols-4">
         {PLANES.map((plan) => {
           const highlighted = plan.popular
+          const isActivePlan = planActivo === plan.key
           const price = anual ? plan.precioAnual : plan.precioMensual
           return (
             <article
               key={plan.key}
-              className={`rounded-[32px] border p-6 ${highlighted ? 'border-[#8fe0da] bg-[linear-gradient(160deg,#0e2a3d,#13354e,#10525a)] text-white shadow-[0_32px_90px_rgba(13,44,58,0.24)]' : 'border-[#d7e4ee] bg-white text-[#112739] shadow-[0_18px_60px_rgba(8,25,39,0.05)]'}`}
+              className={`rounded-[32px] border p-6 ${highlighted ? 'border-[#8fe0da] bg-[linear-gradient(160deg,#0e2a3d,#13354e,#10525a)] text-white shadow-[0_32px_90px_rgba(13,44,58,0.24)]' : 'border-[#d7e4ee] bg-white text-[#112739] shadow-[0_18px_60px_rgba(8,25,39,0.05)]'} ${isActivePlan && !highlighted ? 'ring-2 ring-[#2c7d7a]' : ''}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -294,11 +331,18 @@ export default function PlanesPage() {
                     {plan.nombre}
                   </h2>
                 </div>
-                {highlighted ? (
-                  <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
-                    recomendado
-                  </span>
-                ) : null}
+                <div className="flex flex-col items-end gap-2">
+                  {isActivePlan && (
+                    <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${highlighted ? 'border border-white/20 bg-white/15 text-white' : 'border border-[#2c7d7a]/30 bg-[#2c7d7a]/10 text-[#2c7d7a]'}`}>
+                      Tu plan
+                    </span>
+                  )}
+                  {highlighted && !isActivePlan ? (
+                    <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
+                      recomendado
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <p className={`mt-4 text-sm leading-7 ${highlighted ? 'text-white/76' : 'text-[#567185]'}`}>
@@ -345,7 +389,9 @@ export default function PlanesPage() {
 
               <PlanCTA
                 plan={plan}
-                className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold no-underline transition ${highlighted ? 'bg-white text-[#10263a] hover:bg-[#effaf8]' : 'bg-[#10263a] text-white hover:bg-[#17364f]'}`}
+                highlighted={highlighted}
+                isActivePlan={isActivePlan}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold no-underline transition ${highlighted ? 'bg-white text-[#10263a] hover:bg-[#effaf8]' : 'bg-[#10263a] text-white hover:bg-[#17364f]'}`}
               />
             </article>
           )
