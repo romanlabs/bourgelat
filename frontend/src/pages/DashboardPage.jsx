@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { agendaApi } from '@/features/agenda/agendaApi'
-import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
   BarPanel,
@@ -62,32 +61,6 @@ const TABS = [
   { id: 'plan', label: 'Plan y control', icon: ShieldCheck },
 ]
 
-const TAB_DETAILS = {
-  resumen: {
-    title: 'Command Center',
-    description: 'Lo que el administrador necesita leer primero para operar sin perder tiempo.',
-  },
-  agenda: {
-    title: 'Agenda y demanda',
-    description: 'Citas, asistencia y comportamiento operativo del periodo actual.',
-  },
-  ingresos: {
-    title: 'Caja e ingresos',
-    description: 'Facturacion, ticket promedio y seguimiento de caja.',
-  },
-  inventario: {
-    title: 'Inventario y riesgo',
-    description: 'Productos criticos, categorias activas y valor inventariado.',
-  },
-  pacientes: {
-    title: 'Base clinica',
-    description: 'Capacidad, pacientes activos y acceso directo al modulo operativo.',
-  },
-  plan: {
-    title: 'Plan y continuidad',
-    description: 'Vigencia, capacidades y funcionalidades activas del plan actual.',
-  },
-}
 
 const EMPTY_LIST = []
 const EMPTY_RECORD = {}
@@ -106,11 +79,6 @@ const serializeDate = (date) => {
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
 
-const formatAuditAction = (value) =>
-  String(value || 'SIN_ACCION')
-    .toLowerCase()
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 
 const formatTime = (value) => {
   if (!value) return 'Sin hora'
@@ -318,31 +286,26 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex min-w-[180px] flex-1 items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition',
+                'flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition',
                 active ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
               )}
             >
-              <span className="flex items-center gap-3">
+              <span className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl',
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                     active ? 'bg-white/10 text-teal-200' : 'bg-slate-100 text-slate-600'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </span>
-                <span>
-                  <span className="block text-sm font-semibold">{tab.label}</span>
-                  <span className={cn('mt-1 block text-xs', active ? 'text-slate-300' : 'text-slate-400')}>
-                    {TAB_DETAILS[tab.id].description}
-                  </span>
-                </span>
+                <span className="text-sm font-semibold">{tab.label}</span>
               </span>
 
               {tabBadges[tab.id] ? (
                 <span
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold',
                     active ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-500'
                   )}
                 >
@@ -583,19 +546,6 @@ export default function DashboardPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const auditoriaRecienteQuery = useQuery({
-    queryKey: ['dashboard-auditoria-reciente', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () =>
-      auditoriaApi.obtenerLogs({
-        pagina: 1,
-        limite: 6,
-        desde: rangoMes.fechaInicio,
-        hasta: rangoMes.fechaFin,
-      }),
-    enabled: esAdministrador,
-    placeholderData: (previousData) => previousData,
-  })
-
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
 
@@ -677,23 +627,6 @@ export default function DashboardPage() {
           valor: formatCurrency(Number(producto.precioVenta || 0) * Number(producto.stock || 0)),
         })),
     [inventarioQuery.data?.productos]
-  )
-
-  const recentAuditRows = useMemo(
-    () =>
-      (auditoriaRecienteQuery.data?.logs || []).map((log) => ({
-        id: log.id,
-        fecha: new Intl.DateTimeFormat('es-CO', {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(new Date(log.createdAt)),
-        accion: formatAuditAction(log.accion),
-        responsable: log.responsable?.nombre || 'Sistema',
-        resultado: log.resultado,
-      })),
-    [auditoriaRecienteQuery.data?.logs]
   )
 
   const patientCapacity = buildCapacityChart(mascotasActivas, limiteMascotas, 'Pacientes')
@@ -1026,155 +959,6 @@ export default function DashboardPage() {
           </div>
         </CommandPanel>
 
-        <div className="lg:col-span-7">
-          {puedeVerIngresos ? (
-            <LinePanel
-              title="Ingresos del periodo"
-              subtitle={`Movimiento del ${formatShortDate(rangoMes.fechaInicio)} al ${formatShortDate(rangoMes.fechaFin)}.`}
-              data={ingresosPorDia}
-              dataKey="total"
-              color="#0d9488"
-              formatter={formatCurrency}
-              emptyMessage="Todavia no hay movimiento financiero en el periodo actual."
-            />
-          ) : (
-            <EmptyModuleState
-              title="Caja y reportes financieros no disponibles"
-              body="Activa facturacion interna y reportes operativos para ver ingresos, ticket promedio y metodos de pago."
-              ctaLabel="Revisar planes"
-            />
-          )}
-        </div>
-
-        <CommandPanel
-          className="lg:col-span-5"
-          title="Caja del corte"
-          subtitle="Las ultimas facturas del periodo y su forma de pago."
-          action={
-            <Link to="/finanzas" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
-              Abrir caja
-            </Link>
-          }
-        >
-          {invoiceRows.length > 0 ? (
-            <div className="space-y-3">
-              {invoiceRows.slice(0, 5).map((row) => (
-                <div
-                  key={row.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{row.numero}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {row.fecha} · {row.metodoPago}
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-900">{row.total}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-              <p className="text-sm font-semibold text-slate-900">Aun no hay facturas en el periodo</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Cuando caja empiece a moverse, aqui veras las ultimas emisiones sin salir del panel.
-              </p>
-            </div>
-          )}
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-7"
-          title="Trazabilidad reciente"
-          subtitle="Cambios y acciones del equipo que conviene tener a la vista."
-          action={
-            <Link to="/auditoria" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
-              Abrir auditoria
-            </Link>
-          }
-        >
-          {recentAuditRows.length > 0 ? (
-            <div className="space-y-3">
-              {recentAuditRows.slice(0, 5).map((row) => (
-                <div
-                  key={row.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{row.accion}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {row.responsable} · {row.fecha}
-                    </p>
-                  </div>
-                  <StatusPill
-                    tone={
-                      row.resultado === 'fallido'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    }
-                  >
-                    {row.resultado}
-                  </StatusPill>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-              <p className="text-sm font-semibold text-slate-900">Sin actividad reciente</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                La auditoria mostrara aqui los eventos mas recientes del sistema y del equipo.
-              </p>
-            </div>
-          )}
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-5"
-          title="Control del plan"
-          subtitle="Capacidad, vigencia y decisiones comerciales que pueden impactar operacion."
-        >
-          <div className="grid gap-3">
-            <div className="rounded-2xl border border-slate-200/70 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
-                {typeof diasRestantes === 'number' ? (
-                  <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
-                    {diasRestantes} dias restantes
-                  </StatusPill>
-                ) : null}
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {advertenciaPlan || 'La suscripcion no tiene alertas comerciales criticas.'}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Pacientes
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {limiteMascotas === null ? 'Sin limite' : formatNumber(Math.max(cupoMascotas, 0))}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Usuarios
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {limiteUsuarios === null ? 'Sin limite' : formatNumber(Math.max(cupoUsuarios, 0))}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
-              </div>
-            </div>
-
-            <Link to="/planes" className={cn(SECONDARY_BUTTON, 'justify-center')}>
-              Gestionar plan
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </CommandPanel>
       </div>
     )
   }
