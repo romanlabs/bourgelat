@@ -61,13 +61,13 @@ const formatEntityLabel = (value) => ENTITY_LABELS[value] || value || 'Sin entid
 
 function RestrictedAuditPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Auditoria y actividad"
           subtitle="Este modulo se reserva para administracion principal."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene permisos para consultar trazabilidad, cambios sensibles ni eventos del sistema.
           </div>
         </DashboardPanel>
@@ -174,7 +174,7 @@ export default function AuditoriaPage() {
       title="Auditoria y actividad"
       description="Vista administrativa para seguir cambios sensibles del sistema, responsables, eventos fallidos y trazabilidad operativa por clinica."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Trazabilidad activa
         </StatusPill>
       }
@@ -182,13 +182,13 @@ export default function AuditoriaPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Volver al dashboard
           </Link>
           <Link
             to="/usuarios"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir usuarios
           </Link>
@@ -209,7 +209,7 @@ export default function AuditoriaPage() {
             label="Eventos del filtro"
             value={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
             helper="Total de registros segun el rango y filtros activos."
-            tone="text-cyan-700"
+            tone="text-primary"
           />
           <KpiCard
             icon={ShieldCheck}
@@ -258,13 +258,13 @@ export default function AuditoriaPage() {
             subtitle="La auditoria sirve para reconstruir que paso, quien lo hizo y si el sistema acepto o rechazo la accion."
           >
             <div className="grid gap-4">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Prioriza eventos <span className="font-semibold text-slate-900">fallidos</span> en autenticacion, cambios de usuarios, anulaciones y bloqueos clinicos.
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticacion, cambios de usuarios, anulaciones y bloqueos clinicos.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Cuando una accion afecte caja, historias o permisos, esta vista te da responsable, momento y descripcion en un solo lugar.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operacion sin depender de capturas o recuerdos.
               </div>
             </div>
@@ -276,8 +276,8 @@ export default function AuditoriaPage() {
           subtitle="Filtro administrativo para revisar eventos recientes por modulo, resultado o responsable."
           action={
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center border border-slate-200 bg-white px-3">
-                <ScanSearch className="h-4 w-4 text-slate-400" />
+              <div className="flex items-center border border-border bg-card px-3">
+                <ScanSearch className="h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={buscar}
@@ -286,7 +286,7 @@ export default function AuditoriaPage() {
                     setPagina(1)
                   }}
                   placeholder="Buscar por accion o descripcion"
-                  className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                  className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                 />
               </div>
               <select
@@ -295,7 +295,7 @@ export default function AuditoriaPage() {
                   setResultado(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               >
                 {RESULT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -309,7 +309,7 @@ export default function AuditoriaPage() {
                   setEntidad(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               >
                 <option value="todas">Todas las entidades</option>
                 {entidadesDisponibles.map((item) => (
@@ -324,7 +324,7 @@ export default function AuditoriaPage() {
                   setAccion(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               >
                 <option value="todas">Todas las acciones</option>
                 {accionesDisponibles.map((item) => (
@@ -340,7 +340,7 @@ export default function AuditoriaPage() {
                   setDesde(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               />
               <input
                 type="date"
@@ -349,7 +349,7 @@ export default function AuditoriaPage() {
                   setHasta(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               />
             </div>
           }
@@ -367,8 +367,8 @@ export default function AuditoriaPage() {
                 label: 'Responsable',
                 render: (row) => (
                   <div>
-                    <p className="font-medium text-slate-900">{row.responsable}</p>
-                    <p className="mt-1 text-xs text-slate-500">{row.responsableEmail || 'Sin correo asociado'}</p>
+                    <p className="font-medium text-foreground">{row.responsable}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{row.responsableEmail || 'Sin correo asociado'}</p>
                   </div>
                 ),
               },
@@ -390,21 +390,21 @@ export default function AuditoriaPage() {
               {
                 key: 'descripcion',
                 label: 'Descripcion',
-                render: (row) => <span className="text-sm text-slate-600">{row.descripcion}</span>,
+                render: (row) => <span className="text-sm text-muted-foreground">{row.descripcion}</span>,
               },
             ]}
             emptyTitle="No hay eventos para este filtro"
             emptyBody="Ajusta fechas o filtros para revisar otra parte de la trazabilidad."
             action={
-              <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+              <StatusPill tone="border-border bg-slate-100 text-foreground">
                 Pagina {auditoriaQuery.data?.paginaActual || 1}
               </StatusPill>
             }
           />
 
           {(auditoriaQuery.data?.paginas || 1) > 1 ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-              <p className="text-sm text-slate-600">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground">
                 Pagina {auditoriaQuery.data?.paginaActual || 1} de {auditoriaQuery.data?.paginas || 1}
               </p>
               <div className="flex gap-3">
@@ -412,7 +412,7 @@ export default function AuditoriaPage() {
                   type="button"
                   onClick={() => setPagina((current) => Math.max(current - 1, 1))}
                   disabled={(auditoriaQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Anterior
                 </button>
@@ -422,7 +422,7 @@ export default function AuditoriaPage() {
                     setPagina((current) => Math.min(current + 1, auditoriaQuery.data?.paginas || 1))
                   }
                   disabled={(auditoriaQuery.data?.paginaActual || 1) >= (auditoriaQuery.data?.paginas || 1)}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Siguiente
                 </button>
@@ -449,13 +449,13 @@ export default function AuditoriaPage() {
             subtitle="Donde aporta mas valor esta pantalla dentro de la operacion diaria."
           >
             <div className="grid gap-4 xl:grid-cols-3">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Revisar altas, cambios de rol y desactivaciones de usuarios cuando el equipo cambie turnos o permisos.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Auditar anulaciones, errores de caja o validaciones fallidas cuando el cierre administrativo no cuadre.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Seguir bloqueos, historias o integraciones para soporte interno sin depender de revisar la base manualmente.
               </div>
             </div>

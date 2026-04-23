@@ -60,7 +60,7 @@ const badgeVariants = cva(
  * Badge semántico de estado para toda la aplicación.
  *
  * Reemplaza el patrón de strings manual en StatusPill:
- *   <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">Confirmada</StatusPill>
+ *   <StatusPill tone="border-primary/30 bg-primary/10 text-primary">Confirmada</StatusPill>
  *
  * Por:
  *   <StatusBadge variant="confirmada" />

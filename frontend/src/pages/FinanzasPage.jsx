@@ -110,8 +110,8 @@ const formatDateTime = (value) => {
 const getEstadoTone = (estado) => {
   if (estado === 'pagada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (estado === 'anulada') return 'border-red-200 bg-red-50 text-red-700'
-  if (estado === 'borrador') return 'border-slate-200 bg-slate-100 text-slate-700'
-  return 'border-cyan-200 bg-cyan-50 text-cyan-700'
+  if (estado === 'borrador') return 'border-border bg-muted text-foreground'
+  return 'border-primary/30 bg-primary/10 text-primary'
 }
 
 const getEstadoElectronicoTone = (estado) => {
@@ -120,7 +120,7 @@ const getEstadoElectronicoTone = (estado) => {
   if (estado === 'pendiente' || estado === 'enviada') {
     return 'border-amber-200 bg-amber-50 text-amber-700'
   }
-  return 'border-slate-200 bg-slate-100 text-slate-700'
+  return 'border-border bg-muted text-foreground'
 }
 
 const canEmitInvoice = (factura, canManageElectronic) =>
@@ -235,13 +235,13 @@ const buildThermalReceiptHtml = ({ factura, clinica }) => {
 
 function RestrictedFinancePage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Caja y facturacion"
           subtitle="Este modulo se muestra a perfiles operativos y administrativos autorizados."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad financiera completa. Si necesitas revisar ingresos
             o facturas, solicita permisos al administrador principal o al facturador de la clinica.
           </div>
@@ -704,7 +704,7 @@ export default function FinanzasPage() {
       actions={
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           Volver al dashboard
         </Link>
@@ -779,7 +779,7 @@ export default function FinanzasPage() {
                   <button
                     type="button"
                     onClick={addServiceItem}
-                    className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
                   >
                     <Plus className="h-4 w-4" />
                     Agregar servicio
@@ -788,7 +788,7 @@ export default function FinanzasPage() {
                     type="button"
                     onClick={handleCrearFactura}
                     disabled={crearFacturaMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Receipt className="h-4 w-4" />
                     {crearFacturaMutation.isPending ? 'Guardando...' : 'Crear factura'}
@@ -800,22 +800,22 @@ export default function FinanzasPage() {
                 <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
                   <div className="grid gap-4">
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Buscar tutor
                       </span>
                       <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                           type="text"
                           value={ownerSearch}
                           onChange={(event) => setOwnerSearch(event.target.value)}
                           placeholder="Nombre, documento o telefono"
-                          className="h-10 w-full border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </div>
                     </label>
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Tutor seleccionado
                       </span>
                       <select
@@ -826,7 +826,7 @@ export default function FinanzasPage() {
                             propietarioId: event.target.value,
                           }))
                         }
-                        className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                       >
                         <option value="">Selecciona un tutor</option>
                         {propietariosDisponibles.map((propietario) => (
@@ -838,8 +838,8 @@ export default function FinanzasPage() {
                     </label>
                   </div>
 
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Contexto del tutor
                     </p>
                     {selectedOwner ? (
@@ -853,7 +853,7 @@ export default function FinanzasPage() {
                     )}
                     <Link
                       to="/pacientes"
-                      className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                      className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary"
                     >
                       Abrir pacientes
                     </Link>
@@ -861,13 +861,13 @@ export default function FinanzasPage() {
                 </div>
 
                 {puedeConsultarInventario ? (
-                  <div className="grid gap-4 border border-slate-200 bg-slate-50 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_220px]">
+                  <div className="grid gap-4 border border-border bg-muted px-4 py-4 xl:grid-cols-[minmax(0,1fr)_220px]">
                     <div className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Entrada por escaner
                       </span>
                       <div className="relative">
-                        <ScanLine className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <ScanLine className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                           type="text"
                           value={barcodeInput}
@@ -879,10 +879,10 @@ export default function FinanzasPage() {
                             }
                           }}
                           placeholder="Escanea el codigo y presiona Enter"
-                          className="h-10 w-full border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </div>
-                      <p className="text-sm leading-6 text-slate-600">
+                      <p className="text-sm leading-6 text-muted-foreground">
                         La pistola lectora suele escribir el codigo y cerrar con Enter. Si el
                         producto existe y tiene stock, se agrega directo al borrador.
                       </p>
@@ -892,7 +892,7 @@ export default function FinanzasPage() {
                         type="button"
                         onClick={handleBarcodeScan}
                         disabled={buscarProductoPorBarcodeMutation.isPending}
-                        className="inline-flex h-10 w-full items-center justify-center gap-2 border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex h-10 w-full items-center justify-center gap-2 border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <ScanLine className="h-4 w-4" />
                         {buscarProductoPorBarcodeMutation.isPending ? 'Leyendo...' : 'Agregar por codigo'}
@@ -903,7 +903,7 @@ export default function FinanzasPage() {
 
                 <div className="grid gap-4 xl:grid-cols-3">
                   <label className="grid gap-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Metodo de pago
                     </span>
                     <select
@@ -911,7 +911,7 @@ export default function FinanzasPage() {
                       onChange={(event) =>
                         setInvoiceForm((current) => ({ ...current, metodoPago: event.target.value }))
                       }
-                      className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {PAYMENT_METHOD_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -921,7 +921,7 @@ export default function FinanzasPage() {
                     </select>
                   </label>
                   <label className="grid gap-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Descuento general
                     </span>
                     <input
@@ -932,7 +932,7 @@ export default function FinanzasPage() {
                       onChange={(event) =>
                         setInvoiceForm((current) => ({ ...current, descuentoGeneral: event.target.value }))
                       }
-                      className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </label>
                   <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
@@ -948,7 +948,7 @@ export default function FinanzasPage() {
                 </div>
 
                 <label className="grid gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Observaciones
                   </span>
                   <textarea
@@ -957,28 +957,28 @@ export default function FinanzasPage() {
                       setInvoiceForm((current) => ({ ...current, observaciones: event.target.value }))
                     }
                     placeholder="Notas internas o detalle del servicio prestado."
-                    className="min-h-24 border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-24 border border-border bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary"
                   />
                 </label>
 
                 <div className="grid gap-3">
                   {invoiceForm.items.map((item, index) => (
-                    <div key={item.id} className="grid gap-3 border border-slate-200 bg-slate-50 px-4 py-4 2xl:grid-cols-[120px_minmax(0,1fr)_110px_130px_120px_100px]">
+                    <div key={item.id} className="grid gap-3 border border-border bg-muted px-4 py-4 2xl:grid-cols-[120px_minmax(0,1fr)_110px_130px_120px_100px]">
                       <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Tipo
                         </span>
                         <select
                           value={item.tipo}
                           onChange={(event) => updateInvoiceItem(item.id, 'tipo', event.target.value)}
-                          className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         >
                           <option value="servicio">Servicio</option>
                           <option value="producto">Producto</option>
                         </select>
                       </label>
                       <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Descripcion
                         </span>
                         <input
@@ -986,11 +986,11 @@ export default function FinanzasPage() {
                           value={item.descripcion}
                           onChange={(event) => updateInvoiceItem(item.id, 'descripcion', event.target.value)}
                           placeholder={`Item ${index + 1}`}
-                          className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
                       <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Cantidad
                         </span>
                         <input
@@ -999,11 +999,11 @@ export default function FinanzasPage() {
                           step="0.01"
                           value={item.cantidad}
                           onChange={(event) => updateInvoiceItem(item.id, 'cantidad', event.target.value)}
-                          className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
                       <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Precio unitario
                         </span>
                         <input
@@ -1012,11 +1012,11 @@ export default function FinanzasPage() {
                           step="0.01"
                           value={item.precioUnitario}
                           onChange={(event) => updateInvoiceItem(item.id, 'precioUnitario', event.target.value)}
-                          className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
                       <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Descuento
                         </span>
                         <input
@@ -1025,7 +1025,7 @@ export default function FinanzasPage() {
                           step="0.01"
                           value={item.descuento}
                           onChange={(event) => updateInvoiceItem(item.id, 'descuento', event.target.value)}
-                          className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
                       <div className="flex items-end">
@@ -1033,7 +1033,7 @@ export default function FinanzasPage() {
                           type="button"
                           onClick={() => removeInvoiceItem(item.id)}
                           disabled={invoiceForm.items.length === 1}
-                          className="h-10 w-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="h-10 w-full border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Quitar
                         </button>
@@ -1043,24 +1043,24 @@ export default function FinanzasPage() {
                 </div>
 
                 {puedeConsultarInventario ? (
-                  <div className="grid gap-3 border border-slate-200 bg-white px-4 py-4">
+                  <div className="grid gap-3 border border-border bg-card px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Agregar desde inventario
                         </p>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           Busca un producto y agrégalo como línea facturable.
                         </p>
                       </div>
                       <label className="relative min-w-[260px]">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                           type="text"
                           value={productSearch}
                           onChange={(event) => setProductSearch(event.target.value)}
                           placeholder="Buscar producto por nombre"
-                          className="h-10 w-full border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
                     </div>
@@ -1068,17 +1068,17 @@ export default function FinanzasPage() {
                     <div className="grid gap-3 xl:grid-cols-2">
                       {productosDisponibles.length ? (
                         productosDisponibles.map((producto) => (
-                          <div key={producto.id} className="flex items-center justify-between gap-3 border border-slate-200 bg-slate-50 px-4 py-3">
+                          <div key={producto.id} className="flex items-center justify-between gap-3 border border-border bg-muted px-4 py-3">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-950">{producto.nombre}</p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-muted-foreground">
                                 Stock {formatNumber(producto.stock)} · {formatCurrency(producto.precioVenta)}
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => addProductToInvoice(producto)}
-                              className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-100"
+                              className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
                             >
                               <Plus className="h-3.5 w-3.5" />
                               Agregar
@@ -1086,7 +1086,7 @@ export default function FinanzasPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm leading-7 text-slate-600 lg:col-span-2">
+                        <div className="border border-dashed border-border bg-muted px-4 py-6 text-sm leading-7 text-muted-foreground lg:col-span-2">
                           No hay productos disponibles para esta búsqueda o tu plan actual no tiene inventario cargado.
                         </div>
                       )}
@@ -1103,7 +1103,7 @@ export default function FinanzasPage() {
                 <button
                   type="button"
                   onClick={exportCurrentCut}
-                  className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
                 >
                   <Download className="h-4 w-4" />
                   Exportar CSV
@@ -1112,20 +1112,20 @@ export default function FinanzasPage() {
             >
               <div className="space-y-4">
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between gap-4 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    <span className="font-medium text-slate-600">Tutor</span>
+                  <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium text-muted-foreground">Tutor</span>
                     <span className="min-w-0 text-right font-semibold text-slate-950">
                       {selectedOwner?.nombre || 'Pendiente de seleccionar'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-4 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    <span className="font-medium text-slate-600">Metodo</span>
+                  <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium text-muted-foreground">Metodo</span>
                     <span className="min-w-0 text-right font-semibold text-slate-950">
                       {PAYMENT_METHOD_LABELS[invoiceForm.metodoPago] || invoiceForm.metodoPago}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-4 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    <span className="font-medium text-slate-600">Lineas</span>
+                  <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium text-muted-foreground">Lineas</span>
                     <span className="font-semibold text-slate-950">
                       {formatNumber(invoiceForm.items.length)}
                     </span>
@@ -1133,25 +1133,25 @@ export default function FinanzasPage() {
                 </div>
 
                 <div className="grid gap-3">
-                  <div className="flex items-center justify-between gap-4 border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                    <span className="font-medium text-slate-600">Subtotal</span>
+                  <div className="flex items-center justify-between gap-4 border border-border bg-card px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium text-muted-foreground">Subtotal</span>
                     <span className="font-semibold text-slate-950">
                       {formatCurrency(invoiceTotals.subtotal)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-4 border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                    <span className="font-medium text-slate-600">Descuento general</span>
+                  <div className="flex items-center justify-between gap-4 border border-border bg-card px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium text-muted-foreground">Descuento general</span>
                     <span className="font-semibold text-slate-950">
                       {formatCurrency(invoiceTotals.descuentoGeneral)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 border border-slate-900 bg-slate-950 px-4 py-3 text-sm text-slate-100">
-                    <span className="font-medium text-slate-300">Total estimado</span>
+                    <span className="font-medium text-muted-foreground">Total estimado</span>
                     <span className="font-semibold">{formatCurrency(invoiceTotals.total)}</span>
                   </div>
                 </div>
 
-                <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                   El exportable descarga el corte actual filtrado. La creación guiada guarda la
                   factura interna y luego puedes abrirla en detalle para emisión electrónica o
                   control de anulación.
@@ -1218,8 +1218,8 @@ export default function FinanzasPage() {
                       }}
                       className={`border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${
                         currentFacturaId === row.id
-                          ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-border bg-card text-foreground hover:bg-muted'
                       }`}
                     >
                       {currentFacturaId === row.id ? 'Abierta' : 'Ver detalle'}
@@ -1232,13 +1232,13 @@ export default function FinanzasPage() {
               action={
                 <form onSubmit={handleBuscar} className="flex flex-wrap gap-3">
                   <label className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                       type="text"
                       value={buscarInput}
                       onChange={(event) => setBuscarInput(event.target.value)}
                       placeholder="Buscar factura o cliente"
-                      className="h-10 border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </label>
                   <select
@@ -1254,7 +1254,7 @@ export default function FinanzasPage() {
                         fechaVencimientoPago: '',
                       })
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -1264,7 +1264,7 @@ export default function FinanzasPage() {
                   </select>
                   <button
                     type="submit"
-                    className="border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
                     Buscar
                   </button>
@@ -1277,13 +1277,13 @@ export default function FinanzasPage() {
               subtitle="Desde aqui revisas la venta, imprimes la tirilla y solo intervienes la emision electronica si hubo pendiente o error."
             >
               {!currentFacturaId ? (
-                <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm leading-7 text-slate-600">
+                <div className="border border-dashed border-border bg-muted px-4 py-6 text-sm leading-7 text-muted-foreground">
                   Elige una factura de la tabla para abrir su detalle operativo.
                 </div>
               ) : facturaDetalleQuery.isLoading && !facturaSeleccionada ? (
                 <div className="space-y-3">
                   {[0, 1, 2].map((item) => (
-                    <div key={item} className="h-16 animate-pulse border border-slate-200 bg-slate-50" />
+                    <div key={item} className="h-16 animate-pulse border border-border bg-muted" />
                   ))}
                 </div>
               ) : facturaSeleccionada ? (
@@ -1291,7 +1291,7 @@ export default function FinanzasPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-lg font-semibold text-slate-950">{facturaSeleccionada.numero}</p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {facturaSeleccionada.propietario?.nombre || 'Sin propietario'}
                       </p>
                     </div>
@@ -1299,7 +1299,7 @@ export default function FinanzasPage() {
                       <button
                         type="button"
                         onClick={handlePrintReceipt}
-                        className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
                       >
                         <Printer className="h-4 w-4" />
                         Imprimir tirilla
@@ -1315,41 +1315,41 @@ export default function FinanzasPage() {
                   </div>
 
                   <div className="grid gap-3">
-                    <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
                       Fecha: <span className="font-semibold text-slate-950">{formatLongDate(facturaSeleccionada.fecha)}</span>
                     </div>
-                    <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
                       Metodo de pago:{' '}
                       <span className="font-semibold text-slate-950">
                         {PAYMENT_METHOD_LABELS[facturaSeleccionada.metodoPago] || 'Sin definir'}
                       </span>
                     </div>
-                    <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
                       Responsable:{' '}
                       <span className="font-semibold text-slate-950">
                         {facturaSeleccionada.usuario?.nombre || 'Sin usuario asignado'}
                       </span>
                     </div>
-                    <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
                       Total: <span className="font-semibold text-slate-950">{formatCurrency(facturaSeleccionada.total)}</span>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto border border-slate-200">
-                    <table className="min-w-full divide-y divide-slate-200 text-sm">
-                      <thead className="bg-slate-50">
+                  <div className="overflow-x-auto border border-border">
+                    <table className="min-w-full divide-y divide-border text-sm">
+                      <thead className="bg-muted">
                         <tr>
-                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Item</th>
-                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Cantidad</th>
-                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Precio</th>
+                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Item</th>
+                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cantidad</th>
+                          <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Precio</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200">
+                      <tbody className="divide-y divide-border">
                         {(facturaSeleccionada.items || []).map((item) => (
                           <tr key={item.id}>
-                            <td className="px-3 py-3 text-slate-700">{item.descripcion}</td>
-                            <td className="px-3 py-3 text-slate-700">{formatNumber(item.cantidad)}</td>
-                            <td className="px-3 py-3 text-slate-700">{formatCurrency(item.subtotal)}</td>
+                            <td className="px-3 py-3 text-foreground">{item.descripcion}</td>
+                            <td className="px-3 py-3 text-foreground">{formatNumber(item.cantidad)}</td>
+                            <td className="px-3 py-3 text-foreground">{formatCurrency(item.subtotal)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1357,20 +1357,20 @@ export default function FinanzasPage() {
                   </div>
 
                   {facturaSeleccionada.observaciones ? (
-                    <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                       {facturaSeleccionada.observaciones}
                     </div>
                   ) : null}
 
-                  <div className="space-y-3 border-t border-slate-200 pt-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="space-y-3 border-t border-border pt-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Estado electronico
                     </p>
                     <div className="grid gap-3">
-                      <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                      <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                         CUFE: <span className="font-semibold text-slate-950">{facturaSeleccionada.cufe || 'Pendiente'}</span>
                       </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                      <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                         Validada en:{' '}
                         <span className="font-semibold text-slate-950">
                           {facturaSeleccionada.fechaValidacionElectronica
@@ -1379,7 +1379,7 @@ export default function FinanzasPage() {
                         </span>
                       </div>
                       {facturaSeleccionada.mensajeElectronico ? (
-                        <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                        <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                           {facturaSeleccionada.mensajeElectronico}
                         </div>
                       ) : null}
@@ -1392,19 +1392,19 @@ export default function FinanzasPage() {
                   </div>
 
                   {canEmitInvoice(facturaSeleccionada, puedeEmitirElectronica) ? (
-                    <div className="space-y-4 border-t border-slate-200 pt-4">
+                    <div className="space-y-4 border-t border-border pt-4">
                       <div className="flex items-center gap-2">
-                        <SendHorizontal className="h-4 w-4 text-cyan-700" />
+                        <SendHorizontal className="h-4 w-4 text-primary" />
                         <p className="text-sm font-semibold text-slate-950">Reintentar emision electronica</p>
                       </div>
-                      <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                      <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                         La emision electronica normalmente sale automatica al crear la factura cuando
                         la clinica tiene esta funcionalidad activa. Este bloque solo sirve para
                         pendientes, rechazos o reintentos controlados.
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="grid gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Forma de pago</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Forma de pago</span>
                           <select
                             value={emisionForm.formaPagoCodigo}
                             onChange={(event) =>
@@ -1415,7 +1415,7 @@ export default function FinanzasPage() {
                                   event.target.value === '1' ? '' : current.fechaVencimientoPago,
                               }))
                             }
-                            className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                            className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                           >
                             {PAYMENT_FORM_OPTIONS.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -1425,7 +1425,7 @@ export default function FinanzasPage() {
                           </select>
                         </label>
                         <label className="grid gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Vencimiento</span>
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Vencimiento</span>
                           <input
                             type="date"
                             value={emisionForm.fechaVencimientoPago}
@@ -1436,18 +1436,18 @@ export default function FinanzasPage() {
                               }))
                             }
                             disabled={emisionForm.formaPagoCodigo !== '2'}
-                            className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 disabled:bg-slate-50"
+                            className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:bg-muted"
                           />
                         </label>
                       </div>
-                      <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
                         <input
                           type="checkbox"
                           checked={emisionForm.enviarEmail}
                           onChange={(event) =>
                             setEmisionForm((current) => ({ ...current, enviarEmail: event.target.checked }))
                           }
-                          className="h-4 w-4 border-slate-300 text-cyan-700 focus:ring-cyan-500"
+                          className="h-4 w-4 border-border text-primary focus:ring-primary"
                         />
                         Enviar email al tutor al emitir electronicamente
                       </label>
@@ -1455,7 +1455,7 @@ export default function FinanzasPage() {
                         type="button"
                         onClick={handleEmitirFactura}
                         disabled={emitirFacturaMutation.isPending}
-                        className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <SendHorizontal className="h-4 w-4" />
                         {emitirFacturaMutation.isPending ? 'Emitiendo...' : 'Reintentar emision'}
@@ -1464,7 +1464,7 @@ export default function FinanzasPage() {
                   ) : null}
 
                   {canVoidInvoice(facturaSeleccionada, puedeAnular) ? (
-                    <div className="space-y-4 border-t border-slate-200 pt-4">
+                    <div className="space-y-4 border-t border-border pt-4">
                       <div className="flex items-center gap-2">
                         <Ban className="h-4 w-4 text-red-700" />
                         <p className="text-sm font-semibold text-slate-950">Anular factura</p>
@@ -1473,7 +1473,7 @@ export default function FinanzasPage() {
                         value={motivoAnulacion}
                         onChange={(event) => setMotivoAnulacion(event.target.value)}
                         placeholder="Describe el motivo de anulacion para auditoria y control interno."
-                        className="min-h-24 border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-cyan-500"
+                        className="min-h-24 border border-border bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary"
                       />
                       <button
                         type="button"
@@ -1493,7 +1493,7 @@ export default function FinanzasPage() {
                   ) : null}
                 </div>
               ) : (
-                <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm leading-7 text-slate-600">
+                <div className="border border-dashed border-border bg-muted px-4 py-6 text-sm leading-7 text-muted-foreground">
                   No fue posible abrir el detalle de esta factura.
                 </div>
               )}
@@ -1501,8 +1501,8 @@ export default function FinanzasPage() {
           </div>
 
           {(facturasQuery.data?.paginas || 1) > 1 ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <p className="text-sm text-slate-600">
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-5 py-4 shadow-sm">
+              <p className="text-sm text-muted-foreground">
                 Pagina {facturasQuery.data?.paginaActual || 1} de {facturasQuery.data?.paginas || 1}
               </p>
               <div className="flex gap-3">
@@ -1519,7 +1519,7 @@ export default function FinanzasPage() {
                     setPagina((current) => Math.max(current - 1, 1))
                   }}
                   disabled={(facturasQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Anterior
                 </button>
@@ -1536,7 +1536,7 @@ export default function FinanzasPage() {
                     setPagina((current) => Math.min(current + 1, facturasQuery.data?.paginas || 1))
                   }}
                   disabled={(facturasQuery.data?.paginaActual || 1) >= (facturasQuery.data?.paginas || 1)}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Siguiente
                 </button>
@@ -1545,10 +1545,10 @@ export default function FinanzasPage() {
           ) : null}
 
           {!puedeEmitirElectronica ? (
-            <div className="border border-slate-200 bg-white px-5 py-5 shadow-sm">
+            <div className="border border-border bg-card px-5 py-5 shadow-sm">
               <div className="flex items-start gap-3">
-                <FileText className="mt-0.5 h-5 w-5 text-slate-500" />
-                <div className="text-sm leading-7 text-slate-600">
+                <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
+                <div className="text-sm leading-7 text-muted-foreground">
                   La configuracion tecnica de DIAN y Factus ya no se modifica desde la clinica. Si
                   necesitas activar o corregir la integracion, se hace desde soporte central con un
                   perfil `superadmin`.

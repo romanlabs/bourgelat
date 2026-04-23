@@ -58,7 +58,7 @@ const statusTone = {
   success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   warning: 'border-amber-200 bg-amber-50 text-amber-700',
   danger: 'border-rose-200 bg-rose-50 text-rose-700',
-  neutral: 'border-slate-200 bg-slate-100 text-slate-700',
+  neutral: 'border-border bg-muted text-foreground',
 }
 
 const toBarData = (record) =>
@@ -137,7 +137,7 @@ export default function SuperadminPage() {
       currentKey="resumen"
       asideNote="Si solo tu cuenta tiene el rol `superadmin`, solo tu veras esta consola. Los administradores de clinica siguen entrando a su propio backoffice."
       headerBadge={
-        <span className="inline-flex items-center border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700">
+        <span className="inline-flex items-center border border-border bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
           Plataforma multi-tenant
         </span>
       }
@@ -156,7 +156,7 @@ export default function SuperadminPage() {
             label="Clinicas activas"
             value={formatNumber(resumenQuery.data?.resumen?.clinicasActivas || 0)}
             helper={`De ${formatNumber(resumenQuery.data?.resumen?.totalClinicas || 0)} clinicas registradas.`}
-            tone="text-cyan-700"
+            tone="text-primary"
           />
           <KpiCard
             icon={BadgeDollarSign}
@@ -170,7 +170,7 @@ export default function SuperadminPage() {
             label="Facturado este mes"
             value={formatCurrency(resumenQuery.data?.resumen?.ingresosFacturadosMes || 0)}
             helper="Caja global registrada en las facturas no anuladas del mes."
-            tone="text-slate-900"
+            tone="text-foreground"
           />
           <KpiCard
             icon={CalendarClock}
@@ -280,22 +280,22 @@ export default function SuperadminPage() {
           subtitle="El objetivo de esta consola no es ver todo: es ver primero lo que exige una decision tuya."
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="border border-slate-200 bg-slate-50 p-4">
+            <div className="border border-border bg-muted p-4">
               <p className="text-sm font-semibold text-slate-950">Nuevas clinicas del mes</p>
               <p className="mt-3 text-3xl font-semibold text-slate-950">
                 {formatNumber(resumenQuery.data?.resumen?.nuevasClinicasMes || 0)}
               </p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Te sirve para medir traccion comercial y ajustar onboarding antes de que el soporte
                 se vuelva reactivo.
               </p>
             </div>
-            <div className="border border-slate-200 bg-slate-50 p-4">
+            <div className="border border-border bg-muted p-4">
               <p className="text-sm font-semibold text-slate-950">Usuarios activos de clinica</p>
               <p className="mt-3 text-3xl font-semibold text-slate-950">
                 {formatNumber(resumenQuery.data?.resumen?.usuariosActivos || 0)}
               </p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Es un buen indicador de adopcion real: ya no habla solo de cuentas creadas, sino de
                 equipos usando el software.
               </p>
@@ -399,11 +399,11 @@ export default function SuperadminPage() {
           subtitle="Lo que normalmente deberias revisar antes de abrir el resto del software."
         >
           <div className="space-y-4">
-            <div className="border border-slate-200 p-4">
+            <div className="border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-950">Pipeline comercial</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     Hay{' '}
                     <span className="font-semibold text-slate-950">
                       {formatNumber(resumenQuery.data?.listas?.pruebasPorVencer?.length || 0)}
@@ -411,28 +411,28 @@ export default function SuperadminPage() {
                     cuentas que requieren seguimiento antes de perder ritmo comercial.
                   </p>
                 </div>
-                <Waypoints className="h-5 w-5 text-cyan-700" />
+                <Waypoints className="h-5 w-5 text-primary" />
               </div>
             </div>
 
-            <div className="border border-slate-200 p-4">
+            <div className="border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-950">Gobierno de acceso</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     Esta consola queda aislada del backoffice clinico. Sirve para ti o para un
                     grupo muy corto de operadores globales, no para clientes finales.
                   </p>
                 </div>
-                <UserRoundCog className="h-5 w-5 text-slate-700" />
+                <UserRoundCog className="h-5 w-5 text-foreground" />
               </div>
             </div>
 
-            <div className="border border-slate-200 p-4">
+            <div className="border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-950">DIAN y proveedor</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     La configuracion sensible ya no queda en manos de la clinica. Desde aqui
                     priorizas los casos donde falta activacion, hay fallo tecnico o el perfil fiscal
                     sigue incompleto.

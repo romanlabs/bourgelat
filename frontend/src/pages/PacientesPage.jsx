@@ -90,14 +90,14 @@ function PetAvatar({ name, photo, size = 'h-12 w-12' }) {
       <img
         src={photo}
         alt={`Foto de ${name}`}
-        className={`${size} shrink-0 border border-slate-200 object-cover`}
+        className={`${size} shrink-0 border border-border object-cover`}
       />
     )
   }
 
   return (
     <div
-      className={`${size} flex shrink-0 items-center justify-center border border-slate-200 bg-slate-100 text-sm font-semibold uppercase text-slate-600`}
+      className={`${size} flex shrink-0 items-center justify-center border border-border bg-muted text-sm font-semibold uppercase text-muted-foreground`}
     >
       {String(name || 'P').slice(0, 1)}
     </div>
@@ -389,13 +389,13 @@ export default function PacientesPage() {
 
   if (!rolPermitido) {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <DashboardPanel
             title="Pacientes"
             subtitle="Este modulo se muestra a recepcion, auxiliares, veterinarios o perfiles administrativos."
           >
-            <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+            <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
               Tu acceso actual no tiene visibilidad sobre la base clinica de pacientes y tutores.
             </div>
           </DashboardPanel>
@@ -410,7 +410,7 @@ export default function PacientesPage() {
       title="Pacientes y tutores"
       description="Base clinica para recepcion, consulta y preparacion de historia. Aqui se registran tutores, pacientes activos y los datos minimos que realmente sirven en operacion."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Base clinica activa
         </StatusPill>
       }
@@ -418,25 +418,25 @@ export default function PacientesPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/agenda"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir agenda
           </Link>
           <Link
             to="/antecedentes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir antecedentes
           </Link>
           <Link
             to="/historias"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir historias
           </Link>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Volver al dashboard
           </Link>
@@ -476,7 +476,7 @@ export default function PacientesPage() {
               label="Pacientes activos"
               value={formatNumber(totalMascotas)}
               helper="Pacientes visibles segun el filtro actual de la base."
-              tone="text-cyan-700"
+              tone="text-primary"
             />
             <KpiCard
               icon={Users}
@@ -529,7 +529,7 @@ export default function PacientesPage() {
                       setPaginaMascotas(1)
                     }}
                     placeholder="Buscar por nombre o microchip"
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <select
                     value={especie}
@@ -537,7 +537,7 @@ export default function PacientesPage() {
                       setEspecie(event.target.value)
                       setPaginaMascotas(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {SPECIES_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -560,8 +560,8 @@ export default function PacientesPage() {
                       <div className="flex items-center gap-3">
                         <PetAvatar name={row.paciente} photo={row.fotoPerfil} size="h-11 w-11" />
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-900">{row.paciente}</p>
-                          <p className="mt-1 text-xs text-slate-500">{row.raw.raza || 'Sin raza'}</p>
+                          <p className="font-semibold text-foreground">{row.paciente}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{row.raw.raza || 'Sin raza'}</p>
                         </div>
                       </div>
                     ),
@@ -574,7 +574,7 @@ export default function PacientesPage() {
                     key: 'detalle',
                     label: 'Detalle',
                     render: (row) => (
-                      <div className="text-xs leading-6 text-slate-500">
+                      <div className="text-xs leading-6 text-muted-foreground">
                         {row.raw.raza || 'Sin raza'}
                         {' · '}
                         {formatWeight(row.raw.peso)}
@@ -609,15 +609,15 @@ export default function PacientesPage() {
                 emptyTitle="No hay pacientes para este filtro"
                 emptyBody="Ajusta la busqueda o registra el primer paciente desde el panel inferior."
                 action={
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+                  <StatusPill tone="border-border bg-muted text-foreground">
                     {SPECIES_OPTIONS.find((option) => option.value === especie)?.label}
                   </StatusPill>
                 }
               />
 
               {(mascotasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                  <p className="text-sm text-slate-600">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
                     Pagina {mascotasQuery.data?.paginaActual || 1} de {mascotasQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -625,7 +625,7 @@ export default function PacientesPage() {
                       type="button"
                       onClick={() => setPaginaMascotas((current) => Math.max(current - 1, 1))}
                       disabled={(mascotasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -637,7 +637,7 @@ export default function PacientesPage() {
                         )
                       }
                       disabled={(mascotasQuery.data?.paginaActual || 1) >= (mascotasQuery.data?.paginas || 1)}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -651,10 +651,10 @@ export default function PacientesPage() {
             <DashboardPanel
               title="Registrar tutor"
               subtitle="Alta rapida del responsable principal antes de abrir la ficha del paciente."
-              action={<UserRound className="h-4 w-4 text-cyan-700" />}
+              action={<UserRound className="h-4 w-4 text-primary" />}
             >
               {!puedeCrearTutor ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Tu rol actual puede consultar la base, pero no crear nuevos tutores.
                 </div>
               ) : (
@@ -664,7 +664,7 @@ export default function PacientesPage() {
                     value={ownerForm.nombre}
                     onChange={(event) => setOwnerForm((current) => ({ ...current, nombre: event.target.value }))}
                     placeholder="Nombre completo del tutor"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <div className="grid gap-4 sm:grid-cols-2">
                     <select
@@ -672,7 +672,7 @@ export default function PacientesPage() {
                       onChange={(event) =>
                         setOwnerForm((current) => ({ ...current, tipoDocumento: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {DOCUMENT_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -687,7 +687,7 @@ export default function PacientesPage() {
                         setOwnerForm((current) => ({ ...current, numeroDocumento: event.target.value }))
                       }
                       placeholder="Documento principal"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -702,14 +702,14 @@ export default function PacientesPage() {
                         }))
                       }
                       placeholder="Telefono o celular"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="email"
                       value={ownerForm.email}
                       onChange={(event) => setOwnerForm((current) => ({ ...current, email: event.target.value }))}
                       placeholder="Email del tutor"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <input
@@ -717,12 +717,12 @@ export default function PacientesPage() {
                     value={ownerForm.ciudad}
                     onChange={(event) => setOwnerForm((current) => ({ ...current, ciudad: event.target.value }))}
                     placeholder="Ciudad o municipio"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
                     disabled={crearPropietarioMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {crearPropietarioMutation.isPending ? 'Guardando...' : 'Guardar tutor'}
                   </button>
@@ -733,16 +733,16 @@ export default function PacientesPage() {
             <DashboardPanel
               title="Registrar paciente"
               subtitle="Selecciona un tutor existente y completa solo los datos que ayudan de verdad a recepcion y consulta."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               {!puedeCrearPaciente ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Tu rol actual no tiene permisos para crear pacientes.
                 </div>
               ) : (
                 <form className="grid gap-4" onSubmit={handleCreatePet}>
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="border border-border bg-muted px-4 py-4">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       <Search className="h-3.5 w-3.5" />
                       Buscar tutor existente
                     </div>
@@ -751,12 +751,12 @@ export default function PacientesPage() {
                       value={ownerSearch}
                       onChange={(event) => setOwnerSearch(event.target.value)}
                       placeholder="Nombre, telefono o documento"
-                      className="mt-3 h-11 w-full border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
 
                     <div className="mt-4 space-y-2">
                       {selectedOwner ? (
-                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-slate-700">
+                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
                           <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
                           <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
                           <button
@@ -781,15 +781,15 @@ export default function PacientesPage() {
                                 setSelectedOwner(owner)
                                 setPetForm((current) => ({ ...current, propietarioId: owner.id }))
                               }}
-                              className="flex w-full items-start justify-between border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
+                              className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
                             >
                               <div>
                                 <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                   {owner.telefono || 'Sin telefono principal'}
                                 </p>
                               </div>
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Seleccionar
                               </span>
                             </button>
@@ -804,12 +804,12 @@ export default function PacientesPage() {
                       value={petForm.nombre}
                       onChange={(event) => setPetForm((current) => ({ ...current, nombre: event.target.value }))}
                       placeholder="Nombre del paciente"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <select
                       value={petForm.especie}
                       onChange={(event) => setPetForm((current) => ({ ...current, especie: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {SPECIES_OPTIONS.filter((option) => option.value !== 'todas').map((option) => (
                         <option key={option.value} value={option.value}>
@@ -825,12 +825,12 @@ export default function PacientesPage() {
                       value={petForm.raza}
                       onChange={(event) => setPetForm((current) => ({ ...current, raza: event.target.value }))}
                       placeholder="Raza o cruce"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <select
                       value={petForm.sexo}
                       onChange={(event) => setPetForm((current) => ({ ...current, sexo: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {SEX_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -847,7 +847,7 @@ export default function PacientesPage() {
                       onChange={(event) =>
                         setPetForm((current) => ({ ...current, fechaNacimiento: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="number"
@@ -856,7 +856,7 @@ export default function PacientesPage() {
                       value={petForm.peso}
                       onChange={(event) => setPetForm((current) => ({ ...current, peso: event.target.value }))}
                       placeholder="Peso actual en kg"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
 
@@ -866,7 +866,7 @@ export default function PacientesPage() {
                       value={petForm.color}
                       onChange={(event) => setPetForm((current) => ({ ...current, color: event.target.value }))}
                       placeholder="Color principal"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="text"
@@ -875,7 +875,7 @@ export default function PacientesPage() {
                         setPetForm((current) => ({ ...current, microchip: event.target.value }))
                       }
                       placeholder="Numero de microchip"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
 
@@ -887,14 +887,14 @@ export default function PacientesPage() {
                           type="file"
                           accept="image/jpeg,image/png,image/webp"
                           onChange={handlePetPhotoChange}
-                          className="block w-full border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 file:mr-3 file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                          className="block w-full border border-border bg-card px-3 py-3 text-sm text-foreground file:mr-3 file:border-0 file:bg-foreground file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
                         />
-                        <p className="text-xs leading-6 text-slate-500">
+                        <p className="text-xs leading-6 text-muted-foreground">
                           Aceptamos JPG, PNG o WEBP hasta 4 MB. Sirve una foto descargada desde WhatsApp Web o una imagen tomada y guardada desde el celular.
                         </p>
                         {petPhotoFile ? (
-                          <div className="flex flex-wrap items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
-                            <span className="font-medium text-slate-900">{petPhotoFile.name}</span>
+                          <div className="flex flex-wrap items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
+                            <span className="font-medium text-foreground">{petPhotoFile.name}</span>
                             <span>{formatNumber(Math.round(petPhotoFile.size / 1024))} KB</span>
                             <button
                               type="button"
@@ -902,7 +902,7 @@ export default function PacientesPage() {
                                 setPetPhotoFile(null)
                                 setPetPhotoInputKey((current) => current + 1)
                               }}
-                              className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                              className="text-sm font-semibold text-primary hover:text-primary"
                             >
                               Quitar foto
                             </button>
@@ -917,9 +917,9 @@ export default function PacientesPage() {
                             setPetForm((current) => ({ ...current, fotoPerfil: event.target.value }))
                           }
                           placeholder="O pega una URL publica si ya la tienes"
-                          className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                          className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
-                        <p className="text-xs leading-6 text-slate-500">
+                        <p className="text-xs leading-6 text-muted-foreground">
                           La URL publica sigue disponible como opcion avanzada, pero el camino recomendado es subir el archivo.
                         </p>
                       </div>
@@ -936,7 +936,7 @@ export default function PacientesPage() {
                     </div>
                   </div>
 
-                  <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <label className="flex items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={petForm.esterilizado}
@@ -953,11 +953,11 @@ export default function PacientesPage() {
                       setPetForm((current) => ({ ...current, observaciones: event.target.value }))
                     }
                     placeholder="Notas utiles para recepcion y consulta"
-                    className="min-h-[120px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[120px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
 
                   {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
-                    <div className="border border-dashed border-slate-300 bg-white px-3 py-3 text-sm leading-7 text-slate-600">
+                    <div className="border border-dashed border-border bg-white px-3 py-3 text-sm leading-7 text-muted-foreground">
                       No encontramos un tutor con esa busqueda. Puedes crearlo desde el panel izquierdo.
                     </div>
                   ) : null}
@@ -965,7 +965,7 @@ export default function PacientesPage() {
                   <button
                     type="submit"
                     disabled={crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending
                       ? 'Guardando...'
@@ -981,13 +981,13 @@ export default function PacientesPage() {
             subtitle="Lo importante en esta pantalla es dejar una base limpia y util para el resto del sistema."
           >
             <div className="grid gap-4 xl:grid-cols-3">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Primero se registra el tutor responsable y luego el paciente, para que agenda, historias y cobro compartan la misma base.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 Los campos visibles son los que mas ayudan en recepcion y consulta: identificacion, contacto, especie, peso y observaciones utiles.
               </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 El cupo del plan ya se refleja aqui, asi que la clinica puede saber cuando necesita ordenar la base o subir de nivel.
               </div>
             </div>

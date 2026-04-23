@@ -211,7 +211,7 @@ export function DataTable({
                   key={col.key}
                   scope="col"
                   className={cn(
-                    'px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground',
+                    'px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground',
                     alignClass[col.align ?? 'left'],
                     col.sortable && 'cursor-pointer select-none hover:text-foreground'
                   )}

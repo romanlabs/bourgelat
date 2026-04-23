@@ -57,8 +57,8 @@ const FISCAL_FIELD_LABELS = {
 }
 
 const INPUT_CLASS =
-  'h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500'
-const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500'
+  'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
 const normalizePhone = (value) => value.replace(/\D/g, '').slice(0, 10)
@@ -140,20 +140,20 @@ function FormField({ label, helper, required = false, children }) {
         ) : null}
       </div>
       {children}
-      {helper ? <p className="text-xs leading-6 text-slate-500">{helper}</p> : null}
+      {helper ? <p className="text-xs leading-6 text-muted-foreground">{helper}</p> : null}
     </label>
   )
 }
 
 function RestrictedConfigPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Configuracion de clinica"
           subtitle="Este modulo se reserva para administracion principal."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene permisos para editar la configuracion institucional o fiscal
             de la clinica.
           </div>
@@ -380,7 +380,7 @@ function ConfiguracionContent({
         title="Organiza esta configuracion por bloques"
         subtitle="Primero revisa el resumen, luego edita la ficha institucional y deja la integracion electronica en una vista separada."
         action={
-          <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+          <StatusPill tone="border-border bg-muted text-foreground">
             Configuracion guiada
           </StatusPill>
         }
@@ -393,14 +393,14 @@ function ConfiguracionContent({
               onClick={() => setActiveSection(section.id)}
               className={`border px-4 py-4 text-left transition ${
                 activeSection === section.id
-                  ? 'border-cyan-500 bg-cyan-50'
-                  : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-muted hover:border-border hover:bg-white'
               }`}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {section.label}
               </p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{section.helper}</p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
             </button>
           ))}
         </div>
@@ -412,7 +412,7 @@ function ConfiguracionContent({
           label="Ficha institucional"
           value={`${formatNumber(datosBaseCubiertos)}/6`}
           helper="Nombre, correo, celular, direccion, departamento y ciudad listos para operacion."
-          tone="text-cyan-700"
+          tone="text-primary"
         />
         <KpiCard
           icon={Mail}
@@ -448,8 +448,8 @@ function ConfiguracionContent({
             subtitle="Lo que ya esta listo para operar, comunicarse y presentarse de forma coherente al equipo y al cliente."
           >
             <div className="space-y-4">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                <p className="font-semibold text-slate-900">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                <p className="font-semibold text-foreground">
                   {clinicForm.nombreComercial || clinicForm.nombre || 'Clinica sin nombre visible'}
                 </p>
                 <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
@@ -462,25 +462,25 @@ function ConfiguracionContent({
               </div>
 
               <div className="grid gap-3 xl:grid-cols-2">
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Nombre visible:{' '}
                   <span className="font-semibold text-slate-950">
                     {clinicForm.nombreComercial || clinicForm.nombre || 'Pendiente'}
                   </span>
                 </div>
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Logo institucional:{' '}
                   <span className="font-semibold text-slate-950">
                     {clinicForm.logo ? 'Disponible' : 'Pendiente'}
                   </span>
                 </div>
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Contacto principal:{' '}
                   <span className="font-semibold text-slate-950">
                     {clinicForm.email ? 'Listo' : 'Pendiente'}
                   </span>
                 </div>
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Perfil fiscal:{' '}
                   <span className="font-semibold text-slate-950">
                     {perfilFiscal?.listoParaFacturacion ? 'Listo' : 'En ajuste'}
@@ -488,11 +488,11 @@ function ConfiguracionContent({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-4">
+              <div className="flex flex-wrap gap-3 border-t border-border pt-4">
                 <button
                   type="button"
                   onClick={() => setActiveSection('ficha')}
-                  className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Editar ficha institucional
                 </button>
@@ -500,7 +500,7 @@ function ConfiguracionContent({
                   <button
                     type="button"
                     onClick={() => setActiveSection('facturacion')}
-                    className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                   >
                     Ver facturacion electronica
                   </button>
@@ -540,13 +540,13 @@ function ConfiguracionContent({
               subtitle="La clinica mantiene sus datos base; la configuracion sensible con DIAN y Factus se controla aparte."
             >
               <div className="space-y-3">
-                <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                   Esta separacion reduce errores y evita que el cliente mezcle configuracion visible
                   con credenciales tecnicas o cambios delicados de integracion.
                 </div>
                 <Link
                   to="/finanzas"
-                  className="inline-flex w-full items-center justify-center gap-2 border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex w-full items-center justify-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                 >
                   Ir a finanzas
                   <ArrowRight className="h-4 w-4" />
@@ -820,18 +820,18 @@ function ConfiguracionContent({
               </FormField>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <button
                 type="submit"
                 disabled={actualizarClinicaMutation.isPending}
-                className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuracion'}
               </button>
               <button
                 type="button"
                 onClick={() => setActiveSection('resumen')}
-                className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
               >
                 Volver al resumen
               </button>
@@ -845,8 +845,8 @@ function ConfiguracionContent({
             subtitle="Lectura corta para validar si lo visible al cliente y al equipo ya esta listo."
           >
             <div className="space-y-4">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                <p className="font-semibold text-slate-900">
+              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                <p className="font-semibold text-foreground">
                   {clinicForm.nombreComercial || clinicForm.nombre || 'Clinica sin nombre visible'}
                 </p>
                 <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
@@ -859,10 +859,10 @@ function ConfiguracionContent({
               </div>
 
               <div className="grid gap-3">
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   NIT: <span className="font-semibold text-slate-950">{clinicForm.nit || 'Pendiente'}</span>
                 </div>
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Documento fiscal:{' '}
                   <span className="font-semibold text-slate-950">
                     {FISCAL_DOCUMENT_OPTIONS.find(
@@ -870,7 +870,7 @@ function ConfiguracionContent({
                     )?.label || 'Pendiente'}
                   </span>
                 </div>
-                <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Logo institucional:{' '}
                   <span className="font-semibold text-slate-950">{clinicForm.logo ? 'Disponible' : 'Pendiente'}</span>
                 </div>
@@ -925,7 +925,7 @@ function ConfiguracionContent({
                     tone={
                       factusForm.activa
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-slate-200 bg-slate-100 text-slate-700'
+                        : 'border-border bg-muted text-foreground'
                     }
                   >
                     {factusForm.activa ? 'Integracion activa' : 'Integracion inactiva'}
@@ -933,7 +933,7 @@ function ConfiguracionContent({
                   <StatusPill
                     tone={
                       credencialesCompletas
-                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                        ? 'border-primary/30 bg-primary/10 text-primary'
                         : 'border-amber-200 bg-amber-50 text-amber-700'
                     }
                   >
@@ -959,14 +959,14 @@ function ConfiguracionContent({
                       ))}
                     </select>
                   </FormField>
-                  <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={factusForm.activa}
                       onChange={(event) =>
                         setFactusForm((current) => ({ ...current, activa: event.target.checked }))
                       }
-                      className="h-4 w-4 border-slate-300 text-cyan-700 focus:ring-cyan-500"
+                      className="h-4 w-4 border-border text-primary focus:ring-primary"
                     />
                     Activar integracion para la clinica
                   </label>
@@ -1085,23 +1085,23 @@ function ConfiguracionContent({
                   </FormField>
                 </div>
 
-                <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
                   <input
                     type="checkbox"
                     checked={factusForm.enviarEmail}
                     onChange={(event) =>
                       setFactusForm((current) => ({ ...current, enviarEmail: event.target.checked }))
                     }
-                    className="h-4 w-4 border-slate-300 text-cyan-700 focus:ring-cyan-500"
+                    className="h-4 w-4 border-border text-primary focus:ring-primary"
                   />
                   Enviar email al emitir documentos desde la integracion
                 </label>
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {guardarFactusMutation.isPending ? 'Guardando...' : 'Guardar Factus'}
                   </button>
@@ -1109,7 +1109,7 @@ function ConfiguracionContent({
                     type="button"
                     onClick={() => probarFactusMutation.mutate()}
                     disabled={probarFactusMutation.isPending}
-                    className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {probarFactusMutation.isPending ? 'Probando...' : 'Probar conexion'}
                   </button>
@@ -1117,7 +1117,7 @@ function ConfiguracionContent({
                     type="button"
                     onClick={() => sincronizarFactusMutation.mutate()}
                     disabled={sincronizarFactusMutation.isPending}
-                    className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {sincronizarFactusMutation.isPending ? 'Sincronizando...' : 'Sincronizar catalogos'}
                   </button>
@@ -1129,26 +1129,26 @@ function ConfiguracionContent({
               title="Facturacion electronica"
               subtitle="La configuracion de DIAN y Factus se administra desde Bourgelat para evitar cambios sensibles por parte de la clinica."
               action={
-                <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+                <StatusPill tone="border-border bg-muted text-foreground">
                   Solo lectura para la clinica
                 </StatusPill>
               }
             >
               <div className="grid gap-4">
-                <div className="border border-cyan-200 bg-cyan-50 px-4 py-4 text-sm leading-7 text-cyan-800">
+                <div className="border border-primary/30 bg-primary/10 px-4 py-4 text-sm leading-7 text-primary">
                   Tu equipo puede usar la facturacion electronica dentro del modulo financiero, pero
                   la configuracion tecnica con DIAN y Factus solo la modifica soporte central o un
                   perfil `superadmin`.
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <div className="border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Ambiente</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {FACTUS_ENV_OPTIONS.find((option) => option.value === factusForm.ambiente)?.label ||
                         'Sin definir'}
                     </p>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Estado de la integracion</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {factusForm.activa ? 'Activa para emitir' : 'Pendiente de activacion'}
@@ -1156,19 +1156,19 @@ function ConfiguracionContent({
                   </div>
                 </div>
                 <div className="grid gap-4 2xl:grid-cols-3">
-                  <div className="border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Fuente de credenciales</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {formatCredentialSource(configuracionEfectiva?.fuenteCredenciales)}
                     </p>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Rango de numeracion</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {integracionFactus?.rangoNumeracionId || 'Pendiente'}
                     </p>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Ultimo chequeo</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {formatDateTime(integracionFactus?.ultimoChequeo)}
@@ -1195,32 +1195,32 @@ function ConfiguracionContent({
                   >
                     {credencialesCompletas ? 'Credenciales completas' : 'Credenciales incompletas'}
                   </StatusPill>
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+                  <StatusPill tone="border-border bg-muted text-foreground">
                     {formatCredentialSource(configuracionEfectiva?.fuenteCredenciales)}
                   </StatusPill>
                 </div>
 
                 <div className="grid gap-3">
-                  <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Ambiente:{' '}
                     <span className="font-semibold text-slate-950">
                       {FACTUS_ENV_OPTIONS.find((option) => option.value === factusForm.ambiente)?.label ||
                         'Sin definir'}
                     </span>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Ultimo chequeo:{' '}
                     <span className="font-semibold text-slate-950">
                       {formatDateTime(integracionFactus?.ultimoChequeo)}
                     </span>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Rango activo:{' '}
                     <span className="font-semibold text-slate-950">
                       {integracionFactus?.rangoNumeracionId || 'Pendiente'}
                     </span>
                   </div>
-                  <div className="border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Base URL:{' '}
                     <span className="font-semibold text-slate-950">
                       {configuracionEfectiva?.baseUrl || 'Pendiente'}
@@ -1241,7 +1241,7 @@ function ConfiguracionContent({
                 ) : null}
 
                 {configuracionLocal ? (
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                  <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                     Hay configuracion local disponible. Si no guardas credenciales propias, la
                     clinica puede apoyarse en las variables del entorno del despliegue.
                   </div>
@@ -1340,7 +1340,7 @@ export default function ConfiguracionPage() {
       actions={
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           Volver al dashboard
         </Link>
@@ -1375,7 +1375,7 @@ export default function ConfiguracionPage() {
         >
           <div className="grid gap-4 xl:grid-cols-4">
             {[0, 1, 2, 3].map((item) => (
-              <div key={item} className="h-40 animate-pulse border border-slate-200 bg-slate-50" />
+              <div key={item} className="h-40 animate-pulse border border-border bg-muted" />
             ))}
           </div>
         </DashboardPanel>

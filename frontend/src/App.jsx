@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { authApi } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
 import AppErrorBoundary from '@/components/shared/AppErrorBoundary'
+import { useThemeStore } from '@/store/themeStore'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,10 +93,23 @@ function AuthBootstrap({ children }) {
   return children
 }
 
+function ThemeSync() {
+  const dark = useThemeStore((state) => state.dark)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+  }, [dark])
+
+  return null
+}
+
 export default function App() {
+  const dark = useThemeStore((state) => state.dark)
+
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <ThemeSync />
         <AuthBootstrap>
           <AppRouter />
         </AuthBootstrap>
@@ -103,7 +117,7 @@ export default function App() {
           position="bottom-right"
           richColors
           closeButton
-          theme="dark"
+          theme={dark ? 'dark' : 'light'}
         />
       </QueryClientProvider>
     </AppErrorBoundary>

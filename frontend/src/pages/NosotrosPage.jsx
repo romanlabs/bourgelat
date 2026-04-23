@@ -29,8 +29,8 @@ export default function NosotrosPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-teal-500/10 to-cyan-400/10 p-8">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">En una frase</p>
+        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-teal-500/10 to-primary/10 p-8">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">En una frase</p>
           <p className="text-2xl font-semibold leading-10 text-white">
             {brandProfile.shortTagline}
           </p>

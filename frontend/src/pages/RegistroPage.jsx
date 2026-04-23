@@ -450,6 +450,8 @@ export default function RegistroPage() {
                 <img
                   src={registerHero}
                   alt="Veterinario atendiendo a un perro en consulta"
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,24,31,0.12)_0%,rgba(16,24,31,0.78)_100%)]" />
@@ -465,7 +467,7 @@ export default function RegistroPage() {
                     </p>
                     <h1
                       className="mt-3 max-w-[8ch] text-[26px] leading-[0.98] tracking-[-0.04em] text-white sm:max-w-[9ch] sm:text-[34px] lg:text-[38px]"
-                      style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                      style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                     >
                       Activa la cuenta de la clinica
                     </h1>
@@ -495,6 +497,8 @@ export default function RegistroPage() {
                     <img
                       src={registerDetail}
                       alt="Gatito siendo atendido en una clinica veterinaria"
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,24,28,0.1)_0%,rgba(18,24,28,0.72)_100%)]" />
@@ -548,7 +552,7 @@ export default function RegistroPage() {
                   </div>
                   <h2
                     className="mt-5 max-w-3xl text-[34px] leading-[0.96] tracking-[-0.04em] text-[#1f2521] sm:text-[46px] lg:text-[58px]"
-                    style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                   >
                     Crea la cuenta de la clinica con datos reales y una configuracion clara desde el primer ingreso.
                   </h2>
@@ -572,7 +576,7 @@ export default function RegistroPage() {
                 </p>
                 <h2
                   className="mt-4 text-[30px] leading-[0.98] tracking-[-0.04em] sm:text-[34px]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                 >
                   {currentStep.title}
                 </h2>
@@ -625,7 +629,7 @@ export default function RegistroPage() {
                     </p>
                     <h3
                       className="mt-2 text-[26px] leading-[0.98] tracking-[-0.04em] text-[#1f2521] sm:text-[32px]"
-                      style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                      style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                     >
                       {currentStep.label}
                     </h3>

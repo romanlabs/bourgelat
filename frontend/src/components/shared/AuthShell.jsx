@@ -105,11 +105,9 @@ export default function AuthShell({
   return (
     <div className="min-h-screen bg-[#f4f8fc] text-[#12324b]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(circle_at_top,#d7eafe_0%,rgba(215,234,254,0.34)_42%,transparent_72%)]" />
-        <div className="absolute left-[-8rem] top-[-6rem] h-80 w-80 rounded-full bg-[#d7eafe] blur-3xl" />
-        <div className="absolute bottom-[-7rem] right-[-4rem] h-96 w-96 rounded-full bg-[#cde7f6] blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(circle_at_top,#d7eafe_0%,rgba(215,234,254,0.28)_42%,transparent_72%)]" />
         <div
-          className="absolute inset-0 opacity-[0.18]"
+          className="absolute inset-0 opacity-[0.14]"
           style={{
             backgroundImage:
               'linear-gradient(rgba(18,50,75,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(18,50,75,0.05) 1px, transparent 1px)',
@@ -191,7 +189,7 @@ export default function AuthShell({
                   const Icon = item.icon
 
                   return (
-                    <div key={item.title} className="rounded-[24px] border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+                    <div key={item.title} className="rounded-[24px] border border-white/10 bg-white/6 p-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/10 text-[#9dd5f2]">
                           <Icon className="h-5 w-5" />
