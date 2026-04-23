@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { agendaApi } from '@/features/agenda/agendaApi'
-import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
   BarPanel,
@@ -62,39 +61,13 @@ const TABS = [
   { id: 'plan', label: 'Plan y control', icon: ShieldCheck },
 ]
 
-const TAB_DETAILS = {
-  resumen: {
-    title: 'Command Center',
-    description: 'Lo que el administrador necesita leer primero para operar sin perder tiempo.',
-  },
-  agenda: {
-    title: 'Agenda y demanda',
-    description: 'Citas, asistencia y comportamiento operativo del periodo actual.',
-  },
-  ingresos: {
-    title: 'Caja e ingresos',
-    description: 'Facturacion, ticket promedio y seguimiento de caja.',
-  },
-  inventario: {
-    title: 'Inventario y riesgo',
-    description: 'Productos criticos, categorias activas y valor inventariado.',
-  },
-  pacientes: {
-    title: 'Base clinica',
-    description: 'Capacidad, pacientes activos y acceso directo al modulo operativo.',
-  },
-  plan: {
-    title: 'Plan y continuidad',
-    description: 'Vigencia, capacidades y funcionalidades activas del plan actual.',
-  },
-}
 
 const EMPTY_LIST = []
 const EMPTY_RECORD = {}
 const PRIMARY_BUTTON =
-  'inline-flex items-center gap-2 rounded-xl bg-teal-600 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700'
+  'inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
 const SECONDARY_BUTTON =
-  'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50'
+  'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted'
 
 const serializeDate = (date) => {
   const year = date.getFullYear()
@@ -106,11 +79,6 @@ const serializeDate = (date) => {
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
 
-const formatAuditAction = (value) =>
-  String(value || 'SIN_ACCION')
-    .toLowerCase()
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 
 const formatTime = (value) => {
   if (!value) return 'Sin hora'
@@ -120,7 +88,7 @@ const formatTime = (value) => {
 const getAppointmentTone = (estado) => {
   if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
   if (estado === 'en_curso') return 'border-sky-200 bg-sky-50 text-sky-700'
-  if (estado === 'confirmada') return 'border-cyan-200 bg-cyan-50 text-cyan-700'
+  if (estado === 'confirmada') return 'border-primary/30 bg-primary/10 text-primary'
   if (estado === 'cancelada' || estado === 'no_asistio') {
     return 'border-red-200 bg-red-50 text-red-700'
   }
@@ -188,9 +156,9 @@ function SparklineTooltip({ active, payload, label, formatter }) {
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg">
-      {label ? <p className="font-semibold text-slate-900">{label}</p> : null}
-      <p className="mt-1 text-slate-500">
+    <div className="rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-dropdown">
+      {label ? <p className="font-semibold text-card-foreground">{label}</p> : null}
+      <p className="mt-1 text-muted-foreground">
         {formatter ? formatter(payload[0]?.value) : payload[0]?.value}
       </p>
     </div>
@@ -199,11 +167,11 @@ function SparklineTooltip({ active, payload, label, formatter }) {
 
 function CommandPanel({ title, subtitle, action, className = '', children }) {
   return (
-    <section className={cn('rounded-2xl border border-slate-200/60 bg-white shadow-sm', className)}>
-      <div className="flex flex-col gap-3 border-b border-slate-200/70 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">{title}</p>
-          {subtitle ? <p className="mt-2 text-sm leading-6 text-slate-500">{subtitle}</p> : null}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+          {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
       </div>
@@ -221,31 +189,73 @@ function CommandKpiCard({
   color = '#0d9488',
   formatter,
   className = '',
+  primary = false,
 }) {
   const rawId = useId().replaceAll(':', '')
   const chartData = data?.length ? data : [{ label: '0', value: 0 }]
   const Icon = icon
 
+  if (primary) {
+    return (
+      <div className={cn('flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
+        <div className="flex flex-1 flex-col justify-between p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+              <p className="mt-4 text-5xl font-bold tabular-nums text-card-foreground">{value}</p>
+            </div>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-border bg-muted text-primary">
+              <Icon className="h-5 w-5" />
+            </span>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">{helper}</p>
+        </div>
+        <div className="h-24 border-t border-border px-2 pb-2 pt-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.22} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={color}
+                fill={`url(#${rawId})`}
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 3 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={cn('rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm', className)}>
+    <div className={cn('rounded-2xl border border-border bg-card p-5 shadow-card', className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">{label}</p>
-          <p className="mt-3 text-3xl font-bold text-slate-900">{value}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-card-foreground">{value}</p>
         </div>
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-          <Icon className="h-5 w-5" />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-muted text-muted-foreground">
+          <Icon className="h-4 w-4" />
         </span>
       </div>
 
-      <p className="mt-2 text-xs text-slate-400">{helper}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
 
-      <div className="mt-4 h-16">
+      <div className="mt-3 h-12">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.34} />
+                <stop offset="5%" stopColor={color} stopOpacity={0.28} />
                 <stop offset="95%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
@@ -255,7 +265,7 @@ function CommandKpiCard({
               dataKey="value"
               stroke={color}
               fill={`url(#${rawId})`}
-              strokeWidth={2.2}
+              strokeWidth={2}
               dot={false}
               activeDot={{ r: 3 }}
             />
@@ -270,15 +280,15 @@ function TacticalAlertStrip({ alerts }) {
   if (alerts.length === 0) return null
 
   return (
-    <section className="rounded-2xl border border-red-200 bg-red-50/90 px-5 py-4 shadow-sm">
+    <section className="rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="flex items-center gap-3 text-red-800">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
+        <div className="flex items-center gap-3 text-destructive">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10">
             <ShieldAlert className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide">Tira tactica 8:00 AM</p>
-            <p className="mt-1 text-sm text-red-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em]">Tira tactica 8:00 AM</p>
+            <p className="mt-1 text-sm text-destructive/80">
               Solo aparece cuando hay algo que puede romper la operacion de hoy.
             </p>
           </div>
@@ -286,13 +296,13 @@ function TacticalAlertStrip({ alerts }) {
 
         <div className="grid flex-1 gap-3 lg:grid-cols-3">
           {alerts.map((alert) => (
-            <div key={alert.id} className="rounded-2xl border border-red-200/80 bg-white/60 p-4">
+            <div key={alert.id} className="rounded-2xl border border-destructive/20 bg-card/80 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-red-900">{alert.title}</p>
-                <StatusPill tone="border-red-200 bg-red-100 text-red-700">Urgente</StatusPill>
+                <p className="text-sm font-semibold text-destructive">{alert.title}</p>
+                <StatusPill tone="border-destructive/30 bg-destructive/10 text-destructive">Urgente</StatusPill>
               </div>
-              <p className="mt-2 text-sm leading-6 text-red-800">{alert.detail}</p>
-              <Link to={alert.to} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-red-900">
+              <p className="mt-2 text-sm leading-6 text-destructive/80">{alert.detail}</p>
+              <Link to={alert.to} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-destructive">
                 {alert.actionLabel}
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -306,7 +316,7 @@ function TacticalAlertStrip({ alerts }) {
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   return (
-    <section className="rounded-2xl border border-slate-200/60 bg-white p-2 shadow-sm">
+    <section className="rounded-2xl border border-border bg-card p-2 shadow-card">
       <div className="flex flex-wrap gap-2">
         {TABS.map((tab) => {
           const Icon = tab.icon
@@ -318,32 +328,27 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex min-w-[180px] flex-1 items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition',
-                active ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50'
+                'flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition',
+                active ? 'bg-foreground text-background shadow-sm' : 'bg-card text-muted-foreground hover:bg-muted'
               )}
             >
-              <span className="flex items-center gap-3">
+              <span className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl',
-                    active ? 'bg-white/10 text-teal-200' : 'bg-slate-100 text-slate-600'
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                    active ? 'bg-background/10 text-primary' : 'bg-muted text-muted-foreground'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </span>
-                <span>
-                  <span className="block text-sm font-semibold">{tab.label}</span>
-                  <span className={cn('mt-1 block text-xs', active ? 'text-slate-300' : 'text-slate-400')}>
-                    {TAB_DETAILS[tab.id].description}
-                  </span>
-                </span>
+                <span className="text-sm font-semibold">{tab.label}</span>
               </span>
 
               {tabBadges[tab.id] ? (
                 <span
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
-                    active ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-500'
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                    active ? 'bg-background/10 text-background' : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {tabBadges[tab.id]}
@@ -362,7 +367,7 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
     return (
       <div className="space-y-3">
         {[0, 1, 2, 3].map((item) => (
-          <div key={item} className="h-20 animate-pulse rounded-2xl border border-slate-200/60 bg-slate-50" />
+          <div key={item} className="h-20 animate-pulse rounded-2xl border border-border bg-muted" />
         ))}
       </div>
     )
@@ -370,9 +375,9 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-        <p className="text-sm font-semibold text-slate-900">Sin citas pendientes para hoy</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+      <div className="rounded-2xl border border-dashed border-border bg-muted p-6">
+        <p className="text-sm font-semibold text-card-foreground">Sin citas pendientes para hoy</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Cuando entren pacientes a la agenda, este puente mostrara acciones directas para atender y
           cobrar sin navegar de mas.
         </p>
@@ -382,7 +387,7 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
 
   return (
     <div className="space-y-3">
-      <div className="hidden grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] gap-4 px-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400 md:grid">
+      <div className="hidden grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] gap-4 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground md:grid">
         <span>Hora</span>
         <span>Paciente</span>
         <span>Profesional</span>
@@ -393,27 +398,27 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
       {rows.map((appointment) => (
         <div
           key={appointment.id}
-          className="grid gap-4 rounded-2xl border border-slate-200/70 bg-white p-4 transition hover:bg-slate-50 md:grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] md:items-center"
+          className="grid gap-4 rounded-2xl border border-border bg-card p-4 transition hover:bg-muted/50 md:grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] md:items-center"
         >
           <div>
-            <p className="text-sm font-semibold text-slate-900">{formatTime(appointment.horaInicio)}</p>
-            <p className="mt-1 text-xs text-slate-400">{appointment.tipoCita || 'Consulta'}</p>
+            <p className="text-sm font-semibold text-card-foreground">{formatTime(appointment.horaInicio)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{appointment.tipoCita || 'Consulta'}</p>
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">
+            <p className="truncate text-sm font-semibold text-card-foreground">
               {appointment.mascota?.nombre || 'Paciente sin nombre'}
             </p>
-            <p className="mt-1 truncate text-sm text-slate-500">
+            <p className="mt-1 truncate text-sm text-muted-foreground">
               {appointment.propietario?.nombre || 'Tutor pendiente'} · {appointment.mascota?.especie || 'Sin especie'}
             </p>
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-700">
+            <p className="truncate text-sm font-medium text-foreground">
               {appointment.veterinario?.nombre || 'Profesional por asignar'}
             </p>
-            <p className="mt-1 truncate text-xs text-slate-400">
+            <p className="mt-1 truncate text-xs text-muted-foreground">
               {appointment.motivo || 'Sin motivo registrado'}
             </p>
           </div>
@@ -446,15 +451,15 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
 
 function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <section className="border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <section className="border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-6 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Dashboard administrativo
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-slate-950">{nombreClinica}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
               Este panel de control esta reservado para administracion. Tu perfil puede seguir
               operando dentro de los modulos permitidos, pero el seguimiento financiero, reportes y
               decisiones de plan se concentran aqui.
@@ -462,27 +467,27 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
           </div>
 
           <div className="grid gap-4 p-6 md:grid-cols-2">
-            <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <div className="border border-border bg-muted px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Acceso actual
               </p>
               <p className="mt-3 text-base font-semibold text-slate-950">{usuarioEmail || 'Sin email principal'}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Si necesitas ver reportes o controles de plan, solicita acceso al administrador.
               </p>
             </div>
 
-            <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <div className="border border-border bg-muted px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Siguiente modulo
               </p>
               <p className="mt-3 text-base font-semibold text-slate-950">Pacientes y tutores</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 La base clinica publicada ya puede usarse desde el equipo operativo.
               </p>
               <Link
                 to="/pacientes"
-                className="mt-4 inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="mt-4 inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 Abrir modulo
                 <ArrowRight className="h-4 w-4" />
@@ -583,19 +588,6 @@ export default function DashboardPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const auditoriaRecienteQuery = useQuery({
-    queryKey: ['dashboard-auditoria-reciente', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () =>
-      auditoriaApi.obtenerLogs({
-        pagina: 1,
-        limite: 6,
-        desde: rangoMes.fechaInicio,
-        hasta: rangoMes.fechaFin,
-      }),
-    enabled: esAdministrador,
-    placeholderData: (previousData) => previousData,
-  })
-
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
 
@@ -677,23 +669,6 @@ export default function DashboardPage() {
           valor: formatCurrency(Number(producto.precioVenta || 0) * Number(producto.stock || 0)),
         })),
     [inventarioQuery.data?.productos]
-  )
-
-  const recentAuditRows = useMemo(
-    () =>
-      (auditoriaRecienteQuery.data?.logs || []).map((log) => ({
-        id: log.id,
-        fecha: new Intl.DateTimeFormat('es-CO', {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(new Date(log.createdAt)),
-        accion: formatAuditAction(log.accion),
-        responsable: log.responsable?.nombre || 'Sistema',
-        resultado: log.resultado,
-      })),
-    [auditoriaRecienteQuery.data?.logs]
   )
 
   const patientCapacity = buildCapacityChart(mascotasActivas, limiteMascotas, 'Pacientes')
@@ -919,7 +894,7 @@ export default function DashboardPage() {
 
   const renderSummaryOverview = () => {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {tacticalAlerts.length > 0 ? (
           <div className="lg:col-span-12">
             <TacticalAlertStrip alerts={tacticalAlerts} />
@@ -927,56 +902,57 @@ export default function DashboardPage() {
         ) : null}
 
         <CommandKpiCard
-          className="lg:col-span-3"
+          primary
+          className="lg:col-span-5"
           label="Ingresos del periodo"
           value={formatCurrency(ingresosMesActual)}
-          helper="Lectura financiera del mes actual, con tendencia diaria."
+          helper="Tendencia diaria del mes actual."
           icon={Wallet}
           data={sparklineIngresos}
           color="#0d9488"
           formatter={formatCurrency}
         />
-        <CommandKpiCard
-          className="lg:col-span-3"
-          label="Citas de hoy"
-          value={formatNumber(citasHoy)}
-          helper={`${formatNumber(citasPendientesHoy)} pendientes al corte del dia.`}
-          icon={CalendarClock}
-          data={sparklineAgenda}
-          color="#0f4c81"
-          formatter={formatNumber}
-        />
-        <CommandKpiCard
-          className="lg:col-span-3"
-          label="Alertas de stock"
-          value={formatNumber(alertasInventario)}
-          helper="Productos por debajo del minimo o en vigilancia inmediata."
-          icon={Boxes}
-          data={sparklineInventario}
-          color="#ea580c"
-          formatter={formatNumber}
-        />
-        <CommandKpiCard
-          className="lg:col-span-3"
-          label="Control DIAN"
-          value={formatNumber(dianErrores)}
-          helper={
-            puedeVerIngresos
-              ? `${formatNumber(dianPendientes)} facturas siguen pendientes o enviadas.`
-              : 'Activa caja y reportes para leer el estado de emision.'
-          }
-          icon={ShieldAlert}
-          data={sparklineDian}
-          color="#7c3aed"
-          formatter={formatNumber}
-        />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7 lg:grid-cols-3">
+          <CommandKpiCard
+            label="Citas de hoy"
+            value={formatNumber(citasHoy)}
+            helper={`${formatNumber(citasPendientesHoy)} pendientes`}
+            icon={CalendarClock}
+            data={sparklineAgenda}
+            color="#0f4c81"
+            formatter={formatNumber}
+          />
+          <CommandKpiCard
+            label="Stock crítico"
+            value={formatNumber(alertasInventario)}
+            helper="Bajo mínimo o en vigilancia"
+            icon={Boxes}
+            data={sparklineInventario}
+            color="#ea580c"
+            formatter={formatNumber}
+          />
+          <CommandKpiCard
+            label="Control DIAN"
+            value={formatNumber(dianErrores)}
+            helper={
+              puedeVerIngresos
+                ? `${formatNumber(dianPendientes)} pendientes`
+                : 'Activa caja para ver emisión'
+            }
+            icon={ShieldAlert}
+            data={sparklineDian}
+            color="#7c3aed"
+            formatter={formatNumber}
+          />
+        </div>
 
         <CommandPanel
           className="lg:col-span-8"
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
-            <Link to="/agenda" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
+            <Link to="/agenda" className="text-sm font-semibold text-primary transition hover:text-primary/80">
               Ver agenda completa
             </Link>
           }
@@ -997,7 +973,7 @@ export default function DashboardPage() {
         >
           <div className="space-y-3">
             {adminAlerts.slice(0, 4).map((alert) => (
-              <div key={alert.id} className="rounded-2xl border border-slate-200/70 bg-slate-50 p-4">
+              <div key={alert.id} className="rounded-2xl border border-border bg-muted/60 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill
                     tone={
@@ -1012,12 +988,12 @@ export default function DashboardPage() {
                   >
                     {alert.estado}
                   </StatusPill>
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {alert.area}
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{alert.detalle}</p>
-                <Link to={alert.actionTo} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{alert.detalle}</p>
+                <Link to={alert.actionTo} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                   {alert.actionLabel}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -1026,155 +1002,6 @@ export default function DashboardPage() {
           </div>
         </CommandPanel>
 
-        <div className="lg:col-span-7">
-          {puedeVerIngresos ? (
-            <LinePanel
-              title="Ingresos del periodo"
-              subtitle={`Movimiento del ${formatShortDate(rangoMes.fechaInicio)} al ${formatShortDate(rangoMes.fechaFin)}.`}
-              data={ingresosPorDia}
-              dataKey="total"
-              color="#0d9488"
-              formatter={formatCurrency}
-              emptyMessage="Todavia no hay movimiento financiero en el periodo actual."
-            />
-          ) : (
-            <EmptyModuleState
-              title="Caja y reportes financieros no disponibles"
-              body="Activa facturacion interna y reportes operativos para ver ingresos, ticket promedio y metodos de pago."
-              ctaLabel="Revisar planes"
-            />
-          )}
-        </div>
-
-        <CommandPanel
-          className="lg:col-span-5"
-          title="Caja del corte"
-          subtitle="Las ultimas facturas del periodo y su forma de pago."
-          action={
-            <Link to="/finanzas" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
-              Abrir caja
-            </Link>
-          }
-        >
-          {invoiceRows.length > 0 ? (
-            <div className="space-y-3">
-              {invoiceRows.slice(0, 5).map((row) => (
-                <div
-                  key={row.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{row.numero}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {row.fecha} · {row.metodoPago}
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-900">{row.total}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-              <p className="text-sm font-semibold text-slate-900">Aun no hay facturas en el periodo</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Cuando caja empiece a moverse, aqui veras las ultimas emisiones sin salir del panel.
-              </p>
-            </div>
-          )}
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-7"
-          title="Trazabilidad reciente"
-          subtitle="Cambios y acciones del equipo que conviene tener a la vista."
-          action={
-            <Link to="/auditoria" className="text-sm font-semibold text-teal-700 transition hover:text-teal-800">
-              Abrir auditoria
-            </Link>
-          }
-        >
-          {recentAuditRows.length > 0 ? (
-            <div className="space-y-3">
-              {recentAuditRows.slice(0, 5).map((row) => (
-                <div
-                  key={row.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{row.accion}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {row.responsable} · {row.fecha}
-                    </p>
-                  </div>
-                  <StatusPill
-                    tone={
-                      row.resultado === 'fallido'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    }
-                  >
-                    {row.resultado}
-                  </StatusPill>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6">
-              <p className="text-sm font-semibold text-slate-900">Sin actividad reciente</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                La auditoria mostrara aqui los eventos mas recientes del sistema y del equipo.
-              </p>
-            </div>
-          )}
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-5"
-          title="Control del plan"
-          subtitle="Capacidad, vigencia y decisiones comerciales que pueden impactar operacion."
-        >
-          <div className="grid gap-3">
-            <div className="rounded-2xl border border-slate-200/70 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
-                {typeof diasRestantes === 'number' ? (
-                  <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
-                    {diasRestantes} dias restantes
-                  </StatusPill>
-                ) : null}
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {advertenciaPlan || 'La suscripcion no tiene alertas comerciales criticas.'}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Pacientes
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {limiteMascotas === null ? 'Sin limite' : formatNumber(Math.max(cupoMascotas, 0))}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                  Usuarios
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {limiteUsuarios === null ? 'Sin limite' : formatNumber(Math.max(cupoUsuarios, 0))}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">Cupos disponibles</p>
-              </div>
-            </div>
-
-            <Link to="/planes" className={cn(SECONDARY_BUTTON, 'justify-center')}>
-              Gestionar plan
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </CommandPanel>
       </div>
     )
   }
@@ -1292,7 +1119,7 @@ export default function DashboardPage() {
             label="Promedio por factura"
             value={formatCurrency(promedioFactura)}
             helper="Ticket promedio del mes actual."
-            tone="text-cyan-700"
+            tone="text-primary"
           />
           <KpiCard
             icon={ShieldCheck}
@@ -1338,7 +1165,7 @@ export default function DashboardPage() {
           action={
             <Link
               to="/finanzas"
-              className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+              className="text-sm font-semibold text-primary hover:text-primary"
             >
               Abrir modulo
             </Link>
@@ -1430,7 +1257,7 @@ export default function DashboardPage() {
           action={
             <Link
               to="/inventario"
-              className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+              className="text-sm font-semibold text-primary hover:text-primary"
             >
               Abrir modulo
             </Link>
@@ -1454,7 +1281,7 @@ export default function DashboardPage() {
           label="Propietarios"
           value={formatNumber(propietariosActivos)}
           helper="Responsables activos asociados a la base de pacientes."
-          tone="text-cyan-700"
+          tone="text-primary"
         />
         <KpiCard
           icon={ShieldCheck}
@@ -1517,13 +1344,13 @@ export default function DashboardPage() {
           subtitle="Acceso directo a la base real de pacientes y tutores."
         >
           <div className="space-y-4">
-            <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
               La primera pantalla interna ya esta resuelta: registrar tutor, registrar paciente y
               consultar la base activa sin depender de cards decorativas.
             </div>
             <Link
               to="/pacientes"
-              className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Abrir pacientes y tutores
               <ArrowRight className="h-4 w-4" />
@@ -1551,35 +1378,35 @@ export default function DashboardPage() {
         }
       >
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="border border-border bg-muted px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Clinica
             </p>
             <p className="mt-3 text-base font-semibold text-slate-950">{nombreClinica}</p>
-            <p className="mt-2 text-sm text-slate-600">{ubicacionClinica || 'Ubicacion pendiente'}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicacion pendiente'}</p>
           </div>
-          <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="border border-border bg-muted px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Vigencia
             </p>
             <p className="mt-3 text-base font-semibold text-slate-950">
               {suscripcion?.fechaFin ? formatLongDate(suscripcion.fechaFin) : 'Sin fecha de cierre'}
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               {advertenciaPlan || 'El plan se encuentra sin alertas comerciales criticas.'}
             </p>
           </div>
-          <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="border border-border bg-muted px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Accion recomendada
             </p>
             <p className="mt-3 text-base font-semibold text-slate-950">Gestion comercial</p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               Usa esta vista para decidir upgrades antes de bloquear operacion por cupos o modulos.
             </p>
             <Link
               to="/planes"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary"
             >
               Revisar planes
               <ArrowRight className="h-4 w-4" />
@@ -1603,7 +1430,7 @@ export default function DashboardPage() {
                   tone={
                     row.enabled
                       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-slate-200 bg-slate-100 text-slate-600'
+                      : 'border-border bg-slate-100 text-muted-foreground'
                   }
                 >
                   {row.enabled ? 'Incluido' : 'No incluido'}
@@ -1682,7 +1509,7 @@ export default function DashboardPage() {
       title="Dashboard administrativo"
       description="Un command center para priorizar operacion, caja, inventario y continuidad sin perder tiempo en pantallas saturadas."
       headerBadge={
-        <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+        <StatusPill tone="border-border bg-slate-100 text-foreground">
           Corte {formatShortDate(rangoMes.fechaFin)}
         </StatusPill>
       }
@@ -1716,11 +1543,11 @@ export default function DashboardPage() {
           {[0, 1, 2, 3].map((item) => (
             <div
               key={item}
-              className="h-44 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-3"
+              className="h-44 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-3"
             />
           ))}
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-8" />
-          <div className="h-72 animate-pulse rounded-2xl border border-slate-200/60 bg-white shadow-sm lg:col-span-4" />
+          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-8" />
+          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-4" />
         </div>
       ) : (
         activeView

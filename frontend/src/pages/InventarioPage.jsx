@@ -100,13 +100,13 @@ const getErrorMessage = (error, fallback) =>
 
 function RestrictedInventoryPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Inventario"
           subtitle="Este modulo se reserva para administracion o auxiliares autorizados."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad completa de inventario. Si necesitas revisar
             stock, alertas o movimientos, solicita permisos al administrador principal o al auxiliar
             responsable.
@@ -443,14 +443,14 @@ export default function InventarioPage() {
       title="Inventario y control de stock"
       description="Modulo administrativo para revisar categorias, alertas, productos activos y movimientos de stock con un lenguaje claro de oficina clinica."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Control operativo
         </StatusPill>
       }
       actions={
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           Volver al dashboard
         </Link>
@@ -536,7 +536,7 @@ export default function InventarioPage() {
                           ? 'border-red-200 bg-red-50 text-red-700'
                           : row.tipo === 'Proximo a vencer'
                             ? 'border-amber-200 bg-amber-50 text-amber-700'
-                            : 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                            : 'border-primary/30 bg-primary/10 text-primary'
                       }
                     >
                       {row.tipo}
@@ -566,7 +566,7 @@ export default function InventarioPage() {
                       setPaginaProductos(1)
                     }}
                     placeholder="Buscar por nombre, lote o laboratorio"
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <select
                     value={categoria}
@@ -574,7 +574,7 @@ export default function InventarioPage() {
                       setCategoria(event.target.value)
                       setPaginaProductos(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {CATEGORY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -649,7 +649,7 @@ export default function InventarioPage() {
                               productoId: row.raw.id,
                             }))
                           }}
-                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                          className="text-sm font-semibold text-primary hover:text-primary"
                         >
                           Movimiento
                         </button>
@@ -683,8 +683,8 @@ export default function InventarioPage() {
               />
 
               {(productosQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                  <p className="text-sm text-slate-600">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
                     Pagina {productosQuery.data?.paginaActual || 1} de {productosQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -692,7 +692,7 @@ export default function InventarioPage() {
                       type="button"
                       onClick={() => setPaginaProductos((current) => Math.max(current - 1, 1))}
                       disabled={(productosQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -704,7 +704,7 @@ export default function InventarioPage() {
                         )
                       }
                       disabled={(productosQuery.data?.paginaActual || 1) >= (productosQuery.data?.paginas || 1)}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -735,7 +735,7 @@ export default function InventarioPage() {
                     <select
                       value={productoForm.categoria}
                       onChange={(event) => setProductoForm((current) => ({ ...current, categoria: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {CATEGORY_OPTIONS.filter((option) => option.value !== 'todas').map((option) => (
                         <option key={option.value} value={option.value}>
@@ -746,7 +746,7 @@ export default function InventarioPage() {
                     <select
                       value={productoForm.unidadMedida}
                       onChange={(event) => setProductoForm((current) => ({ ...current, unidadMedida: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {UNIT_OPTIONS.map((option) => (
                         <option key={option} value={option}>
@@ -776,7 +776,7 @@ export default function InventarioPage() {
                       value={productoForm.stockMinimo}
                       onChange={(event) => setProductoForm((current) => ({ ...current, stockMinimo: event.target.value }))}
                       placeholder="Stock minimo"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -787,7 +787,7 @@ export default function InventarioPage() {
                       value={productoForm.precioCompra}
                       onChange={(event) => setProductoForm((current) => ({ ...current, precioCompra: event.target.value }))}
                       placeholder="Precio compra"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="number"
@@ -796,7 +796,7 @@ export default function InventarioPage() {
                       value={productoForm.precioVenta}
                       onChange={(event) => setProductoForm((current) => ({ ...current, precioVenta: event.target.value }))}
                       placeholder="Precio venta"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -805,23 +805,23 @@ export default function InventarioPage() {
                       value={productoForm.laboratorio}
                       onChange={(event) => setProductoForm((current) => ({ ...current, laboratorio: event.target.value }))}
                       placeholder="Laboratorio"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="text"
                       value={productoForm.lote}
                       onChange={(event) => setProductoForm((current) => ({ ...current, lote: event.target.value }))}
                       placeholder="Lote"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <input
                     type="date"
                     value={productoForm.fechaVencimiento}
                     onChange={(event) => setProductoForm((current) => ({ ...current, fechaVencimiento: event.target.value }))}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
-                  <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <label className="flex items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={productoForm.requiereFormula}
@@ -897,7 +897,7 @@ export default function InventarioPage() {
                     <select
                       value={movementForm.motivo}
                       onChange={(event) => setMovementForm((current) => ({ ...current, motivo: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {motivosDisponibles.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -923,14 +923,14 @@ export default function InventarioPage() {
                       value={movementForm.precioUnitario}
                       onChange={(event) => setMovementForm((current) => ({ ...current, precioUnitario: event.target.value }))}
                       placeholder="Precio unitario"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <textarea
                     value={movementForm.observaciones}
                     onChange={(event) => setMovementForm((current) => ({ ...current, observaciones: event.target.value }))}
                     placeholder="Observaciones del movimiento"
-                    className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
@@ -1005,15 +1005,15 @@ export default function InventarioPage() {
             emptyTitle="Aun no hay movimientos registrados"
             emptyBody="Cuando se creen entradas, salidas o ajustes, esta tabla mostrara la traza reciente."
             action={
-              <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+              <StatusPill tone="border-border bg-muted text-foreground">
                 Pagina {movimientosQuery.data?.paginaActual || 1}
               </StatusPill>
             }
           />
 
           {(movimientosQuery.data?.paginas || 1) > 1 ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white px-4 py-4 shadow-sm">
-              <p className="text-sm text-slate-600">
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-4 py-4 shadow-sm">
+              <p className="text-sm text-muted-foreground">
                 Pagina {movimientosQuery.data?.paginaActual || 1} de {movimientosQuery.data?.paginas || 1}
               </p>
               <div className="flex gap-3">
@@ -1021,7 +1021,7 @@ export default function InventarioPage() {
                   type="button"
                   onClick={() => setPaginaMovimientos((current) => Math.max(current - 1, 1))}
                   disabled={(movimientosQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Anterior
                 </button>
@@ -1033,7 +1033,7 @@ export default function InventarioPage() {
                     )
                   }
                   disabled={(movimientosQuery.data?.paginaActual || 1) >= (movimientosQuery.data?.paginas || 1)}
-                  className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Siguiente
                 </button>

@@ -79,13 +79,13 @@ const buildRows = (items, mapper) =>
 
 function RestrictedAntecedentesPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Antecedentes"
           subtitle="Este modulo se muestra a veterinarios, auxiliares o administracion autorizada."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre los antecedentes clinicos del paciente.
           </div>
         </DashboardPanel>
@@ -415,7 +415,7 @@ export default function AntecedentesPage() {
       title="Antecedentes del paciente"
       description="Modulo clinico para dejar visible el contexto permanente del paciente antes de consultar: alergias, vacunas, cirugias, condiciones cronicas y notas generales."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Contexto clinico
         </StatusPill>
       }
@@ -423,13 +423,13 @@ export default function AntecedentesPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/historias"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir historias
           </Link>
           <Link
             to="/pacientes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir pacientes
           </Link>
@@ -471,7 +471,7 @@ export default function AntecedentesPage() {
               label="Cirugias"
               value={formatNumber(cirugiasRows.length)}
               helper="Procedimientos previos relevantes."
-              tone="text-cyan-700"
+              tone="text-primary"
             />
             <KpiCard
               icon={HeartPulse}
@@ -486,19 +486,19 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Seleccionar paciente"
               subtitle="Busca un paciente activo para abrir su contexto clinico."
-              action={<Search className="h-4 w-4 text-cyan-700" />}
+              action={<Search className="h-4 w-4 text-primary" />}
             >
               <input
                 type="text"
                 value={petSearch}
                 onChange={(event) => setPetSearch(event.target.value)}
                 placeholder="Buscar por nombre o microchip"
-                className="h-11 w-full border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               />
 
               <div className="mt-4 space-y-2">
                 {selectedPet ? (
-                  <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
                     <p className="font-semibold text-slate-950">{selectedPet.nombre}</p>
                     <p className="mt-1">
                       {selectedPet.Propietario?.nombre || 'Sin tutor principal'} · {selectedPet.especie}
@@ -522,15 +522,15 @@ export default function AntecedentesPage() {
                       key={pet.id}
                       type="button"
                       onClick={() => handleSelectPet(pet)}
-                      className="flex w-full items-start justify-between border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
+                      className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
                     >
                       <div>
                         <p className="text-sm font-semibold text-slate-950">{pet.nombre}</p>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {pet.Propietario?.nombre || 'Sin tutor principal'}
                         </p>
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Seleccionar
                       </span>
                     </button>
@@ -544,7 +544,7 @@ export default function AntecedentesPage() {
             >
               {selectedPet ? (
                 <form className="grid gap-4" onSubmit={handleGuardarGenerales}>
-                  <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <label className="flex items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={generalValues.esterilizado}
@@ -556,30 +556,30 @@ export default function AntecedentesPage() {
                     type="date"
                     value={generalValues.fechaEsterilizacion}
                     onChange={(event) => updateGeneralDraft('fechaEsterilizacion', event.target.value)}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <textarea
                     value={generalValues.medicamentosActualesTexto}
                     onChange={(event) => updateGeneralDraft('medicamentosActualesTexto', event.target.value)}
                     placeholder="Medicamentos actuales, uno por linea"
-                    className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <textarea
                     value={generalValues.observacionesGenerales}
                     onChange={(event) => updateGeneralDraft('observacionesGenerales', event.target.value)}
                     placeholder="Observaciones generales del paciente"
-                    className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
                     disabled={!puedeEditar || actualizarGeneralesMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {actualizarGeneralesMutation.isPending ? 'Guardando...' : 'Guardar generales'}
                   </button>
                 </form>
               ) : (
-                <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Selecciona un paciente para abrir su resumen general de antecedentes.
                 </div>
               )}
@@ -590,7 +590,7 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Alergias"
               subtitle="Registro rapido de sensibilidades relevantes para la consulta."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               <DataTable
                 title="Listado de alergias"
@@ -612,7 +612,7 @@ export default function AntecedentesPage() {
                     value={alergiaForm.tipo}
                     onChange={(event) => setAlergiaForm((current) => ({ ...current, tipo: event.target.value }))}
                     placeholder="Tipo de alergia"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="text"
@@ -621,7 +621,7 @@ export default function AntecedentesPage() {
                       setAlergiaForm((current) => ({ ...current, descripcion: event.target.value }))
                     }
                     placeholder="Descripcion"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="text"
@@ -630,18 +630,18 @@ export default function AntecedentesPage() {
                       setAlergiaForm((current) => ({ ...current, reaccion: event.target.value }))
                     }
                     placeholder="Reaccion observada"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="date"
                     value={alergiaForm.fecha}
                     onChange={(event) => setAlergiaForm((current) => ({ ...current, fecha: event.target.value }))}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
                     disabled={agregarAlergiaMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {agregarAlergiaMutation.isPending ? 'Guardando...' : 'Agregar alergia'}
                   </button>
@@ -652,7 +652,7 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Vacunas"
               subtitle="Registro de esquema aplicado y proximas dosis."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               <DataTable
                 title="Vacunas registradas"
@@ -674,14 +674,14 @@ export default function AntecedentesPage() {
                     value={vacunaForm.nombre}
                     onChange={(event) => setVacunaForm((current) => ({ ...current, nombre: event.target.value }))}
                     placeholder="Nombre de la vacuna"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <div className="grid gap-4 sm:grid-cols-2">
                     <input
                       type="date"
                       value={vacunaForm.fecha}
                       onChange={(event) => setVacunaForm((current) => ({ ...current, fecha: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="date"
@@ -689,7 +689,7 @@ export default function AntecedentesPage() {
                       onChange={(event) =>
                         setVacunaForm((current) => ({ ...current, proximaDosis: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -698,7 +698,7 @@ export default function AntecedentesPage() {
                       value={vacunaForm.lote}
                       onChange={(event) => setVacunaForm((current) => ({ ...current, lote: event.target.value }))}
                       placeholder="Lote"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="text"
@@ -707,13 +707,13 @@ export default function AntecedentesPage() {
                         setVacunaForm((current) => ({ ...current, laboratorio: event.target.value }))
                       }
                       placeholder="Laboratorio"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={agregarVacunaMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {agregarVacunaMutation.isPending ? 'Guardando...' : 'Agregar vacuna'}
                   </button>
@@ -726,7 +726,7 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Cirugias"
               subtitle="Procedimientos previos para dar contexto a la consulta."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               <DataTable
                 title="Cirugias registradas"
@@ -748,13 +748,13 @@ export default function AntecedentesPage() {
                     value={cirugiaForm.nombre}
                     onChange={(event) => setCirugiaForm((current) => ({ ...current, nombre: event.target.value }))}
                     placeholder="Nombre de la cirugia"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="date"
                     value={cirugiaForm.fecha}
                     onChange={(event) => setCirugiaForm((current) => ({ ...current, fecha: event.target.value }))}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="text"
@@ -763,7 +763,7 @@ export default function AntecedentesPage() {
                       setCirugiaForm((current) => ({ ...current, veterinario: event.target.value }))
                     }
                     placeholder="Profesional o referencia"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <textarea
                     value={cirugiaForm.observaciones}
@@ -771,12 +771,12 @@ export default function AntecedentesPage() {
                       setCirugiaForm((current) => ({ ...current, observaciones: event.target.value }))
                     }
                     placeholder="Observaciones relevantes"
-                    className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
                     disabled={agregarCirugiaMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {agregarCirugiaMutation.isPending ? 'Guardando...' : 'Agregar cirugia'}
                   </button>
@@ -787,7 +787,7 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Condiciones cronicas"
               subtitle="Problemas persistentes que condicionan la atencion del paciente."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               <DataTable
                 title="Condiciones registradas"
@@ -810,7 +810,7 @@ export default function AntecedentesPage() {
                       setCondicionForm((current) => ({ ...current, nombre: event.target.value }))
                     }
                     placeholder="Nombre de la condicion"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <input
                     type="date"
@@ -821,7 +821,7 @@ export default function AntecedentesPage() {
                         fechaDiagnostico: event.target.value,
                       }))
                     }
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <textarea
                     value={condicionForm.tratamientoActual}
@@ -832,12 +832,12 @@ export default function AntecedentesPage() {
                       }))
                     }
                     placeholder="Tratamiento actual o seguimiento"
-                    className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <button
                     type="submit"
                     disabled={agregarCondicionMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {agregarCondicionMutation.isPending ? 'Guardando...' : 'Agregar condicion'}
                   </button>

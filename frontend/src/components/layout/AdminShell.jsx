@@ -13,17 +13,20 @@ import {
   Info,
   LayoutDashboard,
   LogOut,
+  Moon,
   PawPrint,
   Receipt,
   Search,
   ShieldCheck,
   Stethoscope,
+  Sun,
   Users,
 } from 'lucide-react'
 import { PLAN_META } from '@/features/dashboard/dashboardUtils'
 import { useLogout } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { useThemeStore } from '@/store/themeStore'
 
 const SIDEBAR_STORAGE_KEY = 'bourgelat-admin-sidebar-collapsed'
 
@@ -104,16 +107,16 @@ function SidebarLink({ item, active, collapsed = false }) {
           'flex items-center rounded-xl border text-sm font-medium transition-all duration-200',
           collapsed ? 'h-12 justify-center px-0' : 'gap-3 px-3.5 py-2.5',
           active
-            ? 'border-teal-500/60 bg-teal-500/12 text-white shadow-[0_10px_30px_rgba(13,148,136,0.18)]'
-            : 'border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white'
+            ? 'border-[#91e7e0]/50 bg-[#91e7e0]/10 text-white shadow-[0_10px_30px_rgba(92,232,220,0.18)]'
+            : 'border-transparent text-[#91e7e0]/40 hover:border-[#0c2235] hover:bg-[#081827] hover:text-white'
         )}
       >
         <span
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition',
             active
-              ? 'border-teal-400/30 bg-teal-500/14 text-teal-200'
-              : 'border-slate-700/80 bg-slate-800/80 text-slate-300'
+              ? 'border-[#91e7e0]/30 bg-[#91e7e0]/10 text-[#91e7e0]'
+              : 'border-[#0c2235] bg-[#081827] text-[#91e7e0]/40'
           )}
         >
           <Icon className="h-4 w-4" />
@@ -123,7 +126,7 @@ function SidebarLink({ item, active, collapsed = false }) {
       </Link>
 
       {collapsed ? (
-        <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-3 hidden -translate-y-1/2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg group-hover:block">
+        <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-3 hidden -translate-y-1/2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-lg group-hover:block">
           {item.label}
         </div>
       ) : null}
@@ -137,16 +140,16 @@ function QuickActionLink({ item }) {
   return (
     <Link
       to={item.to}
-      className="group rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50/40"
+      className="group rounded-2xl border border-border bg-card p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50/40"
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition group-hover:border-teal-200 group-hover:bg-teal-100 group-hover:text-teal-700">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-foreground transition group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
           <Icon className="h-5 w-5" />
         </span>
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">{item.label}</p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">{item.detail}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
         </div>
       </div>
     </Link>
@@ -168,6 +171,8 @@ export default function AdminShell({
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const { logout } = useLogout()
+  const dark = useThemeStore((state) => state.dark)
+  const toggleDark = useThemeStore((state) => state.toggleDark)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
 
@@ -201,12 +206,12 @@ export default function AdminShell({
   }, [usuario?.email, usuario?.nombre])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1720px] px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row">
           <aside
             className={cn(
-              'hidden shrink-0 rounded-2xl border border-slate-800 bg-slate-900 text-white shadow-[0_22px_60px_rgba(15,23,42,0.24)] transition-all duration-300 lg:sticky lg:top-4 lg:flex lg:h-[calc(100vh-2rem)] lg:flex-col',
+              'hidden shrink-0 rounded-2xl border border-[#0c2235] bg-[#06111c] text-white shadow-[0_22px_60px_rgba(2,8,14,0.45)] transition-all duration-300 lg:sticky lg:top-4 lg:flex lg:h-[calc(100vh-2rem)] lg:flex-col',
               isSidebarCollapsed ? 'lg:w-20' : 'lg:w-72'
             )}
           >
@@ -216,14 +221,14 @@ export default function AdminShell({
                 isSidebarCollapsed ? 'justify-center' : 'gap-3'
               )}
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/18 text-teal-200">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]">
                 <Stethoscope className="h-5 w-5" />
               </div>
 
               {!isSidebarCollapsed ? (
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{nombreClinica}</p>
-                  <p className="mt-1 truncate text-xs text-slate-400">
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
                     {ubicacionClinica || 'Backoffice Bourgelat'}
                   </p>
                 </div>
@@ -233,7 +238,7 @@ export default function AdminShell({
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(true)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:border-slate-600 hover:bg-slate-700"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
                   title="Contraer barra lateral"
                 >
                   <ChevronsLeft className="h-4 w-4" />
@@ -246,7 +251,7 @@ export default function AdminShell({
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(false)}
-                  className="mb-4 inline-flex h-10 w-10 self-center items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:border-slate-600 hover:bg-slate-700"
+                  className="mb-4 inline-flex h-10 w-10 self-center items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
                   title="Expandir barra lateral"
                 >
                   <ChevronsRight className="h-4 w-4" />
@@ -262,7 +267,7 @@ export default function AdminShell({
                   return (
                     <section key={section.key}>
                       {!isSidebarCollapsed ? (
-                        <p className="mb-2.5 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        <p className="mb-2.5 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                           {section.label}
                         </p>
                       ) : null}
@@ -284,14 +289,14 @@ export default function AdminShell({
 
               <div className="mt-auto border-t border-white/10 pt-4">
                 {asideNote && !isSidebarCollapsed ? (
-                  <details className="mb-3 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/70">
-                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-slate-300">
+                  <details className="mb-3 overflow-hidden rounded-xl border border-[#0c2235] bg-[#020d16]/80">
+                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#91e7e0]/50">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#06111c] text-[#91e7e0]/50">
                         <Info className="h-3.5 w-3.5" />
                       </span>
                       Guia del modulo
                     </summary>
-                    <p className="border-t border-slate-800 px-3 py-2 text-[11px] leading-5 text-slate-400">
+                    <p className="border-t border-[#0c2235] px-3 py-2 text-[11px] leading-5 text-[#91e7e0]/40">
                       {asideNote}
                     </p>
                   </details>
@@ -299,7 +304,7 @@ export default function AdminShell({
 
                 <div
                   className={cn(
-                    'rounded-2xl border border-white/10 bg-slate-950/70 p-3',
+                    'rounded-2xl border border-white/8 bg-[#020d16]/80 p-3',
                     isSidebarCollapsed ? 'flex flex-col items-center gap-3' : 'space-y-3'
                   )}
                 >
@@ -307,13 +312,13 @@ export default function AdminShell({
                     <>
                       <div
                         title={`Plan actual: ${plan.nombre}`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/14 text-teal-200"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]"
                       >
                         <ShieldCheck className="h-4 w-4" />
                       </div>
                       <div
                         title={usuario?.nombre || 'Usuario principal'}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]"
                       >
                         {usuarioIniciales}
                       </div>
@@ -321,7 +326,7 @@ export default function AdminShell({
                         type="button"
                         onClick={logout}
                         title="Cerrar sesion"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-100 transition hover:border-slate-600 hover:bg-slate-800"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#0c2235] bg-[#06111c] text-[#91e7e0]/70 transition hover:border-[#91e7e0]/30 hover:bg-[#081827] hover:text-[#91e7e0]"
                       >
                         <LogOut className="h-4 w-4" />
                       </button>
@@ -335,16 +340,16 @@ export default function AdminShell({
                         <p className="mt-2 text-sm font-semibold text-white">{plan.nombre}</p>
                       </div>
 
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
+                      <div className="rounded-xl border border-[#0c2235]/80 bg-[#04101a] p-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]">
                             {usuarioIniciales}
                           </div>
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-white">
                               {usuario?.nombre || 'Sin nombre'}
                             </p>
-                            <p className="truncate text-xs text-slate-400">
+                            <p className="truncate text-xs text-muted-foreground">
                               {usuario?.email || 'Sin email principal'}
                             </p>
                           </div>
@@ -354,7 +359,7 @@ export default function AdminShell({
                       <button
                         type="button"
                         onClick={logout}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-slate-600 hover:bg-slate-800"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0c2235] bg-[#06111c] px-4 py-3 text-sm font-semibold text-white transition hover:border-[#91e7e0]/25 hover:bg-[#081827]"
                       >
                         <LogOut className="h-4 w-4" />
                         Cerrar sesion
@@ -367,7 +372,7 @@ export default function AdminShell({
           </aside>
 
           <div className="min-w-0 flex-1 space-y-6">
-            <header className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_24px_rgba(8,25,39,0.06)]">
               <div className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0 xl:max-w-[460px]">
                   <div className="flex flex-wrap items-center gap-2">
@@ -377,19 +382,19 @@ export default function AdminShell({
                     </span>
                   </div>
                   {description ? (
-                    <p className="mt-1.5 text-sm leading-6 text-slate-500">{description}</p>
+                    <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p>
                   ) : null}
                 </div>
 
                 <button
                   type="button"
-                  className="order-last flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50 px-3.5 text-left shadow-sm transition hover:border-slate-300 hover:bg-white xl:order-none xl:max-w-[520px]"
+                  className="order-last flex h-11 w-full items-center justify-between rounded-2xl border border-border bg-muted px-3.5 text-left shadow-sm transition hover:border-border hover:bg-card xl:order-none xl:max-w-[520px]"
                 >
-                  <span className="flex items-center gap-3 text-sm text-slate-500">
-                    <Search className="h-4 w-4 text-slate-400" />
+                  <span className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Search className="h-4 w-4 text-muted-foreground" />
                     Buscar paciente, factura, historia o modulo
                   </span>
-                  <span className="hidden items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-400 sm:inline-flex">
+                  <span className="hidden items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-semibold text-muted-foreground sm:inline-flex">
                     <Command className="h-3.5 w-3.5" />K
                   </span>
                 </button>
@@ -397,10 +402,19 @@ export default function AdminShell({
                 <div className="flex flex-wrap items-center gap-2 xl:justify-end">
                   {headerBadge ? headerBadge : null}
                   {actions}
+                  <button
+                    type="button"
+                    onClick={toggleDark}
+                    aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:border-border hover:bg-muted hover:text-foreground"
+                  >
+                    <Sun className={`absolute h-4 w-4 transition-all duration-200 ${dark ? 'scale-100 opacity-100' : 'scale-75 opacity-0'}`} />
+                    <Moon className={`absolute h-4 w-4 transition-all duration-200 ${dark ? 'scale-75 opacity-0' : 'scale-100 opacity-100'}`} />
+                  </button>
                 </div>
               </div>
 
-              <div className="border-t border-slate-200/80 px-4 py-3 lg:hidden">
+              <div className="border-t border-border/80 px-4 py-3 lg:hidden">
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {NAV_ITEMS.map((item) => {
                     const Icon = item.icon
@@ -413,8 +427,8 @@ export default function AdminShell({
                         className={cn(
                           'inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition',
                           active
-                            ? 'border-slate-900 bg-slate-900 text-white'
-                            : 'border-slate-200 bg-white text-slate-600'
+                            ? 'border-foreground bg-foreground text-background'
+                            : 'border-border bg-card text-muted-foreground'
                         )}
                       >
                         <Icon className="h-4 w-4" />
@@ -427,13 +441,13 @@ export default function AdminShell({
             </header>
 
             {visibleQuickActions.length > 0 ? (
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm lg:p-5">
+              <section className="rounded-2xl border border-border bg-card p-4 shadow-[0_4px_24px_rgba(8,25,39,0.06)] lg:p-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                       Acciones rapidas
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       Lo que el equipo debe tener a la vista cuando necesita operar rapido.
                     </p>
                   </div>
@@ -441,7 +455,7 @@ export default function AdminShell({
                   <button
                     type="button"
                     onClick={() => setIsSidebarCollapsed((current) => !current)}
-                    className="hidden items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 lg:inline-flex"
+                    className="hidden items-center gap-2 self-start rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-border hover:bg-muted lg:inline-flex"
                   >
                     {isSidebarCollapsed ? (
                       <ChevronsRight className="h-4 w-4" />

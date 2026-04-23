@@ -92,7 +92,7 @@ const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - $
 const buildStateTone = (estado) => {
   switch (estado) {
     case 'confirmada':
-      return 'border-cyan-200 bg-cyan-50 text-cyan-700'
+      return 'border-primary/30 bg-primary/10 text-primary'
     case 'en_curso':
       return 'border-violet-200 bg-violet-50 text-violet-700'
     case 'completada':
@@ -102,7 +102,7 @@ const buildStateTone = (estado) => {
     case 'no_asistio':
       return 'border-amber-200 bg-amber-50 text-amber-700'
     default:
-      return 'border-slate-200 bg-slate-100 text-slate-700'
+      return 'border-border bg-muted text-foreground'
   }
 }
 
@@ -119,13 +119,13 @@ const getOwnerPets = (owner, fallbackPets) => {
 
 function RestrictedAgendaPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Agenda"
           subtitle="Este modulo se muestra a recepcion, veterinarios o perfiles administrativos."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la agenda clinica. Solicita permisos al
             administrador principal si necesitas programar, confirmar o reprogramar citas.
           </div>
@@ -446,7 +446,7 @@ export default function AgendaPage() {
       title="Agenda y coordinacion de citas"
       description="Organiza el dia por profesional, programa nuevas citas y resuelve confirmaciones o reprogramaciones sin salir del modulo administrativo."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Operacion diaria
         </StatusPill>
       }
@@ -454,13 +454,13 @@ export default function AgendaPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/pacientes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir pacientes
           </Link>
           <Link
             to="/historias"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir historias
           </Link>
@@ -508,7 +508,7 @@ export default function AgendaPage() {
               label="Citas del dia"
               value={formatNumber(citasDelDia)}
               helper={`Agenda visible para ${formatLongDate(fecha)}.`}
-              tone="text-cyan-700"
+              tone="text-primary"
             />
             <KpiCard
               icon={ShieldCheck}
@@ -564,7 +564,7 @@ export default function AgendaPage() {
                       setFecha(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                   <select
                     value={estado}
@@ -572,7 +572,7 @@ export default function AgendaPage() {
                       setEstado(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -586,7 +586,7 @@ export default function AgendaPage() {
                       setVeterinarioId(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     <option value="todos">Todos los profesionales</option>
                     {veterinarios.map((item) => (
@@ -633,7 +633,7 @@ export default function AgendaPage() {
                             horaFin: row.raw.horaFin?.slice(0, 5) || '',
                           })
                         }}
-                        className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                        className="text-sm font-semibold text-primary hover:text-primary"
                       >
                         Gestionar
                       </button>
@@ -643,15 +643,15 @@ export default function AgendaPage() {
                 emptyTitle="No hay citas para este filtro"
                 emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde el panel operativo."
                 action={
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+                  <StatusPill tone="border-border bg-muted text-foreground">
                     {formatLongDate(fecha)}
                   </StatusPill>
                 }
               />
 
               {(citasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                  <p className="text-sm text-slate-600">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
                     Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -659,7 +659,7 @@ export default function AgendaPage() {
                       type="button"
                       onClick={() => setPagina((current) => Math.max(current - 1, 1))}
                       disabled={(citasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -669,7 +669,7 @@ export default function AgendaPage() {
                         setPagina((current) => Math.min(current + 1, citasQuery.data?.paginas || 1))
                       }
                       disabled={(citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -708,16 +708,16 @@ export default function AgendaPage() {
             <DashboardPanel
               title="Nueva cita"
               subtitle="Programa la agenda sin salir del backoffice. Primero selecciona tutor, luego paciente y profesional."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
+              action={<Plus className="h-4 w-4 text-primary" />}
             >
               {!puedeProgramar ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Tu rol actual puede consultar la agenda, pero no crear nuevas citas.
                 </div>
               ) : (
                 <form className="grid gap-4" onSubmit={handleCreateAppointment}>
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <div className="border border-border bg-muted px-4 py-4">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       <Search className="h-3.5 w-3.5" />
                       Buscar tutor
                     </div>
@@ -726,12 +726,12 @@ export default function AgendaPage() {
                       value={ownerSearch}
                       onChange={(event) => setOwnerSearch(event.target.value)}
                       placeholder="Nombre, documento o telefono"
-                      className="mt-3 h-11 w-full border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
 
                     <div className="mt-4 space-y-2">
                       {selectedOwner ? (
-                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-slate-700">
+                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
                           <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
                           <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
                           <button
@@ -764,15 +764,15 @@ export default function AgendaPage() {
                                   mascotaId: '',
                                 }))
                               }}
-                              className="flex w-full items-start justify-between border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
+                              className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
                             >
                               <div>
                                 <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
-                                <p className="mt-1 text-sm text-slate-600">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                   {owner.telefono || 'Sin telefono principal'}
                                 </p>
                               </div>
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Seleccionar
                               </span>
                             </button>
@@ -780,9 +780,9 @@ export default function AgendaPage() {
                         : null}
 
                       {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
-                        <div className="border border-dashed border-slate-300 bg-white px-3 py-3 text-sm leading-7 text-slate-600">
+                        <div className="border border-dashed border-border bg-white px-3 py-3 text-sm leading-7 text-muted-foreground">
                           No encontramos un tutor con esa busqueda. Puedes crearlo desde el modulo de pacientes.
-                          <Link to="/pacientes" className="ml-2 font-semibold text-cyan-700 hover:text-cyan-800">
+                          <Link to="/pacientes" className="ml-2 font-semibold text-primary hover:text-primary">
                             Abrir pacientes
                           </Link>
                         </div>
@@ -797,14 +797,14 @@ export default function AgendaPage() {
                       onChange={(event) =>
                         setAppointmentForm((current) => ({ ...current, fecha: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <select
                       value={appointmentForm.tipoCita}
                       onChange={(event) =>
                         setAppointmentForm((current) => ({ ...current, tipoCita: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {TYPE_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -821,7 +821,7 @@ export default function AgendaPage() {
                       onChange={(event) =>
                         setAppointmentForm((current) => ({ ...current, horaInicio: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <input
                       type="time"
@@ -829,7 +829,7 @@ export default function AgendaPage() {
                       onChange={(event) =>
                         setAppointmentForm((current) => ({ ...current, horaFin: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
 
@@ -839,7 +839,7 @@ export default function AgendaPage() {
                       setAppointmentForm((current) => ({ ...current, mascotaId: event.target.value }))
                     }
                     disabled={!selectedOwner}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
                   >
                     <option value="">
                       {selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
@@ -859,7 +859,7 @@ export default function AgendaPage() {
                         veterinarioId: event.target.value,
                       }))
                     }
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     <option value="">Selecciona el profesional</option>
                     {veterinarios.map((item) => (
@@ -876,7 +876,7 @@ export default function AgendaPage() {
                       setAppointmentForm((current) => ({ ...current, motivo: event.target.value }))
                     }
                     placeholder="Motivo principal de la cita"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
 
                   <textarea
@@ -888,7 +888,7 @@ export default function AgendaPage() {
                       }))
                     }
                     placeholder="Observaciones operativas para recepcion o consulta"
-                    className="min-h-[120px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[120px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
 
                   {selectedOwner && mascotasDelTutor.length === 0 ? (
@@ -900,7 +900,7 @@ export default function AgendaPage() {
                   <button
                     type="submit"
                     disabled={crearCitaMutation.isPending || veterinarios.length === 0}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
                   </button>
@@ -912,19 +912,19 @@ export default function AgendaPage() {
               <DashboardPanel
                 title="Gestionar cita"
                 subtitle="Actualiza estado y confirma la evolucion de la cita seleccionada."
-                action={<CircleAlert className="h-4 w-4 text-cyan-700" />}
+                action={<CircleAlert className="h-4 w-4 text-primary" />}
               >
                 {!selectedAppointment ? (
-                  <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                  <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                     Selecciona una cita desde la tabla para confirmar, iniciar, completar, cancelar o marcar no asistencia.
                   </div>
                 ) : !puedeGestionarEstado ? (
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                  <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                     Tu rol actual puede ver el detalle, pero no cambiar el estado de la cita.
                   </div>
                 ) : (
                   <form className="grid gap-4" onSubmit={handleUpdateStatus}>
-                    <div className="border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600">
+                    <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
                       <p className="font-semibold text-slate-950">
                         {selectedAppointment.mascota?.nombre || 'Paciente'}
                       </p>
@@ -937,7 +937,7 @@ export default function AgendaPage() {
                       onChange={(event) =>
                         setStatusForm((current) => ({ ...current, estado: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
                       {STATUS_OPTIONS.filter((item) => item.value !== 'todos').map((option) => (
                         <option key={option.value} value={option.value}>
@@ -956,14 +956,14 @@ export default function AgendaPage() {
                           }))
                         }
                         placeholder="Motivo de cancelacion"
-                        className="min-h-[110px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                        className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
                       />
                     ) : null}
 
                     <button
                       type="submit"
                       disabled={actualizarEstadoMutation.isPending}
-                      className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {actualizarEstadoMutation.isPending ? 'Guardando...' : 'Actualizar estado'}
                     </button>
@@ -974,14 +974,14 @@ export default function AgendaPage() {
               <DashboardPanel
                 title="Reprogramar"
                 subtitle="Mueve la cita si recepcion necesita reorganizar el horario del dia."
-                action={<RefreshCcw className="h-4 w-4 text-cyan-700" />}
+                action={<RefreshCcw className="h-4 w-4 text-primary" />}
               >
                 {!selectedAppointment ? (
-                  <div className="border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                  <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                     Selecciona una cita desde la tabla para cambiar fecha u horario.
                   </div>
                 ) : !puedeReprogramar ? (
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                  <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                     Solo administracion y recepcion pueden reprogramar una cita desde este panel.
                   </div>
                 ) : (
@@ -992,7 +992,7 @@ export default function AgendaPage() {
                       onChange={(event) =>
                         setRescheduleForm((current) => ({ ...current, fecha: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
                       <input
@@ -1004,7 +1004,7 @@ export default function AgendaPage() {
                             horaInicio: event.target.value,
                           }))
                         }
-                        className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                        className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                       />
                       <input
                         type="time"
@@ -1012,14 +1012,14 @@ export default function AgendaPage() {
                         onChange={(event) =>
                           setRescheduleForm((current) => ({ ...current, horaFin: event.target.value }))
                         }
-                        className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                        className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={reprogramarMutation.isPending}
-                      className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {reprogramarMutation.isPending ? 'Guardando...' : 'Reprogramar cita'}
                     </button>

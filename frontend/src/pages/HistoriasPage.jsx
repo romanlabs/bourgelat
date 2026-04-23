@@ -187,13 +187,13 @@ const formatClinicalDateTime = (value) => {
 
 function RestrictedHistoriasPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Historias clinicas"
           subtitle="Este modulo se muestra a veterinarios, auxiliares o administracion autorizada."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la historia clinica. Solicita permisos al
             administrador o al medico responsable.
           </div>
@@ -646,19 +646,19 @@ export default function HistoriasPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/antecedentes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir antecedentes
           </Link>
           <Link
             to="/pacientes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir pacientes
           </Link>
           <Link
             to="/agenda"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir agenda
           </Link>
@@ -743,7 +743,7 @@ export default function HistoriasPage() {
                       setFechaInicio(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <input
                     type="date"
@@ -752,7 +752,7 @@ export default function HistoriasPage() {
                       setFechaFin(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <select
                     value={veterinarioId}
@@ -760,7 +760,7 @@ export default function HistoriasPage() {
                       setVeterinarioId(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   >
                     <option value="todos">Todos los medicos</option>
                     {veterinarios.map((item) => (
@@ -775,7 +775,7 @@ export default function HistoriasPage() {
                       setBloqueada(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   >
                     {BLOCK_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -831,8 +831,8 @@ export default function HistoriasPage() {
               />
 
               {(historiasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                  <p className="text-sm text-slate-600">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
                     Pagina {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -840,7 +840,7 @@ export default function HistoriasPage() {
                       type="button"
                       onClick={() => setPagina((current) => Math.max(current - 1, 1))}
                       disabled={(historiasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -852,7 +852,7 @@ export default function HistoriasPage() {
                         )
                       }
                       disabled={(historiasQuery.data?.paginaActual || 1) >= (historiasQuery.data?.paginas || 1)}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -873,12 +873,12 @@ export default function HistoriasPage() {
                 value={petSearch}
                 onChange={(event) => setPetSearch(event.target.value)}
                 placeholder="Buscar por nombre o microchip"
-                className="h-11 w-full border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
               />
 
               <div className="mt-4 space-y-2">
                 {selectedPet ? (
-                  <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
                     <p className="font-semibold text-slate-950">{selectedPet.nombre}</p>
                     <p className="mt-1">
                       {selectedPet.Propietario?.nombre || 'Sin tutor principal'} · {selectedPet.especie}
@@ -902,15 +902,15 @@ export default function HistoriasPage() {
                       key={pet.id}
                       type="button"
                       onClick={() => handleSelectPet(pet)}
-                      className="flex w-full items-start justify-between border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
+                      className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
                     >
                       <div>
                         <p className="text-sm font-semibold text-slate-950">{pet.nombre}</p>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {pet.Propietario?.nombre || 'Sin tutor principal'}
                         </p>
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Seleccionar
                       </span>
                     </button>
@@ -918,7 +918,7 @@ export default function HistoriasPage() {
               </div>
 
               {selectedHistory ? (
-                <div className="mt-5 border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-7 text-slate-600">
+                <div className="mt-5 border border-border bg-muted px-3 py-3 text-sm leading-7 text-muted-foreground">
                   <p className="font-semibold text-slate-950">Detalle cargado</p>
                   <p className="mt-1">{selectedHistory.veterinario?.nombre || 'Sin profesional'}</p>
                   <p>{formatClinicalDateTime(selectedHistory.fechaConsulta)}</p>
@@ -938,7 +938,7 @@ export default function HistoriasPage() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
                 >
                   <Plus className="h-4 w-4" />
                   Nueva
@@ -946,7 +946,7 @@ export default function HistoriasPage() {
               }
             >
               {!puedeEditarHistorias ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
                 </div>
               ) : (
@@ -957,7 +957,7 @@ export default function HistoriasPage() {
                       onChange={(event) =>
                         setForm((current) => ({ ...current, veterinarioId: event.target.value }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     >
                       <option value="">Selecciona el profesional</option>
                       {veterinarios.map((item) => (
@@ -969,7 +969,7 @@ export default function HistoriasPage() {
                     <select
                       value={form.citaId}
                       onChange={(event) => setForm((current) => ({ ...current, citaId: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     >
                       <option value="">Sin cita relacionada</option>
                       {citasRelacionadas.map((cita) => (
@@ -984,16 +984,16 @@ export default function HistoriasPage() {
                     value={form.motivoConsulta}
                     onChange={(event) => setForm((current) => ({ ...current, motivoConsulta: event.target.value }))}
                     placeholder="Motivo principal de consulta"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <textarea
                     value={form.anamnesis}
                     onChange={(event) => setForm((current) => ({ ...current, anamnesis: event.target.value }))}
                     placeholder="Anamnesis y relato del tutor"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
 
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                  <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                     Registra signos vitales y examen basico con nombres completos para evitar ambiguedades:
                     frecuencia cardiaca en latidos por minuto, frecuencia respiratoria en respiraciones por minuto y condicion corporal en escala de 1 a 5.
                   </div>
@@ -1006,7 +1006,7 @@ export default function HistoriasPage() {
                       value={form.peso}
                       onChange={(event) => setForm((current) => ({ ...current, peso: event.target.value }))}
                       placeholder="Peso"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                     <input
                       type="number"
@@ -1016,7 +1016,7 @@ export default function HistoriasPage() {
                       value={form.temperatura}
                       onChange={(event) => setForm((current) => ({ ...current, temperatura: event.target.value }))}
                       placeholder="Temperatura °C"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                     <input
                       type="number"
@@ -1026,7 +1026,7 @@ export default function HistoriasPage() {
                         setForm((current) => ({ ...current, frecuenciaCardiaca: event.target.value }))
                       }
                       placeholder="Frecuencia cardiaca (lpm)"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                     <input
                       type="number"
@@ -1039,7 +1039,7 @@ export default function HistoriasPage() {
                         }))
                       }
                       placeholder="Frecuencia respiratoria (rpm)"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                     <input
                       type="number"
@@ -1050,14 +1050,14 @@ export default function HistoriasPage() {
                         setForm((current) => ({ ...current, condicionCorporal: event.target.value }))
                       }
                       placeholder="Condicion corporal (1-5)"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                     <input
                       type="text"
                       value={form.mucosas}
                       onChange={(event) => setForm((current) => ({ ...current, mucosas: event.target.value }))}
                       placeholder="Mucosas"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
                   </div>
 
@@ -1066,7 +1066,7 @@ export default function HistoriasPage() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, estadoHidratacion: event.target.value }))
                     }
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   >
                     {HYDRATION_OPTIONS.map((option) => (
                       <option key={option.value || 'default'} value={option.value}>
@@ -1080,13 +1080,13 @@ export default function HistoriasPage() {
                       setForm((current) => ({ ...current, examenFisicoDetalle: event.target.value }))
                     }
                     placeholder="Examen fisico y hallazgos relevantes"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <textarea
                     value={form.diagnostico}
                     onChange={(event) => setForm((current) => ({ ...current, diagnostico: event.target.value }))}
                     placeholder="Diagnostico principal"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <textarea
                     value={form.diagnosticoPresuntivo}
@@ -1094,19 +1094,19 @@ export default function HistoriasPage() {
                       setForm((current) => ({ ...current, diagnosticoPresuntivo: event.target.value }))
                     }
                     placeholder="Diagnostico presuntivo o diferencial"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <textarea
                     value={form.tratamiento}
                     onChange={(event) => setForm((current) => ({ ...current, tratamiento: event.target.value }))}
                     placeholder="Tratamiento instaurado"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
-                  <div className="grid gap-4 border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="grid gap-4 border border-border bg-muted px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-950">Plan farmacologico</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
                           Registra la formulacion como lo hace un software clinico serio: producto,
                           concentracion, dosis, via, frecuencia, duracion, cantidad dispensada e
                           instrucciones claras para el tutor.
@@ -1115,7 +1115,7 @@ export default function HistoriasPage() {
                       <button
                         type="button"
                         onClick={addMedicationDraft}
-                        className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
                       >
                         <Plus className="h-4 w-4" />
                         Agregar medicamento
@@ -1124,25 +1124,25 @@ export default function HistoriasPage() {
 
                     <div className="grid gap-4">
                       {puedeConsultarInventarioClinico ? (
-                        <div className="grid gap-3 border border-dashed border-slate-300 bg-slate-100 px-4 py-4">
+                        <div className="grid gap-3 border border-dashed border-border bg-muted px-4 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-slate-950">
                                 Traer desde inventario clinico
                               </p>
-                              <p className="mt-1 text-sm leading-6 text-slate-600">
+                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                 Busca medicamentos con stock disponible y llévalos a la formulación
                                 sin volver a digitarlos.
                               </p>
                             </div>
                             <label className="relative min-w-[260px]">
-                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                               <input
                                 type="text"
                                 value={medicationSearch}
                                 onChange={(event) => setMedicationSearch(event.target.value)}
                                 placeholder="Buscar medicamento, laboratorio o presentacion"
-                                className="h-11 w-full border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                           </div>
@@ -1152,25 +1152,25 @@ export default function HistoriasPage() {
                               medicamentosCatalogo.map((producto) => (
                                 <div
                                   key={producto.id}
-                                  className="flex items-start justify-between gap-3 border border-slate-200 bg-white px-4 py-4"
+                                  className="flex items-start justify-between gap-3 border border-border bg-card px-4 py-4"
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm font-semibold text-slate-950">
                                       {producto.nombre}
                                     </p>
                                     {producto.presentacionReferencia ? (
-                                      <p className="mt-1 text-sm text-slate-600">
+                                      <p className="mt-1 text-sm text-muted-foreground">
                                         {producto.presentacionReferencia}
                                       </p>
                                     ) : null}
-                                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-400">
+                                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-muted-foreground">
                                       Stock {formatNumber(producto.stock)} disponible
                                     </p>
                                   </div>
                                   <button
                                     type="button"
                                     onClick={() => addMedicationFromInventory(producto)}
-                                    className="inline-flex items-center gap-2 border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-slate-50"
+                                    className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Usar
@@ -1178,7 +1178,7 @@ export default function HistoriasPage() {
                                 </div>
                               ))
                             ) : (
-                              <div className="border border-slate-200 bg-white px-4 py-5 text-sm leading-7 text-slate-600 xl:col-span-2">
+                              <div className="border border-border bg-card px-4 py-5 text-sm leading-7 text-muted-foreground xl:col-span-2">
                                 No hay medicamentos disponibles para esta búsqueda dentro del
                                 inventario activo.
                               </div>
@@ -1188,10 +1188,10 @@ export default function HistoriasPage() {
                       ) : null}
 
                       {form.medicamentos.map((item, index) => (
-                        <div key={item.id} className="grid gap-4 border border-slate-200 bg-white px-4 py-4">
+                        <div key={item.id} className="grid gap-4 border border-border bg-card px-4 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                              <p className="text-sm font-semibold text-slate-900">
+                              <p className="text-sm font-semibold text-foreground">
                                 Medicamento {index + 1}
                               </p>
                               {item.fuente === 'inventario' ? (
@@ -1211,7 +1211,7 @@ export default function HistoriasPage() {
 
                           <div className="grid gap-4 xl:grid-cols-2">
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Medicamento
                               </span>
                               <input
@@ -1221,11 +1221,11 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'nombre', event.target.value)
                                 }
                                 placeholder="Ej. Meloxicam"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Concentracion o presentacion
                               </span>
                               <input
@@ -1235,14 +1235,14 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'concentracion', event.target.value)
                                 }
                                 placeholder="Ej. Suspension oral 1.5 mg/ml"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                           </div>
 
                           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Dosis
                               </span>
                               <input
@@ -1250,17 +1250,17 @@ export default function HistoriasPage() {
                                 value={item.dosis}
                                 onChange={(event) => updateMedicationDraft(item.id, 'dosis', event.target.value)}
                                 placeholder="Ej. 0.1 mg/kg"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Via
                               </span>
                               <select
                                 value={item.via}
                                 onChange={(event) => updateMedicationDraft(item.id, 'via', event.target.value)}
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               >
                                 {MEDICATION_ROUTE_OPTIONS.map((option) => (
                                   <option key={option.value || 'default'} value={option.value}>
@@ -1270,7 +1270,7 @@ export default function HistoriasPage() {
                               </select>
                             </label>
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Frecuencia
                               </span>
                               <input
@@ -1280,11 +1280,11 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'frecuencia', event.target.value)
                                 }
                                 placeholder="Ej. Cada 24 horas"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Duracion
                               </span>
                               <input
@@ -1294,14 +1294,14 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'duracion', event.target.value)
                                 }
                                 placeholder="Ej. 5 dias"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                           </div>
 
                           <div className="grid gap-3 xl:grid-cols-2">
                             <div className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Atajos de frecuencia
                               </span>
                               <div className="flex flex-wrap gap-2">
@@ -1313,7 +1313,7 @@ export default function HistoriasPage() {
                                     className={`border px-3 py-1.5 text-xs font-semibold transition ${
                                       item.frecuencia === option
                                         ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                        : 'border-border bg-card text-muted-foreground hover:bg-muted'
                                     }`}
                                   >
                                     {option}
@@ -1323,7 +1323,7 @@ export default function HistoriasPage() {
                             </div>
 
                             <div className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Atajos de duracion
                               </span>
                               <div className="flex flex-wrap gap-2">
@@ -1335,7 +1335,7 @@ export default function HistoriasPage() {
                                     className={`border px-3 py-1.5 text-xs font-semibold transition ${
                                       item.duracion === option
                                         ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                        : 'border-border bg-card text-muted-foreground hover:bg-muted'
                                     }`}
                                   >
                                     {option}
@@ -1347,7 +1347,7 @@ export default function HistoriasPage() {
 
                           <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)]">
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Cantidad dispensada
                               </span>
                               <input
@@ -1359,11 +1359,11 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'cantidad', event.target.value)
                                 }
                                 placeholder="Ej. 10"
-                                className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                             <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Instrucciones
                               </span>
                               <textarea
@@ -1372,7 +1372,7 @@ export default function HistoriasPage() {
                                   updateMedicationDraft(item.id, 'indicacion', event.target.value)
                                 }
                                 placeholder="Ej. Administrar despues de comer y completar el esquema indicado."
-                                className="min-h-[96px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                                className="min-h-[96px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                               />
                             </label>
                           </div>
@@ -1381,12 +1381,12 @@ export default function HistoriasPage() {
                     </div>
 
                     {medicationSummaryItems.length > 0 ? (
-                      <div className="grid gap-3 border border-dashed border-slate-300 bg-slate-100 px-4 py-4">
+                      <div className="grid gap-3 border border-dashed border-border bg-muted px-4 py-4">
                         <div>
                           <p className="text-sm font-semibold text-slate-950">
                             Resumen de formulacion
                           </p>
-                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
                             Asi se vera la receta clinica que estas dejando documentada para el
                             seguimiento del paciente.
                           </p>
@@ -1395,7 +1395,7 @@ export default function HistoriasPage() {
                           {medicationSummaryItems.map((item) => (
                             <div
                               key={item.id}
-                              className="border border-slate-200 bg-white px-4 py-4 text-sm leading-7 text-slate-700"
+                              className="border border-border bg-card px-4 py-4 text-sm leading-7 text-foreground"
                             >
                               <p className="font-semibold text-slate-950">{item.title}</p>
                               {item.source ? (
@@ -1416,13 +1416,13 @@ export default function HistoriasPage() {
                     value={form.indicaciones}
                     onChange={(event) => setForm((current) => ({ ...current, indicaciones: event.target.value }))}
                     placeholder="Indicaciones para el tutor"
-                    className="min-h-[100px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
                   <input
                     type="date"
                     value={form.proximaConsulta}
                     onChange={(event) => setForm((current) => ({ ...current, proximaConsulta: event.target.value }))}
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                   />
 
                   {selectedHistory?.bloqueada ? (
@@ -1440,7 +1440,7 @@ export default function HistoriasPage() {
                         !selectedPet ||
                         selectedHistory?.bloqueada
                       }
-                      className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {selectedHistory?.id
                         ? editarHistoriaMutation.isPending
@@ -1456,7 +1456,7 @@ export default function HistoriasPage() {
                         type="button"
                         onClick={() => bloquearHistoriaMutation.mutate(selectedHistory.id)}
                         disabled={bloquearHistoriaMutation.isPending || selectedHistory.bloqueada}
-                        className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
                       </button>

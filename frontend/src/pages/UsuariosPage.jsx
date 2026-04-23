@@ -114,10 +114,10 @@ function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
             key={role.value}
             className={`flex items-center gap-3 border px-3 py-3 text-sm transition ${
               disabled
-                ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                ? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
                 : checked
-                  ? 'border-cyan-500 bg-cyan-50 text-cyan-800'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-foreground hover:bg-muted'
             }`}
           >
             <input
@@ -151,8 +151,8 @@ function RoleBadges({ user }) {
             role === 'admin'
               ? 'border-violet-200 bg-violet-50 text-violet-700'
               : role === 'veterinario'
-                ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                : 'border-slate-200 bg-slate-100 text-slate-700'
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-border bg-muted text-foreground'
           }
         >
           {getRoleLabel(role)}
@@ -174,15 +174,15 @@ function PasswordChecklist({ password, visible }) {
   ]
 
   return (
-    <div className="border border-slate-200 bg-slate-50 px-3 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+    <div className="border border-border bg-muted px-3 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         Requisitos de acceso
       </p>
       <div className="mt-3 grid gap-2">
         {rules.map((rule) => (
           <div key={rule.id} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-slate-600">{rule.label}</span>
-            <span className={rule.valid ? 'text-emerald-700' : 'text-slate-400'}>
+            <span className="text-muted-foreground">{rule.label}</span>
+            <span className={rule.valid ? 'text-emerald-700' : 'text-muted-foreground'}>
               {rule.valid ? 'Cumple' : 'Pendiente'}
             </span>
           </div>
@@ -194,13 +194,13 @@ function PasswordChecklist({ password, visible }) {
 
 function RestrictedUsersPage() {
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Usuarios y roles"
           subtitle="Este modulo se reserva para administracion de la clinica."
         >
-          <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene permisos para administrar usuarios, roles ni estados del equipo.
           </div>
         </DashboardPanel>
@@ -466,7 +466,7 @@ export default function UsuariosPage() {
       title="Usuarios y roles"
       description="Centro administrativo para crear equipo, ordenar permisos, revisar cupos del plan y mantener una estructura limpia de acceso por clinica."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Control del equipo
         </StatusPill>
       }
@@ -474,13 +474,13 @@ export default function UsuariosPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Volver al dashboard
           </Link>
           <Link
             to="/planes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Revisar plan
           </Link>
@@ -506,7 +506,7 @@ export default function UsuariosPage() {
             title="Organiza la administracion del equipo"
             subtitle="Separamos lectura, alta y edicion para que cada tarea sea mas clara y no obligue a recorrer toda la pantalla."
             action={
-              <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+              <StatusPill tone="border-border bg-muted text-foreground">
                 {limiteUsuarios === null
                   ? 'Sin limite de usuarios'
                   : `${formatNumber(Math.max(cupoDisponible, 0))} cupos disponibles`}
@@ -539,14 +539,14 @@ export default function UsuariosPage() {
                   onClick={() => setActiveSection(section.id)}
                   className={`border px-4 py-4 text-left transition ${
                     activeSection === section.id
-                      ? 'border-cyan-500 bg-cyan-50'
-                      : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-muted hover:border-border hover:bg-card'
                   }`}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     {section.label}
                   </p>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{section.helper}</p>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
                 </button>
               ))}
             </div>
@@ -558,7 +558,7 @@ export default function UsuariosPage() {
               label="Usuarios activos"
               value={formatNumber(activos.length)}
               helper="Equipo actualmente habilitado para ingresar al sistema."
-              tone="text-cyan-700"
+              tone="text-primary"
             />
             <KpiCard
               icon={ShieldCheck}
@@ -611,13 +611,13 @@ export default function UsuariosPage() {
               subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el ultimo admin de la clinica."
             >
               <div className="grid gap-4">
-                <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                  Usa <span className="font-semibold text-slate-900">Administrador</span> solo para quien realmente gestiona configuracion, suscripcion y equipo.
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                  Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuracion, suscripcion y equipo.
                 </div>
-                <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                  Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-slate-900">roles adicionales</span> en vez de crear cuentas duplicadas.
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                  Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
                 </div>
-                <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                   La plataforma ya bloquea desactivar o degradar al ultimo administrador activo para evitar dejar la clinica sin control.
                 </div>
               </div>
@@ -636,20 +636,20 @@ export default function UsuariosPage() {
               subtitle="Tabla administrativa para buscar, filtrar, editar o activar y desactivar usuarios."
               action={
                 <div className="flex flex-wrap gap-3">
-                  <div className="flex items-center border border-slate-200 bg-white px-3">
-                    <Search className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center border border-border bg-card px-3">
+                    <Search className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
                       value={buscar}
                       onChange={(event) => setBuscar(event.target.value)}
                       placeholder="Buscar por nombre, correo o celular"
-                      className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                      className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
                   <select
                     value={estado}
                     onChange={(event) => setEstado(event.target.value)}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -660,7 +660,7 @@ export default function UsuariosPage() {
                   <select
                     value={rolFiltro}
                     onChange={(event) => setRolFiltro(event.target.value)}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     <option value="todos">Todos los roles</option>
                     {ROLE_OPTIONS.map((role) => (
@@ -682,8 +682,8 @@ export default function UsuariosPage() {
                     label: 'Colaborador',
                     render: (row) => (
                       <div>
-                        <p className="font-semibold text-slate-900">{row.nombre}</p>
-                        <p className="mt-1 text-xs text-slate-500">{row.email}</p>
+                        <p className="font-semibold text-foreground">{row.nombre}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{row.email}</p>
                       </div>
                     ),
                   },
@@ -696,9 +696,9 @@ export default function UsuariosPage() {
                     key: 'telefono',
                     label: 'Contacto',
                     render: (row) => (
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <Phone className="h-3.5 w-3.5 text-slate-400" />
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                           <span>{row.telefono}</span>
                         </div>
                       </div>
@@ -708,7 +708,7 @@ export default function UsuariosPage() {
                     key: 'ultimoAcceso',
                     label: 'Ultimo acceso',
                     render: (row) => (
-                      <span className="text-sm text-slate-600">{formatLastAccess(row.ultimoAcceso)}</span>
+                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso)}</span>
                     ),
                   },
                   {
@@ -719,7 +719,7 @@ export default function UsuariosPage() {
                         tone={
                           row.activo
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-slate-200 bg-slate-100 text-slate-600'
+                            : 'border-border bg-muted text-muted-foreground'
                         }
                       >
                         {row.activo ? 'Activo' : 'Inactivo'}
@@ -738,12 +738,12 @@ export default function UsuariosPage() {
                             setEditForm(buildEditForm(row.raw))
                             setActiveSection('editar')
                           }}
-                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                          className="text-sm font-semibold text-primary hover:text-primary"
                         >
                           Editar
                         </button>
                         {row.raw.id === usuario?.id ? (
-                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                             Sesion actual
                           </span>
                         ) : (
@@ -751,7 +751,7 @@ export default function UsuariosPage() {
                             type="button"
                             onClick={() => toggleUsuarioMutation.mutate({ id: row.raw.id })}
                             disabled={toggleUsuarioMutation.isPending}
-                            className="text-sm font-semibold text-slate-700 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="text-sm font-semibold text-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {row.raw.activo ? 'Desactivar' : 'Activar'}
                           </button>
@@ -763,7 +763,7 @@ export default function UsuariosPage() {
                 emptyTitle="No hay usuarios para este filtro"
                 emptyBody="Ajusta la busqueda o registra el primer colaborador desde la pestana Crear usuario."
                 action={
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
+                  <StatusPill tone="border-border bg-muted text-foreground">
                     {formatNumber(tableRows.length)} visibles
                   </StatusPill>
                 }
@@ -774,7 +774,7 @@ export default function UsuariosPage() {
             <DashboardPanel
               title="Crear usuario"
               subtitle="Alta administrativa del colaborador con rol principal, celular laboral y contrasena inicial."
-              action={<UserPlus className="h-4 w-4 text-cyan-700" />}
+              action={<UserPlus className="h-4 w-4 text-primary" />}
             >
               <form className="grid gap-4" onSubmit={handleCreateUser}>
                 <input
@@ -784,11 +784,11 @@ export default function UsuariosPage() {
                     setCreateForm((current) => ({ ...current, nombre: event.target.value }))
                   }
                   placeholder="Nombre completo del colaborador"
-                  className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center border border-slate-200 bg-white px-3">
-                    <Mail className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center border border-border bg-card px-3">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="email"
                       value={createForm.email}
@@ -796,11 +796,11 @@ export default function UsuariosPage() {
                         setCreateForm((current) => ({ ...current, email: event.target.value }))
                       }
                       placeholder="correo@clinica.co"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
-                  <div className="flex items-center border border-slate-200 bg-white px-3">
-                    <Phone className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center border border-border bg-card px-3">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
                       inputMode="numeric"
@@ -812,7 +812,7 @@ export default function UsuariosPage() {
                         }))
                       }
                       placeholder="Celular laboral"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
                 </div>
@@ -826,7 +826,7 @@ export default function UsuariosPage() {
                         rolesAdicionales: normalizeRoles(current.rolesAdicionales, event.target.value),
                       }))
                     }
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {ROLE_OPTIONS.map((role) => (
                       <option key={role.value} value={role.value}>
@@ -842,7 +842,7 @@ export default function UsuariosPage() {
                       setCreateForm((current) => ({ ...current, password: event.target.value }))
                     }
                     placeholder="Contrasena inicial"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                 </div>
                 <PasswordChecklist
@@ -850,7 +850,7 @@ export default function UsuariosPage() {
                   visible={showPasswordChecklist || createForm.password.length > 0}
                 />
                 <div className="grid gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Roles adicionales
                   </p>
                   <RoleChecklist
@@ -864,7 +864,7 @@ export default function UsuariosPage() {
                 <button
                   type="submit"
                   disabled={crearUsuarioMutation.isPending}
-                  className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {crearUsuarioMutation.isPending ? 'Guardando...' : 'Guardar usuario'}
                 </button>
@@ -937,10 +937,10 @@ export default function UsuariosPage() {
                   ? 'Ajusta datos, rol principal y roles adicionales del usuario seleccionado.'
                   : 'Selecciona primero un usuario desde la tabla para editarlo.'
               }
-              action={<PencilLine className="h-4 w-4 text-cyan-700" />}
+              action={<PencilLine className="h-4 w-4 text-primary" />}
             >
               {!selectedUser ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Esta vista se llena cuando eliges un colaborador desde la tabla principal.
                 </div>
               ) : (
@@ -952,10 +952,10 @@ export default function UsuariosPage() {
                       setEditForm((current) => ({ ...current, nombre: event.target.value }))
                     }
                     placeholder="Nombre del colaborador"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
-                  <div className="flex items-center border border-slate-200 bg-white px-3">
-                    <Mail className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center border border-border bg-card px-3">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="email"
                       value={editForm.email}
@@ -963,7 +963,7 @@ export default function UsuariosPage() {
                         setEditForm((current) => ({ ...current, email: event.target.value }))
                       }
                       placeholder="Email del colaborador"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -977,7 +977,7 @@ export default function UsuariosPage() {
                           rolesAdicionales: normalizeRoles(current.rolesAdicionales, event.target.value),
                         }))
                       }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500 disabled:cursor-not-allowed disabled:bg-slate-50"
+                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
                     >
                       {ROLE_OPTIONS.map((role) => (
                         <option key={role.value} value={role.value}>
@@ -985,8 +985,8 @@ export default function UsuariosPage() {
                         </option>
                       ))}
                     </select>
-                    <div className="flex items-center border border-slate-200 bg-white px-3">
-                      <Phone className="h-4 w-4 text-slate-400" />
+                    <div className="flex items-center border border-border bg-card px-3">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
                         inputMode="numeric"
@@ -998,12 +998,12 @@ export default function UsuariosPage() {
                           }))
                         }
                         placeholder="Celular laboral"
-                        className="h-11 w-full border-0 bg-transparent px-3 text-sm text-slate-700 outline-none"
+                        className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                       />
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Roles adicionales
                     </p>
                     <RoleChecklist
@@ -1022,8 +1022,8 @@ export default function UsuariosPage() {
                     </div>
                   ) : null}
 
-                  <div className="border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-600">
-                    <p className="font-semibold text-slate-900">{selectedUser.nombre}</p>
+                  <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
+                    <p className="font-semibold text-foreground">{selectedUser.nombre}</p>
                     <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso)}</p>
                     <p className="mt-1">
                       Estado actual: {selectedUser.activo ? 'Activo' : 'Inactivo'}
@@ -1034,7 +1034,7 @@ export default function UsuariosPage() {
                     <button
                       type="submit"
                       disabled={editarUsuarioMutation.isPending}
-                      className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {editarUsuarioMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                     </button>
@@ -1044,7 +1044,7 @@ export default function UsuariosPage() {
                         setSelectedUserId(null)
                         setEditForm(DEFAULT_EDIT_FORM)
                       }}
-                      className="border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                     >
                       Limpiar seleccion
                     </button>

@@ -66,7 +66,21 @@ module.exports = {
         '4xl': 'calc(var(--radius) + 16px)',
       },
       fontFamily: {
-        sans: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
+                sans: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Spectral', 'Georgia', 'serif'],
+        mono: ['Geist Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
+      },
+
+      transitionDuration: {
+        fast: '120ms',
+        normal: '200ms',
+        slow: '350ms',
+      },
+
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        decel: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
+        accel: 'cubic-bezier(0.4, 0.0, 1.0, 1)',
       },
     },
   },

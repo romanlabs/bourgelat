@@ -23,9 +23,7 @@ export default function PublicPageShell({
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-[#112739]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-[-8rem] h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="absolute top-28 right-[-6rem] h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-sky-500/8 blur-3xl" />
+        <div className="absolute -top-24 left-[-8rem] h-80 w-80 rounded-full bg-primary/8 blur-3xl" />
       </div>
 
       <div className="relative z-10">
@@ -75,7 +73,7 @@ export default function PublicPageShell({
             </p>
             <h1
               className="text-5xl leading-none tracking-[-0.05em] text-[#10263a] md:text-6xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               {title}
             </h1>

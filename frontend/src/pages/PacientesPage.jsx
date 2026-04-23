@@ -36,6 +36,12 @@ const SPECIES_LABELS = {
   otro: 'Otros',
 }
 
+const SEX_LABELS = {
+  desconocido: 'Sin especificar',
+  macho: 'Macho',
+  hembra: 'Hembra',
+}
+
 const SEX_OPTIONS = [
   { value: 'desconocido', label: 'Sin especificar' },
   { value: 'macho', label: 'Macho' },
@@ -64,25 +70,36 @@ const DEFAULT_PET_FORM = {
   especie: 'perro',
   raza: '',
   sexo: 'desconocido',
-  fechaNacimiento: '',
   peso: '',
   color: '',
-  microchip: '',
   observaciones: '',
-  fotoPerfil: '',
   esterilizado: false,
 }
 
 const MAX_PET_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PET_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+const INPUT_CLASSNAME =
+  'h-11 rounded-[16px] border border-slate-300 bg-white px-3.5 text-[15px] text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-cyan-100'
+const TEXTAREA_CLASSNAME =
+  'min-h-[140px] rounded-[16px] border border-slate-300 bg-white px-3.5 py-3 text-[15px] text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-cyan-100'
+const PET_MEDIA_COLUMN_CLASSNAME = 'grid w-full max-w-[272px] shrink-0 justify-self-start gap-3'
+const PET_MEDIA_FRAME_CLASSNAME = 'overflow-hidden border border-slate-300 bg-white'
+const PET_MEDIA_PREVIEW_CLASSNAME =
+  'flex h-[228px] w-full items-center justify-center overflow-hidden bg-slate-50'
+const PET_MEDIA_ACTIONS_CLASSNAME =
+  'flex h-[188px] flex-col justify-between overflow-hidden border border-slate-300 bg-white px-4 py-4'
+const PET_MEDIA_PRIMARY_BUTTON_CLASSNAME =
+  'inline-flex h-11 w-full cursor-pointer items-center justify-center border border-slate-900 bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800'
+const PET_MEDIA_SECONDARY_BUTTON_CLASSNAME =
+  'inline-flex h-10 w-full items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-900'
+
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const formatWeight = (value) => (value ? `${value} kg` : 'Sin peso')
-
 const getSpeciesLabel = (value) => SPECIES_LABELS[value] || value || 'Sin especie'
-const isHttpUrl = (value) => /^https?:\/\/.+/i.test(value)
+const getSexLabel = (value) => SEX_LABELS[value] || 'Sin especificar'
 
 function PetAvatar({ name, photo, size = 'h-12 w-12' }) {
   if (photo) {
@@ -90,17 +107,29 @@ function PetAvatar({ name, photo, size = 'h-12 w-12' }) {
       <img
         src={photo}
         alt={`Foto de ${name}`}
-        className={`${size} shrink-0 border border-slate-200 object-cover`}
+        className={`${size} shrink-0 border border-border object-cover`}
       />
     )
   }
 
   return (
     <div
-      className={`${size} flex shrink-0 items-center justify-center border border-slate-200 bg-slate-100 text-sm font-semibold uppercase text-slate-600`}
+      className={`${size} flex shrink-0 items-center justify-center border border-border bg-muted text-sm font-semibold uppercase text-muted-foreground`}
     >
       {String(name || 'P').slice(0, 1)}
     </div>
+  )
+}
+
+function FieldBlock({ label, hint, children, className = '' }) {
+  return (
+    <label className={`grid gap-2 ${className}`}>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+      {children}
+      {hint ? <span className="text-xs leading-6 text-slate-500">{hint}</span> : null}
+    </label>
   )
 }
 
@@ -239,37 +268,56 @@ export default function PacientesPage() {
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
   const historiasDisponibles = featureSet.has('historias')
   const antecedentesDisponibles = featureSet.has('antecedentes')
+
   const speciesData = useMemo(() => {
     const record = mascotas.reduce((acc, pet) => {
       acc[pet.especie] = (acc[pet.especie] || 0) + 1
       return acc
     }, {})
+
     return objectToChartData(record, SPECIES_LABELS)
   }, [mascotas])
 
   const mascotasRows = useMemo(
     () =>
-      mascotas.map((mascota) => ({
-        id: mascota.id,
-        paciente: mascota.nombre,
-        fotoPerfil: mascota.fotoPerfil || '',
-        especie: getSpeciesLabel(mascota.especie),
-        tutor: mascota.Propietario?.nombre || 'Sin tutor',
-        contacto: mascota.Propietario?.telefono || 'Sin telefono',
-        ficha:
+      mascotas.map((mascota) => {
+        const fichaInfo =
           historiasDisponibles && antecedentesDisponibles
-            ? 'Lista para historia y antecedentes'
+            ? {
+                label: 'Lista para historia y antecedentes',
+                tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+              }
             : historiasDisponibles
-              ? 'Lista para historia clinica'
+              ? {
+                  label: 'Lista para historia clinica',
+                  tone: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+                }
               : antecedentesDisponibles
-                ? 'Lista para antecedentes'
-                : 'Ficha clinica no incluida',
-        historiasTo: historiasDisponibles
-          ? `/historias?mascotaId=${mascota.id}&propietarioId=${mascota.Propietario?.id || ''}`
-          : '',
-        antecedentesTo: antecedentesDisponibles ? `/antecedentes?mascotaId=${mascota.id}` : '',
-        raw: mascota,
-      })),
+                ? {
+                    label: 'Lista para antecedentes',
+                    tone: 'border-amber-200 bg-amber-50 text-amber-700',
+                  }
+                : {
+                    label: 'Ficha clinica no incluida',
+                    tone: 'border-slate-200 bg-slate-100 text-slate-700',
+                  }
+
+        return {
+          id: mascota.id,
+          paciente: mascota.nombre,
+          fotoPerfil: mascota.fotoPerfil || '',
+          especie: getSpeciesLabel(mascota.especie),
+          tutor: mascota.Propietario?.nombre || 'Sin tutor',
+          contacto: mascota.Propietario?.telefono || 'Sin telefono',
+          ficha: fichaInfo.label,
+          fichaTone: fichaInfo.tone,
+          historiasTo: historiasDisponibles
+            ? `/historias?mascotaId=${mascota.id}&propietarioId=${mascota.Propietario?.id || ''}`
+            : '',
+          antecedentesTo: antecedentesDisponibles ? `/antecedentes?mascotaId=${mascota.id}` : '',
+          raw: mascota,
+        }
+      }),
     [antecedentesDisponibles, historiasDisponibles, mascotas]
   )
 
@@ -316,12 +364,9 @@ export default function PacientesPage() {
       especie: petForm.especie,
       raza: petForm.raza.trim() || undefined,
       sexo: petForm.sexo,
-      fechaNacimiento: petForm.fechaNacimiento || undefined,
       peso: petForm.peso ? Number(petForm.peso) : undefined,
       color: petForm.color.trim() || undefined,
-      microchip: petForm.microchip.trim() || undefined,
       observaciones: petForm.observaciones.trim() || undefined,
-      fotoPerfil: petForm.fotoPerfil.trim() || undefined,
       esterilizado: petForm.esterilizado,
     }
 
@@ -335,18 +380,8 @@ export default function PacientesPage() {
       return
     }
 
-    if (payload.fechaNacimiento && payload.fechaNacimiento > new Date().toISOString().slice(0, 10)) {
-      toast.error('La fecha de nacimiento no puede estar en el futuro.')
-      return
-    }
-
     if (payload.peso !== undefined && (!Number.isFinite(payload.peso) || payload.peso <= 0)) {
       toast.error('Si registras el peso, usa un valor positivo.')
-      return
-    }
-
-    if (payload.fotoPerfil && !isHttpUrl(payload.fotoPerfil)) {
-      toast.error('La foto del paciente debe usar una URL publica que empiece por http:// o https://.')
       return
     }
 
@@ -384,18 +419,24 @@ export default function PacientesPage() {
     }
 
     setPetPhotoFile(nextFile)
-    setPetForm((current) => ({ ...current, fotoPerfil: '' }))
   }
+
+  const patientOperationalItems = [
+    { label: 'Sexo', value: getSexLabel(petForm.sexo) },
+    { label: 'Peso', value: petForm.peso ? `${petForm.peso} kg` : 'Sin registrar' },
+    { label: 'Color', value: petForm.color.trim() || 'Sin registrar' },
+    { label: 'Condicion', value: petForm.esterilizado ? 'Esterilizado' : 'Sin confirmar' },
+  ]
 
   if (!rolPermitido) {
     return (
-      <div className="min-h-screen bg-slate-100">
+      <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <DashboardPanel
             title="Pacientes"
             subtitle="Este modulo se muestra a recepcion, auxiliares, veterinarios o perfiles administrativos."
           >
-            <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+            <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
               Tu acceso actual no tiene visibilidad sobre la base clinica de pacientes y tutores.
             </div>
           </DashboardPanel>
@@ -410,7 +451,7 @@ export default function PacientesPage() {
       title="Pacientes y tutores"
       description="Base clinica para recepcion, consulta y preparacion de historia. Aqui se registran tutores, pacientes activos y los datos minimos que realmente sirven en operacion."
       headerBadge={
-        <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
+        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Base clinica activa
         </StatusPill>
       }
@@ -418,25 +459,25 @@ export default function PacientesPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/agenda"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir agenda
           </Link>
           <Link
             to="/antecedentes"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir antecedentes
           </Link>
           <Link
             to="/historias"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Abrir historias
           </Link>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
             Volver al dashboard
           </Link>
@@ -467,45 +508,627 @@ export default function PacientesPage() {
                   )}
                 </div>
               ) : null}
+              {propietariosSelectorQuery.isError ? (
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                  {getErrorMessage(
+                    propietariosSelectorQuery.error,
+                    'No fue posible consultar los tutores disponibles.'
+                  )}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
-          <div className="grid gap-4 xl:grid-cols-4">
-            <KpiCard
-              icon={PawPrint}
-              label="Pacientes activos"
-              value={formatNumber(totalMascotas)}
-              helper="Pacientes visibles segun el filtro actual de la base."
-              tone="text-cyan-700"
-            />
-            <KpiCard
-              icon={Users}
-              label="Tutores"
-              value={formatNumber(totalPropietarios)}
-              helper="Total de tutores registrados en la clinica."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={ShieldCheck}
-              label="Cupo del plan"
-              value={limiteMascotas === null ? 'Sin limite' : formatNumber(Math.max(limiteMascotas - totalMascotas, 0))}
-              helper={
-                limiteMascotas === null
-                  ? 'La suscripcion actual no tiene tope de pacientes.'
-                  : `${formatNumber(totalMascotas)} de ${formatNumber(limiteMascotas)} pacientes en uso.`
-              }
-              tone="text-violet-700"
-            />
-            <KpiCard
-              icon={HeartPulse}
-              label="Historia clinica"
-              value={historiasDisponibles ? 'Activa' : 'No incluida'}
-              helper="Define si esta base ya puede pasar directo a evolucion clinica."
-              tone={historiasDisponibles ? 'text-rose-700' : 'text-amber-700'}
-            />
-          </div>
+          <DashboardPanel
+            title="Registro operativo"
+            subtitle="Tutor y paciente quedan en un mismo frente de trabajo, con una distribucion mas limpia para laptop y escritorio."
+            action={
+              <div className="flex flex-wrap gap-2">
+                <StatusPill
+                  tone={
+                    selectedOwner
+                      ? 'border-emerald-300 bg-white text-emerald-700'
+                      : 'border-amber-300 bg-white text-amber-800'
+                  }
+                >
+                  {selectedOwner ? 'Tutor listo' : 'Falta tutor'}
+                </StatusPill>
+                <StatusPill tone="border-slate-900 bg-slate-950 text-white">
+                  Paciente al frente
+                </StatusPill>
+              </div>
+            }
+          >
+            <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[340px_minmax(0,1fr)] xl:gap-5">
+              <div className="rounded-[22px] border border-slate-300 bg-[#f6f8fb] p-4 xl:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-lg font-semibold text-slate-950">Tutor responsable</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Busca un tutor existente o crealo rapido sin salir de esta misma zona.
+                    </p>
+                  </div>
+                  <UserRound className="h-5 w-5 shrink-0 text-slate-900" />
+                </div>
 
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
+                {puedeCrearPaciente ? (
+                  <div className="mt-5 rounded-[18px] border border-slate-300 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <Search className="h-3.5 w-3.5" />
+                      Buscar tutor existente
+                    </div>
+
+                    <FieldBlock label="Tutor" className="mt-3">
+                      <input
+                        type="text"
+                        value={ownerSearch}
+                        onChange={(event) => setOwnerSearch(event.target.value)}
+                        placeholder="Nombre, telefono o documento"
+                        disabled={Boolean(selectedOwner)}
+                        className={`${INPUT_CLASSNAME} disabled:cursor-not-allowed disabled:bg-slate-100`}
+                      />
+                    </FieldBlock>
+
+                    <div className="mt-4 space-y-3">
+                      {selectedOwner ? (
+                        <div className="rounded-[18px] border border-slate-300 border-l-[5px] border-l-emerald-600 bg-white px-4 py-4 text-sm text-slate-700">
+                          <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
+                          <p className="mt-2">
+                            {selectedOwner.telefono || 'Sin telefono principal'}
+                            {selectedOwner.numeroDocumento ? ` / ${selectedOwner.numeroDocumento}` : ''}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedOwner(null)
+                              setOwnerSearch('')
+                              setPetForm((current) => ({ ...current, propietarioId: '' }))
+                            }}
+                            className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                          >
+                            Cambiar tutor
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {!selectedOwner && !ownerSearch.trim() ? (
+                        <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                          Escribe nombre, telefono o documento para encontrar un tutor ya creado. Si no existe,
+                          puedes crearlo mas abajo.
+                        </div>
+                      ) : null}
+
+                      {!selectedOwner && ownerSearch.trim() && propietariosSelectorQuery.isFetching ? (
+                        <div className="rounded-[18px] border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                          Buscando tutores...
+                        </div>
+                      ) : null}
+
+                      {!selectedOwner && ownerSearch.trim() && propietarios.length > 0
+                        ? propietarios.map((owner) => (
+                            <button
+                              key={owner.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedOwner(owner)
+                                setOwnerSearch(owner.nombre)
+                                setPetForm((current) => ({ ...current, propietarioId: owner.id }))
+                              }}
+                              className="flex w-full items-start justify-between gap-3 rounded-[18px] border border-slate-300 bg-slate-50 px-4 py-4 text-left transition hover:border-slate-900 hover:bg-white"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {owner.telefono || 'Sin telefono principal'}
+                                </p>
+                                {owner.numeroDocumento ? (
+                                  <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-400">
+                                    {owner.tipoDocumento || 'Doc'} {owner.numeroDocumento}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                Seleccionar
+                              </span>
+                            </button>
+                          ))
+                        : null}
+
+                      {!selectedOwner &&
+                      ownerSearch.trim() &&
+                      !propietariosSelectorQuery.isFetching &&
+                      propietarios.length === 0 ? (
+                        <div className="rounded-[18px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
+                          No encontramos un tutor con esa busqueda. Puedes crearlo en el formulario de abajo.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-[18px] border border-slate-300 bg-white px-4 py-5 text-sm leading-7 text-slate-600">
+                    Tu rol actual puede consultar la base, pero no asignar un tutor a un nuevo paciente desde
+                    esta vista.
+                  </div>
+                )}
+
+                <div className="mt-5 border-t border-slate-300 pt-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-950">Alta rapida de tutor</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        Deja creado al responsable principal sin abrir otra pantalla.
+                      </p>
+                    </div>
+                    <StatusPill
+                      tone={
+                        puedeCrearTutor
+                          ? 'border-cyan-300 bg-white text-cyan-700'
+                          : 'border-slate-300 bg-white text-slate-700'
+                      }
+                    >
+                      {puedeCrearTutor ? 'Disponible' : 'Solo lectura'}
+                    </StatusPill>
+                  </div>
+
+                  {!puedeCrearTutor ? (
+                    <div className="mt-4 rounded-[18px] border border-slate-300 bg-white px-4 py-5 text-sm leading-7 text-slate-600">
+                      Tu rol actual puede consultar la base, pero no crear nuevos tutores.
+                    </div>
+                  ) : (
+                    <form className="mt-4 grid gap-4" onSubmit={handleCreateOwner}>
+                      <FieldBlock label="Nombre del tutor">
+                        <input
+                          type="text"
+                          value={ownerForm.nombre}
+                          onChange={(event) =>
+                            setOwnerForm((current) => ({ ...current, nombre: event.target.value }))
+                          }
+                          placeholder="Nombre completo"
+                          className={INPUT_CLASSNAME}
+                        />
+                      </FieldBlock>
+
+                      <div className="grid gap-4">
+                        <FieldBlock label="Tipo de documento">
+                          <select
+                            value={ownerForm.tipoDocumento}
+                            onChange={(event) =>
+                              setOwnerForm((current) => ({
+                                ...current,
+                                tipoDocumento: event.target.value,
+                              }))
+                            }
+                            className={INPUT_CLASSNAME}
+                          >
+                            {DOCUMENT_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </FieldBlock>
+
+                        <FieldBlock label="Numero de documento">
+                          <input
+                            type="text"
+                            value={ownerForm.numeroDocumento}
+                            onChange={(event) =>
+                              setOwnerForm((current) => ({
+                                ...current,
+                                numeroDocumento: event.target.value,
+                              }))
+                            }
+                            placeholder="Documento principal"
+                            className={INPUT_CLASSNAME}
+                          />
+                        </FieldBlock>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <FieldBlock label="Telefono o celular">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={ownerForm.telefono}
+                            onChange={(event) =>
+                              setOwnerForm((current) => ({
+                                ...current,
+                                telefono: event.target.value.replace(/\D/g, '').slice(0, 10),
+                              }))
+                            }
+                            placeholder="Numero principal"
+                            className={INPUT_CLASSNAME}
+                          />
+                        </FieldBlock>
+
+                        <FieldBlock label="Email" hint="Opcional">
+                          <input
+                            type="email"
+                            value={ownerForm.email}
+                            onChange={(event) =>
+                              setOwnerForm((current) => ({ ...current, email: event.target.value }))
+                            }
+                            placeholder="correo@clinica.com"
+                            className={INPUT_CLASSNAME}
+                          />
+                        </FieldBlock>
+                      </div>
+
+                      <FieldBlock label="Ciudad o municipio" hint="Opcional">
+                        <input
+                          type="text"
+                          value={ownerForm.ciudad}
+                          onChange={(event) =>
+                            setOwnerForm((current) => ({ ...current, ciudad: event.target.value }))
+                          }
+                          placeholder="Ciudad principal"
+                          className={INPUT_CLASSNAME}
+                        />
+                      </FieldBlock>
+
+                      <button
+                        type="submit"
+                        disabled={crearPropietarioMutation.isPending}
+                        className="border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {crearPropietarioMutation.isPending ? 'Guardando...' : 'Guardar tutor'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-[22px] border border-slate-300 bg-white p-4 xl:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-lg font-semibold text-slate-950">Registro rapido de paciente</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      El paciente queda al frente para cargar solo lo necesario en recepcion y consulta.
+                    </p>
+                  </div>
+                  <Plus className="h-5 w-5 shrink-0 text-slate-900" />
+                </div>
+
+                {!puedeCrearPaciente ? (
+                  <div className="mt-5 rounded-[18px] border border-slate-300 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
+                    Tu rol actual no tiene permisos para crear pacientes.
+                  </div>
+                ) : (
+                  <form className="mt-5 grid gap-5" onSubmit={handleCreatePet}>
+                    <div className="grid gap-5">
+                      <div className="rounded-[18px] border border-slate-300 bg-[#f6f8fb] p-4">
+                        <div className="grid gap-6 lg:grid-cols-[272px_minmax(0,1fr)] lg:items-start">
+                          <div className={PET_MEDIA_COLUMN_CLASSNAME}>
+                            <div className={PET_MEDIA_FRAME_CLASSNAME}>
+                              {petPhotoPreview ? (
+                                <div className={PET_MEDIA_PREVIEW_CLASSNAME}>
+                                  <img
+                                    src={petPhotoPreview}
+                                    alt={petForm.nombre ? `Foto de ${petForm.nombre}` : 'Foto del paciente'}
+                                    className="h-full w-full object-contain object-center"
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  className={`${PET_MEDIA_PREVIEW_CLASSNAME} flex-col px-5 text-center text-slate-500`}
+                                >
+                                  <PawPrint className="h-8 w-8 text-slate-900" />
+                                  <p className="mt-3 text-base font-semibold text-slate-950">
+                                    Sin foto cargada
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6">
+                                    Carga una imagen para identificar al paciente.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className={PET_MEDIA_ACTIONS_CLASSNAME}>
+                              <label
+                                htmlFor={`pet-photo-${petPhotoInputKey}`}
+                                className={PET_MEDIA_PRIMARY_BUTTON_CLASSNAME}
+                              >
+                                Seleccionar foto
+                              </label>
+                              <input
+                                id={`pet-photo-${petPhotoInputKey}`}
+                                key={petPhotoInputKey}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handlePetPhotoChange}
+                                className="sr-only"
+                              />
+
+                              {petPhotoFile ? (
+                                <div className="min-w-0 flex-1 pt-4">
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    Archivo cargado
+                                  </p>
+                                  <p
+                                    className="mt-2 truncate text-sm font-medium text-slate-900"
+                                    title={petPhotoFile.name}
+                                  >
+                                    {petPhotoFile.name}
+                                  </p>
+                                  <p className="mt-1 text-sm text-slate-500">
+                                    {formatNumber(Math.round(petPhotoFile.size / 1024))} KB
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="flex-1 pt-4">
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    Formato
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    JPG, PNG o WEBP hasta 4 MB.
+                                  </p>
+                                </div>
+                              )}
+
+                              {petPhotoFile ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPetPhotoFile(null)
+                                    setPetPhotoInputKey((current) => current + 1)
+                                  }}
+                                  className={PET_MEDIA_SECONDARY_BUTTON_CLASSNAME}
+                                >
+                                  Quitar foto
+                                </button>
+                              ) : (
+                                <div className="h-10" />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 grid content-start gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <StatusPill
+                                tone={
+                                  selectedOwner
+                                    ? 'border-emerald-300 bg-white text-emerald-700'
+                                    : 'border-amber-300 bg-white text-amber-800'
+                                }
+                              >
+                                {selectedOwner ? 'Tutor listo' : 'Tutor pendiente'}
+                              </StatusPill>
+                              <p className="min-w-0 text-sm text-slate-600">
+                                <span className="font-semibold text-slate-900">Tutor vinculado:</span>{' '}
+                                <span className="break-words">
+                                  {selectedOwner ? selectedOwner.nombre : 'Pendiente de seleccion'}
+                                </span>
+                              </p>
+                              {selectedOwner?.telefono ? (
+                                <p className="text-sm text-slate-500">{selectedOwner.telefono}</p>
+                              ) : null}
+                            </div>
+
+                            <div className="border-t border-slate-200 pt-4">
+                              <div className="min-w-0">
+                                <div>
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    Paciente
+                                  </p>
+                                  <p className="mt-1 break-words text-3xl font-semibold leading-tight text-slate-950 sm:text-[2rem]">
+                                    {petForm.nombre.trim() || 'Paciente nuevo'}
+                                  </p>
+                                </div>
+
+                                <p className="mt-2 break-words text-sm font-medium text-slate-600">
+                                  {getSpeciesLabel(petForm.especie)}
+                                  {petForm.raza.trim() ? ` / ${petForm.raza.trim()}` : ''}
+                                </p>
+                              </div>
+
+                              <div className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-2">
+                                {patientOperationalItems.map((item) => (
+                                  <div key={item.label}>
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                      {item.label}
+                                    </p>
+                                    <p className="mt-1 break-words text-sm leading-6 text-slate-700">
+                                      {item.value}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FieldBlock label="Nombre del paciente">
+                            <input
+                              type="text"
+                              value={petForm.nombre}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, nombre: event.target.value }))
+                              }
+                              placeholder="Nombre del paciente"
+                              className={INPUT_CLASSNAME}
+                            />
+                          </FieldBlock>
+
+                          <FieldBlock label="Especie">
+                            <select
+                              value={petForm.especie}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, especie: event.target.value }))
+                              }
+                              className={INPUT_CLASSNAME}
+                            >
+                              {SPECIES_OPTIONS.filter((option) => option.value !== 'todas').map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </FieldBlock>
+
+                          <FieldBlock label="Raza o cruce">
+                            <input
+                              type="text"
+                              value={petForm.raza}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, raza: event.target.value }))
+                              }
+                              placeholder="Raza o cruce"
+                              className={INPUT_CLASSNAME}
+                            />
+                          </FieldBlock>
+
+                          <FieldBlock label="Sexo">
+                            <select
+                              value={petForm.sexo}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, sexo: event.target.value }))
+                              }
+                              className={INPUT_CLASSNAME}
+                            >
+                              {SEX_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </FieldBlock>
+
+                          <FieldBlock label="Peso actual (kg)">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={petForm.peso}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, peso: event.target.value }))
+                              }
+                              placeholder="Peso actual"
+                              className={INPUT_CLASSNAME}
+                            />
+                          </FieldBlock>
+
+                          <FieldBlock label="Color principal">
+                            <input
+                              type="text"
+                              value={petForm.color}
+                              onChange={(event) =>
+                                setPetForm((current) => ({ ...current, color: event.target.value }))
+                              }
+                              placeholder="Color principal"
+                              className={INPUT_CLASSNAME}
+                            />
+                          </FieldBlock>
+
+                          <div className="rounded-[16px] border border-slate-300 bg-[#f6f8fb] px-4 py-3.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              Condicion
+                            </p>
+                            <label className="mt-3 flex items-center gap-3 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={petForm.esterilizado}
+                                onChange={(event) =>
+                                  setPetForm((current) => ({
+                                    ...current,
+                                    esterilizado: event.target.checked,
+                                  }))
+                                }
+                              />
+                              Paciente esterilizado
+                            </label>
+                            <p className="mt-2 text-xs leading-6 text-slate-500">
+                              Marca solo si el dato ya fue confirmado.
+                            </p>
+                          </div>
+                        </div>
+
+                        <FieldBlock
+                          label="Observaciones utiles"
+                          hint="Solo notas que realmente ayuden a recepcion, consulta o seguimiento."
+                        >
+                          <textarea
+                            value={petForm.observaciones}
+                            onChange={(event) =>
+                              setPetForm((current) => ({
+                                ...current,
+                                observaciones: event.target.value,
+                              }))
+                            }
+                            placeholder="Notas utiles para recepcion y consulta"
+                            className={TEXTAREA_CLASSNAME}
+                          />
+                        </FieldBlock>
+
+                        <div className="flex flex-col gap-3 border-t border-slate-300 pt-4 lg:flex-row lg:items-center lg:justify-between">
+                          <p className="max-w-2xl text-sm leading-6 text-slate-600">
+                            Registro pensado para dejar lista la ficha y seguir con agenda o historia sin pasos
+                            extra.
+                          </p>
+                          <button
+                            type="submit"
+                            disabled={crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending}
+                            className="border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending
+                              ? 'Guardando...'
+                              : 'Guardar paciente'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </DashboardPanel>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-stretch">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <KpiCard
+                icon={PawPrint}
+                label="Pacientes activos"
+                value={formatNumber(totalMascotas)}
+                helper="Pacientes visibles segun el filtro actual de la base."
+                tone="text-cyan-700"
+                className="min-h-[188px]"
+              />
+              <KpiCard
+                icon={Users}
+                label="Tutores"
+                value={formatNumber(totalPropietarios)}
+                helper="Total de tutores registrados en la clinica."
+                tone="text-emerald-700"
+                className="min-h-[188px]"
+              />
+              <KpiCard
+                icon={ShieldCheck}
+                label="Cupo del plan"
+                value={
+                  limiteMascotas === null
+                    ? 'Sin limite'
+                    : formatNumber(Math.max(limiteMascotas - totalMascotas, 0))
+                }
+                helper={
+                  limiteMascotas === null
+                    ? 'La suscripcion actual no tiene tope de pacientes.'
+                    : `${formatNumber(totalMascotas)} de ${formatNumber(limiteMascotas)} pacientes en uso.`
+                }
+                tone="text-violet-700"
+                className="min-h-[188px]"
+              />
+              <KpiCard
+                icon={HeartPulse}
+                label="Historia clinica"
+                value={historiasDisponibles ? 'Activa' : 'No incluida'}
+                helper="Define si esta base ya puede pasar directo a evolucion clinica."
+                tone={historiasDisponibles ? 'text-rose-700' : 'text-amber-700'}
+                className="min-h-[188px]"
+              />
+            </div>
+
             <DonutCard
               title="Especies visibles"
               subtitle="Distribucion de la base que estas viendo con el filtro actual."
@@ -514,72 +1137,51 @@ export default function PacientesPage() {
               centerValue={formatNumber(mascotas.length)}
               formatter={formatNumber}
               emptyMessage="Aun no hay especies para mostrar."
+              className="h-full"
+              contentClassName="content-start gap-4 px-5 py-4"
+              chartSize={200}
             />
+          </div>
 
-            <DashboardPanel
-              title="Base activa de pacientes"
-              subtitle="Busqueda rapida de pacientes con tutor, contacto y disponibilidad para ficha clinica."
-              action={
-                <div className="flex flex-wrap gap-3">
-                  <input
-                    type="text"
-                    value={buscarMascota}
-                    onChange={(event) => {
-                      setBuscarMascota(event.target.value)
-                      setPaginaMascotas(1)
-                    }}
-                    placeholder="Buscar por nombre o microchip"
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  />
-                  <select
-                    value={especie}
-                    onChange={(event) => {
-                      setEspecie(event.target.value)
-                      setPaginaMascotas(1)
-                    }}
-                    className="h-10 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  >
-                    {SPECIES_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              }
-            >
+          <div className="space-y-4">
               <DataTable
-                title="Pacientes"
-                subtitle="Base lista para recepcion, agenda y consulta."
+                title="Base activa de pacientes"
+                subtitle="Busqueda rapida de pacientes con tutor, contacto y disponibilidad para ficha clinica."
                 rows={mascotasRows}
                 columns={[
                   {
                     key: 'paciente',
                     label: 'Paciente',
                     render: (row) => (
-                      <div className="flex items-center gap-3">
-                        <PetAvatar name={row.paciente} photo={row.fotoPerfil} size="h-11 w-11" />
+                      <div className="flex items-start gap-3">
+                        <PetAvatar name={row.paciente} photo={row.fotoPerfil} size="h-12 w-12" />
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-900">{row.paciente}</p>
-                          <p className="mt-1 text-xs text-slate-500">{row.raw.raza || 'Sin raza'}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {row.especie}
+                            {row.raw.raza ? ` / ${row.raw.raza}` : ''}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {row.raw.color || 'Sin color'} / {formatWeight(row.raw.peso)}
+                          </p>
                         </div>
                       </div>
                     ),
                   },
-                  { key: 'especie', label: 'Especie' },
-                  { key: 'tutor', label: 'Tutor' },
-                  { key: 'contacto', label: 'Contacto' },
-                  { key: 'ficha', label: 'Ficha' },
                   {
-                    key: 'detalle',
-                    label: 'Detalle',
+                    key: 'tutor',
+                    label: 'Tutor',
                     render: (row) => (
-                      <div className="text-xs leading-6 text-slate-500">
-                        {row.raw.raza || 'Sin raza'}
-                        {' · '}
-                        {formatWeight(row.raw.peso)}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900">{row.tutor}</p>
+                        <p className="mt-1 text-xs text-slate-500">{row.contacto}</p>
                       </div>
                     ),
+                  },
+                  {
+                    key: 'ficha',
+                    label: 'Ficha',
+                    render: (row) => <StatusPill tone={row.fichaTone}>{row.ficha}</StatusPill>,
                   },
                   {
                     key: 'acciones',
@@ -607,16 +1209,39 @@ export default function PacientesPage() {
                   },
                 ]}
                 emptyTitle="No hay pacientes para este filtro"
-                emptyBody="Ajusta la busqueda o registra el primer paciente desde el panel inferior."
+                emptyBody="Ajusta la busqueda o registra el primer paciente desde el panel superior."
                 action={
-                  <StatusPill tone="border-slate-200 bg-slate-100 text-slate-700">
-                    {SPECIES_OPTIONS.find((option) => option.value === especie)?.label}
-                  </StatusPill>
+                  <div className="flex flex-wrap gap-3">
+                    <input
+                      type="text"
+                      value={buscarMascota}
+                      onChange={(event) => {
+                        setBuscarMascota(event.target.value)
+                        setPaginaMascotas(1)
+                      }}
+                      placeholder="Buscar por nombre del paciente"
+                      className="h-10 rounded-[18px] border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    />
+                    <select
+                      value={especie}
+                      onChange={(event) => {
+                        setEspecie(event.target.value)
+                        setPaginaMascotas(1)
+                      }}
+                      className="h-10 rounded-[18px] border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
+                    >
+                      {SPECIES_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 }
               />
 
               {(mascotasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
                   <p className="text-sm text-slate-600">
                     Pagina {mascotasQuery.data?.paginaActual || 1} de {mascotasQuery.data?.paginas || 1}
                   </p>
@@ -625,7 +1250,7 @@ export default function PacientesPage() {
                       type="button"
                       onClick={() => setPaginaMascotas((current) => Math.max(current - 1, 1))}
                       disabled={(mascotasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -637,361 +1262,14 @@ export default function PacientesPage() {
                         )
                       }
                       disabled={(mascotasQuery.data?.paginaActual || 1) >= (mascotasQuery.data?.paginas || 1)}
-                      className="border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
                   </div>
                 </div>
               ) : null}
-            </DashboardPanel>
           </div>
-
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
-            <DashboardPanel
-              title="Registrar tutor"
-              subtitle="Alta rapida del responsable principal antes de abrir la ficha del paciente."
-              action={<UserRound className="h-4 w-4 text-cyan-700" />}
-            >
-              {!puedeCrearTutor ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
-                  Tu rol actual puede consultar la base, pero no crear nuevos tutores.
-                </div>
-              ) : (
-                <form className="grid gap-4" onSubmit={handleCreateOwner}>
-                  <input
-                    type="text"
-                    value={ownerForm.nombre}
-                    onChange={(event) => setOwnerForm((current) => ({ ...current, nombre: event.target.value }))}
-                    placeholder="Nombre completo del tutor"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <select
-                      value={ownerForm.tipoDocumento}
-                      onChange={(event) =>
-                        setOwnerForm((current) => ({ ...current, tipoDocumento: event.target.value }))
-                      }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    >
-                      {DOCUMENT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      value={ownerForm.numeroDocumento}
-                      onChange={(event) =>
-                        setOwnerForm((current) => ({ ...current, numeroDocumento: event.target.value }))
-                      }
-                      placeholder="Documento principal"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={ownerForm.telefono}
-                      onChange={(event) =>
-                        setOwnerForm((current) => ({
-                          ...current,
-                          telefono: event.target.value.replace(/\D/g, '').slice(0, 10),
-                        }))
-                      }
-                      placeholder="Telefono o celular"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="email"
-                      value={ownerForm.email}
-                      onChange={(event) => setOwnerForm((current) => ({ ...current, email: event.target.value }))}
-                      placeholder="Email del tutor"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    value={ownerForm.ciudad}
-                    onChange={(event) => setOwnerForm((current) => ({ ...current, ciudad: event.target.value }))}
-                    placeholder="Ciudad o municipio"
-                    className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={crearPropietarioMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {crearPropietarioMutation.isPending ? 'Guardando...' : 'Guardar tutor'}
-                  </button>
-                </form>
-              )}
-            </DashboardPanel>
-
-            <DashboardPanel
-              title="Registrar paciente"
-              subtitle="Selecciona un tutor existente y completa solo los datos que ayudan de verdad a recepcion y consulta."
-              action={<Plus className="h-4 w-4 text-cyan-700" />}
-            >
-              {!puedeCrearPaciente ? (
-                <div className="border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-7 text-slate-600">
-                  Tu rol actual no tiene permisos para crear pacientes.
-                </div>
-              ) : (
-                <form className="grid gap-4" onSubmit={handleCreatePet}>
-                  <div className="border border-slate-200 bg-slate-50 px-4 py-4">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      <Search className="h-3.5 w-3.5" />
-                      Buscar tutor existente
-                    </div>
-                    <input
-                      type="text"
-                      value={ownerSearch}
-                      onChange={(event) => setOwnerSearch(event.target.value)}
-                      placeholder="Nombre, telefono o documento"
-                      className="mt-3 h-11 w-full border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-
-                    <div className="mt-4 space-y-2">
-                      {selectedOwner ? (
-                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-slate-700">
-                          <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
-                          <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedOwner(null)
-                              setPetForm((current) => ({ ...current, propietarioId: '' }))
-                            }}
-                            className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-                          >
-                            Cambiar tutor
-                          </button>
-                        </div>
-                      ) : null}
-
-                      {!selectedOwner && propietarios.length > 0
-                          ? propietarios.map((owner) => (
-                            <button
-                              key={owner.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedOwner(owner)
-                                setPetForm((current) => ({ ...current, propietarioId: owner.id }))
-                              }}
-                              className="flex w-full items-start justify-between border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
-                            >
-                              <div>
-                                <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {owner.telefono || 'Sin telefono principal'}
-                                </p>
-                              </div>
-                              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                Seleccionar
-                              </span>
-                            </button>
-                          ))
-                        : null}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={petForm.nombre}
-                      onChange={(event) => setPetForm((current) => ({ ...current, nombre: event.target.value }))}
-                      placeholder="Nombre del paciente"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                    <select
-                      value={petForm.especie}
-                      onChange={(event) => setPetForm((current) => ({ ...current, especie: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    >
-                      {SPECIES_OPTIONS.filter((option) => option.value !== 'todas').map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={petForm.raza}
-                      onChange={(event) => setPetForm((current) => ({ ...current, raza: event.target.value }))}
-                      placeholder="Raza o cruce"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                    <select
-                      value={petForm.sexo}
-                      onChange={(event) => setPetForm((current) => ({ ...current, sexo: event.target.value }))}
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    >
-                      {SEX_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="date"
-                      value={petForm.fechaNacimiento}
-                      onChange={(event) =>
-                        setPetForm((current) => ({ ...current, fechaNacimiento: event.target.value }))
-                      }
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={petForm.peso}
-                      onChange={(event) => setPetForm((current) => ({ ...current, peso: event.target.value }))}
-                      placeholder="Peso actual en kg"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={petForm.color}
-                      onChange={(event) => setPetForm((current) => ({ ...current, color: event.target.value }))}
-                      placeholder="Color principal"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="text"
-                      value={petForm.microchip}
-                      onChange={(event) =>
-                        setPetForm((current) => ({ ...current, microchip: event.target.value }))
-                      }
-                      placeholder="Numero de microchip"
-                      className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_120px]">
-                    <div className="grid gap-3">
-                      <div className="grid gap-2">
-                        <input
-                          key={petPhotoInputKey}
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handlePetPhotoChange}
-                          className="block w-full border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 file:mr-3 file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
-                        />
-                        <p className="text-xs leading-6 text-slate-500">
-                          Aceptamos JPG, PNG o WEBP hasta 4 MB. Sirve una foto descargada desde WhatsApp Web o una imagen tomada y guardada desde el celular.
-                        </p>
-                        {petPhotoFile ? (
-                          <div className="flex flex-wrap items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
-                            <span className="font-medium text-slate-900">{petPhotoFile.name}</span>
-                            <span>{formatNumber(Math.round(petPhotoFile.size / 1024))} KB</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPetPhotoFile(null)
-                                setPetPhotoInputKey((current) => current + 1)
-                              }}
-                              className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                            >
-                              Quitar foto
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="grid gap-2">
-                        <input
-                          type="text"
-                          value={petForm.fotoPerfil}
-                          onChange={(event) =>
-                            setPetForm((current) => ({ ...current, fotoPerfil: event.target.value }))
-                          }
-                          placeholder="O pega una URL publica si ya la tienes"
-                          className="h-11 border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                        />
-                        <p className="text-xs leading-6 text-slate-500">
-                          La URL publica sigue disponible como opcion avanzada, pero el camino recomendado es subir el archivo.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start justify-center xl:justify-end">
-                      <PetAvatar
-                        name={petForm.nombre || 'Paciente'}
-                        photo={
-                          petPhotoPreview ||
-                          (petForm.fotoPerfil && isHttpUrl(petForm.fotoPerfil) ? petForm.fotoPerfil : '')
-                        }
-                        size="h-[88px] w-[88px]"
-                      />
-                    </div>
-                  </div>
-
-                  <label className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={petForm.esterilizado}
-                      onChange={(event) =>
-                        setPetForm((current) => ({ ...current, esterilizado: event.target.checked }))
-                      }
-                    />
-                    Paciente esterilizado
-                  </label>
-
-                  <textarea
-                    value={petForm.observaciones}
-                    onChange={(event) =>
-                      setPetForm((current) => ({ ...current, observaciones: event.target.value }))
-                    }
-                    placeholder="Notas utiles para recepcion y consulta"
-                    className="min-h-[120px] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-cyan-500"
-                  />
-
-                  {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
-                    <div className="border border-dashed border-slate-300 bg-white px-3 py-3 text-sm leading-7 text-slate-600">
-                      No encontramos un tutor con esa busqueda. Puedes crearlo desde el panel izquierdo.
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="submit"
-                    disabled={crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending}
-                    className="border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending
-                      ? 'Guardando...'
-                      : 'Guardar paciente'}
-                  </button>
-                </form>
-              )}
-            </DashboardPanel>
-          </div>
-
-          <DashboardPanel
-            title="Criterio operativo"
-            subtitle="Lo importante en esta pantalla es dejar una base limpia y util para el resto del sistema."
-          >
-            <div className="grid gap-4 xl:grid-cols-3">
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Primero se registra el tutor responsable y luego el paciente, para que agenda, historias y cobro compartan la misma base.
-              </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                Los campos visibles son los que mas ayudan en recepcion y consulta: identificacion, contacto, especie, peso y observaciones utiles.
-              </div>
-              <div className="border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                El cupo del plan ya se refleja aqui, asi que la clinica puede saber cuando necesita ordenar la base o subir de nivel.
-              </div>
-            </div>
-          </DashboardPanel>
         </div>
       )}
     </AdminShell>
