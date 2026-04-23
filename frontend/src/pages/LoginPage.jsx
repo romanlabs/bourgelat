@@ -114,11 +114,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen overflow-hidden bg-[#0b1623] text-white">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[460px] bg-[radial-gradient(circle_at_top,#17324a_0%,rgba(23,50,74,0.45)_42%,transparent_74%)]" />
-        <div className="absolute -left-24 top-20 h-80 w-80 rounded-full bg-[#224f73]/45 blur-3xl" />
-        <div className="absolute bottom-[-5rem] right-[-4rem] h-96 w-96 rounded-full bg-[#749e8a]/22 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-[460px] bg-[radial-gradient(circle_at_top,#17324a_0%,rgba(23,50,74,0.38)_42%,transparent_74%)]" />
         <div
-          className="absolute inset-0 opacity-[0.12]"
+          className="absolute inset-0 opacity-[0.10]"
           style={{
             backgroundImage:
               'linear-gradient(rgba(238,247,252,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(238,247,252,0.7) 1px, transparent 1px)',
@@ -131,7 +129,7 @@ export default function LoginPage() {
       <div className="relative mx-auto max-w-[1500px] px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
         <header className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/6 px-5 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
           <Link to="/" className="inline-flex items-center gap-3 text-white no-underline">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,#8db8dd_0%,#6d9fe0_58%,#86b6a6_100%)] text-[#0b1623] shadow-[0_18px_40px_rgba(109,159,224,0.24)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#1f6fb2] text-white shadow-[0_18px_40px_rgba(31,111,178,0.28)]">
               <Stethoscope className="h-5 w-5" />
             </div>
             <div>
@@ -177,7 +175,7 @@ export default function LoginPage() {
 
               <h1
                 className="mt-5 text-[46px] leading-[0.93] tracking-[-0.04em] text-[#13263a] sm:text-[58px]"
-                style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
               >
                 Tu jornada clinica empieza aqui
               </h1>
@@ -196,6 +194,8 @@ export default function LoginPage() {
                   <img
                     src={loginHero}
                     alt="Veterinaria atendiendo a un perro en consulta"
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                   <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,23,36,0.04)_0%,rgba(12,23,36,0.68)_100%)]" />
@@ -336,7 +336,7 @@ export default function LoginPage() {
                   </p>
                   <h2
                     className="mt-4 text-[52px] leading-[0.92] tracking-[-0.04em] text-white"
-                    style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                   >
                     Todo el equipo entra al mismo flujo de atencion.
                   </h2>

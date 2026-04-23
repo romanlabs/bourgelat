@@ -26,7 +26,7 @@ function NavAnchor({ item, active }) {
       href={item.href}
       className={`flex items-center justify-between border px-3 py-3 text-sm transition ${
         active
-          ? 'border-cyan-500 bg-cyan-500/10 text-white'
+          ? 'border-sidebar-primary bg-sidebar-primary/15 text-sidebar-foreground'
           : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 hover:bg-slate-900'
       }`}
     >
@@ -34,7 +34,7 @@ function NavAnchor({ item, active }) {
         <span
           className={`flex h-9 w-9 items-center justify-center border ${
             active
-              ? 'border-cyan-400 bg-cyan-500/10 text-cyan-200'
+              ? 'border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary'
               : 'border-slate-700 bg-slate-900 text-slate-300'
           }`}
         >
@@ -42,7 +42,7 @@ function NavAnchor({ item, active }) {
         </span>
         <span className="font-medium">{item.label}</span>
       </span>
-      {active ? <ArrowRight className="h-4 w-4 text-cyan-200" /> : null}
+      {active ? <ArrowRight className="h-4 w-4 text-sidebar-primary" /> : null}
     </a>
   )
 }
@@ -60,19 +60,19 @@ export default function SuperadminShell({
   const { logout } = useLogout()
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1660px] px-4 py-4 sm:px-6 lg:px-8">
         <div className="grid gap-5 xl:grid-cols-[270px_minmax(0,1fr)]">
           <aside className="border border-slate-900 bg-slate-950 px-4 py-5 text-white shadow-sm">
             <div className="border-b border-slate-800 pb-5">
-              <div className="flex h-12 w-12 items-center justify-center border border-slate-700 bg-slate-900 text-cyan-200">
+              <div className="flex h-12 w-12 items-center justify-center border border-slate-700 bg-slate-900 text-sidebar-primary">
                 <Stethoscope className="h-5 w-5" />
               </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Control del software
               </p>
               <h1 className="mt-3 text-2xl font-semibold text-white">Bourgelat</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Consola exclusiva de superadmin para operar el SaaS, revisar crecimiento y
                 controlar configuraciones sensibles.
               </p>
@@ -86,17 +86,17 @@ export default function SuperadminShell({
 
             <div className="mt-6 space-y-3 border-t border-slate-800 pt-5">
               <div className="border border-slate-800 bg-slate-900 px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Rol activo
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">Superadmin</p>
               </div>
               <div className="border border-slate-800 bg-slate-900 px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Sesion
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">{usuario?.nombre || 'Sin nombre'}</p>
-                <p className="mt-1 text-xs text-slate-400">{usuario?.email || 'Sin email principal'}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{usuario?.email || 'Sin email principal'}</p>
               </div>
               {asideNote ? (
                 <div className="border border-slate-800 bg-slate-900 px-3 py-3 text-sm leading-6 text-slate-300">
@@ -124,7 +124,7 @@ export default function SuperadminShell({
             <header className="border border-slate-200 bg-white px-5 py-5 shadow-sm">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Vista exclusiva
                   </p>
                   <h2 className="mt-3 text-3xl font-semibold text-slate-950">{title}</h2>

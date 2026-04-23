@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Link } from 'react-router-dom'
-import ClinicOrbitCanvas from '@/components/shared/ClinicOrbitCanvas'
+import ECGHeartbeatCanvas from '@/components/shared/ECGHeartbeatCanvas'
 import {
   ArrowRight,
   Bell,
@@ -188,7 +188,7 @@ function SectionHeading({ eyebrow, title, body, dark = false, center = false }) 
         className={`mt-4 text-[2.7rem] leading-[0.94] tracking-[-0.05em] sm:text-5xl md:text-6xl ${
           dark ? 'text-white' : 'text-[#10263a]'
         }`}
-        style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+        style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
       >
         {title}
       </h2>
@@ -416,10 +416,90 @@ function LandingNav() {
   )
 }
 
+function FlowStepper() {
+  const [active, setActive] = useState(0)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((prev) => (prev + 1) % FLOW_STEPS.length)
+      setTick((prev) => prev + 1)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [])
+
+  const handleSelect = (index) => {
+    setActive(index)
+    setTick((prev) => prev + 1)
+  }
+
+  return (
+    <div className="mt-10 space-y-2">
+      {FLOW_STEPS.map((step, index) => {
+        const isActive = active === index
+        return (
+          <button
+            key={step.step}
+            type="button"
+            onClick={() => handleSelect(index)}
+            className={`w-full rounded-[28px] border px-6 py-5 text-left transition-all duration-300 ${
+              isActive
+                ? 'border-[#c8dde9] bg-white shadow-[0_18px_60px_rgba(8,25,39,0.07)]'
+                : 'border-transparent bg-transparent hover:bg-white/60'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-300 ${
+                  isActive ? 'bg-[#edf5fb] text-[#3a6d87]' : 'bg-[#e4ecf2] text-[#7a9db5]'
+                }`}
+              >
+                {step.step}
+              </span>
+              <span
+                className={`text-base font-semibold transition-colors duration-300 ${
+                  isActive ? 'text-[#12283c]' : 'text-[#7a9db5]'
+                }`}
+              >
+                {step.title}
+              </span>
+            </div>
+
+            <AnimatePresence>
+              {isActive && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <p className="mt-4 pl-14 text-sm leading-7 text-[#567185]">{step.body}</p>
+                  <div className="mt-4 pl-14">
+                    <div className="h-px w-full overflow-hidden rounded-full bg-[#d7e4ee]">
+                      <motion.div
+                        key={tick}
+                        className="h-full origin-left bg-[#3a6d87]"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 4, ease: 'linear' }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function HeroPreview({ className = '' }) {
   return (
     <div className={`pointer-events-none ${className}`}>
-      <ClinicOrbitCanvas className="block h-full w-full opacity-95" />
+      <ECGHeartbeatCanvas className="block h-full w-full" />
     </div>
   )
 }
@@ -445,6 +525,7 @@ function HeroModuleMarquee() {
               className="flex w-max items-center gap-6 px-3 sm:gap-8 sm:px-6"
               animate={{ x: ['0%', '-50%'] }}
               transition={{ duration: 24, ease: 'linear', repeat: Infinity }}
+              style={{ willChange: 'transform' }}
             >
               {loopItems.map((item, index) => {
                 const Icon = item.icon
@@ -483,7 +564,7 @@ function FeatureMockup() {
             </p>
             <h3
               className="mt-2 text-[2rem] leading-none tracking-[-0.04em] text-[#10263a] sm:text-3xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               La operacion se siente conectada.
             </h3>
@@ -596,13 +677,11 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#f4f7fb] text-[#112739]">
       <LandingNav />
 
-      <section className="relative overflow-hidden bg-[#06111c] text-white">
+      <section className="relative flex min-h-screen flex-col overflow-hidden bg-[#06111c] text-white" style={{ minHeight: '100dvh' }}>
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-[-10rem] top-[-8rem] h-[30rem] w-[30rem] rounded-full bg-[#1c5d63]/40 blur-3xl" />
-          <div className="absolute right-[-10rem] top-24 h-[28rem] w-[28rem] rounded-full bg-[#163d66]/38 blur-3xl" />
-          <div className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-[#11443e]/24 blur-3xl" />
+          <div className="absolute left-[-8rem] top-[-6rem] h-[32rem] w-[32rem] rounded-full bg-[#163d66]/35 blur-3xl" />
           <div
-            className="absolute inset-0 opacity-[0.08]"
+            className="absolute inset-0 opacity-[0.07]"
             style={{
               backgroundImage:
                 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
@@ -611,13 +690,13 @@ export default function LandingPage() {
             }}
           />
         </div>
-        <HeroPreview className="absolute inset-x-[-16%] bottom-[-5rem] top-[7.75rem] z-0 opacity-38 sm:inset-0 sm:opacity-75" />
+        <HeroPreview className="absolute inset-0 z-0 opacity-55 sm:opacity-90" />
 
-        <div className="relative z-10 mx-auto max-w-7xl px-5 pb-14 pt-28 sm:px-6 sm:pb-20 sm:pt-36 lg:px-8 lg:pb-28 lg:pt-40">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-16 pt-28 sm:px-6 sm:pb-24 sm:pt-36 lg:px-8 lg:pb-32 lg:pt-40" style={{ marginTop: 'auto' }}>
           <div className="max-w-4xl">
             <h1
               className="mt-2 max-w-3xl text-[3.2rem] leading-[0.92] tracking-[-0.06em] sm:text-6xl lg:text-7xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Tu clinica veterinaria merece una operacion a la altura de su medicina.
             </h1>
@@ -671,7 +750,7 @@ export default function LandingPage() {
                 </div>
                 <h3
                   className="mt-6 text-3xl leading-none tracking-[-0.04em] text-[#10263a]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                 >
                   {card.title}
                 </h3>
@@ -703,24 +782,7 @@ export default function LandingPage() {
               body="La clinica deja de pasar informacion de mano en mano. El sistema conserva el contexto y el equipo avanza con menos friccion."
             />
 
-            <div className="mt-10 space-y-5">
-              {FLOW_STEPS.map((step) => (
-                <div
-                  key={step.step}
-                  className="rounded-[30px] border border-[#d7e4ee] bg-white px-6 py-5 shadow-[0_18px_60px_rgba(8,25,39,0.05)]"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf5fb] text-[#3a6d87]">
-                      <span className="text-sm font-semibold">{step.step}</span>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#12283c]">{step.title}</h3>
-                      <p className="mt-2 text-sm leading-7 text-[#567185]">{step.body}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <FlowStepper />
           </div>
 
           <div className="mt-12 lg:mt-0">
@@ -750,7 +812,7 @@ export default function LandingPage() {
                 </div>
                 <h3
                   className="mt-6 text-[30px] leading-none tracking-[-0.04em] text-[#10263a]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                 >
                   {panel.title}
                 </h3>
@@ -790,7 +852,7 @@ export default function LandingPage() {
                 </p>
                 <h3
                   className="mt-4 text-[2rem] leading-none tracking-[-0.04em] sm:text-4xl"
-                  style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                 >
                   {plan.name}
                 </h3>
@@ -833,7 +895,7 @@ export default function LandingPage() {
               </p>
               <h2
                 className="mt-4 text-[2.8rem] leading-[0.94] tracking-[-0.05em] text-white sm:text-5xl md:text-6xl"
-                style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
               >
                 Si tu clinica ya siente friccion, revisemos donde se rompe el dia.
               </h2>

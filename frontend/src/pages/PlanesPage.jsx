@@ -234,7 +234,7 @@ export default function PlanesPage() {
             </div>
             <h2
               className="mt-5 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Planes claros para cada momento de la clinica.
             </h2>
@@ -289,7 +289,7 @@ export default function PlanesPage() {
                   </p>
                   <h2
                     className="mt-4 text-4xl leading-none tracking-[-0.05em]"
-                    style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
                   >
                     {plan.nombre}
                   </h2>
@@ -359,7 +359,7 @@ export default function PlanesPage() {
           </p>
           <h2
             className="mt-4 text-4xl leading-none tracking-[-0.05em] text-[#10263a] md:text-5xl"
-            style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
           >
             No es una tabla infinita. Es una eleccion segun el momento de la operacion.
           </h2>
@@ -379,7 +379,7 @@ export default function PlanesPage() {
           </div>
           <h3
             className="mt-5 text-4xl leading-none tracking-[-0.05em]"
-            style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
           >
             Profesional suele ser el ancla correcta.
           </h3>
@@ -453,7 +453,7 @@ export default function PlanesPage() {
           </p>
           <h2
             className="mt-4 text-4xl leading-none tracking-[-0.05em] text-[#10263a] md:text-5xl"
-            style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
           >
             Lo importante antes de elegir.
           </h2>
@@ -474,7 +474,7 @@ export default function PlanesPage() {
             </p>
             <h2
               className="mt-4 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Cuando el plan correcto esta claro, el siguiente paso debe ser simple.
             </h2>
