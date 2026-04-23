@@ -71,21 +71,25 @@ export function SidebarTabButton({ icon, label, active = false, onClick, badge }
       }`}
     >
       <span className="flex items-center gap-3">
-        <span className={`flex h-9 w-9 items-center justify-center border ${
-          active
-            ? 'border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary'
-            : 'border-sidebar-border bg-sidebar text-sidebar-foreground/70'
-        }`}>
+        <span
+          className={`flex h-9 w-9 items-center justify-center border ${
+            active
+              ? 'border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary'
+              : 'border-sidebar-border bg-sidebar text-sidebar-foreground/70'
+          }`}
+        >
           {createElement(icon, { className: 'h-4 w-4' })}
         </span>
         <span className="min-w-0 break-words text-left font-medium [overflow-wrap:anywhere]">{label}</span>
       </span>
       {badge ? (
-        <span className={`shrink-0 border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-          active
-            ? 'border-sidebar-primary/40 text-sidebar-foreground'
-            : 'border-sidebar-border text-sidebar-foreground/60'
-        }`}>
+        <span
+          className={`shrink-0 border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+            active
+              ? 'border-sidebar-primary/40 text-sidebar-foreground'
+              : 'border-sidebar-border text-sidebar-foreground/60'
+          }`}
+        >
           {badge}
         </span>
       ) : null}
@@ -93,10 +97,18 @@ export function SidebarTabButton({ icon, label, active = false, onClick, badge }
   )
 }
 
-export function KpiCard({ icon, label, value, helper, tone = 'text-primary', borderTone = 'border-border' }) {
+export function KpiCard({
+  icon,
+  label,
+  value,
+  helper,
+  tone = 'text-primary',
+  borderTone = 'border-border',
+  className = '',
+}) {
   return (
     <div
-      className={`rounded-[24px] border bg-card px-4 py-4 shadow-card ${borderTone}`}
+      className={`flex h-full flex-col rounded-[24px] border bg-card px-4 py-4 shadow-card ${borderTone} ${className}`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -126,18 +138,30 @@ export function StatusPill({ children, tone = 'border-border bg-muted text-foreg
   )
 }
 
-export function DonutCard({ title, subtitle, data, centerLabel, centerValue, formatter, emptyMessage }) {
+export function DonutCard({
+  title,
+  subtitle,
+  data,
+  centerLabel,
+  centerValue,
+  formatter,
+  emptyMessage,
+  className = '',
+  contentClassName = '',
+  chartSize = 220,
+}) {
   const hasData = data.some((item) => item.value > 0)
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
+    <div
+      className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-card ${className}`}
+    >
       <div className="border-b border-border px-5 py-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
-
-      <div className="flex flex-col gap-6 p-5 2xl:flex-row 2xl:items-center">
-        <div className="relative mx-auto h-[200px] w-full max-w-[200px] shrink-0">
+      <div className={`grid gap-5 p-5 2xl:grid-cols-[220px_minmax(0,1fr)] ${contentClassName}`.trim()}>
+        <div className="relative mx-auto w-full" style={{ maxWidth: `${chartSize}px`, height: `${chartSize}px` }}>
           {hasData ? (
             <>
               <ResponsiveContainer width="100%" height="100%">
