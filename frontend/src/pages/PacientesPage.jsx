@@ -2,7 +2,20 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { HeartPulse, PawPrint, Plus, Search, ShieldCheck, UserRound, Users } from 'lucide-react'
+import {
+  CalendarClock,
+  FileText,
+  HeartPulse,
+  LayoutDashboard,
+  PawPrint,
+  Plus,
+  Search,
+  ShieldCheck,
+  Upload,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -83,16 +96,14 @@ const INPUT_CLASSNAME =
   'h-11 rounded-[16px] border border-slate-300 bg-white px-3.5 text-[15px] text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-cyan-100'
 const TEXTAREA_CLASSNAME =
   'min-h-[140px] rounded-[16px] border border-slate-300 bg-white px-3.5 py-3 text-[15px] text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-cyan-100'
-const PET_MEDIA_COLUMN_CLASSNAME = 'grid w-full max-w-[272px] shrink-0 justify-self-start gap-3'
-const PET_MEDIA_FRAME_CLASSNAME = 'overflow-hidden border border-slate-300 bg-white'
+const PET_MEDIA_COLUMN_CLASSNAME = 'grid w-full max-w-[224px] shrink-0 justify-self-start gap-3'
+const PET_MEDIA_FRAME_CLASSNAME = 'overflow-hidden rounded-[16px] border border-slate-300 bg-white'
 const PET_MEDIA_PREVIEW_CLASSNAME =
-  'flex h-[228px] w-full items-center justify-center overflow-hidden bg-slate-50'
+  'flex h-[168px] w-full items-center justify-center overflow-hidden bg-slate-50'
 const PET_MEDIA_ACTIONS_CLASSNAME =
-  'flex h-[188px] flex-col justify-between overflow-hidden border border-slate-300 bg-white px-4 py-4'
+  'grid gap-3 rounded-[16px] border border-slate-300 bg-white px-3 py-3'
 const PET_MEDIA_PRIMARY_BUTTON_CLASSNAME =
-  'inline-flex h-11 w-full cursor-pointer items-center justify-center border border-slate-900 bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800'
-const PET_MEDIA_SECONDARY_BUTTON_CLASSNAME =
-  'inline-flex h-10 w-full items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-900'
+  'inline-flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-900 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -427,6 +438,10 @@ export default function PacientesPage() {
     { label: 'Color', value: petForm.color.trim() || 'Sin registrar' },
     { label: 'Condicion', value: petForm.esterilizado ? 'Esterilizado' : 'Sin confirmar' },
   ]
+  const patientDisplayName = petForm.nombre.trim() || 'Paciente nuevo'
+  const patientSpeciesSummary = `${getSpeciesLabel(petForm.especie)}${
+    petForm.raza.trim() ? ` / ${petForm.raza.trim()}` : ''
+  }`
 
   if (!rolPermitido) {
     return (
@@ -449,37 +464,41 @@ export default function PacientesPage() {
     <AdminShell
       currentKey="pacientes"
       title="Pacientes y tutores"
-      description="Base clinica para recepcion, consulta y preparacion de historia. Aqui se registran tutores, pacientes activos y los datos minimos que realmente sirven en operacion."
+      description="Consulta y registra tutores y pacientes activos para agenda, antecedentes e historias clinicas."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Base clinica activa
+          Base activa
         </StatusPill>
       }
       actions={
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/agenda"
-            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-900 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Abrir agenda
+            <CalendarClock className="h-4 w-4" />
+            Agenda
           </Link>
           <Link
             to="/antecedentes"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
-            Abrir antecedentes
+            <HeartPulse className="h-4 w-4" />
+            Antecedentes
           </Link>
           <Link
             to="/historias"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
-            Abrir historias
+            <FileText className="h-4 w-4" />
+            Historias
           </Link>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
-            Volver al dashboard
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
           </Link>
         </div>
       }
@@ -797,7 +816,7 @@ export default function PacientesPage() {
                   <form className="mt-5 grid gap-5" onSubmit={handleCreatePet}>
                     <div className="grid gap-5">
                       <div className="rounded-[18px] border border-slate-300 bg-[#f6f8fb] p-4">
-                        <div className="grid gap-6 lg:grid-cols-[272px_minmax(0,1fr)] lg:items-start">
+                        <div className="grid gap-5 lg:grid-cols-[224px_minmax(0,1fr)] lg:items-start">
                           <div className={PET_MEDIA_COLUMN_CLASSNAME}>
                             <div className={PET_MEDIA_FRAME_CLASSNAME}>
                               {petPhotoPreview ? (
@@ -812,11 +831,11 @@ export default function PacientesPage() {
                                 <div
                                   className={`${PET_MEDIA_PREVIEW_CLASSNAME} flex-col px-5 text-center text-slate-500`}
                                 >
-                                  <PawPrint className="h-8 w-8 text-slate-900" />
-                                  <p className="mt-3 text-base font-semibold text-slate-950">
+                                  <PawPrint className="h-7 w-7 text-slate-900" />
+                                  <p className="mt-2 text-sm font-semibold text-slate-950">
                                     Sin foto cargada
                                   </p>
-                                  <p className="mt-2 text-sm leading-6">
+                                  <p className="mt-1.5 text-xs leading-5">
                                     Carga una imagen para identificar al paciente.
                                   </p>
                                 </div>
@@ -828,7 +847,8 @@ export default function PacientesPage() {
                                 htmlFor={`pet-photo-${petPhotoInputKey}`}
                                 className={PET_MEDIA_PRIMARY_BUTTON_CLASSNAME}
                               >
-                                Seleccionar foto
+                                <Upload className="h-4 w-4" />
+                                {petPhotoFile ? 'Cambiar foto' : 'Seleccionar foto'}
                               </label>
                               <input
                                 id={`pet-photo-${petPhotoInputKey}`}
@@ -840,98 +860,102 @@ export default function PacientesPage() {
                               />
 
                               {petPhotoFile ? (
-                                <div className="min-w-0 flex-1 pt-4">
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                    Archivo cargado
-                                  </p>
-                                  <p
-                                    className="mt-2 truncate text-sm font-medium text-slate-900"
-                                    title={petPhotoFile.name}
+                                <div className="flex min-w-0 items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                                  <div className="min-w-0">
+                                    <p
+                                      className="truncate text-sm font-semibold text-slate-900"
+                                      title={petPhotoFile.name}
+                                    >
+                                      {petPhotoFile.name}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                      {formatNumber(Math.round(petPhotoFile.size / 1024))} KB
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPetPhotoFile(null)
+                                      setPetPhotoInputKey((current) => current + 1)
+                                    }}
+                                    aria-label="Quitar foto"
+                                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-slate-900 hover:text-slate-900"
                                   >
-                                    {petPhotoFile.name}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-500">
-                                    {formatNumber(Math.round(petPhotoFile.size / 1024))} KB
-                                  </p>
+                                    <X className="h-4 w-4" />
+                                  </button>
                                 </div>
                               ) : (
-                                <div className="flex-1 pt-4">
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                    Formato
-                                  </p>
-                                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                                    JPG, PNG o WEBP hasta 4 MB.
-                                  </p>
-                                </div>
-                              )}
-
-                              {petPhotoFile ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setPetPhotoFile(null)
-                                    setPetPhotoInputKey((current) => current + 1)
-                                  }}
-                                  className={PET_MEDIA_SECONDARY_BUTTON_CLASSNAME}
-                                >
-                                  Quitar foto
-                                </button>
-                              ) : (
-                                <div className="h-10" />
+                                <p className="text-[11px] leading-4 text-slate-500">
+                                  <span className="font-semibold text-slate-700">Formato:</span> JPG, PNG o WEBP{' '}
+                                  hasta 4 MB.
+                                </p>
                               )}
                             </div>
                           </div>
 
                           <div className="min-w-0 grid content-start gap-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <StatusPill
-                                tone={
-                                  selectedOwner
-                                    ? 'border-emerald-300 bg-white text-emerald-700'
-                                    : 'border-amber-300 bg-white text-amber-800'
-                                }
-                              >
-                                {selectedOwner ? 'Tutor listo' : 'Tutor pendiente'}
-                              </StatusPill>
-                              <p className="min-w-0 text-sm text-slate-600">
-                                <span className="font-semibold text-slate-900">Tutor vinculado:</span>{' '}
-                                <span className="break-words">
-                                  {selectedOwner ? selectedOwner.nombre : 'Pendiente de seleccion'}
-                                </span>
-                              </p>
-                              {selectedOwner?.telefono ? (
-                                <p className="text-sm text-slate-500">{selectedOwner.telefono}</p>
-                              ) : null}
-                            </div>
-
-                            <div className="border-t border-slate-200 pt-4">
-                              <div className="min-w-0">
-                                <div>
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                    Paciente
-                                  </p>
-                                  <p className="mt-1 break-words text-3xl font-semibold leading-tight text-slate-950 sm:text-[2rem]">
-                                    {petForm.nombre.trim() || 'Paciente nuevo'}
-                                  </p>
+                            <div className="rounded-[18px] border border-slate-300 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+                              <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 md:flex-row md:items-center md:justify-between">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <StatusPill
+                                    tone={
+                                      selectedOwner
+                                        ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                                        : 'border-amber-300 bg-amber-50 text-amber-800'
+                                    }
+                                  >
+                                    {selectedOwner ? 'Tutor listo' : 'Tutor pendiente'}
+                                  </StatusPill>
+                                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    Ficha en preparacion
+                                  </span>
                                 </div>
-
-                                <p className="mt-2 break-words text-sm font-medium text-slate-600">
-                                  {getSpeciesLabel(petForm.especie)}
-                                  {petForm.raza.trim() ? ` / ${petForm.raza.trim()}` : ''}
-                                </p>
+                                {selectedOwner?.telefono ? (
+                                  <span className="text-sm font-medium text-slate-500">
+                                    {selectedOwner.telefono}
+                                  </span>
+                                ) : null}
                               </div>
 
-                              <div className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-2">
-                                {patientOperationalItems.map((item) => (
-                                  <div key={item.label}>
+                              <div className="pt-3">
+                                <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))]">
+                                  <div className="min-w-0">
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                      {item.label}
+                                      Paciente
                                     </p>
-                                    <p className="mt-1 break-words text-sm leading-6 text-slate-700">
-                                      {item.value}
+                                    <p className="mt-1 text-2xl font-semibold leading-tight text-slate-950">
+                                      {patientDisplayName}
+                                    </p>
+                                    <span className="mt-2 inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
+                                      <span className="truncate">{patientSpeciesSummary}</span>
+                                    </span>
+                                  </div>
+
+                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                      Tutor
+                                    </p>
+                                    <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+                                      {selectedOwner ? selectedOwner.nombre : 'Pendiente de seleccion'}
                                     </p>
                                   </div>
-                                ))}
+                                </div>
+
+                                <div className="mt-3 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,124px),1fr))]">
+                                  {patientOperationalItems.map((item) => (
+                                    <div
+                                      key={item.label}
+                                      className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+                                    >
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                        {item.label}
+                                      </p>
+                                      <p className="mt-1 text-[13px] font-semibold leading-5 text-slate-800">
+                                        {item.value}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             </div>
                           </div>

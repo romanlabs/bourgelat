@@ -6,7 +6,6 @@ import {
   CalendarClock,
   ChevronsLeft,
   ChevronsRight,
-  Command,
   FileText,
   HeartPulse,
   History,
@@ -16,7 +15,6 @@ import {
   Moon,
   PawPrint,
   Receipt,
-  Search,
   ShieldCheck,
   Stethoscope,
   Sun,
@@ -140,7 +138,7 @@ function QuickActionLink({ item }) {
   return (
     <Link
       to={item.to}
-      className="group rounded-2xl border border-border bg-card p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50/40"
+      className="group rounded-2xl border border-border bg-card p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/10"
     >
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-foreground transition group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
@@ -148,7 +146,7 @@ function QuickActionLink({ item }) {
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+          <p className="text-sm font-semibold text-card-foreground">{item.label}</p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
         </div>
       </div>
@@ -206,7 +204,7 @@ export default function AdminShell({
   }, [usuario?.email, usuario?.nombre])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-workspace min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-[1720px] px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 lg:flex-row">
           <aside
@@ -229,7 +227,7 @@ export default function AdminShell({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{nombreClinica}</p>
                   <p className="mt-1 truncate text-xs text-muted-foreground">
-                    {ubicacionClinica || 'Backoffice Bourgelat'}
+                    {ubicacionClinica || 'Operacion clinica'}
                   </p>
                 </div>
               ) : null}
@@ -371,36 +369,20 @@ export default function AdminShell({
             </div>
           </aside>
 
-          <div className="min-w-0 flex-1 space-y-6">
-            <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_24px_rgba(8,25,39,0.06)]">
-              <div className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
-                <div className="min-w-0 xl:max-w-[460px]">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Backoffice Bourgelat
-                    </span>
+          <div className="min-w-0 flex-1 space-y-5">
+            <header className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_4px_18px_rgba(8,25,39,0.05)]">
+              <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <h1 className="text-xl font-semibold leading-tight text-foreground sm:text-2xl">{title}</h1>
+                    {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                   </div>
                   {description ? (
-                    <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p>
+                    <p className="mt-1 max-w-4xl text-sm leading-5 text-muted-foreground">{description}</p>
                   ) : null}
                 </div>
 
-                <button
-                  type="button"
-                  className="order-last flex h-11 w-full items-center justify-between rounded-2xl border border-border bg-muted px-3.5 text-left shadow-sm transition hover:border-border hover:bg-card xl:order-none xl:max-w-[520px]"
-                >
-                  <span className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    Buscar paciente, factura, historia o modulo
-                  </span>
-                  <span className="hidden items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-semibold text-muted-foreground sm:inline-flex">
-                    <Command className="h-3.5 w-3.5" />K
-                  </span>
-                </button>
-
-                <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                  {headerBadge ? headerBadge : null}
+                <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                   {actions}
                   <button
                     type="button"
