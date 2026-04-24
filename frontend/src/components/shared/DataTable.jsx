@@ -22,8 +22,8 @@ function SkeletonRow({ columns }) {
 function SortIcon({ column, sortKey, sortDir }) {
   if (sortKey !== column) return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
   return sortDir === 'asc'
-    ? <ChevronUp className="h-3 w-3 text-clinical-600" />
-    : <ChevronDown className="h-3 w-3 text-clinical-600" />
+    ? <ChevronUp className="h-3 w-3 text-primary" />
+    : <ChevronDown className="h-3 w-3 text-primary" />
 }
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ function Pagination({ page, pageSize, totalCount, onPageChange }) {
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-clinical-300 hover:bg-clinical-50 hover:text-clinical-700 disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -56,7 +56,7 @@ function Pagination({ page, pageSize, totalCount, onPageChange }) {
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-clinical-300 hover:bg-clinical-50 hover:text-clinical-700 disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />
