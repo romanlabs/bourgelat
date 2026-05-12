@@ -1,54 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion as Motion } from 'motion/react'
 import { Link } from 'react-router-dom'
-import ECGHeartbeatCanvas from '@/components/shared/ECGHeartbeatCanvas'
+import medicaPerritoImage from '@/assets/landing/Medica-perrito.webp'
 import {
   ArrowRight,
-  Bell,
   Calendar,
-  Check,
-  Globe,
+  CheckCircle,
+  Clock,
   HeartPulse,
-  Layers,
   Mail,
   Menu,
   Package,
-  PawPrint,
-  Receipt,
   Shield,
   Stethoscope,
   X,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Experiencia', href: '#experiencia' },
   { label: 'Flujo', href: '#flujo' },
   { label: 'Planes', href: '#planes' },
   { label: 'Contacto', href: '#contacto' },
-]
-
-const EXPERIENCE_CARDS = [
-  {
-    icon: Calendar,
-    title: 'Recepcion sin perseguir chats',
-    body:
-      'La llamada, la confirmacion y la llegada del paciente quedan en un mismo tablero para que recepcion no trabaje a ciegas.',
-    points: ['Citas con contexto', 'Llegadas visibles', 'Menos mensajes repetidos'],
-  },
-  {
-    icon: HeartPulse,
-    title: 'La historia no arranca de cero',
-    body:
-      'El veterinario ve antecedentes, evolucion y pendientes del paciente sin buscar entre papel, Word o notas sueltas.',
-    points: ['Antecedentes a mano', 'Evolucion por visita', 'Pendientes clinicos claros'],
-  },
-  {
-    icon: Receipt,
-    title: 'El cierre deja rastro',
-    body:
-      'El cobro, el consumo de inventario y el seguimiento salen del mismo caso para que el cierre no dependa de memoria.',
-    points: ['Caja conectada', 'Stock que se descuenta', 'Seguimiento despues del pago'],
-  },
 ]
 
 const FLOW_STEPS = [
@@ -72,32 +43,6 @@ const FLOW_STEPS = [
   },
 ]
 
-const PRODUCT_PANELS = [
-  {
-    icon: Layers,
-    title: 'Agenda con contexto',
-    body:
-      'No solo hora y nombre: tambien motivo, paciente, tutor y estado de llegada para tomar mejores decisiones.',
-  },
-  {
-    icon: Bell,
-    title: 'Historia que acompana',
-    body:
-      'Cada visita suma continuidad: antecedentes, observaciones y tareas pendientes siguen al paciente.',
-  },
-  {
-    icon: Package,
-    title: 'Inventario con pulso',
-    body:
-      'El consumo de la atencion ayuda a mantener stock, reposiciones y caja conectados con el trabajo real.',
-  },
-  {
-    icon: Globe,
-    title: 'DIAN cuando toca',
-    body:
-      'Facturacion electronica disponible para clinicas que ya necesitan operar con mas control fiscal.',
-  },
-]
 
 const PLAN_PREVIEW = [
   {
@@ -135,26 +80,596 @@ const footerLinks = [
   { label: 'Cookies', to: '/cookies' },
 ]
 
-const HERO_MARQUEE_ITEMS = [
-  { label: 'Agenda', icon: Calendar },
-  { label: 'Pacientes', icon: PawPrint },
-  { label: 'Historia clinica', icon: HeartPulse },
-  { label: 'Inventario', icon: Package },
-  { label: 'Caja', icon: Receipt },
-  { label: 'Facturacion DIAN', icon: Globe },
-  { label: 'Recordatorios', icon: Bell },
-  { label: 'Operacion diaria', icon: Layers },
+const TRUST_LOGOS = [
+  { src: '/logos/dian.svg', alt: 'DIAN', h: 28, caption: 'Facturación electrónica' },
+  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 28, caption: 'Protegido por Cloudflare' },
+  { src: '/logos/colombia.svg', alt: 'Bandera de Colombia', h: 24, rounded: true, caption: 'Hecho en Colombia' },
 ]
+// TODO: agregar Factus cuando la integración como partner esté cerrada y publicada
+
+const WARM_BAND_BACKGROUND =
+  'linear-gradient(180deg, #f8f4ee 0%, #f4eee6 44%, #f8f4ee 100%)'
+
+
+function useVisible(threshold = 0.4) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true) },
+      { threshold }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [threshold])
+  return { ref, visible }
+}
+
+const ARRIVAL_ITEMS = [
+  'Citas con contexto clínico',
+  'Antecedentes visibles desde recepción',
+  'Sin preguntar dos veces',
+]
+
+const CARE_ITEMS = [
+  'Caja conectada al cierre del caso',
+  'Stock que se descuenta automáticamente',
+  'Seguimiento programado al tutor',
+]
+
+function CinematicCard({ visible, isMobile, alignRight = false, eyebrow, title, body, items }) {
+  const desktopPos = alignRight ? { right: 0 } : { left: 0 }
+  const entranceX = alignRight ? 30 : -30
+
+  const cardStyle = isMobile
+    ? {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 24,
+        padding: '24px 0',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0)' : `translateX(${entranceX}px)`,
+        transition: visible ? 'opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s' : 'none',
+      }
+    : {
+        position: 'absolute',
+        top: '50%',
+        ...desktopPos,
+        maxWidth: '32rem',
+        padding: '40px 0',
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? 'translateY(-50%) translateX(0)'
+          : `translateY(-50%) translateX(${entranceX}px)`,
+        transition: visible
+          ? 'opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s'
+          : 'none',
+      }
+
+  return (
+    <div
+      style={{
+        ...cardStyle,
+        background: 'transparent',
+      }}
+    >
+      <p style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+        letterSpacing: '0.2em', color: '#91e7e0', margin: 0,
+      }}>
+        <span style={{ width: 24, height: 1, backgroundColor: '#91e7e0', flexShrink: 0 }} />
+        {eyebrow}
+      </p>
+
+      <h2 style={{
+        fontFamily: '"Spectral", Georgia, serif',
+        fontWeight: 700,
+        fontSize: isMobile ? '1.6rem' : '2.2rem',
+        lineHeight: 0.95,
+        letterSpacing: '-0.04em',
+        color: '#ffffff',
+        margin: 0,
+        marginTop: 16,
+      }}>
+        {title}
+      </h2>
+
+      <p style={{
+        fontSize: 14, lineHeight: 1.6,
+        color: 'rgba(255,255,255,0.75)', margin: 0, marginTop: 20,
+      }}>
+        {body}
+      </p>
+
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: 14, margin: 0, marginTop: 28, padding: 0, listStyle: 'none' }}>
+        {items.map((item, idx) => (
+          <li key={item} style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateX(0)' : `translateX(${entranceX * 0.6}px)`,
+            transition: visible
+              ? `opacity 600ms ease-out ${400 + idx * 100}ms, transform 600ms ease-out ${400 + idx * 100}ms`
+              : 'none',
+          }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: '50%',
+              border: '1.5px solid #91e7e0',
+              background: 'rgba(145,231,224,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              fontFamily: '"Spectral", Georgia, serif',
+              fontSize: 11, fontWeight: 600, color: '#91e7e0',
+              lineHeight: 1, paddingTop: 1,
+            }}>
+              {String(idx + 1).padStart(2, '0')}
+            </div>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function ArrivalSection() {
+  const { ref: sectionRef, visible } = useVisible(0.15)
+  const [isMobile, setIsMobile] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  ))
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  return (
+    <section
+      ref={sectionRef}
+      style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
+    >
+      <video
+        src="/videos/landing-cinema/escena-2-llegada.mp4"
+        muted autoPlay loop playsInline preload="auto"
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+          transform: visible ? 'scale(1.0)' : 'scale(1.05)',
+          transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}
+      />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to right, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
+      }} />
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
+          <div className="relative h-full">
+            <CinematicCard
+              visible={visible}
+              isMobile={isMobile}
+              alignRight={false}
+              eyebrow="El primer momento"
+              title="Cuando el paciente llega, el equipo ya sabe."
+              body="La recepción ve al paciente, el motivo y los antecedentes antes de que el tutor termine de parquear. Sin llamadas internas, sin notas sueltas."
+              items={ARRIVAL_ITEMS}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CareSection() {
+  const { ref: sectionRef, visible } = useVisible(0.15)
+  const [isMobile, setIsMobile] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  ))
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  return (
+    <section
+      ref={sectionRef}
+      style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
+    >
+      <video
+        src="/videos/landing-cinema/escena-3-consulta.mp4"
+        muted autoPlay loop playsInline preload="auto"
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+          transform: visible ? 'scale(1.0)' : 'scale(1.05)',
+          transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}
+      />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to left, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
+      }} />
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
+          <div className="relative h-full">
+            <CinematicCard
+              visible={visible}
+              isMobile={isMobile}
+              alignRight={true}
+              eyebrow="Continuidad real"
+              title="El cuidado no termina en la consulta."
+              body="Bourgelat cierra el caso con caja, consumo de inventario y recordatorio de seguimiento para que el tutor sepa que el siguiente paso ya está programado."
+              items={CARE_ITEMS}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const PLATFORM_FEATURES = [
+  { icon: Calendar, label: 'Agenda con contexto del paciente' },
+  { icon: HeartPulse, label: 'Historia que acompaña cada visita' },
+  { icon: Package, label: 'Inventario que se descuenta solo' },
+]
+
+const AGENDA_SLOTS = [
+  { time: '09:00', name: 'Luna', type: 'vacunación', bg: '#f0faf8', borderColor: '#91c4c0', useBorderLeft: true },
+  { time: '10:30', name: 'Milo', type: 'revisión',   bg: '#ffffff', borderColor: '#e8f1f4', useBorderLeft: false },
+  { time: '14:00', name: 'Kira', type: 'cirugía',    bg: '#fef3e8', borderColor: '#d4a574', useBorderLeft: true },
+]
+
+const BAR_SPECS = [
+  { h: '60%' }, { h: '85%' }, { h: '45%' }, { h: '75%' }, { h: '55%' },
+]
+
+function PlatformSection() {
+  const { ref: sectionRef, visible } = useVisible(0.2)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  )
+  const [hoveredCard, setHoveredCard] = useState(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  const entrance = (delay) => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'scale(1) translateY(0px)' : 'scale(0.94) translateY(30px)',
+    transition: visible
+      ? `opacity 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms, transform 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms`
+      : 'none',
+  })
+
+  const cardHover = (idx) => {
+    if (hoveredCard === null) return {}
+    return hoveredCard === idx
+      ? { transform: 'scale(1.03)', boxShadow: '0 40px 100px rgba(83,62,41,0.20), 0 12px 32px rgba(83,62,41,0.12)', zIndex: 40 }
+      : { opacity: 0.65 }
+  }
+
+  const CARD_TRANSITION = 'transform 350ms ease-out, box-shadow 350ms ease-out, opacity 350ms ease-out'
+
+  return (
+    <section ref={sectionRef} className="relative overflow-hidden text-[#10263a]">
+      <style>{`
+        @keyframes floatCard {
+          0%, 100% { transform: translateY(0px) rotate(var(--card-rotate, 0deg)); }
+          50%       { transform: translateY(-5px) rotate(var(--card-rotate, 0deg)); }
+        }
+      `}</style>
+
+      <div className="mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8 lg:pb-28 lg:pt-16">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+
+          {/* ── Columna texto ── */}
+          <div style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? 'translateY(0)' : 'translateY(24px)',
+            transition: visible ? 'opacity 800ms ease-out, transform 800ms ease-out' : 'none',
+          }}>
+            <p style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+              letterSpacing: '0.2em', color: '#3c7d8d', margin: 0,
+            }}>
+              <span style={{ width: 24, height: 1, backgroundColor: '#91c4c0', flexShrink: 0 }} />
+              Plataforma
+            </p>
+
+            <h2 style={{
+              fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
+              fontSize: 'clamp(2.4rem, 4vw, 3rem)', lineHeight: 0.95,
+              letterSpacing: '-0.045em', color: '#10263a',
+              maxWidth: '24rem', marginTop: 20,
+            }}>
+              Toda la operación, en una sola vista.
+            </h2>
+
+            <p style={{
+              fontSize: 15, lineHeight: 1.7, color: '#52697a',
+              maxWidth: '22rem', marginTop: 24,
+            }}>
+              Bourgelat conecta agenda, historia clínica, caja e inventario en módulos que se
+              entienden entre sí. Sin copiar datos. Sin perder contexto.
+            </p>
+
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, padding: 0, listStyle: 'none' }}>
+              {PLATFORM_FEATURES.map(({ icon: Icon, label }) => (
+                <li key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <Icon style={{ width: 14, height: 14, color: '#2c7d7a', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#24435c' }}>{label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* ── Columna mockup ── */}
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <CardPatient style={entrance(150)} />
+              <CardAgenda style={entrance(280)} />
+              <CardStock style={entrance(410)} />
+              <CardFactura style={entrance(540)} />
+            </div>
+          ) : (
+            <div style={{ position: 'relative', height: 580 }}>
+
+              {/* Card 1 — Paciente · top-left · z30 */}
+              <CardPatient
+                style={{
+                  position: 'absolute', top: '5%', left: '3%',
+                  width: 300, zIndex: 30,
+                  '--card-rotate': '0deg',
+                  animation: 'floatCard 6s ease-in-out infinite',
+                  animationDelay: '0s',
+                  ...entrance(150),
+                  ...cardHover(0),
+                  transition: CARD_TRANSITION,
+                }}
+                onMouseEnter={() => setHoveredCard(0)}
+                onMouseLeave={() => setHoveredCard(null)}
+              />
+
+              {/* Card 2 — Agenda · mid-right · z20 · tilt +2.5° */}
+              <CardAgenda
+                style={{
+                  position: 'absolute', top: '28%', right: '5%',
+                  width: 260, zIndex: 20,
+                  '--card-rotate': '2.5deg',
+                  animation: 'floatCard 7.5s ease-in-out infinite',
+                  animationDelay: '1.5s',
+                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
+                  ...entrance(280),
+                  ...cardHover(1),
+                  transition: CARD_TRANSITION,
+                }}
+                onMouseEnter={() => setHoveredCard(1)}
+                onMouseLeave={() => setHoveredCard(null)}
+              />
+
+              {/* Card 3 — Stock · bottom-left · z25 · tilt -2.5° */}
+              <CardStock
+                style={{
+                  position: 'absolute', bottom: '20%', left: '8%',
+                  width: 240, zIndex: 25,
+                  '--card-rotate': '-2.5deg',
+                  animation: 'floatCard 6.8s ease-in-out infinite',
+                  animationDelay: '3s',
+                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
+                  ...entrance(410),
+                  ...cardHover(2),
+                  transition: CARD_TRANSITION,
+                }}
+                onMouseEnter={() => setHoveredCard(2)}
+                onMouseLeave={() => setHoveredCard(null)}
+              />
+
+              {/* Card 4 — Factura · bottom-right · z35 */}
+              <CardFactura
+                style={{
+                  position: 'absolute', bottom: '4%', right: '2%',
+                  width: 220, zIndex: 35,
+                  '--card-rotate': '0deg',
+                  animation: 'floatCard 8s ease-in-out infinite',
+                  animationDelay: '4.5s',
+                  ...entrance(540),
+                  ...cardHover(3),
+                  transition: CARD_TRANSITION,
+                }}
+                onMouseEnter={() => setHoveredCard(3)}
+                onMouseLeave={() => setHoveredCard(null)}
+              />
+
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CardPatient({ style = {}, onMouseEnter, onMouseLeave }) {
+  return (
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        background: '#ffffff', borderRadius: 20, padding: 20,
+        border: '1px solid rgba(255,255,255,0.9)',
+        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
+        willChange: 'transform',
+        ...style,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #8fe0da, #b8eff0)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, fontSize: 16, fontWeight: 600, color: '#082033',
+        }}>
+          M
+        </div>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#10263a', margin: 0 }}>Milo García</p>
+          <p style={{ fontSize: 11, color: '#7a8da0', margin: 0, marginTop: 2 }}>Golden Retriever · 4 años</p>
+        </div>
+      </div>
+      <div style={{ marginTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[
+          { Icon: Clock,    iconColor: '#3c7d8d', text: 'Última visita: hace 2 meses' },
+          { Icon: Shield,   iconColor: '#2c7d7a', text: 'Vacunas: al día' },
+          { Icon: Calendar, iconColor: '#3c7d8d', text: 'Próxima cita: mañana 10am' },
+        ].map(({ Icon, iconColor, text }) => (
+          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Icon style={{ width: 12, height: 12, color: iconColor, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: '#52697a' }}>{text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CardAgenda({ style = {}, onMouseEnter, onMouseLeave }) {
+  return (
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        background: '#ffffff', borderRadius: 18, padding: 18,
+        border: '1px solid rgba(255,255,255,0.9)',
+        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
+        willChange: 'transform',
+        ...style,
+      }}
+    >
+      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
+        Agenda · Hoy
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {AGENDA_SLOTS.map((s) => (
+          <div key={s.time} style={{
+            background: s.bg,
+            ...(s.useBorderLeft
+              ? { borderLeft: `3px solid ${s.borderColor}`, borderRadius: '0 8px 8px 0', padding: '8px 12px' }
+              : { border: `1px solid ${s.borderColor}`, borderRadius: 8, padding: '8px 12px' }),
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#3c7d8d' }}>{s.time}</span>
+            <span style={{ fontSize: 12, color: '#10263a' }}>{s.name} · {s.type}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CardStock({ style = {}, onMouseEnter, onMouseLeave }) {
+  return (
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        background: '#ffffff', borderRadius: 18, padding: 18,
+        border: '1px solid rgba(255,255,255,0.9)',
+        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
+        willChange: 'transform',
+        ...style,
+      }}
+    >
+      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
+        Inventario
+      </p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 48 }}>
+        {BAR_SPECS.map((bar, i) => (
+          <div key={i} style={{
+            width: 12, height: bar.h, borderRadius: '3px 3px 0 0',
+            background: 'linear-gradient(to top, #6bc4be, #91e7e0)',
+          }} />
+        ))}
+      </div>
+      <p style={{ fontSize: 12, color: '#52697a', margin: '12px 0 8px' }}>
+        23 productos por reordenar
+      </p>
+      <span style={{
+        display: 'inline-block',
+        fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em',
+        color: '#2c7d7a', background: 'rgba(145,231,224,0.15)',
+        border: '1px solid rgba(145,231,224,0.30)',
+        padding: '3px 8px', borderRadius: 999,
+      }}>
+        Automático
+      </span>
+    </div>
+  )
+}
+
+function CardFactura({ style = {}, onMouseEnter, onMouseLeave }) {
+  return (
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #06111c 0%, #0d2435 100%)',
+        borderRadius: 20, padding: 20,
+        boxShadow: '0 30px 80px rgba(6,17,28,0.30), 0 0 0 1px rgba(145,231,224,0.10)',
+        willChange: 'transform',
+        ...style,
+      }}
+    >
+      <CheckCircle style={{
+        position: 'absolute', top: 16, right: 16,
+        width: 16, height: 16, color: '#91e7e0',
+      }} />
+      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#91e7e0', margin: '0 0 8px' }}>
+        Factura generada
+      </p>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <span style={{
+          fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
+          fontSize: 22, lineHeight: 1, color: '#ffffff',
+        }}>
+          $ 145.000
+        </span>
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>COP</span>
+      </div>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 8 }}>
+        Enviada al tutor · 2 min
+      </p>
+    </div>
+  )
+}
 
 function BrandMark({ dark = false }) {
   return (
     <div className="flex items-center gap-2.5 sm:gap-3">
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-2xl shadow-[0_18px_40px_rgba(92,206,198,0.2)] sm:h-11 sm:w-11 ${
+        className={`flex h-10 w-10 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${
           dark
             ? 'bg-white/10 text-white'
             : 'bg-[linear-gradient(135deg,#8fe0da,#b8eff0)] text-[#082033]'
         }`}
+        style={dark
+          ? { boxShadow: '0 18px 40px rgba(92,206,198,0.2), 0 0 24px rgba(145,231,224,0.15)' }
+          : { boxShadow: '0 18px 40px rgba(92,206,198,0.2)' }
+        }
       >
         <Stethoscope className="h-5 w-5" />
       </div>
@@ -304,13 +819,20 @@ function LandingNav() {
       }`}
     >
       <div
-        className={`mx-auto flex items-center justify-between border px-4 transition-all duration-700 sm:px-6 lg:px-8 ${
+        className={`mx-auto flex items-center justify-between px-4 transition-all duration-500 sm:px-6 lg:px-8 ${
           compact
             ? isLight
-              ? 'max-w-[1200px] rounded-[28px] border-transparent bg-[rgba(248,251,252,0.9)] py-3 shadow-[0_24px_70px_rgba(11,34,50,0.12)] backdrop-blur-xl'
-              : 'max-w-[1200px] rounded-[28px] border-transparent bg-[rgba(3,13,22,0.86)] py-3 shadow-[0_24px_70px_rgba(2,8,14,0.5)] backdrop-blur-xl'
-            : 'max-w-[1400px] rounded-none border-transparent bg-transparent py-5'
+              ? 'max-w-[1200px] rounded-[28px] border border-transparent bg-[rgba(248,251,252,0.9)] py-3 shadow-[0_24px_70px_rgba(11,34,50,0.12)] backdrop-blur-xl'
+              : 'max-w-[1200px] rounded-[28px] py-3'
+            : 'max-w-[1400px] rounded-none border border-transparent bg-transparent py-5'
         }`}
+        style={compact && !isLight ? {
+          background: 'rgba(6,17,28,0.55)',
+          backdropFilter: 'blur(20px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 8px 32px rgba(2,8,14,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+        } : undefined}
       >
         <Link to="/" className="no-underline">
           <BrandMark dark={!isLight} />
@@ -321,10 +843,10 @@ function LandingNav() {
             <a
               key={item.label}
               href={item.href}
-              className={`rounded-full px-4 py-2 text-sm font-semibold no-underline transition-colors ${
+              className={`rounded-full px-4 py-2 text-sm font-semibold no-underline transition-[background-color,color] duration-[250ms] ease-out ${
                 isLight
                   ? 'text-[#173048] hover:bg-[#e8f1f4] hover:text-[#0d2435]'
-                  : 'text-[#e8f3f2] hover:bg-white/10 hover:text-[#a8fff6]'
+                  : 'text-[rgba(255,255,255,0.85)] hover:bg-[rgba(145,231,224,0.08)] hover:text-[#c4f3ed]'
               }`}
             >
               {item.label}
@@ -335,20 +857,45 @@ function LandingNav() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             to="/login"
-            className={`rounded-full border px-4 py-2 text-sm font-semibold no-underline transition-colors ${
+            className={`rounded-full border px-4 py-2 text-sm font-semibold no-underline transition-[background-color,border-color,color] duration-[300ms] ease-out ${
               isLight
                 ? 'border-[#b9ccd8] bg-white/70 text-[#10263a] hover:border-[#9cb5c6] hover:bg-white'
-                : 'border-white/30 bg-[#081827] text-white hover:border-[#91e7e0]/60 hover:bg-[#0c2235]'
+                : 'hover:text-[#91e7e0]'
             }`}
+            style={isLight ? undefined : {
+              color: 'rgba(255,255,255,0.92)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
+            onMouseEnter={isLight ? undefined : (e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(145,231,224,0.35)'
+            }}
+            onMouseLeave={isLight ? undefined : (e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+            }}
           >
             Iniciar sesion
           </Link>
           <Link
             to="/registro"
-            className="inline-flex items-center gap-2 rounded-full border border-[#dff0ee] bg-[#effaf8] px-5 py-2.5 text-sm font-semibold text-[#0d2435] no-underline shadow-[0_14px_34px_rgba(143,224,218,0.18)] transition-colors hover:bg-white"
+            className="group inline-flex items-center gap-2 rounded-full border border-[#dff0ee] px-6 py-3 text-sm font-semibold text-[#0d2435] no-underline transition-[box-shadow,transform] duration-[300ms] ease-out hover:-translate-y-px"
+            style={{
+              background: 'linear-gradient(135deg, #effaf8, #ffffff)',
+              boxShadow: '0 12px 32px rgba(143,224,218,0.20), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 18px 44px rgba(143,224,218,0.30), 0 4px 12px rgba(0,0,0,0.12)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 12px 32px rgba(143,224,218,0.20), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)'
+            }}
           >
             Crear cuenta
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 transition-transform duration-[250ms] ease-out group-hover:translate-x-[3px]" />
           </Link>
         </div>
 
@@ -467,7 +1014,7 @@ function FlowStepper() {
 
             <AnimatePresence>
               {isActive && (
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -477,7 +1024,7 @@ function FlowStepper() {
                   <p className="mt-4 pl-14 text-sm leading-7 text-[#567185]">{step.body}</p>
                   <div className="mt-4 pl-14">
                     <div className="h-px w-full overflow-hidden rounded-full bg-[#d7e4ee]">
-                      <motion.div
+                      <Motion.div
                         key={tick}
                         className="h-full origin-left bg-[#3a6d87]"
                         initial={{ scaleX: 0 }}
@@ -486,7 +1033,7 @@ function FlowStepper() {
                       />
                     </div>
                   </div>
-                </motion.div>
+                </Motion.div>
               )}
             </AnimatePresence>
           </button>
@@ -496,173 +1043,129 @@ function FlowStepper() {
   )
 }
 
-function HeroPreview({ className = '' }) {
+
+function TrustBar() {
+  const doubled = [...TRUST_LOGOS, ...TRUST_LOGOS]
+  const { ref: sectionRef, visible } = useVisible(0.3)
+  const [carouselDuration, setCarouselDuration] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 18 : 32
+  ))
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e) => setCarouselDuration(e.matches ? 18 : 32)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  const fadeIn = (delay = 0) => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0px)' : 'translateY(20px)',
+    transition: visible
+      ? `opacity 800ms ease ${delay}ms, transform 800ms ease ${delay}ms`
+      : 'none',
+  })
+
   return (
-    <div className={`pointer-events-none ${className}`}>
-      <ECGHeartbeatCanvas className="block h-full w-full" />
-    </div>
-  )
-}
-
-function HeroModuleMarquee() {
-  const loopItems = [...HERO_MARQUEE_ITEMS, ...HERO_MARQUEE_ITEMS]
-  const MotionTrack = motion.div
-
-  return (
-    <section className="relative z-20 bg-[#f4f7fb] pt-4 sm:pt-6">
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden bg-transparent py-4 sm:py-5">
-          <div className="relative overflow-hidden">
-            <div className="sr-only">
-              Bourgelat conecta agenda, pacientes, historia clinica, inventario, caja,
-              facturacion DIAN y recordatorios en una misma operacion.
-            </div>
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-[linear-gradient(90deg,#f4f7fb,rgba(244,247,251,0))] sm:w-24" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-[linear-gradient(270deg,#f4f7fb,rgba(244,247,251,0))] sm:w-24" />
-
-            <MotionTrack
-              aria-hidden="true"
-              className="flex w-max items-center gap-6 px-3 sm:gap-8 sm:px-6"
-              animate={{ x: ['0%', '-50%'] }}
-              transition={{ duration: 24, ease: 'linear', repeat: Infinity }}
-              style={{ willChange: 'transform' }}
+    <section
+      ref={sectionRef}
+      className="relative -mt-px overflow-hidden py-8 text-[#10263a] sm:py-9 lg:py-10"
+    >
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
+          <div className="mx-auto max-w-[23rem] text-center lg:mx-0 lg:text-left">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3c7d8d]"
+              style={fadeIn(0)}
             >
-              {loopItems.map((item, index) => {
-                const Icon = item.icon
-
-                return (
-                  <div
-                    key={`${item.label}-${index}`}
-                    className="flex items-center gap-6 whitespace-nowrap text-[#173048]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 shrink-0 text-[#2d7a79]" />
-                      <span className="text-sm font-semibold tracking-[-0.02em] sm:text-[15px]">
-                        {item.label}
-                      </span>
-                    </div>
-                    <span className="text-[#b8cad5]">/</span>
-                  </div>
-                )
-              })}
-            </MotionTrack>
+              Confianza y cumplimiento
+            </p>
+            <h2
+              className="mx-auto mt-2.5 max-w-[20rem] text-[1.45rem] leading-[1.05] tracking-[-0.03em] text-[#10263a] sm:text-[1.65rem] lg:mx-0"
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
+            >
+              Operación segura para clínicas en Colombia.
+            </h2>
+            <p
+              className="mt-3 text-[13px] leading-6 text-[#52697a] sm:text-sm"
+              style={fadeIn(200)}
+            >
+              Facturación electrónica, protección de red y una base local para operar con más calma.
+            </p>
           </div>
+
+          <div
+            className="relative overflow-hidden"
+            style={{
+              opacity: visible ? 1 : 0,
+              transition: visible ? 'opacity 900ms ease 350ms' : 'none',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
+              maskImage:
+                'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
+            }}
+          >
+            <Motion.div
+              className="flex items-center"
+              style={{ gap: 0 }}
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ duration: carouselDuration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
+              aria-hidden="true"
+            >
+              {doubled.map((logo, i) => (
+                <div key={i} className="flex shrink-0 items-stretch">
+                  <div className="flex min-w-[168px] flex-col items-center px-5 sm:min-w-[210px] sm:px-8">
+                    <div className="flex h-9 items-center justify-center sm:h-10">
+                      <img
+                        src={logo.src}
+                        alt={logo.alt}
+                        style={{
+                          height: logo.h,
+                          width: 'auto',
+                          maxWidth: 136,
+                          objectFit: 'contain',
+                          display: 'block',
+                          opacity: 0.86,
+                          filter: 'saturate(0.9) contrast(0.96)',
+                          ...(logo.rounded && { borderRadius: 3, boxShadow: '0 2px 8px rgba(16,38,58,0.10)' }),
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="mt-1.5 whitespace-nowrap"
+                      style={{ fontSize: 11, fontWeight: 500, color: '#5d7180' }}
+                    >
+                      {logo.caption}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <div style={{ width: 1, height: 26, backgroundColor: 'rgba(16,38,58,0.13)', flexShrink: 0 }} />
+                  </div>
+                </div>
+              ))}
+            </Motion.div>
+
+            <ul className="sr-only">
+              {TRUST_LOGOS.map((logo) => <li key={logo.alt}>{logo.alt} — {logo.caption}</li>)}
+            </ul>
+          </div>
+
         </div>
       </div>
     </section>
   )
 }
 
-function FeatureMockup() {
+function DailyFlowVisual() {
   return (
-    <div className="rounded-[28px] border border-[#d6e3ee] bg-white p-4 shadow-[0_26px_80px_rgba(8,25,39,0.08)] sm:rounded-[34px] sm:p-5">
-      <div className="rounded-[24px] border border-[#dce7f0] bg-[#f7fafc] p-4 sm:rounded-[26px] sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#608093]">
-              Vista diaria
-            </p>
-            <h3
-              className="mt-2 text-[2rem] leading-none tracking-[-0.04em] text-[#10263a] sm:text-3xl"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-            >
-              La operacion se siente conectada.
-            </h3>
-          </div>
-          <div className="rounded-full bg-[#e6f7f3] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#27625d]">
-            lista para trabajar
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
-            <div className="rounded-[24px] bg-[#0c1d2d] p-4 text-white sm:p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91e7e0]">
-                    Agenda del dia
-                  </p>
-                  <p className="mt-2 text-lg font-semibold">Recepcion, consulta y cierre</p>
-                </div>
-                <Calendar className="h-5 w-5 text-[#91e7e0]" />
-              </div>
-              <div className="mt-4 space-y-3">
-                {[
-                  '08:00 - Milo llega a vacuna anual',
-                  '10:30 - Luna entra a control respiratorio',
-                  '15:00 - Bruno pasa a caja y seguimiento',
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-sm text-white/78"
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-[#d5e3ed] bg-white p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
-                  Inventario
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#28445a]">
-                  El consumo de consulta se vuelve una senal para reponer, no una sorpresa al final.
-                </p>
-              </div>
-              <div className="rounded-[22px] border border-[#d5e3ed] bg-white p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
-                  Reportes
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#28445a]">
-                  El cierre muestra donde se fue el dia: atenciones, cobros, stock y pendientes.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-[24px] border border-[#d5e3ed] bg-white p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
-                    Paciente
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-[#143149]">
-                    Luna - control respiratorio
-                  </p>
-                </div>
-                <PawPrint className="h-5 w-5 text-[#3b7b87]" />
-              </div>
-              <div className="mt-4 space-y-3">
-                {[
-                  ['Motivo', 'Tos persistente despues de control previo'],
-                  ['Hallazgo', 'Tutor informado y formula actualizada'],
-                  ['Salida', 'Listo para caja y proximo seguimiento'],
-                ].map(([label, text]) => (
-                  <div key={label} className="rounded-[18px] bg-[#f5f8fb] px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#66849b]">
-                      {label}
-                    </p>
-                    <p className="mt-1.5 text-sm leading-6 text-[#27425a]">{text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] bg-[linear-gradient(135deg,#0d3b4a,#12314a)] p-4 text-white shadow-[0_16px_44px_rgba(6,23,35,0.22)] sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9debe4]">
-                Facturacion electronica
-              </p>
-              <p className="mt-3 text-sm leading-6 text-white/80">
-                Disponible cuando la clinica necesita emitir sin volver a digitar el caso en otro
-                sistema.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[#10263a] shadow-[0_30px_90px_rgba(8,25,39,0.16)] sm:rounded-[36px]">
+      <img
+        src={medicaPerritoImage}
+        alt="Medica veterinaria abrazando a un paciente canino en consulta"
+        className="h-full w-full object-cover"
+        loading="lazy"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,15,25,0.78),rgba(4,15,25,0.22)_56%,rgba(4,15,25,0.04))]" />
     </div>
   )
 }
@@ -674,154 +1177,84 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-[#112739]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f4f7fb] text-[#112739]">
       <LandingNav />
 
-      <section className="relative flex min-h-screen flex-col overflow-hidden bg-[#06111c] text-white" style={{ minHeight: '100dvh' }}>
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-[-8rem] top-[-6rem] h-[32rem] w-[32rem] rounded-full bg-[#163d66]/35 blur-3xl" />
-          <div
-            className="absolute inset-0 opacity-[0.07]"
-            style={{
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
-              backgroundSize: '72px 72px',
-              maskImage: 'radial-gradient(circle at top, black 16%, transparent 76%)',
-            }}
-          />
-        </div>
-        <HeroPreview className="absolute inset-0 z-0 opacity-55 sm:opacity-90" />
+      <section className="relative flex h-[100dvh] flex-col justify-end overflow-hidden bg-[#06111c] text-white">
+        <video
+          src="/videos/landing-cinema/escena-1-perro.mp4"
+          muted
+          autoPlay
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 z-0 h-full w-full object-cover object-[42%_center] sm:object-[48%_center] lg:object-center"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{
+            background:
+              'linear-gradient(to top right, rgba(6,17,28,0.5), rgba(6,17,28,0.08) 70%)',
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[30dvh] sm:h-[34dvh] lg:h-[38dvh]"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0) 42%, rgba(248,244,238,0.06) 58%, rgba(248,244,238,0.24) 74%, rgba(248,244,238,0.68) 91%, #f8f4ee 100%)',
+          }}
+        />
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-16 pt-28 sm:px-6 sm:pb-24 sm:pt-36 lg:px-8 lg:pb-32 lg:pt-40" style={{ marginTop: 'auto' }}>
-          <div className="max-w-4xl">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-32 lg:px-8 lg:pb-12 lg:pt-36">
+          <div className="max-w-[34rem]">
             <h1
-              className="mt-2 max-w-3xl text-[3.2rem] leading-[0.92] tracking-[-0.06em] sm:text-6xl lg:text-7xl"
+              className="mt-2 max-w-[22rem] text-[2.15rem] leading-[0.94] tracking-[-0.06em] sm:max-w-[32rem] sm:text-[2.9rem] lg:max-w-[34rem] lg:text-[3.25rem] xl:text-[3.45rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Tu clinica veterinaria merece una operacion a la altura de su medicina.
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/72 sm:mt-6 sm:text-lg sm:leading-8">
+            <p className="mt-5 max-w-[31rem] text-[15px] leading-7 text-white/76 sm:mt-6 sm:text-base sm:leading-8">
               Bourgelat integra agenda, historia clinica, caja, inventario y seguimiento en un
               solo sistema para reducir reprocesos, ordenar al equipo y ofrecer una experiencia
               mas profesional a cada tutor.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/registro"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#effaf8] px-6 py-3.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white sm:w-auto"
-              >
-                Crear cuenta
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/planes"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-6 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/10 sm:w-auto"
-              >
-                Ver planes
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
           </div>
         </div>
       </section>
 
-      <HeroModuleMarquee />
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: WARM_BAND_BACKGROUND,
+          boxShadow: 'inset 0 -1px 0 rgba(9,31,48,0.04)',
+        }}
+      >
+        <TrustBar />
+        <PlatformSection />
+      </div>
 
-      <section id="experiencia" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <SectionHeading
-          eyebrow="Experiencia"
-          title="Menos pantalla por pantalla. Mas continuidad por caso."
-          body="Bourgelat no intenta decorar el caos: lo ordena alrededor del paciente, del tutor y de las decisiones del equipo."
-        />
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {EXPERIENCE_CARDS.map((card) => {
-            const Icon = card.icon
-            return (
-              <article
-                key={card.title}
-                className="rounded-[32px] border border-[#d6e3ee] bg-white p-6 shadow-[0_22px_70px_rgba(8,25,39,0.06)]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#edf5fb] text-[#466f87]">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3
-                  className="mt-6 text-3xl leading-none tracking-[-0.04em] text-[#10263a]"
-                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                >
-                  {card.title}
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-[#5a7185]">{card.body}</p>
-
-                <div className="mt-6 space-y-3">
-                  {card.points.map((point) => (
-                    <div
-                      key={point}
-                      className="flex items-start gap-3 text-sm leading-6 text-[#24435c]"
-                    >
-                      <Check className="mt-1 h-4 w-4 shrink-0 text-[#2c7d7a]" />
-                      <span>{point}</span>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            )
-          })}
-        </div>
-      </section>
+      <ArrivalSection />
 
       <section id="flujo" className="bg-[#edf4f8]">
-        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:grid lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:grid lg:grid-cols-[minmax(360px,0.78fr)_minmax(0,1.05fr)] lg:items-center lg:gap-14 lg:px-8 lg:py-24">
           <div>
             <SectionHeading
               eyebrow="Flujo diario"
-              title="De la llamada al seguimiento, cada paso empuja al siguiente."
-              body="La clinica deja de pasar informacion de mano en mano. El sistema conserva el contexto y el equipo avanza con menos friccion."
+              title="De la llamada al seguimiento, el dia avanza sin perder el caso."
+              body="La clinica deja de pasar informacion de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una senal para el siguiente."
             />
 
             <FlowStepper />
           </div>
 
           <div className="mt-12 lg:mt-0">
-            <FeatureMockup />
+            <DailyFlowVisual />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <SectionHeading
-          eyebrow="Plataforma"
-          title="No es otro tablero bonito: es el hilo comun del equipo."
-          body="Cada modulo responde a una pregunta del dia: quien llega, que le paso, que se uso, que se cobra y que toca despues."
-          center
-        />
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {PRODUCT_PANELS.map((panel) => {
-            const Icon = panel.icon
-            return (
-              <article
-                key={panel.title}
-                className="rounded-[28px] border border-[#d7e4ee] bg-white p-6 shadow-[0_18px_55px_rgba(8,25,39,0.06)]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#edf5fb] text-[#3a6d87]">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3
-                  className="mt-6 text-[30px] leading-none tracking-[-0.04em] text-[#10263a]"
-                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                >
-                  {panel.title}
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-[#567185]">{panel.body}</p>
-              </article>
-            )
-          })}
-        </div>
-      </section>
+      <CareSection />
 
       <section id="planes" className="bg-[#07131f] text-white">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">

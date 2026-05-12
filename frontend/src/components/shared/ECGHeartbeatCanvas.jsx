@@ -6,13 +6,13 @@ const R_PEAK_PHASE = 0.405 // midpoint of QRS spike in the 0..1 cycle
 function ecgSample(p) {
   p = ((p % 1) + 1) % 1
   if (p < 0.10) return 0
-  if (p < 0.22) return 0.20 * Math.exp(-(((p - 0.16) / 0.028) ** 2))         // P wave
+  if (p < 0.22) return 0.28 * Math.exp(-(((p - 0.16) / 0.028) ** 2))         // P wave
   if (p < 0.32) return 0                                                       // PR segment
-  if (p < 0.37) return -0.12 * Math.sin(((p - 0.32) / 0.05) * Math.PI)       // Q dip
+  if (p < 0.37) return -0.20 * Math.sin(((p - 0.32) / 0.05) * Math.PI)       // Q dip
   if (p < 0.44) return Math.sin(((p - 0.37) / 0.07) * Math.PI)                // R spike
   if (p < 0.50) return -0.25 * Math.sin(((p - 0.44) / 0.06) * Math.PI)       // S dip
   if (p < 0.58) return 0                                                       // ST segment
-  if (p < 0.78) return 0.30 * Math.exp(-(((p - 0.68) / 0.07) ** 2))           // T wave
+  if (p < 0.78) return 0.40 * Math.exp(-(((p - 0.68) / 0.07) ** 2))           // T wave
   return 0
 }
 
@@ -69,8 +69,8 @@ export default function ECGHeartbeatCanvas({ className = '' }) {
       ctx.clearRect(0, 0, width, height)
 
       const compact = width < 560
-      const cyclesPerScreen = compact ? 1.6 : 2.0
-      const scrollSpeed = 0.38 // cycles per second — calm, clinical pace
+      const cyclesPerScreen = compact ? 1.6 : 2.2
+      const scrollSpeed = 0.72 // cycles per second
 
       // ECG paper grid: very subtle teal crosshatch
       const gridSize = compact ? 26 : 34
