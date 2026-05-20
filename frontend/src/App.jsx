@@ -49,7 +49,7 @@ function AuthBootstrap({ children }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const setAuth = useAuthStore((state) => state.setAuth)
   const clearAuth = useAuthStore((state) => state.clearAuth)
-  const [checking, setChecking] = useState(() => shouldBootstrapSession() || useAuthStore.getState().isAuthenticated)
+  const [checking, setChecking] = useState(() => shouldBootstrapSession())
 
   useEffect(() => {
     const needsSessionCheck = shouldBootstrapSession() || isAuthenticated
