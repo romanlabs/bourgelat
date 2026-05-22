@@ -71,6 +71,10 @@ module.exports = {
         mono: ['Geist Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
       },
 
+      zIndex: {
+        60: '60',
+      },
+
       transitionDuration: {
         fast: '120ms',
         normal: '200ms',
