@@ -8,6 +8,8 @@ const cleanParams = (params) =>
 export const agendaApi = {
   async obtenerCitas({
     fecha,
+    fechaDesde,
+    fechaHasta,
     veterinarioId,
     mascotaId,
     propietarioId,
@@ -16,7 +18,7 @@ export const agendaApi = {
     limite = 20,
   } = {}) {
     const { data } = await api.get('/citas', {
-      params: cleanParams({ fecha, veterinarioId, mascotaId, propietarioId, estado, pagina, limite }),
+      params: cleanParams({ fecha, fechaDesde, fechaHasta, veterinarioId, mascotaId, propietarioId, estado, pagina, limite }),
     })
     return data
   },

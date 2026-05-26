@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CalendarClock,
+  CalendarDays,
   CircleAlert,
   Clock3,
+  List,
   Plus,
   RefreshCcw,
   Search,
   ShieldCheck,
   Stethoscope,
 } from 'lucide-react'
+import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   BarPanel,
@@ -140,6 +143,7 @@ export default function AgendaPage() {
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
 
+  const [vistaAgenda, setVistaAgenda] = useState('calendario')
   const [fecha, setFecha] = useState(getToday())
   const [estado, setEstado] = useState('todos')
   const [veterinarioId, setVeterinarioId] = useState('todos')
@@ -150,6 +154,8 @@ export default function AgendaPage() {
   const [appointmentForm, setAppointmentForm] = useState(DEFAULT_APPOINTMENT_FORM)
   const [statusForm, setStatusForm] = useState(DEFAULT_STATUS_FORM)
   const [rescheduleForm, setRescheduleForm] = useState(DEFAULT_RESCHEDULE_FORM)
+
+  const formPanelRef = useRef(null)
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
@@ -230,6 +236,7 @@ export default function AgendaPage() {
       }))
       setSelectedOwner(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -244,6 +251,7 @@ export default function AgendaPage() {
       toast.success(data?.message || 'Estado actualizado')
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -258,6 +266,7 @@ export default function AgendaPage() {
       toast.success(data?.message || 'Cita reprogramada exitosamente')
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -349,6 +358,27 @@ export default function AgendaPage() {
         raw: cita,
       })),
     [citas]
+  )
+
+  /** Pre-rellena el formulario de nueva cita al hacer clic en un slot del calendario. */
+  const handleCalendarSlotClick = useCallback((fechaSlot, horaInicio) => {
+    const [h, m] = horaInicio.split(':').map(Number)
+    const finMins = h * 60 + m + 30
+    const horaFin = `${String(Math.floor(finMins / 60)).padStart(2, '0')}:${String(finMins % 60).padStart(2, '0')}`
+    setAppointmentForm((current) => ({ ...current, fecha: fechaSlot, horaInicio, horaFin }))
+    formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
+  const handleCalendarUpdateStatus = useCallback(
+    (citaId, payload) => actualizarEstadoMutation.mutate({ citaId, payload }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  const handleCalendarReschedule = useCallback(
+    (citaId, payload) => reprogramarMutation.mutate({ citaId, payload }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   )
 
   const handleCreateAppointment = (event) => {
@@ -553,26 +583,63 @@ export default function AgendaPage() {
             />
 
             <DashboardPanel
-              title="Agenda del dia"
-              subtitle="Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional."
+              title={vistaAgenda === 'calendario' ? 'Calendario semanal' : 'Agenda del dia'}
+              subtitle={
+                vistaAgenda === 'calendario'
+                  ? 'Vista semanal de citas por dia y horario. Haz clic en un slot para agendar.'
+                  : 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
+              }
               action={
-                <div className="flex flex-wrap gap-3">
-                  <input
-                    type="date"
-                    value={fecha}
-                    onChange={(event) => {
-                      setFecha(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Toggle de vista */}
+                  <div className="flex border border-border bg-muted">
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('calendario')}
+                      title="Vista calendario"
+                      className={`flex h-9 w-9 items-center justify-center transition ${
+                        vistaAgenda === 'calendario'
+                          ? 'bg-foreground text-white'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('lista')}
+                      title="Vista lista"
+                      className={`flex h-9 w-9 items-center justify-center transition ${
+                        vistaAgenda === 'lista'
+                          ? 'bg-foreground text-white'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Filtro de fecha: solo en lista */}
+                  {vistaAgenda === 'lista' && (
+                    <input
+                      type="date"
+                      value={fecha}
+                      onChange={(event) => {
+                        setFecha(event.target.value)
+                        setPagina(1)
+                      }}
+                      className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    />
+                  )}
+
+                  {/* Filtros compartidos */}
                   <select
                     value={estado}
                     onChange={(event) => {
                       setEstado(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -586,7 +653,7 @@ export default function AgendaPage() {
                       setVeterinarioId(event.target.value)
                       setPagina(1)
                     }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   >
                     <option value="todos">Todos los profesionales</option>
                     {veterinarios.map((item) => (
@@ -598,84 +665,108 @@ export default function AgendaPage() {
                 </div>
               }
             >
-              <DataTable
-                title="Citas programadas"
-                subtitle="Lectura diaria con accion rapida sobre cada caso."
-                rows={citasRows}
-                columns={[
-                  { key: 'horario', label: 'Horario' },
-                  { key: 'paciente', label: 'Paciente' },
-                  { key: 'tutor', label: 'Tutor' },
-                  { key: 'motivo', label: 'Motivo' },
-                  { key: 'profesional', label: 'Profesional' },
-                  {
-                    key: 'estado',
-                    label: 'Estado',
-                    render: (row) => (
-                      <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
-                    ),
-                  },
-                  {
-                    key: 'accion',
-                    label: 'Gestion',
-                    render: (row) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedAppointment(row.raw)
-                          setStatusForm({
-                            estado: row.raw.estado,
-                            motivoCancelacion: row.raw.motivoCancelacion || '',
-                          })
-                          setRescheduleForm({
-                            fecha: row.raw.fecha,
-                            horaInicio: row.raw.horaInicio?.slice(0, 5) || '',
-                            horaFin: row.raw.horaFin?.slice(0, 5) || '',
-                          })
-                        }}
-                        className="text-sm font-semibold text-primary hover:text-primary"
-                      >
-                        Gestionar
-                      </button>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay citas para este filtro"
-                emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde el panel operativo."
-                action={
-                  <StatusPill tone="border-border bg-muted text-foreground">
-                    {formatLongDate(fecha)}
-                  </StatusPill>
-                }
-              />
+              {/* ── Vista calendario ── */}
+              {vistaAgenda === 'calendario' && (
+                <AgendaCalendar
+                  veterinarioId={veterinarioId}
+                  estado={estado}
+                  enabled={rolPermitido && puedeVerAgenda}
+                  puedeProgramar={puedeProgramar}
+                  puedeGestionarEstado={puedeGestionarEstado}
+                  puedeReprogramar={puedeReprogramar}
+                  onSlotClick={handleCalendarSlotClick}
+                  onUpdateStatus={handleCalendarUpdateStatus}
+                  onReschedule={handleCalendarReschedule}
+                  isUpdating={actualizarEstadoMutation.isPending}
+                  isRescheduling={reprogramarMutation.isPending}
+                />
+              )}
 
-              {(citasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPagina((current) => Math.max(current - 1, 1))}
-                      disabled={(citasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Anterior
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPagina((current) => Math.min(current + 1, citasQuery.data?.paginas || 1))
-                      }
-                      disabled={(citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                </div>
-              ) : null}
+              {/* ── Vista lista ── */}
+              {vistaAgenda === 'lista' && (
+                <>
+                  <DataTable
+                    title="Citas programadas"
+                    subtitle="Lectura diaria con accion rapida sobre cada caso."
+                    rows={citasRows}
+                    columns={[
+                      { key: 'horario', label: 'Horario' },
+                      { key: 'paciente', label: 'Paciente' },
+                      { key: 'tutor', label: 'Tutor' },
+                      { key: 'motivo', label: 'Motivo' },
+                      { key: 'profesional', label: 'Profesional' },
+                      {
+                        key: 'estado',
+                        label: 'Estado',
+                        render: (row) => (
+                          <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
+                        ),
+                      },
+                      {
+                        key: 'accion',
+                        label: 'Gestion',
+                        render: (row) => (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAppointment(row.raw)
+                              setStatusForm({
+                                estado: row.raw.estado,
+                                motivoCancelacion: row.raw.motivoCancelacion || '',
+                              })
+                              setRescheduleForm({
+                                fecha: row.raw.fecha,
+                                horaInicio: row.raw.horaInicio?.slice(0, 5) || '',
+                                horaFin: row.raw.horaFin?.slice(0, 5) || '',
+                              })
+                            }}
+                            className="text-sm font-semibold text-primary hover:text-primary"
+                          >
+                            Gestionar
+                          </button>
+                        ),
+                      },
+                    ]}
+                    emptyTitle="No hay citas para este filtro"
+                    emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde el panel operativo."
+                    action={
+                      <StatusPill tone="border-border bg-muted text-foreground">
+                        {formatLongDate(fecha)}
+                      </StatusPill>
+                    }
+                  />
+
+                  {(citasQuery.data?.paginas || 1) > 1 ? (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setPagina((current) => Math.max(current - 1, 1))}
+                          disabled={(citasQuery.data?.paginaActual || 1) <= 1}
+                          className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Anterior
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPagina((current) => Math.min(current + 1, citasQuery.data?.paginas || 1))
+                          }
+                          disabled={
+                            (citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)
+                          }
+                          className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </DashboardPanel>
           </div>
 
@@ -704,7 +795,7 @@ export default function AgendaPage() {
             />
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
+          <div ref={formPanelRef} className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
             <DashboardPanel
               title="Nueva cita"
               subtitle="Programa la agenda sin salir del backoffice. Primero selecciona tutor, luego paciente y profesional."

@@ -111,11 +111,24 @@ const crearCita = async (req, res) => {
 const obtenerCitas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { fecha, veterinarioId, mascotaId, propietarioId, estado, pagina = 1, limite = 20 } = req.query;
+    const {
+      fecha, fechaDesde, fechaHasta,
+      veterinarioId, mascotaId, propietarioId, estado,
+      pagina = 1, limite = 20,
+    } = req.query;
 
     const where = { clinicaId };
 
-    if (fecha) where.fecha = fecha;
+    if (fecha) {
+      where.fecha = fecha;
+    } else if (fechaDesde && fechaHasta) {
+      where.fecha = { [Op.between]: [fechaDesde, fechaHasta] };
+    } else if (fechaDesde) {
+      where.fecha = { [Op.gte]: fechaDesde };
+    } else if (fechaHasta) {
+      where.fecha = { [Op.lte]: fechaHasta };
+    }
+
     if (veterinarioId) where.veterinarioId = veterinarioId;
     if (mascotaId) where.mascotaId = mascotaId;
     if (propietarioId) where.propietarioId = propietarioId;
