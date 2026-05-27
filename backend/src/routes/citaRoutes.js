@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { body } = require('express-validator')
+const { body, query } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const {
@@ -23,7 +23,11 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
   validar,
 ], crearCita)
 
-router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'), obtenerCitas)
+router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'), [
+  query('fechaDesde').optional().isDate().withMessage('fechaDesde debe ser una fecha válida (YYYY-MM-DD)'),
+  query('fechaHasta').optional().isDate().withMessage('fechaHasta debe ser una fecha válida (YYYY-MM-DD)'),
+  validar,
+], obtenerCitas)
 router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'), obtenerCita)
 
 router.patch('/:id/estado', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), [

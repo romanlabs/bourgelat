@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CalendarClock,
+  CalendarDays,
   CircleAlert,
   Clock3,
+  List,
   Plus,
   RefreshCcw,
   Search,
   ShieldCheck,
   Stethoscope,
 } from 'lucide-react'
+import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   BarPanel,
@@ -44,6 +47,12 @@ const STATUS_OPTIONS = [
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
   { value: 'no_asistio', label: 'No asistio' },
+]
+
+const TABS = [
+  { id: 'agenda', label: 'Agenda' },
+  { id: 'gestion', label: 'Gestión de citas' },
+  { id: 'analitica', label: 'Analítica' },
 ]
 
 const TYPE_OPTIONS = [
@@ -140,6 +149,8 @@ export default function AgendaPage() {
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
 
+  const [activeTab, setActiveTab] = useState('agenda')
+  const [vistaAgenda, setVistaAgenda] = useState('calendario')
   const [fecha, setFecha] = useState(getToday())
   const [estado, setEstado] = useState('todos')
   const [veterinarioId, setVeterinarioId] = useState('todos')
@@ -230,6 +241,7 @@ export default function AgendaPage() {
       }))
       setSelectedOwner(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -244,6 +256,7 @@ export default function AgendaPage() {
       toast.success(data?.message || 'Estado actualizado')
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -258,6 +271,7 @@ export default function AgendaPage() {
       toast.success(data?.message || 'Cita reprogramada exitosamente')
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -349,6 +363,27 @@ export default function AgendaPage() {
         raw: cita,
       })),
     [citas]
+  )
+
+  /** Pre-rellena el formulario y cambia al tab de gestión al hacer clic en un slot del calendario. */
+  const handleCalendarSlotClick = useCallback((fechaSlot, horaInicio) => {
+    const [h, m] = horaInicio.split(':').map(Number)
+    const finMins = h * 60 + m + 30
+    const horaFin = `${String(Math.floor(finMins / 60)).padStart(2, '0')}:${String(finMins % 60).padStart(2, '0')}`
+    setAppointmentForm((current) => ({ ...current, fecha: fechaSlot, horaInicio, horaFin }))
+    setActiveTab('gestion')
+  }, [])
+
+  const handleCalendarUpdateStatus = useCallback(
+    (citaId, payload) => actualizarEstadoMutation.mutate({ citaId, payload }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  const handleCalendarReschedule = useCallback(
+    (citaId, payload) => reprogramarMutation.mutate({ citaId, payload }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   )
 
   const handleCreateAppointment = (event) => {
@@ -475,239 +510,290 @@ export default function AgendaPage() {
           ctaLabel="Revisar planes"
         />
       ) : (
-        <div className="space-y-5">
-          {citasQuery.isError || veterinariosQuery.isError || reporteQuery.isError ? (
-            <div className="grid gap-4">
-              {citasQuery.isError ? (
+        <div className="space-y-0">
+          {/* ── Banners de error — siempre visibles ── */}
+          {(citasQuery.isError || veterinariosQuery.isError || reporteQuery.isError) && (
+            <div className="mb-5 grid gap-4">
+              {citasQuery.isError && (
                 <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
                   {getErrorMessage(citasQuery.error, 'No fue posible cargar la agenda seleccionada.')}
                 </div>
-              ) : null}
-              {veterinariosQuery.isError ? (
+              )}
+              {veterinariosQuery.isError && (
                 <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
                   {getErrorMessage(
                     veterinariosQuery.error,
                     'No fue posible cargar el equipo veterinario disponible.'
                   )}
                 </div>
-              ) : null}
-              {reporteQuery.isError ? (
+              )}
+              {reporteQuery.isError && (
                 <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
                   {getErrorMessage(
                     reporteQuery.error,
                     'No fue posible cargar la lectura mensual de agenda.'
                   )}
                 </div>
-              ) : null}
+              )}
             </div>
-          ) : null}
+          )}
 
-          <div className="grid gap-4 xl:grid-cols-4">
-            <KpiCard
-              icon={CalendarClock}
-              label="Citas del dia"
-              value={formatNumber(citasDelDia)}
-              helper={`Agenda visible para ${formatLongDate(fecha)}.`}
-              tone="text-primary"
-            />
-            <KpiCard
-              icon={ShieldCheck}
-              label="Confirmadas"
-              value={formatNumber(confirmadas)}
-              helper="Citas ya confirmadas dentro del dia seleccionado."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={Clock3}
-              label="Pendientes"
-              value={formatNumber(pendientes)}
-              helper="Programadas, confirmadas o en curso aun sin cierre definitivo."
-              tone="text-amber-700"
-            />
-            <KpiCard
-              icon={Stethoscope}
-              label="Profesionales"
-              value={formatNumber(veterinarios.length)}
-              helper="Equipo veterinario disponible para asignacion."
-              tone="text-violet-700"
-            />
+          {/* ── Navegación de tabs ── */}
+          <div className="flex gap-0 border-b border-border">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
-            <DonutCard
-              title={puedeVerAnalitica ? 'Estado mensual de citas' : 'Estado del dia'}
-              subtitle={
-                puedeVerAnalitica
-                  ? 'Lectura del periodo actual para medir avance y asistencia.'
-                  : 'Distribucion de la agenda visible en la fecha seleccionada.'
-              }
-              data={estadoChartData}
-              centerLabel={puedeVerAnalitica ? 'Mes actual' : 'Dia activo'}
-              centerValue={
-                puedeVerAnalitica
-                  ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                  : formatNumber(citasDelDia)
-              }
-              formatter={formatNumber}
-              emptyMessage="Aun no hay citas para mostrar."
-            />
+          {/* ══════════════════════════════
+              Tab: Agenda
+          ══════════════════════════════ */}
+          {activeTab === 'agenda' && (
+            <div className="space-y-5 pt-5">
+              {/* KPI cards */}
+              <div className="grid gap-4 xl:grid-cols-4">
+                <KpiCard
+                  icon={CalendarClock}
+                  label="Citas del dia"
+                  value={formatNumber(citasDelDia)}
+                  helper={`Agenda visible para ${formatLongDate(fecha)}.`}
+                  tone="text-primary"
+                />
+                <KpiCard
+                  icon={ShieldCheck}
+                  label="Confirmadas"
+                  value={formatNumber(confirmadas)}
+                  helper="Citas ya confirmadas dentro del dia seleccionado."
+                  tone="text-emerald-700"
+                />
+                <KpiCard
+                  icon={Clock3}
+                  label="Pendientes"
+                  value={formatNumber(pendientes)}
+                  helper="Programadas, confirmadas o en curso aun sin cierre definitivo."
+                  tone="text-amber-700"
+                />
+                <KpiCard
+                  icon={Stethoscope}
+                  label="Profesionales"
+                  value={formatNumber(veterinarios.length)}
+                  helper="Equipo veterinario disponible para asignacion."
+                  tone="text-violet-700"
+                />
+              </div>
 
-            <DashboardPanel
-              title="Agenda del dia"
-              subtitle="Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional."
-              action={
-                <div className="flex flex-wrap gap-3">
-                  <input
-                    type="date"
-                    value={fecha}
-                    onChange={(event) => {
-                      setFecha(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <select
-                    value={estado}
-                    onChange={(event) => {
-                      setEstado(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={veterinarioId}
-                    onChange={(event) => {
-                      setVeterinarioId(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    <option value="todos">Todos los profesionales</option>
-                    {veterinarios.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              }
-            >
-              <DataTable
-                title="Citas programadas"
-                subtitle="Lectura diaria con accion rapida sobre cada caso."
-                rows={citasRows}
-                columns={[
-                  { key: 'horario', label: 'Horario' },
-                  { key: 'paciente', label: 'Paciente' },
-                  { key: 'tutor', label: 'Tutor' },
-                  { key: 'motivo', label: 'Motivo' },
-                  { key: 'profesional', label: 'Profesional' },
-                  {
-                    key: 'estado',
-                    label: 'Estado',
-                    render: (row) => (
-                      <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
-                    ),
-                  },
-                  {
-                    key: 'accion',
-                    label: 'Gestion',
-                    render: (row) => (
+              {/* Calendario / lista con toggle */}
+              <DashboardPanel
+                title={vistaAgenda === 'calendario' ? 'Calendario semanal' : 'Agenda del dia'}
+                subtitle={
+                  vistaAgenda === 'calendario'
+                    ? 'Vista semanal de citas. Haz clic en un slot para ir al formulario de nueva cita.'
+                    : 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
+                }
+                action={
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Toggle de vista */}
+                    <div className="flex border border-border bg-muted">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedAppointment(row.raw)
-                          setStatusForm({
-                            estado: row.raw.estado,
-                            motivoCancelacion: row.raw.motivoCancelacion || '',
-                          })
-                          setRescheduleForm({
-                            fecha: row.raw.fecha,
-                            horaInicio: row.raw.horaInicio?.slice(0, 5) || '',
-                            horaFin: row.raw.horaFin?.slice(0, 5) || '',
-                          })
-                        }}
-                        className="text-sm font-semibold text-primary hover:text-primary"
+                        onClick={() => setVistaAgenda('calendario')}
+                        title="Vista calendario"
+                        className={`flex h-9 w-9 items-center justify-center transition ${
+                          vistaAgenda === 'calendario'
+                            ? 'bg-foreground text-white'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
                       >
-                        Gestionar
+                        <CalendarDays className="h-4 w-4" />
                       </button>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay citas para este filtro"
-                emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde el panel operativo."
-                action={
-                  <StatusPill tone="border-border bg-muted text-foreground">
-                    {formatLongDate(fecha)}
-                  </StatusPill>
-                }
-              />
+                      <button
+                        type="button"
+                        onClick={() => setVistaAgenda('lista')}
+                        title="Vista lista"
+                        className={`flex h-9 w-9 items-center justify-center transition ${
+                          vistaAgenda === 'lista'
+                            ? 'bg-foreground text-white'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <List className="h-4 w-4" />
+                      </button>
+                    </div>
 
-              {(citasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPagina((current) => Math.max(current - 1, 1))}
-                      disabled={(citasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                    {/* Filtro de fecha: solo en lista */}
+                    {vistaAgenda === 'lista' && (
+                      <input
+                        type="date"
+                        value={fecha}
+                        onChange={(event) => {
+                          setFecha(event.target.value)
+                          setPagina(1)
+                        }}
+                        className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                      />
+                    )}
+
+                    {/* Filtros compartidos */}
+                    <select
+                      value={estado}
+                      onChange={(event) => {
+                        setEstado(event.target.value)
+                        setPagina(1)
+                      }}
+                      className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
-                      Anterior
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPagina((current) => Math.min(current + 1, citasQuery.data?.paginas || 1))
-                      }
-                      disabled={(citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={veterinarioId}
+                      onChange={(event) => {
+                        setVeterinarioId(event.target.value)
+                        setPagina(1)
+                      }}
+                      className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                     >
-                      Siguiente
-                    </button>
+                      <option value="todos">Todos los profesionales</option>
+                      {veterinarios.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.nombre}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
-              ) : null}
-            </DashboardPanel>
-          </div>
+                }
+              >
+                {/* Vista calendario */}
+                {vistaAgenda === 'calendario' && (
+                  <AgendaCalendar
+                    veterinarioId={veterinarioId}
+                    estado={estado}
+                    enabled={rolPermitido && puedeVerAgenda}
+                    puedeProgramar={puedeProgramar}
+                    puedeGestionarEstado={puedeGestionarEstado}
+                    puedeReprogramar={puedeReprogramar}
+                    onSlotClick={handleCalendarSlotClick}
+                    onUpdateStatus={handleCalendarUpdateStatus}
+                    onReschedule={handleCalendarReschedule}
+                    isUpdating={actualizarEstadoMutation.isPending}
+                    isRescheduling={reprogramarMutation.isPending}
+                  />
+                )}
 
-          <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_420px]">
-            <BarPanel
-              title="Carga del dia por profesional"
-              subtitle="Distribucion visible de citas por medico en la fecha seleccionada."
-              data={cargaProfesionales}
-              dataKey="total"
-              color="#0f4c81"
-              formatter={formatNumber}
-              emptyMessage="Aun no hay citas para medir carga por profesional."
-            />
-            <DonutCard
-              title={puedeVerAnalitica ? 'Tipo de cita del mes' : 'Tipo de cita del dia'}
-              subtitle="Ayuda a leer el mix operativo que mas se esta moviendo."
-              data={tipoChartData}
-              centerLabel="Tipos"
-              centerValue={
-                puedeVerAnalitica
-                  ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                  : formatNumber(citasDelDia)
-              }
-              formatter={formatNumber}
-              emptyMessage="Aun no hay tipos de cita para mostrar."
-            />
-          </div>
+                {/* Vista lista */}
+                {vistaAgenda === 'lista' && (
+                  <>
+                    <DataTable
+                      title="Citas programadas"
+                      subtitle="Lectura diaria con accion rapida sobre cada caso."
+                      rows={citasRows}
+                      columns={[
+                        { key: 'horario', label: 'Horario' },
+                        { key: 'paciente', label: 'Paciente' },
+                        { key: 'tutor', label: 'Tutor' },
+                        { key: 'motivo', label: 'Motivo' },
+                        { key: 'profesional', label: 'Profesional' },
+                        {
+                          key: 'estado',
+                          label: 'Estado',
+                          render: (row) => (
+                            <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
+                          ),
+                        },
+                        {
+                          key: 'accion',
+                          label: 'Gestion',
+                          render: (row) => (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedAppointment(row.raw)
+                                setStatusForm({
+                                  estado: row.raw.estado,
+                                  motivoCancelacion: row.raw.motivoCancelacion || '',
+                                })
+                                setRescheduleForm({
+                                  fecha: row.raw.fecha,
+                                  horaInicio: row.raw.horaInicio?.slice(0, 5) || '',
+                                  horaFin: row.raw.horaFin?.slice(0, 5) || '',
+                                })
+                                setActiveTab('gestion')
+                              }}
+                              className="text-sm font-semibold text-primary hover:text-primary"
+                            >
+                              Gestionar
+                            </button>
+                          ),
+                        },
+                      ]}
+                      emptyTitle="No hay citas para este filtro"
+                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestana Gestion."
+                      action={
+                        <StatusPill tone="border-border bg-muted text-foreground">
+                          {formatLongDate(fecha)}
+                        </StatusPill>
+                      }
+                    />
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
+                    {(citasQuery.data?.paginas || 1) > 1 && (
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                        <p className="text-sm text-muted-foreground">
+                          Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setPagina((current) => Math.max(current - 1, 1))}
+                            disabled={(citasQuery.data?.paginaActual || 1) <= 1}
+                            className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Anterior
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPagina((current) =>
+                                Math.min(current + 1, citasQuery.data?.paginas || 1)
+                              )
+                            }
+                            disabled={
+                              (citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)
+                            }
+                            className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Siguiente
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </DashboardPanel>
+            </div>
+          )}
+
+          {/* ══════════════════════════════
+              Tab: Gestión de citas
+          ══════════════════════════════ */}
+          {activeTab === 'gestion' && (
+            <div className="grid gap-5 pt-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
             <DashboardPanel
               title="Nueva cita"
-              subtitle="Programa la agenda sin salir del backoffice. Primero selecciona tutor, luego paciente y profesional."
+              subtitle="Programa una cita nueva. Tambien puedes llegar aqui haciendo clic en cualquier slot del calendario."
               action={<Plus className="h-4 w-4 text-primary" />}
             >
               {!puedeProgramar ? (
@@ -916,7 +1002,7 @@ export default function AgendaPage() {
               >
                 {!selectedAppointment ? (
                   <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Selecciona una cita desde la tabla para confirmar, iniciar, completar, cancelar o marcar no asistencia.
+                    Haz clic en una cita desde el calendario o la vista lista para gestionar su estado aqui.
                   </div>
                 ) : !puedeGestionarEstado ? (
                   <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
@@ -978,7 +1064,7 @@ export default function AgendaPage() {
               >
                 {!selectedAppointment ? (
                   <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Selecciona una cita desde la tabla para cambiar fecha u horario.
+                    Haz clic en una cita desde el calendario o la vista lista para reprogramarla aqui.
                   </div>
                 ) : !puedeReprogramar ? (
                   <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
@@ -1028,6 +1114,63 @@ export default function AgendaPage() {
               </DashboardPanel>
             </div>
           </div>
+          )}
+
+          {/* ══════════════════════════════
+              Tab: Analítica
+          ══════════════════════════════ */}
+          {activeTab === 'analitica' && (
+            <div className="space-y-5 pt-5">
+              <div className="grid gap-5 2xl:grid-cols-3">
+                <DonutCard
+                  title={puedeVerAnalitica ? 'Estado mensual de citas' : 'Estado del dia'}
+                  subtitle={
+                    puedeVerAnalitica
+                      ? 'Lectura del periodo actual para medir avance y asistencia.'
+                      : 'Distribucion de la agenda visible en la fecha seleccionada.'
+                  }
+                  data={estadoChartData}
+                  centerLabel={puedeVerAnalitica ? 'Mes actual' : 'Dia activo'}
+                  centerValue={
+                    puedeVerAnalitica
+                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
+                      : formatNumber(citasDelDia)
+                  }
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay citas para mostrar."
+                />
+                <DonutCard
+                  title={puedeVerAnalitica ? 'Tipo de cita del mes' : 'Tipo de cita del dia'}
+                  subtitle="Ayuda a leer el mix operativo que mas se esta moviendo."
+                  data={tipoChartData}
+                  centerLabel="Tipos"
+                  centerValue={
+                    puedeVerAnalitica
+                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
+                      : formatNumber(citasDelDia)
+                  }
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay tipos de cita para mostrar."
+                />
+                <BarPanel
+                  title="Carga del dia por profesional"
+                  subtitle="Distribucion visible de citas por medico en la fecha seleccionada."
+                  data={cargaProfesionales}
+                  dataKey="total"
+                  color="#0f4c81"
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay citas para medir carga por profesional."
+                />
+              </div>
+
+              {!puedeVerAnalitica && (
+                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                  Estas viendo la lectura del dia seleccionado. Con el plan Profesional o superior
+                  accedes a reportes mensuales completos, tendencias y exportables.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </AdminShell>
