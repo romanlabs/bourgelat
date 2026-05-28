@@ -5,8 +5,6 @@ const { cifrarTexto } = require('../config/crypto')
 const {
   obtenerEmpresaFactus,
   obtenerRangosNumeracionFactus,
-  obtenerUnidadesMedidaFactus,
-  obtenerTributosProductosFactus,
   solicitarTokenFactus,
 } = require('../services/factusService')
 const {
@@ -163,18 +161,14 @@ const sincronizarFactus = async (req, res) => {
       password: configuracionEfectiva.password,
     })
 
-    const [empresa, rangos, unidadesMedida, tributosProductos] = await Promise.all([
+    const [empresa, rangos] = await Promise.all([
       obtenerEmpresaFactus({ baseUrl: configuracionEfectiva.baseUrl, token: tokenFactus.access_token }),
       obtenerRangosNumeracionFactus({ baseUrl: configuracionEfectiva.baseUrl, token: tokenFactus.access_token }),
-      obtenerUnidadesMedidaFactus({ baseUrl: configuracionEfectiva.baseUrl, token: tokenFactus.access_token }),
-      obtenerTributosProductosFactus({ baseUrl: configuracionEfectiva.baseUrl, token: tokenFactus.access_token }),
     ])
 
     const snapshot = {
       empresa: empresa.data || null,
       rangosNumeracion: rangos.data?.data || [],
-      unidadesMedida: unidadesMedida.data || [],
-      tributosProductos: tributosProductos.data || [],
       sincronizadoEn: new Date().toISOString(),
       fuenteCredenciales: configuracionEfectiva.fuenteCredenciales,
     }

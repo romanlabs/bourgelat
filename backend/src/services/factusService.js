@@ -111,40 +111,6 @@ const solicitarTokenFactus = async ({
   return data
 }
 
-const construirPayloadClienteFactus = (propietario) => {
-  if (!propietario) {
-    throw new Error('Se requiere un propietario para construir el cliente de Factus')
-  }
-
-  return {
-    identification: propietario.numeroDocumento,
-    dv: propietario.digitoVerificacion || '',
-    company: propietario.razonSocial || '',
-    trade_name: propietario.nombreComercial || '',
-    names: propietario.nombre,
-    address: propietario.direccion || '',
-    email: propietario.email || '',
-    phone: propietario.telefono || '',
-    legal_organization_id: propietario.organizacionJuridicaId || '',
-    tribute_id: propietario.tributoId || '',
-    identification_document_id: propietario.tipoDocumentoFacturacionId || null,
-    municipality_id: propietario.municipioId || null,
-  }
-}
-
-const construirPayloadEstablecimientoFactus = (clinica) => {
-  if (!clinica) {
-    throw new Error('Se requiere una clÃ­nica para construir el establecimiento de Factus')
-  }
-
-  return {
-    name: clinica.nombreComercial || clinica.razonSocial || clinica.nombre,
-    address: clinica.direccion || '',
-    phone_number: clinica.telefono || '',
-    email: clinica.email || '',
-    municipality_id: clinica.municipioId || null,
-  }
-}
 
 const crearHeadersFactus = (token, extraHeaders = {}) => ({
   Accept: 'application/json',
@@ -182,7 +148,7 @@ const solicitarFactus = async ({
 const obtenerEmpresaFactus = async ({ baseUrl, token }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/company',
+    path: '/v2/companies',
     token,
   })
 }
@@ -190,23 +156,7 @@ const obtenerEmpresaFactus = async ({ baseUrl, token }) => {
 const obtenerRangosNumeracionFactus = async ({ baseUrl, token }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/numbering-ranges',
-    token,
-  })
-}
-
-const obtenerUnidadesMedidaFactus = async ({ baseUrl, token }) => {
-  return solicitarFactus({
-    baseUrl,
-    path: '/v1/measurement-units',
-    token,
-  })
-}
-
-const obtenerTributosProductosFactus = async ({ baseUrl, token }) => {
-  return solicitarFactus({
-    baseUrl,
-    path: '/v1/tributes/products',
+    path: '/v2/numbering-ranges',
     token,
   })
 }
@@ -214,7 +164,7 @@ const obtenerTributosProductosFactus = async ({ baseUrl, token }) => {
 const validarFacturaFactus = async ({ baseUrl, token, payload }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/bills/validate',
+    path: '/v2/bills/validate',
     method: 'POST',
     token,
     headers: {
@@ -231,9 +181,5 @@ module.exports = {
   solicitarFactus,
   obtenerEmpresaFactus,
   obtenerRangosNumeracionFactus,
-  obtenerUnidadesMedidaFactus,
-  obtenerTributosProductosFactus,
   validarFacturaFactus,
-  construirPayloadClienteFactus,
-  construirPayloadEstablecimientoFactus,
 }

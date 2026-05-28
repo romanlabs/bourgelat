@@ -5,7 +5,6 @@ import medicaPerritoImage from '@/assets/landing/Medica-perrito.webp'
 import {
   ArrowRight,
   Calendar,
-  CheckCircle,
   Clock,
   HeartPulse,
   Mail,
@@ -27,7 +26,7 @@ const FLOW_STEPS = [
     step: '01',
     title: 'Llaman, agendan y llegan',
     body:
-      'La recepcion ve que paciente viene, por que viene y que debe pasar antes de entrar a consulta.',
+      'La recepción ve qué paciente viene, por qué viene y qué debe pasar antes de entrar a consulta.',
   },
   {
     step: '02',
@@ -49,26 +48,26 @@ const PLAN_PREVIEW = [
     name: 'Esencial',
     subtitle: 'Para empezar con orden',
     price: 'Sin cargo mensual',
-    note: 'Agenda, pacientes e historia clinica para arrancar con una base clara.',
+    note: 'Agenda, pacientes e historia clínica para arrancar con una base clara.',
   },
   {
-    name: 'Clinica',
-    subtitle: 'Para operar el dia completo',
+    name: 'Clínica',
+    subtitle: 'Para operar el día completo',
     price: 'COP 99.000/mes',
-    note: 'Inventario, caja y reportes para una clinica que ya necesita control operativo.',
+    note: 'Inventario, caja y reportes para una clínica que ya necesita control operativo.',
   },
   {
     name: 'Profesional',
     subtitle: 'El plan principal',
     price: 'COP 189.000/mes',
-    note: 'Incluye facturacion electronica DIAN y una operacion mas completa.',
+    note: 'Incluye facturación electrónica DIAN y una operación más completa.',
     featured: true,
   },
   {
     name: 'Personalizado',
-    subtitle: 'Para migracion y acompanamiento',
-    price: 'Cotizacion guiada',
-    note: 'Cuando la clinica necesita una implementacion mas acompasada con el equipo.',
+    subtitle: 'Para migración y acompañamiento',
+    price: 'Cotización guiada',
+    note: 'Cuando la clínica necesita una implementación más acompasada con el equipo.',
   },
 ]
 
@@ -82,28 +81,30 @@ const footerLinks = [
 
 const TRUST_LOGOS = [
   { src: '/logos/dian.svg', alt: 'DIAN', h: 28, caption: 'Facturación electrónica' },
-  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 28, caption: 'Protegido por Cloudflare' },
-  { src: '/logos/colombia.svg', alt: 'Bandera de Colombia', h: 24, rounded: true, caption: 'Hecho en Colombia' },
+  { src: '/logos/factus.png', alt: 'Factus', h: 22, caption: 'Integrado con Factus', invert: true },
+  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 28, caption: 'Protegido por Cloudflare', outline: true },
+  { src: '/logos/escudo-colombia.svg', alt: 'Escudo de Colombia', h: 36, caption: 'Hecho en Colombia', outline: true },
 ]
-// TODO: agregar Factus cuando la integración como partner esté cerrada y publicada
 
-const WARM_BAND_BACKGROUND =
-  'linear-gradient(180deg, #f8f4ee 0%, #f4eee6 44%, #f8f4ee 100%)'
+const WARM_BAND_BACKGROUND = '#f8f4ee'
 
 
-function useVisible(threshold = 0.4) {
+function useVisible(threshold = 0.4, { toggle = false, rootMargin = '0px' } = {}) {
   const ref = useRef(null)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return undefined
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true) },
-      { threshold }
+      ([entry]) => {
+        if (toggle) setVisible(entry.isIntersecting)
+        else if (entry.isIntersecting) setVisible(true)
+      },
+      { threshold, rootMargin }
     )
     obs.observe(el)
     return () => obs.disconnect()
-  }, [threshold])
+  }, [threshold, toggle, rootMargin])
   return { ref, visible }
 }
 
@@ -235,7 +236,7 @@ function ArrivalSection() {
     >
       <video
         src="/videos/landing-cinema/escena-2-llegada.mp4"
-        muted autoPlay loop playsInline preload="auto"
+        muted autoPlay loop playsInline preload="none"
         style={{
           position: 'absolute', inset: 0,
           width: '100%', height: '100%', objectFit: 'cover', display: 'block',
@@ -286,7 +287,7 @@ function CareSection() {
     >
       <video
         src="/videos/landing-cinema/escena-3-consulta.mp4"
-        muted autoPlay loop playsInline preload="auto"
+        muted autoPlay loop playsInline preload="none"
         style={{
           position: 'absolute', inset: 0,
           width: '100%', height: '100%', objectFit: 'cover', display: 'block',
@@ -323,60 +324,81 @@ const PLATFORM_FEATURES = [
   { icon: Package, label: 'Inventario que se descuenta solo' },
 ]
 
-const AGENDA_SLOTS = [
-  { time: '09:00', name: 'Luna', type: 'vacunación', bg: '#f0faf8', borderColor: '#91c4c0', useBorderLeft: true },
-  { time: '10:30', name: 'Milo', type: 'revisión',   bg: '#ffffff', borderColor: '#e8f1f4', useBorderLeft: false },
-  { time: '14:00', name: 'Kira', type: 'cirugía',    bg: '#fef3e8', borderColor: '#d4a574', useBorderLeft: true },
-]
+function DeviceMockup() {
+  const { ref, visible } = useVisible(0.15, { toggle: true, rootMargin: '0px 0px -20% 0px' })
+  return (
+    <div ref={ref} style={{ marginLeft: '-6%', mixBlendMode: 'multiply' }}>
+    <div
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0px)' : 'translateX(-110%)',
+        transition: visible
+          ? 'opacity 700ms ease-out 100ms, transform 900ms cubic-bezier(0.22,1,0.36,1) 100ms'
+          : 'opacity 500ms ease-in, transform 600ms cubic-bezier(0.55,0,1,0.45)',
+        position: 'relative',
+        filter: 'drop-shadow(0 40px 80px rgba(6,17,28,0.28)) drop-shadow(0 12px 32px rgba(6,17,28,0.16))',
+      }}
+    >
+      {/* Hand + tablet photo (transparent PNG from remove.bg) */}
+      <img
+        src="/images/mano-tablet.webp"
+        alt="Profesional sosteniendo tablet con Bourgelat"
+        style={{ width: '100%', display: 'block', position: 'relative', zIndex: 1 }}
+        loading="lazy"
+      />
 
-const BAR_SPECS = [
-  { h: '60%' }, { h: '85%' }, { h: '45%' }, { h: '75%' }, { h: '55%' },
-]
+      {/* Dashboard screenshot overlaid on the tablet screen.
+          Values calibrated to the tablet's position and ~9° CW tilt in mano-tablet.png.
+          Adjust top/left/width/height if the image is replaced. */}
+      <div style={{
+        position: 'absolute',
+        top: '5.1%',
+        left: '38.8%',
+        width: '53.411%',
+        height: '67.56%',
+        transform: 'perspective(987px) rotateX(5.7deg) rotate(0.29deg)',
+        transformOrigin: 'center center',
+        overflow: 'hidden',
+        borderRadius: 1.1,
+        zIndex: 2,
+      }}>
+        <img
+          src="/images/bourgelat-pacientes.png"
+          alt="Módulo de pacientes en Bourgelat"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top left',
+            display: 'block',
+            filter: 'brightness(0.97)',
+          }}
+          loading="lazy"
+        />
+        {/* Screen vignette — simula el cristal de la pantalla */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse at 50% 40%, transparent 65%, rgba(0,0,0,0.04) 100%)',
+          pointerEvents: 'none',
+        }} />
+      </div>
+    </div>
+    </div>
+  )
+}
 
 function PlatformSection() {
   const { ref: sectionRef, visible } = useVisible(0.2)
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  )
-  const [hoveredCard, setHoveredCard] = useState(null)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  const entrance = (delay) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? 'scale(1) translateY(0px)' : 'scale(0.94) translateY(30px)',
-    transition: visible
-      ? `opacity 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms, transform 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms`
-      : 'none',
-  })
-
-  const cardHover = (idx) => {
-    if (hoveredCard === null) return {}
-    return hoveredCard === idx
-      ? { transform: 'scale(1.03)', boxShadow: '0 40px 100px rgba(83,62,41,0.20), 0 12px 32px rgba(83,62,41,0.12)', zIndex: 40 }
-      : { opacity: 0.65 }
-  }
-
-  const CARD_TRANSITION = 'transform 350ms ease-out, box-shadow 350ms ease-out, opacity 350ms ease-out'
-
   return (
-    <section ref={sectionRef} className="relative overflow-hidden text-[#10263a]">
-      <style>{`
-        @keyframes floatCard {
-          0%, 100% { transform: translateY(0px) rotate(var(--card-rotate, 0deg)); }
-          50%       { transform: translateY(-5px) rotate(var(--card-rotate, 0deg)); }
-        }
-      `}</style>
-
+    <section ref={sectionRef} className="relative text-[#10263a]">
       <div className="mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8 lg:pb-28 lg:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
 
-          {/* ── Columna texto ── */}
+          {/* Device mockup — left column */}
+          <DeviceMockup />
+
+          {/* Text column */}
           <div style={{
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(24px)',
@@ -417,243 +439,9 @@ function PlatformSection() {
               ))}
             </ul>
           </div>
-
-          {/* ── Columna mockup ── */}
-          {isMobile ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <CardPatient style={entrance(150)} />
-              <CardAgenda style={entrance(280)} />
-              <CardStock style={entrance(410)} />
-              <CardFactura style={entrance(540)} />
-            </div>
-          ) : (
-            <div style={{ position: 'relative', height: 580 }}>
-
-              {/* Card 1 — Paciente · top-left · z30 */}
-              <CardPatient
-                style={{
-                  position: 'absolute', top: '5%', left: '3%',
-                  width: 300, zIndex: 30,
-                  '--card-rotate': '0deg',
-                  animation: 'floatCard 6s ease-in-out infinite',
-                  animationDelay: '0s',
-                  ...entrance(150),
-                  ...cardHover(0),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(0)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 2 — Agenda · mid-right · z20 · tilt +2.5° */}
-              <CardAgenda
-                style={{
-                  position: 'absolute', top: '28%', right: '5%',
-                  width: 260, zIndex: 20,
-                  '--card-rotate': '2.5deg',
-                  animation: 'floatCard 7.5s ease-in-out infinite',
-                  animationDelay: '1.5s',
-                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
-                  ...entrance(280),
-                  ...cardHover(1),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(1)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 3 — Stock · bottom-left · z25 · tilt -2.5° */}
-              <CardStock
-                style={{
-                  position: 'absolute', bottom: '20%', left: '8%',
-                  width: 240, zIndex: 25,
-                  '--card-rotate': '-2.5deg',
-                  animation: 'floatCard 6.8s ease-in-out infinite',
-                  animationDelay: '3s',
-                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
-                  ...entrance(410),
-                  ...cardHover(2),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(2)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 4 — Factura · bottom-right · z35 */}
-              <CardFactura
-                style={{
-                  position: 'absolute', bottom: '4%', right: '2%',
-                  width: 220, zIndex: 35,
-                  '--card-rotate': '0deg',
-                  animation: 'floatCard 8s ease-in-out infinite',
-                  animationDelay: '4.5s',
-                  ...entrance(540),
-                  ...cardHover(3),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(3)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-            </div>
-          )}
         </div>
       </div>
     </section>
-  )
-}
-
-function CardPatient({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 20, padding: 20,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #8fe0da, #b8eff0)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, fontSize: 16, fontWeight: 600, color: '#082033',
-        }}>
-          M
-        </div>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#10263a', margin: 0 }}>Milo García</p>
-          <p style={{ fontSize: 11, color: '#7a8da0', margin: 0, marginTop: 2 }}>Golden Retriever · 4 años</p>
-        </div>
-      </div>
-      <div style={{ marginTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[
-          { Icon: Clock,    iconColor: '#3c7d8d', text: 'Última visita: hace 2 meses' },
-          { Icon: Shield,   iconColor: '#2c7d7a', text: 'Vacunas: al día' },
-          { Icon: Calendar, iconColor: '#3c7d8d', text: 'Próxima cita: mañana 10am' },
-        ].map(({ Icon, iconColor, text }) => (
-          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon style={{ width: 12, height: 12, color: iconColor, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#52697a' }}>{text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CardAgenda({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 18, padding: 18,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
-        Agenda · Hoy
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {AGENDA_SLOTS.map((s) => (
-          <div key={s.time} style={{
-            background: s.bg,
-            ...(s.useBorderLeft
-              ? { borderLeft: `3px solid ${s.borderColor}`, borderRadius: '0 8px 8px 0', padding: '8px 12px' }
-              : { border: `1px solid ${s.borderColor}`, borderRadius: 8, padding: '8px 12px' }),
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#3c7d8d' }}>{s.time}</span>
-            <span style={{ fontSize: 12, color: '#10263a' }}>{s.name} · {s.type}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CardStock({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 18, padding: 18,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
-        Inventario
-      </p>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 48 }}>
-        {BAR_SPECS.map((bar, i) => (
-          <div key={i} style={{
-            width: 12, height: bar.h, borderRadius: '3px 3px 0 0',
-            background: 'linear-gradient(to top, #6bc4be, #91e7e0)',
-          }} />
-        ))}
-      </div>
-      <p style={{ fontSize: 12, color: '#52697a', margin: '12px 0 8px' }}>
-        23 productos por reordenar
-      </p>
-      <span style={{
-        display: 'inline-block',
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em',
-        color: '#2c7d7a', background: 'rgba(145,231,224,0.15)',
-        border: '1px solid rgba(145,231,224,0.30)',
-        padding: '3px 8px', borderRadius: 999,
-      }}>
-        Automático
-      </span>
-    </div>
-  )
-}
-
-function CardFactura({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        position: 'relative',
-        background: 'linear-gradient(135deg, #06111c 0%, #0d2435 100%)',
-        borderRadius: 20, padding: 20,
-        boxShadow: '0 30px 80px rgba(6,17,28,0.30), 0 0 0 1px rgba(145,231,224,0.10)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <CheckCircle style={{
-        position: 'absolute', top: 16, right: 16,
-        width: 16, height: 16, color: '#91e7e0',
-      }} />
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#91e7e0', margin: '0 0 8px' }}>
-        Factura generada
-      </p>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-        <span style={{
-          fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
-          fontSize: 22, lineHeight: 1, color: '#ffffff',
-        }}>
-          $ 145.000
-        </span>
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>COP</span>
-      </div>
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 8 }}>
-        Enviada al tutor · 2 min
-      </p>
-    </div>
   )
 }
 
@@ -679,10 +467,10 @@ function BrandMark({ dark = false }) {
         </p>
         <p
           className={`hidden text-[11px] uppercase tracking-[0.22em] sm:block ${
-            dark ? 'text-white/50' : 'text-[#5a7188]'
+            dark ? 'text-white/80' : 'text-[#3a6d87]'
           }`}
         >
-          plataforma para clinicas veterinarias
+          Plataforma para clínicas veterinarias
         </p>
       </div>
     </div>
@@ -1125,8 +913,8 @@ function TrustBar() {
                           maxWidth: 136,
                           objectFit: 'contain',
                           display: 'block',
-                          opacity: 0.86,
-                          filter: 'saturate(0.9) contrast(0.96)',
+                          opacity: 0.9,
+                          filter: `${logo.invert ? 'invert(1) ' : ''}grayscale(1) brightness(0) invert(1) sepia(1) hue-rotate(190deg) saturate(4) brightness(0.42)${logo.outline ? ' drop-shadow(0 0 3px #f4f7fb) drop-shadow(0 0 3px #f4f7fb)' : ''}`,
                           ...(logo.rounded && { borderRadius: 3, boxShadow: '0 2px 8px rgba(16,38,58,0.10)' }),
                         }}
                       />
@@ -1172,7 +960,7 @@ function DailyFlowVisual() {
 
 export default function LandingPage() {
   useEffect(() => {
-    document.title = 'Bourgelat | Software para clinicas veterinarias'
+    document.title = 'Bourgelat | Software para clínicas veterinarias'
     window.scrollTo(0, 0)
   }, [])
 
@@ -1188,6 +976,7 @@ export default function LandingPage() {
           loop
           playsInline
           preload="auto"
+          fetchPriority="high"
           className="absolute inset-0 z-0 h-full w-full object-cover object-[42%_center] sm:object-[48%_center] lg:object-center"
         />
         <div
@@ -1211,13 +1000,13 @@ export default function LandingPage() {
               className="mt-2 max-w-[22rem] text-[2.15rem] leading-[0.94] tracking-[-0.06em] sm:max-w-[32rem] sm:text-[2.9rem] lg:max-w-[34rem] lg:text-[3.25rem] xl:text-[3.45rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
-              Tu clinica veterinaria merece una operacion a la altura de su medicina.
+              Tu clínica veterinaria merece una operación a la altura de su medicina.
             </h1>
 
             <p className="mt-5 max-w-[31rem] text-[15px] leading-7 text-white/76 sm:mt-6 sm:text-base sm:leading-8">
-              Bourgelat integra agenda, historia clinica, caja, inventario y seguimiento en un
+              Bourgelat integra agenda, historia clínica, caja, inventario y seguimiento en un
               solo sistema para reducir reprocesos, ordenar al equipo y ofrecer una experiencia
-              mas profesional a cada tutor.
+              más profesional a cada tutor.
             </p>
           </div>
         </div>
@@ -1241,8 +1030,8 @@ export default function LandingPage() {
           <div>
             <SectionHeading
               eyebrow="Flujo diario"
-              title="De la llamada al seguimiento, el dia avanza sin perder el caso."
-              body="La clinica deja de pasar informacion de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una senal para el siguiente."
+              title="De la llamada al seguimiento, el día avanza sin perder el caso."
+              body="La clínica deja de pasar información de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una señal para el siguiente."
             />
 
             <FlowStepper />
@@ -1261,7 +1050,7 @@ export default function LandingPage() {
           <SectionHeading
             eyebrow="Planes"
             title="Planes para entrar sin miedo y crecer sin rearmar todo."
-            body="Puedes empezar con orden clinico y sumar caja, inventario, reportes y facturacion electronica cuando la operacion lo pida."
+            body="Puedes empezar con orden clínico y sumar caja, inventario, reportes y facturación electrónica cuando la operación lo pida."
             dark
             center
           />
@@ -1330,7 +1119,7 @@ export default function LandingPage() {
                 className="mt-4 text-[2.8rem] leading-[0.94] tracking-[-0.05em] text-white sm:text-5xl md:text-6xl"
                 style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
               >
-                Si tu clinica ya siente friccion, revisemos donde se rompe el dia.
+                Si tu clínica ya siente fricción, revisemos dónde se rompe el día.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/74">
                 Cuentanos como trabajan hoy: agenda, historias, inventario, caja y DIAN. Con eso
@@ -1363,8 +1152,8 @@ export default function LandingPage() {
           <div className="max-w-xl">
             <BrandMark />
             <p className="mt-4 text-sm leading-7 text-[#5a7185]">
-              Software para clinicas veterinarias que quieren una operacion mas clara, mas humana y
-              mas confiable desde la recepcion hasta el cierre del dia.
+              Software para clínicas veterinarias que quieren una operación más clara, más humana y
+              más confiable desde la recepción hasta el cierre del día.
             </p>
           </div>
 

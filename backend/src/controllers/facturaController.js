@@ -37,10 +37,9 @@ const ORGANIZACIONES_JURIDICAS_FACTUS = {
   persona_natural: '2',
 }
 
-const DEFAULT_UNIT_MEASURE_ID = 70
-const DEFAULT_STANDARD_CODE_ID = 1
-const DEFAULT_PRODUCT_TRIBUTE_ID = 1
-const DEFAULT_CUSTOMER_TRIBUTE_ID = '21'
+const DEFAULT_UNIT_MEASURE_CODE = '94'
+const DEFAULT_STANDARD_CODE = '999'
+const DEFAULT_CUSTOMER_TRIBUTE_CODE = 'ZZ'
 
 const convertirANumero = (valor, valorPorDefecto = 0) => {
   if (valor === undefined || valor === null || valor === '') {
@@ -193,7 +192,7 @@ const resolverOrganizacionJuridicaFactus = (propietario) => {
 }
 
 const resolverTributoClienteFactus = (propietario) => {
-  return limpiarTexto(propietario.tributoId) || DEFAULT_CUSTOMER_TRIBUTE_ID
+  return limpiarTexto(propietario.tributoId) || DEFAULT_CUSTOMER_TRIBUTE_CODE
 }
 
 const resolverMetodoPagoFactus = (factura, configuracionEfectiva, metodoPagoCodigo) => {
@@ -275,10 +274,10 @@ const construirClienteFactus = (propietario) => {
     address: limpiarTexto(propietario.direccion),
     email: limpiarTexto(propietario.email),
     phone: limpiarTexto(propietario.telefono),
-    legal_organization_id: organizacionJuridicaId,
-    tribute_id: resolverTributoClienteFactus(propietario),
-    identification_document_id: tipoDocumentoFacturacionId,
-    municipality_id: convertirAEntero(propietario.municipioId),
+    legal_organization_code: organizacionJuridicaId,
+    tribute_code: resolverTributoClienteFactus(propietario),
+    identification_document_code: String(tipoDocumentoFacturacionId),
+    municipality_code: limpiarTexto(propietario.municipioId) || undefined,
   }
 }
 
@@ -304,14 +303,12 @@ const construirItemsFactus = (factura) => {
         limpiarTexto(item.productoId) ||
         `${factura.numero}-ITEM-${index + 1}`,
       name: limpiarTexto(item.descripcion),
-      quantity: cantidad,
-      discount_rate: descuentoRate,
-      price: redondear(precioUnitario, 2),
-      tax_rate: '0.00',
-      unit_measure_id: DEFAULT_UNIT_MEASURE_ID,
-      standard_code_id: DEFAULT_STANDARD_CODE_ID,
-      is_excluded: 1,
-      tribute_id: DEFAULT_PRODUCT_TRIBUTE_ID,
+      quantity: String(cantidad),
+      discount_rate: String(descuentoRate),
+      price: String(redondear(precioUnitario, 2)),
+      unit_measure_code: DEFAULT_UNIT_MEASURE_CODE,
+      standard_code: DEFAULT_STANDARD_CODE,
+      taxes: [{ code: '01', rate: '0.00', is_excluded: true }],
       withholding_taxes: [],
     }
   })
@@ -327,20 +324,24 @@ const construirPayloadFacturaFactus = ({
   enviarEmail,
   fechaVencimientoPago,
 }) => {
-  const payload = {
-    document: documentoCodigo,
-    numbering_range_id: rangoNumeracionId,
-    reference_code: factura.numero,
-    observation: limpiarTexto(factura.observaciones) || undefined,
+  const pagoEntry = {
     payment_form: formaPagoCodigo,
     payment_method_code: metodoPagoCodigo,
-    send_email: enviarEmail ? 1 : 0,
-    customer: construirClienteFactus(factura.propietario),
-    items: construirItemsFactus(factura),
+    amount: String(redondear(factura.total, 2)),
+  }
+  if (formaPagoCodigo === '2' && fechaVencimientoPago) {
+    pagoEntry.due_date = fechaVencimientoPago
   }
 
-  if (fechaVencimientoPago) {
-    payload.payment_due_date = fechaVencimientoPago
+  const payload = {
+    numbering_range_id: rangoNumeracionId,
+    reference_code: factura.numero,
+    document: documentoCodigo,
+    observation: limpiarTexto(factura.observaciones) || undefined,
+    send_email: enviarEmail ? 1 : 0,
+    payment_details: [pagoEntry],
+    customer: construirClienteFactus(factura.propietario),
+    items: construirItemsFactus(factura),
   }
 
   return payload
@@ -767,7 +768,7 @@ const emitirFacturaElectronica = async (req, res) => {
 
     if (formaPagoEfectiva === '2' && !fechaVencimientoPago) {
       return res.status(400).json({
-        message: 'La fecha de vencimiento es obligatoria cuando la forma de pago es credito',
+        message: 'La fecha de vencimiento (fechaVencimientoPago) es obligatoria cuando la forma de pago es credito',
       })
     }
 
