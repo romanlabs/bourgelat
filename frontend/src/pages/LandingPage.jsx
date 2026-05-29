@@ -346,7 +346,6 @@ function DeviceMockup() {
         style={{ width: '100%', display: 'block', position: 'relative', zIndex: 1 }}
         loading="lazy"
       />
-
       {/* Dashboard screenshot overlaid on the tablet screen.
           Values calibrated to the tablet's position and ~9° CW tilt in mano-tablet.png.
           Adjust top/left/width/height if the image is replaced. */}
@@ -380,6 +379,13 @@ function DeviceMockup() {
           position: 'absolute',
           inset: 0,
           background: 'radial-gradient(ellipse at 50% 40%, transparent 65%, rgba(0,0,0,0.04) 100%)',
+          pointerEvents: 'none',
+        }} />
+        {/* Sombra sutil en el borde izquierdo del mockup */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to right, rgba(0,0,0,0.06) 0%, transparent 35%)',
           pointerEvents: 'none',
         }} />
       </div>
