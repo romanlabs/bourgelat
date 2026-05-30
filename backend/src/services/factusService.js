@@ -174,6 +174,22 @@ const validarFacturaFactus = async ({ baseUrl, token, payload }) => {
   })
 }
 
+const descargarPdfFactura = async ({ baseUrl, token, numero }) => {
+  return solicitarFactus({
+    baseUrl,
+    path: `/v2/bills/${encodeURIComponent(numero)}/download-pdf`,
+    token,
+  })
+}
+
+const descargarXmlFactura = async ({ baseUrl, token, numero }) => {
+  return solicitarFactus({
+    baseUrl,
+    path: `/v2/bills/${encodeURIComponent(numero)}/download-xml`,
+    token,
+  })
+}
+
 module.exports = {
   obtenerBaseUrlFactus,
   obtenerConfiguracionFactusEnv,
@@ -182,4 +198,6 @@ module.exports = {
   obtenerEmpresaFactus,
   obtenerRangosNumeracionFactus,
   validarFacturaFactus,
+  descargarPdfFactura,
+  descargarXmlFactura,
 }

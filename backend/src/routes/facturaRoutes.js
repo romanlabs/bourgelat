@@ -6,6 +6,7 @@ const {
   obtenerFacturas,
   obtenerFactura,
   emitirFacturaElectronica,
+  descargarFacturaElectronica,
   anularFactura,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
@@ -89,6 +90,14 @@ router.post(
     validar,
   ],
   emitirFacturaElectronica
+)
+
+router.get(
+  '/:id/descargar/:formato',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
+  requiereFacturacionElectronica,
+  descargarFacturaElectronica
 )
 
 router.patch(
