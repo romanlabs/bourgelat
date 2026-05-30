@@ -8,7 +8,12 @@ const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
-const { solicitarTokenFactus, validarFacturaFactus } = require('../services/factusService')
+const {
+  solicitarTokenFactus,
+  validarFacturaFactus,
+  descargarPdfFactura,
+  descargarXmlFactura,
+} = require('../services/factusService')
 const {
   obtenerNombrePlan,
   obtenerSuscripcionActivaClinica,
@@ -991,10 +996,102 @@ const anularFactura = async (req, res) => {
   }
 }
 
+const descargarFacturaElectronica = async (req, res) => {
+  try {
+    const { id, formato } = req.params
+    const { clinicaId } = req.usuario
+
+    const formatoNormalizado = String(formato || '').toLowerCase()
+    if (!['pdf', 'xml'].includes(formatoNormalizado)) {
+      return res.status(400).json({ message: 'Formato no valido. Use pdf o xml.' })
+    }
+
+    const factura = await Factura.findOne({ where: { id, clinicaId } })
+
+    if (!factura) {
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (factura.estadoElectronico !== 'validada') {
+      return res.status(409).json({
+        message: 'La factura no ha sido validada electronicamente en Factus',
+      })
+    }
+
+    const numeroFactus = factura.respuestaElectronica?.data?.bill?.number || factura.referenciaExterna
+
+    if (!numeroFactus) {
+      return res.status(409).json({
+        message: 'No se encontro el numero de factura electronica para descargar',
+      })
+    }
+
+    const { configuracionEfectiva } = await obtenerContextoFactusPorClinica(clinicaId)
+
+    if (!configuracionEfectiva.credencialesCompletas) {
+      return res.status(400).json({
+        message: 'Faltan credenciales de Factus para descargar la factura',
+      })
+    }
+
+    const tokenFactus = await solicitarTokenFactus({
+      baseUrl: configuracionEfectiva.baseUrl,
+      clientId: configuracionEfectiva.clientId,
+      clientSecret: configuracionEfectiva.clientSecret,
+      username: configuracionEfectiva.username,
+      password: configuracionEfectiva.password,
+    })
+
+    const descargar = formatoNormalizado === 'pdf' ? descargarPdfFactura : descargarXmlFactura
+    const respuesta = await descargar({
+      baseUrl: configuracionEfectiva.baseUrl,
+      token: tokenFactus.access_token,
+      numero: numeroFactus,
+    })
+
+    const data = respuesta?.data || {}
+    const base64 =
+      formatoNormalizado === 'pdf' ? data.pdf_base_64_encoded : data.xml_base_64_encoded
+
+    if (!base64) {
+      return res.status(502).json({ message: 'Factus no devolvio el archivo solicitado' })
+    }
+
+    const buffer = Buffer.from(base64, 'base64')
+    const baseName = limpiarTexto(data.file_name) || `factura-${factura.numero}`
+    const nombreArchivo = baseName.toLowerCase().endsWith(`.${formatoNormalizado}`)
+      ? baseName
+      : `${baseName}.${formatoNormalizado}`
+    const contentType = formatoNormalizado === 'pdf' ? 'application/pdf' : 'application/xml'
+
+    await registrarAuditoria({
+      accion: 'DESCARGAR_FACTURA_ELECTRONICA',
+      entidad: 'Factura',
+      entidadId: factura.id,
+      descripcion: `Descarga ${formatoNormalizado.toUpperCase()} de factura ${factura.numero} desde Factus`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.setHeader('Content-Type', contentType)
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`)
+    res.setHeader('Content-Length', buffer.length)
+    return res.send(buffer)
+  } catch (error) {
+    const status = error.status && error.status >= 400 && error.status < 600 ? error.status : 500
+    return res.status(status).json({
+      message: 'No fue posible descargar la factura electronica',
+      error: error.message,
+      payload: error.payload || null,
+    })
+  }
+}
+
 module.exports = {
   crearFactura,
   obtenerFacturas,
   obtenerFactura,
   emitirFacturaElectronica,
+  descargarFacturaElectronica,
   anularFactura,
 }
