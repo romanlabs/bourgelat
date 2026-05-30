@@ -240,8 +240,6 @@ const sincronizarFactus = async (req, res) => {
       sincronizacion: {
         empresa: snapshot.empresa,
         totalRangos: snapshot.rangosNumeracion.length,
-        totalUnidadesMedida: snapshot.unidadesMedida.length,
-        totalTributosProductos: snapshot.tributosProductos.length,
         sincronizadoEn: snapshot.sincronizadoEn,
       },
     })
