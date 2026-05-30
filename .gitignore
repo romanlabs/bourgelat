@@ -141,3 +141,8 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 frontend/vite-dev-test.err
 frontend/vite-dev-test.out
+
+# Local agent / tooling artifacts
+.claude/
+.superpowers/
+ruvector.db
