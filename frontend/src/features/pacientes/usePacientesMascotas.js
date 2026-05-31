@@ -115,6 +115,9 @@ export function usePacientesMascotas({ enabled, featureSet }) {
     [mascotasQuery.data?.mascotas, historiasDisponibles, antecedentesDisponibles]
   )
 
+  const [expedienteDrawerOpen, setExpedienteDrawerOpen] = useState(false)
+  const [selectedMascota, setSelectedMascota] = useState(null)
+
   function openDrawer() {
     setOwnerSearch('')
     setDrawerOpen(true)
@@ -123,6 +126,16 @@ export function usePacientesMascotas({ enabled, featureSet }) {
   function closeDrawer() {
     setDrawerOpen(false)
     setOwnerSearch('')
+  }
+
+  function openExpediente(row) {
+    setSelectedMascota(row)
+    setExpedienteDrawerOpen(true)
+  }
+
+  function closeExpediente() {
+    setExpedienteDrawerOpen(false)
+    setTimeout(() => setSelectedMascota(null), 300)
   }
 
   async function handleDrawerSubmit({ payload, photoFile, onDone }) {
@@ -151,5 +164,9 @@ export function usePacientesMascotas({ enabled, featureSet }) {
     openDrawer,
     closeDrawer,
     handleDrawerSubmit,
+    expedienteDrawerOpen,
+    selectedMascota,
+    openExpediente,
+    closeExpediente,
   }
 }

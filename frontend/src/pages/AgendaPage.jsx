@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CalendarClock,
@@ -148,6 +148,7 @@ export default function AgendaPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('agenda')
   const [vistaAgenda, setVistaAgenda] = useState('calendario')
@@ -252,13 +253,20 @@ export default function AgendaPage() {
 
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Estado actualizado')
+    onSuccess: (data, { payload, cita }) => {
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      if (payload.estado === 'completada' && cita?.mascota?.id) {
+        toast.info('Cita completada. Registra la historia clínica de la consulta.')
+        navigate(
+          `/historias?mascotaId=${cita.mascota.id}&propietarioId=${cita.propietario?.id || ''}&citaId=${cita.id}`
+        )
+      } else {
+        toast.success(data?.message || 'Estado actualizado')
+      }
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar la cita.'))
@@ -375,7 +383,7 @@ export default function AgendaPage() {
   }, [])
 
   const handleCalendarUpdateStatus = useCallback(
-    (citaId, payload) => actualizarEstadoMutation.mutate({ citaId, payload }),
+    (citaId, payload, cita) => actualizarEstadoMutation.mutate({ citaId, payload, cita }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
@@ -440,6 +448,7 @@ export default function AgendaPage() {
         motivoCancelacion:
           statusForm.estado === 'cancelada' ? statusForm.motivoCancelacion.trim() : undefined,
       },
+      cita: selectedAppointment,
     })
   }
 

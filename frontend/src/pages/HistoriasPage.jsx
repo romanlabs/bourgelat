@@ -170,19 +170,7 @@ const mapHistoriaToForm = (historia) => ({
   veterinarioId: historia?.veterinarioId || '',
 })
 
-const mapMedicamentosToText = (medicamentos) => {
-  if (!Array.isArray(medicamentos) || medicamentos.length === 0) return ''
-  return medicamentos
-    .map((item) => {
-      if (typeof item === 'string') return item
-      if (item && typeof item === 'object') {
-        return [item.nombre, item.dosis, item.frecuencia].filter(Boolean).join(' | ')
-      }
-      return ''
-    })
-    .filter(Boolean)
-    .join('\n')
-}
+import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
@@ -198,96 +186,6 @@ const formatClinicalDateTime = (value) => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
-}
-
-function AntecedentesResumen({ antecedentes, mascotaId }) {
-  const alergias = antecedentes?.alergias || []
-  const condiciones = antecedentes?.condicionesCronicas || []
-  const vacunas = antecedentes?.vacunas || []
-  const medicamentosTexto = mapMedicamentosToText(antecedentes?.medicamentosActuales)
-  const ninguno = alergias.length === 0 && condiciones.length === 0 && !medicamentosTexto && vacunas.length === 0
-
-  if (ninguno) {
-    return (
-      <div className="py-1 text-sm text-muted-foreground">
-        Sin antecedentes registrados para este paciente.{' '}
-        <Link to={`/antecedentes?mascotaId=${mascotaId}`} className="font-semibold text-cyan-700 hover:text-cyan-800">
-          Registrar antecedentes
-        </Link>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      {alergias.length > 0 && (
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">Alergias</p>
-          <div className="space-y-1">
-            {alergias.map((item, index) => (
-              <div key={index} className="rounded border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                <span className="font-semibold">{item.tipo || 'Alergia'}</span>
-                {item.descripcion ? <span> · {item.descripcion}</span> : null}
-                {item.reaccion ? <span className="text-rose-600"> → {item.reaccion}</span> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {condiciones.length > 0 && (
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">Condiciones crónicas</p>
-          <div className="space-y-1">
-            {condiciones.map((item, index) => (
-              <div key={index} className="rounded border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                <span className="font-semibold">{item.nombre}</span>
-                {item.tratamientoActual ? <span> · {item.tratamientoActual}</span> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {medicamentosTexto ? (
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">Medicamentos actuales</p>
-          <p className="whitespace-pre-line text-sm leading-6 text-foreground">{medicamentosTexto}</p>
-        </div>
-      ) : null}
-
-      {vacunas.length > 0 && (
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Vacunas</p>
-          <div className="space-y-1">
-            {vacunas.slice(0, 3).map((item, index) => (
-              <div key={index} className="text-sm text-foreground">
-                <span className="font-semibold">{item.nombre}</span>
-                {item.fecha ? <span className="text-muted-foreground"> · {item.fecha}</span> : null}
-                {item.proximaDosis ? <span className="text-emerald-700"> · Próxima: {item.proximaDosis}</span> : null}
-              </div>
-            ))}
-            {vacunas.length > 3 ? (
-              <p className="text-xs text-muted-foreground">+{vacunas.length - 3} más</p>
-            ) : null}
-          </div>
-        </div>
-      )}
-
-      {antecedentes?.esterilizado ? (
-        <p className="text-xs text-muted-foreground">
-          Paciente esterilizado{antecedentes.fechaEsterilizacion ? ` · ${antecedentes.fechaEsterilizacion}` : ''}
-        </p>
-      ) : null}
-
-      <Link
-        to={`/antecedentes?mascotaId=${mascotaId}`}
-        className="block pt-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800"
-      >
-        Editar antecedentes →
-      </Link>
-    </div>
-  )
 }
 
 function RestrictedHistoriasPage() {
@@ -314,6 +212,7 @@ export default function HistoriasPage() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const prefillAppliedRef = useRef(false)
+  const formPanelRef = useRef(null)
   const mascotaIdPrefill = searchParams.get('mascotaId') || ''
   const citaIdPrefill = searchParams.get('citaId') || ''
 
@@ -372,6 +271,11 @@ export default function HistoriasPage() {
           veterinarioId: current.veterinarioId,
           citaId: citaIdPrefill || '',
         }))
+        if (citaIdPrefill) {
+          setTimeout(() => {
+            formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 150)
+        }
       } catch (error) {
         if (!cancelled) {
           toast.error(getErrorMessage(error, 'No fue posible precargar el paciente desde la agenda.'))
@@ -1074,6 +978,7 @@ export default function HistoriasPage() {
               ) : null}
             </DashboardPanel>
 
+            <div ref={formPanelRef}>
             <DashboardPanel
               title={selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
               subtitle="Documenta la consulta con los datos clinicos que de verdad sirven para seguimiento y trazabilidad."
@@ -1608,6 +1513,7 @@ export default function HistoriasPage() {
                 </form>
               )}
             </DashboardPanel>
+            </div>
           </div>
         </div>
       )}

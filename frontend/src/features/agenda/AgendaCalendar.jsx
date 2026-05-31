@@ -118,11 +118,15 @@ function CitaDetailDialog({
   const handleStatusSubmit = (event) => {
     event.preventDefault()
     if (statusForm.estado === 'cancelada' && !statusForm.motivoCancelacion.trim()) return
-    onUpdateStatus(cita.id, {
-      estado: statusForm.estado,
-      motivoCancelacion:
-        statusForm.estado === 'cancelada' ? statusForm.motivoCancelacion.trim() : undefined,
-    })
+    onUpdateStatus(
+      cita.id,
+      {
+        estado: statusForm.estado,
+        motivoCancelacion:
+          statusForm.estado === 'cancelada' ? statusForm.motivoCancelacion.trim() : undefined,
+      },
+      cita,
+    )
   }
 
   const handleRescheduleSubmit = (event) => {
