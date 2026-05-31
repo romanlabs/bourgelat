@@ -36,6 +36,7 @@ import {
 } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
+import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 
@@ -245,6 +246,35 @@ export default function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+
+      const mascotaId = data?.cita?.mascota?.id
+      if (mascotaId) {
+        antecedentesApi.obtenerAntecedentes(mascotaId)
+          .then((res) => {
+            const ant = res?.antecedentes
+            const sinAntecedentes =
+              !ant ||
+              (
+                (!ant.alergias || ant.alergias.length === 0) &&
+                (!ant.condicionesCronicas || ant.condicionesCronicas.length === 0) &&
+                (!ant.vacunas || ant.vacunas.length === 0) &&
+                (!ant.medicamentosActuales || ant.medicamentosActuales.length === 0)
+              )
+            if (sinAntecedentes) {
+              toast.warning(
+                'Este paciente no tiene antecedentes registrados. Regístralos antes de la consulta.',
+                {
+                  duration: 8000,
+                  action: {
+                    label: 'Registrar antecedentes →',
+                    onClick: () => navigate(`/antecedentes?mascotaId=${mascotaId}`),
+                  },
+                }
+              )
+            }
+          })
+          .catch(() => {})
+      }
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear la cita.'))

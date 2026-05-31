@@ -355,8 +355,8 @@ export default function AgendaCalendar({
     }
   }, [isUpdating, isRescheduling, selectedCita])
 
-  const handleCitaUpdate = (citaId, payload) => {
-    onUpdateStatus(citaId, payload)
+  const handleCitaUpdate = (citaId, payload, cita) => {
+    onUpdateStatus(citaId, payload, cita)
   }
   const handleCitaReschedule = (citaId, payload) => {
     onReschedule(citaId, payload)
@@ -566,8 +566,8 @@ export default function AgendaCalendar({
         onClose={() => setSelectedCita(null)}
         puedeGestionarEstado={puedeGestionarEstado}
         puedeReprogramar={puedeReprogramar}
-        onUpdateStatus={(citaId, payload) => {
-          handleCitaUpdate(citaId, payload)
+        onUpdateStatus={(citaId, payload, cita) => {
+          handleCitaUpdate(citaId, payload, cita)
           setSelectedCita(null)
         }}
         onReschedule={(citaId, payload) => {
