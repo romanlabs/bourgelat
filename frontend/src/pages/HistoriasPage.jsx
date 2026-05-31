@@ -21,6 +21,12 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 
+const TABS = [
+  { id: 'resumen', label: 'Resumen' },
+  { id: 'historial', label: 'Historial' },
+  { id: 'consulta', label: 'Nueva consulta' },
+]
+
 const BLOCK_OPTIONS = [
   { value: 'todos', label: 'Todas' },
   { value: 'false', label: 'Editables' },
@@ -171,6 +177,7 @@ const mapHistoriaToForm = (historia) => ({
 })
 
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
+import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
@@ -216,6 +223,7 @@ export default function HistoriasPage() {
   const mascotaIdPrefill = searchParams.get('mascotaId') || ''
   const citaIdPrefill = searchParams.get('citaId') || ''
 
+  const [activeTab, setActiveTab] = useState('resumen')
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const [pagina, setPagina] = useState(1)
   const [veterinarioId, setVeterinarioId] = useState('todos')
@@ -272,9 +280,12 @@ export default function HistoriasPage() {
           citaId: citaIdPrefill || '',
         }))
         if (citaIdPrefill) {
+          setActiveTab('consulta')
           setTimeout(() => {
             formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }, 150)
+        } else {
+          setActiveTab('historial')
         }
       } catch (error) {
         if (!cancelled) {
@@ -408,6 +419,8 @@ export default function HistoriasPage() {
       toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clinica.'))
     },
   })
+
+  const resumenHook = useHistoriasResumen({ enabled: rolPermitido && puedeVerHistorias })
 
   const veterinarios = veterinariosQuery.data?.usuarios || []
   const mascotas = mascotasQuery.data?.mascotas || []
@@ -685,7 +698,76 @@ export default function HistoriasPage() {
           ctaLabel="Revisar planes"
         />
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-0">
+          {/* Barra de tabs */}
+          <div className="flex gap-0 border-b border-border">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab: Resumen */}
+          {activeTab === 'resumen' && (
+          <div className="space-y-5 pt-5">
+          <div className="grid gap-4 xl:grid-cols-4">
+            <KpiCard
+              icon={FileText}
+              label="Historias del mes"
+              value={formatNumber(resumenHook.totalHistorias)}
+              helper="Total de consultas documentadas en el mes actual."
+              tone="text-cyan-700"
+            />
+            <KpiCard
+              icon={Lock}
+              label="Bloqueadas"
+              value={formatNumber(resumenHook.historiasBloqueadas)}
+              helper="Consultas que ya no admiten modificaciones."
+              tone="text-amber-700"
+            />
+            <KpiCard
+              icon={ShieldCheck}
+              label="Con control"
+              value={formatNumber(resumenHook.conControl)}
+              helper="Historias del mes con proxima consulta programada."
+              tone="text-emerald-700"
+            />
+            <KpiCard
+              icon={Stethoscope}
+              label="Profesionales"
+              value={formatNumber(resumenHook.profesionalesActivos)}
+              helper="Medicos con consultas registradas este mes."
+              tone="text-violet-700"
+            />
+          </div>
+
+          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
+            <DonutCard
+              title="Estado de documentacion"
+              subtitle="Balance entre historias editables y bloqueadas en el mes actual."
+              data={resumenHook.statusData}
+              centerLabel="Historias"
+              centerValue={formatNumber(resumenHook.totalHistorias)}
+              formatter={formatNumber}
+              emptyMessage="Aun no hay historias para mostrar."
+            />
+          </div>
+          </div>
+          )}
+
+          {/* Tab: Historial */}
+          {activeTab === 'historial' && (
+          <div className="space-y-5 pt-5">
           {historiasQuery.isError || veterinariosQuery.isError ? (
             <div className="grid gap-4">
               {historiasQuery.isError ? (
@@ -700,48 +782,6 @@ export default function HistoriasPage() {
               ) : null}
             </div>
           ) : null}
-
-          <div className="grid gap-4 xl:grid-cols-4">
-            <KpiCard
-              icon={FileText}
-              label="Historias visibles"
-              value={formatNumber(historiasQuery.data?.total || 0)}
-              helper="Total dentro del filtro activo del modulo."
-              tone="text-cyan-700"
-            />
-            <KpiCard
-              icon={Lock}
-              label="Bloqueadas"
-              value={formatNumber(historiasBloqueadas)}
-              helper="Consultas que ya no admiten modificaciones."
-              tone="text-amber-700"
-            />
-            <KpiCard
-              icon={ShieldCheck}
-              label="Con control"
-              value={formatNumber(conControl)}
-              helper="Historias visibles con proxima consulta programada."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={Stethoscope}
-              label="Profesionales"
-              value={formatNumber(profesionalesActivos)}
-              helper="Medicos que aparecen en la muestra visible."
-              tone="text-violet-700"
-            />
-          </div>
-
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
-            <DonutCard
-              title="Estado de documentacion"
-              subtitle="Balance entre historias editables y bloqueadas dentro del filtro activo."
-              data={statusData}
-              centerLabel="Historias"
-              centerValue={formatNumber(historias.length)}
-              formatter={formatNumber}
-              emptyMessage="Aun no hay historias para mostrar."
-            />
 
             <DashboardPanel
               title="Listado clinico"
@@ -823,7 +863,10 @@ export default function HistoriasPage() {
                     render: (row) => (
                       <button
                         type="button"
-                        onClick={() => loadHistory(row.id)}
+                        onClick={() => {
+                          loadHistory(row.id)
+                          setActiveTab('consulta')
+                        }}
                         className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
                       >
                         Ver
@@ -873,7 +916,11 @@ export default function HistoriasPage() {
               ) : null}
             </DashboardPanel>
           </div>
+          )}
 
+          {/* Tab: Nueva consulta */}
+          {activeTab === 'consulta' && (
+          <div className="space-y-5 pt-5">
           <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
             <DashboardPanel
               title="Paciente para consulta"
@@ -1515,6 +1562,9 @@ export default function HistoriasPage() {
             </DashboardPanel>
             </div>
           </div>
+          </div>
+          )}
+
         </div>
       )}
     </AdminShell>

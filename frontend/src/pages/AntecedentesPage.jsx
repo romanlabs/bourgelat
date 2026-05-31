@@ -17,6 +17,11 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 
+const TABS = [
+  { id: 'resumen', label: 'Resumen' },
+  { id: 'antecedentes', label: 'Antecedentes' },
+]
+
 const TODAY = new Date().toISOString().slice(0, 10)
 
 const DEFAULT_GENERAL_VALUES = {
@@ -102,6 +107,7 @@ export default function AntecedentesPage() {
   const prefillAppliedRef = useRef(false)
   const mascotaIdPrefill = searchParams.get('mascotaId') || ''
 
+  const [activeTab, setActiveTab] = useState('resumen')
   const [petSearch, setPetSearch] = useState('')
   const [selectedPet, setSelectedPet] = useState(null)
   const [generalDraft, setGeneralDraft] = useState(null)
@@ -144,6 +150,7 @@ export default function AntecedentesPage() {
           Propietario: mascota.Propietario,
         })
         setGeneralDraft(null)
+        setActiveTab('antecedentes')
       } catch (error) {
         if (!cancelled) {
           toast.error(getErrorMessage(error, 'No fue posible precargar el paciente para antecedentes.'))
@@ -444,7 +451,34 @@ export default function AntecedentesPage() {
           ctaLabel="Revisar planes"
         />
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-0">
+          {/* Barra de tabs */}
+          <div className="flex gap-0 border-b border-border">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab: Resumen */}
+          {activeTab === 'resumen' && (
+          <div className="space-y-5 pt-5">
+          {!selectedPet ? (
+            <div className="border border-border bg-muted px-4 py-5 text-sm text-muted-foreground">
+              Selecciona un paciente en el tab <span className="font-semibold">Antecedentes</span> para ver sus estadísticas clínicas.
+            </div>
+          ) : (
+          <>
           {antecedentesQuery.isError ? (
             <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
               {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
@@ -481,7 +515,19 @@ export default function AntecedentesPage() {
               tone="text-amber-700"
             />
           </div>
+          </>
+          )}
+          </div>
+          )}
 
+          {/* Tab: Antecedentes */}
+          {activeTab === 'antecedentes' && (
+          <div className="space-y-5 pt-5">
+          {antecedentesQuery.isError ? (
+            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+              {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
+            </div>
+          ) : null}
           <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
             <DashboardPanel
               title="Seleccionar paciente"
@@ -845,6 +891,9 @@ export default function AntecedentesPage() {
               ) : null}
             </DashboardPanel>
           </div>
+          </div>
+          )}
+
         </div>
       )}
     </AdminShell>
