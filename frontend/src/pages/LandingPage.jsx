@@ -27,18 +27,21 @@ const FLOW_STEPS = [
     title: 'Llaman, agendan y llegan',
     body:
       'La recepción ve qué paciente viene, por qué viene y qué debe pasar antes de entrar a consulta.',
+    image: '/images/flujo/slide-1.webp',
   },
   {
     step: '02',
     title: 'El caso se atiende con memoria',
     body:
       'El veterinario registra la evolucion sobre el historial real del paciente, no sobre una nota aislada.',
+    image: '/images/flujo/slide-2.webp',
   },
   {
     step: '03',
     title: 'Caja, stock y proximo paso',
     body:
       'El cierre queda amarrado al caso: cobro, consumo, alerta de reposicion y siguiente contacto con el tutor.',
+    image: '/images/flujo/slide-3.webp',
   },
 ]
 
@@ -398,8 +401,8 @@ function PlatformSection() {
   const { ref: sectionRef, visible } = useVisible(0.2)
   return (
     <section ref={sectionRef} className="relative text-[#10263a]">
-      <div className="mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8 lg:pb-28 lg:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
+      <div className="mx-auto max-w-7xl px-5 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20 lg:px-8 lg:pb-36 lg:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-20">
 
           {/* Device mockup — left column */}
           <DeviceMockup />
@@ -483,7 +486,7 @@ function BrandMark({ dark = false }) {
   )
 }
 
-function SectionHeading({ eyebrow, title, body, dark = false, center = false }) {
+function SectionHeading({ eyebrow, title, body, dark = false, center = false, compact = false }) {
   return (
     <div className={`${center ? 'mx-auto text-center' : ''} max-w-3xl`}>
       <p
@@ -494,9 +497,11 @@ function SectionHeading({ eyebrow, title, body, dark = false, center = false }) 
         {eyebrow}
       </p>
       <h2
-        className={`mt-4 text-[2.7rem] leading-[0.94] tracking-[-0.05em] sm:text-5xl md:text-6xl ${
-          dark ? 'text-white' : 'text-[#10263a]'
-        }`}
+        className={`mt-4 leading-[0.96] tracking-[-0.04em] ${
+          compact
+            ? 'text-[2rem] sm:text-[2.4rem] md:text-[2.8rem]'
+            : 'text-[2.7rem] sm:text-5xl md:text-6xl'
+        } ${dark ? 'text-white' : 'text-[#10263a]'}`}
         style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
       >
         {title}
@@ -516,6 +521,7 @@ function LandingNav() {
   const [open, setOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [navTheme, setNavTheme] = useState('dark')
+  const [hiddenBySection, setHiddenBySection] = useState(false)
   const headerRef = useRef(null)
 
   useEffect(() => {
@@ -594,9 +600,17 @@ function LandingNav() {
     window.addEventListener('scroll', syncHeader, { passive: true })
     window.addEventListener('resize', syncHeader)
 
+    const flujoSection = document.getElementById('flujo')
+    const observer = flujoSection ? new IntersectionObserver(
+      ([entry]) => setHiddenBySection(entry.isIntersecting),
+      { threshold: 0.15 }
+    ) : null
+    if (observer && flujoSection) observer.observe(flujoSection)
+
     return () => {
       window.removeEventListener('scroll', syncHeader)
       window.removeEventListener('resize', syncHeader)
+      observer?.disconnect()
     }
   }, [])
 
@@ -611,16 +625,23 @@ function LandingNav() {
           ? 'left-3 right-3 top-3 sm:left-5 sm:right-5 sm:top-4'
           : 'left-0 right-0 top-0'
       }`}
+      style={{ transform: hiddenBySection ? 'translateY(-120%)' : 'translateY(0)' }}
     >
       <div
         className={`mx-auto flex items-center justify-between px-4 transition-all duration-500 sm:px-6 lg:px-8 ${
           compact
             ? isLight
-              ? 'max-w-[1200px] rounded-[28px] border border-transparent bg-[rgba(248,251,252,0.9)] py-3 shadow-[0_24px_70px_rgba(11,34,50,0.12)] backdrop-blur-xl'
+              ? 'max-w-[1200px] rounded-[28px] py-3'
               : 'max-w-[1200px] rounded-[28px] py-3'
             : 'max-w-[1400px] rounded-none border border-transparent bg-transparent py-5'
         }`}
-        style={compact && !isLight ? {
+        style={compact ? isLight ? {
+          background: 'rgba(248,244,238,0.72)',
+          backdropFilter: 'blur(20px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          border: '1px solid rgba(180,165,148,0.18)',
+          boxShadow: '0 8px 32px rgba(16,38,58,0.07)',
+        } : {
           background: 'rgba(6,17,28,0.55)',
           backdropFilter: 'blur(20px) saturate(1.4)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
@@ -707,37 +728,58 @@ function LandingNav() {
         </button>
       </div>
 
-      {open ? (
-        <div
-          className={`mt-2 overflow-hidden rounded-[24px] border px-5 py-5 shadow-[0_24px_70px_rgba(2,8,14,0.26)] backdrop-blur-xl lg:hidden ${
-            isLight
-              ? 'border-[#d4e2ea] bg-[rgba(248,251,252,0.96)]'
-              : 'border-white/10 bg-[rgba(2,11,18,0.96)]'
-          }`}
-        >
-          <div className="flex flex-col gap-4">
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`rounded-full px-4 py-3 text-sm font-medium no-underline transition-colors ${
-                  isLight
-                    ? 'text-[#173048] hover:bg-[#e8f1f4]'
-                    : 'text-white/90 hover:bg-white/10'
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-            <div className="mt-2 flex flex-col gap-3">
+      <AnimatePresence>
+        {open && (
+          <Motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="mt-2 overflow-hidden rounded-[24px] border lg:hidden"
+            style={isLight ? {
+              background: 'rgba(248,244,238,0.94)',
+              backdropFilter: 'blur(24px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
+              border: '1px solid rgba(180,165,148,0.22)',
+              boxShadow: '0 24px 70px rgba(16,38,58,0.10)',
+            } : {
+              background: 'rgba(4,13,22,0.96)',
+              backdropFilter: 'blur(24px) saturate(1.4)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 24px 70px rgba(2,8,14,0.40)',
+            }}
+          >
+            {/* Nav links */}
+            <div className="px-3 pt-3">
+              {NAV_ITEMS.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center rounded-2xl px-4 py-3.5 text-[15px] font-medium no-underline transition-colors ${
+                    isLight
+                      ? 'text-[#173048] hover:bg-black/5'
+                      : 'text-white/90 hover:bg-white/08'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className={`mx-5 my-3 h-px ${isLight ? 'bg-black/08' : 'bg-white/08'}`} />
+
+            {/* CTAs */}
+            <div className="flex flex-col gap-2 px-3 pb-3">
               <Link
                 to="/login"
                 onClick={() => setOpen(false)}
-                className={`rounded-full border px-4 py-3 text-center text-sm font-semibold no-underline transition-colors ${
+                className={`rounded-2xl border px-4 py-3.5 text-center text-[15px] font-semibold no-underline transition-colors ${
                   isLight
-                    ? 'border-[#b9ccd8] bg-white/70 text-[#10263a] hover:bg-white'
-                    : 'border-white/30 bg-[#081827] text-white hover:bg-white/10'
+                    ? 'border-[#c8d8e4] bg-white/60 text-[#10263a] hover:bg-white/90'
+                    : 'border-white/15 bg-white/05 text-white hover:bg-white/10'
                 }`}
               >
                 Iniciar sesion
@@ -745,94 +787,149 @@ function LandingNav() {
               <Link
                 to="/registro"
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-[#dff0ee] bg-[#effaf8] px-4 py-3 text-center text-sm font-semibold text-[#0d2435] no-underline transition-colors hover:bg-white"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-center text-[15px] font-semibold text-[#0d2435] no-underline transition-colors"
+                style={{
+                  background: 'linear-gradient(135deg, #effaf8, #ffffff)',
+                  border: '1px solid #dff0ee',
+                  boxShadow: '0 4px 16px rgba(143,224,218,0.20)',
+                }}
               >
                 Crear cuenta
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </Motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }
 
-function FlowStepper() {
-  const [active, setActive] = useState(0)
-  const [tick, setTick] = useState(0)
+function FlowCarousel() {
+  const [current, setCurrent] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const total = FLOW_STEPS.length
 
   useEffect(() => {
+    if (paused) return undefined
     const id = setInterval(() => {
-      setActive((prev) => (prev + 1) % FLOW_STEPS.length)
-      setTick((prev) => prev + 1)
-    }, 4000)
+      setCurrent((prev) => (prev + 1) % total)
+    }, 4500)
     return () => clearInterval(id)
-  }, [])
+  }, [paused, total])
 
-  const handleSelect = (index) => {
-    setActive(index)
-    setTick((prev) => prev + 1)
+  const go = (dir) => setCurrent((prev) => (prev + dir + total) % total)
+
+  const roleFor = (index) => {
+    if (index === current) return 'current'
+    if (index === (current + 1) % total) return 'next'
+    if (index === (current - 1 + total) % total) return 'previous'
+    return 'hidden'
+  }
+
+  const handleTilt = (event) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const slide = event.currentTarget.querySelector('.flow-slide[data-role="current"]')
+    if (!slide) return
+    const inner = slide.querySelector('.flow-slide__inner')
+    const img = slide.querySelector('.flow-slide__img')
+    if (!inner) return
+
+    const rect = slide.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    // normaliza contra 28% del tamaño → efecto completo con poco movimiento
+    const x = Math.max(-0.5, Math.min(0.5, (event.clientX - cx) / (rect.width * 0.28)))
+    const y = Math.max(-0.5, Math.min(0.5, (event.clientY - cy) / (rect.height * 0.28)))
+
+    inner.style.setProperty('--rotX', `${(-y * 10).toFixed(2)}deg`)
+    inner.style.setProperty('--rotY', `${(x * 12).toFixed(2)}deg`)
+
+    if (img) {
+      img.style.setProperty('--imgX', `${(-x * 3).toFixed(2)}%`)
+      img.style.setProperty('--imgY', `${(-y * 3).toFixed(2)}%`)
+    }
+  }
+
+  const resetTilt = (event) => {
+    const slide = event.currentTarget.querySelector('.flow-slide[data-role="current"]')
+    if (!slide) return
+    const inner = slide.querySelector('.flow-slide__inner')
+    const img = slide.querySelector('.flow-slide__img')
+    if (inner) {
+      inner.style.setProperty('--rotX', '0deg')
+      inner.style.setProperty('--rotY', '0deg')
+    }
+    if (img) {
+      img.style.setProperty('--imgX', '0%')
+      img.style.setProperty('--imgY', '0%')
+    }
+    setPaused(false)
   }
 
   return (
-    <div className="mt-10 space-y-2">
-      {FLOW_STEPS.map((step, index) => {
-        const isActive = active === index
-        return (
-          <button
-            key={step.step}
-            type="button"
-            onClick={() => handleSelect(index)}
-            className={`w-full rounded-[28px] border px-6 py-5 text-left transition-all duration-300 ${
-              isActive
-                ? 'border-[#c8dde9] bg-white shadow-[0_18px_60px_rgba(8,25,39,0.07)]'
-                : 'border-transparent bg-transparent hover:bg-white/60'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <span
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-300 ${
-                  isActive ? 'bg-[#edf5fb] text-[#3a6d87]' : 'bg-[#e4ecf2] text-[#7a9db5]'
-                }`}
-              >
-                {step.step}
-              </span>
-              <span
-                className={`text-base font-semibold transition-colors duration-300 ${
-                  isActive ? 'text-[#12283c]' : 'text-[#7a9db5]'
-                }`}
-              >
-                {step.title}
-              </span>
-            </div>
+    <div className="flow-carousel mt-12 lg:mt-16">
+      <div
+        className="flow-carousel__stage"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={resetTilt}
+        onMouseMove={handleTilt}
+      >
+        <div className="flow-carousel__bg" aria-hidden="true">
+          {FLOW_STEPS.map((step, index) => (
+            <div
+              key={step.step}
+              className="flow-carousel__bg-layer"
+              data-role={roleFor(index)}
+              style={{ backgroundImage: `url(${step.image})` }}
+            />
+          ))}
+        </div>
 
-            <AnimatePresence>
-              {isActive && (
-                <Motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <p className="mt-4 pl-14 text-sm leading-7 text-[#567185]">{step.body}</p>
-                  <div className="mt-4 pl-14">
-                    <div className="h-px w-full overflow-hidden rounded-full bg-[#d7e4ee]">
-                      <Motion.div
-                        key={tick}
-                        className="h-full origin-left bg-[#3a6d87]"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 4, ease: 'linear' }}
-                      />
+        <div className="flow-carousel__slides">
+          {FLOW_STEPS.map((step, index) => {
+            const role = roleFor(index)
+            return (
+              <article
+                key={step.step}
+                className="flow-slide"
+                data-role={role}
+                aria-hidden={role !== 'current'}
+                onClick={role === 'next' ? () => go(1) : role === 'previous' ? () => go(-1) : undefined}
+              >
+                <div className="flow-slide__inner">
+                  <div className="flow-slide__frame" aria-hidden="true">
+                    <span className="flow-slide__island" />
+                    <span className="flow-slide__home" />
+                  </div>
+                  <div className="flow-slide__media">
+                    <img
+                      className="flow-slide__img"
+                      src={step.image}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="flow-slide__text">
+                    <div className="flow-reveal">
+                      <span className="flow-slide__badge">Paso {step.step}</span>
+                    </div>
+                    <div className="flow-reveal">
+                      <h3 className="flow-slide__title">{step.title}</h3>
+                    </div>
+                    <div className="flow-reveal">
+                      <p className="flow-slide__desc">{step.body}</p>
                     </div>
                   </div>
-                </Motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        )
-      })}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
+      </div>
+
     </div>
   )
 }
@@ -1029,23 +1126,19 @@ export default function LandingPage() {
         <PlatformSection />
       </div>
 
-      <ArrivalSection />
+      {/* <ArrivalSection /> — "El primer momento" comentada temporalmente */}
 
-      <section id="flujo" className="bg-[#edf4f8]">
-        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:grid lg:grid-cols-[minmax(360px,0.78fr)_minmax(0,1.05fr)] lg:items-center lg:gap-14 lg:px-8 lg:py-24">
-          <div>
-            <SectionHeading
-              eyebrow="Flujo diario"
-              title="De la llamada al seguimiento, el día avanza sin perder el caso."
-              body="La clínica deja de pasar información de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una señal para el siguiente."
-            />
+      <section id="flujo" className="bg-[#f8f4ee] text-[#173048] overflow-hidden">
+        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Flujo diario"
+            title="De la llamada al seguimiento, el día avanza sin perder el caso."
+            body="La clínica deja de pasar información de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una señal para el siguiente."
+            center
+            compact
+          />
 
-            <FlowStepper />
-          </div>
-
-          <div className="mt-12 lg:mt-0">
-            <DailyFlowVisual />
-          </div>
+          <FlowCarousel />
         </div>
       </section>
 
