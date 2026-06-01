@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion as Motion } from 'motion/react'
 import { Link } from 'react-router-dom'
-import medicaPerritoImage from '@/assets/landing/Medica-perrito.webp'
 import {
   ArrowRight,
   Calendar,
-  Clock,
   HeartPulse,
   Mail,
   Menu,
   Package,
-  Shield,
   Stethoscope,
   X,
 } from 'lucide-react'
@@ -110,12 +107,6 @@ function useVisible(threshold = 0.4, { toggle = false, rootMargin = '0px' } = {}
   }, [threshold, toggle, rootMargin])
   return { ref, visible }
 }
-
-const ARRIVAL_ITEMS = [
-  'Citas con contexto clínico',
-  'Antecedentes visibles desde recepción',
-  'Sin preguntar dos veces',
-]
 
 const CARE_ITEMS = [
   'Caja conectada al cierre del caso',
@@ -219,8 +210,14 @@ function CinematicCard({ visible, isMobile, alignRight = false, eyebrow, title, 
   )
 }
 
-function ArrivalSection() {
-  const { ref: sectionRef, visible } = useVisible(0.15)
+// Sección cinematográfica con video de fondo + tarjeta de texto.
+// Unifica las antiguas ArrivalSection/CareSection: solo cambian el video, la
+// alineación de la tarjeta (que también define la dirección del degradado) y el
+// copy. El video se reproduce únicamente mientras la sección está en viewport.
+function CinematicVideoSection({ videoSrc, alignRight = false, eyebrow, title, body, items }) {
+  const sectionRef = useRef(null)
+  const videoRef = useRef(null)
+  const [visible, setVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(() => (
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   ))
@@ -232,65 +229,40 @@ function ArrivalSection() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  return (
-    <section
-      ref={sectionRef}
-      style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
-    >
-      <video
-        src="/videos/landing-cinema/escena-2-llegada.mp4"
-        muted autoPlay loop playsInline preload="none"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-          transform: visible ? 'scale(1.0)' : 'scale(1.05)',
-          transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to right, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
-      }} />
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
-          <div className="relative h-full">
-            <CinematicCard
-              visible={visible}
-              isMobile={isMobile}
-              alignRight={false}
-              eyebrow="El primer momento"
-              title="Cuando el paciente llega, el equipo ya sabe."
-              body="La recepción ve al paciente, el motivo y los antecedentes antes de que el tutor termine de parquear. Sin llamadas internas, sin notas sueltas."
-              items={ARRIVAL_ITEMS}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CareSection() {
-  const { ref: sectionRef, visible } = useVisible(0.15)
-  const [isMobile, setIsMobile] = useState(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  ))
-
+  // Reproduce el video solo mientras la sección está en viewport: un video
+  // fullscreen decodificando fuera de pantalla es un costo de CPU/GPU constante.
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    const el = sectionRef.current
+    if (!el) return undefined
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true)
+        const video = videoRef.current
+        if (!video) return
+        if (entry.isIntersecting) {
+          const played = video.play()
+          if (played && typeof played.catch === 'function') played.catch(() => {})
+        } else {
+          video.pause()
+        }
+      },
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
+  const overlayGradient = `linear-gradient(to ${alignRight ? 'left' : 'right'}, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)`
+
   return (
     <section
       ref={sectionRef}
       style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
     >
       <video
-        src="/videos/landing-cinema/escena-3-consulta.mp4"
-        muted autoPlay loop playsInline preload="none"
+        ref={videoRef}
+        src={videoSrc}
+        muted loop playsInline preload="none"
         style={{
           position: 'absolute', inset: 0,
           width: '100%', height: '100%', objectFit: 'cover', display: 'block',
@@ -298,21 +270,18 @@ function CareSection() {
           transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
         }}
       />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to left, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
-      }} />
+      <div style={{ position: 'absolute', inset: 0, background: overlayGradient }} />
       <div style={{ position: 'absolute', inset: 0 }}>
         <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
           <div className="relative h-full">
             <CinematicCard
               visible={visible}
               isMobile={isMobile}
-              alignRight={true}
-              eyebrow="Continuidad real"
-              title="El cuidado no termina en la consulta."
-              body="Bourgelat cierra el caso con caja, consumo de inventario y recordatorio de seguimiento para que el tutor sepa que el siguiente paso ya está programado."
-              items={CARE_ITEMS}
+              alignRight={alignRight}
+              eyebrow={eyebrow}
+              title={title}
+              body={body}
+              items={items}
             />
           </div>
         </div>
@@ -596,9 +565,21 @@ function LandingNav() {
       setNavTheme('dark')
     }
 
+    // Batch el trabajo de layout (getBoundingClientRect, elementsFromPoint,
+    // getComputedStyle) a un máximo de una vez por frame para evitar el jank
+    // de leer layout en cada evento de scroll.
+    let frame = 0
+    const requestSync = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        syncHeader()
+      })
+    }
+
     syncHeader()
-    window.addEventListener('scroll', syncHeader, { passive: true })
-    window.addEventListener('resize', syncHeader)
+    window.addEventListener('scroll', requestSync, { passive: true })
+    window.addEventListener('resize', requestSync)
 
     const flujoSection = document.getElementById('flujo')
     const observer = flujoSection ? new IntersectionObserver(
@@ -608,8 +589,9 @@ function LandingNav() {
     if (observer && flujoSection) observer.observe(flujoSection)
 
     return () => {
-      window.removeEventListener('scroll', syncHeader)
-      window.removeEventListener('resize', syncHeader)
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', requestSync)
+      window.removeEventListener('resize', requestSync)
       observer?.disconnect()
     }
   }, [])
@@ -809,6 +791,8 @@ function FlowCarousel() {
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
   const total = FLOW_STEPS.length
+  const tiltFrame = useRef(0)
+  const reducedMotion = useRef(null)
 
   useEffect(() => {
     if (paused) return undefined
@@ -817,6 +801,14 @@ function FlowCarousel() {
     }, 4500)
     return () => clearInterval(id)
   }, [paused, total])
+
+  // Memoiza el MediaQueryList una sola vez en lugar de crear uno en cada mousemove.
+  useEffect(() => {
+    reducedMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)')
+    return () => {
+      if (tiltFrame.current) cancelAnimationFrame(tiltFrame.current)
+    }
+  }, [])
 
   const go = (dir) => setCurrent((prev) => (prev + dir + total) % total)
 
@@ -828,30 +820,42 @@ function FlowCarousel() {
   }
 
   const handleTilt = (event) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const slide = event.currentTarget.querySelector('.flow-slide[data-role="current"]')
-    if (!slide) return
-    const inner = slide.querySelector('.flow-slide__inner')
-    const img = slide.querySelector('.flow-slide__img')
-    if (!inner) return
+    if (reducedMotion.current?.matches) return
+    // Captura los valores del evento de forma síncrona: React anula
+    // currentTarget tras el handler, así que no se pueden leer dentro del rAF.
+    const stage = event.currentTarget
+    const { clientX, clientY } = event
+    if (tiltFrame.current) return
+    tiltFrame.current = requestAnimationFrame(() => {
+      tiltFrame.current = 0
+      const slide = stage.querySelector('.flow-slide[data-role="current"]')
+      if (!slide) return
+      const inner = slide.querySelector('.flow-slide__inner')
+      const img = slide.querySelector('.flow-slide__img')
+      if (!inner) return
 
-    const rect = slide.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height / 2
-    // normaliza contra 28% del tamaño → efecto completo con poco movimiento
-    const x = Math.max(-0.5, Math.min(0.5, (event.clientX - cx) / (rect.width * 0.28)))
-    const y = Math.max(-0.5, Math.min(0.5, (event.clientY - cy) / (rect.height * 0.28)))
+      const rect = slide.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      // normaliza contra 28% del tamaño → efecto completo con poco movimiento
+      const x = Math.max(-0.5, Math.min(0.5, (clientX - cx) / (rect.width * 0.28)))
+      const y = Math.max(-0.5, Math.min(0.5, (clientY - cy) / (rect.height * 0.28)))
 
-    inner.style.setProperty('--rotX', `${(-y * 10).toFixed(2)}deg`)
-    inner.style.setProperty('--rotY', `${(x * 12).toFixed(2)}deg`)
+      inner.style.setProperty('--rotX', `${(-y * 10).toFixed(2)}deg`)
+      inner.style.setProperty('--rotY', `${(x * 12).toFixed(2)}deg`)
 
-    if (img) {
-      img.style.setProperty('--imgX', `${(-x * 3).toFixed(2)}%`)
-      img.style.setProperty('--imgY', `${(-y * 3).toFixed(2)}%`)
-    }
+      if (img) {
+        img.style.setProperty('--imgX', `${(-x * 3).toFixed(2)}%`)
+        img.style.setProperty('--imgY', `${(-y * 3).toFixed(2)}%`)
+      }
+    })
   }
 
   const resetTilt = (event) => {
+    if (tiltFrame.current) {
+      cancelAnimationFrame(tiltFrame.current)
+      tiltFrame.current = 0
+    }
     const slide = event.currentTarget.querySelector('.flow-slide[data-role="current"]')
     if (!slide) return
     const inner = slide.querySelector('.flow-slide__inner')
@@ -1047,20 +1051,6 @@ function TrustBar() {
   )
 }
 
-function DailyFlowVisual() {
-  return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[#10263a] shadow-[0_30px_90px_rgba(8,25,39,0.16)] sm:rounded-[36px]">
-      <img
-        src={medicaPerritoImage}
-        alt="Medica veterinaria abrazando a un paciente canino en consulta"
-        className="h-full w-full object-cover"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,15,25,0.78),rgba(4,15,25,0.22)_56%,rgba(4,15,25,0.04))]" />
-    </div>
-  )
-}
-
 export default function LandingPage() {
   useEffect(() => {
     document.title = 'Bourgelat | Software para clínicas veterinarias'
@@ -1126,7 +1116,15 @@ export default function LandingPage() {
         <PlatformSection />
       </div>
 
-      {/* <ArrivalSection /> — "El primer momento" comentada temporalmente */}
+      {/* "El primer momento" — comentada temporalmente. Para reactivar, descomenta:
+      <CinematicVideoSection
+        videoSrc="/videos/landing-cinema/escena-2-llegada.mp4"
+        eyebrow="El primer momento"
+        title="Cuando el paciente llega, el equipo ya sabe."
+        body="La recepción ve al paciente, el motivo y los antecedentes antes de que el tutor termine de parquear. Sin llamadas internas, sin notas sueltas."
+        items={['Citas con contexto clínico', 'Antecedentes visibles desde recepción', 'Sin preguntar dos veces']}
+      />
+      */}
 
       <section id="flujo" className="bg-[#f8f4ee] text-[#173048] overflow-hidden">
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
@@ -1142,7 +1140,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <CareSection />
+      <CinematicVideoSection
+        alignRight
+        videoSrc="/videos/landing-cinema/escena-3-consulta.mp4"
+        eyebrow="Continuidad real"
+        title="El cuidado no termina en la consulta."
+        body="Bourgelat cierra el caso con caja, consumo de inventario y recordatorio de seguimiento para que el tutor sepa que el siguiente paso ya está programado."
+        items={CARE_ITEMS}
+      />
 
       <section id="planes" className="bg-[#07131f] text-white">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
