@@ -334,7 +334,7 @@ function DeviceMockup() {
         zIndex: 2,
       }}>
         <img
-          src="/images/bourgelat-pacientes.png"
+          src="/images/bourgelat-pacientes.webp"
           alt="Módulo de pacientes en Bourgelat"
           style={{
             width: '100%',
