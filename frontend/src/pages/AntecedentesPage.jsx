@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { HeartPulse, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { HeartPulse, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -108,6 +108,8 @@ export default function AntecedentesPage() {
   const mascotaIdPrefill = searchParams.get('mascotaId') || ''
 
   const [activeTab, setActiveTab] = useState('resumen')
+  const [antDrawerOpen, setAntDrawerOpen] = useState(false)
+  const [antDrawerType, setAntDrawerType] = useState(null) // 'alergia'|'vacuna'|'cirugia'|'condicion'|'generales'
   const [petSearch, setPetSearch] = useState('')
   const [selectedPet, setSelectedPet] = useState(null)
   const [generalDraft, setGeneralDraft] = useState(null)
@@ -126,6 +128,18 @@ export default function AntecedentesPage() {
   useEffect(() => {
     document.title = 'Antecedentes | Bourgelat'
   }, [])
+
+  useEffect(() => {
+    if (!antDrawerOpen) return
+    const handler = (e) => { if (e.key === 'Escape') setAntDrawerOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [antDrawerOpen])
+
+  const openAntDrawer = (type) => {
+    setAntDrawerType(type)
+    setAntDrawerOpen(true)
+  }
 
   useEffect(() => {
     if (!rolPermitido || !puedeVerAntecedentes || !mascotaIdPrefill || prefillAppliedRef.current) {
@@ -202,6 +216,7 @@ export default function AntecedentesPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Antecedentes generales actualizados exitosamente')
       setGeneralDraft(null)
+      setAntDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
     },
     onError: (error) => {
@@ -214,6 +229,7 @@ export default function AntecedentesPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Alergia agregada exitosamente')
       setAlergiaForm(DEFAULT_ALERGIA_FORM)
+      setAntDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
     },
     onError: (error) => {
@@ -226,6 +242,7 @@ export default function AntecedentesPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Cirugia agregada exitosamente')
       setCirugiaForm(DEFAULT_CIRUGIA_FORM)
+      setAntDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
     },
     onError: (error) => {
@@ -238,6 +255,7 @@ export default function AntecedentesPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Vacuna agregada exitosamente')
       setVacunaForm(DEFAULT_VACUNA_FORM)
+      setAntDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
     },
     onError: (error) => {
@@ -250,6 +268,7 @@ export default function AntecedentesPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Condicion cronica agregada exitosamente')
       setCondicionForm(DEFAULT_CONDICION_FORM)
+      setAntDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
     },
     onError: (error) => {
@@ -589,41 +608,30 @@ export default function AntecedentesPage() {
               subtitle="Datos de contexto permanente y medicamentos actuales del paciente."
             >
               {selectedPet ? (
-                <form className="grid gap-4" onSubmit={handleGuardarGenerales}>
-                  <label className="flex items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={generalValues.esterilizado}
-                      onChange={(event) => updateGeneralDraft('esterilizado', event.target.checked)}
-                    />
-                    Paciente esterilizado
-                  </label>
-                  <input
-                    type="date"
-                    value={generalValues.fechaEsterilizacion}
-                    onChange={(event) => updateGeneralDraft('fechaEsterilizacion', event.target.value)}
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <textarea
-                    value={generalValues.medicamentosActualesTexto}
-                    onChange={(event) => updateGeneralDraft('medicamentosActualesTexto', event.target.value)}
-                    placeholder="Medicamentos actuales, uno por linea"
-                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <textarea
-                    value={generalValues.observacionesGenerales}
-                    onChange={(event) => updateGeneralDraft('observacionesGenerales', event.target.value)}
-                    placeholder="Observaciones generales del paciente"
-                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!puedeEditar || actualizarGeneralesMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {actualizarGeneralesMutation.isPending ? 'Guardando...' : 'Guardar generales'}
-                  </button>
-                </form>
+                <div className="space-y-3">
+                  {selectedAntecedentes?.esterilizado && (
+                    <p className="text-sm text-emerald-700 font-semibold">Paciente esterilizado{selectedAntecedentes.fechaEsterilizacion ? ` · ${selectedAntecedentes.fechaEsterilizacion}` : ''}</p>
+                  )}
+                  {selectedAntecedentes?.medicamentosActuales?.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-1">Medicamentos actuales</p>
+                      <p className="text-sm text-foreground whitespace-pre-line">{mapMedicamentosToText(selectedAntecedentes.medicamentosActuales)}</p>
+                    </div>
+                  )}
+                  {selectedAntecedentes?.observacionesGenerales && (
+                    <p className="text-sm text-muted-foreground">{selectedAntecedentes.observacionesGenerales}</p>
+                  )}
+                  {puedeEditar && (
+                    <button
+                      type="button"
+                      onClick={() => openAntDrawer('generales')}
+                      className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Editar generales
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Selecciona un paciente para abrir su resumen general de antecedentes.
@@ -636,7 +644,11 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Alergias"
               subtitle="Registro rapido de sensibilidades relevantes para la consulta."
-              action={<Plus className="h-4 w-4 text-primary" />}
+              action={puedeEditar && selectedPet ? (
+                <button type="button" onClick={() => openAntDrawer('alergia')} className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5" />Agregar
+                </button>
+              ) : null}
             >
               <DataTable
                 title="Listado de alergias"
@@ -651,54 +663,16 @@ export default function AntecedentesPage() {
                 emptyTitle="Sin alergias registradas"
                 emptyBody="Cuando registres una alergia aparecera aqui."
               />
-              {puedeEditar ? (
-                <form className="mt-4 grid gap-4" onSubmit={handleAgregarAlergia}>
-                  <input
-                    type="text"
-                    value={alergiaForm.tipo}
-                    onChange={(event) => setAlergiaForm((current) => ({ ...current, tipo: event.target.value }))}
-                    placeholder="Tipo de alergia"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="text"
-                    value={alergiaForm.descripcion}
-                    onChange={(event) =>
-                      setAlergiaForm((current) => ({ ...current, descripcion: event.target.value }))
-                    }
-                    placeholder="Descripcion"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="text"
-                    value={alergiaForm.reaccion}
-                    onChange={(event) =>
-                      setAlergiaForm((current) => ({ ...current, reaccion: event.target.value }))
-                    }
-                    placeholder="Reaccion observada"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="date"
-                    value={alergiaForm.fecha}
-                    onChange={(event) => setAlergiaForm((current) => ({ ...current, fecha: event.target.value }))}
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <button
-                    type="submit"
-                    disabled={agregarAlergiaMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {agregarAlergiaMutation.isPending ? 'Guardando...' : 'Agregar alergia'}
-                  </button>
-                </form>
-              ) : null}
             </DashboardPanel>
 
             <DashboardPanel
               title="Vacunas"
               subtitle="Registro de esquema aplicado y proximas dosis."
-              action={<Plus className="h-4 w-4 text-primary" />}
+              action={puedeEditar && selectedPet ? (
+                <button type="button" onClick={() => openAntDrawer('vacuna')} className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5" />Agregar
+                </button>
+              ) : null}
             >
               <DataTable
                 title="Vacunas registradas"
@@ -713,58 +687,6 @@ export default function AntecedentesPage() {
                 emptyTitle="Sin vacunas registradas"
                 emptyBody="Cuando registres una vacuna aparecera aqui."
               />
-              {puedeEditar ? (
-                <form className="mt-4 grid gap-4" onSubmit={handleAgregarVacuna}>
-                  <input
-                    type="text"
-                    value={vacunaForm.nombre}
-                    onChange={(event) => setVacunaForm((current) => ({ ...current, nombre: event.target.value }))}
-                    placeholder="Nombre de la vacuna"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="date"
-                      value={vacunaForm.fecha}
-                      onChange={(event) => setVacunaForm((current) => ({ ...current, fecha: event.target.value }))}
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                    <input
-                      type="date"
-                      value={vacunaForm.proximaDosis}
-                      onChange={(event) =>
-                        setVacunaForm((current) => ({ ...current, proximaDosis: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={vacunaForm.lote}
-                      onChange={(event) => setVacunaForm((current) => ({ ...current, lote: event.target.value }))}
-                      placeholder="Lote"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                    <input
-                      type="text"
-                      value={vacunaForm.laboratorio}
-                      onChange={(event) =>
-                        setVacunaForm((current) => ({ ...current, laboratorio: event.target.value }))
-                      }
-                      placeholder="Laboratorio"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={agregarVacunaMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {agregarVacunaMutation.isPending ? 'Guardando...' : 'Agregar vacuna'}
-                  </button>
-                </form>
-              ) : null}
             </DashboardPanel>
           </div>
 
@@ -772,7 +694,11 @@ export default function AntecedentesPage() {
             <DashboardPanel
               title="Cirugias"
               subtitle="Procedimientos previos para dar contexto a la consulta."
-              action={<Plus className="h-4 w-4 text-primary" />}
+              action={puedeEditar && selectedPet ? (
+                <button type="button" onClick={() => openAntDrawer('cirugia')} className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5" />Agregar
+                </button>
+              ) : null}
             >
               <DataTable
                 title="Cirugias registradas"
@@ -787,53 +713,16 @@ export default function AntecedentesPage() {
                 emptyTitle="Sin cirugias registradas"
                 emptyBody="Cuando registres una cirugia aparecera aqui."
               />
-              {puedeEditar ? (
-                <form className="mt-4 grid gap-4" onSubmit={handleAgregarCirugia}>
-                  <input
-                    type="text"
-                    value={cirugiaForm.nombre}
-                    onChange={(event) => setCirugiaForm((current) => ({ ...current, nombre: event.target.value }))}
-                    placeholder="Nombre de la cirugia"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="date"
-                    value={cirugiaForm.fecha}
-                    onChange={(event) => setCirugiaForm((current) => ({ ...current, fecha: event.target.value }))}
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="text"
-                    value={cirugiaForm.veterinario}
-                    onChange={(event) =>
-                      setCirugiaForm((current) => ({ ...current, veterinario: event.target.value }))
-                    }
-                    placeholder="Profesional o referencia"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <textarea
-                    value={cirugiaForm.observaciones}
-                    onChange={(event) =>
-                      setCirugiaForm((current) => ({ ...current, observaciones: event.target.value }))
-                    }
-                    placeholder="Observaciones relevantes"
-                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <button
-                    type="submit"
-                    disabled={agregarCirugiaMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {agregarCirugiaMutation.isPending ? 'Guardando...' : 'Agregar cirugia'}
-                  </button>
-                </form>
-              ) : null}
             </DashboardPanel>
 
             <DashboardPanel
               title="Condiciones cronicas"
               subtitle="Problemas persistentes que condicionan la atencion del paciente."
-              action={<Plus className="h-4 w-4 text-primary" />}
+              action={puedeEditar && selectedPet ? (
+                <button type="button" onClick={() => openAntDrawer('condicion')} className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                  <Plus className="h-3.5 w-3.5" />Agregar
+                </button>
+              ) : null}
             >
               <DataTable
                 title="Condiciones registradas"
@@ -847,48 +736,6 @@ export default function AntecedentesPage() {
                 emptyTitle="Sin condiciones cronicas"
                 emptyBody="Cuando registres una condicion cronica aparecera aqui."
               />
-              {puedeEditar ? (
-                <form className="mt-4 grid gap-4" onSubmit={handleAgregarCondicion}>
-                  <input
-                    type="text"
-                    value={condicionForm.nombre}
-                    onChange={(event) =>
-                      setCondicionForm((current) => ({ ...current, nombre: event.target.value }))
-                    }
-                    placeholder="Nombre de la condicion"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <input
-                    type="date"
-                    value={condicionForm.fechaDiagnostico}
-                    onChange={(event) =>
-                      setCondicionForm((current) => ({
-                        ...current,
-                        fechaDiagnostico: event.target.value,
-                      }))
-                    }
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <textarea
-                    value={condicionForm.tratamientoActual}
-                    onChange={(event) =>
-                      setCondicionForm((current) => ({
-                        ...current,
-                        tratamientoActual: event.target.value,
-                      }))
-                    }
-                    placeholder="Tratamiento actual o seguimiento"
-                    className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <button
-                    type="submit"
-                    disabled={agregarCondicionMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {agregarCondicionMutation.isPending ? 'Guardando...' : 'Agregar condicion'}
-                  </button>
-                </form>
-              ) : null}
             </DashboardPanel>
           </div>
           </div>
@@ -896,6 +743,115 @@ export default function AntecedentesPage() {
 
         </div>
       )}
+
+      {/* ── Drawer: Antecedentes ── */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${antDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setAntDrawerOpen(false)}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${antDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {antDrawerType === 'alergia' && 'Agregar alergia'}
+              {antDrawerType === 'vacuna' && 'Agregar vacuna'}
+              {antDrawerType === 'cirugia' && 'Agregar cirugia'}
+              {antDrawerType === 'condicion' && 'Agregar condicion cronica'}
+              {antDrawerType === 'generales' && 'Datos generales'}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {selectedPet?.nombre || 'Paciente'} · {selectedPet?.especie}
+            </p>
+          </div>
+          <button type="button" onClick={() => setAntDrawerOpen(false)} aria-label="Cerrar" className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {/* Generales */}
+          {antDrawerType === 'generales' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleGuardarGenerales}>
+              <label className="flex items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground">
+                <input type="checkbox" checked={generalValues.esterilizado} onChange={(e) => updateGeneralDraft('esterilizado', e.target.checked)} />
+                Paciente esterilizado
+              </label>
+              <input type="date" value={generalValues.fechaEsterilizacion} onChange={(e) => updateGeneralDraft('fechaEsterilizacion', e.target.value)} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <textarea value={generalValues.medicamentosActualesTexto} onChange={(e) => updateGeneralDraft('medicamentosActualesTexto', e.target.value)} placeholder="Medicamentos actuales, uno por linea" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <textarea value={generalValues.observacionesGenerales} onChange={(e) => updateGeneralDraft('observacionesGenerales', e.target.value)} placeholder="Observaciones generales del paciente" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
+            </form>
+          )}
+
+          {/* Alergia */}
+          {antDrawerType === 'alergia' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarAlergia}>
+              <input type="text" value={alergiaForm.tipo} onChange={(e) => setAlergiaForm((c) => ({ ...c, tipo: e.target.value }))} placeholder="Tipo de alergia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={alergiaForm.descripcion} onChange={(e) => setAlergiaForm((c) => ({ ...c, descripcion: e.target.value }))} placeholder="Descripcion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={alergiaForm.reaccion} onChange={(e) => setAlergiaForm((c) => ({ ...c, reaccion: e.target.value }))} placeholder="Reaccion observada" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="date" value={alergiaForm.fecha} onChange={(e) => setAlergiaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+            </form>
+          )}
+
+          {/* Vacuna */}
+          {antDrawerType === 'vacuna' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarVacuna}>
+              <input type="text" value={vacunaForm.nombre} onChange={(e) => setVacunaForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la vacuna" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={vacunaForm.fecha} onChange={(e) => setVacunaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Proxima dosis</p><input type="date" value={vacunaForm.proximaDosis} onChange={(e) => setVacunaForm((c) => ({ ...c, proximaDosis: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input type="text" value={vacunaForm.lote} onChange={(e) => setVacunaForm((c) => ({ ...c, lote: e.target.value }))} placeholder="Lote" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+                <input type="text" value={vacunaForm.laboratorio} onChange={(e) => setVacunaForm((c) => ({ ...c, laboratorio: e.target.value }))} placeholder="Laboratorio" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              </div>
+            </form>
+          )}
+
+          {/* Cirugia */}
+          {antDrawerType === 'cirugia' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarCirugia}>
+              <input type="text" value={cirugiaForm.nombre} onChange={(e) => setCirugiaForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la cirugia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="date" value={cirugiaForm.fecha} onChange={(e) => setCirugiaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={cirugiaForm.veterinario} onChange={(e) => setCirugiaForm((c) => ({ ...c, veterinario: e.target.value }))} placeholder="Profesional o referencia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <textarea value={cirugiaForm.observaciones} onChange={(e) => setCirugiaForm((c) => ({ ...c, observaciones: e.target.value }))} placeholder="Observaciones relevantes" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
+            </form>
+          )}
+
+          {/* Condicion */}
+          {antDrawerType === 'condicion' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarCondicion}>
+              <input type="text" value={condicionForm.nombre} onChange={(e) => setCondicionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la condicion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <div><p className="mb-1 text-xs text-muted-foreground">Fecha de diagnostico</p><input type="date" value={condicionForm.fechaDiagnostico} onChange={(e) => setCondicionForm((c) => ({ ...c, fechaDiagnostico: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+              <textarea value={condicionForm.tratamientoActual} onChange={(e) => setCondicionForm((c) => ({ ...c, tratamientoActual: e.target.value }))} placeholder="Tratamiento actual o seguimiento" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
+            </form>
+          )}
+        </div>
+
+        <div className="flex gap-3 border-t border-border px-5 py-4">
+          <button
+            type="submit"
+            form="ant-drawer-form"
+            disabled={
+              actualizarGeneralesMutation.isPending ||
+              agregarAlergiaMutation.isPending ||
+              agregarVacunaMutation.isPending ||
+              agregarCirugiaMutation.isPending ||
+              agregarCondicionMutation.isPending
+            }
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Guardar
+          </button>
+          <button type="button" onClick={() => setAntDrawerOpen(false)} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
+            Cancelar
+          </button>
+        </div>
+      </div>
     </AdminShell>
   )
 }

@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronDown, FileText, HeartPulse, Lock, Plus, Search, ShieldCheck, Stethoscope } from 'lucide-react'
+import { ChevronDown, FileText, HeartPulse, Lock, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -224,6 +224,7 @@ export default function HistoriasPage() {
   const citaIdPrefill = searchParams.get('citaId') || ''
 
   const [activeTab, setActiveTab] = useState('resumen')
+  const [historiaDrawerOpen, setHistoriaDrawerOpen] = useState(false)
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const [pagina, setPagina] = useState(1)
   const [veterinarioId, setVeterinarioId] = useState('todos')
@@ -249,6 +250,13 @@ export default function HistoriasPage() {
   useEffect(() => {
     document.title = 'Historias clinicas | Bourgelat'
   }, [])
+
+  useEffect(() => {
+    if (!historiaDrawerOpen) return
+    const handler = (e) => { if (e.key === 'Escape') setHistoriaDrawerOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [historiaDrawerOpen])
 
   useEffect(() => {
     if (!rolPermitido || !puedeVerHistorias || !mascotaIdPrefill || prefillAppliedRef.current) {
@@ -384,6 +392,7 @@ export default function HistoriasPage() {
       toast.success(data?.message || 'Historia clinica registrada exitosamente')
       setSelectedHistory(data?.historia || null)
       setForm(createDefaultForm())
+      setHistoriaDrawerOpen(false)
       queryClient.invalidateQueries({ queryKey: ['historias-listado'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
@@ -865,7 +874,7 @@ export default function HistoriasPage() {
                         type="button"
                         onClick={() => {
                           loadHistory(row.id)
-                          setActiveTab('consulta')
+                          setHistoriaDrawerOpen(true)
                         }}
                         className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
                       >
@@ -921,7 +930,7 @@ export default function HistoriasPage() {
           {/* Tab: Nueva consulta */}
           {activeTab === 'consulta' && (
           <div className="space-y-5 pt-5">
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
+          <div className="grid gap-5 xl:grid-cols-[480px_minmax(0,1fr)]">
             <DashboardPanel
               title="Paciente para consulta"
               subtitle="Selecciona el paciente activo antes de registrar o revisar la evolucion."
@@ -1025,26 +1034,50 @@ export default function HistoriasPage() {
               ) : null}
             </DashboardPanel>
 
-            <div ref={formPanelRef}>
             <DashboardPanel
-              title={selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
-              subtitle="Documenta la consulta con los datos clinicos que de verdad sirven para seguimiento y trazabilidad."
-              action={
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nueva
-                </button>
-              }
+              title="Consulta clinica"
+              subtitle="Registra o revisa la historia clinica del paciente."
             >
-              {!puedeEditarHistorias ? (
+              {!selectedPet ? (
+                <p className="text-sm text-muted-foreground">Selecciona primero un paciente para abrir la consulta.</p>
+              ) : !puedeEditarHistorias ? (
                 <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
                   Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
                 </div>
               ) : (
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => { resetForm(); setHistoriaDrawerOpen(true) }}
+                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nueva historia clinica
+                  </button>
+                  {selectedHistory ? (
+                    <div className="border border-border bg-muted px-4 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{selectedHistory.motivoConsulta || 'Historia cargada'}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{selectedHistory.veterinario?.nombre || 'Sin profesional'} · {formatClinicalDateTime(selectedHistory.fechaConsulta)}</p>
+                        </div>
+                        <StatusPill tone={buildHistoryStatusTone(selectedHistory.bloqueada)}>
+                          {selectedHistory.bloqueada ? 'Bloqueada' : 'Editable'}
+                        </StatusPill>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setHistoriaDrawerOpen(true)}
+                        className="mt-3 text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+                      >
+                        Abrir para editar →
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              {/* form moved to drawer — see below */}
+              {false && (
                 <form className="grid gap-4" onSubmit={handleSubmit}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <select
@@ -1560,13 +1593,225 @@ export default function HistoriasPage() {
                 </form>
               )}
             </DashboardPanel>
-            </div>
           </div>
           </div>
           )}
 
         </div>
       )}
+
+      {/* ── Drawer: Historia clínica ── */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${historiaDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setHistoriaDrawerOpen(false)}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
+        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${historiaDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {selectedPet ? `${selectedPet.nombre} · ${selectedPet.especie}` : 'Selecciona un paciente primero'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!selectedHistory && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+              >
+                Limpiar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setHistoriaDrawerOpen(false)}
+              aria-label="Cerrar"
+              className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Body scrollable */}
+        <div ref={formPanelRef} className="flex-1 overflow-y-auto px-5 py-5">
+          {!puedeEditarHistorias ? (
+            <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
+            </div>
+          ) : (
+            <form id="historia-drawer-form" className="grid gap-4" onSubmit={handleSubmit}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <select
+                  value={form.veterinarioId || preferredVetId}
+                  onChange={(event) => setForm((current) => ({ ...current, veterinarioId: event.target.value }))}
+                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                >
+                  <option value="">Selecciona el profesional</option>
+                  {veterinarios.map((item) => (
+                    <option key={item.id} value={item.id}>{item.nombre}</option>
+                  ))}
+                </select>
+                <select
+                  value={form.citaId}
+                  onChange={(event) => setForm((current) => ({ ...current, citaId: event.target.value }))}
+                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                >
+                  <option value="">Sin cita relacionada</option>
+                  {citasRelacionadas.map((cita) => (
+                    <option key={cita.id} value={cita.id}>
+                      {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <textarea
+                value={form.motivoConsulta}
+                onChange={(event) => setForm((current) => ({ ...current, motivoConsulta: event.target.value }))}
+                placeholder="Motivo principal de consulta"
+                className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+              />
+              <textarea
+                value={form.anamnesis}
+                onChange={(event) => setForm((current) => ({ ...current, anamnesis: event.target.value }))}
+                placeholder="Anamnesis y relato del tutor"
+                className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+              />
+
+              <p className="text-xs text-muted-foreground">Signos vitales — frecuencia cardiaca (lpm), respiratoria (rpm), condicion corporal (1-5).</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <input type="number" min="0" step="0.1" value={form.peso} onChange={(e) => setForm((c) => ({ ...c, peso: e.target.value }))} placeholder="Peso (kg)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <input type="number" min="30" max="45" step="0.1" value={form.temperatura} onChange={(e) => setForm((c) => ({ ...c, temperatura: e.target.value }))} placeholder="Temperatura °C" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <input type="number" min="0" value={form.frecuenciaCardiaca} onChange={(e) => setForm((c) => ({ ...c, frecuenciaCardiaca: e.target.value }))} placeholder="Frec. cardiaca (lpm)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <input type="number" min="0" value={form.frecuenciaRespiratoria} onChange={(e) => setForm((c) => ({ ...c, frecuenciaRespiratoria: e.target.value }))} placeholder="Frec. respiratoria (rpm)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <input type="number" min="1" max="5" value={form.condicionCorporal} onChange={(e) => setForm((c) => ({ ...c, condicionCorporal: e.target.value }))} placeholder="Condicion corporal (1-5)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <input type="text" value={form.mucosas} onChange={(e) => setForm((c) => ({ ...c, mucosas: e.target.value }))} placeholder="Mucosas" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              </div>
+
+              <select value={form.estadoHidratacion} onChange={(e) => setForm((c) => ({ ...c, estadoHidratacion: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
+                {HYDRATION_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
+              </select>
+              <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Examen fisico y hallazgos relevantes" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnostico principal" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnostico presuntivo o diferencial" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+
+              {/* Plan farmacológico */}
+              <div className="grid gap-4 border border-border bg-muted px-4 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">Plan farmacologico</p>
+                  <button type="button" onClick={addMedicationDraft} className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted">
+                    <Plus className="h-4 w-4" />Agregar medicamento
+                  </button>
+                </div>
+                {puedeConsultarInventarioClinico ? (
+                  <div className="grid gap-3 border border-dashed border-border bg-card px-4 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario clinico</p>
+                    <label className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input type="text" value={medicationSearch} onChange={(e) => setMedicationSearch(e.target.value)} placeholder="Medicamento, laboratorio o presentacion" className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {medicamentosCatalogo.length ? medicamentosCatalogo.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-2 border border-border bg-muted px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{p.nombre}</p>
+                            <p className="text-xs text-muted-foreground">Stock {formatNumber(p.stock)}</p>
+                          </div>
+                          <button type="button" onClick={() => addMedicationFromInventory(p)} className="shrink-0 border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted">
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin resultados en inventario.</p>}
+                    </div>
+                  </div>
+                ) : null}
+                {form.medicamentos.map((item, index) => (
+                  <div key={item.id} className="grid gap-3 border border-border bg-card px-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-foreground">Medicamento {index + 1}{item.fuente === 'inventario' ? <span className="ml-2 text-xs text-cyan-700">· inventario</span> : null}</p>
+                      <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                      <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentracion / presentacion" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                      <select value={item.via} onChange={(e) => updateMedicationDraft(item.id, 'via', e.target.value)} className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
+                        {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-1">
+                        <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <div className="flex flex-wrap gap-1">{MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'frecuencia', s)} className={`px-2 py-0.5 text-xs font-semibold transition border ${item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
+                      </div>
+                      <div className="grid gap-1">
+                        <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duracion" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <div className="flex flex-wrap gap-1">{MEDICATION_DURATION_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'duracion', s)} className={`px-2 py-0.5 text-xs font-semibold transition border ${item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
+                      <input type="number" min="0" step="0.01" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                      <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[60px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+
+              {selectedHistory?.bloqueada ? (
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                  Esta historia ya esta bloqueada. Puedes consultarla, pero no volver a editarla.
+                </div>
+              ) : null}
+            </form>
+          )}
+        </div>
+
+        {/* Footer */}
+        {puedeEditarHistorias && (
+          <div className="flex flex-wrap gap-3 border-t border-border px-5 py-4">
+            <button
+              type="submit"
+              form="historia-drawer-form"
+              disabled={crearHistoriaMutation.isPending || editarHistoriaMutation.isPending || !selectedPet || selectedHistory?.bloqueada}
+              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {selectedHistory?.id
+                ? editarHistoriaMutation.isPending ? 'Guardando...' : 'Guardar cambios'
+                : crearHistoriaMutation.isPending ? 'Guardando...' : 'Registrar historia'}
+            </button>
+            {selectedHistory?.id ? (
+              <button
+                type="button"
+                onClick={() => bloquearHistoriaMutation.mutate(selectedHistory.id)}
+                disabled={bloquearHistoriaMutation.isPending || selectedHistory.bloqueada}
+                className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
+              </button>
+            ) : null}
+            <button type="button" onClick={() => setHistoriaDrawerOpen(false)} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
     </AdminShell>
   )
 }
