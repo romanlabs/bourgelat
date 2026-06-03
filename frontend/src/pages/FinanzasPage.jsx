@@ -276,25 +276,15 @@ export default function FinanzasPage() {
                   title="Nueva factura"
                   subtitle="Caja operativa para consultas, peluqueria, productos, procedimientos y ventas mostrador."
                   action={
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={facturacionHook.addServiceItem}
-                        className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Agregar servicio
-                      </button>
-                      <button
-                        type="button"
-                        onClick={facturacionHook.handleCrearFactura}
-                        disabled={facturacionHook.crearFacturaMutation.isPending}
-                        className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Receipt className="h-4 w-4" />
-                        {facturacionHook.crearFacturaMutation.isPending ? 'Guardando...' : 'Crear factura'}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={facturacionHook.handleCrearFactura}
+                      disabled={facturacionHook.crearFacturaMutation.isPending}
+                      className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Receipt className="h-4 w-4" />
+                      {facturacionHook.crearFacturaMutation.isPending ? 'Guardando...' : 'Crear factura'}
+                    </button>
                   }
                 >
                   <div className="grid gap-4">
@@ -399,144 +389,177 @@ export default function FinanzasPage() {
                       />
                     </label>
 
-                    {/* Items — tabla compacta */}
+                    {/* Items — tabla compacta o empty state */}
                     <div>
-                      <div className="overflow-x-auto">
-                        {/* Header */}
-                        <div
-                          className="grid min-w-[580px] border-x border-t border-border bg-muted px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
-                          style={{ gridTemplateColumns: '108px 1fr 88px 116px 88px 36px' }}
-                        >
-                          <span>Tipo</span>
-                          <span className="pl-2">Descripcion</span>
-                          <span>Cantidad</span>
-                          <span>Precio unit.</span>
-                          <span>Descuento</span>
-                          <span />
-                        </div>
-                        {/* Rows */}
-                        <div className="min-w-[580px] divide-y divide-border border border-border">
-                          {facturacionHook.invoiceForm.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="grid items-center gap-1 px-3 py-2"
-                              style={{ gridTemplateColumns: '108px 1fr 88px 116px 88px 36px' }}
-                            >
-                              <select
-                                value={item.tipo}
-                                onChange={(event) =>
-                                  facturacionHook.updateInvoiceItem(item.id, 'tipo', event.target.value)
-                                }
-                                className="h-9 border border-border bg-card px-2 text-xs text-foreground outline-none focus:border-primary"
-                              >
-                                <option value="servicio">Servicio</option>
-                                <option value="producto">Producto</option>
-                              </select>
-                              <input
-                                type="text"
-                                value={item.descripcion}
-                                onChange={(event) =>
-                                  facturacionHook.updateInvoiceItem(
-                                    item.id,
-                                    'descripcion',
-                                    event.target.value
-                                  )
-                                }
-                                placeholder="Descripcion"
-                                className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                              />
-                              <input
-                                type="number"
-                                min="1"
-                                step={item.tipo === 'producto' ? '1' : '0.01'}
-                                max={
-                                  item.tipo === 'producto' && item.stock != null
-                                    ? item.stock
-                                    : undefined
-                                }
-                                title={
-                                  item.tipo === 'producto' && item.stock != null
-                                    ? `Stock disponible: ${item.stock}`
-                                    : undefined
-                                }
-                                value={item.cantidad}
-                                onChange={(event) =>
-                                  facturacionHook.updateInvoiceItem(
-                                    item.id,
-                                    'cantidad',
-                                    event.target.value
-                                  )
-                                }
-                                className={`h-9 border bg-card px-2 text-sm text-foreground outline-none focus:border-primary ${
-                                  item.tipo === 'producto' &&
-                                  item.stock != null &&
-                                  Number(item.cantidad) > item.stock
-                                    ? 'border-red-400 bg-red-50 text-red-700'
-                                    : 'border-border'
-                                }`}
-                              />
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.precioUnitario}
-                                onChange={(event) =>
-                                  facturacionHook.updateInvoiceItem(
-                                    item.id,
-                                    'precioUnitario',
-                                    event.target.value
-                                  )
-                                }
-                                className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                              />
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.descuento}
-                                onChange={(event) =>
-                                  facturacionHook.updateInvoiceItem(
-                                    item.id,
-                                    'descuento',
-                                    event.target.value
-                                  )
-                                }
-                                className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                              />
+                      {facturacionHook.invoiceForm.items.length === 0 ? (
+                        /* Empty state */
+                        <div className="border border-dashed border-border bg-muted px-6 py-10 text-center">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Items de la factura
+                          </p>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Agrega productos del inventario o registra un servicio.
+                          </p>
+                          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                            {puedeConsultarInventario && (
                               <button
                                 type="button"
-                                onClick={() => facturacionHook.removeInvoiceItem(item.id)}
-                                disabled={facturacionHook.invoiceForm.items.length === 1}
-                                className="flex h-9 w-9 items-center justify-center border border-border bg-card text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                onClick={() => facturacionHook.setProductDrawerOpen(true)}
+                                className="inline-flex items-center gap-2 border border-border bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <Package className="h-4 w-4" />
+                                Agregar productos
                               </button>
-                            </div>
-                          ))}
+                            )}
+                            <button
+                              type="button"
+                              onClick={facturacionHook.addServiceItem}
+                              className="inline-flex items-center gap-2 border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Agregar servicio
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        /* Tabla con ítems */
+                        <>
+                          <div className="overflow-x-auto">
+                            {/* Header */}
+                            <div
+                              className="grid min-w-[580px] border-x border-t border-border bg-muted px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+                              style={{ gridTemplateColumns: '72px 1fr 88px 116px 88px 36px' }}
+                            >
+                              <span>Tipo</span>
+                              <span className="pl-2">Descripcion</span>
+                              <span>Cantidad</span>
+                              <span>Precio unit.</span>
+                              <span>Descuento</span>
+                              <span />
+                            </div>
+                            {/* Rows */}
+                            <div className="min-w-[580px] divide-y divide-border border border-border">
+                              {facturacionHook.invoiceForm.items.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="grid items-center gap-1 px-3 py-2"
+                                  style={{ gridTemplateColumns: '72px 1fr 88px 116px 88px 36px' }}
+                                >
+                                  <span
+                                    className={`inline-flex items-center self-center px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] border ${
+                                      item.tipo === 'producto'
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                        : 'border-primary/30 bg-primary/10 text-primary'
+                                    }`}
+                                  >
+                                    {item.tipo === 'producto' ? 'Producto' : 'Servicio'}
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={item.descripcion}
+                                    onChange={(event) =>
+                                      facturacionHook.updateInvoiceItem(
+                                        item.id,
+                                        'descripcion',
+                                        event.target.value
+                                      )
+                                    }
+                                    placeholder="Descripcion"
+                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
+                                  />
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    step={item.tipo === 'producto' ? '1' : '0.01'}
+                                    max={
+                                      item.tipo === 'producto' && item.stock != null
+                                        ? item.stock
+                                        : undefined
+                                    }
+                                    title={
+                                      item.tipo === 'producto' && item.stock != null
+                                        ? `Stock disponible: ${item.stock}`
+                                        : undefined
+                                    }
+                                    value={item.cantidad}
+                                    onChange={(event) =>
+                                      facturacionHook.updateInvoiceItem(
+                                        item.id,
+                                        'cantidad',
+                                        event.target.value
+                                      )
+                                    }
+                                    className={`h-9 border bg-card px-2 text-sm text-foreground outline-none focus:border-primary ${
+                                      item.tipo === 'producto' &&
+                                      item.stock != null &&
+                                      Number(item.cantidad) > item.stock
+                                        ? 'border-red-400 bg-red-50 text-red-700'
+                                        : 'border-border'
+                                    }`}
+                                  />
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={item.precioUnitario}
+                                    onChange={(event) =>
+                                      facturacionHook.updateInvoiceItem(
+                                        item.id,
+                                        'precioUnitario',
+                                        event.target.value
+                                      )
+                                    }
+                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
+                                  />
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={item.descuento}
+                                    onChange={(event) =>
+                                      facturacionHook.updateInvoiceItem(
+                                        item.id,
+                                        'descuento',
+                                        event.target.value
+                                      )
+                                    }
+                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => facturacionHook.removeInvoiceItem(item.id)}
+                                    className="flex h-9 w-9 items-center justify-center border border-border bg-card text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
 
-                      {/* Botones debajo de la tabla */}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={facturacionHook.addServiceItem}
-                          className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          Agregar servicio
-                        </button>
-                        {puedeConsultarInventario ? (
-                          <button
-                            type="button"
-                            onClick={() => facturacionHook.setProductDrawerOpen(true)}
-                            className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                          >
-                            <Package className="h-3.5 w-3.5" />
-                            Desde inventario
-                          </button>
-                        ) : null}
-                      </div>
+                          {/* Botones debajo de la tabla */}
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {puedeConsultarInventario && (
+                              <button
+                                type="button"
+                                onClick={() => facturacionHook.setProductDrawerOpen(true)}
+                                className="inline-flex items-center gap-2 border border-border bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                              >
+                                <Package className="h-3.5 w-3.5" />
+                                Desde inventario
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={facturacionHook.addServiceItem}
+                              className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Agregar servicio
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </DashboardPanel>

@@ -284,16 +284,22 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
       toast.error('Selecciona una factura para imprimir la tirilla.')
       return
     }
-    const popup = window.open('', '_blank', 'noopener,noreferrer,width=420,height=900')
-    if (!popup) {
-      toast.error('El navegador bloqueo la ventana de impresion.')
+    const html = buildThermalReceiptHtml({ factura: facturaSeleccionada, clinica })
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none'
+    document.body.appendChild(iframe)
+    const doc = iframe.contentDocument || iframe.contentWindow?.document
+    if (!doc) {
+      document.body.removeChild(iframe)
+      toast.error('No se pudo preparar la tirilla para impresion.')
       return
     }
-    popup.document.open()
-    popup.document.write(buildThermalReceiptHtml({ factura: facturaSeleccionada, clinica }))
-    popup.document.close()
-    popup.focus()
-    popup.print()
+    doc.open()
+    doc.write(html)
+    doc.close()
+    iframe.contentWindow.focus()
+    iframe.contentWindow.print()
+    setTimeout(() => document.body.removeChild(iframe), 1000)
   }
 
   const exportCurrentCut = () => {
