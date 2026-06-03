@@ -30,7 +30,7 @@ const buildInitialForm = () => ({
   metodoPago: 'efectivo',
   observaciones: '',
   descuentoGeneral: '0',
-  items: [createBlankInvoiceItem()],
+  items: [],
 })
 
 export const PAYMENT_METHOD_OPTIONS = [
@@ -166,7 +166,7 @@ export function useFinanzasFacturacion({
   const removeInvoiceItem = (itemId) => {
     setInvoiceForm((curr) => ({
       ...curr,
-      items: curr.items.length > 1 ? curr.items.filter((item) => item.id !== itemId) : curr.items,
+      items: curr.items.filter((item) => item.id !== itemId),
     }))
   }
 
