@@ -23,23 +23,69 @@ import {
   calcCitaHeight,
 } from './useAgendaCalendar'
 
-// ─── Colores por estado (reutiliza la lógica de AgendaPage) ──────────────────
+// ─── Colores y utilidades visuales ───────────────────────────────────────────
 
 function buildStateTone(estado) {
   switch (estado) {
+    case 'programada':
+      return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
     case 'confirmada':
-      return 'border-primary/40 bg-primary/15 text-primary dark:bg-primary/20'
+      return 'border-primary/60 bg-primary/25 text-primary dark:bg-primary/25 dark:border-primary/50'
     case 'en_curso':
-      return 'border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700'
+      return 'border-violet-400 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-600'
     case 'completada':
-      return 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700'
+      return 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-600'
     case 'cancelada':
-      return 'border-red-300 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700'
+      return 'border-red-400 bg-red-100 text-red-700 opacity-75 dark:bg-red-900/40 dark:text-red-200 dark:border-red-600'
     case 'no_asistio':
-      return 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700'
-    default: // programada
-      return 'border-border bg-muted text-foreground'
+      return 'border-amber-400 bg-amber-100 text-amber-700 opacity-75 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-600'
+    default:
+      return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
   }
+}
+
+function getAccentColor(estado) {
+  switch (estado) {
+    case 'programada':  return '#93c5fd'
+    case 'confirmada':  return 'hsl(160 84% 39%)'
+    case 'en_curso':    return '#a78bfa'
+    case 'completada':  return '#34d399'
+    case 'cancelada':   return '#f87171'
+    case 'no_asistio':  return '#fbbf24'
+    default:            return '#93c5fd'
+  }
+}
+
+const TIPO_SHORT = {
+  consulta_general: 'Consulta',
+  vacunacion:       'Vacuna',
+  cirugia:          'Cirugía',
+  desparasitacion:  'Desparasit.',
+  control:          'Control',
+  urgencia:         'Urgencia',
+  peluqueria:       'Peluquería',
+  laboratorio:      'Lab.',
+  radiografia:      'Radiografía',
+  otro:             'Otro',
+}
+
+const ESPECIE_EMOJI = {
+  perro:    '🐶',
+  gato:     '🐱',
+  conejo:   '🐰',
+  ave:      '🦜',
+  pajaro:   '🦜',
+  hamster:  '🐹',
+  reptil:   '🦎',
+}
+
+function especieToEmoji(especie) {
+  if (!especie) return '🐾'
+  const key = especie.toLowerCase()
+  for (const [k, v] of Object.entries(ESPECIE_EMOJI)) {
+    if (key.includes(k)) return v
+  }
+  return '🐾'
 }
 
 const STATUS_OPTIONS = [
@@ -51,12 +97,43 @@ const STATUS_OPTIONS = [
   { value: 'no_asistio', label: 'No asistió' },
 ]
 
+// ─── Indicador de hora actual ─────────────────────────────────────────────────
+
+function NowLine() {
+  const getNowTop = () => {
+    const now = new Date()
+    const str = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    return timeToTop(str)
+  }
+
+  const [top, setTop] = useState(getNowTop)
+
+  useEffect(() => {
+    const id = setInterval(() => setTop(getNowTop()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div
+      className="pointer-events-none absolute left-0 right-0 z-30"
+      style={{ top: `${top}px` }}
+    >
+      <div className="flex items-center">
+        <div className="h-2 w-2 flex-shrink-0 -translate-x-1 rounded-full bg-red-500" />
+        <div className="h-[1.5px] flex-1 bg-red-400/70" />
+      </div>
+    </div>
+  )
+}
+
 // ─── Chip de cita ────────────────────────────────────────────────────────────
 
 function CitaChip({ cita, onClick }) {
   const top = timeToTop(cita.horaInicio)
   const height = calcCitaHeight(cita.horaInicio, cita.horaFin)
   const horaLabel = cita.horaInicio?.slice(0, 5) || ''
+  const emoji = especieToEmoji(cita.mascota?.especie)
+  const tipoCorto = TIPO_SHORT[cita.tipoCita] || cita.tipoCita
 
   return (
     <button
@@ -67,17 +144,34 @@ function CitaChip({ cita, onClick }) {
       }}
       title={`${cita.mascota?.nombre || 'Cita'} — ${horaLabel}`}
       className={cn(
-        'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-sm border px-1.5 py-0.5 text-left transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+        'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-sm border-y border-r px-1.5 py-1 text-left shadow-sm transition-all hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
         buildStateTone(cita.estado)
       )}
-      style={{ top: `${top}px`, height: `${height}px`, minHeight: '22px' }}
+      style={{
+        top: `${top}px`,
+        height: `${height}px`,
+        minHeight: '24px',
+        borderLeftWidth: '3px',
+        borderLeftColor: getAccentColor(cita.estado),
+      }}
     >
-      <p className="truncate text-[11px] font-semibold leading-tight">
+      <p className="truncate text-[11px] font-bold leading-tight">
+        <span className="mr-0.5 not-italic">{emoji}</span>
         {cita.mascota?.nombre || 'Paciente'}
       </p>
-      {height >= 38 && (
-        <p className="truncate text-[10px] leading-tight opacity-80">
-          {horaLabel} · {cita.veterinario?.nombre?.split(' ')[0] || ''}
+      {height >= 44 && (
+        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-75">
+          {horaLabel} · {tipoCorto}
+        </p>
+      )}
+      {height >= 64 && (
+        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-60">
+          {cita.propietario?.nombre?.split(' ')[0] || ''}
+        </p>
+      )}
+      {height >= 84 && (
+        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-55">
+          Dr. {cita.veterinario?.nombre?.split(' ')[0] || ''}
         </p>
       )}
     </button>
@@ -430,6 +524,7 @@ export default function AgendaCalendar({
 
             {semanaActual.map((day) => {
               const esHoy = isToday(day)
+              const count = getCitasDelDia(day).length
               return (
                 <div
                   key={day.toISOString()}
@@ -443,14 +538,26 @@ export default function AgendaCalendar({
                   </p>
                   <p
                     className={cn(
-                      'text-sm font-semibold leading-none mt-0.5',
+                      'mt-0.5 text-sm font-semibold leading-none',
                       esHoy
-                        ? 'flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white mx-auto'
+                        ? 'mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white'
                         : 'text-foreground'
                     )}
                   >
                     {format(day, 'd')}
                   </p>
+                  {!isLoading && count > 0 && (
+                    <span
+                      className={cn(
+                        'mt-1 inline-flex h-4 items-center justify-center rounded-full px-1.5 text-[9px] font-bold',
+                        count >= 4
+                          ? 'bg-primary text-white'
+                          : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </div>
               )
             })}
@@ -543,6 +650,9 @@ export default function AgendaCalendar({
                       />
                     ))}
 
+                  {/* Indicador de hora actual */}
+                  {!isLoading && esHoy && <NowLine />}
+
                   {/* Chips de citas */}
                   {!isLoading &&
                     citasDelDia.map((cita) => (
@@ -557,6 +667,26 @@ export default function AgendaCalendar({
             })}
           </div>
         </div>
+      </div>
+
+      {/* Leyenda de estados */}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 px-1">
+        {[
+          { estado: 'programada',  label: 'Programada' },
+          { estado: 'confirmada',  label: 'Confirmada' },
+          { estado: 'en_curso',    label: 'En curso' },
+          { estado: 'completada',  label: 'Completada' },
+          { estado: 'cancelada',   label: 'Cancelada' },
+          { estado: 'no_asistio',  label: 'No asistió' },
+        ].map(({ estado, label }) => (
+          <div key={estado} className="flex items-center gap-1.5">
+            <div
+              className={cn('h-3 w-3 rounded-sm border-y border-r', buildStateTone(estado))}
+              style={{ borderLeftWidth: '3px', borderLeftColor: getAccentColor(estado) }}
+            />
+            <span className="text-[11px] text-muted-foreground">{label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Dialog de detalle */}
