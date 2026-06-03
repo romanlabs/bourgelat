@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronDown, FileText, HeartPulse, Lock, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
+import { Activity, CalendarCheck, ChevronDown, ClipboardCheck, FileText, HeartPulse, Link2, Lock, MessageSquare, Pill, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -20,6 +20,7 @@ import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -195,6 +196,53 @@ const formatClinicalDateTime = (value) => {
   }).format(new Date(value))
 }
 
+// ─── Sección del formulario clínico (acordeón) ───────────────────────────────
+
+function FormSection({ icon, title, filled, required, open, onToggle, children }) {
+  return (
+    <div className="overflow-hidden border border-border">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle()}
+        className="flex cursor-pointer select-none items-center gap-2.5 bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/70"
+      >
+        <span className="flex-shrink-0 text-muted-foreground">{icon}</span>
+        <span className="flex-1 text-sm font-semibold text-foreground">{title}</span>
+        {required && (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500">requerido</span>
+        )}
+        <div
+          className={cn(
+            'h-2 w-2 flex-shrink-0 rounded-full transition-colors',
+            filled ? 'bg-primary' : 'bg-muted-foreground/30'
+          )}
+        />
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200',
+            open && 'rotate-180'
+          )}
+        />
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 200ms ease',
+        }}
+      >
+        <div className="overflow-hidden">
+          <div className="grid gap-3 border-t border-border/60 px-4 py-4">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function RestrictedHistoriasPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -237,7 +285,15 @@ export default function HistoriasPage() {
   const [selectedPet, setSelectedPet] = useState(null)
   const [selectedHistory, setSelectedHistory] = useState(null)
   const [form, setForm] = useState(() => createDefaultForm())
+  const [formSections, setFormSections] = useState(new Set(['contexto', 'anamnesis']))
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
+
+  const toggleFormSection = (id) =>
+    setFormSections((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
   const featureSet = new Set(
@@ -436,7 +492,29 @@ export default function HistoriasPage() {
   const historias = historiasQuery.data?.historias || []
   const citasRelacionadas = citasRelacionadasQuery.data?.citas || []
   const medicamentosCatalogo = catalogoMedicamentosQuery.data?.productos || []
+
+  const citaVinculada = form.citaId
+    ? citasRelacionadas.find((c) => c.id === form.citaId) || null
+    : null
+
+  const sectionFilled = {
+    contexto: !!(form.veterinarioId) || !!form.citaId,
+    anamnesis: !!form.motivoConsulta.trim() || !!form.anamnesis.trim(),
+    examen: !!(form.peso || form.temperatura || form.frecuenciaCardiaca || form.frecuenciaRespiratoria || form.condicionCorporal || form.mucosas || form.estadoHidratacion || form.examenFisicoDetalle),
+    diagnostico: !!form.diagnostico.trim() || !!form.diagnosticoPresuntivo.trim() || !!form.tratamiento.trim(),
+    plan: !!form.indicaciones.trim() || !!form.proximaConsulta || form.medicamentos.some((m) => medicationHasAnyValue(m) && m.nombre.trim()),
+  }
+
+  const PROGRESS_STEPS = [
+    { id: 'contexto', label: 'Contexto' },
+    { id: 'anamnesis', label: 'Anamnesis' },
+    { id: 'examen', label: 'Examen' },
+    { id: 'diagnostico', label: 'Dx / Tto' },
+    { id: 'plan', label: 'Plan' },
+  ]
+
   const preferredVetId =
+    veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
     veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
 
   useEffect(() => {
@@ -490,6 +568,7 @@ export default function HistoriasPage() {
       const historia = data?.historia
       setSelectedHistory(historia || null)
       setForm(mapHistoriaToForm(historia))
+      setFormSections(new Set(['contexto', 'anamnesis', 'examen', 'diagnostico', 'plan']))
       if (historia?.mascota && historia?.propietario) {
         setSelectedPet({
           ...historia.mascota,
@@ -504,6 +583,7 @@ export default function HistoriasPage() {
   const resetForm = () => {
     setSelectedHistory(null)
     setForm(createDefaultForm())
+    setFormSections(new Set(['contexto', 'anamnesis']))
   }
 
   const handleSelectPet = (pet) => {
@@ -657,6 +737,7 @@ export default function HistoriasPage() {
 
     if (!payload.motivoConsulta || !payload.diagnostico || !payload.tratamiento || !payload.veterinarioId) {
       toast.error('Completa motivo de consulta, diagnostico, tratamiento y profesional responsable.')
+      setFormSections(new Set(['contexto', 'anamnesis', 'diagnostico']))
       return
     }
 
@@ -1613,35 +1694,68 @@ export default function HistoriasPage() {
         className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${historiaDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {selectedPet ? `${selectedPet.nombre} · ${selectedPet.especie}` : 'Selecciona un paciente primero'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {!selectedHistory && (
+        <div className="border-b border-border px-5 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {selectedHistory ? 'Editar historia clínica' : 'Nueva historia clínica'}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {selectedPet ? `${selectedPet.nombre} · ${selectedPet.especie}` : 'Selecciona un paciente primero'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {!selectedHistory && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Limpiar
+                </button>
+              )}
               <button
                 type="button"
-                onClick={resetForm}
-                className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                onClick={() => setHistoriaDrawerOpen(false)}
+                aria-label="Cerrar"
+                className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
               >
-                Limpiar
+                <X className="h-4 w-4" />
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setHistoriaDrawerOpen(false)}
-              aria-label="Cerrar"
-              className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            </div>
+          </div>
+
+          {/* Indicador de progreso */}
+          <div className="mt-3 flex items-center gap-3">
+            {PROGRESS_STEPS.map((step) => (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setFormSections((prev) => new Set([...prev, step.id]))}
+                className="flex items-center gap-1.5 group"
+                title={`Ir a ${step.label}`}
+              >
+                <div className={cn(
+                  'h-2 w-2 rounded-full transition-colors',
+                  sectionFilled[step.id] ? 'bg-primary' : 'bg-muted-foreground/25'
+                )} />
+                <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors hidden sm:inline">
+                  {step.label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Banner puente operativo */}
+        {citaIdPrefill && !selectedHistory && (
+          <div className="flex items-center gap-2 border-b border-primary/20 bg-primary/10 px-5 py-2">
+            <Link2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+            <p className="text-xs font-semibold text-primary">
+              Desde agenda · Cita vinculada automáticamente
+            </p>
+          </div>
+        )}
 
         {/* Body scrollable */}
         <div ref={formPanelRef} className="flex-1 overflow-y-auto px-5 py-5">
@@ -1650,135 +1764,217 @@ export default function HistoriasPage() {
               Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
             </div>
           ) : (
-            <form id="historia-drawer-form" className="grid gap-4" onSubmit={handleSubmit}>
-              <div className="grid gap-4 sm:grid-cols-2">
+            <form id="historia-drawer-form" className="space-y-2" onSubmit={handleSubmit}>
+
+              {/* ── SECCIÓN 1: Contexto ── */}
+              <FormSection
+                icon={<CalendarCheck className="h-4 w-4" />}
+                title="Contexto"
+                filled={sectionFilled.contexto}
+                required
+                open={formSections.has('contexto')}
+                onToggle={() => toggleFormSection('contexto')}
+              >
                 <select
                   value={form.veterinarioId || preferredVetId}
-                  onChange={(event) => setForm((current) => ({ ...current, veterinarioId: event.target.value }))}
-                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                  onChange={(e) => setForm((c) => ({ ...c, veterinarioId: e.target.value }))}
+                  className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                 >
-                  <option value="">Selecciona el profesional</option>
+                  <option value="">Selecciona el profesional ⭐</option>
                   {veterinarios.map((item) => (
                     <option key={item.id} value={item.id}>{item.nombre}</option>
                   ))}
                 </select>
-                <select
-                  value={form.citaId}
-                  onChange={(event) => setForm((current) => ({ ...current, citaId: event.target.value }))}
-                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                >
-                  <option value="">Sin cita relacionada</option>
-                  {citasRelacionadas.map((cita) => (
-                    <option key={cita.id} value={cita.id}>
-                      {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <textarea
-                value={form.motivoConsulta}
-                onChange={(event) => setForm((current) => ({ ...current, motivoConsulta: event.target.value }))}
-                placeholder="Motivo principal de consulta"
-                className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-              />
-              <textarea
-                value={form.anamnesis}
-                onChange={(event) => setForm((current) => ({ ...current, anamnesis: event.target.value }))}
-                placeholder="Anamnesis y relato del tutor"
-                className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-              />
+                {/* Cita vinculada */}
+                {citaVinculada ? (
+                  <div className="flex items-start justify-between gap-3 border border-primary/30 bg-primary/8 px-3 py-3">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <Link2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-wider text-primary">Cita vinculada</p>
+                        <p className="mt-0.5 text-sm font-semibold text-foreground">
+                          {citaVinculada.fecha} · {citaVinculada.horaInicio?.slice(0, 5)}
+                          {citaVinculada.horaFin ? `–${citaVinculada.horaFin.slice(0, 5)}` : ''}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {citaVinculada.motivo || citaVinculada.tipoCita}
+                          {citaVinculada.veterinario?.nombre ? ` · ${citaVinculada.veterinario.nombre}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm((c) => ({ ...c, citaId: '' }))}
+                      className="flex-shrink-0 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+                    >
+                      Desvincular
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={form.citaId}
+                    onChange={(e) => setForm((c) => ({ ...c, citaId: e.target.value }))}
+                    className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                  >
+                    <option value="">Sin cita relacionada</option>
+                    {citasRelacionadas.map((cita) => (
+                      <option key={cita.id} value={cita.id}>
+                        {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </FormSection>
 
-              <p className="text-xs text-muted-foreground">Signos vitales — frecuencia cardiaca (lpm), respiratoria (rpm), condicion corporal (1-5).</p>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <input type="number" min="0" step="0.1" value={form.peso} onChange={(e) => setForm((c) => ({ ...c, peso: e.target.value }))} placeholder="Peso (kg)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <input type="number" min="30" max="45" step="0.1" value={form.temperatura} onChange={(e) => setForm((c) => ({ ...c, temperatura: e.target.value }))} placeholder="Temperatura °C" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <input type="number" min="0" value={form.frecuenciaCardiaca} onChange={(e) => setForm((c) => ({ ...c, frecuenciaCardiaca: e.target.value }))} placeholder="Frec. cardiaca (lpm)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <input type="number" min="0" value={form.frecuenciaRespiratoria} onChange={(e) => setForm((c) => ({ ...c, frecuenciaRespiratoria: e.target.value }))} placeholder="Frec. respiratoria (rpm)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <input type="number" min="1" max="5" value={form.condicionCorporal} onChange={(e) => setForm((c) => ({ ...c, condicionCorporal: e.target.value }))} placeholder="Condicion corporal (1-5)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <input type="text" value={form.mucosas} onChange={(e) => setForm((c) => ({ ...c, mucosas: e.target.value }))} placeholder="Mucosas" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              </div>
+              {/* ── SECCIÓN 2: Anamnesis ── */}
+              <FormSection
+                icon={<MessageSquare className="h-4 w-4" />}
+                title="Anamnesis"
+                filled={sectionFilled.anamnesis}
+                required
+                open={formSections.has('anamnesis')}
+                onToggle={() => toggleFormSection('anamnesis')}
+              >
+                <textarea
+                  value={form.motivoConsulta}
+                  onChange={(e) => setForm((c) => ({ ...c, motivoConsulta: e.target.value }))}
+                  placeholder="Motivo principal de consulta ⭐"
+                  className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                />
+                <textarea
+                  value={form.anamnesis}
+                  onChange={(e) => setForm((c) => ({ ...c, anamnesis: e.target.value }))}
+                  placeholder="Anamnesis y relato del tutor"
+                  className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                />
+              </FormSection>
 
-              <select value={form.estadoHidratacion} onChange={(e) => setForm((c) => ({ ...c, estadoHidratacion: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                {HYDRATION_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-              </select>
-              <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Examen fisico y hallazgos relevantes" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnostico principal" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnostico presuntivo o diferencial" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-
-              {/* Plan farmacológico */}
-              <div className="grid gap-4 border border-border bg-muted px-4 py-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-foreground">Plan farmacologico</p>
-                  <button type="button" onClick={addMedicationDraft} className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted">
-                    <Plus className="h-4 w-4" />Agregar medicamento
-                  </button>
+              {/* ── SECCIÓN 3: Examen físico ── */}
+              <FormSection
+                icon={<Activity className="h-4 w-4" />}
+                title="Examen físico"
+                filled={sectionFilled.examen}
+                open={formSections.has('examen')}
+                onToggle={() => toggleFormSection('examen')}
+              >
+                <p className="text-xs text-muted-foreground">FC (lpm) · FR (rpm) · Condición corporal 1–5</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <input type="number" min="0" step="0.1" value={form.peso} onChange={(e) => setForm((c) => ({ ...c, peso: e.target.value }))} placeholder="Peso (kg)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                  <input type="number" min="30" max="45" step="0.1" value={form.temperatura} onChange={(e) => setForm((c) => ({ ...c, temperatura: e.target.value }))} placeholder="Temp. °C" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                  <input type="number" min="0" value={form.frecuenciaCardiaca} onChange={(e) => setForm((c) => ({ ...c, frecuenciaCardiaca: e.target.value }))} placeholder="FC (lpm)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                  <input type="number" min="0" value={form.frecuenciaRespiratoria} onChange={(e) => setForm((c) => ({ ...c, frecuenciaRespiratoria: e.target.value }))} placeholder="FR (rpm)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                  <input type="number" min="1" max="5" value={form.condicionCorporal} onChange={(e) => setForm((c) => ({ ...c, condicionCorporal: e.target.value }))} placeholder="Condición (1-5)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                  <input type="text" value={form.mucosas} onChange={(e) => setForm((c) => ({ ...c, mucosas: e.target.value }))} placeholder="Mucosas" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                 </div>
-                {puedeConsultarInventarioClinico ? (
-                  <div className="grid gap-3 border border-dashed border-border bg-card px-4 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario clinico</p>
+                <select value={form.estadoHidratacion} onChange={(e) => setForm((c) => ({ ...c, estadoHidratacion: e.target.value }))} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
+                  {HYDRATION_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
+                </select>
+                <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Hallazgos y notas del examen físico" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              </FormSection>
+
+              {/* ── SECCIÓN 4: Diagnóstico y tratamiento ── */}
+              <FormSection
+                icon={<ClipboardCheck className="h-4 w-4" />}
+                title="Diagnóstico y tratamiento"
+                filled={sectionFilled.diagnostico}
+                required
+                open={formSections.has('diagnostico')}
+                onToggle={() => toggleFormSection('diagnostico')}
+              >
+                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal ⭐" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnóstico presuntivo o diferencial" className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado ⭐" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+              </FormSection>
+
+              {/* ── SECCIÓN 5: Plan farmacológico y cierre ── */}
+              <FormSection
+                icon={<Pill className="h-4 w-4" />}
+                title="Plan farmacológico y cierre"
+                filled={sectionFilled.plan}
+                open={formSections.has('plan')}
+                onToggle={() => toggleFormSection('plan')}
+              >
+                {/* Inventario */}
+                {puedeConsultarInventarioClinico && (
+                  <div className="grid gap-2 border border-dashed border-border bg-muted/50 px-3 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario</p>
                     <label className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input type="text" value={medicationSearch} onChange={(e) => setMedicationSearch(e.target.value)} placeholder="Medicamento, laboratorio o presentacion" className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                      <input type="text" value={medicationSearch} onChange={(e) => setMedicationSearch(e.target.value)} placeholder="Medicamento o laboratorio" className="h-9 w-full border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                     </label>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid gap-1.5 sm:grid-cols-2">
                       {medicamentosCatalogo.length ? medicamentosCatalogo.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between gap-2 border border-border bg-muted px-3 py-2">
+                        <div key={p.id} className="flex items-center justify-between gap-2 border border-border bg-card px-3 py-2">
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{p.nombre}</p>
+                            <p className="truncate text-sm font-semibold text-foreground">{p.nombre}</p>
                             <p className="text-xs text-muted-foreground">Stock {formatNumber(p.stock)}</p>
                           </div>
-                          <button type="button" onClick={() => addMedicationFromInventory(p)} className="shrink-0 border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted">
+                          <button type="button" onClick={() => addMedicationFromInventory(p)} className="shrink-0 border border-border bg-muted px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted/70">
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin resultados en inventario.</p>}
+                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin resultados.</p>}
                     </div>
                   </div>
-                ) : null}
-                {form.medicamentos.map((item, index) => (
-                  <div key={item.id} className="grid gap-3 border border-border bg-card px-4 py-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground">Medicamento {index + 1}{item.fuente === 'inventario' ? <span className="ml-2 text-xs text-cyan-700">· inventario</span> : null}</p>
-                      <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                      <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentracion / presentacion" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                      <select value={item.via} onChange={(e) => updateMedicationDraft(item.id, 'via', e.target.value)} className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                        {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                      </select>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="grid gap-1">
-                        <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <div className="flex flex-wrap gap-1">{MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'frecuencia', s)} className={`px-2 py-0.5 text-xs font-semibold transition border ${item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
-                      </div>
-                      <div className="grid gap-1">
-                        <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duracion" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <div className="flex flex-wrap gap-1">{MEDICATION_DURATION_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'duracion', s)} className={`px-2 py-0.5 text-xs font-semibold transition border ${item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
-                      <input type="number" min="0" step="0.01" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                      <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[60px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                )}
 
-              <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[80px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-
-              {selectedHistory?.bloqueada ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  Esta historia ya esta bloqueada. Puedes consultarla, pero no volver a editarla.
+                {/* Medicamentos */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Formulación</p>
+                  <button type="button" onClick={addMedicationDraft} className="inline-flex items-center gap-1 border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-muted">
+                    <Plus className="h-3 w-3" />Agregar
+                  </button>
                 </div>
-              ) : null}
+                <div className="space-y-2">
+                  {form.medicamentos.map((item, index) => (
+                    <div key={item.id} className="grid gap-2 border border-border bg-card px-3 py-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-foreground">
+                          Medicamento {index + 1}
+                          {item.fuente === 'inventario' && <span className="ml-2 text-cyan-700">· inventario</span>}
+                        </p>
+                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentración / presentación" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <select value={item.via} onChange={(e) => updateMedicationDraft(item.id, 'via', e.target.value)} className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
+                          {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="grid gap-1">
+                          <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                          <div className="flex flex-wrap gap-1">{MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'frecuencia', s)} className={`px-1.5 py-0.5 text-[10px] font-semibold transition border ${item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
+                        </div>
+                        <div className="grid gap-1">
+                          <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duración" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                          <div className="flex flex-wrap gap-1">{MEDICATION_DURATION_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'duracion', s)} className={`px-1.5 py-0.5 text-[10px] font-semibold transition border ${item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
+                        </div>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-[100px_1fr]">
+                        <input type="number" min="0" step="0.01" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[56px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Indicaciones y próxima consulta */}
+                <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                <div>
+                  <p className="mb-1 text-xs text-muted-foreground">Próxima consulta / control</p>
+                  <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                </div>
+              </FormSection>
+
+              {selectedHistory?.bloqueada && (
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                  Esta historia ya está bloqueada. Puedes consultarla, pero no volver a editarla.
+                </div>
+              )}
             </form>
           )}
         </div>
