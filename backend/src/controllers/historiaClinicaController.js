@@ -236,7 +236,7 @@ const obtenerHistorias = async (req, res) => {
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json({ message: error.statusCode ? error.message : 'Error en el servidor', error: error.message })
+      .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
   }
 }
 
@@ -385,7 +385,7 @@ const crearHistoria = async (req, res) => {
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json({ message: error.statusCode ? error.message : 'Error en el servidor', error: error.message })
+      .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
   }
 }
 

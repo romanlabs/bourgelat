@@ -9,9 +9,7 @@ const passwordFuerteRegex =
 const telefonoColombiaRegex = /^3\d{9}$/
 const ROLES_VALIDOS = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
-const normalizarTexto = (value) => (typeof value === 'string' ? value.trim() : '')
-const normalizarEmail = (value) => normalizarTexto(value).toLowerCase()
-const normalizarTelefono = (value) => normalizarTexto(value).replace(/\D/g, '').slice(0, 10)
+const { normalizarTexto, normalizarEmail, normalizarTelefonoColombiano: normalizarTelefono } = require('../utils/normalizar')
 
 const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
   if (!Array.isArray(rolesAdicionales)) return []

@@ -1,4 +1,5 @@
 const AuditoriaLog = require('../models/AuditoriaLog')
+const logger = require('../utils/logger')
 
 const registrarAuditoria = async ({
   accion,
@@ -26,7 +27,7 @@ const registrarAuditoria = async ({
     })
   } catch (error) {
     // No interrumpir el flujo si falla el log
-    console.error('Error al registrar auditoría:', error.message)
+    logger.error({ contexto: 'auditoria', mensaje: error.message })
   }
 }
 

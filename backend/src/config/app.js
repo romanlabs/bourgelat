@@ -79,9 +79,9 @@ const appConfig = {
   },
   rateLimit: {
     windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
-    maxRequests: parseNumber(process.env.RATE_LIMIT_MAX, 100),
+    maxRequests: parseNumber(process.env.RATE_LIMIT_MAX, 500),
     authWindowMs: parseNumber(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
-    authMaxRequests: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 10),
+    authMaxRequests: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 20),
   },
   security: {
     requireOriginForCookieAuth: parseBoolean(

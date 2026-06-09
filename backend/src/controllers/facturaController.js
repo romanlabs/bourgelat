@@ -64,10 +64,7 @@ const convertirAEntero = (valor, valorPorDefecto = null) => {
   return Number.isNaN(numero) ? valorPorDefecto : numero
 }
 
-const limpiarTexto = (valor) => {
-  if (valor === undefined || valor === null) return ''
-  return String(valor).trim()
-}
+const { limpiarTexto } = require('../utils/normalizar')
 
 const redondear = (valor, decimales = 2) => {
   const factor = 10 ** decimales
