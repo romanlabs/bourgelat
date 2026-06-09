@@ -11,25 +11,16 @@ const {
 } = require('../controllers/authController')
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
+const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
+const { normalizarTelefonoColombiano } = require('../utils/normalizar')
 
 const router = express.Router()
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
-const normalizarTelefonoColombiano = (valor) => {
-  if (typeof valor !== 'string') return valor
-
-  const soloNumeros = valor.replace(/\D/g, '')
-  const sinPrefijo =
-    soloNumeros.length > 10 && soloNumeros.startsWith('57')
-      ? soloNumeros.slice(2)
-      : soloNumeros
-
-  return sinPrefijo.slice(0, 10)
-}
-
 router.post(
   '/registro',
+  limitadorAuth,
   [
     body('nombre').trim().notEmpty().withMessage('El nombre de la clinica es obligatorio'),
     body('nombreAdministrador')
@@ -90,6 +81,7 @@ router.post(
 
 router.post(
   '/login',
+  limitadorAuth,
   [
     body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
     body('password').notEmpty().withMessage('Password requerida'),
@@ -98,9 +90,9 @@ router.post(
   login
 )
 
-router.post('/refresh', [validar], refresh)
+router.post('/refresh', limitadorAuth, refresh)
 
-router.post('/logout', [validar], logout)
+router.post('/logout', limitadorAuth, logout)
 
 router.post('/logout-all', verificarToken, logoutAll)
 router.get('/me', verificarToken, me)

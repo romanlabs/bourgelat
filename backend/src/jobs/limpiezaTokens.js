@@ -1,6 +1,8 @@
 const { Op } = require('sequelize')
 const RefreshToken = require('../models/RefreshToken')
 const AuditoriaLog = require('../models/AuditoriaLog')
+const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
+const logger = require('../utils/logger')
 
 const limpiarTokensVencidos = async () => {
   try {
@@ -14,17 +16,17 @@ const limpiarTokensVencidos = async () => {
     })
 
     if (eliminados > 0) {
-      console.log(`[Limpieza] ${eliminados} refresh tokens eliminados`)
+      logger.info({ contexto: 'limpieza', mensaje: `${eliminados} refresh tokens eliminados` })
     }
   } catch (error) {
-    console.error('[Limpieza] Error al limpiar refresh tokens:', error.message)
+    logger.error({ contexto: 'limpieza-tokens', mensaje: error.message })
   }
 }
 
 const limpiarLogsAntiguos = async () => {
   try {
     const fechaLimite = new Date()
-    fechaLimite.setMonth(fechaLimite.getMonth() - 3) // 3 meses atrás
+    fechaLimite.setMonth(fechaLimite.getMonth() - 3)
 
     const eliminados = await AuditoriaLog.destroy({
       where: {
@@ -34,15 +36,12 @@ const limpiarLogsAntiguos = async () => {
     })
 
     if (eliminados > 0) {
-      console.log(`[Limpieza] ${eliminados} logs de auditoría antiguos eliminados`)
+      logger.info({ contexto: 'limpieza', mensaje: `${eliminados} logs de auditoría antiguos eliminados` })
     }
   } catch (error) {
-    console.error('[Limpieza] Error al limpiar logs:', error.message)
+    logger.error({ contexto: 'limpieza-logs', mensaje: error.message })
   }
 }
-
-module.exports = { limpiarTokensVencidos, limpiarLogsAntiguos }
-const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
 
 const limpiarIdempotencia = async () => {
   try {
@@ -52,10 +51,10 @@ const limpiarIdempotencia = async () => {
       },
     })
     if (eliminados > 0) {
-      console.log(`[Limpieza] ${eliminados} claves de idempotencia eliminadas`)
+      logger.info({ contexto: 'limpieza', mensaje: `${eliminados} claves de idempotencia eliminadas` })
     }
   } catch (error) {
-    console.error('[Limpieza] Error al limpiar idempotencia:', error.message)
+    logger.error({ contexto: 'limpieza-idempotencia', mensaje: error.message })
   }
 }
 

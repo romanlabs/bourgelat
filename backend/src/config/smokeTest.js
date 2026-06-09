@@ -38,7 +38,7 @@ const run = () => {
       false
     ),
     {
-      message: 'Error en el servidor',
+      message: 'Error interno del servidor',
     }
   )
 

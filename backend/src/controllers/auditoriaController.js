@@ -2,10 +2,7 @@ const { Op, fn, col } = require('sequelize')
 const AuditoriaLog = require('../models/AuditoriaLog')
 const Usuario = require('../models/Usuario')
 
-const limpiarTexto = (valor) => {
-  if (valor === undefined || valor === null) return ''
-  return String(valor).trim()
-}
+const { limpiarTexto } = require('../utils/normalizar')
 
 const parseEntero = (valor, valorPorDefecto) => {
   const numero = Number.parseInt(valor, 10)

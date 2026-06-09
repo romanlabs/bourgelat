@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const { DataTypes, Op } = require('sequelize')
 const sequelize = require('../config/database')
+const logger = require('../utils/logger')
 
 const IdempotenciaKey = sequelize.define('IdempotenciaKey', {
   id: {
@@ -78,14 +79,14 @@ const idempotencia = async (req, res, next) => {
         })
       } catch (error) {
         // No interrumpir si falla el guardado
-        console.error('Error guardando idempotencia:', error.message)
+        logger.error({ contexto: 'idempotencia-guardado', mensaje: error.message })
       }
       return jsonOriginal(data)
     }
 
     next()
   } catch (error) {
-    console.error('Error en middleware de idempotencia:', error.message)
+    logger.error({ contexto: 'idempotencia', mensaje: error.message })
     next()
   }
 }

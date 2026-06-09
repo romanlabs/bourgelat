@@ -4,33 +4,19 @@ const dotenv = require('dotenv')
 const helmet = require('helmet')
 const hpp = require('hpp')
 const xss = require('xss-clean')
-const winston = require('winston')
 const sequelize = require('./config/database')
 const { appConfig } = require('./config/app')
 const { runPendingMigrations } = require('./config/migrations')
 const { validateRuntimeConfig } = require('./config/validateRuntimeConfig')
-const { limitadorGeneral, limitadorAuth } = require('./middlewares/rateLimitMiddleware')
+const { limitadorGeneral } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
 const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
 const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR } = require('./config/uploads')
+const logger = require('./utils/logger')
 
 dotenv.config()
-
-// ── Logger ─────────────────────────────────────────────────
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/errores.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/actividad.log' }),
-  ],
-})
 
 const runtimeConfigReport = validateRuntimeConfig()
 
@@ -153,7 +139,7 @@ const auditoriaRoutes = require('./routes/auditoriaRoutes')
 const integracionFacturacionRoutes = require('./routes/integracionFacturacionRoutes')
 const superadminRoutes = require('./routes/superadminRoutes')
 
-app.use('/api/auth', limitadorAuth, authRoutes)
+app.use('/api/auth', authRoutes)
 app.use('/api/usuarios', usuarioRoutes)
 app.use('/api/clinica', clinicaRoutes)
 app.use('/api/propietarios', propietarioRoutes)
@@ -172,28 +158,6 @@ app.use('/api/superadmin', superadminRoutes)
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a Bourgelat API' })
-})
-
-app.get('/health', async (req, res) => {
-  try {
-    await sequelize.authenticate()
-
-    res.json({
-      status: 'ok',
-      service: 'bourgelat-backend',
-      environment: appConfig.nodeEnv,
-      database: 'reachable',
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    res.status(503).json({
-      status: 'error',
-      service: 'bourgelat-backend',
-      environment: appConfig.nodeEnv,
-      database: 'unreachable',
-      timestamp: new Date().toISOString(),
-    })
-  }
 })
 
 // ── Ruta no encontrada ─────────────────────────────────────
