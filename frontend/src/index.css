@@ -5,6 +5,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Posición del video/imagen de login: centrado en desktop, animales visibles en móvil */
+.login-media { object-position: 70% 45%; }
+@media (min-width: 1024px) {
+  .login-media { object-position: center; }
+}
+
+/* Neutraliza el azul del autofill del navegador en los inputs del login */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #fdf8f3 inset;
+  -webkit-text-fill-color: #2b2018;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 :root {
   --background: 214 49% 97%;
   --foreground: 210 55% 15%;

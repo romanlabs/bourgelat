@@ -1,82 +1,51 @@
-import { createElement, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { motion } from 'motion/react'
+import { motion as Motion } from 'motion/react'
 import { z } from 'zod'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  CalendarClock,
-  Eye,
-  EyeOff,
-  HeartPulse,
-  LockKeyhole,
-  Mail,
-  PawPrint,
-  ReceiptText,
-  ShieldCheck,
-  Stethoscope,
-} from 'lucide-react'
-import loginHero from '@/assets/auth/login-hero.webp'
+import { ArrowRight, Eye, EyeOff, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '@/features/auth/useAuth'
 
-void motion
+// Assets servidos desde public/ (Vite). El poster evita el flash inicial y
+// actua como fallback estatico con movimiento reducido o si el video falla.
+const LOGIN_VIDEO = '/videos/login.mp4'
+const LOGIN_POSTER = '/videos/login.webp'
+
+// Paleta calida y limpia que combina con el video (no beige, no azul):
+//   INK     espresso para texto, titulo y boton
+//   ACCENT  caramelo (el tono del cachorro) para eyebrow, link y foco
+const INK = '#2b2018'
+const ACCENT = '#b07645'
 
 const loginSchema = z.object({
-  email: z.string().trim().email('Ingresa un correo corporativo valido'),
-  password: z.string().min(1, 'Ingresa tu contrasena'),
+  email: z.string().trim().email('Ingresa un correo válido'),
+  password: z.string().min(1, 'Ingresa tu contraseña'),
 })
 
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 
-const MODULES = [
-  { icon: CalendarClock, label: 'Agenda' },
-  { icon: HeartPulse, label: 'Pacientes' },
-  { icon: ReceiptText, label: 'Facturacion electronica' },
-]
-
-function SurfaceField({ icon, error, action, children }) {
-  return (
-    <div className="rounded-[28px] border border-[#d7e1ea] bg-[#f8fbfd] p-4 shadow-[0_18px_40px_rgba(19,38,58,0.05)]">
-      <div className="relative">
-        <div className="pointer-events-none absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-[16px] bg-white text-[#567087] shadow-[0_12px_24px_rgba(19,38,58,0.08)]">
-          {createElement(icon, { className: 'h-4 w-4' })}
-        </div>
-        {children}
-        {action ? <div className="absolute right-4 top-1/2 -translate-y-1/2">{action}</div> : null}
-      </div>
-      {error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
-    </div>
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
   )
-}
 
-function InsightPill({ icon, children }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2 backdrop-blur-md">
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/12 text-[#d9f0e6]">
-        {createElement(icon, { className: 'h-4 w-4' })}
-      </span>
-      <span className="text-sm font-medium text-white/88">{children}</span>
-    </div>
-  )
-}
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handler = (event) => setReduced(event.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
-function ModuleChip({ icon, label }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e5ee] bg-white px-3 py-2 text-sm text-[#27425a] shadow-[0_10px_22px_rgba(19,38,58,0.05)]">
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#edf4f9] text-[#5a7893]">
-        {createElement(icon, { className: 'h-3.5 w-3.5' })}
-      </span>
-      {label}
-    </div>
-  )
+  return reduced
 }
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [videoFailed, setVideoFailed] = useState(false)
+  const reducedMotion = usePrefersReducedMotion()
   const { mutate: login, isPending } = useLogin()
   const location = useLocation()
 
@@ -87,268 +56,212 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
     mode: 'onBlur',
   })
 
   useEffect(() => {
-    reset({
-      email: '',
-      password: '',
-    })
+    reset({ email: '', password: '' })
   }, [location.key, location.state, reset])
 
   const emailField = register('email')
   const passwordField = register('password')
 
   const onSubmit = (data) => {
-    login({
-      email: normalizarEmail(data.email),
-      password: data.password,
-    })
+    login({ email: normalizarEmail(data.email), password: data.password })
   }
 
+  const fadeUp = (delay = 0) =>
+    reducedMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 16 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
+        }
+
+  const showVideo = !reducedMotion && !videoFailed
+  const inputClass =
+    'h-14 w-full rounded-none border-0 border-b border-[#2b2018]/20 bg-transparent px-1 text-[15px] text-[#2b2018] outline-none transition placeholder:text-[#2b2018]/35 focus:border-[#b07645]'
+
   return (
-    <div className="min-h-screen overflow-hidden bg-[#0b1623] text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[460px] bg-[radial-gradient(circle_at_top,#17324a_0%,rgba(23,50,74,0.38)_42%,transparent_74%)]" />
-        <div
-          className="absolute inset-0 opacity-[0.10]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(238,247,252,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(238,247,252,0.7) 1px, transparent 1px)',
-            backgroundSize: '72px 72px',
-            maskImage: 'radial-gradient(circle at top, black 20%, transparent 78%)',
-          }}
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-white text-[#2b2018]">
+
+      {/* Video — hijo directo del mismo contenedor flex que el navbar y el form */}
+      {showVideo ? (
+        <video
+          className="login-media absolute inset-0 h-full w-full object-cover"
+          style={{ transform: 'scale(1.1) translateX(-5%)' }}
+          src={LOGIN_VIDEO}
+          poster={LOGIN_POSTER}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          onError={() => setVideoFailed(true)}
         />
-      </div>
+      ) : (
+        <img
+          src={LOGIN_POSTER}
+          alt=""
+          aria-hidden="true"
+          className="login-media absolute inset-0 h-full w-full object-cover"
+          style={{ transform: 'scale(1) translateX(-5%)' }}
+        />
+      )}
 
-      <div className="relative mx-auto max-w-[1500px] px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
-        <header className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/6 px-5 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <Link to="/" className="inline-flex items-center gap-3 text-white no-underline">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#1f6fb2] text-white shadow-[0_18px_40px_rgba(31,111,178,0.28)]">
-              <Stethoscope className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold tracking-[-0.02em]">Bourgelat</p>
-              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-white/48">
-                acceso de operacion veterinaria
-              </p>
-            </div>
+      {/* Velo móvil para legibilidad */}
+      {/* Degradado desktop: cubre el área del formulario y se disuelve hacia los animales */}
+      <div
+        className="absolute inset-0 hidden lg:block"
+        style={{
+          background:
+            'linear-gradient(90deg, #fdf6ee 0%, #fdf6ee 32%, rgba(253,246,238,0) 52%)',
+        }}
+      />
+
+      {/* ── Barra superior ── */}
+      <Motion.header
+        initial={reducedMotion ? false : { opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4 sm:px-8"
+      >
+        <Link to="/" className="group inline-flex items-center gap-3 text-[#2b2018] no-underline">
+          <span className="flex h-9 w-9 items-center justify-center bg-[#2b2018] text-white transition-colors duration-200 group-hover:bg-[#b07645]">
+            <Stethoscope className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
+            <span className="mt-1 block text-[10px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
+              acceso veterinario
+            </span>
+          </span>
+        </Link>
+
+        <nav className="flex items-center gap-2 text-sm sm:gap-3">
+          <Link
+            to="/"
+            className="hidden items-center gap-1.5 text-[#2b2018]/50 no-underline transition-colors hover:text-[#2b2018] sm:inline-flex"
+          >
+            <ArrowRight className="h-3 w-3 rotate-180" />
+            Volver al inicio
           </Link>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full border border-white/12 px-4 py-2 text-sm font-medium text-white/72 no-underline transition hover:border-white/24 hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al inicio
-            </Link>
-            <Link
-              to="/registro"
-              className="inline-flex items-center gap-2 rounded-full bg-[#eef4ef] px-4 py-2 text-sm font-semibold text-[#183127] no-underline transition hover:bg-white"
-            >
-              Crear cuenta
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </header>
-
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(420px,540px)_minmax(0,1fr)]">
-          <motion.section
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-[38px] border border-white/12 bg-white/[0.94] p-6 text-[#13263a] shadow-[0_36px_120px_rgba(5,11,18,0.34)] sm:p-8"
+          <div className="hidden h-4 w-px bg-[#2b2018]/15 sm:block" />
+          <Link
+            to="/registro"
+            className="group inline-flex items-center gap-2 bg-[#2b2018] px-4 py-2.5 text-[13px] font-semibold tracking-[0.04em] text-white no-underline transition-colors duration-200 hover:bg-[#b07645]"
           >
-            <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(120,164,195,0.18),transparent_70%)]" />
+            Crear cuenta
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </nav>
+      </Motion.header>
 
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e5ee] bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5b7d97]">
-                <span className="h-2 w-2 rounded-full bg-[#86b6a6]" />
-                Portal de acceso
+      {/* Difuminado bajo el navbar: funde el blanco del frosted glass con los tonos cálidos del video */}
+      <div
+        className="relative z-10 h-3 w-full pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(253,246,238,0.72) 0%, rgba(253,246,238,0.35) 55%, transparent 100%)',
+        }}
+      />
+
+      {/* ── Contenido: una sola pantalla, formulario a la izquierda ── */}
+      <main className="relative z-10 flex flex-1 items-center overflow-hidden pb-80 lg:pb-4">
+        <div className="w-full px-5 sm:px-8 lg:pl-[15%] lg:pr-8">
+          <div
+            className="w-full max-w-[400px] border border-[#2b2018]/8 bg-white/95 px-8 py-8 backdrop-blur-sm"
+            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
+          >
+            <Motion.p
+              {...fadeUp(0.05)}
+              className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.26em]"
+              style={{ color: ACCENT }}
+            >
+              <span className="h-px w-6" style={{ backgroundColor: ACCENT }} />
+              Portal de acceso
+            </Motion.p>
+
+            <Motion.h1
+              {...fadeUp(0.12)}
+              className="mt-3 text-[1.45rem] leading-[1.05] tracking-[-0.03em] text-[#2b2018] whitespace-nowrap"
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+            >
+              Tu jornada clínica empieza aquí
+            </Motion.h1>
+
+            <Motion.form
+              {...fadeUp(0.2)}
+              onSubmit={handleSubmit(onSubmit)}
+              className="mt-6 space-y-5"
+              autoComplete="off"
+            >
+              <input type="text" name="login-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
+              <input type="password" name="login-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
+
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">
+                  Correo corporativo
+                </label>
+                <input
+                  {...emailField}
+                  type="email"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  inputMode="email"
+                  spellCheck={false}
+                  placeholder="Ejemplo@gmail.com"
+                  className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
+                />
+                {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
               </div>
 
-              <h1
-                className="mt-5 text-[46px] leading-[0.93] tracking-[-0.04em] text-[#13263a] sm:text-[58px]"
-                style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-              >
-                Tu jornada clinica empieza aqui
-              </h1>
-              <p className="mt-4 max-w-xl text-[15px] leading-7 text-[#4e677a]">
-                Accede al espacio de trabajo de tu clinica desde un entorno claro, seguro y listo para consultas, pacientes y facturacion.
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {MODULES.map((module) => (
-                  <ModuleChip key={module.label} icon={module.icon} label={module.label} />
-                ))}
-              </div>
-
-              <div className="mt-6 overflow-hidden rounded-[30px] border border-[#d9e5ee] lg:hidden">
-                <div className="relative h-56">
-                  <img
-                    src={loginHero}
-                    alt="Veterinaria atendiendo a un perro en consulta"
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover"
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    {...passwordField}
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="off"
+                    placeholder="Ingresa tu contraseña"
+                    className={`${inputClass} pr-10 ${errors.password ? 'border-red-500' : ''}`}
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,23,36,0.04)_0%,rgba(12,23,36,0.68)_100%)]" />
-                  <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-2">
-                    <InsightPill icon={PawPrint}>Consulta en tiempo real</InsightPill>
-                  </div>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4" autoComplete="off">
-                <input type="text" name="login-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
-                <input type="password" name="login-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
-                <div>
-                  <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.18em] text-[#5b7d97]">
-                    Correo corporativo
-                  </label>
-                  <SurfaceField icon={Mail} error={errors.email?.message}>
-                    <input
-                      {...emailField}
-                      type="email"
-                      autoComplete="off"
-                      autoCapitalize="none"
-                      inputMode="email"
-                      spellCheck={false}
-                      placeholder="direccion.medica@bourgelat.co"
-                      className={`h-16 w-full rounded-[22px] border bg-white pl-16 pr-4 text-[15px] text-[#13263a] outline-none transition placeholder:text-[#7f95a6] focus:border-[#7ba0cb] focus:ring-4 focus:ring-[#7ba0cb]/12 ${
-                        errors.email ? 'border-red-400' : 'border-[#d7e1ea]'
-                      }`}
-                    />
-                  </SurfaceField>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[#5b7d97]">
-                      Contrasena
-                    </label>
-                    <span className="text-xs text-[#678397]">
-                      Acceso para usuarios activos de la clinica
-                    </span>
-                  </div>
-                  <SurfaceField
-                    icon={LockKeyhole}
-                    error={errors.password?.message}
-                    action={(
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((value) => !value)}
-                        className="text-[#678397] transition hover:text-[#13263a]"
-                        aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-[#2b2018]/55 transition hover:text-[#2b2018]"
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   >
-                    <input
-                      {...passwordField}
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="off"
-                      placeholder="Ingresa tu contrasena"
-                      className={`h-16 w-full rounded-[22px] border bg-white pl-16 pr-14 text-[15px] text-[#13263a] outline-none transition placeholder:text-[#7f95a6] focus:border-[#7ba0cb] focus:ring-4 focus:ring-[#7ba0cb]/12 ${
-                        errors.password ? 'border-red-400' : 'border-[#d7e1ea]'
-                      }`}
-                    />
-                  </SurfaceField>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-
-                <div className="rounded-[28px] border border-[#d8e6de] bg-[linear-gradient(135deg,#f5fbf8_0%,#edf6f2_100%)] p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white text-[#5f8c78] shadow-[0_10px_22px_rgba(95,140,120,0.14)]">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#1f3a2e]">Ingreso seguro y contextual</p>
-                      <p className="mt-1.5 text-sm leading-6 text-[#456356]">
-                        El sistema reconoce el usuario, su clinica y el contexto operativo para llevarlo directo al dashboard correcto.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isPending}
-                  className="mt-2 h-[60px] w-full rounded-full bg-[linear-gradient(135deg,#173b58_0%,#315c7e_62%,#6c9a8f_100%)] px-6 text-sm font-semibold text-white shadow-[0_22px_48px_rgba(23,59,88,0.28)] transition hover:opacity-95"
-                >
-                  {isPending ? 'Ingresando al entorno clinico...' : 'Entrar a la plataforma'}
-                  {!isPending ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
-                </Button>
-              </form>
-
-              <div className="mt-6 border-t border-[#d9e5ee] pt-5 text-sm text-[#5f7284]">
-                Primera vez en Bourgelat?{' '}
-                <Link to="/registro" className="font-semibold text-[#214864] no-underline hover:text-[#13263a]">
-                  Crear la cuenta de tu clinica
-                </Link>
-              </div>
-            </div>
-          </motion.section>
-
-          <motion.section
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.72, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden xl:block"
-          >
-            <div className="relative h-full min-h-[820px] overflow-hidden rounded-[42px] border border-white/10 shadow-[0_50px_140px_rgba(4,10,18,0.42)]">
-              <img
-                src={loginHero}
-                alt="Veterinaria revisando a un perro en una consulta moderna"
-                className="h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(7,16,27,0.14)_10%,rgba(7,16,27,0.3)_38%,rgba(7,16,27,0.84)_100%)]" />
-              <div className="absolute inset-x-0 top-0 h-56 bg-[linear-gradient(180deg,rgba(7,16,27,0.64)_0%,transparent_100%)]" />
-
-              <div className="absolute left-6 right-6 top-6 flex flex-wrap gap-2">
-                <InsightPill icon={PawPrint}>Caninos y felinos</InsightPill>
-                <InsightPill icon={Building2}>Cuenta de clinica</InsightPill>
+                {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
               </div>
 
-              <div className="absolute left-6 top-24 w-[250px] rounded-[24px] border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d9f0e6]">
-                  Operacion diaria
-                </p>
-                <p className="mt-3 text-sm font-semibold leading-6">
-                  Agenda, historia y caja dentro del mismo recorrido.
-                </p>
-                <p className="mt-2 text-sm leading-6 text-white/68">
-                  El acceso mantiene el mismo criterio de orden y contexto del resto de la plataforma.
-                </p>
-              </div>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="group h-14 w-full rounded-none bg-[#2b2018] px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#3d2f24]"
+              >
+                {isPending ? 'Ingresando...' : 'Entrar a la plataforma'}
+                {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}
+              </Button>
+            </Motion.form>
 
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <div className="max-w-2xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d9f0e6]">
-                    Operacion veterinaria centralizada
-                  </p>
-                  <h2
-                    className="mt-4 text-[52px] leading-[0.92] tracking-[-0.04em] text-white"
-                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                  >
-                    Todo el equipo entra al mismo flujo de atencion.
-                  </h2>
-                  <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/72">
-                    Desde este acceso se concentra la agenda, la historia clinica y la facturacion para sostener una operacion diaria ordenada.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.section>
+            <Motion.p {...fadeUp(0.28)} className="mt-6 text-sm text-[#2b2018]/60">
+              ¿Primera vez en Bourgelat?{' '}
+              <Link to="/registro" className="font-semibold no-underline hover:underline" style={{ color: ACCENT }}>
+                Crear la cuenta de tu clínica
+              </Link>
+            </Motion.p>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
