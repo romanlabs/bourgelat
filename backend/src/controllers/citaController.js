@@ -4,6 +4,7 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
 const { isPastDateOnly, isValidDateOnly } = require('../utils/dateOnly');
+const { parsePaginacion } = require('../utils/paginacion');
 
 const esProfesionalVeterinario = (usuario) =>
   usuario &&
@@ -114,8 +115,8 @@ const obtenerCitas = async (req, res) => {
     const {
       fecha, fechaDesde, fechaHasta,
       veterinarioId, mascotaId, propietarioId, estado,
-      pagina = 1, limite = 20,
     } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
     const where = { clinicaId };
 
@@ -134,12 +135,10 @@ const obtenerCitas = async (req, res) => {
     if (propietarioId) where.propietarioId = propietarioId;
     if (estado) where.estado = estado;
 
-    const offset = (pagina - 1) * limite;
-
     const { count, rows } = await Cita.findAndCountAll({
       where,
-      limit: parseInt(limite),
-      offset: parseInt(offset),
+      limit: limite,
+      offset,
       order: [['fecha', 'ASC'], ['horaInicio', 'ASC']],
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'fotoPerfil'] },

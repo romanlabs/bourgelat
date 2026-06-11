@@ -1,7 +1,30 @@
 const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
 const { DataTypes, Op } = require('sequelize')
 const sequelize = require('../config/database')
 const logger = require('../utils/logger')
+const { obtenerAccessTokenRequest } = require('../config/cookies')
+
+// La idempotencia corre antes de la autenticacion por ruta, asi que derivamos
+// el "duenio" de la clave del access token. Esto evita que un atacante con la
+// Idempotency-Key de otra clinica recupere su respuesta cacheada (fuga cross-tenant)
+// o que la respuesta cacheada se sirva a un principal distinto.
+const obtenerPrincipalIdempotencia = (req) => {
+  const token = obtenerAccessTokenRequest(req)
+
+  if (!token) {
+    return 'anon'
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    return `u:${decoded.id}:c:${decoded.clinicaId || 'none'}`
+  } catch (error) {
+    // Token presente pero invalido/expirado: aislamos por hash del token para
+    // no colisionar nunca con la clave de un usuario valido.
+    return `t:${crypto.createHash('sha256').update(token).digest('hex')}`
+  }
+}
 
 const IdempotenciaKey = sequelize.define('IdempotenciaKey', {
   id: {
@@ -42,6 +65,7 @@ const idempotencia = async (req, res, next) => {
   if (!claveIdempotencia) return next()
 
   const partesClave = [
+    obtenerPrincipalIdempotencia(req),
     req.method,
     req.originalUrl || req.url || '/',
     String(claveIdempotencia).trim(),

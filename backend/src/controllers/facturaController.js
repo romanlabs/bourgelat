@@ -19,6 +19,7 @@ const {
   obtenerSuscripcionActivaClinica,
   suscripcionTieneFuncionalidad,
 } = require('../services/suscripcionService')
+const { parsePaginacion } = require('../utils/paginacion')
 
 const METODOS_PAGO_FACTUS = {
   efectivo: '10',
@@ -596,7 +597,8 @@ const crearFactura = async (req, res) => {
 const obtenerFacturas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario
-    const { fechaInicio, fechaFin, estado, pagina = 1, limite = 20, buscar } = req.query
+    const { fechaInicio, fechaFin, estado, buscar } = req.query
+    const { pagina: paginaNumero, limite: limiteNumero, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
     const where = { clinicaId }
     if (estado) where.estado = estado
@@ -612,10 +614,6 @@ const obtenerFacturas = async (req, res) => {
         { '$usuario.nombre$': { [Op.iLike]: `%${textoBusqueda}%` } },
       ]
     }
-
-    const limiteNumero = parseInt(limite, 10)
-    const paginaNumero = parseInt(pagina, 10)
-    const offset = (paginaNumero - 1) * limiteNumero
 
     const includeListado = [
       { model: Propietario, as: 'propietario', attributes: ['id', 'nombre'], required: false },

@@ -2,6 +2,7 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const { validarCupoSuscripcion } = require('../services/suscripcionService')
 const { MASCOTAS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads')
+const { parsePaginacion } = require('../utils/paginacion')
 
 const crearMascota = async (req, res) => {
   try {
@@ -76,7 +77,8 @@ const subirFotoMascota = async (req, res) => {
 const obtenerMascotas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { buscar, especie, pagina = 1, limite = 10 } = req.query;
+    const { buscar, especie } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 10 });
     const { Op } = require('sequelize');
 
     const where = { clinicaId, activo: true };
@@ -90,12 +92,10 @@ const obtenerMascotas = async (req, res) => {
       ];
     }
 
-    const offset = (pagina - 1) * limite;
-
     const { count, rows } = await Mascota.findAndCountAll({
       where,
-      limit: parseInt(limite),
-      offset: parseInt(offset),
+      limit: limite,
+      offset,
       order: [['nombre', 'ASC']],
       include: [{
         model: Propietario,
