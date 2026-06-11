@@ -7,6 +7,7 @@ const Producto = require('../models/Producto')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { Op } = require('sequelize')
 const { isValidDateOnly } = require('../utils/dateOnly')
+const { parsePaginacion } = require('../utils/paginacion')
 
 const HYDRATION_STATES = [
   'normal',
@@ -188,9 +189,8 @@ const obtenerHistorias = async (req, res) => {
       bloqueada,
       fechaInicio,
       fechaFin,
-      pagina = 1,
-      limite = 20,
     } = req.query
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
     const where = { clinicaId }
 
@@ -207,11 +207,9 @@ const obtenerHistorias = async (req, res) => {
       where.fechaConsulta = { [Op.lte]: fechaFin }
     }
 
-    const offset = (Number(pagina) - 1) * Number(limite)
-
     const { count, rows } = await HistoriaClinica.findAndCountAll({
       where,
-      limit: Number(limite),
+      limit: limite,
       offset,
       order: [['fechaConsulta', 'DESC']],
       include: [

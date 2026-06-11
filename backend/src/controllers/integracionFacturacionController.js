@@ -6,6 +6,7 @@ const {
   obtenerEmpresaFactus,
   obtenerRangosNumeracionFactus,
   solicitarTokenFactus,
+  esBaseUrlFactusPermitida,
 } = require('../services/factusService')
 const {
   serializarIntegracionFactus,
@@ -81,6 +82,12 @@ const guardarConfiguracionFactus = async (req, res) => {
       enviarEmail,
       configuracionAdicional = {},
     } = req.body
+
+    if (baseUrl !== undefined && baseUrl !== '' && !esBaseUrlFactusPermitida(baseUrl)) {
+      return res.status(400).json({
+        message: 'La baseUrl de Factus no es valida. Debe ser un dominio oficial de Factus por https.',
+      })
+    }
 
     const existente = await IntegracionFacturacion.findOne({ where: { clinicaId } })
 

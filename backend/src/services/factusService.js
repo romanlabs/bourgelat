@@ -20,6 +20,45 @@ const normalizarEntero = (valor) => {
   return Number.isNaN(numero) ? null : numero
 }
 
+// Solo se permite llamar a hosts oficiales de Factus (o el host configurado por
+// env). Evita SSRF: un admin podria guardar baseUrl apuntando a la red interna
+// o al endpoint de metadata de la nube y el servidor haria la peticion.
+const FACTUS_HOSTS_PERMITIDOS = new Set([
+  'api.factus.com.co',
+  'api-sandbox.factus.com.co',
+])
+
+const obtenerHostFactusEnv = () => {
+  try {
+    return process.env.FACTUS_BASE_URL ? new URL(process.env.FACTUS_BASE_URL).host : null
+  } catch (error) {
+    return null
+  }
+}
+
+const esBaseUrlFactusPermitida = (valor) => {
+  let parsed
+
+  try {
+    parsed = new URL(String(valor))
+  } catch (error) {
+    return false
+  }
+
+  if (parsed.protocol !== 'https:') return false
+
+  const hostEnv = obtenerHostFactusEnv()
+  return FACTUS_HOSTS_PERMITIDOS.has(parsed.host) || (Boolean(hostEnv) && parsed.host === hostEnv)
+}
+
+const asegurarBaseUrlFactus = (valor) => {
+  if (!esBaseUrlFactusPermitida(valor)) {
+    const error = new Error('La baseUrl de Factus no esta permitida')
+    error.status = 400
+    throw error
+  }
+}
+
 const obtenerBaseUrlFactus = (integracion) => {
   if (integracion?.baseUrl) return integracion.baseUrl
 
@@ -85,6 +124,8 @@ const solicitarTokenFactus = async ({
     throw new Error('La integraciÃ³n con Factus requiere Node.js 18+ para usar fetch nativo')
   }
 
+  asegurarBaseUrlFactus(baseUrl)
+
   const payload = new URLSearchParams({
     grant_type: 'password',
     client_id: clientId,
@@ -126,6 +167,8 @@ const solicitarFactus = async ({
   headers = {},
   body,
 }) => {
+  asegurarBaseUrlFactus(baseUrl)
+
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: crearHeadersFactus(token, headers),
@@ -192,6 +235,8 @@ const descargarXmlFactura = async ({ baseUrl, token, numero }) => {
 
 module.exports = {
   obtenerBaseUrlFactus,
+  esBaseUrlFactusPermitida,
+  asegurarBaseUrlFactus,
   obtenerConfiguracionFactusEnv,
   solicitarTokenFactus,
   solicitarFactus,

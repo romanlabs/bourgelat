@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const Propietario = require('../models/Propietario');
 const Mascota = require('../models/Mascota');
+const { parsePaginacion } = require('../utils/paginacion');
 
 const crearPropietario = async (req, res) => {
   try {
@@ -54,7 +55,8 @@ const crearPropietario = async (req, res) => {
 const obtenerPropietarios = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { buscar, pagina = 1, limite = 10 } = req.query;
+    const { buscar } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 10 });
 
     const where = { clinicaId };
 
@@ -66,12 +68,10 @@ const obtenerPropietarios = async (req, res) => {
       ];
     }
 
-    const offset = (pagina - 1) * limite;
-
     const { count, rows } = await Propietario.findAndCountAll({
       where,
-      limit: parseInt(limite),
-      offset: parseInt(offset),
+      limit: limite,
+      offset,
       order: [['nombre', 'ASC']],
       include: [{
         model: Mascota,
