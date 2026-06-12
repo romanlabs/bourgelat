@@ -46,6 +46,9 @@ const normalizarNit = (valor = '') => valor.replace(/[^\d-]/g, '').slice(0, 20)
 const registroSchema = z
   .object({
     nombre: z.string().trim().min(2, 'Escribe el nombre de la clinica').max(90, 'El nombre es demasiado largo'),
+    tipoPersona: z.enum(['persona_natural', 'persona_juridica'], {
+      errorMap: () => ({ message: 'Selecciona el tipo de persona' }),
+    }),
     nit: optionalField(
       z
         .string()
@@ -109,7 +112,7 @@ const STEPS = [
 ]
 
 const STEP_FIELDS = [
-  ['nombre', 'nit', 'departamento', 'ciudad'],
+  ['nombre', 'tipoPersona', 'nit', 'departamento', 'ciudad'],
   ['nombreAdministrador', 'emailClinica', 'email', 'telefono', 'direccion'],
   ['password', 'confirmar'],
 ]
@@ -150,6 +153,7 @@ export default function RegistroPage() {
     resolver: zodResolver(registroSchema),
     defaultValues: {
       nombre: '',
+      tipoPersona: 'persona_juridica',
       nit: '',
       departamento: '',
       ciudad: '',
@@ -166,6 +170,7 @@ export default function RegistroPage() {
 
   const datos = useWatch({ control })
   const departamentoSeleccionado = useWatch({ control, name: 'departamento' })
+  const tipoPersonaSeleccionado = useWatch({ control, name: 'tipoPersona' })
   const carnetCompleto = Boolean(
     datos?.nombre && datos?.ciudad && datos?.nombreAdministrador && (datos?.emailClinica || datos?.email)
   )
@@ -177,7 +182,6 @@ export default function RegistroPage() {
     setValue('ciudad', '')
   }, [departamentoSeleccionado, setValue])
 
-  const currentStep = STEPS[paso]
   const passwordChecks = [
     {
       key: 'length',
@@ -361,6 +365,33 @@ export default function RegistroPage() {
                     <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Nombre de la clínica</label>
                     <input {...nombreField} type="text" autoComplete="organization" placeholder="Clínica Veterinaria Bourgelat" className={inputCls(errors.nombre)} />
                     {errors.nombre ? <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p> : null}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Tipo de persona</label>
+                    <div className="mt-1 grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'persona_natural', label: 'Persona natural' },
+                        { value: 'persona_juridica', label: 'Persona jurídica' },
+                      ].map((opcion) => {
+                        const activo = tipoPersonaSeleccionado === opcion.value
+                        return (
+                          <button
+                            key={opcion.value}
+                            type="button"
+                            aria-pressed={activo}
+                            onClick={() => setValue('tipoPersona', opcion.value, { shouldValidate: true })}
+                            className={`h-11 border text-[13px] font-semibold transition ${
+                              activo
+                                ? 'border-[#b07645] bg-[#b07645]/10 text-[#2b2018]'
+                                : 'border-[#2b2018]/20 text-[#2b2018]/55 hover:border-[#2b2018]/40'
+                            }`}
+                          >
+                            {opcion.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {errors.tipoPersona ? <p className="mt-1 text-sm text-red-600">{errors.tipoPersona.message}</p> : null}
                   </div>
                   <div className="grid grid-cols-2 gap-5">
                     <div>
