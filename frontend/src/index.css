@@ -21,7 +21,7 @@ input:-webkit-autofill:focus {
 }
 
 :root {
-  --background: 214 49% 97%;
+  --background: 214 25% 97%;
   --foreground: 210 55% 15%;
   --card: 0 0% 100%;
   --card-foreground: 210 55% 15%;
@@ -31,15 +31,18 @@ input:-webkit-autofill:focus {
   --primary-foreground: 0 0% 100%;
   --secondary: 152 60% 94%;
   --secondary-foreground: 163 78% 20%;
-  --muted: 214 30% 94%;
+  --muted: 214 20% 94%;
   --muted-foreground: 210 20% 45%;
   --accent: 214 80% 95%;
   --accent-foreground: 221 70% 35%;
   --destructive: 2 72% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 208 35% 88%;
-  --input: 208 35% 88%;
+  --border: 208 25% 88%;
+  --input: 208 25% 88%;
   --ring: 160 70% 55%;
+  --caramel: 27 44% 48%;
+  --caramel-foreground: 0 0% 100%;
+  --caramel-muted: 27 55% 94%;
   --chart-1: 160 84% 39%;
   --chart-2: 221 83% 53%;
   --chart-3: 38 92% 50%;
@@ -76,6 +79,9 @@ input:-webkit-autofill:focus {
   --border: 217 33% 18%;
   --input: 217 33% 18%;
   --ring: 174 72% 56%;
+  --caramel: 27 55% 58%;
+  --caramel-foreground: 27 20% 10%;
+  --caramel-muted: 27 30% 15%;
   --chart-1: 221 83% 53%;
   --chart-2: 212 95% 68%;
   --chart-3: 173 58% 39%;
