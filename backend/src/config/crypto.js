@@ -52,7 +52,16 @@ const descifrarTexto = (valorCifrado) => {
   return texto.toString('utf8')
 }
 
+// HMAC determinístico para índices ciegos: mismo input → mismo output,
+// pero sin la clave del servidor no se puede precomputar.
+// Usar para campos buscables (ej. numeroDocumento) sin exponer el valor real.
+const hmacTexto = (valor) => {
+  if (valor == null) return null
+  return crypto.createHmac('sha256', resolverClave()).update(String(valor)).digest('hex')
+}
+
 module.exports = {
   cifrarTexto,
   descifrarTexto,
+  hmacTexto,
 }

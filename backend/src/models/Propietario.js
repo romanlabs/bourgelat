@@ -1,6 +1,9 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const Clinica = require('./Clinica');
+'use strict'
+
+const { DataTypes } = require('sequelize')
+const sequelize = require('../config/database')
+const Clinica = require('./Clinica')
+const { registrarHooksCifrado } = require('../config/modelEncryption')
 
 const Propietario = sequelize.define('Propietario', {
   id: {
@@ -9,7 +12,7 @@ const Propietario = sequelize.define('Propietario', {
     primaryKey: true,
   },
   nombre: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
   tipoDocumento: {
@@ -18,22 +21,26 @@ const Propietario = sequelize.define('Propietario', {
     defaultValue: 'CC',
   },
   numeroDocumento: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
-  email: {
-    type: DataTypes.STRING,
+  // HMAC-SHA256 del numeroDocumento en texto plano.
+  // Permite búsquedas por igualdad y el índice único sin exponer el valor real.
+  // Se actualiza automáticamente vía beforeCreate/beforeUpdate.
+  numeroDocumentoHash: {
+    type: DataTypes.TEXT,
     allowNull: true,
-    validate: {
-      isEmail: true,
-    },
+  },
+  email: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   telefono: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
   direccion: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   ciudad: {
@@ -41,11 +48,11 @@ const Propietario = sequelize.define('Propietario', {
     allowNull: true,
   },
   razonSocial: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   nombreComercial: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   tipoPersona: {
@@ -97,13 +104,20 @@ const Propietario = sequelize.define('Propietario', {
   tableName: 'propietarios',
   timestamps: true,
   indexes: [
-  { fields: ['numeroDocumento', 'clinicaId'], unique: true },
-  { fields: ['clinicaId', 'activo'] },
-  { fields: ['telefono'] },
-],
-});
+    // Índice único sobre el hash en lugar del valor cifrado (no comparable directamente).
+    // Para buscar por documento: WHERE "numeroDocumentoHash" = hmacTexto(input) AND "clinicaId" = ?
+    { fields: ['numeroDocumentoHash', 'clinicaId'], unique: true, name: 'propietarios_doc_hash_clinica_unique' },
+    { fields: ['clinicaId', 'activo'] },
+    { fields: ['telefono'] },
+  ],
+})
 
-Clinica.hasMany(Propietario, { foreignKey: 'clinicaId' });
-Propietario.belongsTo(Clinica, { foreignKey: 'clinicaId' });
+registrarHooksCifrado(Propietario, {
+  campos:     ['nombre', 'numeroDocumento', 'email', 'telefono', 'direccion', 'razonSocial', 'nombreComercial'],
+  hashConfig: { fuente: 'numeroDocumento', destino: 'numeroDocumentoHash' },
+})
 
-module.exports = Propietario;
+Clinica.hasMany(Propietario, { foreignKey: 'clinicaId' })
+Propietario.belongsTo(Clinica, { foreignKey: 'clinicaId' })
+
+module.exports = Propietario
