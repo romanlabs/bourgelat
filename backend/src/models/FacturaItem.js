@@ -1,7 +1,10 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const Factura = require('./Factura');
-const Producto = require('./Producto');
+'use strict'
+
+const { DataTypes } = require('sequelize')
+const sequelize = require('../config/database')
+const Factura = require('./Factura')
+const Producto = require('./Producto')
+const { registrarHooksCifrado } = require('../config/modelEncryption')
 
 const FacturaItem = sequelize.define('FacturaItem', {
   id: {
@@ -9,8 +12,9 @@ const FacturaItem = sequelize.define('FacturaItem', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  // Cifrado: revela qué servicios o medicamentos consume el cliente.
   descripcion: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
   tipo: {
@@ -18,6 +22,7 @@ const FacturaItem = sequelize.define('FacturaItem', {
     allowNull: false,
     defaultValue: 'servicio',
   },
+  // Los precios no se cifran: necesarios para recalcular totales y reportes.
   cantidad: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
@@ -57,14 +62,18 @@ const FacturaItem = sequelize.define('FacturaItem', {
   timestamps: true,
   updatedAt: false,
   indexes: [
-  { fields: ['facturaId'] },
-  { fields: ['productoId'] },
-]
-});
+    { fields: ['facturaId'] },
+    { fields: ['productoId'] },
+  ],
+})
 
-Factura.hasMany(FacturaItem, { foreignKey: 'facturaId', as: 'items' });
-FacturaItem.belongsTo(Factura, { foreignKey: 'facturaId', as: 'factura' });
-Producto.hasMany(FacturaItem, { foreignKey: 'productoId', as: 'itemsFactura' });
-FacturaItem.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' });
+registrarHooksCifrado(FacturaItem, {
+  campos: ['descripcion'],
+})
 
-module.exports = FacturaItem;
+Factura.hasMany(FacturaItem, { foreignKey: 'facturaId', as: 'items' })
+FacturaItem.belongsTo(Factura, { foreignKey: 'facturaId', as: 'factura' })
+Producto.hasMany(FacturaItem, { foreignKey: 'productoId', as: 'itemsFactura' })
+FacturaItem.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' })
+
+module.exports = FacturaItem

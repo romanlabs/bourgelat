@@ -55,6 +55,11 @@ module.exports = {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
+        caramel: {
+          DEFAULT: 'hsl(var(--caramel))',
+          foreground: 'hsl(var(--caramel-foreground))',
+          muted: 'hsl(var(--caramel-muted))',
+        },
       },
       borderRadius: {
         sm: 'calc(var(--radius) - 4px)',

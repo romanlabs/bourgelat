@@ -219,7 +219,7 @@ export default function AdminShell({
                 isSidebarCollapsed ? 'justify-center' : 'gap-3'
               )}
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#b07645]/35 bg-[#91e7e0]/10 text-[#91e7e0]">
                 <Stethoscope className="h-5 w-5" />
               </div>
 
@@ -374,7 +374,7 @@ export default function AdminShell({
               <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <h1 className="text-xl font-semibold leading-tight text-foreground sm:text-2xl">{title}</h1>
+                    <h1 className="font-display text-xl font-semibold leading-tight text-foreground sm:text-2xl">{title}</h1>
                     {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                   </div>
                   {description ? (

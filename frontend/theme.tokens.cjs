@@ -62,6 +62,29 @@ const colors = {
   },
 
   /**
+   * Caramelo — acento cálido, puente con la identidad del login
+   * Usar en:
+   *   - Badges de alerta amigable (vacunas pendientes, citas próximas)
+   *   - Detalles decorativos del sidebar (borde del logo/avatar de clínica)
+   *   - Empty states con contexto de acción pendiente
+   *   - Texto de "eyebrow" en módulos con contexto emocional
+   * NO usar como color de acción primaria ni en tablas de datos.
+   */
+  caramel: {
+    50:  '#fdf6ee',
+    100: '#f9e8d4',
+    200: '#f3d0a8',
+    300: '#eab97c',
+    400: '#d49156',
+    500: '#b07645', // ← login accent principal
+    600: '#925e35',
+    700: '#714726',
+    800: '#50321a',
+    900: '#301e0f',
+    950: '#180f07',
+  },
+
+  /**
    * Grises cálidos — fondos, bordes y texto
    * Reemplazan slate-* y gray-* en contenido de UI.
    * Tienen un ligero tono cálido (evitan la frialdad clínica excesiva).
