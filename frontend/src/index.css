@@ -854,3 +854,46 @@ input:-webkit-autofill:focus {
     opacity: 0;
   }
 }
+
+/* ── Firma del hero: línea de signo vital (ECG) ──────────────────────────── */
+.hero-ecg {
+  width: 188px;
+  max-width: 58%;
+}
+.hero-ecg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.hero-ecg__base {
+  fill: none;
+  stroke: rgba(176, 118, 69, 0.3);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-ecg__pulse {
+  fill: none;
+  stroke: #b07645;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Un segmento iluminado de ~46u barre un patrón total de 666u: el offset
+     viaja exactamente 666u y el bucle es invisible. */
+  stroke-dasharray: 46 620;
+  filter: drop-shadow(0 0 6px rgba(176, 118, 69, 0.4));
+  animation: hero-ecg-sweep 2.6s linear infinite;
+}
+@keyframes hero-ecg-sweep {
+  to {
+    stroke-dashoffset: -666;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-ecg__pulse {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.5;
+  }
+}
