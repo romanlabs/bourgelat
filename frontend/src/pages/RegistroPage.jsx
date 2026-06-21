@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  ShieldCheck,
   Stethoscope,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +22,8 @@ void motion
 
 const INK = '#2b2018'
 const ACCENT = '#b07645'
+const REGISTRO_VIDEO_WEBM = '/videos/registro-puppy.webm'
+const REGISTRO_VIDEO_MP4  = '/videos/registro-puppy.mp4'
 
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
@@ -168,12 +169,8 @@ export default function RegistroPage() {
     mode: 'onBlur',
   })
 
-  const datos = useWatch({ control })
   const departamentoSeleccionado = useWatch({ control, name: 'departamento' })
   const tipoPersonaSeleccionado = useWatch({ control, name: 'tipoPersona' })
-  const carnetCompleto = Boolean(
-    datos?.nombre && datos?.ciudad && datos?.nombreAdministrador && (datos?.emailClinica || datos?.email)
-  )
   const passwordValue = useWatch({ control, name: 'password' }) || ''
   const ciudades =
     colombia.find((item) => item.departamento === departamentoSeleccionado)?.ciudades ?? []
@@ -325,8 +322,8 @@ export default function RegistroPage() {
 
       </div>
 
-      <main className="relative z-10 flex flex-1 items-center overflow-hidden px-5 pb-6 sm:px-8">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center justify-center gap-12 lg:gap-20">
+      <main className="relative z-10 flex flex-1 overflow-hidden">
+        <div className="flex flex-1 items-center justify-center px-5 pb-6 sm:px-8">
           <motion.div
             key={paso}
             initial={{ opacity: 0, y: 14 }}
@@ -543,90 +540,36 @@ export default function RegistroPage() {
               </Link>
             </p>
           </motion.div>
-
-          {/* ── Carnet de la clínica: credencial que se diligencia en vivo ── */}
-          <motion.aside
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden w-full max-w-[400px] shrink-0 lg:block"
-            aria-hidden="true"
-          >
-            <div
-              className="relative bg-[#2b2018] px-8 py-9 text-white"
-              style={{ boxShadow: '0 8px 20px rgba(43,32,24,0.12), 0 24px 56px rgba(43,32,24,0.22), 0 48px 90px rgba(43,32,24,0.16)' }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: ACCENT }}>
-                  <span className="h-px w-5" style={{ backgroundColor: ACCENT }} />
-                  Credencial
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Exp · 2026</span>
-              </div>
-
-              <div className={`mt-7 border-l-2 pl-4 transition-colors duration-300 ${paso === 0 ? 'border-[#b07645]' : 'border-white/10'}`}>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-white/40">Clínica</p>
-                <p
-                  className="mt-1.5 text-[1.6rem] leading-[1.04] tracking-[-0.02em]"
-                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                >
-                  {datos?.nombre || <span className="text-white/25">Nombre de la clínica</span>}
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-white/55">
-                  <span>NIT · {datos?.nit || '—'}</span>
-                  <span className="text-white/20">·</span>
-                  <span>{datos?.ciudad && datos?.departamento ? `${datos.ciudad}, ${datos.departamento}` : 'Ubicación pendiente'}</span>
-                </div>
-              </div>
-
-              <div className="my-6 h-px bg-white/10" />
-
-              <div className={`border-l-2 pl-4 transition-colors duration-300 ${paso === 1 ? 'border-[#b07645]' : 'border-white/10'}`}>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-white/40">Responsable</p>
-                <p className="mt-1.5 text-[15px]">
-                  {datos?.nombreAdministrador || <span className="text-white/25">Por definir</span>}
-                </p>
-                <p className="mt-0.5 text-[13px] text-white/55">{datos?.emailClinica || datos?.email || 'correo@pendiente'}</p>
-              </div>
-
-              <div className="my-6 h-px bg-white/10" />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 text-white/45">
-                  <span className="flex h-7 w-7 items-center justify-center bg-white/8">
-                    <Stethoscope className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="text-[11px] leading-tight">
-                    Expedida por
-                    <br />
-                    <span className="text-white/65">Bourgelat</span>
-                  </span>
-                </div>
-                <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors duration-300 ${paso === 2 ? 'text-[#b07645]' : 'text-white/30'}`}>
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Acceso
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {carnetCompleto ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.4, rotate: -42 }}
-                    animate={{ opacity: 1, scale: 1, rotate: -9 }}
-                    exit={{ opacity: 0, scale: 0.4 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 13 }}
-                    className="pointer-events-none absolute right-6 top-6 flex h-[78px] w-[78px] flex-col items-center justify-center rounded-full border-2"
-                    style={{ borderColor: 'rgba(176,118,69,0.65)', color: ACCENT }}
-                  >
-                    <span className="absolute inset-[5px] rounded-full border border-[#b07645]/30" />
-                    <Check className="h-5 w-5" />
-                    <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em]">Activa</span>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
-          </motion.aside>
         </div>
+
+        {/* ── Video del perrito (Veo 3) — flush al lateral derecho ── */}
+        <motion.aside
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="relative hidden w-[40%] shrink-0 lg:block"
+          aria-hidden="true"
+        >
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+          >
+            <source src={REGISTRO_VIDEO_WEBM} type="video/webm" />
+            <source src={REGISTRO_VIDEO_MP4}  type="video/mp4" />
+          </video>
+          <span
+            className="pointer-events-none absolute left-5 top-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/85"
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.45)' }}
+          >
+            <span className="h-px w-5" style={{ backgroundColor: ACCENT }} />
+            Bienvenido
+          </span>
+        </motion.aside>
       </main>
     </div>
   )
