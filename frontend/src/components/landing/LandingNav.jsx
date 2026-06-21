@@ -21,16 +21,10 @@ export default function LandingNav() {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
 
-    // El nav es oscuro únicamente mientras el hero cubre la franja del header.
-    const heroSection = document.getElementById('hero')
-    const headerHeight = headerRef.current?.offsetHeight ?? 78
-    const themeObserver = heroSection
-      ? new IntersectionObserver(
-          ([entry]) => setNavTheme(entry.isIntersecting ? 'dark' : 'light'),
-          { rootMargin: `-${Math.round(headerHeight + 12)}px 0px 0px 0px`, threshold: 0 }
-        )
-      : null
-    if (themeObserver && heroSection) themeObserver.observe(heroSection)
+    // El hero ahora es cálido y claro, igual que el resto de la página, así que el
+    // nav usa siempre el tema claro (texto oscuro). Se mantiene como estado por si
+    // en el futuro vuelve una sección oscura bajo el header.
+    setNavTheme('light')
 
     // El header se oculta mientras el carrusel de flujo está en pantalla.
     const flujoSection = document.getElementById('flujo')
@@ -44,7 +38,6 @@ export default function LandingNav() {
 
     return () => {
       window.removeEventListener('scroll', onScroll)
-      themeObserver?.disconnect()
       hideObserver?.disconnect()
     }
   }, [])
@@ -69,15 +62,11 @@ export default function LandingNav() {
             : 'max-w-[1400px] rounded-none border border-transparent bg-transparent py-5'
         }`}
         style={compact ? isLight ? {
-          background: 'rgba(253,246,238,0.82)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          background: 'rgba(253,246,238,0.94)',
           border: '1px solid rgba(43,32,24,0.12)',
           boxShadow: '0 8px 32px rgba(43,32,24,0.08)',
         } : {
-          background: 'rgba(43,32,24,0.55)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+          background: 'rgba(30,21,14,0.88)',
           border: '1px solid rgba(255,255,255,0.10)',
           boxShadow: '0 8px 32px rgba(20,14,9,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
         } : undefined}
@@ -113,9 +102,7 @@ export default function LandingNav() {
             style={isLight ? undefined : {
               color: 'rgba(255,255,255,0.92)',
               border: '1px solid rgba(255,255,255,0.14)',
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
+              background: 'rgba(255,255,255,0.10)',
             }}
             onMouseEnter={isLight ? undefined : (e) => {
               e.currentTarget.style.background = 'rgba(176,118,69,0.16)'
@@ -126,7 +113,7 @@ export default function LandingNav() {
               e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'
             }}
           >
-            Iniciar sesion
+            Iniciar sesión
           </Link>
           <Link
             to="/registro"
@@ -145,7 +132,7 @@ export default function LandingNav() {
               ? 'border-[rgba(43,32,24,0.25)] text-[#2b2018] hover:bg-[rgba(43,32,24,0.06)]'
               : 'border-white/20 text-white hover:bg-white/10'
           }`}
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
         >
           {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </button>
@@ -205,7 +192,7 @@ export default function LandingNav() {
                     : 'border-white/15 bg-white/05 text-white hover:bg-white/10'
                 }`}
               >
-                Iniciar sesion
+                Iniciar sesión
               </Link>
               <Link
                 to="/registro"

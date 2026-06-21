@@ -21,8 +21,14 @@ export default function LandingPage() {
     <div className="min-h-screen overflow-x-hidden bg-[#fdf6ee] text-[#2b2018]">
       <LandingNav />
 
-      <section id="hero" className="relative flex h-[100dvh] flex-col justify-center overflow-hidden bg-[#1a1008] text-white">
-        {/* ── Video hero ── */}
+      <section
+        id="hero"
+        className="relative flex h-[100dvh] flex-col justify-center overflow-hidden text-[#2b2018]"
+        style={{ background: 'linear-gradient(165deg, #f8e7cf 0%, #f1d6ad 48%, #ecd1a7 100%)' }}
+      >
+        {/* ── Video hero: perro completo, contenido y anclado abajo a la derecha.
+            object-contain (no cover) muestra al perro entero; su fondo beige funde
+            con el degradado cálido del hero. ── */}
         <video
           autoPlay
           muted
@@ -30,53 +36,72 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ willChange: 'transform', transform: 'translateZ(0)' }}
+          className="absolute inset-0 h-full w-full object-contain"
+          style={{ transform: 'translateZ(0)', objectPosition: 'right bottom' }}
         >
-          <source src="/videos/perroHero.webm" type="video/webm" />
+          {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
+              evitando el thermal throttling del VP9 por software que entrecortaba
+              el video tras un rato. WebM queda como fallback. */}
           <source src="/videos/perroHero.mp4"  type="video/mp4"  />
+          <source src="/videos/perroHero.webm" type="video/webm" />
         </video>
 
-        {/* Overlay oscuro para que el texto sea legible sobre el video */}
-        <div className="pointer-events-none absolute inset-0 bg-[#1a1008]/25" />
-
-        {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee) */}
+        {/* Lavado cálido a la izquierda: levanta la legibilidad del texto oscuro
+            sobre el beige sin tapar al perro de la derecha. */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[22dvh]"
-          style={{ background: 'linear-gradient(180deg, rgba(248,244,238,0) 0%, #f8f4ee 100%)' }}
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{ background: 'linear-gradient(100deg, rgba(249,236,216,0.95) 0%, rgba(249,236,216,0.72) 32%, rgba(249,236,216,0.18) 56%, rgba(249,236,216,0) 70%)' }}
+        />
+
+        {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee).
+            Degradado con easing (no lineal) para un empalme sin banding visible. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[28dvh]"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0.08) 28%, rgba(248,244,238,0.28) 50%, rgba(248,244,238,0.58) 68%, rgba(248,244,238,0.85) 84%, #f8f4ee 100%)',
+          }}
         />
 
         <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
           <div className="max-w-[36rem]">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.26em] text-[#d4a870]">
-              <span className="h-px w-6 bg-[#d4a870]" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">
               Software para clínicas veterinarias
             </p>
 
+            {/* Firma: línea de signo vital. El barrido recorre el trazo como el
+                monitor de un paciente — guiño al ECGHeartbeatCanvas de la marca. */}
+            <div className="hero-ecg mt-4" aria-hidden="true">
+              <svg viewBox="0 0 320 24" preserveAspectRatio="xMinYMid meet">
+                <path className="hero-ecg__base" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
+                <path className="hero-ecg__pulse" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
+              </svg>
+            </div>
+
             <h1
-              className="mt-5 max-w-[22rem] text-[2.15rem] leading-[0.94] tracking-[-0.06em] text-white sm:max-w-[32rem] sm:text-[2.9rem] lg:max-w-[34rem] lg:text-[3.25rem] xl:text-[3.45rem]"
+              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[34rem] lg:text-[3.35rem] xl:text-[3.6rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
-              Tu clínica veterinaria merece una operación a la altura de su medicina.
+              Tu clínica merece una operación
+              <span style={{ fontStyle: 'italic', fontWeight: 600, color: '#a8662e' }}> a la altura de su medicina.</span>
             </h1>
 
-            <p className="mt-5 max-w-[31rem] text-[15px] leading-7 text-white/70 sm:mt-6 sm:text-base sm:leading-8">
-              Bourgelat integra agenda, historia clínica, caja, inventario y seguimiento en un
-              solo sistema para reducir reprocesos, ordenar al equipo y ofrecer una experiencia
-              más profesional a cada tutor.
+            <p className="mt-6 max-w-[30rem] text-[15px] leading-7 text-[#6a5038] sm:text-[16.5px] sm:leading-8">
+              Agenda, historia clínica, caja e inventario en un solo lugar. Menos reprocesos,
+              un equipo coordinado y una experiencia más profesional para cada tutor.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none bg-white px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white"
+                className="group pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_12px_30px_rgba(43,32,24,0.22)] transition-colors hover:bg-[#b07645]"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <Link
                 to="/planes"
-                className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none border border-white/30 bg-transparent px-7 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]"
+                className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]"
               >
                 Ver planes
               </Link>

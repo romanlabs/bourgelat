@@ -28,10 +28,12 @@ describe('Hero video', () => {
     expect(types).toContain('video/mp4')
   })
 
-  it('WebM aparece antes que MP4 (prioridad de decodificación)', () => {
+  it('MP4 (H.264) aparece antes que WebM (decodificación por hardware)', () => {
+    // H.264 se decodifica por hardware en casi todos los equipos; el VP9 del
+    // WebM caía a software → thermal throttling → stutter tras un rato.
     render(<MemoryRouter><LandingPage /></MemoryRouter>)
     const sources = [...document.querySelector('video').querySelectorAll('source')]
     const idx = (type) => sources.findIndex(s => s.type === type)
-    expect(idx('video/webm')).toBeLessThan(idx('video/mp4'))
+    expect(idx('video/mp4')).toBeLessThan(idx('video/webm'))
   })
 })
