@@ -4,6 +4,7 @@ const Clinica = require('./Clinica');
 const Mascota = require('./Mascota');
 const Propietario = require('./Propietario');
 const Usuario = require('./Usuario');
+const { aplicarDescifrado } = require('../config/modelEncryption');
 
 const Cita = sequelize.define('Cita', {
   id: {
@@ -119,5 +120,14 @@ Usuario.hasMany(Cita, { foreignKey: 'veterinarioId' });
 Cita.belongsTo(Usuario, { foreignKey: 'veterinarioId', as: 'veterinario' });
 Clinica.hasMany(Cita, { foreignKey: 'clinicaId' });
 Cita.belongsTo(Clinica, { foreignKey: 'clinicaId' });
+
+Cita.addHook('afterFind', (resultado) => {
+  if (!resultado) return
+  const descifrar = (inst) => {
+    const prop = inst?.dataValues?.propietario
+    if (prop) aplicarDescifrado({ instance: prop, ...Propietario.CIFRADO })
+  }
+  Array.isArray(resultado) ? resultado.forEach(descifrar) : descifrar(resultado)
+})
 
 module.exports = Cita;

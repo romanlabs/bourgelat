@@ -524,14 +524,8 @@ export default function AntecedentesPage() {
       actions={
         <div className="flex flex-wrap gap-2">
           <Link
-            to="/historias"
-            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Abrir historias
-          </Link>
-          <Link
             to="/pacientes"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir pacientes
           </Link>

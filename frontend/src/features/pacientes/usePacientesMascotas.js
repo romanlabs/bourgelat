@@ -106,7 +106,7 @@ export function usePacientesMascotas({ enabled, featureSet }) {
           fichaLabel: fichaInfo.label,
           fichaTone: fichaInfo.tone,
           historiasTo: historiasDisponibles
-            ? `/historias?mascotaId=${mascota.id}&propietarioId=${mascota.Propietario?.id || ''}`
+            ? `/pacientes/${mascota.id}/historial`
             : '',
           antecedentesTo: antecedentesDisponibles ? `/antecedentes?mascotaId=${mascota.id}` : '',
           raw: mascota,

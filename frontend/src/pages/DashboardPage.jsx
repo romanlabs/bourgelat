@@ -147,7 +147,9 @@ const buildStatusSparkline = (record, labels = {}) =>
   }))
 
 const buildHistoryHref = (appointment) =>
-  `/historias?mascotaId=${appointment?.mascota?.id || ''}&propietarioId=${appointment?.propietario?.id || ''}&citaId=${appointment?.id || ''}`
+  appointment?.mascota?.id
+    ? `/pacientes/${appointment.mascota.id}/historial`
+    : '/pacientes'
 
 const buildBillingHref = (appointment) =>
   `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`

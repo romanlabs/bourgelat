@@ -11,6 +11,7 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
 const PacientesPage = lazy(() => import('@/pages/PacientesPage'))
+const PacienteHistorialPage = lazy(() => import('@/pages/PacienteHistorialPage'))
 const HistoriasPage = lazy(() => import('@/pages/HistoriasPage'))
 const AntecedentesPage = lazy(() => import('@/pages/AntecedentesPage'))
 const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
@@ -82,6 +83,7 @@ const router = createBrowserRouter([
           { path: '/superadmin', element: <Suspense fallback={<Loader />}><SuperadminPage /></Suspense> },
           { path: '/agenda', element: <Suspense fallback={<Loader />}><AgendaPage /></Suspense> },
           { path: '/pacientes', element: <Suspense fallback={<Loader />}><PacientesPage /></Suspense> },
+          { path: '/pacientes/:mascotaId/historial', element: <Suspense fallback={<Loader />}><PacienteHistorialPage /></Suspense> },
           { path: '/historias', element: <Suspense fallback={<Loader />}><HistoriasPage /></Suspense> },
           { path: '/antecedentes', element: <Suspense fallback={<Loader />}><AntecedentesPage /></Suspense> },
           { path: '/configuracion', element: <Suspense fallback={<Loader />}><ConfiguracionPage /></Suspense> },

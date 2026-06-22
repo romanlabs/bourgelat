@@ -112,8 +112,14 @@ const Propietario = sequelize.define('Propietario', {
   ],
 })
 
+// Exportado para que modelos padre puedan descifrar instancias anidadas de Propietario.
+// Sequelize v6 no dispara afterFind del modelo hijo cuando se carga vía include.
+const CIFRADO_PROPIETARIO = {
+  campos: ['nombre', 'numeroDocumento', 'email', 'telefono', 'direccion', 'razonSocial', 'nombreComercial'],
+}
+
 registrarHooksCifrado(Propietario, {
-  campos:     ['nombre', 'numeroDocumento', 'email', 'telefono', 'direccion', 'razonSocial', 'nombreComercial'],
+  ...CIFRADO_PROPIETARIO,
   hashConfig: { fuente: 'numeroDocumento', destino: 'numeroDocumentoHash' },
 })
 
@@ -121,3 +127,4 @@ Clinica.hasMany(Propietario, { foreignKey: 'clinicaId' })
 Propietario.belongsTo(Clinica, { foreignKey: 'clinicaId' })
 
 module.exports = Propietario
+module.exports.CIFRADO = CIFRADO_PROPIETARIO

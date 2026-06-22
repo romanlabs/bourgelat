@@ -129,6 +129,7 @@ module.exports = {
   descifrarCampo,
   cifrarJsonCampo,
   descifrarJsonCampo,
+  aplicarDescifrado,
   registrarHooksCifrado,
   hmacTexto,
 }

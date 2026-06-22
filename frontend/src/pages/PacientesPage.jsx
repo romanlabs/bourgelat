@@ -113,9 +113,6 @@ export default function PacientesPage() {
           <Link to="/antecedentes" className="inline-flex h-9 items-center gap-1.5 border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted">
             <HeartPulse className="h-4 w-4" />Antecedentes
           </Link>
-          <Link to="/historias" className="inline-flex h-9 items-center gap-1.5 border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted">
-            <FileText className="h-4 w-4" />Historias
-          </Link>
           <Link to="/dashboard" className="inline-flex h-9 items-center gap-1.5 border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted">
             <LayoutDashboard className="h-4 w-4" />Dashboard
           </Link>
