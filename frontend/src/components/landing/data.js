@@ -67,11 +67,14 @@ export const footerLinks = [
   { label: 'Cookies', to: '/cookies' },
 ]
 
+// Las alturas están afinadas por PESO ÓPTICO, no por píxeles iguales: los
+// wordmarks anchos (DIAN, Cloudflare) pesan de más, así que van más bajos; el
+// escudo es detallado y se lee pequeño, así que va más alto.
 export const TRUST_LOGOS = [
-  { src: '/logos/dian.svg', alt: 'DIAN', h: 28, caption: 'Facturación electrónica' },
-  { src: '/logos/factus.png', alt: 'Factus', h: 22, caption: 'Integrado con Factus', invert: true },
-  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 28, caption: 'Protegido por Cloudflare', outline: true },
-  { src: '/logos/escudo-colombia.svg', alt: 'Escudo de Colombia', h: 36, caption: 'Hecho en Colombia', outline: true },
+  { src: '/logos/dian.svg', alt: 'DIAN', h: 23, caption: 'Habilitado ante la DIAN' },
+  { src: '/logos/factus.png', alt: 'Factus', h: 24, caption: 'Conectado con Factus', invert: true },
+  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 23, caption: 'Tus datos siempre seguros', outline: true },
+  { src: '/logos/escudo-colombia.svg', alt: 'Escudo de Colombia', h: 42, caption: 'Hecho en Colombia', outline: true },
 ]
 
 export const WARM_BAND_BACKGROUND = '#f8f4ee'
