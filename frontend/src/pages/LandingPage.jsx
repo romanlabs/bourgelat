@@ -94,7 +94,7 @@ export default function LandingPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_12px_30px_rgba(43,32,24,0.22)] transition-colors hover:bg-[#b07645]"
+                className="group pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645]"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
