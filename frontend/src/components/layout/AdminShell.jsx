@@ -32,7 +32,6 @@ const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
-  { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
@@ -46,7 +45,7 @@ const NAV_SECTIONS = [
   {
     key: 'operacion',
     label: 'Operacion diaria',
-    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes'],
+    items: ['dashboard', 'agenda', 'pacientes', 'antecedentes'],
   },
   {
     key: 'gestion',
@@ -81,7 +80,7 @@ const DEFAULT_QUICK_ACTIONS = [
     key: 'historia',
     label: 'Historia clinica',
     detail: 'Abrir consulta y documentar el caso sin rodeos.',
-    to: '/historias',
+    to: '/pacientes',
     icon: FileText,
   },
   {

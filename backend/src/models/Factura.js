@@ -5,7 +5,7 @@ const sequelize = require('../config/database')
 const Clinica = require('./Clinica')
 const Propietario = require('./Propietario')
 const Usuario = require('./Usuario')
-const { registrarHooksCifrado } = require('../config/modelEncryption')
+const { registrarHooksCifrado, aplicarDescifrado } = require('../config/modelEncryption')
 
 const Factura = sequelize.define('Factura', {
   id: {
@@ -170,5 +170,14 @@ Usuario.hasMany(Factura, { foreignKey: 'usuarioId', as: 'facturas' })
 Factura.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' })
 Clinica.hasMany(Factura, { foreignKey: 'clinicaId' })
 Factura.belongsTo(Clinica, { foreignKey: 'clinicaId' })
+
+Factura.addHook('afterFind', (resultado) => {
+  if (!resultado) return
+  const descifrar = (inst) => {
+    const prop = inst?.dataValues?.propietario
+    if (prop) aplicarDescifrado({ instance: prop, ...Propietario.CIFRADO })
+  }
+  Array.isArray(resultado) ? resultado.forEach(descifrar) : descifrar(resultado)
+})
 
 module.exports = Factura

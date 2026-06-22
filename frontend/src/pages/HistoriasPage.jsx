@@ -1,8 +1,7 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
-import { toast } from 'sonner'
-import { Activity, CalendarCheck, ChevronDown, ClipboardCheck, FileText, HeartPulse, Link2, Lock, MessageSquare, Pill, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { FileText, Lock, ShieldCheck, Stethoscope } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -13,19 +12,15 @@ import {
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
 import { formatLongDate, formatNumber, getCurrentMonthRange } from '@/features/dashboard/dashboardUtils'
-import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { historiasApi } from '@/features/historias/historiasApi'
-import { inventarioApi } from '@/features/inventario/inventarioApi'
-import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
-import { cn } from '@/lib/utils'
+import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'historial', label: 'Historial' },
-  { id: 'consulta', label: 'Nueva consulta' },
 ]
 
 const BLOCK_OPTIONS = [
@@ -34,214 +29,13 @@ const BLOCK_OPTIONS = [
   { value: 'true', label: 'Bloqueadas' },
 ]
 
-const HYDRATION_OPTIONS = [
-  { value: '', label: 'Estado de hidratacion' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'deshidratacion_leve', label: 'Deshidratacion leve' },
-  { value: 'deshidratacion_moderada', label: 'Deshidratacion moderada' },
-  { value: 'deshidratacion_severa', label: 'Deshidratacion severa' },
-]
-
-const MEDICATION_ROUTE_OPTIONS = [
-  { value: '', label: 'Via de administracion' },
-  { value: 'oral', label: 'Oral' },
-  { value: 'subcutanea', label: 'Subcutanea' },
-  { value: 'intramuscular', label: 'Intramuscular' },
-  { value: 'intravenosa', label: 'Intravenosa' },
-  { value: 'topica', label: 'Topica' },
-  { value: 'otica', label: 'Otica' },
-  { value: 'oftalmica', label: 'Oftalmica' },
-  { value: 'inhalada', label: 'Inhalada' },
-  { value: 'rectal', label: 'Rectal' },
-  { value: 'transdermica', label: 'Transdermica' },
-  { value: 'otra', label: 'Otra' },
-]
-
-const MEDICATION_FREQUENCY_SUGGESTIONS = [
-  'Cada 8 horas',
-  'Cada 12 horas',
-  'Cada 24 horas',
-  'Dosis unica',
-  'Segun necesidad',
-]
-
-const MEDICATION_DURATION_SUGGESTIONS = ['3 dias', '5 dias', '7 dias', '10 dias', '14 dias']
-
-const createMedicationId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-
-const createMedicationDraft = (overrides = {}) => ({
-  id: createMedicationId(),
-  productoId: '',
-  fuente: '',
-  nombre: '',
-  concentracion: '',
-  dosis: '',
-  via: '',
-  frecuencia: '',
-  duracion: '',
-  cantidad: '',
-  indicacion: '',
-  ...overrides,
-})
-
-const createDefaultForm = () => ({
-  motivoConsulta: '',
-  anamnesis: '',
-  peso: '',
-  temperatura: '',
-  frecuenciaCardiaca: '',
-  frecuenciaRespiratoria: '',
-  condicionCorporal: '',
-  mucosas: '',
-  estadoHidratacion: '',
-  examenFisicoDetalle: '',
-  diagnostico: '',
-  diagnosticoPresuntivo: '',
-  tratamiento: '',
-  medicamentos: [createMedicationDraft()],
-  indicaciones: '',
-  proximaConsulta: '',
-  citaId: '',
-  veterinarioId: '',
-})
-
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
-
-const normalizeNumber = (value) => {
-  if (value === '' || value === null || value === undefined) return undefined
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-const medicationHasAnyValue = (item) =>
-  [item?.nombre, item?.concentracion, item?.dosis, item?.via, item?.frecuencia, item?.duracion, item?.cantidad, item?.indicacion]
-    .some((value) => String(value || '').trim().length > 0)
-
-const mapMedicamentosToDrafts = (medicamentos) => {
-  if (!Array.isArray(medicamentos) || medicamentos.length === 0) {
-    return [createMedicationDraft()]
-  }
-
-  const drafts = medicamentos
-    .map((item) => {
-      if (typeof item === 'string') {
-        return createMedicationDraft({ nombre: item })
-      }
-
-      if (item && typeof item === 'object') {
-        return createMedicationDraft({
-          productoId: item.productoId || '',
-          fuente: item.fuente || '',
-          nombre: item.nombre || '',
-          concentracion: item.concentracion || '',
-          dosis: item.dosis || '',
-          via: item.via || '',
-          frecuencia: item.frecuencia || '',
-          duracion: item.duracion || '',
-          cantidad:
-            item.cantidad === undefined || item.cantidad === null || item.cantidad === ''
-              ? ''
-              : String(item.cantidad),
-          indicacion: item.indicacion || item.instrucciones || '',
-        })
-      }
-
-      return null
-    })
-    .filter(Boolean)
-
-  return drafts.length > 0 ? drafts : [createMedicationDraft()]
-}
-
-const mapHistoriaToForm = (historia) => ({
-  motivoConsulta: historia?.motivoConsulta || '',
-  anamnesis: historia?.anamnesis || '',
-  peso: historia?.peso ? String(historia.peso) : '',
-  temperatura: historia?.temperatura ? String(historia.temperatura) : '',
-  frecuenciaCardiaca: historia?.frecuenciaCardiaca ? String(historia.frecuenciaCardiaca) : '',
-  frecuenciaRespiratoria: historia?.frecuenciaRespiratoria
-    ? String(historia.frecuenciaRespiratoria)
-    : '',
-  condicionCorporal: historia?.condicionCorporal ? String(historia.condicionCorporal) : '',
-  mucosas: historia?.mucosas || '',
-  estadoHidratacion: historia?.estadoHidratacion || '',
-  examenFisicoDetalle: historia?.examenFisicoDetalle || '',
-  diagnostico: historia?.diagnostico || '',
-  diagnosticoPresuntivo: historia?.diagnosticoPresuntivo || '',
-  tratamiento: historia?.tratamiento || '',
-  medicamentos: mapMedicamentosToDrafts(historia?.medicamentos),
-  indicaciones: historia?.indicaciones || '',
-  proximaConsulta: historia?.proximaConsulta || '',
-  citaId: historia?.citaId || '',
-  veterinarioId: historia?.veterinarioId || '',
-})
-
-import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
-import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
     ? 'border-amber-200 bg-amber-50 text-amber-700'
     : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-
-const formatClinicalDateTime = (value) => {
-  if (!value) return 'Sin fecha'
-  return new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
-// ─── Sección del formulario clínico (acordeón) ───────────────────────────────
-
-function FormSection({ icon, title, filled, required, open, onToggle, children }) {
-  return (
-    <div className="overflow-hidden border border-border">
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={onToggle}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle()}
-        className="flex cursor-pointer select-none items-center gap-2.5 bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/70"
-      >
-        <span className="flex-shrink-0 text-muted-foreground">{icon}</span>
-        <span className="flex-1 text-sm font-semibold text-foreground">{title}</span>
-        {required && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500">requerido</span>
-        )}
-        <div
-          className={cn(
-            'h-2 w-2 flex-shrink-0 rounded-full transition-colors',
-            filled ? 'bg-primary' : 'bg-muted-foreground/30'
-          )}
-        />
-        <ChevronDown
-          className={cn(
-            'h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200',
-            open && 'rotate-180'
-          )}
-        />
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateRows: open ? '1fr' : '0fr',
-          transition: 'grid-template-rows 200ms ease',
-        }}
-      >
-        <div className="overflow-hidden">
-          <div className="grid gap-3 border-t border-border/60 px-4 py-4">
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function RestrictedHistoriasPage() {
   return (
@@ -264,111 +58,30 @@ function RestrictedHistoriasPage() {
 export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
-  const queryClient = useQueryClient()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const prefillAppliedRef = useRef(false)
-  const formPanelRef = useRef(null)
-  const mascotaIdPrefill = searchParams.get('mascotaId') || ''
-  const citaIdPrefill = searchParams.get('citaId') || ''
+  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('resumen')
-  const [historiaDrawerOpen, setHistoriaDrawerOpen] = useState(false)
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const [pagina, setPagina] = useState(1)
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [bloqueada, setBloqueada] = useState('todos')
   const [fechaInicio, setFechaInicio] = useState(rangoMes.fechaInicio)
   const [fechaFin, setFechaFin] = useState(rangoMes.fechaFin)
-  const [petSearch, setPetSearch] = useState('')
-  const [medicationSearch, setMedicationSearch] = useState('')
-  const [antecedentesOpen, setAntecedentesOpen] = useState(false)
-  const [selectedPet, setSelectedPet] = useState(null)
-  const [selectedHistory, setSelectedHistory] = useState(null)
-  const [form, setForm] = useState(() => createDefaultForm())
-  const [formSections, setFormSections] = useState(new Set(['contexto', 'anamnesis']))
-  const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
-
-  const toggleFormSection = (id) =>
-    setFormSections((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
   const featureSet = new Set(
     Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
   )
   const puedeVerHistorias = featureSet.has('historias')
-  const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
-  const puedeConsultarInventarioClinico = featureSet.has('inventario')
 
   useEffect(() => {
     document.title = 'Historias clinicas | Bourgelat'
   }, [])
 
-  useEffect(() => {
-    if (!historiaDrawerOpen) return
-    const handler = (e) => { if (e.key === 'Escape') setHistoriaDrawerOpen(false) }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [historiaDrawerOpen])
-
-  useEffect(() => {
-    if (!rolPermitido || !puedeVerHistorias || !mascotaIdPrefill || prefillAppliedRef.current) {
-      return
-    }
-
-    let cancelled = false
-
-    const hydrateFromQuery = async () => {
-      try {
-        const data = await pacientesApi.obtenerMascota(mascotaIdPrefill)
-        if (cancelled) return
-
-        const mascota = data?.mascota
-        if (!mascota) {
-          return
-        }
-
-        prefillAppliedRef.current = true
-        setSelectedPet({
-          ...mascota,
-          Propietario: mascota.Propietario,
-        })
-        setSelectedHistory(null)
-        setPagina(1)
-        setForm((current) => ({
-          ...createDefaultForm(),
-          veterinarioId: current.veterinarioId,
-          citaId: citaIdPrefill || '',
-        }))
-        if (citaIdPrefill) {
-          setActiveTab('consulta')
-          setTimeout(() => {
-            formPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 150)
-        } else {
-          setActiveTab('historial')
-        }
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(getErrorMessage(error, 'No fue posible precargar el paciente desde la agenda.'))
-        }
-      }
-    }
-
-    hydrateFromQuery()
-
-    return () => {
-      cancelled = true
-    }
-  }, [rolPermitido, puedeVerHistorias, mascotaIdPrefill, citaIdPrefill])
-
   const historiasQuery = useQuery({
     queryKey: [
       'historias-listado',
-      selectedPet?.id || 'todas',
+      'todas',
       veterinarioId,
       bloqueada,
       fechaInicio,
@@ -377,13 +90,12 @@ export default function HistoriasPage() {
     ],
     queryFn: () =>
       historiasApi.obtenerHistorias({
-        mascotaId: selectedPet?.id,
         veterinarioId: veterinarioId !== 'todos' ? veterinarioId : undefined,
         bloqueada: bloqueada !== 'todos' ? bloqueada : undefined,
         fechaInicio,
         fechaFin,
         pagina,
-        limite: 12,
+        limite: 20,
       }),
     enabled: rolPermitido && puedeVerHistorias,
     placeholderData: (previousData) => previousData,
@@ -396,139 +108,10 @@ export default function HistoriasPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const mascotasQuery = useQuery({
-    queryKey: ['historias-mascotas-selector', petSearch.trim()],
-    queryFn: () =>
-      pacientesApi.obtenerMascotas({
-        buscar: petSearch.trim() || undefined,
-        pagina: 1,
-        limite: 8,
-      }),
-    enabled: rolPermitido && puedeVerHistorias,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const citasRelacionadasQuery = useQuery({
-    queryKey: ['historias-citas-relacionadas', selectedPet?.id || null],
-    queryFn: () =>
-      agendaApi.obtenerCitas({
-        mascotaId: selectedPet?.id,
-        pagina: 1,
-        limite: 12,
-      }),
-    enabled: rolPermitido && puedeVerHistorias && Boolean(selectedPet?.id),
-    placeholderData: (previousData) => previousData,
-  })
-
-  const antecedentesQuery = useQuery({
-    queryKey: ['historias-antecedentes', selectedPet?.id || null],
-    queryFn: () => antecedentesApi.obtenerAntecedentes(selectedPet.id),
-    enabled: rolPermitido && puedeVerHistorias && Boolean(selectedPet?.id),
-    placeholderData: (previousData) => previousData,
-  })
-
-  const catalogoMedicamentosQuery = useQuery({
-    queryKey: ['historias-catalogo-medicamentos', medicationSearchDeferred],
-    queryFn: () =>
-      inventarioApi.obtenerCatalogoMedicamentos({
-        buscar: medicationSearchDeferred || undefined,
-        limite: 6,
-      }),
-    enabled:
-      rolPermitido &&
-      puedeVerHistorias &&
-      puedeEditarHistorias &&
-      puedeConsultarInventarioClinico,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const crearHistoriaMutation = useMutation({
-    mutationFn: historiasApi.crearHistoria,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica registrada exitosamente')
-      setSelectedHistory(data?.historia || null)
-      setForm(createDefaultForm())
-      setHistoriaDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['historias-listado'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar la historia clinica.'))
-    },
-  })
-
-  const editarHistoriaMutation = useMutation({
-    mutationFn: ({ historiaId, payload }) => historiasApi.editarHistoria(historiaId, payload),
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica actualizada exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['historias-listado'] })
-      if (selectedHistory?.id) {
-        loadHistory(selectedHistory.id)
-      }
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible actualizar la historia clinica.'))
-    },
-  })
-
-  const bloquearHistoriaMutation = useMutation({
-    mutationFn: historiasApi.bloquearHistoria,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica bloqueada exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['historias-listado'] })
-      if (selectedHistory?.id) {
-        loadHistory(selectedHistory.id)
-      }
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clinica.'))
-    },
-  })
-
   const resumenHook = useHistoriasResumen({ enabled: rolPermitido && puedeVerHistorias })
 
   const veterinarios = veterinariosQuery.data?.usuarios || []
-  const mascotas = mascotasQuery.data?.mascotas || []
   const historias = historiasQuery.data?.historias || []
-  const citasRelacionadas = citasRelacionadasQuery.data?.citas || []
-  const medicamentosCatalogo = catalogoMedicamentosQuery.data?.productos || []
-
-  const citaVinculada = form.citaId
-    ? citasRelacionadas.find((c) => c.id === form.citaId) || null
-    : null
-
-  const sectionFilled = {
-    contexto: !!(form.veterinarioId) || !!form.citaId,
-    anamnesis: !!form.motivoConsulta.trim() || !!form.anamnesis.trim(),
-    examen: !!(form.peso || form.temperatura || form.frecuenciaCardiaca || form.frecuenciaRespiratoria || form.condicionCorporal || form.mucosas || form.estadoHidratacion || form.examenFisicoDetalle),
-    diagnostico: !!form.diagnostico.trim() || !!form.diagnosticoPresuntivo.trim() || !!form.tratamiento.trim(),
-    plan: !!form.indicaciones.trim() || !!form.proximaConsulta || form.medicamentos.some((m) => medicationHasAnyValue(m) && m.nombre.trim()),
-  }
-
-  const PROGRESS_STEPS = [
-    { id: 'contexto', label: 'Contexto' },
-    { id: 'anamnesis', label: 'Anamnesis' },
-    { id: 'examen', label: 'Examen' },
-    { id: 'diagnostico', label: 'Dx / Tto' },
-    { id: 'plan', label: 'Plan' },
-  ]
-
-  const preferredVetId =
-    veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
-    veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
-
-  useEffect(() => {
-    if (!citaIdPrefill || !selectedPet?.id) return
-
-    setForm((current) => (
-      current.citaId === citaIdPrefill
-        ? current
-        : {
-            ...current,
-            citaId: citaIdPrefill,
-          }
-    ))
-  }, [citaIdPrefill, selectedPet?.id])
 
   const historiasRows = historias.map((historia) => ({
     id: historia.id,
@@ -543,211 +126,8 @@ export default function HistoriasPage() {
     diagnostico: historia.diagnostico,
     proximaConsulta: historia.proximaConsulta ? formatLongDate(historia.proximaConsulta) : 'Sin control',
     bloqueada: historia.bloqueada,
-    raw: historia,
+    mascotaId: historia.mascota?.id || null,
   }))
-
-  const historiasBloqueadas = historias.filter((item) => item.bloqueada).length
-  const conControl = historias.filter((item) => item.proximaConsulta).length
-  const profesionalesActivos = new Set(
-    historias.map((item) => item.veterinario?.id).filter(Boolean)
-  ).size
-
-  const statusData = [
-    {
-      key: 'editables',
-      name: 'Editables',
-      value: historias.length - historiasBloqueadas,
-      color: '#0f766e',
-    },
-    { key: 'bloqueadas', name: 'Bloqueadas', value: historiasBloqueadas, color: '#f59e0b' },
-  ]
-
-  const loadHistory = async (historiaId) => {
-    try {
-      const data = await historiasApi.obtenerHistoria(historiaId)
-      const historia = data?.historia
-      setSelectedHistory(historia || null)
-      setForm(mapHistoriaToForm(historia))
-      setFormSections(new Set(['contexto', 'anamnesis', 'examen', 'diagnostico', 'plan']))
-      if (historia?.mascota && historia?.propietario) {
-        setSelectedPet({
-          ...historia.mascota,
-          Propietario: historia.propietario,
-        })
-      }
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'No fue posible cargar el detalle de la historia clinica.'))
-    }
-  }
-
-  const resetForm = () => {
-    setSelectedHistory(null)
-    setForm(createDefaultForm())
-    setFormSections(new Set(['contexto', 'anamnesis']))
-  }
-
-  const handleSelectPet = (pet) => {
-    setSelectedPet(pet)
-    setSelectedHistory(null)
-    setForm(createDefaultForm())
-    setPagina(1)
-    setAntecedentesOpen(true)
-    if (searchParams.get('mascotaId') || searchParams.get('citaId') || searchParams.get('propietarioId')) {
-      setSearchParams({})
-    }
-  }
-
-  const buildPayload = () => {
-    const medicamentos = form.medicamentos
-      .map((item) => ({
-        productoId: item.productoId || undefined,
-        nombre: item.nombre.trim(),
-        concentracion: item.concentracion.trim() || undefined,
-        dosis: item.dosis.trim() || undefined,
-        via: item.via || undefined,
-        frecuencia: item.frecuencia.trim() || undefined,
-        duracion: item.duracion.trim() || undefined,
-        cantidad: normalizeNumber(item.cantidad),
-        indicacion: item.indicacion.trim() || undefined,
-      }))
-      .filter((item) => item.nombre)
-
-    return {
-      motivoConsulta: form.motivoConsulta.trim(),
-      anamnesis: form.anamnesis.trim() || undefined,
-      peso: normalizeNumber(form.peso),
-      temperatura: normalizeNumber(form.temperatura),
-      frecuenciaCardiaca: normalizeNumber(form.frecuenciaCardiaca),
-      frecuenciaRespiratoria: normalizeNumber(form.frecuenciaRespiratoria),
-      condicionCorporal: normalizeNumber(form.condicionCorporal),
-      mucosas: form.mucosas.trim() || undefined,
-      estadoHidratacion: form.estadoHidratacion || undefined,
-      examenFisicoDetalle: form.examenFisicoDetalle.trim() || undefined,
-      diagnostico: form.diagnostico.trim(),
-      diagnosticoPresuntivo: form.diagnosticoPresuntivo.trim() || undefined,
-      tratamiento: form.tratamiento.trim(),
-      medicamentos,
-      indicaciones: form.indicaciones.trim() || undefined,
-      proximaConsulta: form.proximaConsulta || undefined,
-      citaId: form.citaId || undefined,
-      mascotaId: selectedPet?.id,
-      propietarioId: selectedPet?.Propietario?.id,
-      veterinarioId: form.veterinarioId || preferredVetId,
-    }
-  }
-
-  const updateMedicationDraft = (draftId, field, value) => {
-    setForm((current) => ({
-      ...current,
-      medicamentos: current.medicamentos.map((item) =>
-        item.id === draftId ? { ...item, [field]: value } : item
-      ),
-    }))
-  }
-
-  const addMedicationDraft = () => {
-    setForm((current) => ({
-      ...current,
-      medicamentos: [...current.medicamentos, createMedicationDraft()],
-    }))
-  }
-
-  const removeMedicationDraft = (draftId) => {
-    setForm((current) => {
-      const nextItems = current.medicamentos.filter((item) => item.id !== draftId)
-
-      return {
-        ...current,
-        medicamentos: nextItems.length > 0 ? nextItems : [createMedicationDraft()],
-      }
-    })
-  }
-
-  const addMedicationFromInventory = (producto) => {
-    const draft = createMedicationDraft({
-      productoId: producto.id,
-      fuente: 'inventario',
-      nombre: producto.nombre || '',
-      concentracion: producto.presentacionReferencia || '',
-      cantidad: '1',
-      indicacion: producto.requiereFormula
-        ? 'Dispensar segun indicacion medica registrada en la historia.'
-        : '',
-    })
-
-    setForm((current) => {
-      const firstEmptyIndex = current.medicamentos.findIndex(
-        (item) => !medicationHasAnyValue(item)
-      )
-
-      if (firstEmptyIndex >= 0) {
-        return {
-          ...current,
-          medicamentos: current.medicamentos.map((item, index) =>
-            index === firstEmptyIndex ? draft : item
-          ),
-        }
-      }
-
-      return {
-        ...current,
-        medicamentos: [...current.medicamentos, draft],
-      }
-    })
-  }
-
-  const applyMedicationSuggestion = (draftId, field, value) => {
-    updateMedicationDraft(draftId, field, value)
-  }
-
-  const medicationSummaryItems = form.medicamentos
-    .filter((item) => medicationHasAnyValue(item) && item.nombre.trim())
-    .map((item) => ({
-      id: item.id,
-      title: item.nombre.trim(),
-      meta: [item.concentracion, item.dosis, item.via, item.frecuencia, item.duracion]
-        .filter(Boolean)
-        .join(' | '),
-      source: item.fuente === 'inventario' ? 'Catalogo interno' : '',
-      quantity:
-        item.cantidad !== '' && item.cantidad !== null && item.cantidad !== undefined
-          ? `Cantidad formulada: ${item.cantidad}`
-          : '',
-      instructions: item.indicacion.trim(),
-    }))
-
-  const handleSubmit = (event) => {
-    event.preventDefault()
-
-    if (!selectedPet?.id || !selectedPet?.Propietario?.id) {
-      toast.error('Selecciona primero un paciente activo para abrir la historia clinica.')
-      return
-    }
-
-    const payload = buildPayload()
-
-    const medicamentoIncompleto = form.medicamentos.find(
-      (item) => medicationHasAnyValue(item) && !item.nombre.trim()
-    )
-
-    if (medicamentoIncompleto) {
-      toast.error('Cada medicamento diligenciado debe tener al menos el nombre del producto.')
-      return
-    }
-
-    if (!payload.motivoConsulta || !payload.diagnostico || !payload.tratamiento || !payload.veterinarioId) {
-      toast.error('Completa motivo de consulta, diagnostico, tratamiento y profesional responsable.')
-      setFormSections(new Set(['contexto', 'anamnesis', 'diagnostico']))
-      return
-    }
-
-    if (selectedHistory?.id) {
-      editarHistoriaMutation.mutate({ historiaId: selectedHistory.id, payload })
-      return
-    }
-
-    crearHistoriaMutation.mutate(payload)
-  }
 
   if (!rolPermitido) {
     return <RestrictedHistoriasPage />
@@ -757,29 +137,13 @@ export default function HistoriasPage() {
     <AdminShell
       currentKey="historias"
       title="Historias clinicas"
-      description="Modulo clinico para documentar consultas, examen fisico, diagnostico y plan terapeutico con trazabilidad real sobre el paciente."
+      description="Vista administrativa de consultas documentadas. Para registrar o editar una historia, abre el historial del paciente."
       headerBadge={
         <StatusPill tone="border-rose-200 bg-rose-50 text-rose-700">
           Consulta documentada
         </StatusPill>
       }
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/pacientes"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Abrir pacientes
-          </Link>
-          <Link
-            to="/agenda"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Abrir agenda
-          </Link>
-        </div>
-      }
-      asideNote="Este modulo sirve para consulta veterinaria real: deja constancia de lo evaluado, el diagnostico, el tratamiento y el control futuro."
+      asideNote="Para crear o editar una historia clínica ve al historial del paciente desde la sección Pacientes o desde la Agenda al completar una cita."
     >
       {!puedeVerHistorias ? (
         <EmptyModuleState
@@ -789,7 +153,7 @@ export default function HistoriasPage() {
         />
       ) : (
         <div className="space-y-0">
-          {/* Barra de tabs */}
+          {/* Tabs */}
           <div className="flex gap-0 border-b border-border">
             {TABS.map((tab) => (
               <button
@@ -809,1205 +173,177 @@ export default function HistoriasPage() {
 
           {/* Tab: Resumen */}
           {activeTab === 'resumen' && (
-          <div className="space-y-5 pt-5">
-          <div className="grid gap-4 xl:grid-cols-4">
-            <KpiCard
-              icon={FileText}
-              label="Historias del mes"
-              value={formatNumber(resumenHook.totalHistorias)}
-              helper="Total de consultas documentadas en el mes actual."
-              tone="text-cyan-700"
-            />
-            <KpiCard
-              icon={Lock}
-              label="Bloqueadas"
-              value={formatNumber(resumenHook.historiasBloqueadas)}
-              helper="Consultas que ya no admiten modificaciones."
-              tone="text-amber-700"
-            />
-            <KpiCard
-              icon={ShieldCheck}
-              label="Con control"
-              value={formatNumber(resumenHook.conControl)}
-              helper="Historias del mes con proxima consulta programada."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={Stethoscope}
-              label="Profesionales"
-              value={formatNumber(resumenHook.profesionalesActivos)}
-              helper="Medicos con consultas registradas este mes."
-              tone="text-violet-700"
-            />
-          </div>
+            <div className="space-y-5 pt-5">
+              <div className="grid gap-4 xl:grid-cols-4">
+                <KpiCard
+                  icon={FileText}
+                  label="Historias del mes"
+                  value={formatNumber(resumenHook.totalHistorias)}
+                  helper="Total de consultas documentadas en el mes actual."
+                  tone="text-cyan-700"
+                />
+                <KpiCard
+                  icon={Lock}
+                  label="Bloqueadas"
+                  value={formatNumber(resumenHook.historiasBloqueadas)}
+                  helper="Consultas que ya no admiten modificaciones."
+                  tone="text-amber-700"
+                />
+                <KpiCard
+                  icon={ShieldCheck}
+                  label="Con control"
+                  value={formatNumber(resumenHook.conControl)}
+                  helper="Historias del mes con proxima consulta programada."
+                  tone="text-emerald-700"
+                />
+                <KpiCard
+                  icon={Stethoscope}
+                  label="Profesionales"
+                  value={formatNumber(resumenHook.profesionalesActivos)}
+                  helper="Medicos con consultas registradas este mes."
+                  tone="text-violet-700"
+                />
+              </div>
 
-          <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
-            <DonutCard
-              title="Estado de documentacion"
-              subtitle="Balance entre historias editables y bloqueadas en el mes actual."
-              data={resumenHook.statusData}
-              centerLabel="Historias"
-              centerValue={formatNumber(resumenHook.totalHistorias)}
-              formatter={formatNumber}
-              emptyMessage="Aun no hay historias para mostrar."
-            />
-          </div>
-          </div>
+              <div className="grid gap-5 2xl:grid-cols-[420px_minmax(0,1fr)]">
+                <DonutCard
+                  title="Estado de documentacion"
+                  subtitle="Balance entre historias editables y bloqueadas en el mes actual."
+                  data={resumenHook.statusData}
+                  centerLabel="Historias"
+                  centerValue={formatNumber(resumenHook.totalHistorias)}
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay historias para mostrar."
+                />
+              </div>
+            </div>
           )}
 
           {/* Tab: Historial */}
           {activeTab === 'historial' && (
-          <div className="space-y-5 pt-5">
-          {historiasQuery.isError || veterinariosQuery.isError ? (
-            <div className="grid gap-4">
-              {historiasQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-                  {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
-                </div>
-              ) : null}
-              {veterinariosQuery.isError ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-            <DashboardPanel
-              title="Listado clinico"
-              subtitle="Consulta recientes por paciente, profesional, periodo y estado de bloqueo."
-              action={
-                <div className="flex flex-wrap gap-3">
-                  <input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(event) => {
-                      setFechaInicio(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(event) => {
-                      setFechaFin(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <select
-                    value={veterinarioId}
-                    onChange={(event) => {
-                      setVeterinarioId(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  >
-                    <option value="todos">Todos los medicos</option>
-                    {veterinarios.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={bloqueada}
-                    onChange={(event) => {
-                      setBloqueada(event.target.value)
-                      setPagina(1)
-                    }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  >
-                    {BLOCK_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              }
-            >
-              <DataTable
-                title="Historias"
-                subtitle="Vista administrativa y clinica de las consultas documentadas."
-                rows={historiasRows}
-                columns={[
-                  { key: 'fecha', label: 'Fecha' },
-                  { key: 'paciente', label: 'Paciente' },
-                  { key: 'tutor', label: 'Tutor' },
-                  { key: 'profesional', label: 'Profesional' },
-                  { key: 'proximaConsulta', label: 'Control' },
-                  {
-                    key: 'bloqueada',
-                    label: 'Estado',
-                    render: (row) => (
-                      <StatusPill tone={buildHistoryStatusTone(row.bloqueada)}>
-                        {row.bloqueada ? 'Bloqueada' : 'Editable'}
-                      </StatusPill>
-                    ),
-                  },
-                  {
-                    key: 'accion',
-                    label: 'Detalle',
-                    render: (row) => (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          loadHistory(row.id)
-                          setHistoriaDrawerOpen(true)
-                        }}
-                        className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                      >
-                        Ver
-                      </button>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay historias para este filtro"
-                emptyBody="Ajusta el periodo, el profesional o el paciente para encontrar una consulta existente."
-                action={
-                  selectedPet ? (
-                    <StatusPill tone="border-cyan-200 bg-cyan-50 text-cyan-700">
-                      {selectedPet.nombre}
-                    </StatusPill>
-                  ) : null
-                }
-              />
-
-              {(historiasQuery.data?.paginas || 1) > 1 ? (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Pagina {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPagina((current) => Math.max(current - 1, 1))}
-                      disabled={(historiasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Anterior
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPagina((current) =>
-                          Math.min(current + 1, historiasQuery.data?.paginas || 1)
-                        )
-                      }
-                      disabled={(historiasQuery.data?.paginaActual || 1) >= (historiasQuery.data?.paginas || 1)}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </DashboardPanel>
-          </div>
-          )}
-
-          {/* Tab: Nueva consulta */}
-          {activeTab === 'consulta' && (
-          <div className="space-y-5 pt-5">
-          <div className="grid gap-5 xl:grid-cols-[480px_minmax(0,1fr)]">
-            <DashboardPanel
-              title="Paciente para consulta"
-              subtitle="Selecciona el paciente activo antes de registrar o revisar la evolucion."
-              action={<Search className="h-4 w-4 text-cyan-700" />}
-            >
-              <input
-                type="text"
-                value={petSearch}
-                onChange={(event) => setPetSearch(event.target.value)}
-                placeholder="Buscar por nombre o microchip"
-                className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-              />
-
-              <div className="mt-4 space-y-2">
-                {selectedPet ? (
-                  <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
-                    <p className="font-semibold text-slate-950">{selectedPet.nombre}</p>
-                    <p className="mt-1">
-                      {selectedPet.Propietario?.nombre || 'Sin tutor principal'} · {selectedPet.especie}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPet(null)
-                        resetForm()
-                      }}
-                      className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-                    >
-                      Cambiar paciente
-                    </button>
-                  </div>
-                ) : null}
-
-                {!selectedPet &&
-                  mascotas.map((pet) => (
-                    <button
-                      key={pet.id}
-                      type="button"
-                      onClick={() => handleSelectPet(pet)}
-                      className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">{pet.nombre}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {pet.Propietario?.nombre || 'Sin tutor principal'}
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Seleccionar
-                      </span>
-                    </button>
-                  ))}
-              </div>
-
-              {selectedPet ? (
-                <div className="mt-4 border border-border">
-                  <button
-                    type="button"
-                    onClick={() => setAntecedentesOpen((v) => !v)}
-                    className="flex w-full items-center justify-between bg-muted px-4 py-3 text-left transition hover:bg-muted/80"
-                  >
-                    <div className="flex items-center gap-2">
-                      <HeartPulse className="h-4 w-4 text-rose-600" />
-                      <span className="text-sm font-semibold text-foreground">Antecedentes</span>
-                      {antecedentesQuery.data?.antecedentes?.alergias?.length > 0 ? (
-                        <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                          {antecedentesQuery.data.antecedentes.alergias.length} alerg.
-                        </span>
-                      ) : null}
+            <div className="space-y-5 pt-5">
+              {historiasQuery.isError || veterinariosQuery.isError ? (
+                <div className="grid gap-4">
+                  {historiasQuery.isError && (
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                      {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
                     </div>
-                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition ${antecedentesOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {antecedentesOpen ? (
-                    <div className="px-4 py-3">
-                      {antecedentesQuery.isPending ? (
-                        <p className="text-sm text-muted-foreground">Cargando antecedentes...</p>
-                      ) : antecedentesQuery.isError ? (
-                        <p className="text-sm text-rose-600">No fue posible cargar los antecedentes.</p>
-                      ) : (
-                        <AntecedentesResumen
-                          antecedentes={antecedentesQuery.data?.antecedentes}
-                          mascotaId={selectedPet.id}
-                        />
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {selectedHistory ? (
-                <div className="mt-5 border border-border bg-muted px-3 py-3 text-sm leading-7 text-muted-foreground">
-                  <p className="font-semibold text-slate-950">Detalle cargado</p>
-                  <p className="mt-1">{selectedHistory.veterinario?.nombre || 'Sin profesional'}</p>
-                  <p>{formatClinicalDateTime(selectedHistory.fechaConsulta)}</p>
-                  <div className="mt-3">
-                    <StatusPill tone={buildHistoryStatusTone(selectedHistory.bloqueada)}>
-                      {selectedHistory.bloqueada ? 'Bloqueada' : 'Editable'}
-                    </StatusPill>
-                  </div>
-                </div>
-              ) : null}
-            </DashboardPanel>
-
-            <DashboardPanel
-              title="Consulta clinica"
-              subtitle="Registra o revisa la historia clinica del paciente."
-            >
-              {!selectedPet ? (
-                <p className="text-sm text-muted-foreground">Selecciona primero un paciente para abrir la consulta.</p>
-              ) : !puedeEditarHistorias ? (
-                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                  Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <button
-                    type="button"
-                    onClick={() => { resetForm(); setHistoriaDrawerOpen(true) }}
-                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nueva historia clinica
-                  </button>
-                  {selectedHistory ? (
-                    <div className="border border-border bg-muted px-4 py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{selectedHistory.motivoConsulta || 'Historia cargada'}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{selectedHistory.veterinario?.nombre || 'Sin profesional'} · {formatClinicalDateTime(selectedHistory.fechaConsulta)}</p>
-                        </div>
-                        <StatusPill tone={buildHistoryStatusTone(selectedHistory.bloqueada)}>
-                          {selectedHistory.bloqueada ? 'Bloqueada' : 'Editable'}
-                        </StatusPill>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setHistoriaDrawerOpen(true)}
-                        className="mt-3 text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                      >
-                        Abrir para editar →
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-              {/* form moved to drawer — see below */}
-              {false && (
-                <form className="grid gap-4" onSubmit={handleSubmit}>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <select
-                      value={form.veterinarioId || preferredVetId}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, veterinarioId: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    >
-                      <option value="">Selecciona el profesional</option>
-                      {veterinarios.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={form.citaId}
-                      onChange={(event) => setForm((current) => ({ ...current, citaId: event.target.value }))}
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    >
-                      <option value="">Sin cita relacionada</option>
-                      {citasRelacionadas.map((cita) => (
-                        <option key={cita.id} value={cita.id}>
-                          {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <textarea
-                    value={form.motivoConsulta}
-                    onChange={(event) => setForm((current) => ({ ...current, motivoConsulta: event.target.value }))}
-                    placeholder="Motivo principal de consulta"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <textarea
-                    value={form.anamnesis}
-                    onChange={(event) => setForm((current) => ({ ...current, anamnesis: event.target.value }))}
-                    placeholder="Anamnesis y relato del tutor"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-
-                  <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                    Registra signos vitales y examen basico con nombres completos para evitar ambiguedades:
-                    frecuencia cardiaca en latidos por minuto, frecuencia respiratoria en respiraciones por minuto y condicion corporal en escala de 1 a 5.
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={form.peso}
-                      onChange={(event) => setForm((current) => ({ ...current, peso: event.target.value }))}
-                      placeholder="Peso"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="number"
-                      min="30"
-                      max="45"
-                      step="0.1"
-                      value={form.temperatura}
-                      onChange={(event) => setForm((current) => ({ ...current, temperatura: event.target.value }))}
-                      placeholder="Temperatura °C"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.frecuenciaCardiaca}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, frecuenciaCardiaca: event.target.value }))
-                      }
-                      placeholder="Frecuencia cardiaca (lpm)"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.frecuenciaRespiratoria}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          frecuenciaRespiratoria: event.target.value,
-                        }))
-                      }
-                      placeholder="Frecuencia respiratoria (rpm)"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={form.condicionCorporal}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, condicionCorporal: event.target.value }))
-                      }
-                      placeholder="Condicion corporal (1-5)"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                    <input
-                      type="text"
-                      value={form.mucosas}
-                      onChange={(event) => setForm((current) => ({ ...current, mucosas: event.target.value }))}
-                      placeholder="Mucosas"
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    />
-                  </div>
-
-                  <select
-                    value={form.estadoHidratacion}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, estadoHidratacion: event.target.value }))
-                    }
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  >
-                    {HYDRATION_OPTIONS.map((option) => (
-                      <option key={option.value || 'default'} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <textarea
-                    value={form.examenFisicoDetalle}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, examenFisicoDetalle: event.target.value }))
-                    }
-                    placeholder="Examen fisico y hallazgos relevantes"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <textarea
-                    value={form.diagnostico}
-                    onChange={(event) => setForm((current) => ({ ...current, diagnostico: event.target.value }))}
-                    placeholder="Diagnostico principal"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <textarea
-                    value={form.diagnosticoPresuntivo}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, diagnosticoPresuntivo: event.target.value }))
-                    }
-                    placeholder="Diagnostico presuntivo o diferencial"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <textarea
-                    value={form.tratamiento}
-                    onChange={(event) => setForm((current) => ({ ...current, tratamiento: event.target.value }))}
-                    placeholder="Tratamiento instaurado"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <div className="grid gap-4 border border-border bg-muted px-4 py-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">Plan farmacologico</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                          Registra la formulacion como lo hace un software clinico serio: producto,
-                          concentracion, dosis, via, frecuencia, duracion, cantidad dispensada e
-                          instrucciones claras para el tutor.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={addMedicationDraft}
-                        className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Agregar medicamento
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4">
-                      {puedeConsultarInventarioClinico ? (
-                        <div className="grid gap-3 border border-dashed border-border bg-muted px-4 py-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-950">
-                                Traer desde inventario clinico
-                              </p>
-                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                Busca medicamentos con stock disponible y llévalos a la formulación
-                                sin volver a digitarlos.
-                              </p>
-                            </div>
-                            <label className="relative min-w-[260px]">
-                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <input
-                                type="text"
-                                value={medicationSearch}
-                                onChange={(event) => setMedicationSearch(event.target.value)}
-                                placeholder="Buscar medicamento, laboratorio o presentacion"
-                                className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                          </div>
-
-                          <div className="grid gap-3 xl:grid-cols-2">
-                            {medicamentosCatalogo.length ? (
-                              medicamentosCatalogo.map((producto) => (
-                                <div
-                                  key={producto.id}
-                                  className="flex items-start justify-between gap-3 border border-border bg-card px-4 py-4"
-                                >
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-950">
-                                      {producto.nombre}
-                                    </p>
-                                    {producto.presentacionReferencia ? (
-                                      <p className="mt-1 text-sm text-muted-foreground">
-                                        {producto.presentacionReferencia}
-                                      </p>
-                                    ) : null}
-                                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-muted-foreground">
-                                      Stock {formatNumber(producto.stock)} disponible
-                                    </p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => addMedicationFromInventory(producto)}
-                                    className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                    Usar
-                                  </button>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="border border-border bg-card px-4 py-5 text-sm leading-7 text-muted-foreground xl:col-span-2">
-                                No hay medicamentos disponibles para esta búsqueda dentro del
-                                inventario activo.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {form.medicamentos.map((item, index) => (
-                        <div key={item.id} className="grid gap-4 border border-border bg-card px-4 py-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">
-                                Medicamento {index + 1}
-                              </p>
-                              {item.fuente === 'inventario' ? (
-                                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-700">
-                                  Vinculado a inventario interno
-                                </p>
-                              ) : null}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeMedicationDraft(item.id)}
-                              className="text-sm font-semibold text-rose-700 hover:text-rose-800"
-                            >
-                              Quitar
-                            </button>
-                          </div>
-
-                          <div className="grid gap-4 xl:grid-cols-2">
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Medicamento
-                              </span>
-                              <input
-                                type="text"
-                                value={item.nombre}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'nombre', event.target.value)
-                                }
-                                placeholder="Ej. Meloxicam"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Concentracion o presentacion
-                              </span>
-                              <input
-                                type="text"
-                                value={item.concentracion}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'concentracion', event.target.value)
-                                }
-                                placeholder="Ej. Suspension oral 1.5 mg/ml"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Dosis
-                              </span>
-                              <input
-                                type="text"
-                                value={item.dosis}
-                                onChange={(event) => updateMedicationDraft(item.id, 'dosis', event.target.value)}
-                                placeholder="Ej. 0.1 mg/kg"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Via
-                              </span>
-                              <select
-                                value={item.via}
-                                onChange={(event) => updateMedicationDraft(item.id, 'via', event.target.value)}
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              >
-                                {MEDICATION_ROUTE_OPTIONS.map((option) => (
-                                  <option key={option.value || 'default'} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Frecuencia
-                              </span>
-                              <input
-                                type="text"
-                                value={item.frecuencia}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'frecuencia', event.target.value)
-                                }
-                                placeholder="Ej. Cada 24 horas"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Duracion
-                              </span>
-                              <input
-                                type="text"
-                                value={item.duracion}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'duracion', event.target.value)
-                                }
-                                placeholder="Ej. 5 dias"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                          </div>
-
-                          <div className="grid gap-3 xl:grid-cols-2">
-                            <div className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Atajos de frecuencia
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {MEDICATION_FREQUENCY_SUGGESTIONS.map((option) => (
-                                  <button
-                                    key={option}
-                                    type="button"
-                                    onClick={() => applyMedicationSuggestion(item.id, 'frecuencia', option)}
-                                    className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                                      item.frecuencia === option
-                                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                                        : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                                    }`}
-                                  >
-                                    {option}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Atajos de duracion
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {MEDICATION_DURATION_SUGGESTIONS.map((option) => (
-                                  <button
-                                    key={option}
-                                    type="button"
-                                    onClick={() => applyMedicationSuggestion(item.id, 'duracion', option)}
-                                    className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                                      item.duracion === option
-                                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
-                                        : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                                    }`}
-                                  >
-                                    {option}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)]">
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Cantidad dispensada
-                              </span>
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.cantidad}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'cantidad', event.target.value)
-                                }
-                                placeholder="Ej. 10"
-                                className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                            <label className="grid gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Instrucciones
-                              </span>
-                              <textarea
-                                value={item.indicacion}
-                                onChange={(event) =>
-                                  updateMedicationDraft(item.id, 'indicacion', event.target.value)
-                                }
-                                placeholder="Ej. Administrar despues de comer y completar el esquema indicado."
-                                className="min-h-[96px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {medicationSummaryItems.length > 0 ? (
-                      <div className="grid gap-3 border border-dashed border-border bg-muted px-4 py-4">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">
-                            Resumen de formulacion
-                          </p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                            Asi se vera la receta clinica que estas dejando documentada para el
-                            seguimiento del paciente.
-                          </p>
-                        </div>
-                        <div className="grid gap-3">
-                          {medicationSummaryItems.map((item) => (
-                            <div
-                              key={item.id}
-                              className="border border-border bg-card px-4 py-4 text-sm leading-7 text-foreground"
-                            >
-                              <p className="font-semibold text-slate-950">{item.title}</p>
-                              {item.source ? (
-                                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-700">
-                                  {item.source}
-                                </p>
-                              ) : null}
-                              {item.meta ? <p className="mt-1">{item.meta}</p> : null}
-                              {item.quantity ? <p>{item.quantity}</p> : null}
-                              {item.instructions ? <p>{item.instructions}</p> : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                  <textarea
-                    value={form.indicaciones}
-                    onChange={(event) => setForm((current) => ({ ...current, indicaciones: event.target.value }))}
-                    placeholder="Indicaciones para el tutor"
-                    className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-                  <input
-                    type="date"
-                    value={form.proximaConsulta}
-                    onChange={(event) => setForm((current) => ({ ...current, proximaConsulta: event.target.value }))}
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  />
-
-                  {selectedHistory?.bloqueada ? (
+                  )}
+                  {veterinariosQuery.isError && (
                     <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                      Esta historia ya esta bloqueada. Puedes consultarla, pero no volver a editarla.
+                      {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
                     </div>
-                  ) : null}
+                  )}
+                </div>
+              ) : null}
 
+              <DashboardPanel
+                title="Listado clinico"
+                subtitle="Consulta recientes por profesional, periodo y estado de bloqueo. Haz clic en Ver para abrir el historial completo del paciente."
+                action={
                   <div className="flex flex-wrap gap-3">
-                    <button
-                      type="submit"
-                      disabled={
-                        crearHistoriaMutation.isPending ||
-                        editarHistoriaMutation.isPending ||
-                        !selectedPet ||
-                        selectedHistory?.bloqueada
-                      }
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    <input
+                      type="date"
+                      value={fechaInicio}
+                      onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                    />
+                    <input
+                      type="date"
+                      value={fechaFin}
+                      onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                    />
+                    <select
+                      value={veterinarioId}
+                      onChange={(e) => { setVeterinarioId(e.target.value); setPagina(1) }}
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     >
-                      {selectedHistory?.id
-                        ? editarHistoriaMutation.isPending
-                          ? 'Guardando...'
-                          : 'Guardar cambios'
-                        : crearHistoriaMutation.isPending
-                          ? 'Guardando...'
-                          : 'Registrar historia'}
-                    </button>
+                      <option value="todos">Todos los medicos</option>
+                      {veterinarios.map((v) => (
+                        <option key={v.id} value={v.id}>{v.nombre}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={bloqueada}
+                      onChange={(e) => { setBloqueada(e.target.value); setPagina(1) }}
+                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                    >
+                      {BLOCK_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                }
+              >
+                <DataTable
+                  title="Historias"
+                  subtitle="Vista administrativa de las consultas documentadas."
+                  rows={historiasRows}
+                  columns={[
+                    { key: 'fecha', label: 'Fecha' },
+                    { key: 'paciente', label: 'Paciente' },
+                    { key: 'tutor', label: 'Tutor' },
+                    { key: 'profesional', label: 'Profesional' },
+                    { key: 'proximaConsulta', label: 'Control' },
+                    {
+                      key: 'bloqueada',
+                      label: 'Estado',
+                      render: (row) => (
+                        <StatusPill tone={buildHistoryStatusTone(row.bloqueada)}>
+                          {row.bloqueada ? 'Bloqueada' : 'Editable'}
+                        </StatusPill>
+                      ),
+                    },
+                    {
+                      key: 'accion',
+                      label: 'Historial',
+                      render: (row) => (
+                        <button
+                          type="button"
+                          onClick={() => row.mascotaId && navigate(`/pacientes/${row.mascotaId}/historial`)}
+                          disabled={!row.mascotaId}
+                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Ver
+                        </button>
+                      ),
+                    },
+                  ]}
+                  emptyTitle="No hay historias para este filtro"
+                  emptyBody="Ajusta el periodo, el profesional o el estado para encontrar una consulta existente."
+                />
 
-                    {selectedHistory?.id ? (
+                {(historiasQuery.data?.paginas || 1) > 1 && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Pagina {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
+                    </p>
+                    <div className="flex gap-3">
                       <button
                         type="button"
-                        onClick={() => bloquearHistoriaMutation.mutate(selectedHistory.id)}
-                        disabled={bloquearHistoriaMutation.isPending || selectedHistory.bloqueada}
-                        className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => setPagina((p) => Math.max(p - 1, 1))}
+                        disabled={(historiasQuery.data?.paginaActual || 1) <= 1}
+                        className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
+                        Anterior
                       </button>
-                    ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setPagina((p) => Math.min(p + 1, historiasQuery.data?.paginas || 1))}
+                        disabled={(historiasQuery.data?.paginaActual || 1) >= (historiasQuery.data?.paginas || 1)}
+                        className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
                   </div>
-                </form>
-              )}
-            </DashboardPanel>
-          </div>
-          </div>
+                )}
+              </DashboardPanel>
+            </div>
           )}
-
         </div>
       )}
-
-      {/* ── Drawer: Historia clínica ── */}
-      <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${historiaDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setHistoriaDrawerOpen(false)}
-        aria-hidden="true"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={selectedHistory ? 'Editar historia clinica' : 'Nueva historia clinica'}
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${historiaDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        {/* Header */}
-        <div className="border-b border-border px-5 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {selectedHistory ? 'Editar historia clínica' : 'Nueva historia clínica'}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {selectedPet ? `${selectedPet.nombre} · ${selectedPet.especie}` : 'Selecciona un paciente primero'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {!selectedHistory && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                >
-                  Limpiar
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setHistoriaDrawerOpen(false)}
-                aria-label="Cerrar"
-                className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Indicador de progreso */}
-          <div className="mt-3 flex items-center gap-3">
-            {PROGRESS_STEPS.map((step) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setFormSections((prev) => new Set([...prev, step.id]))}
-                className="flex items-center gap-1.5 group"
-                title={`Ir a ${step.label}`}
-              >
-                <div className={cn(
-                  'h-2 w-2 rounded-full transition-colors',
-                  sectionFilled[step.id] ? 'bg-primary' : 'bg-muted-foreground/25'
-                )} />
-                <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors hidden sm:inline">
-                  {step.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Banner puente operativo */}
-        {citaIdPrefill && !selectedHistory && (
-          <div className="flex items-center gap-2 border-b border-primary/20 bg-primary/10 px-5 py-2">
-            <Link2 className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
-            <p className="text-xs font-semibold text-primary">
-              Desde agenda · Cita vinculada automáticamente
-            </p>
-          </div>
-        )}
-
-        {/* Body scrollable */}
-        <div ref={formPanelRef} className="flex-1 overflow-y-auto px-5 py-5">
-          {!puedeEditarHistorias ? (
-            <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
-            </div>
-          ) : (
-            <form id="historia-drawer-form" className="space-y-2" onSubmit={handleSubmit}>
-
-              {/* ── SECCIÓN 1: Contexto ── */}
-              <FormSection
-                icon={<CalendarCheck className="h-4 w-4" />}
-                title="Contexto"
-                filled={sectionFilled.contexto}
-                required
-                open={formSections.has('contexto')}
-                onToggle={() => toggleFormSection('contexto')}
-              >
-                <select
-                  value={form.veterinarioId || preferredVetId}
-                  onChange={(e) => setForm((c) => ({ ...c, veterinarioId: e.target.value }))}
-                  className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                >
-                  <option value="">Selecciona el profesional ⭐</option>
-                  {veterinarios.map((item) => (
-                    <option key={item.id} value={item.id}>{item.nombre}</option>
-                  ))}
-                </select>
-
-                {/* Cita vinculada */}
-                {citaVinculada ? (
-                  <div className="flex items-start justify-between gap-3 border border-primary/30 bg-primary/8 px-3 py-3">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <Link2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-wider text-primary">Cita vinculada</p>
-                        <p className="mt-0.5 text-sm font-semibold text-foreground">
-                          {citaVinculada.fecha} · {citaVinculada.horaInicio?.slice(0, 5)}
-                          {citaVinculada.horaFin ? `–${citaVinculada.horaFin.slice(0, 5)}` : ''}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {citaVinculada.motivo || citaVinculada.tipoCita}
-                          {citaVinculada.veterinario?.nombre ? ` · ${citaVinculada.veterinario.nombre}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setForm((c) => ({ ...c, citaId: '' }))}
-                      className="flex-shrink-0 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
-                    >
-                      Desvincular
-                    </button>
-                  </div>
-                ) : (
-                  <select
-                    value={form.citaId}
-                    onChange={(e) => setForm((c) => ({ ...c, citaId: e.target.value }))}
-                    className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  >
-                    <option value="">Sin cita relacionada</option>
-                    {citasRelacionadas.map((cita) => (
-                      <option key={cita.id} value={cita.id}>
-                        {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </FormSection>
-
-              {/* ── SECCIÓN 2: Anamnesis ── */}
-              <FormSection
-                icon={<MessageSquare className="h-4 w-4" />}
-                title="Anamnesis"
-                filled={sectionFilled.anamnesis}
-                required
-                open={formSections.has('anamnesis')}
-                onToggle={() => toggleFormSection('anamnesis')}
-              >
-                <textarea
-                  value={form.motivoConsulta}
-                  onChange={(e) => setForm((c) => ({ ...c, motivoConsulta: e.target.value }))}
-                  placeholder="Motivo principal de consulta ⭐"
-                  className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                />
-                <textarea
-                  value={form.anamnesis}
-                  onChange={(e) => setForm((c) => ({ ...c, anamnesis: e.target.value }))}
-                  placeholder="Anamnesis y relato del tutor"
-                  className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                />
-              </FormSection>
-
-              {/* ── SECCIÓN 3: Examen físico ── */}
-              <FormSection
-                icon={<Activity className="h-4 w-4" />}
-                title="Examen físico"
-                filled={sectionFilled.examen}
-                open={formSections.has('examen')}
-                onToggle={() => toggleFormSection('examen')}
-              >
-                <p className="text-xs text-muted-foreground">FC (lpm) · FR (rpm) · Condición corporal 1–5</p>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <input type="number" min="0" step="0.1" value={form.peso} onChange={(e) => setForm((c) => ({ ...c, peso: e.target.value }))} placeholder="Peso (kg)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                  <input type="number" min="30" max="45" step="0.1" value={form.temperatura} onChange={(e) => setForm((c) => ({ ...c, temperatura: e.target.value }))} placeholder="Temp. °C" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                  <input type="number" min="0" value={form.frecuenciaCardiaca} onChange={(e) => setForm((c) => ({ ...c, frecuenciaCardiaca: e.target.value }))} placeholder="FC (lpm)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                  <input type="number" min="0" value={form.frecuenciaRespiratoria} onChange={(e) => setForm((c) => ({ ...c, frecuenciaRespiratoria: e.target.value }))} placeholder="FR (rpm)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                  <input type="number" min="1" max="5" value={form.condicionCorporal} onChange={(e) => setForm((c) => ({ ...c, condicionCorporal: e.target.value }))} placeholder="Condición (1-5)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                  <input type="text" value={form.mucosas} onChange={(e) => setForm((c) => ({ ...c, mucosas: e.target.value }))} placeholder="Mucosas" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                </div>
-                <select value={form.estadoHidratacion} onChange={(e) => setForm((c) => ({ ...c, estadoHidratacion: e.target.value }))} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                  {HYDRATION_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                </select>
-                <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Hallazgos y notas del examen físico" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              </FormSection>
-
-              {/* ── SECCIÓN 4: Diagnóstico y tratamiento ── */}
-              <FormSection
-                icon={<ClipboardCheck className="h-4 w-4" />}
-                title="Diagnóstico y tratamiento"
-                filled={sectionFilled.diagnostico}
-                required
-                open={formSections.has('diagnostico')}
-                onToggle={() => toggleFormSection('diagnostico')}
-              >
-                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal ⭐" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnóstico presuntivo o diferencial" className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado ⭐" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-              </FormSection>
-
-              {/* ── SECCIÓN 5: Plan farmacológico y cierre ── */}
-              <FormSection
-                icon={<Pill className="h-4 w-4" />}
-                title="Plan farmacológico y cierre"
-                filled={sectionFilled.plan}
-                open={formSections.has('plan')}
-                onToggle={() => toggleFormSection('plan')}
-              >
-                {/* Inventario */}
-                {puedeConsultarInventarioClinico && (
-                  <div className="grid gap-2 border border-dashed border-border bg-muted/50 px-3 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario</p>
-                    <label className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input type="text" value={medicationSearch} onChange={(e) => setMedicationSearch(e.target.value)} placeholder="Medicamento o laboratorio" className="h-9 w-full border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                    </label>
-                    <div className="grid gap-1.5 sm:grid-cols-2">
-                      {medicamentosCatalogo.length ? medicamentosCatalogo.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between gap-2 border border-border bg-card px-3 py-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-foreground">{p.nombre}</p>
-                            <p className="text-xs text-muted-foreground">Stock {formatNumber(p.stock)}</p>
-                          </div>
-                          <button type="button" onClick={() => addMedicationFromInventory(p)} className="shrink-0 border border-border bg-muted px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted/70">
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin resultados.</p>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Medicamentos */}
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Formulación</p>
-                  <button type="button" onClick={addMedicationDraft} className="inline-flex items-center gap-1 border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-muted">
-                    <Plus className="h-3 w-3" />Agregar
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {form.medicamentos.map((item, index) => (
-                    <div key={item.id} className="grid gap-2 border border-border bg-card px-3 py-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-foreground">
-                          Medicamento {index + 1}
-                          {item.fuente === 'inventario' && <span className="ml-2 text-cyan-700">· inventario</span>}
-                        </p>
-                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentración / presentación" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <select value={item.via} onChange={(e) => updateMedicationDraft(item.id, 'via', e.target.value)} className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                          {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                        </select>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="grid gap-1">
-                          <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                          <div className="flex flex-wrap gap-1">{MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'frecuencia', s)} className={`px-1.5 py-0.5 text-[10px] font-semibold transition border ${item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
-                        </div>
-                        <div className="grid gap-1">
-                          <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duración" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                          <div className="flex flex-wrap gap-1">{MEDICATION_DURATION_SUGGESTIONS.map((s) => <button key={s} type="button" onClick={() => applyMedicationSuggestion(item.id, 'duracion', s)} className={`px-1.5 py-0.5 text-[10px] font-semibold transition border ${item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground'}`}>{s}</button>)}</div>
-                        </div>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-[100px_1fr]">
-                        <input type="number" min="0" step="0.01" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[56px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Indicaciones y próxima consulta */}
-                <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                <div>
-                  <p className="mb-1 text-xs text-muted-foreground">Próxima consulta / control</p>
-                  <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                </div>
-              </FormSection>
-
-              {selectedHistory?.bloqueada && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  Esta historia ya está bloqueada. Puedes consultarla, pero no volver a editarla.
-                </div>
-              )}
-            </form>
-          )}
-        </div>
-
-        {/* Footer */}
-        {puedeEditarHistorias && (
-          <div className="flex flex-wrap gap-3 border-t border-border px-5 py-4">
-            <button
-              type="submit"
-              form="historia-drawer-form"
-              disabled={crearHistoriaMutation.isPending || editarHistoriaMutation.isPending || !selectedPet || selectedHistory?.bloqueada}
-              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {selectedHistory?.id
-                ? editarHistoriaMutation.isPending ? 'Guardando...' : 'Guardar cambios'
-                : crearHistoriaMutation.isPending ? 'Guardando...' : 'Registrar historia'}
-            </button>
-            {selectedHistory?.id ? (
-              <button
-                type="button"
-                onClick={() => bloquearHistoriaMutation.mutate(selectedHistory.id)}
-                disabled={bloquearHistoriaMutation.isPending || selectedHistory.bloqueada}
-                className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
-              </button>
-            ) : null}
-            <button type="button" onClick={() => setHistoriaDrawerOpen(false)} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
-              Cancelar
-            </button>
-          </div>
-        )}
-      </div>
     </AdminShell>
   )
 }

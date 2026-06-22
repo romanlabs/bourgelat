@@ -291,9 +291,7 @@ export default function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
       if (payload.estado === 'completada' && cita?.mascota?.id) {
         toast.info('Cita completada. Registra la historia clínica de la consulta.')
-        navigate(
-          `/historias?mascotaId=${cita.mascota.id}&propietarioId=${cita.propietario?.id || ''}&citaId=${cita.id}`
-        )
+        navigate(`/pacientes/${cita.mascota.id}/historial?citaId=${cita.id}`)
       } else {
         toast.success(data?.message || 'Estado actualizado')
       }
@@ -531,12 +529,6 @@ export default function AgendaPage() {
             className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Abrir pacientes
-          </Link>
-          <Link
-            to="/historias"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Abrir historias
           </Link>
         </div>
       }
