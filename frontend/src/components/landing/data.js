@@ -35,27 +35,27 @@ export const PLAN_PREVIEW = [
   {
     name: 'Esencial',
     subtitle: 'Para empezar con orden',
-    price: 'Sin cargo mensual',
-    note: 'Agenda, pacientes e historia clínica para arrancar con una base clara.',
+    price: 'Gratis',
+    note: 'Agenda, pacientes e historia clínica para poner la consulta en orden desde el primer día.',
   },
   {
     name: 'Clínica',
-    subtitle: 'Para operar el día completo',
+    subtitle: 'Para el día completo',
     price: 'COP 99.000/mes',
-    note: 'Inventario, caja y reportes para una clínica que ya necesita control operativo.',
+    note: 'Suma inventario, caja y reportes cuando la clínica necesita control sobre cada turno.',
   },
   {
     name: 'Profesional',
-    subtitle: 'El plan principal',
+    subtitle: 'El más elegido',
     price: 'COP 189.000/mes',
-    note: 'Incluye facturación electrónica DIAN y una operación más completa.',
+    note: 'Todo lo de Clínica más facturación electrónica DIAN, lista para crecer sin rearmar nada.',
     featured: true,
   },
   {
     name: 'Personalizado',
-    subtitle: 'Para migración y acompañamiento',
-    price: 'Cotización guiada',
-    note: 'Cuando la clínica necesita una implementación más acompasada con el equipo.',
+    subtitle: 'Para migrar acompañado',
+    price: 'Cotización a medida',
+    note: 'Implementación guiada y soporte cercano cuando traes tu clínica desde otro sistema.',
   },
 ]
 
@@ -79,8 +79,11 @@ export const TRUST_LOGOS = [
 
 export const WARM_BAND_BACKGROUND = '#f8f4ee'
 
+// `screen` es la captura que se muestra en la tablet al activar cada módulo.
+// Agenda e Inventario aún no tienen captura propia: el <img> cae de vuelta a
+// bourgelat-pacientes.webp hasta que se agreguen esos archivos a public/images.
 export const PLATFORM_FEATURES = [
-  { icon: Calendar, label: 'Agenda con contexto del paciente' },
-  { icon: HeartPulse, label: 'Historia que acompaña cada visita' },
-  { icon: Package, label: 'Inventario que se descuenta solo' },
+  { icon: Calendar, label: 'Agenda con contexto del paciente', screen: '/images/bourgelat-agenda.webp' },
+  { icon: HeartPulse, label: 'Historia que acompaña cada visita', screen: '/images/bourgelat-pacientes.webp' },
+  { icon: Package, label: 'Inventario que se descuenta solo', screen: '/images/bourgelat-inventario.webp' },
 ]

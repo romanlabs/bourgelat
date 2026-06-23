@@ -9,17 +9,19 @@ export default function SectionHeading({ eyebrow, title, body, dark = false, cen
         {eyebrow}
       </p>
       <h2
-        className={`mt-4 leading-[0.96] tracking-[-0.04em] ${
+        className={`leading-[0.98] tracking-[-0.04em] ${
           compact
-            ? 'text-[2rem] sm:text-[2.4rem] md:text-[2.8rem]'
-            : 'text-[2.7rem] sm:text-5xl md:text-6xl'
+            ? 'mt-3 text-[1.9rem] sm:text-[2.2rem] md:text-[2.5rem]'
+            : 'mt-4 text-[2.7rem] sm:text-5xl md:text-6xl'
         } ${dark ? 'text-white' : 'text-[#2b2018]'}`}
         style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
       >
         {title}
       </h2>
       <p
-        className={`mt-5 text-[15px] leading-7 sm:text-lg sm:leading-8 ${
+        className={`text-[15px] leading-7 sm:text-lg sm:leading-8 ${
+          compact ? 'mt-4 text-base sm:text-[17px] sm:leading-7' : 'mt-5'
+        } ${center && compact ? 'mx-auto max-w-xl' : ''} ${
           dark ? 'text-white/70' : 'text-[#6b5d4d]'
         }`}
       >

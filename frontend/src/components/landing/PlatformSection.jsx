@@ -1,16 +1,19 @@
+import { useState } from "react"
 import { useVisible } from "./useVisible"
 import DeviceMockup from "./DeviceMockup"
 import { PLATFORM_FEATURES } from "./data"
 
 export default function PlatformSection() {
   const { ref: sectionRef, visible } = useVisible(0.2)
+  const [active, setActive] = useState(0)
+  const screens = PLATFORM_FEATURES.map((f) => f.screen)
   return (
-    <section ref={sectionRef} className="relative text-[#2b2018]">
-      <div className="mx-auto max-w-7xl px-5 pb-24 pt-16 sm:px-6 sm:pb-32 sm:pt-20 lg:px-8 lg:pb-36 lg:pt-24">
+    <section id="plataforma" ref={sectionRef} className="relative scroll-mt-40 overflow-x-clip text-[#2b2018]">
+      <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8 lg:pb-20 lg:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-20">
 
-          {/* Device mockup — left column */}
-          <DeviceMockup />
+          {/* Device mockup — left column. La pantalla cambia según el módulo activo. */}
+          <DeviceMockup screens={screens} active={active} />
 
           {/* Text column */}
           <div style={{
@@ -19,11 +22,9 @@ export default function PlatformSection() {
             transition: visible ? 'opacity 800ms ease-out, transform 800ms ease-out' : 'none',
           }}>
             <p style={{
-              display: 'flex', alignItems: 'center', gap: 12,
               fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-              letterSpacing: '0.2em', color: '#b07645', margin: 0,
+              letterSpacing: '0.3em', color: '#a35f25', margin: 0,
             }}>
-              <span style={{ width: 24, height: 1, backgroundColor: '#c79a6f', flexShrink: 0 }} />
               Plataforma
             </p>
 
@@ -33,7 +34,7 @@ export default function PlatformSection() {
               letterSpacing: '-0.045em', color: '#2b2018',
               maxWidth: '24rem', marginTop: 20,
             }}>
-              Toda la operación, en una sola vista.
+              Toda la clínica, en una sola vista.
             </h2>
 
             <p style={{
@@ -44,17 +45,28 @@ export default function PlatformSection() {
               entienden entre sí. Sin copiar datos. Sin perder contexto.
             </p>
 
-            <ul style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, padding: 0, listStyle: 'none' }}>
-              {PLATFORM_FEATURES.map((feature) => {
+            <div className="plat-modules" role="tablist" aria-label="Módulos de la plataforma">
+              <span className="plat-modules__spine" aria-hidden="true" />
+              {PLATFORM_FEATURES.map((feature, i) => {
                 const Icon = feature.icon
                 return (
-                  <li key={feature.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <Icon style={{ width: 14, height: 14, color: '#b07645', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: '#4a3f33' }}>{feature.label}</span>
-                  </li>
+                  <button
+                    type="button"
+                    key={feature.label}
+                    role="tab"
+                    aria-selected={i === active}
+                    onClick={() => setActive(i)}
+                    className={`plat-module${visible ? ' is-visible' : ''}${i === active ? ' is-active' : ''}`}
+                    style={{ transitionDelay: visible ? `${250 + i * 130}ms` : '0ms' }}
+                  >
+                    <span className="plat-module__tile">
+                      <Icon style={{ width: 20, height: 20 }} strokeWidth={1.75} />
+                    </span>
+                    <span className="plat-module__label">{feature.label}</span>
+                  </button>
                 )
               })}
-            </ul>
+            </div>
           </div>
         </div>
       </div>
