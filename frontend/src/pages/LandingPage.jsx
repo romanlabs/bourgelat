@@ -25,8 +25,7 @@ export default function LandingPage() {
 
       <section
         id="hero"
-        className="relative flex h-[100dvh] flex-col justify-center overflow-hidden text-[#2b2018]"
-        style={{ background: 'linear-gradient(165deg, #f8e7cf 0%, #f1d6ad 48%, #ecd1a7 100%)' }}
+        className="hero-bg relative flex h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] sm:justify-center"
       >
         {/* ── Video hero: perro completo, contenido y anclado abajo a la derecha.
             object-contain (no cover) muestra al perro entero; su fondo beige funde
@@ -38,8 +37,8 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="absolute inset-0 h-full w-full object-contain"
-          style={{ transform: 'translateZ(0)', objectPosition: 'right bottom' }}
+          className="hero-video absolute inset-x-0 bottom-0 top-auto h-[48dvh] w-full object-contain object-bottom sm:inset-0 sm:top-0 sm:h-full sm:object-[right_bottom]"
+          style={{ transform: 'translateZ(0)' }}
         >
           {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
               evitando el thermal throttling del VP9 por software que entrecortaba
@@ -58,14 +57,14 @@ export default function LandingPage() {
         {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee).
             Degradado con easing (no lineal) para un empalme sin banding visible. */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[28dvh]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[12dvh] sm:h-[28dvh]"
           style={{
             background:
               'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0.08) 28%, rgba(248,244,238,0.28) 50%, rgba(248,244,238,0.58) 68%, rgba(248,244,238,0.85) 84%, #f8f4ee 100%)',
           }}
         />
 
-        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-40 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
           <div className="max-w-[36rem]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">
               Software para clínicas veterinarias
@@ -96,14 +95,14 @@ export default function LandingPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645]"
+                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <Link
                 to="/planes"
-                className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-none border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]"
+                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
               >
                 Ver planes
               </Link>
@@ -149,11 +148,11 @@ export default function LandingPage() {
             center
           />
 
-          <div className="plans-grid mt-12 grid gap-6 lg:grid-cols-4">
+          <div className="plans-grid mt-10 grid gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-4">
             {PLAN_PREVIEW.map((plan) => (
               <article
                 key={plan.name}
-                className={`plan-card relative rounded-2xl border bg-white p-6 ${
+                className={`plan-card relative rounded-2xl border bg-white p-5 sm:p-6 ${
                   plan.featured
                     ? 'border-[#b07645] shadow-[0_24px_60px_rgba(43,32,24,0.12)]'
                     : 'border-[#2b2018]/10 shadow-[0_12px_30px_rgba(43,32,24,0.06)]'
@@ -171,15 +170,21 @@ export default function LandingPage() {
                 >
                   {plan.subtitle}
                 </p>
-                <h3
-                  className="mt-4 text-[2rem] leading-none tracking-[-0.04em] sm:text-4xl"
-                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                >
-                  {plan.name}
-                </h3>
-                <p className="mt-4 text-lg font-semibold text-[#2b2018]">{plan.price}</p>
+                {/* Móvil: nombre y precio en una sola línea para tarjetas más
+                    compactas y escaneables. Desktop: apilados como antes. */}
+                <div className="mt-3 flex items-baseline justify-between gap-3 sm:mt-4 sm:block">
+                  <h3
+                    className="text-[1.7rem] leading-none tracking-[-0.04em] sm:text-4xl"
+                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+                  >
+                    {plan.name}
+                  </h3>
+                  <p className="shrink-0 text-base font-semibold text-[#2b2018] sm:mt-4 sm:text-lg">
+                    {plan.price}
+                  </p>
+                </div>
                 <p
-                  className={`mt-4 text-sm leading-7 ${
+                  className={`mt-3 text-sm leading-6 sm:mt-4 sm:leading-7 ${
                     plan.featured ? 'text-[#2b2018]/80' : 'text-[#2b2018]/65'
                   }`}
                 >
@@ -192,14 +197,14 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Link
               to="/planes"
-              className="group inline-flex items-center justify-center gap-2 rounded-none bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645]"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645] sm:w-auto"
             >
               Ver comparativa completa
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
             </Link>
             <Link
               to="/registro"
-              className="inline-flex items-center justify-center gap-2 rounded-none border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-none border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
             >
               Crear cuenta
             </Link>
@@ -239,14 +244,14 @@ export default function LandingPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group inline-flex items-center justify-center gap-2 rounded-none bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <a
                 href="mailto:hola@bourgelat.co"
-                className="inline-flex items-center justify-center gap-2 rounded-none border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-none border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
               >
                 <Mail className="h-4 w-4" />
                 hola@bourgelat.co
