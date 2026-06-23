@@ -1,6 +1,8 @@
 import { useVisible } from "./useVisible"
 
-export default function DeviceMockup() {
+const FALLBACK_SCREEN = '/images/bourgelat-pacientes.webp'
+
+export default function DeviceMockup({ screens = [FALLBACK_SCREEN], active = 0 }) {
   const { ref, visible } = useVisible(0.15, { toggle: true, rootMargin: '0px 0px -20% 0px' })
   return (
     <div ref={ref} style={{ marginLeft: '-6%', mixBlendMode: 'multiply' }}>
@@ -22,9 +24,9 @@ export default function DeviceMockup() {
         style={{ width: '100%', display: 'block', position: 'relative', zIndex: 1 }}
         loading="lazy"
       />
-      {/* Dashboard screenshot overlaid on the tablet screen.
-          Values calibrated to the tablet's position and ~9° CW tilt in mano-tablet.png.
-          Adjust top/left/width/height if the image is replaced. */}
+      {/* Pantalla del dashboard sobre la tablet. Las capturas de cada módulo se
+          apilan y se hace crossfade por opacidad según el módulo activo.
+          Valores calibrados a la posición y ~9° CW de la tablet en mano-tablet. */}
       <div style={{
         position: 'absolute',
         top: '5.1%',
@@ -37,19 +39,33 @@ export default function DeviceMockup() {
         borderRadius: 1.1,
         zIndex: 2,
       }}>
-        <img
-          src="/images/bourgelat-pacientes.webp"
-          alt="Módulo de pacientes en Bourgelat"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'top left',
-            display: 'block',
-            filter: 'brightness(0.97)',
-          }}
-          loading="lazy"
-        />
+        {screens.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt={i === active ? 'Módulo activo de Bourgelat' : ''}
+            aria-hidden={i === active ? undefined : true}
+            onError={(e) => {
+              if (!e.currentTarget.dataset.fb) {
+                e.currentTarget.dataset.fb = '1'
+                e.currentTarget.src = FALLBACK_SCREEN
+              }
+            }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'top left',
+              display: 'block',
+              filter: 'brightness(0.97)',
+              opacity: i === active ? 1 : 0,
+              transition: 'opacity 450ms ease',
+            }}
+            loading="lazy"
+          />
+        ))}
         {/* Screen vignette — simula el cristal de la pantalla */}
         <div style={{
           position: 'absolute',

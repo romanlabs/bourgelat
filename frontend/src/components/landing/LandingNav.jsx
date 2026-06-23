@@ -71,7 +71,11 @@ export default function LandingNav() {
           boxShadow: '0 8px 32px rgba(20,14,9,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
         } : undefined}
       >
-        <Link to="/" className="group no-underline">
+        <Link
+          to="/"
+          className="group no-underline"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
           <BrandMark dark={!isLight} />
         </Link>
 

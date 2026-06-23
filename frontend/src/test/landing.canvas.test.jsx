@@ -3,28 +3,22 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect } from 'vitest'
 import LandingPage from '../pages/LandingPage'
 
-describe('DogTug canvas', () => {
-  it('se monta dentro de #contacto', () => {
+describe('Cierre #contacto', () => {
+  it('renderiza la sección de contacto', () => {
+    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    expect(document.getElementById('contacto')).toBeInTheDocument()
+  })
+
+  it('muestra el perro de despedida dentro de #contacto', () => {
+    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    const dog = document.getElementById('contacto').querySelector('.contact-dog')
+    expect(dog).toBeInTheDocument()
+    expect(dog.getAttribute('src')).toMatch(/perro-despedida/)
+  })
+
+  it('incluye el CTA de crear cuenta', () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>)
     const contacto = document.getElementById('contacto')
-    expect(contacto).toBeInTheDocument()
-    const canvas = contacto.querySelector('canvas')
-    expect(canvas).toBeInTheDocument()
-  })
-
-  it('tiene dimensiones internas correctas (560 × 330)', () => {
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
-    const canvas = document.getElementById('contacto').querySelector('canvas')
-    expect(canvas.width).toBe(560)
-    expect(canvas.height).toBe(330)
-  })
-
-  it('mensaje inicial está presente junto al canvas', () => {
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
-    const canvas = document.getElementById('contacto').querySelector('canvas')
-    // The message <p> is the next sibling of the canvas in the DogTug wrapper
-    const msg = canvas.nextElementSibling
-    expect(msg).toBeInTheDocument()
-    expect(msg.textContent).toMatch(/cuerda/i)
+    expect(contacto.textContent).toMatch(/crear cuenta/i)
   })
 })

@@ -116,10 +116,7 @@ export default function FlowCarousel() {
                 onClick={role === 'next' ? () => go(1) : role === 'previous' ? () => go(-1) : undefined}
               >
                 <div className="flow-slide__inner">
-                  <div className="flow-slide__frame" aria-hidden="true">
-                    <span className="flow-slide__island" />
-                    <span className="flow-slide__home" />
-                  </div>
+                  <span className="flow-slide__tab" aria-hidden="true" />
                   <div className="flow-slide__media">
                     <img
                       className="flow-slide__img"
@@ -128,10 +125,11 @@ export default function FlowCarousel() {
                       aria-hidden="true"
                       loading="lazy"
                     />
+                    <span className="flow-slide__num" aria-hidden="true">{step.step}</span>
                   </div>
                   <div className="flow-slide__text">
                     <div className="flow-reveal">
-                      <span className="flow-slide__badge">Paso {step.step}</span>
+                      <span className="flow-slide__step">Paso {step.step}</span>
                     </div>
                     <div className="flow-reveal">
                       <h3 className="flow-slide__title">{step.title}</h3>

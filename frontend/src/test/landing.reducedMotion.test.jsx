@@ -23,9 +23,9 @@ describe('prefers-reduced-motion', () => {
     ).not.toThrow()
   })
 
-  it('el canvas de DogTug sigue montándose con reduced-motion', () => {
+  it('el perro de despedida se monta con reduced-motion', () => {
     render(<MemoryRouter><LandingPage /></MemoryRouter>)
-    const canvas = document.getElementById('contacto')?.querySelector('canvas')
-    expect(canvas).toBeInTheDocument()
+    const dog = document.getElementById('contacto')?.querySelector('.contact-dog')
+    expect(dog).toBeInTheDocument()
   })
 })

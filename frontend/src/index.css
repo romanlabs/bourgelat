@@ -273,7 +273,7 @@ input:-webkit-autofill:focus {
 /* ── Flow carousel (#flujo) ─────────────────────────────────── */
 .flow-carousel {
   --flow-slide-w: min(62vw, 240px);
-  --flow-dur: 700ms;
+  --flow-dur: 1100ms;
   --flow-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -288,16 +288,16 @@ input:-webkit-autofill:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 520px;
-  perspective: 620px;
+  min-height: 540px;
+  perspective: 660px;
   overflow: visible;
-  padding: 60px 0 40px;
+  padding: 50px 0 36px;
 }
 
 .flow-carousel__slides {
   position: relative;
   width: var(--flow-slide-w);
-  height: 490px;
+  height: 500px;
   transform-style: preserve-3d;
 }
 
@@ -340,234 +340,62 @@ input:-webkit-autofill:focus {
   cursor: pointer;
 }
 
-/* contenedor = marco metálico titanio naranja (el gradiente rota con el tilt) */
+/* contenedor = ficha clínica cálida (foto arriba, placa de texto abajo) */
 .flow-slide__inner {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  border-radius: 27px;
-  background: linear-gradient(
-    152deg,
-    #c97c30 0%,
-    #f6b362 10%,
-    #a85e1d 26%,
-    #e89546 42%,
-    #fccd88 50%,
-    #c87526 58%,
-    #9a5418 74%,
-    #d88438 89%,
-    #824510 100%
-  );
+  padding: 8px;
+  border-radius: 18px;
+  background: #fdf6ee;
   box-shadow:
-    0 22px 50px rgba(56, 26, 6, 0.35),
-    inset 0 1px 1px rgba(255, 228, 180, 0.65),
-    inset 0 -2px 3px rgba(56, 22, 4, 0.5);
+    0 22px 44px rgba(56, 26, 6, 0.11),
+    0 6px 14px rgba(56, 26, 6, 0.07),
+    inset 0 0 0 1px rgba(43, 32, 24, 0.07);
   transform: rotateX(var(--rotX, 0deg)) rotateY(var(--rotY, 0deg));
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-style: preserve-3d;
 }
 
-/* pantalla — metida hacia adentro para revelar el marco metálico */
+/* La tarjeta activa flota con más profundidad sobre las laterales */
+.flow-slide[data-role='current'] .flow-slide__inner {
+  box-shadow:
+    0 44px 80px rgba(56, 26, 6, 0.22),
+    0 18px 36px rgba(56, 26, 6, 0.14),
+    0 4px 10px rgba(56, 26, 6, 0.10),
+    inset 0 0 0 1px rgba(43, 32, 24, 0.07);
+}
+
+/* lengüeta superior — guiño a una ficha/carpeta de paciente */
+.flow-slide__tab {
+  position: absolute;
+  top: -7px;
+  left: 22px;
+  width: 52px;
+  height: 9px;
+  border-radius: 6px 6px 0 0;
+  background: #b07645;
+  box-shadow: inset 0 1px 0 rgba(255, 228, 180, 0.45);
+  z-index: 4;
+}
+
+/* foto del paso */
 .flow-slide__media {
-  position: absolute;
-  inset: 4px;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
-  border-radius: 22px;
-  background: #0a1a28;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
-    inset 0 1px 3px rgba(0, 0, 0, 0.45);
+  border-radius: 12px;
+  background: #e7dccb;
+  box-shadow: inset 0 0 0 1px rgba(43, 32, 24, 0.06);
 }
 
-/* ── Phone frame chrome (isla/botón/home; el metal lo da el inner) ── */
-.flow-slide__frame {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  border-radius: 26px;
-  border: none;
-}
+/* ── Acabado de la ficha (sin chrome de celular) ── */
 
-/* lomo metálico más ancho a la derecha en las laterales */
-.flow-slide[data-role='previous'] .flow-slide__media,
-.flow-slide[data-role='next'] .flow-slide__media {
-  inset: 5px 15px 5px 4px;
-  border-radius: 21px;
-}
-
-/* cámara frontal */
-.flow-slide__camera {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(8,18,30,0.9);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 3px rgba(80,160,255,0.3);
-}
-
-/* Dynamic Island */
-.flow-slide__island {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 84px;
-  height: 22px;
-  border-radius: 999px;
-  background: rgba(8, 8, 10, 0.94);
-  z-index: 11;
-  box-shadow:
-    0 0 0 1.5px rgba(255,255,255,0.1),
-    0 2px 10px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-/* lente de la cámara dentro de la isla */
-.flow-slide__island::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 9px;
-  transform: translateY(-50%);
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 32%,
-    rgba(80, 82, 85, 0.6) 0%,
-    rgba(22, 22, 24, 0.95) 28%,
-    rgba(8, 8, 10, 1) 60%,
-    rgba(2, 2, 4, 1) 100%
-  );
-  box-shadow:
-    0 0 0 2px rgba(30, 30, 32, 0.95),
-    0 0 0 3.5px rgba(255, 255, 255, 0.07),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.18),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.6);
-}
-
-/* isla más pequeña en tarjetas laterales */
-.flow-slide[data-role='previous'] .flow-slide__island,
-.flow-slide[data-role='next'] .flow-slide__island {
-  width: 64px;
-  height: 17px;
-  top: 13px;
-}
-
-.flow-slide[data-role='previous'] .flow-slide__island::before,
-.flow-slide[data-role='next'] .flow-slide__island::before {
-  width: 8px;
-  height: 8px;
-  right: 7px;
-}
-
-/* home indicator */
-.flow-slide__home {
-  position: absolute;
-  bottom: 13px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 4px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.28);
-  box-shadow: 0 0 6px rgba(255,255,255,0.15);
-}
-
-/* botón lateral sobre el lomo metálico */
-.flow-slide[data-role='previous'] .flow-slide__frame::after,
-.flow-slide[data-role='next'] .flow-slide__frame::after {
-  content: '';
-  position: absolute;
-  top: 30%;
-  right: 4.5px;
-  width: 5px;
-  height: 50px;
-  border-radius: 3px;
-  background: linear-gradient(
-    to right,
-    rgba(110, 52, 10, 0.95) 0%,
-    rgba(225, 140, 62, 1) 40%,
-    rgba(255, 205, 130, 1) 60%,
-    rgba(165, 84, 24, 1) 100%
-  );
-  box-shadow:
-    inset 0 1px 1px rgba(255, 228, 180, 0.75),
-    inset 0 -1px 1px rgba(70, 30, 6, 0.6),
-    0 1px 2px rgba(40, 16, 3, 0.4);
-  z-index: 13;
-}
-
-/* ── Vidrio de pantalla ── */
-
-/* central: raya fina diagonal + borde superior luminoso del display */
-.flow-slide[data-role='current'] .flow-slide__media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: 24px;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-      rgba(255,255,255,0.20) 0%, transparent 12%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.40),
-    inset 1px 0 0 rgba(255,255,255,0.12),
-    inset -1px 0 0 rgba(255,255,255,0.12);
-}
-
-/* izquierda: raya desde el lado frontal + borde luminoso */
-.flow-slide[data-role='previous'] .flow-slide__media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: 24px;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-      rgba(255,255,255,0.14) 0%, transparent 10%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.32),
-    inset -1px 0 0 rgba(255,255,255,0.14);
-}
-
-/* derecha: raya desde borde izquierdo visible + borde luminoso */
-.flow-slide[data-role='next'] .flow-slide__media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: 24px;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-      rgba(255,255,255,0.14) 0%, transparent 10%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.32),
-    inset 1px 0 0 rgba(255,255,255,0.14);
-}
-
-
-.flow-slide[data-role='current'] .flow-slide__media {
-  background: #0a1a28;
-  box-shadow:
-    0 2px 0 1px rgba(255,255,255,0.09) inset,
-    0 40px 90px rgba(8,18,30,0.55),
-    0 10px 25px rgba(8,18,30,0.32),
-    0 0 40px rgba(58,109,135,0.18),
-    0 0 0 1px rgba(255,255,255,0.06);
-}
-
-.flow-slide[data-role='previous'] .flow-slide__media,
-.flow-slide[data-role='next'] .flow-slide__media {
-  background: #0a1a28;
-  box-shadow:
-    0 2px 0 1px rgba(255,255,255,0.06) inset,
-    0 8px 20px rgba(8,18,30,0.25);
+.flow-slide__media {
+  background: #e7dccb;
 }
 
 .flow-slide[data-role='previous'] .flow-slide__img,
@@ -603,20 +431,36 @@ input:-webkit-autofill:focus {
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background: linear-gradient(
     to top,
-    rgba(6, 17, 28, 0.92) 0%,
-    rgba(6, 17, 28, 0.45) 46%,
-    rgba(6, 17, 28, 0.08) 100%
+    rgba(20, 12, 4, 0.42) 0%,
+    rgba(20, 12, 4, 0.14) 22%,
+    transparent 46%
   );
 }
 
 .flow-carousel__bg {
+  display: none;
   position: absolute;
   inset: -40px 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
 }
 
 .flow-carousel__bg::after {
@@ -625,10 +469,10 @@ input:-webkit-autofill:focus {
   inset: 0;
   z-index: 1;
   background: radial-gradient(
-    60% 55% at 50% 50%,
-    rgba(248, 244, 238, 0.1) 0%,
-    rgba(248, 244, 238, 0.7) 55%,
-    #f8f4ee 80%
+    65% 60% at 50% 50%,
+    rgba(248, 244, 238, 0.45) 0%,
+    rgba(248, 244, 238, 0.82) 50%,
+    #f8f4ee 72%
   );
 }
 
@@ -643,7 +487,7 @@ input:-webkit-autofill:focus {
 }
 
 .flow-carousel__bg-layer[data-role='current'] {
-  opacity: 0.28;
+  opacity: 0.12;
 }
 
 .flow-carousel__bg-layer[data-role='next'],
@@ -651,64 +495,100 @@ input:-webkit-autofill:focus {
   opacity: 0;
 }
 
+/* Numeral del paso: serif grande sobre la foto, recortado por la esquina
+   inferior izquierda → firma editorial, no una etiqueta literal. */
 .flow-slide__num {
   position: absolute;
-  top: -6px;
-  right: 14px;
+  left: 16px;
+  bottom: 8px;
   z-index: 2;
   font-family: 'Spectral', Georgia, serif;
-  font-size: 7.5rem;
-  line-height: 1;
+  font-size: 4.6rem;
+  line-height: 0.78;
   font-weight: 700;
-  color: rgba(145, 231, 224, 0.22);
+  font-style: italic;
+  color: rgba(253, 246, 238, 0.97);
+  text-shadow: 0 3px 18px rgba(20, 12, 4, 0.5);
   pointer-events: none;
 }
 
-.flow-slide__badge {
+/* el numeral solo en la tarjeta activa (evita el dígito espejado en laterales) */
+.flow-slide:not([data-role='current']) .flow-slide__num {
+  display: none;
+}
+
+/* Kicker fino con regla ámbar (reemplaza la píldora plana) */
+.flow-slide__step {
   display: inline-flex;
-  width: fit-content;
   align-items: center;
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  gap: 9px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.9);
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(4px);
+  color: #a35f25;
+}
+.flow-slide__step::before {
+  content: '';
+  width: 20px;
+  height: 1.5px;
+  background: #b07645;
 }
 
 .flow-slide__title {
   font-family: 'Spectral', Georgia, serif;
-  font-size: clamp(1rem, 2.3vw, 1.18rem);
-  line-height: 1.22;
-  font-weight: 600;
-  color: #ffffff;
+  font-size: clamp(1.1rem, 2.5vw, 1.38rem);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  color: #2b2018;
 }
 
 .flow-slide__desc {
   font-size: clamp(0.76rem, 1.5vw, 0.84rem);
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.82);
+  color: #6b5d4d;
 }
 
 .flow-slide__text {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 24px;
+  position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  transform: translateZ(45px);
+  gap: 8px;
+  overflow: hidden;
+  max-height: 240px;
+  padding: 14px 12px 6px;
+  transition:
+    max-height var(--flow-dur) var(--flow-ease),
+    opacity var(--flow-dur) var(--flow-ease),
+    padding-top var(--flow-dur) var(--flow-ease),
+    padding-bottom var(--flow-dur) var(--flow-ease);
+  transform: translateZ(30px);
   transform-style: preserve-3d;
 }
 
 .flow-slide:not([data-role='current']) .flow-slide__media {
-  filter: brightness(0.68);
+  filter: saturate(0.85) brightness(0.96);
+}
+
+.flow-slide:not([data-role='current']) .flow-slide__inner {
+  background: #f6eede;
+}
+
+/* Laterales: la placa de texto se colapsa y la foto ocupa toda la tarjeta.
+   Al pasar a activa, la placa se expande (max-height) y la foto "sube". */
+.flow-slide:not([data-role='current']) .flow-slide__text {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* el degradado oscuro inferior (para el numeral) solo en la activa */
+.flow-slide:not([data-role='current']) .flow-slide__media::after {
+  opacity: 0;
 }
 
 .flow-reveal {
@@ -732,10 +612,6 @@ input:-webkit-autofill:focus {
   transform: translateY(0);
 }
 
-/* oculta desc en slides laterales para no saturar */
-.flow-slide:not([data-role='current']) .flow-slide__desc {
-  display: none;
-}
 
 .flow-slide[data-role='current'] .flow-slide__text .flow-reveal:nth-child(1) > * {
   transition-delay: 180ms;
@@ -745,6 +621,121 @@ input:-webkit-autofill:focus {
 }
 .flow-slide[data-role='current'] .flow-slide__text .flow-reveal:nth-child(3) > * {
   transition-delay: 380ms;
+}
+
+/* ── Perro veterinario que se asoma desde el borde derecho ── */
+.flow-dog {
+  position: absolute;
+  right: -4%;
+  top: 8%;
+  width: clamp(150px, 40vw, 230px);
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(34%) rotate(3deg);
+  filter: drop-shadow(0 18px 28px rgba(56, 26, 6, 0.22));
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+  will-change: transform, opacity;
+}
+
+@media (min-width: 1024px) {
+  .flow-dog {
+    right: -1%;
+    top: 6%;
+    width: clamp(340px, 29vw, 520px);
+  }
+}
+
+.flow-dog.is-visible {
+  opacity: 1;
+  transform: translateX(0) rotate(0deg);
+  animation: flow-dog-bob 5.5s ease-in-out 900ms infinite;
+}
+
+@keyframes flow-dog-bob {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-1.2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dog {
+    transition: none;
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Perro de despedida: estático, asomado en la esquina ── */
+.contact-dog {
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.4));
+}
+
+/* ── Perro veterinario que se asoma desde el borde izquierdo (flujo → planes) ── */
+.flow-dog-medic {
+  position: absolute;
+  left: 0;
+  bottom: -5%;
+  width: clamp(200px, 52vw, 300px);
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-40%) rotate(-3deg);
+  filter: drop-shadow(0 18px 28px rgba(56, 26, 6, 0.22));
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+  will-change: transform, opacity;
+}
+
+@media (min-width: 1024px) {
+  .flow-dog-medic {
+    left: 0;
+    bottom: -7%;
+    width: clamp(440px, 38vw, 660px);
+  }
+}
+
+.flow-dog-medic.is-visible {
+  opacity: 1;
+  transform: translateX(0) rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dog-medic {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Planes: al pasar el cursor por uno, los demás se difuminan ── */
+.plan-card {
+  transition: filter 320ms ease, opacity 320ms ease, transform 320ms ease;
+}
+
+.plans-grid:hover .plan-card {
+  filter: blur(3px);
+  opacity: 0.5;
+}
+
+.plans-grid .plan-card:hover {
+  filter: none;
+  opacity: 1;
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-card,
+  .plans-grid:hover .plan-card,
+  .plans-grid .plan-card:hover {
+    transition: none;
+    transform: none;
+  }
 }
 
 .flow-carousel__btn {
@@ -895,5 +886,139 @@ input:-webkit-autofill:focus {
     animation: none;
     stroke-dasharray: none;
     opacity: 0.5;
+  }
+}
+
+/* ── Divisor del footer: latido con luz que recorre ──────────────────────── */
+.footer-pulse {
+  width: 100%;
+  margin: 0 auto;
+}
+.footer-pulse svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.footer-pulse__base {
+  fill: none;
+  stroke: rgba(176, 118, 69, 0.28);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.footer-pulse__sweep {
+  fill: none;
+  stroke: #b07645;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* segmento iluminado de ~90u que recorre un trazo normalizado a 1000u */
+  stroke-dasharray: 90 910;
+  filter: drop-shadow(0 0 5px rgba(176, 118, 69, 0.55));
+  animation: footer-pulse-sweep var(--fp-dur, 4.2s) linear infinite;
+}
+@keyframes footer-pulse-sweep {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-pulse__sweep {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.4;
+  }
+}
+
+/* ── Plataforma: pila de módulos conectados ──────────────────────────────── */
+.plat-modules {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* El spine encodea que los módulos están enlazados entre sí. */
+.plat-modules__spine {
+  position: absolute;
+  left: 23px;
+  top: 24px;
+  bottom: 24px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(176, 118, 69, 0.45) 0%, rgba(176, 118, 69, 0.12) 100%);
+  z-index: 0;
+}
+.plat-module {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(14px);
+}
+.plat-module.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.plat-module:focus-visible {
+  outline: 2px solid #b07645;
+  outline-offset: 3px;
+}
+/* Módulo activo: la pantalla de la tablet muestra este módulo. */
+.plat-module.is-active .plat-module__tile {
+  background: #2b2018;
+  border-color: #2b2018;
+  color: #efd3ad;
+}
+.plat-module.is-active .plat-module__label {
+  color: #2b2018;
+  font-weight: 600;
+}
+.plat-module__tile {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f4ee;
+  border: 1px solid rgba(176, 118, 69, 0.35);
+  color: #b07645;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(43, 32, 24, 0.06);
+  transition: background 260ms ease, color 260ms ease, border-color 260ms ease, transform 260ms ease;
+}
+.plat-module:hover .plat-module__tile {
+  background: #2b2018;
+  border-color: #2b2018;
+  color: #efd3ad;
+  transform: translateY(-2px);
+}
+.plat-module__label {
+  font-size: 15px;
+  line-height: 1.4;
+  color: #4a3f33;
+  transition: color 260ms ease;
+}
+.plat-module:hover .plat-module__label {
+  color: #2b2018;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plat-module {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
