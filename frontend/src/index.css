@@ -935,92 +935,64 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* ── Plataforma: pila de módulos conectados ──────────────────────────────── */
-.plat-modules {
-  position: relative;
+/* ── Plataforma: tabs horizontales de módulos ────────────────────────────── */
+.plat-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 36px 0 0;
   padding: 0;
-  list-style: none;
 }
-/* El spine encodea que los módulos están enlazados entre sí. */
-.plat-modules__spine {
-  position: absolute;
-  left: 23px;
-  top: 24px;
-  bottom: 24px;
-  width: 2px;
-  background: linear-gradient(180deg, rgba(176, 118, 69, 0.45) 0%, rgba(176, 118, 69, 0.12) 100%);
-  z-index: 0;
-}
-.plat-module {
-  position: relative;
-  z-index: 1;
-  display: flex;
+.plat-tab {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-  width: 100%;
+  gap: 9px;
   margin: 0;
-  padding: 4px;
-  border: 0;
-  background: none;
+  padding: 10px 16px;
+  border: 1px solid rgba(176, 118, 69, 0.35);
+  border-radius: 999px;
+  background: #f8f4ee;
+  color: #6b5d4d;
   font: inherit;
-  text-align: left;
+  font-size: 14px;
+  line-height: 1.2;
   cursor: pointer;
   opacity: 0;
   transform: translateY(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background 240ms ease, color 240ms ease, border-color 240ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
 }
-.plat-module.is-visible {
+.plat-tab.is-visible {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 600ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.plat-module:focus-visible {
+.plat-tab:focus-visible {
   outline: 2px solid #b07645;
   outline-offset: 3px;
 }
-/* Módulo activo: la pantalla de la tablet muestra este módulo. */
-.plat-module.is-active .plat-module__tile {
-  background: #2b2018;
-  border-color: #2b2018;
-  color: #efd3ad;
-}
-.plat-module.is-active .plat-module__label {
+.plat-tab:hover {
+  border-color: rgba(176, 118, 69, 0.6);
   color: #2b2018;
-  font-weight: 600;
-}
-.plat-module__tile {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f4ee;
-  border: 1px solid rgba(176, 118, 69, 0.35);
-  color: #b07645;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(43, 32, 24, 0.06);
-  transition: background 260ms ease, color 260ms ease, border-color 260ms ease, transform 260ms ease;
-}
-.plat-module:hover .plat-module__tile {
-  background: #2b2018;
-  border-color: #2b2018;
-  color: #efd3ad;
   transform: translateY(-2px);
 }
-.plat-module__label {
-  font-size: 15px;
-  line-height: 1.4;
-  color: #4a3f33;
-  transition: color 260ms ease;
+.plat-tab__icon {
+  flex-shrink: 0;
+  color: #b07645;
+  transition: color 240ms ease;
 }
-.plat-module:hover .plat-module__label {
-  color: #2b2018;
+/* Tab activo: la pantalla de la tablet muestra este módulo. */
+.plat-tab.is-active {
+  background: #2b2018;
+  border-color: #2b2018;
+  color: #f8f4ee;
+  font-weight: 600;
+}
+.plat-tab.is-active .plat-tab__icon {
+  color: #efd3ad;
 }
 @media (prefers-reduced-motion: reduce) {
-  .plat-module {
+  .plat-tab {
     opacity: 1;
     transform: none;
     transition: none;

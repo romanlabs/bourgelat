@@ -45,8 +45,7 @@ export default function PlatformSection() {
               entienden entre sí. Sin copiar datos. Sin perder contexto.
             </p>
 
-            <div className="plat-modules" role="tablist" aria-label="Módulos de la plataforma">
-              <span className="plat-modules__spine" aria-hidden="true" />
+            <div className="plat-tabs" role="tablist" aria-label="Módulos de la plataforma">
               {PLATFORM_FEATURES.map((feature, i) => {
                 const Icon = feature.icon
                 return (
@@ -56,13 +55,11 @@ export default function PlatformSection() {
                     role="tab"
                     aria-selected={i === active}
                     onClick={() => setActive(i)}
-                    className={`plat-module${visible ? ' is-visible' : ''}${i === active ? ' is-active' : ''}`}
-                    style={{ transitionDelay: visible ? `${250 + i * 130}ms` : '0ms' }}
+                    className={`plat-tab${visible ? ' is-visible' : ''}${i === active ? ' is-active' : ''}`}
+                    style={{ transitionDelay: visible ? `${250 + i * 110}ms` : '0ms' }}
                   >
-                    <span className="plat-module__tile">
-                      <Icon style={{ width: 20, height: 20 }} strokeWidth={1.75} />
-                    </span>
-                    <span className="plat-module__label">{feature.label}</span>
+                    <Icon className="plat-tab__icon" style={{ width: 18, height: 18 }} strokeWidth={1.75} />
+                    <span className="plat-tab__label">{feature.label}</span>
                   </button>
                 )
               })}

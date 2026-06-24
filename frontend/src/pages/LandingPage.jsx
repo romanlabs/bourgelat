@@ -11,6 +11,7 @@ import FlowDogMedic from "@/components/landing/FlowDogMedic"
 import SectionHeading from "@/components/landing/SectionHeading"
 import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
+import WhatsAppFab from "@/components/landing/WhatsAppFab"
 import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
 
 export default function LandingPage() {
@@ -95,14 +96,14 @@ export default function LandingPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
+                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <Link
                 to="/planes"
-                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
+                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
               >
                 Ver planes
               </Link>
@@ -197,14 +198,14 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Link
               to="/planes"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645] sm:w-auto"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645] sm:w-auto"
             >
               Ver comparativa completa
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
             </Link>
             <Link
               to="/registro"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-none border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
             >
               Crear cuenta
             </Link>
@@ -244,14 +245,14 @@ export default function LandingPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-none bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <a
                 href="mailto:hola@bourgelat.co"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-none border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
               >
                 <Mail className="h-4 w-4" />
                 hola@bourgelat.co
@@ -378,39 +379,40 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-6 border-t border-[#fdf6ee]/12 pt-7 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-xs text-[#fdf6ee]/60">
-              <p>© {new Date().getFullYear()} Bourgelat. Todos los derechos reservados.</p>
-              <p className="mt-1 text-[#fdf6ee]/40">bourgelat.co · app.bourgelat.co</p>
-            </div>
+          {/* Redes sociales — encima de la línea divisoria */}
+          <div className="mt-12 flex items-center justify-center gap-3 sm:justify-end">
+            <a
+              href="https://instagram.com/bourgelat.co"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Bourgelat en Instagram"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+              </svg>
+            </a>
+            <a
+              href="https://tiktok.com/@bourgelat"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Bourgelat en TikTok"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+              </svg>
+            </a>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <a
-                href="https://instagram.com/bourgelat.co"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Bourgelat en Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
-              >
-                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                </svg>
-              </a>
-              <a
-                href="https://tiktok.com/@bourgelat"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Bourgelat en TikTok"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
-              >
-                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
-                  <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-                </svg>
-              </a>
-            </div>
+          <div className="mt-6 border-t border-[#fdf6ee]/12 pt-7 text-xs text-[#fdf6ee]/60">
+            <p>© {new Date().getFullYear()} Bourgelat. Todos los derechos reservados.</p>
+            <p className="mt-1 text-[#fdf6ee]/40">bourgelat.co · app.bourgelat.co</p>
           </div>
         </div>
       </footer>
+
+      <WhatsAppFab />
     </div>
   )
 }
