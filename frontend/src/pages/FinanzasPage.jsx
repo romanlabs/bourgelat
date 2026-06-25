@@ -5,7 +5,6 @@ import {
   CircleAlert,
   Download,
   FileText,
-  Package,
   Plus,
   Printer,
   Receipt,
@@ -32,11 +31,10 @@ import {
   formatNumber,
   formatShortDate,
 } from '@/features/dashboard/dashboardUtils'
-import { useFinanzasFacturacion, PAYMENT_METHOD_OPTIONS } from '@/features/finanzas/useFinanzasFacturacion'
+import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturacion'
 import { useFinanzasHistorial, STATUS_OPTIONS, PAYMENT_FORM_OPTIONS } from '@/features/finanzas/useFinanzasHistorial'
 import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
-import ProductSelectorDrawer from '@/features/finanzas/ProductSelectorDrawer'
-import TutorSelectorDrawer from '@/features/finanzas/TutorSelectorDrawer'
+import QuickSaleLayout from '@/features/finanzas/QuickSaleLayout'
 import { hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
 
@@ -45,6 +43,7 @@ const TABS = [
   { id: 'facturacion', label: 'Facturacion' },
   { id: 'historial', label: 'Historial' },
 ]
+
 
 const ESTADO_LABELS = {
   borrador: 'Borrador',
@@ -108,7 +107,7 @@ function RestrictedFinancePage() {
 export default function FinanzasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
-  const [activeTab, setActiveTab] = useState('resumen')
+  const [activeTab, setActiveTab] = useState('facturacion')
 
   useEffect(() => {
     document.title = 'Caja y facturacion | Bourgelat'
@@ -179,21 +178,33 @@ export default function FinanzasPage() {
         />
       ) : (
         <div className="space-y-5">
-          <div className="flex gap-0 border-b border-border">
-            {TABS.map((tab) => (
+          <div className="flex items-center justify-between border-b border-border">
+            <div className="flex gap-0">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {activeTab !== 'facturacion' && (
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                }`}
+                onClick={() => setActiveTab('facturacion')}
+                className="mr-1 inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-primary/10 hover:text-primary hover:border-primary/30"
               >
-                {tab.label}
+                <Plus className="h-3.5 w-3.5" />
+                Nueva factura
               </button>
-            ))}
+            )}
           </div>
 
           {/* ── Tab: Resumen ── */}
@@ -270,399 +281,13 @@ export default function FinanzasPage() {
 
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (
-            <>
-              <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.28fr)_380px]">
-                <DashboardPanel
-                  title="Nueva factura"
-                  subtitle="Caja operativa para consultas, peluqueria, productos, procedimientos y ventas mostrador."
-                  action={
-                    <button
-                      type="button"
-                      onClick={facturacionHook.handleCrearFactura}
-                      disabled={facturacionHook.crearFacturaMutation.isPending}
-                      className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Receipt className="h-4 w-4" />
-                      {facturacionHook.crearFacturaMutation.isPending ? 'Guardando...' : 'Crear factura'}
-                    </button>
-                  }
-                >
-                  <div className="grid gap-4">
-                    {/* Tutor — fila compacta */}
-                    <div className="flex items-center gap-3 border border-border bg-muted px-4 py-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-secondary text-sm font-semibold text-primary">
-                        {facturacionHook.selectedOwnerData?.nombre?.charAt(0)?.toUpperCase() || (
-                          <Search className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Tutor
-                        </p>
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {facturacionHook.selectedOwnerData?.nombre || 'Sin tutor seleccionado'}
-                        </p>
-                        {facturacionHook.selectedOwnerData?.email ? (
-                          <p className="truncate text-xs text-muted-foreground">
-                            {facturacionHook.selectedOwnerData.email}
-                          </p>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => facturacionHook.setTutorDrawerOpen(true)}
-                        className="shrink-0 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                      >
-                        {facturacionHook.selectedOwnerData ? 'Cambiar' : 'Seleccionar'}
-                      </button>
-                    </div>
-
-                    {/* Método de pago + descuento + info */}
-                    <div className="grid gap-4 xl:grid-cols-3">
-                      <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Metodo de pago
-                        </span>
-                        <select
-                          value={facturacionHook.invoiceForm.metodoPago}
-                          onChange={(event) =>
-                            facturacionHook.setInvoiceForm((curr) => ({
-                              ...curr,
-                              metodoPago: event.target.value,
-                            }))
-                          }
-                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        >
-                          {PAYMENT_METHOD_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="grid gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          Descuento general
-                        </span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={facturacionHook.invoiceForm.descuentoGeneral}
-                          onChange={(event) =>
-                            facturacionHook.setInvoiceForm((curr) => ({
-                              ...curr,
-                              descuentoGeneral: event.target.value,
-                            }))
-                          }
-                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        />
-                      </label>
-                      <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Emision electronica
-                        </p>
-                        <p className="mt-2">
-                          {emisionAutomaticaActiva
-                            ? 'Activa — se emite automaticamente al crear.'
-                            : 'No activa en este plan. Se guarda la factura interna.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Observaciones */}
-                    <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Observaciones
-                      </span>
-                      <textarea
-                        value={facturacionHook.invoiceForm.observaciones}
-                        onChange={(event) =>
-                          facturacionHook.setInvoiceForm((curr) => ({
-                            ...curr,
-                            observaciones: event.target.value,
-                          }))
-                        }
-                        placeholder="Notas internas o detalle del servicio prestado."
-                        rows={2}
-                        className="border border-border bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary"
-                      />
-                    </label>
-
-                    {/* Items — tabla compacta o empty state */}
-                    <div>
-                      {facturacionHook.invoiceForm.items.length === 0 ? (
-                        /* Empty state */
-                        <div className="border border-dashed border-border bg-muted px-6 py-10 text-center">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            Items de la factura
-                          </p>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Agrega productos del inventario o registra un servicio.
-                          </p>
-                          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                            {puedeConsultarInventario && (
-                              <button
-                                type="button"
-                                onClick={() => facturacionHook.setProductDrawerOpen(true)}
-                                className="inline-flex items-center gap-2 border border-border bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                              >
-                                <Package className="h-4 w-4" />
-                                Agregar productos
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={facturacionHook.addServiceItem}
-                              className="inline-flex items-center gap-2 border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Agregar servicio
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Tabla con ítems */
-                        <>
-                          <div className="overflow-x-auto">
-                            {/* Header */}
-                            <div
-                              className="grid min-w-[580px] border-x border-t border-border bg-muted px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
-                              style={{ gridTemplateColumns: '72px 1fr 88px 116px 88px 36px' }}
-                            >
-                              <span>Tipo</span>
-                              <span className="pl-2">Descripcion</span>
-                              <span>Cantidad</span>
-                              <span>Precio unit.</span>
-                              <span>Descuento</span>
-                              <span />
-                            </div>
-                            {/* Rows */}
-                            <div className="min-w-[580px] divide-y divide-border border border-border">
-                              {facturacionHook.invoiceForm.items.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="grid items-center gap-1 px-3 py-2"
-                                  style={{ gridTemplateColumns: '72px 1fr 88px 116px 88px 36px' }}
-                                >
-                                  <span
-                                    className={`inline-flex items-center self-center px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] border ${
-                                      item.tipo === 'producto'
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                        : 'border-primary/30 bg-primary/10 text-primary'
-                                    }`}
-                                  >
-                                    {item.tipo === 'producto' ? 'Producto' : 'Servicio'}
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={item.descripcion}
-                                    onChange={(event) =>
-                                      facturacionHook.updateInvoiceItem(
-                                        item.id,
-                                        'descripcion',
-                                        event.target.value
-                                      )
-                                    }
-                                    placeholder="Descripcion"
-                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                                  />
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    step={item.tipo === 'producto' ? '1' : '0.01'}
-                                    max={
-                                      item.tipo === 'producto' && item.stock != null
-                                        ? item.stock
-                                        : undefined
-                                    }
-                                    title={
-                                      item.tipo === 'producto' && item.stock != null
-                                        ? `Stock disponible: ${item.stock}`
-                                        : undefined
-                                    }
-                                    value={item.cantidad}
-                                    onChange={(event) =>
-                                      facturacionHook.updateInvoiceItem(
-                                        item.id,
-                                        'cantidad',
-                                        event.target.value
-                                      )
-                                    }
-                                    className={`h-9 border bg-card px-2 text-sm text-foreground outline-none focus:border-primary ${
-                                      item.tipo === 'producto' &&
-                                      item.stock != null &&
-                                      Number(item.cantidad) > item.stock
-                                        ? 'border-red-400 bg-red-50 text-red-700'
-                                        : 'border-border'
-                                    }`}
-                                  />
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={item.precioUnitario}
-                                    onChange={(event) =>
-                                      facturacionHook.updateInvoiceItem(
-                                        item.id,
-                                        'precioUnitario',
-                                        event.target.value
-                                      )
-                                    }
-                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                                  />
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={item.descuento}
-                                    onChange={(event) =>
-                                      facturacionHook.updateInvoiceItem(
-                                        item.id,
-                                        'descuento',
-                                        event.target.value
-                                      )
-                                    }
-                                    className="h-9 border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-primary"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => facturacionHook.removeInvoiceItem(item.id)}
-                                    className="flex h-9 w-9 items-center justify-center border border-border bg-card text-muted-foreground transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Botones debajo de la tabla */}
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {puedeConsultarInventario && (
-                              <button
-                                type="button"
-                                onClick={() => facturacionHook.setProductDrawerOpen(true)}
-                                className="inline-flex items-center gap-2 border border-border bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                              >
-                                <Package className="h-3.5 w-3.5" />
-                                Desde inventario
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={facturacionHook.addServiceItem}
-                              className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              Agregar servicio
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </DashboardPanel>
-
-                {/* Panel resumen del borrador */}
-                <DashboardPanel
-                  title="Resumen del borrador"
-                  subtitle="Lectura rápida antes de crear la factura o exportar el corte financiero."
-                  action={
-                    <button
-                      type="button"
-                      onClick={historialHook.exportCurrentCut}
-                      className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-                    >
-                      <Download className="h-4 w-4" />
-                      Exportar CSV
-                    </button>
-                  }
-                >
-                  <div className="space-y-4">
-                    <div className="grid gap-3">
-                      <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                        <span className="font-medium text-muted-foreground">Tutor</span>
-                        <span className="min-w-0 text-right font-semibold text-slate-950">
-                          {facturacionHook.selectedOwnerData?.nombre || 'Pendiente de seleccionar'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                        <span className="font-medium text-muted-foreground">Metodo</span>
-                        <span className="min-w-0 text-right font-semibold text-slate-950">
-                          {PAYMENT_METHOD_LABELS[facturacionHook.invoiceForm.metodoPago] ||
-                            facturacionHook.invoiceForm.metodoPago}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                        <span className="font-medium text-muted-foreground">Lineas</span>
-                        <span className="font-semibold text-slate-950">
-                          {formatNumber(facturacionHook.invoiceForm.items.length)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3">
-                      <div className="flex items-center justify-between gap-4 border border-border bg-card px-4 py-3 text-sm text-foreground">
-                        <span className="font-medium text-muted-foreground">Subtotal</span>
-                        <span className="font-semibold text-slate-950">
-                          {formatCurrency(facturacionHook.invoiceTotals.subtotal)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 border border-border bg-card px-4 py-3 text-sm text-foreground">
-                        <span className="font-medium text-muted-foreground">Descuento general</span>
-                        <span className="font-semibold text-slate-950">
-                          {formatCurrency(facturacionHook.invoiceTotals.descuentoGeneral)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 border border-slate-900 bg-slate-950 px-4 py-3 text-sm text-slate-100">
-                        <span className="font-medium text-muted-foreground">Total estimado</span>
-                        <span className="font-semibold">
-                          {formatCurrency(facturacionHook.invoiceTotals.total)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      El exportable descarga el corte actual filtrado. La creación guiada guarda la
-                      factura interna y luego puedes abrirla en detalle para emisión electrónica o
-                      control de anulación.
-                    </div>
-                  </div>
-                </DashboardPanel>
-              </div>
-
-              {/* Drawers del tab de facturacion */}
-              <TutorSelectorDrawer
-                open={facturacionHook.tutorDrawerOpen}
-                onClose={() => facturacionHook.setTutorDrawerOpen(false)}
-                propietariosQuery={facturacionHook.propietariosQuery}
-                ownerSearch={facturacionHook.ownerSearch}
-                setOwnerSearch={facturacionHook.setOwnerSearch}
-                selectedId={facturacionHook.invoiceForm.propietarioId}
-                onSelect={(propietario) => {
-                  facturacionHook.selectOwner(propietario)
-                  facturacionHook.setTutorDrawerOpen(false)
-                }}
-              />
-
-              {puedeConsultarInventario ? (
-                <ProductSelectorDrawer
-                  open={facturacionHook.productDrawerOpen}
-                  onClose={() => facturacionHook.setProductDrawerOpen(false)}
-                  productosDisponibles={facturacionHook.productosDisponibles}
-                  productosQuery={facturacionHook.productosQuery}
-                  productSearch={facturacionHook.productSearch}
-                  setProductSearch={facturacionHook.setProductSearch}
-                  barcodeInput={facturacionHook.barcodeInput}
-                  setBarcodeInput={facturacionHook.setBarcodeInput}
-                  onAddProduct={facturacionHook.addProductToInvoice}
-                  onBarcodeScan={facturacionHook.handleBarcodeScan}
-                  buscarProductoPorBarcodeMutation={facturacionHook.buscarProductoPorBarcodeMutation}
-                />
-              ) : null}
-            </>
+            <QuickSaleLayout
+              facturacionHook={facturacionHook}
+              puedeConsultarInventario={puedeConsultarInventario}
+              emisionAutomaticaActiva={emisionAutomaticaActiva}
+            />
           )}
+
 
           {/* ── Tab: Historial ── */}
           {activeTab === 'historial' && (
