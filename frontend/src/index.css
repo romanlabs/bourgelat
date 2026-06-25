@@ -1004,6 +1004,23 @@ input:-webkit-autofill:focus {
   background: linear-gradient(165deg, #f8e7cf 0%, #f1d6ad 48%, #ecd1a7 100%);
 }
 
+/* ── Registro: video de fondo (object-contain). El borde izquierdo del video
+   marcaba un canto contra el relleno; lo difuminamos con una máscara para que
+   se disuelva en el fondo crema sin diferencia visible. ─────────────────── */
+.registro-bg-video {
+  /* Desktop: el perro va a la derecha; el ~22% izquierdo (fondo vacío del
+     video) se funde hacia el relleno de la página. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.6) 12%, #000 24%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.6) 12%, #000 24%);
+}
+@media (max-width: 639px) {
+  /* Móvil: el video es una banda inferior; fundimos su borde superior. */
+  .registro-bg-video {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+  }
+}
+
 /* En móvil el video es una banda inferior y su fondo beige marcaba un escalón.
    Igualamos el degradado al color real del fondo del video (#efd0a9) en la mitad
    inferior y difuminamos el borde superior del video, para que se fundan sin

@@ -178,10 +178,9 @@ export default function LoginPage() {
           >
             <Motion.p
               {...fadeUp(0.05)}
-              className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.26em]"
+              className="text-[11px] font-semibold uppercase tracking-[0.26em]"
               style={{ color: ACCENT }}
             >
-              <span className="h-px w-6" style={{ backgroundColor: ACCENT }} />
               Portal de acceso
             </Motion.p>
 

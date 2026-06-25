@@ -12,9 +12,9 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Stethoscope,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import BrandMark from '@/components/landing/BrandMark'
 import colombia from '@/data/colombia'
 import { useRegistro } from '@/features/auth/useAuth'
 
@@ -22,8 +22,10 @@ void motion
 
 const INK = '#2b2018'
 const ACCENT = '#b07645'
-const REGISTRO_VIDEO_WEBM = '/videos/registro-puppy.webm'
-const REGISTRO_VIDEO_MP4  = '/videos/registro-puppy.mp4'
+const EYEBROW = '#a35f25'
+const REGISTRO_VIDEO_WEBM = '/videos/perro-registro-opt.webm'
+const REGISTRO_VIDEO_MP4  = '/videos/perro-registro-opt.mp4'
+const REGISTRO_POSTER     = '/videos/perro-registro-poster.webp'
 
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
@@ -46,7 +48,7 @@ const normalizarNit = (valor = '') => valor.replace(/[^\d-]/g, '').slice(0, 20)
 
 const registroSchema = z
   .object({
-    nombre: z.string().trim().min(2, 'Escribe el nombre de la clinica').max(90, 'El nombre es demasiado largo'),
+    nombre: z.string().trim().min(2, 'Escribe el nombre de la clínica').max(90, 'El nombre es demasiado largo'),
     tipoPersona: z.enum(['persona_natural', 'persona_juridica'], {
       errorMap: () => ({ message: 'Selecciona el tipo de persona' }),
     }),
@@ -56,7 +58,7 @@ const registroSchema = z
         .trim()
         .min(6, 'El NIT debe tener al menos 6 caracteres')
         .max(20, 'El NIT no puede superar 20 caracteres')
-        .regex(/^[0-9-]+$/, 'Usa solo numeros y guion en el NIT')
+        .regex(/^[0-9-]+$/, 'Usa solo números y guion en el NIT')
     ),
     departamento: z.string().trim().min(1, 'Selecciona un departamento'),
     ciudad: z.string().trim().min(1, 'Selecciona una ciudad'),
@@ -65,50 +67,41 @@ const registroSchema = z
       .trim()
       .min(2, 'Escribe el nombre del administrador')
       .max(90, 'El nombre es demasiado largo'),
-    email: z.string().trim().email('Ingresa un email valido'),
-    emailClinica: z.string().trim().email('Ingresa un email valido'),
-    telefono: z.string().regex(/^3\d{9}$/, 'Ingresa un celular colombiano valido de 10 digitos'),
+    email: z.string().trim().email('Ingresa un email válido'),
+    emailClinica: z.string().trim().email('Ingresa un email válido'),
+    telefono: z.string().regex(/^3\d{9}$/, 'Ingresa un celular colombiano válido de 10 dígitos'),
     direccion: optionalField(
       z
         .string()
         .trim()
-        .min(6, 'La direccion es muy corta')
-        .max(140, 'La direccion es demasiado larga')
+        .min(6, 'La dirección es muy corta')
+        .max(140, 'La dirección es demasiado larga')
     ),
     password: z
       .string()
       .refine(
         (value) => PASSWORD_REGEX.test(value),
-        'Crea una contrasena fuerte con mayuscula, minuscula, numero y caracter especial'
+        'La contraseña aún no cumple todos los requisitos'
       ),
     confirmar: z.string(),
   })
   .refine((values) => values.password === values.confirmar, {
-    message: 'Las contrasenas no coinciden',
+    message: 'Las contraseñas no coinciden',
     path: ['confirmar'],
   })
 
 const STEPS = [
   {
-    label: 'Clinica',
-    short: 'Identidad',
-    title: 'Define la identidad y la sede principal de la clinica.',
-    description: 'Registraremos el nombre comercial, el NIT y la ubicacion de la sede principal.',
-    note: 'Esta informacion ayuda a personalizar documentos, reportes y configuraciones desde el primer ingreso.',
+    label: 'Clínica',
+    description: 'Datos de tu clínica: nombre, tipo de persona, ubicación y NIT.',
   },
   {
     label: 'Responsable',
-    short: 'Contacto',
-    title: 'Registra a la persona responsable de la operacion inicial.',
-    description: 'Definiremos el correo institucional, el acceso del administrador y el celular principal.',
-    note: 'El correo de la clinica y el celular principal son obligatorios para una operacion real y ambos se validan antes de guardar.',
+    description: 'Persona a cargo de la cuenta y datos de contacto de la clínica.',
   },
   {
     label: 'Seguridad',
-    short: 'Acceso',
-    title: 'Protege la cuenta de acceso con una clave robusta.',
-    description: 'Al finalizar, la clinica quedara lista para ingresar al sistema con el acceso principal.',
-    note: 'La contrasena debe cumplir las mismas reglas en la interfaz y en el backend antes de enviar el registro.',
+    description: 'Crea una contraseña segura para proteger el acceso.',
   },
 ]
 
@@ -123,13 +116,13 @@ const STEP_FIELDS = [
 
 function PasswordRule({ valid, children }) {
   return (
-    <div className="flex items-center gap-2.5 text-sm text-[#42524a]">
+    <div className="flex items-center gap-2 text-[12px] text-[#42524a]">
       <span
-        className={`flex h-5 w-5 items-center justify-center rounded-full ${
+        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
           valid ? 'bg-[#e6f4ec] text-[#3f8b63]' : 'bg-[#efe8df] text-[#7e786f]'
         }`}
       >
-        <Check className="h-3 w-3" />
+        <Check className="h-2.5 w-2.5" />
       </span>
       <span>{children}</span>
     </div>
@@ -182,27 +175,27 @@ export default function RegistroPage() {
   const passwordChecks = [
     {
       key: 'length',
-      label: 'Entre 8 y 72 caracteres',
+      label: 'Mínimo 8 caracteres',
       valid: passwordValue.length >= 8 && passwordValue.length <= 72,
     },
     {
       key: 'upper',
-      label: 'Al menos una mayuscula',
+      label: 'Una mayúscula',
       valid: /[A-Z]/.test(passwordValue),
     },
     {
       key: 'lower',
-      label: 'Al menos una minuscula',
+      label: 'Una minúscula',
       valid: /[a-z]/.test(passwordValue),
     },
     {
       key: 'number',
-      label: 'Al menos un numero',
+      label: 'Un número',
       valid: /\d/.test(passwordValue),
     },
     {
       key: 'special',
-      label: 'Un caracter especial',
+      label: 'Un carácter especial',
       valid: /[^A-Za-z0-9]/.test(passwordValue),
     },
   ]
@@ -231,24 +224,30 @@ export default function RegistroPage() {
   const confirmarField = register('confirmar')
 
   const stepper = (
-    <div className="flex items-center gap-0">
+    <div className="flex items-center">
       {STEPS.map((step, index) => {
         const isActive = index === paso
         const isDone = index < paso
         return (
-          <div key={step.label} className="flex items-center">
+          <div key={step.label} className="flex flex-1 items-center last:flex-none">
             <div className="flex items-center gap-2">
-              <span className={`flex h-6 w-6 items-center justify-center text-[11px] font-bold transition-colors ${
-                isActive ? 'bg-[#b07645] text-white' : isDone ? 'bg-[#2b2018] text-white' : 'border border-[#2b2018]/20 text-[#2b2018]/40'
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors duration-300 ${
+                isActive
+                  ? 'bg-[#b07645] text-white shadow-[0_4px_12px_rgba(176,118,69,0.35)]'
+                  : isDone
+                    ? 'bg-[#2b2018] text-white'
+                    : 'border border-[#2b2018]/20 text-[#2b2018]/40'
               }`}>
-                {isDone ? <Check className="h-3 w-3" /> : `0${index + 1}`}
+                {isDone ? <Check className="h-3.5 w-3.5" /> : `0${index + 1}`}
               </span>
-              <span className={`text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors ${
-                isActive ? 'text-[#2b2018]' : isDone ? 'text-[#2b2018]/60' : 'text-[#2b2018]/30'
+              <span className={`hidden text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors duration-300 sm:inline ${
+                isActive ? 'text-[#2b2018]' : isDone ? 'text-[#2b2018]/55' : 'text-[#2b2018]/30'
               }`}>{step.label}</span>
             </div>
             {index < STEPS.length - 1 && (
-              <div className={`mx-3 h-px w-8 transition-colors ${isDone ? 'bg-[#2b2018]/40' : 'bg-[#2b2018]/15'}`} />
+              <div className="mx-3 h-px flex-1 overflow-hidden rounded-full bg-[#2b2018]/12">
+                <div className={`h-full rounded-full bg-[#2b2018]/45 transition-all duration-500 ${isDone ? 'w-full' : 'w-0'}`} />
+              </div>
             )}
           </div>
         )
@@ -279,93 +278,112 @@ export default function RegistroPage() {
   }
 
   const inputCls = (hasError) =>
-    `h-12 w-full border-0 border-b bg-transparent px-1 text-[15px] text-[#2b2018] outline-none transition placeholder:text-[#2b2018]/35 ${hasError ? 'border-red-500' : 'border-[#2b2018]/20 focus:border-[#b07645]'}`
+    `h-10 w-full border-0 border-b bg-transparent px-0.5 text-[14px] text-[#2b2018] outline-none transition placeholder:text-[#2b2018]/35 ${hasError ? 'border-red-500' : 'border-[#2b2018]/20 focus:border-[#b07645]'}`
 
   const selectCls = (hasError) =>
-    `h-12 w-full appearance-none border-0 border-b bg-transparent px-1 text-[15px] text-[#2b2018] outline-none transition ${hasError ? 'border-red-500' : 'border-[#2b2018]/20 focus:border-[#b07645]'}`
+    `h-10 w-full appearance-none border-0 border-b bg-transparent px-0.5 text-[14px] text-[#2b2018] outline-none transition ${hasError ? 'border-red-500' : 'border-[#2b2018]/20 focus:border-[#b07645]'}`
 
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-[#fdf6ee] text-[#2b2018]">
+    <div
+      className="relative flex h-[100dvh] flex-col overflow-hidden text-[#2b2018]"
+      style={{
+        // Degradado igualado al fondo real del video (crema), muestreado por
+        // bandas verticales, para que el relleno empalme sin canto con el video.
+        background: 'linear-gradient(180deg, #fad6a8 0%, #fcddb5 20%, #fce0b9 45%, #fcdfba 65%, #fce2c1 85%, #f9dcbc 100%)',
+      }}
+    >
 
-      <div className="mx-auto w-full max-w-[1520px] px-5 sm:px-8">
-        <header className="flex items-center justify-between pb-2 pt-5">
-          <Link to="/" className="group inline-flex items-center gap-3 text-[#2b2018] no-underline">
-            <span className="flex h-9 w-9 items-center justify-center bg-[#2b2018] text-white transition-colors duration-200 group-hover:bg-[#b07645]">
-              <Stethoscope className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
-              <span className="mt-1 block text-[10px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
-                registro de clínica
-              </span>
-            </span>
+      {/* ── Video de fondo: misma colocación que el hero del landing.
+          object-contain + object-[right_bottom] muestra al perro completo
+          (cabeza y patas) y su fondo beige funde con el degradado hero-bg. ── */}
+      <video
+        className="registro-bg-video absolute inset-x-0 bottom-0 top-auto h-[48dvh] w-full object-contain object-bottom sm:inset-0 sm:top-0 sm:h-full sm:object-[right_bottom]"
+        style={{ transform: 'translateZ(0)' }}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster={REGISTRO_POSTER}
+        disablePictureInPicture
+        aria-hidden="true"
+      >
+        <source src={REGISTRO_VIDEO_WEBM} type="video/webm" />
+        <source src={REGISTRO_VIDEO_MP4} type="video/mp4" />
+      </video>
+
+      {/* Velo crema opaco a la izquierda, del MISMO color que el fondo del
+          video (rgb 251,224,185). Cubre por completo el borde del object-contain
+          y se desvanece antes del perro, así no queda ningún canto visible. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{ background: 'linear-gradient(90deg, rgb(251,224,185) 0%, rgb(251,224,185) 44%, rgba(251,224,185,0.6) 54%, rgba(251,224,185,0) 64%)' }}
+      />
+
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col px-5 sm:px-8">
+        <header className="flex items-center justify-between py-4">
+          <Link to="/" className="group no-underline">
+            <BrandMark />
           </Link>
 
-          <nav className="flex items-center gap-2 text-sm sm:gap-3">
+          <nav className="flex items-center gap-3">
             <Link
               to="/"
-              className="hidden items-center gap-1.5 text-[#2b2018]/50 no-underline transition-colors hover:text-[#2b2018] sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-[#2b2018] no-underline transition-[background-color,color] duration-[250ms] ease-out hover:bg-[rgba(43,32,24,0.06)] hover:text-[#b07645] sm:inline-flex"
             >
-              <ArrowLeft className="h-3 w-3" />
+              <ArrowLeft className="h-4 w-4" />
               Volver al inicio
             </Link>
-            <div className="hidden h-4 w-px bg-[#2b2018]/15 sm:block" />
             <Link
               to="/login"
-              className="group inline-flex items-center gap-2 bg-[#2b2018] px-4 py-2.5 text-[13px] font-semibold tracking-[0.04em] text-white no-underline transition-colors duration-200 hover:bg-[#b07645]"
+              className="group inline-flex h-10 items-center gap-2 rounded-md bg-[#2b2018] px-5 text-sm font-semibold tracking-[0.04em] text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.18)] transition-colors duration-200 hover:bg-[#b07645]"
             >
-              Ya tengo acceso
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              Iniciar sesión
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </nav>
         </header>
 
-      </div>
-
-      <main className="relative z-10 flex flex-1 overflow-hidden">
-        <div className="flex flex-1 items-center justify-center px-5 pb-6 sm:px-8">
+        <main className="flex min-h-0 flex-1 items-center pb-5 lg:pl-24 xl:pl-44">
           <motion.div
             key={paso}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-[480px] border border-[#2b2018]/8 bg-white/95 px-8 py-8 backdrop-blur-sm"
-            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10)' }}
+            className="w-full max-w-[480px] rounded-[12px] border border-white/70 bg-white/95 px-7 py-6 backdrop-blur-md sm:px-9"
+            style={{ boxShadow: '0 2px 4px rgba(43,32,24,0.04), 0 12px 30px rgba(43,32,24,0.10), 0 36px 80px rgba(43,32,24,0.16)' }}
           >
+            <div className="w-full">
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.05 }}
-              className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.26em]"
-              style={{ color: ACCENT }}
+              className="text-[11px] font-semibold uppercase tracking-[0.3em]"
+              style={{ color: EYEBROW }}
             >
-              <span className="h-px w-6" style={{ backgroundColor: ACCENT }} />
               Portal de registro
             </motion.p>
 
-            <h1
-              className="mt-3 text-[1.45rem] leading-[1.05] tracking-[-0.03em] text-[#2b2018]"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-            >
-              Activa la cuenta de tu clínica
-            </h1>
+            <p className="mt-3 text-[13px] leading-5 text-[#6a5038]">
+              {STEPS[paso].description}
+            </p>
 
-            <div className="mt-5">{stepper}</div>
+            <div className="mt-4">{stepper}</div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" autoComplete="off">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3" autoComplete="off">
               <input type="text" name="register-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
               <input type="password" name="register-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
 
               {paso === 0 ? (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Nombre de la clínica</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Nombre de la clínica</label>
                     <input {...nombreField} type="text" autoComplete="organization" placeholder="Clínica Veterinaria Bourgelat" className={inputCls(errors.nombre)} />
                     {errors.nombre ? <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p> : null}
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Tipo de persona</label>
-                    <div className="mt-1 grid grid-cols-2 gap-2">
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Tipo de persona</label>
+                    <div className="grid grid-cols-2 gap-2">
                       {[
                         { value: 'persona_natural', label: 'Persona natural' },
                         { value: 'persona_juridica', label: 'Persona jurídica' },
@@ -377,7 +395,7 @@ export default function RegistroPage() {
                             type="button"
                             aria-pressed={activo}
                             onClick={() => setValue('tipoPersona', opcion.value, { shouldValidate: true })}
-                            className={`h-11 border text-[13px] font-semibold transition ${
+                            className={`h-9 rounded-md border text-[13px] font-semibold transition-colors ${
                               activo
                                 ? 'border-[#b07645] bg-[#b07645]/10 text-[#2b2018]'
                                 : 'border-[#2b2018]/20 text-[#2b2018]/55 hover:border-[#2b2018]/40'
@@ -390,9 +408,9 @@ export default function RegistroPage() {
                     </div>
                     {errors.tipoPersona ? <p className="mt-1 text-sm text-red-600">{errors.tipoPersona.message}</p> : null}
                   </div>
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Departamento</label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Departamento</label>
                       <select {...departamentoField} className={selectCls(errors.departamento)}>
                         <option value="">Selecciona</option>
                         {colombia.map((item) => (
@@ -402,16 +420,16 @@ export default function RegistroPage() {
                       {errors.departamento ? <p className="mt-1 text-sm text-red-600">{errors.departamento.message}</p> : null}
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Ciudad</label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Ciudad</label>
                       <select {...ciudadField} disabled={!departamentoSeleccionado} className={`${selectCls(errors.ciudad)} disabled:opacity-50`}>
-                        <option value="">{departamentoSeleccionado ? 'Selecciona' : '— elige depto primero'}</option>
+                        <option value="">{departamentoSeleccionado ? 'Selecciona' : 'Elige departamento'}</option>
                         {ciudades.map((ciudad) => (<option key={ciudad} value={ciudad}>{ciudad}</option>))}
                       </select>
                       {errors.ciudad ? <p className="mt-1 text-sm text-red-600">{errors.ciudad.message}</p> : null}
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">NIT <span className="normal-case tracking-normal text-[#2b2018]/30">(opcional)</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">NIT <span className="normal-case tracking-normal text-[#2b2018]/30">(opcional)</span></label>
                     <input {...nitField} type="text" inputMode="numeric" maxLength={20} placeholder="900123456-7" className={inputCls(errors.nit)} />
                     {errors.nit ? <p className="mt-1 text-sm text-red-600">{errors.nit.message}</p> : null}
                   </div>
@@ -419,32 +437,32 @@ export default function RegistroPage() {
               ) : null}
 
               {paso === 1 ? (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Nombre del responsable</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Nombre del responsable</label>
                     <input {...nombreAdminField} type="text" autoComplete="name" placeholder="Nombre y apellido" className={inputCls(errors.nombreAdministrador)} />
                     {errors.nombreAdministrador ? <p className="mt-1 text-sm text-red-600">{errors.nombreAdministrador.message}</p> : null}
                   </div>
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Email clínica</label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Email clínica</label>
                       <input {...emailClinicaField} type="email" inputMode="email" spellCheck={false} placeholder="contacto@tuclinica.com" className={inputCls(errors.emailClinica)} />
                       {errors.emailClinica ? <p className="mt-1 text-sm text-red-600">{errors.emailClinica.message}</p> : null}
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Email admin</label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Email admin</label>
                       <input {...emailField} type="email" inputMode="email" spellCheck={false} autoComplete="email" placeholder="tu@email.com" className={inputCls(errors.email)} />
                       {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Celular</label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Celular</label>
                       <input {...telefonoField} type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="3001234567" className={inputCls(errors.telefono)} />
                       {errors.telefono ? <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p> : null}
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Dirección <span className="normal-case tracking-normal text-[#2b2018]/30">(opcional)</span></label>
+                      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Dirección <span className="normal-case tracking-normal text-[#2b2018]/30">(opcional)</span></label>
                       <input {...direccionField} type="text" autoComplete="street-address" placeholder="Calle 10 # 5-23" className={inputCls(errors.direccion)} />
                       {errors.direccion ? <p className="mt-1 text-sm text-red-600">{errors.direccion.message}</p> : null}
                     </div>
@@ -453,9 +471,9 @@ export default function RegistroPage() {
               ) : null}
 
               {paso === 2 ? (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Contraseña</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Contraseña</label>
                     <div className="relative">
                       <input
                         {...passwordField}
@@ -473,7 +491,7 @@ export default function RegistroPage() {
                     {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">Confirmar contraseña</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55">Confirmar contraseña</label>
                     <div className="relative">
                       <input
                         {...confirmarField}
@@ -498,7 +516,7 @@ export default function RegistroPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.2 }}
-                        className="grid grid-cols-2 gap-2 border border-[#2b2018]/8 bg-[#fdf8f3] p-4"
+                        className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-[#2b2018]/8 bg-[#fdf8f3] px-3.5 py-3"
                       >
                         {passwordChecks.map((rule) => (
                           <PasswordRule key={rule.key} valid={rule.valid}>{rule.label}</PasswordRule>
@@ -520,12 +538,12 @@ export default function RegistroPage() {
                 )}
 
                 {paso < STEPS.length - 1 ? (
-                  <Button type="button" onClick={handleNextStep} className="group h-12 rounded-none bg-[#2b2018] px-8 text-sm font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#3d2f24]">
+                  <Button type="button" onClick={handleNextStep} className="group h-11 rounded-md bg-[#2b2018] px-7 text-sm font-semibold tracking-[0.04em] text-[#fdf6ee] shadow-[0_4px_12px_rgba(43,32,24,0.18)] transition-colors hover:bg-[#b07645]">
                     Continuar
                     <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={isPending} className="group h-12 rounded-none bg-[#2b2018] px-8 text-sm font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-[#3d2f24]">
+                  <Button type="submit" disabled={isPending} className="group h-11 rounded-md bg-[#2b2018] px-7 text-sm font-semibold tracking-[0.04em] text-[#fdf6ee] shadow-[0_4px_12px_rgba(43,32,24,0.18)] transition-colors hover:bg-[#b07645]">
                     {isPending ? 'Creando...' : 'Crear cuenta'}
                     {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}
                   </Button>
@@ -533,44 +551,16 @@ export default function RegistroPage() {
               </div>
             </form>
 
-            <p className="mt-6 text-sm text-[#2b2018]/60">
+            <p className="mt-4 text-[13px] text-[#2b2018]/60">
               ¿Ya tienes acceso?{' '}
               <Link to="/login" className="font-semibold no-underline hover:underline" style={{ color: ACCENT }}>
                 Ingresar a la plataforma
               </Link>
             </p>
+            </div>
           </motion.div>
-        </div>
-
-        {/* ── Video del perrito (Veo 3) — flush al lateral derecho ── */}
-        <motion.aside
-          initial={{ opacity: 0, x: 28 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-          className="relative hidden w-[40%] shrink-0 lg:block"
-          aria-hidden="true"
-        >
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            disablePictureInPicture
-          >
-            <source src={REGISTRO_VIDEO_WEBM} type="video/webm" />
-            <source src={REGISTRO_VIDEO_MP4}  type="video/mp4" />
-          </video>
-          <span
-            className="pointer-events-none absolute left-5 top-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/85"
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.45)' }}
-          >
-            <span className="h-px w-5" style={{ backgroundColor: ACCENT }} />
-            Bienvenido
-          </span>
-        </motion.aside>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

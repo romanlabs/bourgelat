@@ -48,11 +48,17 @@ export default function LandingPage() {
           <source src="/videos/perroHero.webm" type="video/webm" />
         </video>
 
-        {/* Lavado cálido a la izquierda: levanta la legibilidad del texto oscuro
-            sobre el beige sin tapar al perro de la derecha. */}
+        {/* Móvil: lavado cálido suave (el perro va en banda inferior). */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1]"
+          className="pointer-events-none absolute inset-0 z-[1] sm:hidden"
           style={{ background: 'linear-gradient(100deg, rgba(249,236,216,0.95) 0%, rgba(249,236,216,0.72) 32%, rgba(249,236,216,0.18) 56%, rgba(249,236,216,0) 70%)' }}
+        />
+        {/* Desktop: velo crema OPACO del mismo color del fondo del video
+            (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
+            antes del perro, así no queda canto entre el relleno y el video. */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] hidden sm:block"
+          style={{ background: 'linear-gradient(90deg, rgb(251,229,195) 0%, rgb(251,229,195) 36%, rgba(251,229,195,0.5) 48%, rgba(251,229,195,0) 57%)' }}
         />
 
         {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee).
