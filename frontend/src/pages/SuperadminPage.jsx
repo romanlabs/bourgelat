@@ -1,16 +1,26 @@
 import { Navigate } from 'react-router-dom'
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Activity,
   BadgeDollarSign,
   Building2,
   CalendarClock,
   CircleDollarSign,
+  Search,
   ShieldAlert,
   UserRoundCog,
   Waypoints,
 } from 'lucide-react'
+import {
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogRoot,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import SuperadminShell from '@/components/layout/SuperadminShell'
 import { superadminApi } from '@/features/superadmin/superadminApi'
 import {
@@ -59,6 +69,338 @@ const statusTone = {
   warning: 'border-amber-200 bg-amber-50 text-amber-700',
   danger: 'border-rose-200 bg-rose-50 text-rose-700',
   neutral: 'border-border bg-muted text-foreground',
+}
+
+const METODOS_PAGO = [
+  'transferencia',
+  'nequi',
+  'daviplata',
+  'efectivo',
+  'tarjeta_credito',
+  'tarjeta_debito',
+  'otro',
+]
+
+const METODO_LABELS = {
+  transferencia: 'Transferencia',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+  efectivo: 'Efectivo',
+  tarjeta_credito: 'Tarjeta crédito',
+  tarjeta_debito: 'Tarjeta débito',
+  otro: 'Otro',
+}
+
+const todayISO = () => new Date().toISOString().split('T')[0]
+const nextYearISO = () => {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 1)
+  return d.toISOString().split('T')[0]
+}
+
+const inputCls =
+  'w-full border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground'
+const labelCls = 'block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-1.5'
+
+function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubmit, isLoading, error }) {
+  const [form, setForm] = useState({
+    plan: 'clinica',
+    estado: 'activa',
+    fechaInicio: todayISO(),
+    fechaFin: nextYearISO(),
+    precio: '',
+    metodoPago: '',
+    referenciaPago: '',
+  })
+
+  useEffect(() => {
+    if (!clinica) return
+    const planActual = clinica.plan && clinica.plan !== 'inicio' ? clinica.plan : 'clinica'
+    const precioSugerido = catalogoPlanes?.[planActual]?.precioMensual ?? ''
+    setForm({
+      plan: planActual,
+      estado: 'activa',
+      fechaInicio: todayISO(),
+      fechaFin: nextYearISO(),
+      precio: precioSugerido !== null ? String(precioSugerido) : '',
+      metodoPago: '',
+      referenciaPago: '',
+    })
+  }, [clinica?.id])
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+
+  const onPlanChange = (e) => {
+    const plan = e.target.value
+    const precio = catalogoPlanes?.[plan]?.precioMensual ?? ''
+    setForm((f) => ({ ...f, plan, precio: precio !== null ? String(precio) : '' }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSubmit({
+      clinicaId: clinica.id,
+      plan: form.plan,
+      estado: form.estado,
+      fechaInicio: form.fechaInicio,
+      fechaFin: form.fechaFin,
+      ...(form.precio !== '' && { precio: Number(form.precio) }),
+      ...(form.metodoPago && { metodoPago: form.metodoPago }),
+      ...(form.referenciaPago && { referenciaPago: form.referenciaPago }),
+    })
+  }
+
+  const planInfo = catalogoPlanes?.[form.plan]
+
+  return (
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Asignar plan</DialogTitle>
+          {clinica ? (
+            <DialogDescription>
+              {clinica.nombre} · {clinica.email}
+            </DialogDescription>
+          ) : null}
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Plan</label>
+              <select value={form.plan} onChange={onPlanChange} className={inputCls} required>
+                {Object.entries(catalogoPlanes || {}).map(([key, p]) => (
+                  <option key={key} value={key}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </select>
+              {planInfo ? (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Hasta {planInfo.limiteUsuarios ?? '∞'} usuarios · {planInfo.limiteMascotas ?? '∞'} mascotas
+                </p>
+              ) : null}
+            </div>
+
+            <div>
+              <label className={labelCls}>Estado</label>
+              <select value={form.estado} onChange={set('estado')} className={inputCls} required>
+                <option value="activa">Activa</option>
+                <option value="prueba">Temporal / prueba</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Fecha inicio</label>
+              <input type="date" value={form.fechaInicio} onChange={set('fechaInicio')} className={inputCls} required />
+            </div>
+            <div>
+              <label className={labelCls}>Fecha fin</label>
+              <input type="date" value={form.fechaFin} onChange={set('fechaFin')} className={inputCls} required />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Precio cobrado (COP)</label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="Ej: 189000"
+                value={form.precio}
+                onChange={set('precio')}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Método de pago</label>
+              <select value={form.metodoPago} onChange={set('metodoPago')} className={inputCls}>
+                <option value="">— Opcional —</option>
+                {METODOS_PAGO.map((m) => (
+                  <option key={m} value={m}>
+                    {METODO_LABELS[m]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelCls}>Referencia de pago</label>
+            <input
+              type="text"
+              placeholder="Ej: TRF-2026-001"
+              value={form.referenciaPago}
+              onChange={set('referenciaPago')}
+              className={inputCls}
+            />
+          </div>
+
+          {error ? (
+            <p className="border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {error?.response?.data?.message || error?.message || 'Error al asignar el plan.'}
+            </p>
+          ) : null}
+
+          <DialogFooter className="pt-2">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Cancelar
+              </button>
+            </DialogClose>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="border border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+            >
+              {isLoading ? 'Guardando...' : 'Confirmar asignación'}
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </DialogRoot>
+  )
+}
+
+function GestionPlanesSection({ catalogoPlanes }) {
+  const queryClient = useQueryClient()
+  const [busqueda, setBusqueda] = useState('')
+  const [clinicaSeleccionada, setClinicaSeleccionada] = useState(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const clinicasQuery = useQuery({
+    queryKey: ['superadmin-clinicas'],
+    queryFn: superadminApi.listarClinicas,
+    staleTime: 60 * 1000,
+  })
+
+  const asignarMutation = useMutation({
+    mutationFn: superadminApi.asignarPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['superadmin-clinicas'] })
+      queryClient.invalidateQueries({ queryKey: ['superadmin-resumen'] })
+      setDialogOpen(false)
+    },
+  })
+
+  const clinicasFiltradas = useMemo(() => {
+    const lista = clinicasQuery.data?.clinicas || []
+    if (!busqueda.trim()) return lista
+    const q = busqueda.toLowerCase()
+    return lista.filter(
+      (c) =>
+        c.nombre?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.ciudad?.toLowerCase().includes(q)
+    )
+  }, [clinicasQuery.data?.clinicas, busqueda])
+
+  function abrirDialog(clinica) {
+    setClinicaSeleccionada(clinica)
+    asignarMutation.reset()
+    setDialogOpen(true)
+  }
+
+  return (
+    <section id="planes">
+      <DataTable
+        title="Gestion de planes"
+        subtitle="Busca una clinica y asignale el plan que corresponde segun el acuerdo comercial. La asignacion es inmediata y cancela cualquier suscripcion anterior."
+        action={
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, email o ciudad..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-72 border border-border bg-background py-2 pl-9 pr-4 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+            />
+          </div>
+        }
+        columns={[
+          { key: 'nombre', label: 'Clinica' },
+          { key: 'email', label: 'Contacto' },
+          {
+            key: 'ciudad',
+            label: 'Ciudad',
+            render: (row) => [row.ciudad, row.departamento].filter(Boolean).join(', ') || '—',
+          },
+          {
+            key: 'plan',
+            label: 'Plan actual',
+            render: (row) => {
+              const meta = PLAN_META[row.plan]
+              return meta ? <StatusPill tone={meta.tone}>{meta.nombre}</StatusPill> : row.plan
+            },
+          },
+          {
+            key: 'estadoSuscripcion',
+            label: 'Estado',
+            render: (row) => (
+              <StatusPill
+                tone={
+                  row.estadoSuscripcion === 'activa'
+                    ? statusTone.success
+                    : row.estadoSuscripcion === 'prueba'
+                      ? statusTone.warning
+                      : statusTone.neutral
+                }
+              >
+                {ESTADO_SUSCRIPCION_LABELS[row.estadoSuscripcion] || row.estadoSuscripcion}
+              </StatusPill>
+            ),
+          },
+          {
+            key: 'fechaFin',
+            label: 'Vence',
+            render: (row) => (row.fechaFin ? formatLongDate(row.fechaFin) : '—'),
+          },
+          {
+            key: 'acciones',
+            label: '',
+            render: (row) => (
+              <button
+                type="button"
+                onClick={() => abrirDialog(row)}
+                className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+              >
+                Asignar plan
+              </button>
+            ),
+          },
+        ]}
+        rows={clinicasFiltradas}
+        emptyTitle={
+          busqueda ? `Sin resultados para "${busqueda}".` : 'No hay clinicas registradas.'
+        }
+        emptyBody={
+          busqueda
+            ? 'Intenta con otro nombre, email o ciudad.'
+            : 'Cuando se creen cuentas en la plataforma apareceran aqui.'
+        }
+      />
+
+      <AsignarPlanDialog
+        open={dialogOpen}
+        onOpenChange={(v) => {
+          setDialogOpen(v)
+          if (!v) asignarMutation.reset()
+        }}
+        clinica={clinicaSeleccionada}
+        catalogoPlanes={catalogoPlanes}
+        onSubmit={(payload) => asignarMutation.mutate(payload)}
+        isLoading={asignarMutation.isPending}
+        error={asignarMutation.error}
+      />
+    </section>
+  )
 }
 
 const toBarData = (record) =>
@@ -303,6 +645,8 @@ export default function SuperadminPage() {
           </div>
         </DashboardPanel>
       </section>
+
+      <GestionPlanesSection catalogoPlanes={resumenQuery.data?.catalogoPlanes} />
 
       <section id="gobierno" className="grid gap-5 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <DataTable
