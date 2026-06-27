@@ -383,6 +383,64 @@ const obtenerResumenGlobal = async (req, res) => {
   }
 }
 
+const listarClinicas = async (req, res) => {
+  try {
+    const [clinicas, suscripciones] = await Promise.all([
+      Clinica.findAll({
+        attributes: [
+          'id',
+          'nombre',
+          'nombreComercial',
+          'razonSocial',
+          'email',
+          'ciudad',
+          'departamento',
+          'activo',
+          'createdAt',
+        ],
+        order: [['createdAt', 'DESC']],
+        raw: true,
+      }),
+      Suscripcion.findAll({
+        where: { estado: { [Op.in]: ESTADOS_SUSCRIPCION_VIGENTES } },
+        order: [
+          ['clinicaId', 'ASC'],
+          ['createdAt', 'DESC'],
+        ],
+        raw: true,
+      }),
+    ])
+
+    const suscripcionPorClinica = new Map()
+    suscripciones.forEach((s) => {
+      if (!suscripcionPorClinica.has(s.clinicaId)) {
+        suscripcionPorClinica.set(s.clinicaId, s)
+      }
+    })
+
+    const resultado = clinicas.map((clinica) => {
+      const suscripcion = suscripcionPorClinica.get(clinica.id)
+      return {
+        id: clinica.id,
+        nombre: clinica.nombreComercial || clinica.razonSocial || clinica.nombre || 'Sin nombre',
+        email: clinica.email,
+        ciudad: clinica.ciudad,
+        departamento: clinica.departamento,
+        activo: clinica.activo,
+        createdAt: clinica.createdAt,
+        plan: suscripcion?.plan || 'inicio',
+        estadoSuscripcion: suscripcion?.estado || 'activa',
+        fechaFin: suscripcion?.fechaFin || null,
+      }
+    })
+
+    res.json({ clinicas: resultado })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 module.exports = {
   obtenerResumenGlobal,
+  listarClinicas,
 }

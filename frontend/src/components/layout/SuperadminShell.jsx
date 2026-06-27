@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  CreditCard,
   Crown,
   LayoutDashboard,
   LogOut,
@@ -14,6 +15,7 @@ import { useLogout } from '@/features/auth/useAuth'
 const NAV_ITEMS = [
   { key: 'resumen', label: 'Resumen global', href: '#resumen', icon: LayoutDashboard },
   { key: 'suscripciones', label: 'Suscripciones', href: '#suscripciones', icon: Crown },
+  { key: 'planes', label: 'Gestion de planes', href: '#planes', icon: CreditCard },
   { key: 'gobierno', label: 'Gobierno DIAN', href: '#gobierno', icon: ShieldAlert },
   { key: 'operacion', label: 'Operacion', href: '#operacion', icon: ReceiptText },
 ]
