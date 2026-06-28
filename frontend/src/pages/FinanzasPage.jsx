@@ -628,6 +628,40 @@ export default function FinanzasPage() {
                         </div>
                       ) : null}
 
+                      {historialHook.canRegisterPayment ? (
+                        <div className="space-y-4 border-t border-border pt-4">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-primary" />
+                            <p className="text-sm font-semibold text-slate-950">Registrar pago</p>
+                          </div>
+                          <select
+                            value={historialHook.pagoMetodo}
+                            onChange={(event) => historialHook.setPagoMetodo(event.target.value)}
+                            className="w-full border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary"
+                          >
+                            <option value="">Método de pago (opcional)</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="nequi">Nequi</option>
+                            <option value="daviplata">Daviplata</option>
+                            <option value="tarjeta_debito">Tarjeta débito</option>
+                            <option value="tarjeta_credito">Tarjeta crédito</option>
+                            <option value="otro">Otro</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={historialHook.handleRegistrarPago}
+                            disabled={historialHook.registrarPagoMutation.isPending}
+                            className="inline-flex items-center gap-2 border border-primary bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            {historialHook.registrarPagoMutation.isPending
+                              ? 'Registrando...'
+                              : 'Marcar como pagada'}
+                          </button>
+                        </div>
+                      ) : null}
+
                       {historialHook.canVoidInvoice ? (
                         <div className="space-y-4 border-t border-border pt-4">
                           <div className="flex items-center gap-2">

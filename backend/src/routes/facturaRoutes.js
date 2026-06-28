@@ -8,6 +8,7 @@ const {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -98,6 +99,22 @@ router.get(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionElectronica,
   descargarFacturaElectronica
+)
+
+router.patch(
+  '/:id/pagar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  [
+    body('metodoPago')
+      .optional()
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .withMessage('Metodo de pago no valido'),
+    body('observaciones').optional().trim(),
+    validar,
+  ],
+  registrarPago
 )
 
 router.patch(
