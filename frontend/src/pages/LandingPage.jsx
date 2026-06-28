@@ -1,6 +1,6 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, Mail, MapPin } from "lucide-react"
+import { ArrowRight, ChevronDown, Mail, MapPin } from "lucide-react"
 
 import LandingNav from "@/components/landing/LandingNav"
 import TrustBar from "@/components/landing/TrustBar"
@@ -13,6 +13,51 @@ import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
 import WhatsAppFab from "@/components/landing/WhatsAppFab"
 import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
+
+const FAQS = [
+  {
+    pregunta: '¿En qué plan entra la facturación electrónica DIAN?',
+    respuesta:
+      'En Profesional y Personalizado. La implementación interna se acompaña después de elegir el plan.',
+  },
+  {
+    pregunta: '¿Puedo empezar con Esencial y subir después?',
+    respuesta:
+      'Sí. La idea es empezar con orden y subir de plan cuando la operación diaria pida más control.',
+  },
+  {
+    pregunta: '¿Qué plan elige una clínica que ya factura todos los días?',
+    respuesta:
+      'Normalmente Profesional: cubre agenda, consulta, inventario, caja, reportes y DIAN en el mismo flujo.',
+  },
+  {
+    pregunta: '¿Cuándo conviene hablar con el equipo?',
+    respuesta:
+      'Cuando necesitas migración, acompañamiento cercano o un volumen fuera del caso estándar.',
+  },
+]
+
+function FAQItem({ pregunta, respuesta }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-2xl border border-[#2b2018]/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 bg-transparent px-5 py-4 text-left"
+      >
+        <span className="text-base font-semibold text-[#2b2018]">{pregunta}</span>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-[#b07645] transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open ? (
+        <p className="px-5 pb-5 text-sm leading-7 text-[#6b5d4d]">{respuesta}</p>
+      ) : null}
+    </div>
+  )
+}
 
 export default function LandingPage() {
   useEffect(() => {
@@ -215,6 +260,24 @@ export default function LandingPage() {
             >
               Crear cuenta
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="preguntas" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
+        <div className="mx-auto max-w-3xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Preguntas frecuentes"
+            title="Lo importante antes de elegir."
+            body="Si te queda una duda puntual, escríbenos y la resolvemos sin vueltas."
+            center
+            compact
+          />
+
+          <div className="mt-10 grid gap-3">
+            {FAQS.map((faq) => (
+              <FAQItem key={faq.pregunta} pregunta={faq.pregunta} respuesta={faq.respuesta} />
+            ))}
           </div>
         </div>
       </section>
