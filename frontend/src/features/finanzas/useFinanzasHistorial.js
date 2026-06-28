@@ -153,6 +153,7 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const [selectedFacturaId, setSelectedFacturaId] = useState(null)
   const [motivoAnulacion, setMotivoAnulacion] = useState('')
   const [emisionForm, setEmisionForm] = useState(RESET_EMISION)
+  const [pagoMetodo, setPagoMetodo] = useState('')
 
   const resetSeleccion = () => {
     setSelectedFacturaId(null)
@@ -211,6 +212,22 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     },
   })
 
+  const registrarPagoMutation = useMutation({
+    mutationFn: ({ facturaId, metodoPago }) => finanzasApi.registrarPago(facturaId, { metodoPago }),
+    onSuccess: (data, variables) => {
+      toast.success(data?.message || 'Pago registrado exitosamente')
+      setPagoMetodo('')
+      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-factura-detalle', variables.facturaId] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible registrar el pago.'))
+    },
+  })
+
   const anularFacturaMutation = useMutation({
     mutationFn: ({ facturaId, motivo }) => finanzasApi.anularFactura(facturaId, motivo),
     onSuccess: (data, variables) => {
@@ -264,6 +281,14 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
         fechaVencimientoPago:
           emisionForm.formaPagoCodigo === '2' ? emisionForm.fechaVencimientoPago : undefined,
       },
+    })
+  }
+
+  const handleRegistrarPago = () => {
+    if (!facturaSeleccionada) return
+    registrarPagoMutation.mutate({
+      facturaId: facturaSeleccionada.id,
+      metodoPago: pagoMetodo || undefined,
     })
   }
 
@@ -336,6 +361,10 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     facturaSeleccionada.estadoElectronico !== 'validada' &&
     facturaSeleccionada.estado !== 'anulada'
 
+  const canRegisterPayment =
+    facturaSeleccionada &&
+    facturaSeleccionada.estado === 'emitida'
+
   const canVoidInvoice =
     puedeAnular &&
     facturaSeleccionada &&
@@ -354,6 +383,8 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     setMotivoAnulacion,
     emisionForm,
     setEmisionForm,
+    pagoMetodo,
+    setPagoMetodo,
     currentFacturaId,
     facturaSeleccionada,
     facturasRows,
@@ -361,13 +392,16 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     facturaDetalleQuery,
     emitirFacturaMutation,
     anularFacturaMutation,
+    registrarPagoMutation,
     canEmitInvoice,
     canVoidInvoice,
+    canRegisterPayment,
     ESTADO_LABELS,
     ESTADO_ELECTRONICO_LABELS,
     handleBuscar,
     handleEmitirFactura,
     handleAnularFactura,
+    handleRegistrarPago,
     handlePrintReceipt,
     exportCurrentCut,
     seleccionarFactura,

@@ -898,6 +898,55 @@ const emitirFacturaElectronica = async (req, res) => {
   }
 }
 
+const registrarPago = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+    const { metodoPago, observaciones } = req.body
+
+    const factura = await Factura.findOne({ where: { id, clinicaId } })
+
+    if (!factura) {
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (factura.estado !== 'emitida') {
+      return res.status(400).json({
+        message: `Solo se pueden marcar como pagadas facturas en estado "emitida". Estado actual: ${factura.estado}`,
+      })
+    }
+
+    const estadoAnterior = factura.estado
+    const metodoPagoAnterior = factura.metodoPago
+
+    await factura.update({
+      estado: 'pagada',
+      ...(metodoPago ? { metodoPago } : {}),
+      ...(observaciones ? { observaciones } : {}),
+    })
+
+    await registrarAuditoria({
+      accion: 'REGISTRAR_PAGO_FACTURA',
+      entidad: 'Factura',
+      entidadId: factura.id,
+      descripcion: `Factura ${factura.numero} marcada como pagada. Método: ${metodoPago || metodoPagoAnterior || 'no especificado'}`,
+      datosAnteriores: { estado: estadoAnterior, metodoPago: metodoPagoAnterior },
+      datosNuevos: { estado: 'pagada', metodoPago: metodoPago || metodoPagoAnterior },
+      req,
+      resultado: 'exitoso',
+    })
+
+    const facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+
+    res.json({
+      message: 'Pago registrado exitosamente',
+      factura: facturaActualizada,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 const anularFactura = async (req, res) => {
   const transaction = await sequelize.transaction()
 
@@ -1089,4 +1138,5 @@ module.exports = {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
 }
