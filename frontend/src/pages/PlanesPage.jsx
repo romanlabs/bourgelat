@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion as Motion, AnimatePresence, useReducedMotion } from 'motion/react'
-import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'lucide-react'
 
 import BrandMark from '@/components/landing/BrandMark'
 
@@ -243,32 +243,30 @@ function AvisameField() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-2">
+    <form onSubmit={onSubmit} className="space-y-2.5">
       <label htmlFor="avisame-email" className="block text-xs font-medium" style={{ color: BODY }}>
         Te avisamos cuando esté lista
       </label>
-      <div className="flex gap-2">
-        <input
-          id="avisame-email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="tu@correo.com"
-          className="h-11 w-full rounded-md border bg-white px-3 text-sm outline-none transition focus:border-[#b07645]"
-          style={{ borderColor: LINE, color: INK }}
-        />
-        <button
-          type="submit"
-          disabled={!valid}
-          className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md px-4 text-sm font-semibold text-white transition-colors hover:bg-[#b07645] disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ backgroundColor: INK }}
-        >
-          <Bell className="h-4 w-4" />
-          Avísame
-        </button>
-      </div>
+      <input
+        id="avisame-email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="tu@correo.com"
+        className="h-11 w-full rounded-md border bg-white px-3.5 text-sm outline-none transition focus:border-[#b07645]"
+        style={{ borderColor: LINE, color: INK }}
+      />
+      <button
+        type="submit"
+        disabled={!valid}
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-semibold text-white transition-colors hover:bg-[#b07645] disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: INK }}
+      >
+        <Bell className="h-4 w-4" />
+        Avísame
+      </button>
     </form>
   )
 }
@@ -289,17 +287,21 @@ function ComingSoonCard({ plan, index, reduce }) {
       className="relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-dashed p-7"
       style={{ backgroundColor: '#fbf6ee', borderColor: '#e0cdb4', color: INK }}
     >
-      {/* Sello tipo estampa "Próximamente" */}
+      {/* Sello tipo estampa de caucho "Próximamente" — doble filete y leve rotación */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-4 top-4 rotate-6 select-none rounded-md border-2 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] opacity-80"
-        style={{ borderColor: ACCENT, color: ACCENT }}
+        className="pointer-events-none absolute right-3.5 top-5 -rotate-[7deg] select-none rounded-[5px] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.2em]"
+        style={{
+          color: ACCENT,
+          border: `1.5px solid ${ACCENT}`,
+          boxShadow: `inset 0 0 0 1.5px #fbf6ee, inset 0 0 0 2.5px rgba(176,118,69,0.35)`,
+          opacity: 0.92,
+        }}
       >
-        Pronto
+        Próximamente
       </span>
 
-      <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
-        <Sparkles className="h-3.5 w-3.5" />
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
         Versión 2
       </p>
       <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
