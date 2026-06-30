@@ -23,6 +23,14 @@ const CHIP = '#f1e9dc'
 const ACCENT_ON_INK = '#d9a06b'
 const REC_BAND = 'rgba(176,118,69,0.07)' // banda de la columna recomendada
 
+// Gradientes sutiles para dar profundidad (que el café no se vea plano)
+const GRAD_CARD = 'linear-gradient(165deg, #fffdf9 0%, #f8f1e6 100%)'
+const GRAD_INK = 'linear-gradient(165deg, #38291c 0%, #211710 100%)'
+const GRAD_SOON = 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)'
+// Efecto spotlight: las cards no apuntadas se atenúan y desenfocan un poco
+const DIM_FILTER = 'blur(1.4px) brightness(0.97) saturate(0.92)'
+const GLOW_ACTIVE = '0 18px 50px -18px rgba(176,118,69,0.45)'
+
 const PLANES = [
   {
     key: 'inicio',
@@ -271,7 +279,9 @@ function AvisameField() {
   )
 }
 
-function ComingSoonCard({ plan, index, reduce }) {
+function ComingSoonCard({ plan, index, reduce, hovered, setHovered }) {
+  const dim = hovered && hovered !== plan.key
+  const active = hovered === plan.key
   const reveal = reduce
     ? {}
     : {
@@ -284,18 +294,25 @@ function ComingSoonCard({ plan, index, reduce }) {
   return (
     <Motion.article
       {...reveal}
-      className="relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-dashed p-7"
-      style={{ backgroundColor: '#fbf6ee', borderColor: '#e0cdb4', color: INK }}
+      onMouseEnter={() => setHovered(plan.key)}
+      onMouseLeave={() => setHovered(null)}
+      className="relative flex h-full flex-col rounded-2xl border-2 border-dashed p-7 transition-[filter,border-color] duration-300"
+      style={{
+        background: GRAD_SOON,
+        borderColor: active ? ACCENT : '#e0cdb4',
+        color: INK,
+        filter: dim ? DIM_FILTER : 'none',
+      }}
     >
-      {/* Sello tipo estampa de caucho "Próximamente" — doble filete y leve rotación */}
+      {/* Sello tipo estampa de caucho "Próximamente" — doble filete, fondo lavado y leve rotación */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-3.5 top-5 -rotate-[7deg] select-none rounded-[5px] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.2em]"
+        className="pointer-events-none absolute right-4 top-5 -rotate-[6deg] select-none rounded-[6px] px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.22em]"
         style={{
           color: ACCENT,
           border: `1.5px solid ${ACCENT}`,
-          boxShadow: `inset 0 0 0 1.5px #fbf6ee, inset 0 0 0 2.5px rgba(176,118,69,0.35)`,
-          opacity: 0.92,
+          backgroundColor: 'rgba(176,118,69,0.06)',
+          boxShadow: 'inset 0 0 0 2px #fdf8f0, inset 0 0 0 3px rgba(176,118,69,0.45)',
         }}
       >
         Próximamente
@@ -326,9 +343,9 @@ function ComingSoonCard({ plan, index, reduce }) {
   )
 }
 
-function PlanCard({ plan, anual, index, reduce }) {
+function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
   if (plan.comingSoon) {
-    return <ComingSoonCard plan={plan} index={index} reduce={reduce} />
+    return <ComingSoonCard plan={plan} index={index} reduce={reduce} hovered={hovered} setHovered={setHovered} />
   }
   const price = anual ? plan.precioAnual : plan.precioMensual
   const ahorro =
@@ -336,6 +353,12 @@ function PlanCard({ plan, anual, index, reduce }) {
       ? plan.precioMensual - plan.precioAnual
       : 0
   const anchor = plan.popular
+  const dim = hovered && hovered !== plan.key
+  const active = hovered === plan.key
+  const hover = {
+    onMouseEnter: () => setHovered(plan.key),
+    onMouseLeave: () => setHovered(null),
+  }
 
   const reveal = reduce
     ? {}
@@ -350,8 +373,9 @@ function PlanCard({ plan, anual, index, reduce }) {
     return (
       <Motion.article
         {...reveal}
-        className="relative flex h-full flex-col rounded-2xl p-7 text-white shadow-[0_36px_80px_-24px_rgba(43,32,24,0.55)] lg:-translate-y-3 lg:scale-[1.02]"
-        style={{ backgroundColor: INK }}
+        {...hover}
+        className="relative flex h-full flex-col rounded-2xl p-7 text-white shadow-[0_36px_80px_-24px_rgba(43,32,24,0.55)] transition-[filter] duration-300 lg:-translate-y-3 lg:scale-[1.02]"
+        style={{ background: GRAD_INK, filter: dim ? DIM_FILTER : active ? 'brightness(1.06)' : 'none' }}
       >
         {/* glow ámbar de marca detrás de la card ancla */}
         <div
@@ -411,8 +435,15 @@ function PlanCard({ plan, anual, index, reduce }) {
   return (
     <Motion.article
       {...reveal}
-      className="flex h-full flex-col rounded-2xl border p-7 transition-shadow hover:shadow-[0_24px_60px_-30px_rgba(43,32,24,0.35)]"
-      style={{ backgroundColor: SURFACE, borderColor: LINE, color: INK }}
+      {...hover}
+      className="flex h-full flex-col rounded-2xl border p-7 transition-[filter,border-color,box-shadow] duration-300"
+      style={{
+        background: GRAD_CARD,
+        borderColor: active ? ACCENT : LINE,
+        color: INK,
+        filter: dim ? DIM_FILTER : 'none',
+        boxShadow: active ? GLOW_ACTIVE : '0 1px 0 rgba(255,255,255,0.6)',
+      }}
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
         {plan.subtitulo}
@@ -477,6 +508,7 @@ function CompareCell({ value }) {
 
 export default function PlanesPage() {
   const [anual, setAnual] = useState(false)
+  const [hovered, setHovered] = useState(null)
   const reduce = useReducedMotion()
 
   useEffect(() => {
@@ -564,7 +596,15 @@ export default function PlanesPage() {
         {/* ── Cards de planes ── */}
         <section className="grid items-stretch gap-5 pb-16 lg:grid-cols-4">
           {PLANES.map((plan, i) => (
-            <PlanCard key={plan.key} plan={plan} anual={anual} index={i} reduce={reduce} />
+            <PlanCard
+              key={plan.key}
+              plan={plan}
+              anual={anual}
+              index={i}
+              reduce={reduce}
+              hovered={hovered}
+              setHovered={setHovered}
+            />
           ))}
         </section>
 
