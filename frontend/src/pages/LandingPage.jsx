@@ -1,6 +1,6 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowRight, Mail, MapPin } from "lucide-react"
+import { ArrowRight, ChevronDown, Mail, MapPin } from "lucide-react"
 
 import LandingNav from "@/components/landing/LandingNav"
 import TrustBar from "@/components/landing/TrustBar"
@@ -13,6 +13,51 @@ import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
 import WhatsAppFab from "@/components/landing/WhatsAppFab"
 import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
+
+const FAQS = [
+  {
+    pregunta: '¿Puedo empezar con Esencial y subir después?',
+    respuesta:
+      'Sí. La idea es empezar con orden y subir de plan cuando la operación diaria pida más control.',
+  },
+  {
+    pregunta: '¿Qué plan elige una clínica que ya cobra y controla inventario?',
+    respuesta:
+      'Normalmente Clínica: cubre agenda, consulta, inventario, caja y reportes en el mismo flujo.',
+  },
+  {
+    pregunta: '¿La facturación electrónica DIAN está disponible?',
+    respuesta:
+      'Próximamente. Estamos integrándola para la v2 del producto. Si ya la necesitas, escríbenos y te avisamos cuando esté lista.',
+  },
+  {
+    pregunta: '¿Cuándo conviene hablar con el equipo?',
+    respuesta:
+      'Cuando tienes dudas sobre el plan que mejor se ajusta a tu clínica, o quieres conocer la hoja de ruta del producto.',
+  },
+]
+
+function FAQItem({ pregunta, respuesta }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-2xl border border-[#2b2018]/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 bg-transparent px-5 py-4 text-left"
+      >
+        <span className="text-base font-semibold text-[#2b2018]">{pregunta}</span>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-[#b07645] transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open ? (
+        <p className="px-5 pb-5 text-sm leading-7 text-[#6b5d4d]">{respuesta}</p>
+      ) : null}
+    </div>
+  )
+}
 
 export default function LandingPage() {
   useEffect(() => {
@@ -125,7 +170,9 @@ export default function LandingPage() {
         }}
       >
         <TrustBar />
-        <PlatformSection />
+        <div id="plataforma" className="scroll-mt-20">
+          <PlatformSection />
+        </div>
       </div>
 
       <div className="relative -mt-px">
@@ -151,23 +198,40 @@ export default function LandingPage() {
           <SectionHeading
             eyebrow="Planes"
             title="Planes para entrar sin miedo y crecer sin rearmar todo."
-            body="Empieza con el orden clínico y suma caja, inventario, reportes y facturación electrónica cuando tu clínica lo pida."
+            body="Empieza con el orden clínico y suma caja, inventario y reportes cuando tu clínica lo pida. Sin costos ocultos ni configuraciones complejas."
             center
           />
 
-          <div className="plans-grid mt-10 grid gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-4">
+          <div className="plans-grid mt-10 grid gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-3">
             {PLAN_PREVIEW.map((plan) => (
               <article
                 key={plan.name}
-                className={`plan-card relative rounded-2xl border bg-white p-5 sm:p-6 ${
+                className={`plan-card relative rounded-2xl p-5 sm:p-6 ${
                   plan.featured
-                    ? 'border-[#b07645] shadow-[0_24px_60px_rgba(43,32,24,0.12)]'
-                    : 'border-[#2b2018]/10 shadow-[0_12px_30px_rgba(43,32,24,0.06)]'
+                    ? 'border border-[#b07645] bg-white shadow-[0_24px_60px_rgba(43,32,24,0.12)]'
+                    : plan.comingSoon
+                    ? 'border-2 border-dashed border-[#e0cdb4]'
+                    : 'border border-[#2b2018]/10 bg-white shadow-[0_12px_30px_rgba(43,32,24,0.06)]'
                 }`}
+                style={plan.comingSoon ? { background: 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)', filter: 'blur(0.6px) brightness(0.98) saturate(0.9)' } : undefined}
               >
                 {plan.featured && (
                   <span className="absolute -top-3 right-5 rounded-full bg-[#b07645] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
                     Más elegido
+                  </span>
+                )}
+                {plan.comingSoon && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-4 top-4 -rotate-[6deg] select-none rounded-[6px] px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.22em]"
+                    style={{
+                      color: '#b07645',
+                      border: '1.5px solid #b07645',
+                      backgroundColor: 'rgba(176,118,69,0.06)',
+                      boxShadow: 'inset 0 0 0 2px #fdf8f0, inset 0 0 0 3px rgba(176,118,69,0.45)',
+                    }}
+                  >
+                    Próximamente
                   </span>
                 )}
                 <p
@@ -177,8 +241,6 @@ export default function LandingPage() {
                 >
                   {plan.subtitle}
                 </p>
-                {/* Móvil: nombre y precio en una sola línea para tarjetas más
-                    compactas y escaneables. Desktop: apilados como antes. */}
                 <div className="mt-3 flex items-baseline justify-between gap-3 sm:mt-4 sm:block">
                   <h3
                     className="text-[1.7rem] leading-none tracking-[-0.04em] sm:text-4xl"
@@ -186,9 +248,11 @@ export default function LandingPage() {
                   >
                     {plan.name}
                   </h3>
-                  <p className="shrink-0 text-base font-semibold text-[#2b2018] sm:mt-4 sm:text-lg">
-                    {plan.price}
-                  </p>
+                  {plan.price && (
+                    <p className="shrink-0 text-base font-semibold text-[#2b2018] sm:mt-4 sm:text-lg">
+                      {plan.price}
+                    </p>
+                  )}
                 </div>
                 <p
                   className={`mt-3 text-sm leading-6 sm:mt-4 sm:leading-7 ${
@@ -219,6 +283,24 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section id="preguntas" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
+        <div className="mx-auto max-w-3xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Preguntas frecuentes"
+            title="Lo importante antes de elegir."
+            body="Si te queda una duda puntual, escríbenos y la resolvemos sin vueltas."
+            center
+            compact
+          />
+
+          <div className="mt-10 grid gap-3">
+            {FAQS.map((faq) => (
+              <FAQItem key={faq.pregunta} pregunta={faq.pregunta} respuesta={faq.respuesta} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="contacto" className="-mt-px scroll-mt-40 bg-[#f8f4ee] px-5 pb-16 pt-2 sm:px-6 lg:px-8 lg:pb-24">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-[#2b2018] px-6 py-12 shadow-[0_40px_120px_rgba(43,32,24,0.28)] sm:px-10 sm:py-14 lg:px-16 lg:py-20">
           {/* Glow ámbar cálido detrás del perro */}
@@ -244,7 +326,7 @@ export default function LandingPage() {
               <span className="italic text-[#e9c089]">Mañana tu clínica respira distinto.</span>
             </h2>
             <p className="mt-5 max-w-xl text-base leading-8 text-[#fdf6ee]/70">
-              Cuéntanos cómo trabajan hoy —agenda, historias, inventario, caja y DIAN— y vemos
+              Cuéntanos cómo trabajan hoy —agenda, historias, inventario y caja— y vemos
               juntos por dónde empezar. Sin compromiso y a tu ritmo.
             </p>
 
