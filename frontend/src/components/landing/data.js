@@ -1,6 +1,7 @@
 import { Calendar, HeartPulse, Package } from "lucide-react"
 
 export const NAV_ITEMS = [
+  { label: 'Plataforma', href: '#plataforma' },
   { label: 'Flujo', href: '#flujo' },
   { label: 'Planes', href: '#planes' },
   { label: 'Contacto', href: '#contacto' },
@@ -43,19 +44,14 @@ export const PLAN_PREVIEW = [
     subtitle: 'Para el día completo',
     price: 'COP 99.000/mes',
     note: 'Suma inventario, caja y reportes cuando la clínica necesita control sobre cada turno.',
-  },
-  {
-    name: 'Profesional',
-    subtitle: 'El más elegido',
-    price: 'COP 189.000/mes',
-    note: 'Todo lo de Clínica más facturación electrónica DIAN, lista para crecer sin rearmar nada.',
     featured: true,
   },
   {
-    name: 'Personalizado',
-    subtitle: 'Para migrar acompañado',
-    price: 'Cotización a medida',
-    note: 'Implementación guiada y soporte cercano cuando traes tu clínica desde otro sistema.',
+    name: 'Profesional',
+    subtitle: 'Próximamente',
+    price: null,
+    note: 'Reportes avanzados y facturación electrónica DIAN. En desarrollo para la v2.',
+    comingSoon: true,
   },
 ]
 
@@ -67,14 +63,14 @@ export const footerLinks = [
   { label: 'Cookies', to: '/cookies' },
 ]
 
-// Las alturas están afinadas por PESO ÓPTICO, no por píxeles iguales: los
-// wordmarks anchos (DIAN, Cloudflare) pesan de más, así que van más bajos; el
-// escudo es detallado y se lee pequeño, así que va más alto.
 export const TRUST_LOGOS = [
-  { src: '/logos/dian.svg', alt: 'DIAN', h: 23, caption: 'Habilitado ante la DIAN' },
-  { src: '/logos/factus.png', alt: 'Factus', h: 24, caption: 'Conectado con Factus', invert: true },
   { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 23, caption: 'Tus datos siempre seguros', outline: true },
   { src: '/logos/escudo-colombia.svg', alt: 'Escudo de Colombia', h: 42, caption: 'Hecho en Colombia', outline: true },
+]
+
+export const TRUST_CHIPS = [
+  '100% en la nube — sin instalaciones',
+  'Acceso desde cualquier dispositivo',
 ]
 
 export const WARM_BAND_BACKGROUND = '#f8f4ee'

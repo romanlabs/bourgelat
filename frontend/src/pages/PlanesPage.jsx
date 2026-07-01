@@ -85,25 +85,6 @@ const PLANES = [
       'Todo lo del plan Clínica',
     ],
   },
-  {
-    key: 'personalizado',
-    nombre: 'Personalizado',
-    subtitulo: 'Migración y acompañamiento',
-    resumen:
-      'Para clínicas que necesitan acompañamiento, configuración guiada o una migración más cuidada.',
-    precioMensual: null,
-    precioAnual: null,
-    cta: 'Hablar con el equipo',
-    nota: 'Te respondemos en 24 h',
-    href: 'mailto:hola@bourgelat.co?subject=Quiero%20cotizar%20Bourgelat',
-    limites: ['Volumen a medida', 'Migración guiada', 'Soporte cercano'],
-    incluye: [
-      'Base de Profesional',
-      'Revisión del caso',
-      'Acompañamiento de migración',
-      'Configuración guiada',
-    ],
-  },
 ]
 
 // Comparativa por categorías. Los valores reflejan backend/src/config/planes.js
@@ -112,38 +93,31 @@ const COMPARISON_GROUPS = [
   {
     grupo: 'Operación clínica',
     filas: [
-      { label: 'Agenda con contexto del paciente', values: { inicio: true, clinica: true, profesional: true, personalizado: true } },
-      { label: 'Historia clínica y antecedentes', values: { inicio: true, clinica: true, profesional: true, personalizado: true } },
-      { label: 'Mascotas activas', values: { inicio: '250', clinica: '2.500', profesional: '10.000', personalizado: 'Ilimitadas' } },
-      { label: 'Usuarios del equipo', values: { inicio: '2', clinica: '5', profesional: '12', personalizado: 'A medida' } },
+      { label: 'Agenda con contexto del paciente', values: { inicio: true, clinica: true, profesional: true } },
+      { label: 'Historia clínica y antecedentes', values: { inicio: true, clinica: true, profesional: true } },
+      { label: 'Mascotas activas', values: { inicio: '250', clinica: '2.500', profesional: '10.000' } },
+      { label: 'Usuarios del equipo', values: { inicio: '2', clinica: '5', profesional: '12' } },
     ],
   },
   {
     grupo: 'Caja y facturación',
     filas: [
-      { label: 'Inventario operativo', values: { inicio: false, clinica: true, profesional: true, personalizado: true } },
-      { label: 'Caja y facturación interna', values: { inicio: false, clinica: true, profesional: true, personalizado: true } },
+      { label: 'Inventario operativo', values: { inicio: false, clinica: true, profesional: true } },
+      { label: 'Caja y facturación interna', values: { inicio: false, clinica: true, profesional: true } },
       {
         label: 'Facturación electrónica DIAN',
         hint: 'Emisión validada ante la DIAN a través de Factus. Disponible en la próxima versión.',
-        soon: { profesional: true, personalizado: true },
-        values: { inicio: false, clinica: false, profesional: 'soon', personalizado: 'soon' },
+        soon: { profesional: true },
+        values: { inicio: false, clinica: false, profesional: 'soon' },
       },
     ],
   },
   {
     grupo: 'Reportes y datos',
     filas: [
-      { label: 'Reportes operativos', values: { inicio: false, clinica: true, profesional: true, personalizado: true } },
-      { label: 'Reportes completos y exportables', values: { inicio: false, clinica: false, profesional: true, personalizado: true } },
-      { label: 'Almacenamiento de archivos', values: { inicio: '1 GB', clinica: '5 GB', profesional: '20 GB', personalizado: 'A medida' } },
-    ],
-  },
-  {
-    grupo: 'Acompañamiento',
-    filas: [
-      { label: 'Migración guiada desde otro sistema', values: { inicio: false, clinica: false, profesional: false, personalizado: true } },
-      { label: 'Soporte prioritario', values: { inicio: false, clinica: false, profesional: false, personalizado: true } },
+      { label: 'Reportes operativos', values: { inicio: false, clinica: true, profesional: true } },
+      { label: 'Reportes completos y exportables', values: { inicio: false, clinica: false, profesional: true } },
+      { label: 'Almacenamiento de archivos', values: { inicio: '1 GB', clinica: '5 GB', profesional: '20 GB' } },
     ],
   },
 ]
@@ -165,15 +139,15 @@ const PLAN_MATCH = [
     momento: 'Círculo completo',
     title: 'Si quieres cerrar el círculo',
     body:
-      'Profesional es lo natural cuando la clínica quiere agenda, consulta, administración y DIAN en un solo recorrido.',
+      'Profesional es lo natural cuando la clínica quiere agenda, consulta, administración e inventario avanzado en un solo recorrido.',
   },
 ]
 
 const TRUST = [
-  'Habilitado ante la DIAN',
-  'Conectado con Factus',
   'Protegido con Cloudflare',
   'Hecho en Colombia',
+  'Datos seguros y privados',
+  'Soporte en español',
 ]
 
 const pesos = new Intl.NumberFormat('es-CO', {
@@ -262,7 +236,7 @@ function AvisameField() {
         autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="tu@correo.com"
+        placeholder="Ejemplo@gmail.com"
         className="h-11 w-full rounded-md border bg-white px-3.5 text-sm outline-none transition focus:border-[#b07645]"
         style={{ borderColor: LINE, color: INK }}
       />
@@ -594,7 +568,7 @@ export default function PlanesPage() {
         </section>
 
         {/* ── Cards de planes ── */}
-        <section className="grid items-stretch gap-5 pb-16 lg:grid-cols-4">
+        <section className="grid items-stretch gap-5 pb-16 lg:grid-cols-3">
           {PLANES.map((plan, i) => (
             <PlanCard
               key={plan.key}
@@ -651,7 +625,7 @@ export default function PlanesPage() {
           <p className="mb-3 text-xs lg:hidden" style={{ color: BODY }}>Desliza para comparar →</p>
           <div className="overflow-hidden rounded-2xl border" style={{ backgroundColor: SURFACE, borderColor: LINE }}>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left">
+              <table className="w-full min-w-[580px] border-collapse text-left">
                 <thead>
                   <tr>
                     <th
