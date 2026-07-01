@@ -31,6 +31,7 @@ const categoriasValidas = [
 ]
 const tiposMovimientoValidos = ['entrada', 'salida', 'ajuste']
 const motivosMovimientoValidos = [
+  'inventario_inicial',
   'compra',
   'venta',
   'uso_clinico',

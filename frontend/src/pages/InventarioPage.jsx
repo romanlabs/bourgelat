@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CircleAlert, PackagePlus, Search, ShieldCheck, Sparkles, Boxes } from 'lucide-react'
+import { CircleAlert, PackagePlus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
+import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
 import {
@@ -22,11 +23,13 @@ import {
   MOVEMENT_TYPE_OPTIONS,
   MOVEMENT_REASON_OPTIONS,
 } from '@/features/inventario/useInventarioMovimientos'
+import { useFacturaCompra, ESTADO_COLORS } from '@/features/inventario/useFacturaCompra'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'productos', label: 'Productos' },
   { id: 'movimientos', label: 'Movimientos' },
+  { id: 'facturas-compra', label: 'Facturas de Compra' },
 ]
 
 function StockBadge({ stock, stockMinimo }) {
@@ -156,6 +159,8 @@ export default function InventarioPage() {
     submitMovementForm,
     selectProduct,
   } = movimientosHook
+
+  const facturaCompraHook = useFacturaCompra()
 
   return (
     <AdminShell
@@ -598,7 +603,7 @@ export default function InventarioPage() {
                           { key: 'tipo', label: 'Tipo' },
                           { key: 'motivo', label: 'Motivo' },
                           { key: 'cantidad', label: 'Cantidad' },
-                          { key: 'cambio', label: 'Cambio' },
+                          { key: 'cambio', label: 'Stock total' },
                         ]}
                         emptyTitle="Sin movimientos recientes"
                         emptyBody="Este producto aun no tiene trazabilidad registrada."
@@ -626,7 +631,7 @@ export default function InventarioPage() {
                     { key: 'producto', label: 'Producto' },
                     { key: 'tipo', label: 'Tipo' },
                     { key: 'motivo', label: 'Motivo' },
-                    { key: 'cambio', label: 'Cambio' },
+                    { key: 'cambio', label: 'Stock total' },
                   ]}
                   emptyTitle="Aun no hay movimientos registrados"
                   emptyBody="Cuando se creen entradas, salidas o ajustes, esta tabla mostrara la traza reciente."
@@ -646,6 +651,174 @@ export default function InventarioPage() {
               />
             </div>
           )}
+          {/* Tab: Facturas de Compra */}
+          {activeTab === 'facturas-compra' && (
+            <div className="space-y-4">
+
+              {/* Banner de alertas de pago */}
+              {(facturaCompraHook.alertasCompra.totalVencidas > 0 || facturaCompraHook.alertasCompra.totalProximas > 0) && (
+                <div className="flex flex-wrap items-center gap-3 border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                  <CircleAlert className="h-4 w-4 shrink-0" />
+                  <span>
+                    {facturaCompraHook.alertasCompra.totalVencidas > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { facturaCompraHook.setFiltroEstado('confirmada'); facturaCompraHook.setPagina(1) }}
+                        className="font-semibold text-red-700 dark:text-red-400 hover:underline mr-2"
+                      >
+                        {facturaCompraHook.alertasCompra.totalVencidas} {facturaCompraHook.alertasCompra.totalVencidas === 1 ? 'factura vencida' : 'facturas vencidas'}
+                      </button>
+                    )}
+                    {facturaCompraHook.alertasCompra.totalVencidas > 0 && facturaCompraHook.alertasCompra.totalProximas > 0 && '·'}
+                    {facturaCompraHook.alertasCompra.totalProximas > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { facturaCompraHook.setFiltroEstado('confirmada'); facturaCompraHook.setPagina(1) }}
+                        className="font-semibold hover:underline ml-2"
+                      >
+                        {facturaCompraHook.alertasCompra.totalProximas} {facturaCompraHook.alertasCompra.totalProximas === 1 ? 'factura vence' : 'facturas vencen'} en los próximos 7 días
+                      </button>
+                    )}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {['', 'borrador', 'confirmada', 'anulada'].map((estado) => (
+                    <button
+                      key={estado}
+                      type="button"
+                      onClick={() => { facturaCompraHook.setFiltroEstado(estado); facturaCompraHook.setPagina(1) }}
+                      className={`border px-3 py-1.5 text-xs font-semibold transition ${
+                        facturaCompraHook.filtroEstado === estado
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {estado === '' ? 'Todas' : estado.charAt(0).toUpperCase() + estado.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={facturaCompraHook.abrirNueva}
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Nueva factura de compra
+                </button>
+              </div>
+
+              {facturaCompraHook.isLoading ? (
+                <DashboardPanel title="Facturas de compra" subtitle="Registro de compras a proveedores.">
+                  <TableSkeleton rows={5} />
+                </DashboardPanel>
+              ) : (
+                <DataTable
+                  title="Facturas de compra"
+                  subtitle="Registro de compras a proveedores. Confirma una factura para actualizar el stock."
+                  rows={facturaCompraHook.facturas.map((f) => {
+                    const hoy = new Date()
+                    const plazo = f.fechaPagoFinal ? new Date(f.fechaPagoFinal) : null
+                    const enSieteDias = new Date(); enSieteDias.setDate(hoy.getDate() + 7)
+                    let plazoBadge = null
+                    if (f.pagada) {
+                      plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Pagada · {f.fechaPago}</span>
+                    } else if (plazo) {
+                      if (plazo < hoy) {
+                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Vencida · {f.fechaPagoFinal}</span>
+                      } else if (plazo <= enSieteDias) {
+                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Vence {f.fechaPagoFinal}</span>
+                      } else {
+                        plazoBadge = <span className="text-sm text-muted-foreground">{f.fechaPagoFinal}</span>
+                      }
+                    }
+                    return {
+                      id: f.id,
+                      numero: f.numero || <span className="text-muted-foreground">—</span>,
+                      proveedor: f.proveedor,
+                      fecha: f.fecha,
+                      estado: f.estado,
+                      plazo: plazoBadge || <span className="text-muted-foreground">—</span>,
+                      items: f.items?.length ?? '—',
+                      total: formatCurrency(Number(f.total || 0)),
+                      raw: f,
+                    }
+                  })}
+                  columns={[
+                    { key: 'numero', label: 'N° Factura' },
+                    { key: 'proveedor', label: 'Proveedor' },
+                    { key: 'fecha', label: 'Fecha' },
+                    {
+                      key: 'estado',
+                      label: 'Estado',
+                      render: (row) => (
+                        <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_COLORS[row.estado] || ''}`}>
+                          {row.estado.charAt(0).toUpperCase() + row.estado.slice(1)}
+                        </span>
+                      ),
+                    },
+                    { key: 'plazo', label: 'Plazo de pago' },
+                    { key: 'items', label: 'Ítems' },
+                    { key: 'total', label: 'Total' },
+                    {
+                      key: 'acciones',
+                      label: 'Acciones',
+                      render: (row) => (
+                        <div className="flex flex-wrap gap-3">
+                          {row.raw.estado === 'borrador' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => facturaCompraHook.abrirEditar(row.raw)}
+                                className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => facturaCompraHook.pedirConfirmar(row.raw.id)}
+                                className="text-sm font-semibold text-primary hover:underline"
+                              >
+                                Confirmar
+                              </button>
+                            </>
+                          )}
+                          {row.raw.estado === 'confirmada' && !row.raw.pagada && row.raw.fechaPagoFinal && (
+                            <button
+                              type="button"
+                              onClick={() => facturaCompraHook.pedirPagar(row.raw.id)}
+                              className="text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+                            >
+                              Confirmar pago
+                            </button>
+                          )}
+                          {row.raw.estado !== 'anulada' && (
+                            <button
+                              type="button"
+                              onClick={() => facturaCompraHook.pedirAnular(row.raw.id)}
+                              className="text-sm font-semibold text-red-600 hover:text-red-800"
+                            >
+                              Anular
+                            </button>
+                          )}
+                        </div>
+                      ),
+                    },
+                  ]}
+                  emptyTitle="No hay facturas de compra"
+                  emptyBody="Crea una nueva factura de compra para registrar el ingreso de mercancía al inventario."
+                />
+              )}
+
+              <Paginacion
+                pagina={facturaCompraHook.pagina}
+                paginas={facturaCompraHook.paginas}
+                onChange={facturaCompraHook.setPagina}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -657,6 +830,77 @@ export default function InventarioPage() {
         onSubmit={handleDrawerSubmit}
         isPending={isPendingProduct}
       />
+
+      {/* Drawer de facturas de compra */}
+      <FacturaCompraDrawer
+        open={facturaCompraHook.drawerOpen}
+        editingFactura={facturaCompraHook.editingFactura}
+        form={facturaCompraHook.form}
+        setForm={facturaCompraHook.setForm}
+        onClose={facturaCompraHook.cerrarDrawer}
+        onSubmit={facturaCompraHook.submitForm}
+        isSaving={facturaCompraHook.isSaving}
+        agregarItem={facturaCompraHook.agregarItem}
+        actualizarItem={facturaCompraHook.actualizarItem}
+        eliminarItem={facturaCompraHook.eliminarItem}
+        totalCalculado={facturaCompraHook.totalCalculado}
+        productosSelector={productosSelectorQuery.data?.productos || []}
+        errorMsg={facturaCompraHook.errorMsg}
+      />
+
+      {/* ConfirmDialog facturas de compra */}
+      {facturaCompraHook.confirmDialog.open && (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-sm border border-border bg-card p-6 shadow-xl">
+            <p className="text-sm font-semibold text-foreground">
+              {facturaCompraHook.confirmDialog.tipo === 'confirmar'
+                ? '¿Confirmar factura de compra?'
+                : facturaCompraHook.confirmDialog.tipo === 'pagar'
+                  ? '¿Confirmar pago de esta factura?'
+                  : '¿Anular factura de compra?'}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {facturaCompraHook.confirmDialog.tipo === 'confirmar'
+                ? 'Al confirmar, el stock de cada producto se actualizará con las cantidades de esta factura. Esta acción no se puede deshacer directamente.'
+                : facturaCompraHook.confirmDialog.tipo === 'pagar'
+                  ? 'Esta acción quedará registrada con la fecha de hoy como constancia del pago. No se puede revertir.'
+                  : 'Al anular una factura confirmada, los movimientos de entrada serán revertidos con ajustes de stock.'}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={facturaCompraHook.ejecutarAccion}
+                disabled={facturaCompraHook.isActuando}
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
+                  facturaCompraHook.confirmDialog.tipo === 'anular'
+                    ? 'border border-red-300 bg-red-600 hover:bg-red-700'
+                    : 'border border-emerald-300 bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {facturaCompraHook.isActuando
+                  ? 'Procesando…'
+                  : facturaCompraHook.confirmDialog.tipo === 'confirmar'
+                    ? 'Sí, confirmar'
+                    : facturaCompraHook.confirmDialog.tipo === 'pagar'
+                      ? 'Sí, marcar como pagada'
+                      : 'Sí, anular'}
+              </button>
+              <button
+                type="button"
+                onClick={facturaCompraHook.cancelarAccion}
+                disabled={facturaCompraHook.isActuando}
+                className="flex-1 border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ConfirmDialog — Fase 3d: z-60 para quedar sobre el drawer */}
       {confirmDialog.open && (
