@@ -8,6 +8,7 @@ import {
   Boxes,
   CalendarClock,
   CircleAlert,
+  FileText,
   LayoutDashboard,
   PawPrint,
   Receipt,
@@ -19,6 +20,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ALL_QUICK_ACTIONS } from '@/components/layout/quickActions'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
@@ -68,6 +70,17 @@ const PRIMARY_BUTTON =
   'inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
 const SECONDARY_BUTTON =
   'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted'
+
+function OpenModuleButton({ to, label }) {
+  return (
+    <div className="flex justify-end">
+      <Link to={to} className={SECONDARY_BUTTON}>
+        {label}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  )
+}
 
 const serializeDate = (date) => {
   const year = date.getFullYear()
@@ -549,6 +562,12 @@ export default function DashboardPage() {
   const puedeAbrirHistorias = esAdministrador && featureSet.has('historias')
   const puedeAbrirCaja = esAdministrador && featureSet.has('facturacion_interna')
 
+  const quickActions = useMemo(() => {
+    const keys = ['agenda', 'paciente', 'historia', 'facturar']
+    if (puedeVerInventario) keys.splice(1, 0, 'inventario')
+    return keys.map((key) => ALL_QUICK_ACTIONS[key])
+  }, [puedeVerInventario])
+
   const ingresosQuery = useQuery({
     queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
     queryFn: () => dashboardApi.obtenerReporteIngresos(rangoMes),
@@ -699,13 +718,6 @@ export default function DashboardPage() {
       uso: formatNumber(mascotasActivas),
       limite: limiteMascotas === null ? 'Sin limite' : formatNumber(limiteMascotas),
       estado: limiteMascotas === null ? 'Abierto' : `${cupoMascotas} disponibles`,
-    },
-    {
-      id: 'propietarios',
-      area: 'Propietarios',
-      uso: formatNumber(propietariosActivos),
-      limite: 'No aplica',
-      estado: 'Base activa',
     },
   ]
 
@@ -882,13 +894,32 @@ export default function DashboardPage() {
     [resumenElectronico]
   )
 
-  const todayBridgeRows = useMemo(
+  const todayBridgeRows = useMemo(() => {
+    const filtered = [...citasHoyRows]
+      .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
+      .slice(0, 8)
+
+    if (usuario?.rol === 'veterinario' && usuario?.id) {
+      return [
+        ...filtered.filter((c) => c.veterinario?.id === usuario.id),
+        ...filtered.filter((c) => c.veterinario?.id !== usuario.id),
+      ]
+    }
+    return filtered
+  }, [citasHoyRows, usuario])
+
+  const sinDocumentar = useMemo(
     () =>
-      [...citasHoyRows]
-        .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
-        .slice(0, 8),
+      citasHoyRows.filter(
+        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
+      ).length,
     [citasHoyRows]
   )
+
+  const ingresosHoy = useMemo(() => {
+    const entry = ingresosPorDia.find((d) => d.fecha === hoy)
+    return entry?.total ?? 0
+  }, [ingresosPorDia, hoy])
 
   if (!esAdministrador) {
     return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
@@ -915,7 +946,7 @@ export default function DashboardPage() {
           formatter={formatCurrency}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7 lg:grid-cols-3">
+        <div className={cn('grid grid-cols-1 gap-4 lg:col-span-7', puedeAbrirHistorias ? 'sm:grid-cols-4 lg:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-3')}>
           <CommandKpiCard
             label="Citas de hoy"
             value={formatNumber(citasHoy)}
@@ -947,6 +978,17 @@ export default function DashboardPage() {
             color="#7c3aed"
             formatter={formatNumber}
           />
+          {puedeAbrirHistorias ? (
+            <CommandKpiCard
+              label="Sin documentar"
+              value={formatNumber(sinDocumentar)}
+              helper="Consultas de hoy sin historia clínica"
+              icon={FileText}
+              data={[{ label: 'hoy', value: sinDocumentar }]}
+              color="#0891b2"
+              formatter={formatNumber}
+            />
+          ) : null}
         </div>
 
         <CommandPanel
@@ -1021,6 +1063,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={CalendarClock}
@@ -1071,17 +1115,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        <DataTable
-          title="Lectura operativa de agenda"
-          subtitle="Resumen directo para recepcion y coordinacion del equipo."
-          rows={estadosCita}
-          columns={[
-            { key: 'name', label: 'Estado' },
-            { key: 'value', label: 'Cantidad', render: (row) => formatNumber(row.value) },
-          ]}
-          emptyTitle="No hay estados para mostrar"
-          emptyBody="Cuando existan citas en el periodo, aqui veras una lectura simple del estado operativo."
-        />
       </div>
     )
   }
@@ -1102,6 +1135,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={Wallet}
@@ -1124,10 +1159,11 @@ export default function DashboardPage() {
             tone="text-primary"
           />
           <KpiCard
-            icon={ShieldCheck}
-            label="Metodos activos"
-            value={formatNumber(metodosPago.length)}
-            helper="Cantidad de formas de pago usadas en el periodo."
+            icon={Wallet}
+            label="Ingresos de hoy"
+            value={formatCurrency(ingresosHoy)}
+            helper="Facturado hoy en el modulo de caja."
+            tone="text-primary"
           />
         </div>
 
@@ -1192,6 +1228,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={Boxes}
@@ -1271,6 +1309,8 @@ export default function DashboardPage() {
 
   const renderPacientesTab = () => (
     <div className="space-y-5">
+      <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
+
       <div className="grid gap-4 xl:grid-cols-4">
         <KpiCard
           icon={PawPrint}
@@ -1326,40 +1366,19 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <DataTable
-          title="Capacidad y estado"
-          subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
-          rows={capacityRows}
-          columns={[
-            { key: 'area', label: 'Area' },
-            { key: 'uso', label: 'Uso actual' },
-            { key: 'limite', label: 'Limite' },
-            { key: 'estado', label: 'Estado' },
-          ]}
-          emptyTitle="Sin datos"
-          emptyBody="No hay informacion de capacidad disponible."
-        />
-
-        <DashboardPanel
-          title="Modulo operativo publicado"
-          subtitle="Acceso directo a la base real de pacientes y tutores."
-        >
-          <div className="space-y-4">
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              La primera pantalla interna ya esta resuelta: registrar tutor, registrar paciente y
-              consultar la base activa sin depender de cards decorativas.
-            </div>
-            <Link
-              to="/pacientes"
-              className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Abrir pacientes y tutores
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </DashboardPanel>
-      </div>
+      <DataTable
+        title="Capacidad y estado"
+        subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
+        rows={capacityRows}
+        columns={[
+          { key: 'area', label: 'Area' },
+          { key: 'uso', label: 'Uso actual' },
+          { key: 'limite', label: 'Limite' },
+          { key: 'estado', label: 'Estado' },
+        ]}
+        emptyTitle="Sin datos"
+        emptyBody="No hay informacion de capacidad disponible."
+      />
     </div>
   )
 
@@ -1417,46 +1436,31 @@ export default function DashboardPage() {
         </div>
       </DashboardPanel>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <DataTable
-          title="Funcionalidades habilitadas"
-          subtitle="Cada modulo del producto segun la suscripcion activa de la clinica."
-          rows={featureRows}
-          columns={[
-            { key: 'label', label: 'Modulo' },
-            {
-              key: 'enabled',
-              label: 'Estado',
-              render: (row) => (
-                <StatusPill
-                  tone={
-                    row.enabled
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-border bg-slate-100 text-muted-foreground'
-                  }
-                >
-                  {row.enabled ? 'Incluido' : 'No incluido'}
-                </StatusPill>
-              ),
-            },
-          ]}
-          emptyTitle="Sin funcionalidades"
-          emptyBody="No fue posible cargar el estado de funcionalidades del plan."
-        />
-
-        <DataTable
-          title="Alertas comerciales"
-          subtitle="Lo que puede afectar la continuidad operativa si no se revisa a tiempo."
-          rows={adminAlerts}
-          columns={[
-            { key: 'area', label: 'Area' },
-            { key: 'estado', label: 'Estado' },
-            { key: 'detalle', label: 'Detalle' },
-          ]}
-          emptyTitle="Sin alertas"
-          emptyBody="No hay alertas comerciales relevantes para mostrar."
-        />
-      </div>
+      <DataTable
+        title="Funcionalidades habilitadas"
+        subtitle="Cada modulo del producto segun la suscripcion activa de la clinica."
+        rows={featureRows}
+        columns={[
+          { key: 'label', label: 'Modulo' },
+          {
+            key: 'enabled',
+            label: 'Estado',
+            render: (row) => (
+              <StatusPill
+                tone={
+                  row.enabled
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-border bg-slate-100 text-muted-foreground'
+                }
+              >
+                {row.enabled ? 'Incluido' : 'No incluido'}
+              </StatusPill>
+            ),
+          },
+        ]}
+        emptyTitle="Sin funcionalidades"
+        emptyBody="No fue posible cargar el estado de funcionalidades del plan."
+      />
     </div>
   )
 
@@ -1523,7 +1527,8 @@ export default function DashboardPage() {
         ) : null
       }
       showQuickActions
-      asideNote="Lee el tablero, detecta el frente critico y entra al modulo correcto solo cuando ya sabes que accion tomar."
+      quickActions={quickActions}
+      asideNote="Usa las acciones rapidas para entrar directo al modulo, o revisa el radar del dia si necesitas mas contexto primero."
     >
       <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
 

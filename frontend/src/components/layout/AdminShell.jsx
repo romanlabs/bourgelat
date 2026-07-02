@@ -6,7 +6,6 @@ import {
   CalendarClock,
   ChevronsLeft,
   ChevronsRight,
-  FileText,
   HeartPulse,
   History,
   Info,
@@ -25,6 +24,7 @@ import { useLogout } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
+import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 
 const SIDEBAR_STORAGE_KEY = 'bourgelat-admin-sidebar-collapsed'
 
@@ -60,37 +60,6 @@ const NAV_SECTIONS = [
 ]
 
 const NAV_ITEMS_BY_KEY = Object.fromEntries(NAV_ITEMS.map((item) => [item.key, item]))
-
-const DEFAULT_QUICK_ACTIONS = [
-  {
-    key: 'facturar',
-    label: 'Facturar',
-    detail: 'Entrar a caja y emitir una factura sin buscar el modulo.',
-    to: '/finanzas',
-    icon: Receipt,
-  },
-  {
-    key: 'paciente',
-    label: 'Nuevo paciente',
-    detail: 'Registrar tutor y paciente desde el flujo operativo.',
-    to: '/pacientes',
-    icon: PawPrint,
-  },
-  {
-    key: 'historia',
-    label: 'Historia clinica',
-    detail: 'Abrir consulta y documentar el caso sin rodeos.',
-    to: '/pacientes',
-    icon: FileText,
-  },
-  {
-    key: 'agenda',
-    label: 'Nueva cita',
-    detail: 'Programar o reorganizar la agenda del dia.',
-    to: '/agenda',
-    icon: CalendarClock,
-  },
-]
 
 function SidebarLink({ item, active, collapsed = false }) {
   const Icon = item.icon
@@ -161,7 +130,7 @@ export default function AdminShell({
   actions,
   headerBadge,
   asideNote,
-  quickActions = DEFAULT_QUICK_ACTIONS,
+  quickActions = null,
   showQuickActions = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
@@ -191,7 +160,13 @@ export default function AdminShell({
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
   const plan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
-  const visibleQuickActions = showQuickActions ? quickActions : []
+  const visibleQuickActions = useMemo(() => {
+    if (!showQuickActions) return []
+    if (quickActions) return quickActions
+    const order = ROL_ACTION_ORDER[usuario?.rol]
+    if (!order) return DEFAULT_QUICK_ACTIONS
+    return order.map((key) => ALL_QUICK_ACTIONS[key])
+  }, [showQuickActions, quickActions, usuario?.rol])
   const usuarioIniciales = useMemo(() => {
     const source = usuario?.nombre || usuario?.email || 'BC'
     return source

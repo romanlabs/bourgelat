@@ -172,10 +172,10 @@ export default function InventarioPage() {
       }
       actions={
         <Link
-          to="/dashboard"
+          to="/finanzas"
           className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Volver al dashboard
+          Abrir caja
         </Link>
       }
       asideNote="Aqui se concentran alertas, productos y movimientos. Lo importante es cuidar el stock antes de afectar caja o consulta."
