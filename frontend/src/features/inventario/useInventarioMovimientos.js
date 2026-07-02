@@ -13,8 +13,9 @@ export const MOVEMENT_TYPE_OPTIONS = [
 
 export const MOVEMENT_REASON_OPTIONS = {
   entrada: [
+    { value: 'inventario_inicial', label: 'Inventario Inicial' },
     { value: 'compra', label: 'Compra' },
-    { value: 'devolucion', label: 'Devolucion' },
+    { value: 'devolucion', label: 'Devolución' },
     { value: 'otro', label: 'Otro' },
   ],
   salida: [
@@ -85,7 +86,7 @@ export function useInventarioMovimientos({ enabled }) {
         producto: m.producto?.nombre || 'Producto',
         tipo: m.tipo,
         motivo: m.motivo,
-        cambio: `${m.stockAnterior} → ${m.stockNuevo}`,
+        cambio: formatNumber(m.stockNuevo),
       })),
     [movimientosQuery.data?.movimientos]
   )
@@ -105,7 +106,7 @@ export function useInventarioMovimientos({ enabled }) {
         tipo: m.tipo,
         motivo: m.motivo.replaceAll('_', ' '),
         cantidad: formatNumber(m.cantidad),
-        cambio: `${m.stockAnterior} → ${m.stockNuevo}`,
+        cambio: formatNumber(m.stockNuevo),
       })),
     [productoDetalleQuery.data?.producto?.movimientos]
   )

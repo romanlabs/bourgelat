@@ -28,6 +28,7 @@ const MovimientoInventario = sequelize.define('MovimientoInventario', {
   },
   motivo: {
     type: DataTypes.ENUM(
+      'inventario_inicial',
       'compra',
       'venta',
       'uso_clinico',
@@ -69,6 +70,10 @@ const MovimientoInventario = sequelize.define('MovimientoInventario', {
       model: Clinica,
       key: 'id',
     },
+  },
+  facturaCompraId: {
+    type: DataTypes.UUID,
+    allowNull: true,
   },
 }, {
   tableName: 'movimientos_inventario',
