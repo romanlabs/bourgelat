@@ -460,35 +460,44 @@ export default function FinanzasPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-3">
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Fecha:{' '}
-                          <span className="font-semibold text-slate-950">
+                      <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          Total facturado
+                        </p>
+                        <p className="text-2xl font-bold tabular-nums text-slate-950">
+                          {formatCurrency(historialHook.facturaSeleccionada.total)}
+                        </p>
+                      </div>
+
+                      <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Fecha
+                          </dt>
+                          <dd className="mt-1 text-sm font-semibold text-slate-950">
                             {formatLongDate(historialHook.facturaSeleccionada.fecha)}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Metodo de pago:{' '}
-                          <span className="font-semibold text-slate-950">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Pago
+                          </dt>
+                          <dd className="mt-1 text-sm font-semibold text-slate-950">
                             {PAYMENT_METHOD_LABELS[
                               historialHook.facturaSeleccionada.metodoPago
                             ] || 'Sin definir'}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Responsable:{' '}
-                          <span className="font-semibold text-slate-950">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Responsable
+                          </dt>
+                          <dd className="mt-1 truncate text-sm font-semibold text-slate-950">
                             {historialHook.facturaSeleccionada.usuario?.nombre ||
                               'Sin usuario asignado'}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Total:{' '}
-                          <span className="font-semibold text-slate-950">
-                            {formatCurrency(historialHook.facturaSeleccionada.total)}
-                          </span>
-                        </div>
-                      </div>
+                      </dl>
 
                       <div className="overflow-x-auto border border-border">
                         <table className="min-w-full divide-y divide-border text-sm">
@@ -497,11 +506,11 @@ export default function FinanzasPage() {
                               <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Item
                               </th>
-                              <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Cantidad
                               </th>
-                              <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Precio
+                              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Subtotal
                               </th>
                             </tr>
                           </thead>
@@ -509,15 +518,25 @@ export default function FinanzasPage() {
                             {(historialHook.facturaSeleccionada.items || []).map((item) => (
                               <tr key={item.id}>
                                 <td className="px-3 py-3 text-foreground">{item.descripcion}</td>
-                                <td className="px-3 py-3 text-foreground">
+                                <td className="px-3 py-3 text-right tabular-nums text-foreground">
                                   {formatNumber(item.cantidad)}
                                 </td>
-                                <td className="px-3 py-3 text-foreground">
+                                <td className="px-3 py-3 text-right tabular-nums text-foreground">
                                   {formatCurrency(item.subtotal)}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
+                          <tfoot>
+                            <tr className="border-t border-border bg-muted">
+                              <td className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" colSpan={2}>
+                                Total
+                              </td>
+                              <td className="px-3 py-3 text-right font-bold tabular-nums text-slate-950">
+                                {formatCurrency(historialHook.facturaSeleccionada.total)}
+                              </td>
+                            </tr>
+                          </tfoot>
                         </table>
                       </div>
 
