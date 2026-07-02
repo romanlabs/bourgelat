@@ -42,9 +42,9 @@ export default function ProductCommandSearch({
       descripcion: desc,
       cantidad: '1',
       precioUnitario: serviceForm.precio || '0',
-      descuento: '0',
       productoId: '',
       stock: null,
+      precioMinimo: 0,
     }
     setInvoiceForm((curr) => ({ ...curr, items: [...curr.items, newItem] }))
     setServiceForm({ descripcion: '', precio: '' })

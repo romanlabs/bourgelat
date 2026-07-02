@@ -419,9 +419,16 @@ const crearFactura = async (req, res) => {
     } = req.body
     const { clinicaId } = req.usuario
 
-    if (!propietarioId || !items || items.length === 0) {
+    if (!items || items.length === 0) {
       await transaction.rollback()
-      return res.status(400).json({ message: 'Propietario e items son obligatorios' })
+      return res.status(400).json({ message: 'La factura debe tener al menos un item' })
+    }
+
+    if (emitirElectronica && !propietarioId) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'La facturacion electronica requiere un cliente con datos fiscales. Selecciona un tutor o crea la factura interna.',
+      })
     }
 
     if (emitirElectronica) {
@@ -438,15 +445,17 @@ const crearFactura = async (req, res) => {
       }
     }
 
-    const propietario = await Propietario.findOne({
-      where: { id: propietarioId, clinicaId },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    })
+    if (propietarioId) {
+      const propietario = await Propietario.findOne({
+        where: { id: propietarioId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
 
-    if (!propietario) {
-      await transaction.rollback()
-      return res.status(404).json({ message: 'Propietario no encontrado' })
+      if (!propietario) {
+        await transaction.rollback()
+        return res.status(404).json({ message: 'Propietario no encontrado' })
+      }
     }
 
     let subtotal = 0
@@ -495,6 +504,15 @@ const crearFactura = async (req, res) => {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
         }
+
+        // Piso de precio: un producto no se puede vender por debajo de su costo.
+        const precioCompra = convertirANumero(producto.precioCompra, 0)
+        if (precioCompra > 0 && precioUnitario < precioCompra) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `"${producto.nombre}" no se puede vender por debajo de su costo ($${precioCompra})`,
+          })
+        }
       }
 
       const itemSubtotal = Math.max((precioUnitario * cantidad) - descuentoItem, 0)
@@ -529,7 +547,7 @@ const crearFactura = async (req, res) => {
       estadoElectronico: emitirElectronica ? 'pendiente' : 'no_aplica',
       documentoElectronico: emitirElectronica ? documentoElectronico : null,
       rangoNumeracionId: emitirElectronica ? rangoNumeracionId : null,
-      propietarioId,
+      propietarioId: propietarioId || null,
       usuarioId: usuarioId || req.usuario.id,
       clinicaId,
     }, { transaction })
@@ -721,6 +739,12 @@ const emitirFacturaElectronica = async (req, res) => {
 
     const factura = await obtenerFacturaDetallada(id, clinicaId)
     validarFacturaParaEmision(factura)
+
+    if (!factura.propietario) {
+      return res.status(400).json({
+        message: 'La factura no tiene cliente asociado. La facturacion electronica requiere un cliente con datos fiscales.',
+      })
+    }
 
     const camposFaltantesPropietario = obtenerCamposFiscalesPropietarioFaltantes(factura.propietario)
     if (camposFaltantesPropietario.length > 0) {

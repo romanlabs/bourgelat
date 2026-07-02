@@ -11,9 +11,9 @@ const createBlankInvoiceItem = () => ({
   descripcion: '',
   cantidad: '1',
   precioUnitario: '',
-  descuento: '0',
   productoId: '',
   stock: null,
+  precioMinimo: 0,
 })
 
 const toAmount = (value) => {
@@ -29,7 +29,6 @@ const buildInitialForm = () => ({
   propietarioId: '',
   metodoPago: 'efectivo',
   observaciones: '',
-  descuentoGeneral: '0',
   items: [],
 })
 
@@ -143,12 +142,10 @@ export function useFinanzasFacturacion({
     const subtotal = invoiceForm.items.reduce((acc, item) => {
       const cantidad = Math.max(toAmount(item.cantidad), 0)
       const precio = Math.max(toAmount(item.precioUnitario), 0)
-      const descuento = Math.max(toAmount(item.descuento), 0)
-      return acc + Math.max(cantidad * precio - descuento, 0)
+      return acc + cantidad * precio
     }, 0)
-    const descuentoGeneral = Math.max(toAmount(invoiceForm.descuentoGeneral), 0)
-    return { subtotal, descuentoGeneral, total: Math.max(subtotal - descuentoGeneral, 0) }
-  }, [invoiceForm.items, invoiceForm.descuentoGeneral])
+    return { subtotal, total: subtotal }
+  }, [invoiceForm.items])
 
   const updateInvoiceItem = (itemId, field, value) => {
     setInvoiceForm((curr) => ({
@@ -181,9 +178,10 @@ export function useFinanzasFacturacion({
           descripcion: product.nombre,
           cantidad: '1',
           precioUnitario: String(product.precioVenta || 0),
-          descuento: '0',
           productoId: product.id,
           stock: product.stock ?? null,
+          // Piso de precio: no se puede vender por debajo del costo.
+          precioMinimo: Math.max(toAmount(product.precioCompra), 0),
         },
       ],
     }))
@@ -199,17 +197,11 @@ export function useFinanzasFacturacion({
   }
 
   const handleCrearFactura = () => {
-    if (!invoiceForm.propietarioId) {
-      toast.error('Selecciona un tutor para crear la factura.')
-      return
-    }
-
     const itemsValidos = invoiceForm.items
       .map((item) => ({
         descripcion: item.descripcion.trim(),
         cantidad: toAmount(item.cantidad),
         precioUnitario: toAmount(item.precioUnitario),
-        descuento: toAmount(item.descuento),
         tipo: item.tipo,
         productoId: item.productoId || undefined,
       }))
@@ -222,6 +214,20 @@ export function useFinanzasFacturacion({
 
     if (itemsValidos.some((item) => item.precioUnitario < 0)) {
       toast.error('El precio unitario no puede ser negativo.')
+      return
+    }
+
+    // Piso de precio: un producto no se puede vender por debajo de su costo.
+    const itemBajoCosto = invoiceForm.items.find(
+      (item) =>
+        item.tipo === 'producto' &&
+        toAmount(item.precioMinimo) > 0 &&
+        toAmount(item.precioUnitario) < toAmount(item.precioMinimo)
+    )
+    if (itemBajoCosto) {
+      toast.error(
+        `"${itemBajoCosto.descripcion}" no se puede vender por debajo de su costo ($${toAmount(itemBajoCosto.precioMinimo).toLocaleString('es-CO')}).`
+      )
       return
     }
 
@@ -238,12 +244,13 @@ export function useFinanzasFacturacion({
       return
     }
 
+    // La emision electronica requiere cliente con datos fiscales;
+    // las ventas de mostrador (sin tutor) siempre quedan como factura interna.
     crearFacturaMutation.mutate({
-      propietarioId: invoiceForm.propietarioId,
+      propietarioId: invoiceForm.propietarioId || undefined,
       metodoPago: invoiceForm.metodoPago,
       observaciones: invoiceForm.observaciones.trim() || undefined,
-      descuentoGeneral: toAmount(invoiceForm.descuentoGeneral),
-      emitirElectronica: emisionAutomaticaActiva,
+      emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
       items: itemsValidos,
     })
   }
