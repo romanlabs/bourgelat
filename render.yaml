@@ -115,15 +115,12 @@ services:
       - key: FACTUS_AMBIENTE
         value: production
 
-  - type: web
+  - type: static
     name: bourgelat-web
-    runtime: docker
-    plan: starter
     region: oregon
-    dockerContext: frontend
-    dockerfilePath: frontend/Dockerfile.prod
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
     autoDeployTrigger: commit
-    healthCheckPath: /healthz
     domains:
       - bourgelat.co
       - app.bourgelat.co
@@ -131,6 +128,14 @@ services:
       paths:
         - frontend/**
         - render.yaml
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://api.bourgelat.co/api
@@ -244,21 +249,22 @@ services:
       - key: FACTUS_AMBIENTE
         value: sandbox
 
-  - type: web
+  - type: static
     name: bourgelat-web-staging
-    runtime: docker
-    plan: free
     region: oregon
-    dockerContext: frontend
-    dockerfilePath: frontend/Dockerfile.prod
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
     autoDeployTrigger: commit
-    healthCheckPath: /healthz
     domains:
       - staging.bourgelat.co
     buildFilter:
       paths:
         - frontend/**
         - render.yaml
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://api-staging.bourgelat.co/api
