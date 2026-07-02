@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
+import { invalidateInventarioQueries } from '@/features/inventario/inventarioUtils'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { finanzasApi } from './finanzasApi'
 
@@ -99,6 +100,9 @@ export function useFinanzasFacturacion({
       queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      // La venta descuenta stock: refrescar productos y movimientos de inventario.
+      invalidateInventarioQueries(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['finanzas-productos'] })
 
       if (emisionAutomaticaActiva && data?.factura?.id && data?.factura?.estadoElectronico === 'pendiente') {
         emitirParaAutoEmision.mutate({

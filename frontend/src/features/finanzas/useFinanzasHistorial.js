@@ -146,6 +146,9 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const clinica = useAuthStore((state) => state.clinica)
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
 
+  // Rango editable: por defecto el mes en curso.
+  const [fechaInicio, setFechaInicio] = useState(rangoMes.fechaInicio)
+  const [fechaFin, setFechaFin] = useState(rangoMes.fechaFin)
   const [estado, setEstado] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [buscarInput, setBuscarInput] = useState('')
@@ -168,11 +171,11 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   }
 
   const facturasQuery = useQuery({
-    queryKey: ['finanzas-facturas', estado, buscar, pagina, rangoMes.fechaInicio, rangoMes.fechaFin],
+    queryKey: ['finanzas-facturas', estado, buscar, pagina, fechaInicio, fechaFin],
     queryFn: () =>
       finanzasApi.obtenerFacturas({
-        fechaInicio: rangoMes.fechaInicio,
-        fechaFin: rangoMes.fechaFin,
+        fechaInicio,
+        fechaFin,
         estado: estado !== 'todos' ? estado : undefined,
         buscar: buscar || undefined,
         pagina,
@@ -181,6 +184,13 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     enabled,
     placeholderData: (prev) => prev,
   })
+
+  const cambiarRango = (inicio, fin) => {
+    if (inicio) setFechaInicio(inicio)
+    if (fin) setFechaFin(fin)
+    setPagina(1)
+    resetSeleccion()
+  }
 
   const currentFacturaId = useMemo(() => {
     const disponibles = facturasQuery.data?.facturas || []
@@ -349,7 +359,7 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `finanzas-${rangoMes.fechaInicio}-${rangoMes.fechaFin}.csv`
+    link.download = `finanzas-${fechaInicio}-${fechaFin}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -373,6 +383,9 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
 
   return {
     rangoMes,
+    fechaInicio,
+    fechaFin,
+    cambiarRango,
     estado,
     setEstado,
     pagina,

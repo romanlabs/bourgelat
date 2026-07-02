@@ -24,11 +24,17 @@ const SEX_OPTIONS = [
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+const hoyISO = () => new Date().toISOString().slice(0, 10)
+
 const pacienteSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
   especie: z.enum(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro']),
   raza: z.string().optional(),
   sexo: z.enum(['desconocido', 'macho', 'hembra']),
+  fechaNacimiento: z
+    .string()
+    .optional()
+    .refine((v) => !v || v <= hoyISO(), 'La fecha de nacimiento no puede ser futura'),
   peso: z.coerce.number().positive('El peso debe ser positivo').optional().or(z.literal('')),
   color: z.string().optional(),
   observaciones: z.string().optional(),
@@ -40,6 +46,7 @@ const DEFAULT_VALUES = {
   especie: 'perro',
   raza: '',
   sexo: 'desconocido',
+  fechaNacimiento: '',
   peso: '',
   color: '',
   observaciones: '',
@@ -128,6 +135,7 @@ export default function PacienteDrawer({
       especie: formData.especie,
       raza: formData.raza?.trim() || undefined,
       sexo: formData.sexo,
+      fechaNacimiento: formData.fechaNacimiento || undefined,
       peso: formData.peso ? Number(formData.peso) : undefined,
       color: formData.color?.trim() || undefined,
       observaciones: formData.observaciones?.trim() || undefined,
@@ -311,6 +319,11 @@ export default function PacienteDrawer({
                   <select id="p-sexo" className={fieldClass} {...register('sexo')}>
                     {SEX_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>
+                  <input id="p-nacimiento" type="date" max={hoyISO()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-red-400' : ''}`} {...register('fechaNacimiento')} />
+                  {errors.fechaNacimiento && <p className="text-xs text-red-600">{errors.fechaNacimiento.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-peso" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Peso actual (kg)</label>

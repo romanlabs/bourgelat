@@ -162,7 +162,11 @@ export default function PacienteExpedienteDrawer({ open, mascota, featureSet, on
               {mascota?.tutor ? ` · ${mascota.tutor}` : ''}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {[mascota?.color !== 'Sin color' && mascota?.color, mascota?.peso !== 'Sin peso' && mascota?.peso]
+              {[
+                mascota?.edad !== 'Sin edad' && mascota?.edad,
+                mascota?.color !== 'Sin color' && mascota?.color,
+                mascota?.peso !== 'Sin peso' && mascota?.peso,
+              ]
                 .filter(Boolean)
                 .join(' · ')}
             </p>

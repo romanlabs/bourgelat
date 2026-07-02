@@ -254,7 +254,9 @@ export default function PacientesPage() {
                             <p className="mt-0.5 text-xs text-muted-foreground">
                               {row.especie}{row.raza ? ` / ${row.raza}` : ''}
                             </p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">{row.color} · {row.peso}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {[row.edad !== 'Sin edad' && row.edad, row.color, row.peso].filter(Boolean).join(' · ')}
+                            </p>
                           </div>
                         </div>
                       ),
