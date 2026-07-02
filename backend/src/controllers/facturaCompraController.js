@@ -62,7 +62,7 @@ const obtenerFacturasCompra = async (req, res) => {
       facturas: rows,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -86,7 +86,7 @@ const obtenerFacturaCompra = async (req, res) => {
 
     res.json({ factura });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -138,7 +138,7 @@ const crearFacturaCompra = async (req, res) => {
 
     res.status(201).json({ message: 'Factura de compra creada', factura: facturaConItems });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -191,7 +191,7 @@ const editarFacturaCompra = async (req, res) => {
     if (error.message.includes('ítem') || error.message.includes('borrador')) {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -259,7 +259,7 @@ const confirmarFacturaCompra = async (req, res) => {
     if (error.message.includes('no encontrado') || error.message.includes('inactivo')) {
       return res.status(400).json({ message: error.message });
     }
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -290,17 +290,19 @@ const anularFacturaCompra = async (req, res) => {
           if (producto) {
             const stockAnterior = Number(producto.stock);
             const cantidadRevertir = Number(item.cantidad);
-            const stockNuevo = Math.max(0, stockAnterior - cantidadRevertir);
+            const revertirReal = Math.min(cantidadRevertir, stockAnterior);
+            const stockNuevo = stockAnterior - revertirReal;
+            const revertidoParcial = revertirReal < cantidadRevertir;
 
             await producto.update({ stock: stockNuevo }, { transaction });
 
             await MovimientoInventario.create({
               tipo: 'ajuste',
               motivo: 'ajuste_inventario',
-              cantidad: stockAnterior - stockNuevo,
+              cantidad: revertirReal,
               stockAnterior,
               stockNuevo,
-              observaciones: `Anulación factura de compra #${factura.numero || factura.id.slice(0, 8)}`,
+              observaciones: `Anulación factura de compra #${factura.numero || factura.id.slice(0, 8)}${revertidoParcial ? ` (reversión parcial: stock insuficiente para revertir ${cantidadRevertir} unidades)` : ''}`,
               productoId: item.productoId,
               usuarioId,
               clinicaId,
@@ -314,7 +316,7 @@ const anularFacturaCompra = async (req, res) => {
 
     res.json({ message: 'Factura de compra anulada' });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 };
 
@@ -327,34 +329,26 @@ const obtenerAlertasCompra = async (req, res) => {
 
     const attrs = ['id', 'numero', 'proveedor', 'fecha', 'fechaPagoFinal', 'total']
 
-    const vencidas = await FacturaCompra.findAll({
+    const todas = await FacturaCompra.findAll({
       where: {
         clinicaId,
         estado: 'confirmada',
         pagada: false,
-        fechaPagoFinal: { [Op.lt]: hoy },
+        fechaPagoFinal: { [Op.lte]: en7dias },
       },
       attributes: attrs,
       order: [['fechaPagoFinal', 'ASC']],
     })
 
-    const proximasAVencer = await FacturaCompra.findAll({
-      where: {
-        clinicaId,
-        estado: 'confirmada',
-        pagada: false,
-        fechaPagoFinal: { [Op.between]: [hoy, en7dias] },
-      },
-      attributes: attrs,
-      order: [['fechaPagoFinal', 'ASC']],
-    })
+    const vencidas = todas.filter((f) => new Date(f.fechaPagoFinal) < hoy)
+    const proximasAVencer = todas.filter((f) => new Date(f.fechaPagoFinal) >= hoy)
 
     res.json({
       vencidas: { total: vencidas.length, facturas: vencidas },
       proximasAVencer: { total: proximasAVencer.length, facturas: proximasAVencer },
     })
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+    res.status(500).json({ message: 'Error en el servidor' })
   }
 }
 
@@ -378,7 +372,7 @@ const marcarComoPagada = async (req, res) => {
 
     res.json({ message: 'Factura marcada como pagada', fechaPago: fechaPagoFinal })
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+    res.status(500).json({ message: 'Error en el servidor' })
   }
 }
 
