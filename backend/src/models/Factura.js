@@ -124,9 +124,10 @@ const Factura = sequelize.define('Factura', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // Nullable: ventas de mostrador sin cliente asociado.
   propietarioId: {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: Propietario,
       key: 'id',

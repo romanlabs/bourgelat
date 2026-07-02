@@ -1,6 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { formatearEdad } from '@/lib/utils'
 import { pacientesApi } from './pacientesApi'
 
 const getErrorMessage = (error, fallback) =>
@@ -102,6 +103,7 @@ export function usePacientesMascotas({ enabled, featureSet }) {
           tutor: mascota.Propietario?.nombre || 'Sin tutor',
           contacto: mascota.Propietario?.telefono || 'Sin telefono',
           color: mascota.color || 'Sin color',
+          edad: formatearEdad(mascota.fechaNacimiento) || 'Sin edad',
           peso: mascota.peso ? `${mascota.peso} kg` : 'Sin peso',
           fichaLabel: fichaInfo.label,
           fichaTone: fichaInfo.tone,

@@ -348,7 +348,7 @@ export default function FinanzasPage() {
                   emptyTitle="Aun no hay facturas para este filtro"
                   emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenara automaticamente."
                   action={
-                    <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap gap-3">
+                    <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap items-center gap-3">
                       <label className="relative">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
@@ -359,6 +359,25 @@ export default function FinanzasPage() {
                           className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={historialHook.fechaInicio}
+                          max={historialHook.fechaFin}
+                          onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
+                          aria-label="Fecha inicial del filtro"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">a</span>
+                        <input
+                          type="date"
+                          value={historialHook.fechaFin}
+                          min={historialHook.fechaInicio}
+                          onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
+                          aria-label="Fecha final del filtro"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        />
+                      </div>
                       <select
                         value={historialHook.estado}
                         onChange={(event) => {

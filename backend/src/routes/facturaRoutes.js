@@ -27,7 +27,10 @@ router.post(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionInterna,
   [
-    body('propietarioId').isUUID().withMessage('Propietario no valido'),
+    body('propietarioId')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Propietario no valido'),
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
     body('items.*.descripcion').notEmpty().withMessage('Descripcion del item requerida'),
     body('items.*.cantidad').isFloat({ min: 0.01 }).withMessage('Cantidad debe ser mayor a 0'),

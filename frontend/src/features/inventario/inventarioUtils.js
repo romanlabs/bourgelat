@@ -7,5 +7,6 @@ export function invalidateInventarioQueries(queryClient) {
   queryClient.invalidateQueries({ queryKey: ['inventario-producto-detalle'] })
   queryClient.invalidateQueries({ queryKey: ['inventario-reporte-completo'] })
   queryClient.invalidateQueries({ queryKey: ['inventario-alertas'] })
+  queryClient.invalidateQueries({ queryKey: ['inventario-movimientos'] })
   queryClient.invalidateQueries({ queryKey: ['dashboard-inventario'] })
 }
