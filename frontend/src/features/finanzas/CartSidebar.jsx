@@ -157,44 +157,46 @@ export default function CartSidebar({
                         </p>
                       )}
 
+                    </div>
+
+                    {/* Cantidad + subtotal en la columna de números */}
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => decrementQty(item.id, item.cantidad)}
+                          aria-label="Restar una unidad"
+                          className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-6 text-center text-xs font-bold tabular-nums text-foreground">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => incrementQty(item.id, item.cantidad)}
+                          aria-label="Sumar una unidad"
+                          className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeInvoiceItem(item.id)}
+                          aria-label="Quitar del carrito"
+                          className="ml-1 flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:text-red-500"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                       {subtotalItem > 0 && (
-                        <p className="mt-0.5 text-xs font-bold text-primary">
+                        <p className="text-xs font-bold tabular-nums text-primary">
                           {formatCOP(subtotalItem)}
                         </p>
                       )}
                     </div>
-
-                    {/* Controles cantidad */}
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => decrementQty(item.id, item.cantidad)}
-                        className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-6 text-center text-xs font-bold text-foreground">
-                        {qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => incrementQty(item.id, item.cantidad)}
-                        className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-
-                    {/* Eliminar */}
-                    <button
-                      type="button"
-                      onClick={() => removeInvoiceItem(item.id)}
-                      className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground transition hover:text-red-500"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
                   </div>
-
                 </motion.div>
               )
             })}
@@ -206,11 +208,11 @@ export default function CartSidebar({
       <div className="space-y-1.5 border-t border-border px-4 py-3">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Subtotal</span>
-          <span>{formatCOP(invoiceTotals?.subtotal ?? 0)}</span>
+          <span className="tabular-nums">{formatCOP(invoiceTotals?.subtotal ?? 0)}</span>
         </div>
         <div className="flex items-baseline justify-between pt-1">
           <span className="text-sm font-bold text-foreground">Total</span>
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-lg font-bold tabular-nums text-foreground">
             {formatCOP(invoiceTotals?.total ?? 0)}
           </span>
         </div>
