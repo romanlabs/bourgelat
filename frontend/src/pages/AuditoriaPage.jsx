@@ -179,20 +179,12 @@ export default function AuditoriaPage() {
         </StatusPill>
       }
       actions={
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Volver al dashboard
-          </Link>
-          <Link
-            to="/usuarios"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Abrir usuarios
-          </Link>
-        </div>
+        <Link
+          to="/usuarios"
+          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Abrir usuarios
+        </Link>
       }
       asideNote="Usa esta vista para seguir cambios de acceso, caja, historias e inventario sin depender de memoria o revisiones manuales."
     >

@@ -162,10 +162,10 @@ export default function FinanzasPage() {
       }
       actions={
         <Link
-          to="/dashboard"
+          to="/inventario"
           className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Volver al dashboard
+          Abrir inventario
         </Link>
       }
       asideNote="Usa este modulo para buscar facturas, revisar estados, emitir electronicamente y controlar anulaciones con trazabilidad."

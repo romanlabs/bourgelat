@@ -420,6 +420,7 @@ function ConfiguracionContent({
           value={clinicForm.email ? 'Listo' : 'Pendiente'}
           helper={clinicForm.email || 'Define un correo institucional para respuestas y documentos.'}
           tone={clinicForm.email ? 'text-emerald-700' : 'text-amber-700'}
+          borderTone={clinicForm.email ? 'border-border' : 'border-amber-300'}
         />
         <KpiCard
           icon={Phone}
@@ -427,6 +428,7 @@ function ConfiguracionContent({
           value={clinicForm.telefono ? 'Activa' : 'Pendiente'}
           helper={clinicForm.telefono || 'Agrega un celular colombiano valido para contacto principal.'}
           tone={clinicForm.telefono ? 'text-emerald-700' : 'text-amber-700'}
+          borderTone={clinicForm.telefono ? 'border-border' : 'border-amber-300'}
         />
         <KpiCard
           icon={ShieldCheck}
@@ -438,6 +440,7 @@ function ConfiguracionContent({
               : 'Completa la ficha para habilitar una salida tributaria mas ordenada.'
           }
           tone={perfilFiscal?.listoParaFacturacion ? 'text-emerald-700' : 'text-amber-700'}
+          borderTone={perfilFiscal?.listoParaFacturacion ? 'border-border' : 'border-amber-300'}
         />
       </div>
 
@@ -1339,10 +1342,10 @@ export default function ConfiguracionPage() {
       }
       actions={
         <Link
-          to="/dashboard"
+          to="/usuarios"
           className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Volver al dashboard
+          Abrir usuarios
         </Link>
       }
       asideNote="Usa esta vista para ajustar nombre visible, datos institucionales, salida fiscal e integracion de facturacion sin mezclarlo con operacion diaria."
