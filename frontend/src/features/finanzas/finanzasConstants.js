@@ -8,14 +8,16 @@ export const PRODUCT_CATEGORIES = [
   { value: 'suplemento', label: 'Suplemento' },
 ]
 
+import { Banknote, CreditCard, Landmark, MoreHorizontal, Smartphone } from 'lucide-react'
+
 export const PAYMENT_METHOD_ICONS = {
-  efectivo: '💵',
-  tarjeta_debito: '💳',
-  tarjeta_credito: '💳',
-  transferencia: '🏦',
-  nequi: '📱',
-  daviplata: '📱',
-  otro: '•••',
+  efectivo: Banknote,
+  tarjeta_debito: CreditCard,
+  tarjeta_credito: CreditCard,
+  transferencia: Landmark,
+  nequi: Smartphone,
+  daviplata: Smartphone,
+  otro: MoreHorizontal,
 }
 
 export const PAYMENT_METHOD_SHORT = {
