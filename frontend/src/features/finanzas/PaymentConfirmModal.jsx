@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Receipt } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import {
   DialogRoot,
   DialogContent,
@@ -12,6 +12,19 @@ import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+
+// Sugerencias de billetes: monto exacto + redondeos comunes hacia arriba
+const buildCashSuggestions = (total) => {
+  if (total <= 0) return []
+  const bills = [5000, 10000, 20000, 50000, 100000]
+  const suggestions = [total]
+  for (const bill of bills) {
+    const rounded = Math.ceil(total / bill) * bill
+    if (rounded > total && !suggestions.includes(rounded)) suggestions.push(rounded)
+    if (suggestions.length >= 4) break
+  }
+  return suggestions.slice(0, 4)
+}
 
 export default function PaymentConfirmModal({
   open,
@@ -32,6 +45,9 @@ export default function PaymentConfirmModal({
 
   const metodoPagoLabel =
     PAYMENT_METHOD_OPTIONS.find((m) => m.value === metodoPago)?.label || metodoPago
+  const MetodoIcon = PAYMENT_METHOD_ICONS[metodoPago]
+
+  const cashSuggestions = useMemo(() => buildCashSuggestions(total), [total])
 
   const handleConfirm = () => {
     handleCrearFactura()
@@ -44,66 +60,80 @@ export default function PaymentConfirmModal({
     }
   }
 
+  const isPending = crearFacturaMutation?.isPending
+
   return (
     <DialogRoot open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-primary" />
-            Confirmar cobro
-          </DialogTitle>
-          <DialogDescription>
-            Revisa los datos antes de emitir la factura.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="mt-4 space-y-5">
-          {/* Total */}
-          <div className="border border-border bg-muted px-5 py-4 text-center">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <DialogContent className="max-w-sm overflow-hidden rounded-2xl p-0">
+        {/* Cabecera con total protagonista */}
+        <div className="bg-muted/60 px-6 pb-5 pt-6 text-center">
+          <DialogHeader className="space-y-0">
+            <DialogDescription className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Total a cobrar
-            </p>
-            <p className="mt-1 text-4xl font-bold tracking-tight text-foreground">
+            </DialogDescription>
+            <DialogTitle className="mt-1 text-[2.5rem] font-bold leading-none tracking-tight tabular-nums text-foreground">
               {formatCOP(total)}
-            </p>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground">
+            {MetodoIcon && <MetodoIcon className="h-3.5 w-3.5 text-primary" />}
+            {metodoPagoLabel}
           </div>
+        </div>
 
-          {/* Método de pago */}
-          <div className="flex items-center justify-between border border-border bg-card px-4 py-3">
-            <span className="text-sm text-muted-foreground">Método de pago</span>
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <span>{PAYMENT_METHOD_ICONS[metodoPago]}</span>
-              {metodoPagoLabel}
-            </span>
-          </div>
-
-          {/* Campo efectivo */}
+        <div className="space-y-4 px-6 pb-6 pt-4">
+          {/* Efectivo: monto recibido + sugerencias + vuelto */}
           {esEfectivo && (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Monto recibido
-                </label>
-                <input
-                  type="number"
-                  value={montoRecibido}
-                  onChange={(e) => setMontoRecibido(e.target.value)}
-                  placeholder="0"
-                  className="w-full border border-border bg-card px-3 py-2 text-right text-base font-semibold text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-                  autoFocus
-                />
-              </div>
-
-              {montoRecibido && (
-                <div
-                  className={`flex items-center justify-between border px-4 py-3 text-sm font-semibold ${
-                    vueltoPositivo
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-red-200 bg-red-50 text-red-700'
-                  }`}
+            <div className="space-y-2.5">
+              <div className="flex items-baseline justify-between">
+                <label
+                  htmlFor="monto-recibido"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  <span>Vuelto</span>
-                  <span>{vueltoPositivo ? formatCOP(vuelto) : `Falta ${formatCOP(Math.abs(vuelto))}`}</span>
+                  Recibido
+                </label>
+                {montoRecibido && (
+                  <span
+                    className={`text-xs font-bold tabular-nums ${
+                      vueltoPositivo ? 'text-primary' : 'text-red-600'
+                    }`}
+                  >
+                    {vueltoPositivo
+                      ? `Vuelto ${formatCOP(vuelto)}`
+                      : `Falta ${formatCOP(Math.abs(vuelto))}`}
+                  </span>
+                )}
+              </div>
+              <input
+                id="monto-recibido"
+                type="number"
+                inputMode="numeric"
+                value={montoRecibido}
+                onChange={(e) => setMontoRecibido(e.target.value)}
+                placeholder="$ 0"
+                autoFocus
+                className={`w-full rounded-xl border-2 bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                  montoRecibido && !vueltoPositivo
+                    ? 'border-red-300 focus:border-red-400'
+                    : 'border-border focus:border-primary'
+                }`}
+              />
+              {cashSuggestions.length > 0 && (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {cashSuggestions.map((amount, i) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => setMontoRecibido(String(amount))}
+                      className={`rounded-lg border py-1.5 text-[11px] font-semibold tabular-nums transition ${
+                        monto === amount
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      }`}
+                    >
+                      {i === 0 ? 'Exacto' : `$${(amount / 1000).toLocaleString('es-CO')}k`}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -113,11 +143,24 @@ export default function PaymentConfirmModal({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={crearFacturaMutation?.isPending}
-            className="w-full border border-transparent bg-slate-950 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {crearFacturaMutation?.isPending ? 'Emitiendo...' : 'Emitir factura'}
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Emitiendo...
+              </>
+            ) : (
+              <>
+                Emitir factura
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
+          <p className="text-center text-[11px] text-muted-foreground">
+            Revisa los datos antes de emitir — la factura queda registrada en el historial.
+          </p>
         </div>
       </DialogContent>
     </DialogRoot>

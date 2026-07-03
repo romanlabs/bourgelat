@@ -8,7 +8,6 @@ import {
   ChevronsRight,
   HeartPulse,
   History,
-  Info,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -70,24 +69,22 @@ function SidebarLink({ item, active, collapsed = false }) {
         to={item.to}
         title={collapsed ? item.label : undefined}
         className={cn(
-          'flex items-center rounded-xl border text-sm font-medium transition-all duration-200',
-          collapsed ? 'h-12 justify-center px-0' : 'gap-3 px-3.5 py-2.5',
+          'relative flex items-center rounded-lg text-sm font-medium transition-colors duration-150',
+          collapsed ? 'h-10 justify-center px-0' : 'gap-2.5 px-3 py-2',
           active
-            ? 'border-[#91e7e0]/50 bg-[#91e7e0]/10 text-white shadow-[0_10px_30px_rgba(92,232,220,0.18)]'
-            : 'border-transparent text-[#91e7e0]/40 hover:border-[#0c2235] hover:bg-[#081827] hover:text-white'
+            ? 'bg-[#91e7e0]/10 text-white'
+            : 'text-[#91e7e0]/45 hover:bg-[#081827] hover:text-white'
         )}
       >
-        <span
+        {active && !collapsed ? (
+          <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#91e7e0]" />
+        ) : null}
+        <Icon
           className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition',
-            active
-              ? 'border-[#91e7e0]/30 bg-[#91e7e0]/10 text-[#91e7e0]'
-              : 'border-[#0c2235] bg-[#081827] text-[#91e7e0]/40'
+            'h-4 w-4 shrink-0 transition-colors',
+            active ? 'text-[#91e7e0]' : 'text-[#91e7e0]/40 group-hover:text-[#91e7e0]/70'
           )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-
+        />
         {!collapsed ? <span className="truncate">{item.label}</span> : null}
       </Link>
 
@@ -129,7 +126,6 @@ export default function AdminShell({
   children,
   actions,
   headerBadge,
-  asideNote,
   quickActions = null,
   showQuickActions = false,
 }) {
@@ -189,18 +185,18 @@ export default function AdminShell({
           >
             <div
               className={cn(
-                'flex items-center border-b border-white/10 px-4 py-3.5',
-                isSidebarCollapsed ? 'justify-center' : 'gap-3'
+                'flex items-center border-b border-white/10 px-4 py-3',
+                isSidebarCollapsed ? 'justify-center' : 'gap-2.5'
               )}
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#b07645]/35 bg-[#91e7e0]/10 text-[#91e7e0]">
-                <Stethoscope className="h-5 w-5" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#91e7e0]/10 text-[#91e7e0]">
+                <Stethoscope className="h-4 w-4" />
               </div>
 
               {!isSidebarCollapsed ? (
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{nombreClinica}</p>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                  <p className="truncate text-[11px] text-[#91e7e0]/40">
                     {ubicacionClinica || 'Operacion clinica'}
                   </p>
                 </div>
@@ -210,7 +206,7 @@ export default function AdminShell({
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(true)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-[#91e7e0]"
                   title="Contraer barra lateral"
                 >
                   <ChevronsLeft className="h-4 w-4" />
@@ -218,19 +214,19 @@ export default function AdminShell({
               ) : null}
             </div>
 
-            <div className="flex flex-1 flex-col overflow-hidden px-3 py-3.5">
+            <div className="flex flex-1 flex-col overflow-hidden px-3 py-3">
               {isSidebarCollapsed ? (
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(false)}
-                  className="mb-4 inline-flex h-10 w-10 self-center items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
+                  className="mb-3 inline-flex h-9 w-9 self-center items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-[#91e7e0]"
                   title="Expandir barra lateral"
                 >
                   <ChevronsRight className="h-4 w-4" />
                 </button>
               ) : null}
 
-              <nav className="flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
+              <nav className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
                 {NAV_SECTIONS.map((section) => {
                   const sectionItems = section.items
                     .map((itemKey) => NAV_ITEMS_BY_KEY[itemKey])
@@ -239,12 +235,12 @@ export default function AdminShell({
                   return (
                     <section key={section.key}>
                       {!isSidebarCollapsed ? (
-                        <p className="mb-2.5 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#91e7e0]/30">
                           {section.label}
                         </p>
                       ) : null}
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-0.5">
                         {sectionItems.map((item) => (
                           <SidebarLink
                             key={item.key}
@@ -259,86 +255,47 @@ export default function AdminShell({
                 })}
               </nav>
 
-              <div className="mt-auto border-t border-white/10 pt-4">
-                {asideNote && !isSidebarCollapsed ? (
-                  <details className="mb-3 overflow-hidden rounded-xl border border-[#0c2235] bg-[#020d16]/80">
-                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#91e7e0]/50">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#06111c] text-[#91e7e0]/50">
-                        <Info className="h-3.5 w-3.5" />
-                      </span>
-                      Guia del modulo
-                    </summary>
-                    <p className="border-t border-[#0c2235] px-3 py-2 text-[11px] leading-5 text-[#91e7e0]/40">
-                      {asideNote}
-                    </p>
-                  </details>
-                ) : null}
-
-                <div
-                  className={cn(
-                    'rounded-2xl border border-white/8 bg-[#020d16]/80 p-3',
-                    isSidebarCollapsed ? 'flex flex-col items-center gap-3' : 'space-y-3'
-                  )}
-                >
-                  {isSidebarCollapsed ? (
-                    <>
-                      <div
-                        title={`Plan actual: ${plan.nombre}`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]"
-                      >
-                        <ShieldCheck className="h-4 w-4" />
-                      </div>
-                      <div
-                        title={usuario?.nombre || 'Usuario principal'}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]"
-                      >
-                        {usuarioIniciales}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={logout}
-                        title="Cerrar sesion"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#0c2235] bg-[#06111c] text-[#91e7e0]/70 transition hover:border-[#91e7e0]/30 hover:bg-[#081827] hover:text-[#91e7e0]"
-                      >
-                        <LogOut className="h-4 w-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Plan actual
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-white">{plan.nombre}</p>
-                      </div>
-
-                      <div className="rounded-xl border border-[#0c2235]/80 bg-[#04101a] p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]">
-                            {usuarioIniciales}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">
-                              {usuario?.nombre || 'Sin nombre'}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {usuario?.email || 'Sin email principal'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={logout}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0c2235] bg-[#06111c] px-4 py-3 text-sm font-semibold text-white transition hover:border-[#91e7e0]/25 hover:bg-[#081827]"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Cerrar sesion
-                      </button>
-                    </>
-                  )}
-                </div>
+              <div className="mt-auto shrink-0 border-t border-white/10 pt-3">
+                {isSidebarCollapsed ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      title={`${usuario?.nombre || 'Usuario'} · Plan ${plan.nombre}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]"
+                    >
+                      {usuarioIniciales}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      title="Cerrar sesion"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#91e7e0]/50 transition hover:bg-[#081827] hover:text-[#91e7e0]"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]">
+                      {usuarioIniciales}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">
+                        {usuario?.nombre || 'Sin nombre'}
+                      </p>
+                      <p className="truncate text-[11px] text-[#91e7e0]/40">
+                        Plan {plan.nombre}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      title="Cerrar sesion"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-red-400"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </aside>
