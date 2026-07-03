@@ -1,5 +1,5 @@
 import { useVisible } from "./useVisible"
-import { TRUST_LOGOS } from "./data"
+import { TRUST_LOGOS, TRUST_CHIPS } from "./data"
 
 function TrustLogo({ logo }) {
   return (
@@ -56,19 +56,19 @@ export default function TrustBar() {
               className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]"
               style={fadeIn(0)}
             >
-              Confianza y cumplimiento
+              Respaldo técnico
             </p>
             <h2
               className="mx-auto mt-2.5 max-w-[20rem] text-[1.45rem] leading-[1.08] tracking-[-0.03em] text-[#2b2018] sm:text-[1.65rem] lg:mx-0"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
             >
-              Al día con la DIAN, sin pelear con la tecnología.
+              Infraestructura seria para una clínica que ya funciona.
             </h2>
             <p
               className="mt-3 text-[13px] leading-6 text-[#6b5d4d] sm:text-sm"
               style={fadeIn(200)}
             >
-              Factura electrónica habilitada, datos protegidos y una base alojada en Colombia.
+              Datos protegidos con Cloudflare y una plataforma construida en Colombia para clínicas colombianas.
             </p>
           </div>
 
@@ -90,13 +90,24 @@ export default function TrustBar() {
               </div>
             </div>
 
-            {/* Desktop: fila estática. Con solo cuatro respaldos quietos se leen
-                mejor y dan más autoridad. */}
+            {/* Desktop: logos + chips de texto para llenar la fila */}
             <div className="hidden items-stretch lg:flex lg:flex-nowrap lg:justify-between">
               {TRUST_LOGOS.map((logo, i) => (
                 <div key={logo.alt} className="flex items-stretch">
                   <TrustLogo logo={logo} />
-                  {i < TRUST_LOGOS.length - 1 && (
+                  <div className="flex items-center">
+                    <div style={{ width: 1, height: 30, backgroundColor: 'rgba(43,32,24,0.12)' }} />
+                  </div>
+                </div>
+              ))}
+              {TRUST_CHIPS.map((chip, i) => (
+                <div key={chip} className="flex items-stretch">
+                  <div className="flex min-w-[148px] flex-col items-center justify-center px-5 sm:min-w-[176px] sm:px-7">
+                    <div className="flex h-12 items-center justify-center">
+                      <span className="text-center text-[13px] font-semibold leading-snug text-[#2b2018]">{chip}</span>
+                    </div>
+                  </div>
+                  {i < TRUST_CHIPS.length - 1 && (
                     <div className="flex items-center">
                       <div style={{ width: 1, height: 30, backgroundColor: 'rgba(43,32,24,0.12)' }} />
                     </div>

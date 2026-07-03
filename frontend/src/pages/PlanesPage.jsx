@@ -1,17 +1,35 @@
-import { useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  ArrowRight,
-  Check,
-  ChevronDown,
-  Shield,
-  Sparkles,
-  Stethoscope,
-  Users,
-  X,
-} from 'lucide-react'
+import { motion as Motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'lucide-react'
 
-import PublicPageShell from '@/components/shared/PublicPageShell'
+import BrandMark from '@/components/landing/BrandMark'
+
+// ── Paleta cálida (misma identidad de landing, login y registro) ──
+//   INK      espresso — títulos, texto, botón sólido y card-ancla
+//   BODY     taupe — cuerpo
+//   ACCENT   caramelo — eyebrows, checks, links
+//   CREAM    fondo general
+//   SURFACE  blanco cálido para cards
+//   LINE     hairline cálido
+const INK = '#2b2018'
+const BODY = '#6b5d4d'
+const ACCENT = '#b07645'
+const EYEBROW = '#a35f25'
+const CREAM = '#f8f4ee'
+const SURFACE = '#fffdf9'
+const LINE = '#e7ddd0'
+const CHIP = '#f1e9dc'
+const ACCENT_ON_INK = '#d9a06b'
+const REC_BAND = 'rgba(176,118,69,0.07)' // banda de la columna recomendada
+
+// Gradientes sutiles para dar profundidad (que el café no se vea plano)
+const GRAD_CARD = 'linear-gradient(165deg, #fffdf9 0%, #f8f1e6 100%)'
+const GRAD_INK = 'linear-gradient(165deg, #38291c 0%, #211710 100%)'
+const GRAD_SOON = 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)'
+// Efecto spotlight: las cards no apuntadas se atenúan y desenfocan un poco
+const DIM_FILTER = 'blur(1.4px) brightness(0.97) saturate(0.92)'
+const GLOW_ACTIVE = '0 18px 50px -18px rgba(176,118,69,0.45)'
 
 const PLANES = [
   {
@@ -19,488 +37,740 @@ const PLANES = [
     nombre: 'Esencial',
     subtitulo: 'Para empezar con orden',
     resumen:
-      'Ideal para consultorios o clinicas que quieren ordenar agenda, pacientes e historia clinica sin empezar por una configuracion pesada.',
+      'Para consultorios que quieren ordenar agenda, pacientes e historia clínica sin una configuración pesada.',
     precioMensual: 0,
     precioAnual: 0,
-    badge: 'Base operativa',
-    cta: 'Crear cuenta',
+    cta: 'Empezar gratis',
+    nota: 'Gratis para siempre · sin tarjeta',
     to: '/registro',
-    limites: ['1 sede', '2 usuarios', '250 mascotas activas', '1 GB base'],
+    limites: ['2 usuarios', '250 mascotas', '1 GB'],
     incluye: [
       'Agenda de citas',
       'Propietarios y mascotas',
-      'Historia clinica basica',
+      'Historia clínica básica',
       'Antecedentes del paciente',
-      'Roles operativos base',
     ],
   },
   {
     key: 'clinica',
-    nombre: 'Clinica',
-    subtitulo: 'Para operar el dia completo',
+    nombre: 'Clínica',
+    subtitulo: 'Para operar el día completo',
+    popular: true,
     resumen:
-      'Pensado para equipos que ya necesitan unir agenda, consulta, inventario y caja dentro de un mismo sistema.',
+      'Para equipos que ya necesitan unir agenda, consulta, inventario y caja en un mismo sistema.',
     precioMensual: 99000,
     precioAnual: 79000,
-    badge: 'Operacion diaria',
-    cta: 'Elegir plan Clinica',
+    cta: 'Elegir Clínica',
+    nota: 'Cancela cuando quieras',
     to: '/registro',
-    limites: ['1 sede', '5 usuarios', '2.500 mascotas activas', '5 GB base'],
+    limites: ['5 usuarios', '2.500 mascotas', '5 GB'],
     incluye: [
       'Todo lo de Esencial',
       'Inventario operativo',
-      'Caja y facturacion interna',
-      'Dashboard basico',
+      'Caja y facturación interna',
       'Reportes operativos',
     ],
   },
   {
     key: 'profesional',
     nombre: 'Profesional',
-    subtitulo: 'El plan principal',
+    subtitulo: 'Facturación electrónica DIAN',
+    comingSoon: true,
     resumen:
-      'La opcion recomendada para clinicas que quieren una operacion mas completa y facturacion electronica DIAN en el mismo flujo.',
-    precioMensual: 189000,
-    precioAnual: 159000,
-    badge: 'Mas elegido',
-    popular: true,
-    cta: 'Elegir plan Profesional',
-    to: '/registro',
-    limites: ['1 sede', '12 usuarios', '10.000 mascotas activas', '20 GB base'],
-    incluye: [
-      'Todo lo de Clinica',
-      'Facturacion electronica DIAN',
-      'Inventario avanzado',
-      'Reportes completos',
-      'Exportables y cierre mas solido',
-    ],
-  },
-  {
-    key: 'personalizado',
-    nombre: 'Personalizado',
-    subtitulo: 'Migracion y acompanamiento',
-    resumen:
-      'Para clinicas que necesitan una propuesta con mas acompanamiento, configuracion guiada o una migracion mas cuidada.',
-    precioMensual: null,
-    precioAnual: null,
-    badge: 'Cotizacion guiada',
-    cta: 'Hablar con el equipo',
-    href: 'mailto:hola@bourgelat.co?subject=Quiero%20cotizar%20Bourgelat',
-    limites: ['Volumen a medida', 'Usuarios segun alcance', 'Migracion guiada', 'Acompanamiento comercial'],
-    incluye: [
-      'Base de Profesional',
-      'Revision del caso',
-      'Acompanamiento de migracion',
-      'Configuracion guiada',
-      'Seguimiento inicial con el equipo',
+      'La emisión validada ante la DIAN —con CUFE y conexión a Factus— llega en la próxima versión de Bourgelat.',
+    proximamente: [
+      'Facturación electrónica DIAN',
+      'Validación y CUFE automáticos',
+      'Conexión con Factus',
+      'Todo lo del plan Clínica',
     ],
   },
 ]
 
-const COMPARISON_ROWS = [
+// Comparativa por categorías. Los valores reflejan backend/src/config/planes.js
+// (límites y funcionalidades por plan). Mantener en sincronía con ese archivo.
+const COMPARISON_GROUPS = [
   {
-    label: 'Agenda, pacientes e historia clinica',
-    values: { inicio: true, clinica: true, profesional: true, personalizado: true },
+    grupo: 'Operación clínica',
+    filas: [
+      { label: 'Agenda con contexto del paciente', values: { inicio: true, clinica: true, profesional: true } },
+      { label: 'Historia clínica y antecedentes', values: { inicio: true, clinica: true, profesional: true } },
+      { label: 'Mascotas activas', values: { inicio: '250', clinica: '2.500', profesional: '10.000' } },
+      { label: 'Usuarios del equipo', values: { inicio: '2', clinica: '5', profesional: '12' } },
+    ],
   },
   {
-    label: 'Inventario operativo',
-    values: { inicio: false, clinica: true, profesional: true, personalizado: true },
+    grupo: 'Caja y facturación',
+    filas: [
+      { label: 'Inventario operativo', values: { inicio: false, clinica: true, profesional: true } },
+      { label: 'Caja y facturación interna', values: { inicio: false, clinica: true, profesional: true } },
+      {
+        label: 'Facturación electrónica DIAN',
+        hint: 'Emisión validada ante la DIAN a través de Factus. Disponible en la próxima versión.',
+        soon: { profesional: true },
+        values: { inicio: false, clinica: false, profesional: 'soon' },
+      },
+    ],
   },
   {
-    label: 'Caja y facturacion interna',
-    values: { inicio: false, clinica: true, profesional: true, personalizado: true },
-  },
-  {
-    label: 'Facturacion electronica DIAN',
-    values: { inicio: false, clinica: false, profesional: true, personalizado: true },
-  },
-  {
-    label: 'Reportes completos y exportables',
-    values: { inicio: false, clinica: false, profesional: true, personalizado: true },
-  },
-  {
-    label: 'Acompanamiento de migracion',
-    values: { inicio: false, clinica: false, profesional: false, personalizado: true },
-  },
-  {
-    label: 'Usuarios incluidos',
-    type: 'text',
-    values: { inicio: '2', clinica: '5', profesional: '12', personalizado: 'A medida' },
+    grupo: 'Reportes y datos',
+    filas: [
+      { label: 'Reportes operativos', values: { inicio: false, clinica: true, profesional: true } },
+      { label: 'Reportes completos y exportables', values: { inicio: false, clinica: false, profesional: true } },
+      { label: 'Almacenamiento de archivos', values: { inicio: '1 GB', clinica: '5 GB', profesional: '20 GB' } },
+    ],
   },
 ]
 
 const PLAN_MATCH = [
   {
-    title: 'Si estas digitalizando por primera vez',
+    momento: 'Estás empezando',
+    title: 'Si digitalizas por primera vez',
     body:
-      'Esencial te deja ordenar agenda, pacientes e historia clinica sin meterte de una en un despliegue mas grande.',
+      'Esencial te deja ordenar agenda, pacientes e historia clínica sin meterte de una en un despliegue grande.',
   },
   {
-    title: 'Si ya cobras, compras y controlas stock todos los dias',
+    momento: 'Operación diaria',
+    title: 'Si ya cobras, compras y controlas stock',
     body:
-      'Clinica empieza a tener mas sentido porque la operacion ya necesita inventario, caja y reportes dentro del mismo entorno.',
+      'Clínica empieza a tener sentido: la operación ya necesita inventario, caja y reportes en el mismo entorno.',
   },
   {
-    title: 'Si quieres cerrar el circulo completo',
+    momento: 'Círculo completo',
+    title: 'Si quieres cerrar el círculo',
     body:
-      'Profesional es el plan mas natural cuando la clinica quiere agenda, consulta, administracion y facturacion electronica DIAN en un solo recorrido.',
+      'Profesional es lo natural cuando la clínica quiere agenda, consulta, administración e inventario avanzado en un solo recorrido.',
   },
 ]
 
-const FAQS = [
-  {
-    pregunta: 'En que plan entra la facturacion electronica DIAN?',
-    respuesta:
-      'La facturacion electronica DIAN aparece en Profesional y Personalizado. En la pagina de venta solo necesitas entender eso; la implementacion interna se gestiona despues.',
-  },
-  {
-    pregunta: 'Puedo empezar con Esencial y subir despues?',
-    respuesta:
-      'Si. La idea es que una clinica pueda empezar con orden y subir de plan cuando la operacion diaria ya pida mas control.',
-  },
-  {
-    pregunta: 'Que plan suele elegir una clinica que ya factura todos los dias?',
-    respuesta:
-      'Normalmente Profesional, porque es donde la experiencia ya cubre agenda, consulta, inventario, caja, reportes y DIAN dentro del mismo flujo.',
-  },
-  {
-    pregunta: 'Cuando conviene hablar con el equipo?',
-    respuesta:
-      'Cuando necesitas migracion, acompanamiento mas cercano o una configuracion con volumen y alcance fuera del caso estandar.',
-  },
+const TRUST = [
+  'Protegido con Cloudflare',
+  'Hecho en Colombia',
+  'Datos seguros y privados',
+  'Soporte en español',
 ]
+
+const pesos = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  maximumFractionDigits: 0,
+})
 
 function formatPrice(value) {
-  if (value === null) return 'Cotizacion guiada'
-  if (value === 0) return 'Sin cargo mensual'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+  if (value === null) return 'A medida'
+  if (value === 0) return 'Gratis'
+  return pesos.format(value)
 }
 
-function PlanCTA({ plan, className }) {
-  if (plan.href) {
-    return (
-      <a href={plan.href} className={className}>
-        {plan.cta}
-      </a>
-    )
-  }
-
-  return (
-    <Link to={plan.to} className={className}>
+function PlanCTA({ plan, className, style }) {
+  const content = (
+    <>
       {plan.cta}
-    </Link>
+      <ArrowRight className="h-4 w-4" />
+    </>
+  )
+  return plan.href ? (
+    <a href={plan.href} className={className} style={style}>{content}</a>
+  ) : (
+    <Link to={plan.to} className={className} style={style}>{content}</Link>
   )
 }
 
-function FAQItem({ pregunta, respuesta }) {
-  const [open, setOpen] = useState(false)
-
+function AnimatedPrice({ price, reduce, onInk }) {
+  const sub = onInk ? 'text-white/70' : ''
+  const subStyle = onInk ? undefined : { color: BODY }
   return (
-    <div className="rounded-[28px] border border-[#d7e4ee] bg-white p-5 shadow-[0_12px_36px_rgba(8,25,39,0.04)]">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-4 bg-transparent text-left"
-      >
-        <span className="text-base font-semibold text-[#10263a]">{pregunta}</span>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eff5fb] text-[#456c85]">
-          <ChevronDown className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`} />
-        </span>
-      </button>
-      {open ? <p className="mt-4 text-sm leading-7 text-[#567185]">{respuesta}</p> : null}
+    <div className="flex min-h-[44px] items-baseline gap-1.5">
+      <AnimatePresence mode="wait" initial={false}>
+        <Motion.span
+          key={String(price)}
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="text-[2rem] font-semibold leading-none tracking-[-0.02em]"
+        >
+          {formatPrice(price)}
+        </Motion.span>
+      </AnimatePresence>
+      {price ? <span className={`text-sm ${sub}`} style={subStyle}>/mes</span> : null}
     </div>
   )
 }
 
-export default function PlanesPage() {
-  const [anual, setAnual] = useState(false)
+// Captura de interesados en la facturación electrónica (lista de espera v2).
+// Sin backend aún: dispara un mailto para que el lead llegue a la bandeja y
+// muestra confirmación. TODO v2: reemplazar por endpoint de waitlist.
+function AvisameField() {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+
+  const onSubmit = (e) => {
+    e.preventDefault()
+    if (!valid) return
+    const asunto = encodeURIComponent('Avísame: facturación electrónica DIAN')
+    const cuerpo = encodeURIComponent(`Quiero que me avisen cuando salga la facturación electrónica.\nCorreo: ${email.trim()}`)
+    window.location.href = `mailto:hola@bourgelat.co?subject=${asunto}&body=${cuerpo}`
+    setSent(true)
+  }
+
+  if (sent) {
+    return (
+      <div className="flex items-start gap-2 rounded-lg border px-3 py-3 text-sm" style={{ borderColor: LINE, backgroundColor: '#f3efe6', color: '#3f342a' }}>
+        <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ACCENT }} />
+        <span>Listo. Te escribimos a <strong>{email.trim()}</strong> en cuanto esté disponible.</span>
+      </div>
+    )
+  }
 
   return (
-    <PublicPageShell
-      eyebrow="Planes Bourgelat"
-      title="Planes que se entienden rapido y crecen con la clinica."
-      description="Compara lo necesario para elegir bien: que incluye cada etapa, cuando entra la DIAN y cual suele ser el siguiente paso natural segun el nivel de operacion."
+    <form onSubmit={onSubmit} className="space-y-2.5">
+      <label htmlFor="avisame-email" className="block text-xs font-medium" style={{ color: BODY }}>
+        Te avisamos cuando esté lista
+      </label>
+      <input
+        id="avisame-email"
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Ejemplo@gmail.com"
+        className="h-11 w-full rounded-md border bg-white px-3.5 text-sm outline-none transition focus:border-[#b07645]"
+        style={{ borderColor: LINE, color: INK }}
+      />
+      <button
+        type="submit"
+        disabled={!valid}
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-semibold text-white transition-colors hover:bg-[#b07645] disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: INK }}
+      >
+        <Bell className="h-4 w-4" />
+        Avísame
+      </button>
+    </form>
+  )
+}
+
+function ComingSoonCard({ plan, index, reduce, hovered, setHovered }) {
+  const dim = hovered && hovered !== plan.key
+  const active = hovered === plan.key
+  const reveal = reduce
+    ? {}
+    : {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-60px' },
+        transition: { duration: 0.5, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] },
+      }
+
+  return (
+    <Motion.article
+      {...reveal}
+      onMouseEnter={() => setHovered(plan.key)}
+      onMouseLeave={() => setHovered(null)}
+      className="relative flex h-full flex-col rounded-2xl border-2 border-dashed p-7 transition-[filter,border-color] duration-300"
+      style={{
+        background: GRAD_SOON,
+        borderColor: active ? ACCENT : '#e0cdb4',
+        color: INK,
+        filter: dim ? DIM_FILTER : 'none',
+      }}
     >
-      <section className="mb-10 rounded-[32px] border border-[#d6e3ee] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-6 text-white shadow-[0_30px_100px_rgba(6,22,35,0.18)] md:p-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9debe4]">
-              <Sparkles className="h-3.5 w-3.5" />
-              Facturacion electronica DIAN en Profesional y Personalizado
+      {/* Sello tipo estampa de caucho "Próximamente" — doble filete, fondo lavado y leve rotación */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute right-4 top-5 -rotate-[6deg] select-none rounded-[6px] px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.22em]"
+        style={{
+          color: ACCENT,
+          border: `1.5px solid ${ACCENT}`,
+          backgroundColor: 'rgba(176,118,69,0.06)',
+          boxShadow: 'inset 0 0 0 2px #fdf8f0, inset 0 0 0 3px rgba(176,118,69,0.45)',
+        }}
+      >
+        Próximamente
+      </span>
+
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
+        Versión 2
+      </p>
+      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+        {plan.nombre}
+      </h3>
+      <p className="mt-3 text-sm font-semibold" style={{ color: ACCENT }}>{plan.subtitulo}</p>
+      <p className="mt-3 text-sm leading-7" style={{ color: BODY }}>{plan.resumen}</p>
+
+      <div className="mt-6 space-y-3">
+        {plan.proximamente.map((item) => (
+          <div key={item} className="flex items-start gap-3 text-sm leading-6" style={{ color: '#5b4c3c' }}>
+            <Clock className="mt-0.5 h-4 w-4 shrink-0" style={{ color: '#b89a78' }} />
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-7">
+        <AvisameField />
+      </div>
+    </Motion.article>
+  )
+}
+
+function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
+  if (plan.comingSoon) {
+    return <ComingSoonCard plan={plan} index={index} reduce={reduce} hovered={hovered} setHovered={setHovered} />
+  }
+  const price = anual ? plan.precioAnual : plan.precioMensual
+  const ahorro =
+    anual && plan.precioMensual && plan.precioAnual && plan.precioMensual > plan.precioAnual
+      ? plan.precioMensual - plan.precioAnual
+      : 0
+  const anchor = plan.popular
+  const dim = hovered && hovered !== plan.key
+  const active = hovered === plan.key
+  const hover = {
+    onMouseEnter: () => setHovered(plan.key),
+    onMouseLeave: () => setHovered(null),
+  }
+
+  const reveal = reduce
+    ? {}
+    : {
+        initial: { opacity: 0, y: 20 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-60px' },
+        transition: { duration: 0.5, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] },
+      }
+
+  if (anchor) {
+    return (
+      <Motion.article
+        {...reveal}
+        {...hover}
+        className="relative flex h-full flex-col rounded-2xl p-7 text-white shadow-[0_36px_80px_-24px_rgba(43,32,24,0.55)] transition-[filter] duration-300 lg:-translate-y-3 lg:scale-[1.02]"
+        style={{ background: GRAD_INK, filter: dim ? DIM_FILTER : active ? 'brightness(1.06)' : 'none' }}
+      >
+        {/* glow ámbar de marca detrás de la card ancla */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-px -z-10 rounded-2xl opacity-70 blur-2xl"
+          style={{ background: 'radial-gradient(120% 80% at 70% 0%, rgba(233,192,137,0.30), transparent 65%)' }}
+        />
+        <span
+          className="absolute right-6 top-0 -translate-y-1/2 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+          style={{ backgroundColor: ACCENT, color: '#fff' }}
+        >
+          Más elegido
+        </span>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: ACCENT_ON_INK }}>
+          {plan.subtitulo}
+        </p>
+        <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}>
+          {plan.nombre}
+        </h3>
+        <AnimatedPrice price={price} reduce={reduce} onInk />
+        <div className="min-h-[20px]">
+          {ahorro ? (
+            <span className="text-xs font-semibold" style={{ color: ACCENT_ON_INK }}>
+              Ahorras {pesos.format(ahorro)}/mes
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-3 text-sm leading-7 text-white/75">{plan.resumen}</p>
+
+        <div className="mt-6 space-y-3">
+          {plan.incluye.map((item) => (
+            <div key={item} className="flex items-start gap-3 text-sm leading-6 text-white/90">
+              <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ACCENT_ON_INK }} />
+              <span>{item}</span>
             </div>
-            <h2
-              className="mt-5 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-            >
-              Planes claros para cada momento de la clinica.
-            </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-8 text-white/76 md:text-base">
-              No necesitas aprender una estructura complicada para decidir. Lo importante es saber
-              si hoy estas ordenando lo esencial, operando el dia completo o cerrando el circulo
-              clinico, administrativo y fiscal.
-            </p>
-          </div>
-
-          <div className="rounded-[28px] border border-white/12 bg-white/8 p-5 backdrop-blur-xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9debe4]">
-              Mostrar precios
-            </p>
-            <div className="mt-4 flex rounded-full border border-white/10 bg-white/6 p-1">
-              <button
-                type="button"
-                onClick={() => setAnual(false)}
-                className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${!anual ? 'bg-white text-[#10263a]' : 'text-white/72'}`}
-              >
-                Mensual
-              </button>
-              <button
-                type="button"
-                onClick={() => setAnual(true)}
-                className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${anual ? 'bg-white text-[#10263a]' : 'text-white/72'}`}
-              >
-                Anual
-              </button>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-white/68">
-              El modo anual muestra el valor mensual equivalente para equipos que quieren una
-              proyeccion mas predecible.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="mb-20 grid gap-6 xl:grid-cols-4">
-        {PLANES.map((plan) => {
-          const highlighted = plan.popular
-          const price = anual ? plan.precioAnual : plan.precioMensual
-          return (
-            <article
-              key={plan.key}
-              className={`rounded-[32px] border p-6 ${highlighted ? 'border-[#8fe0da] bg-[linear-gradient(160deg,#0e2a3d,#13354e,#10525a)] text-white shadow-[0_32px_90px_rgba(13,44,58,0.24)]' : 'border-[#d7e4ee] bg-white text-[#112739] shadow-[0_18px_60px_rgba(8,25,39,0.05)]'}`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${highlighted ? 'text-[#9debe4]' : 'text-[#5c778d]'}`}>
-                    {plan.badge}
-                  </p>
-                  <h2
-                    className="mt-4 text-4xl leading-none tracking-[-0.05em]"
-                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                  >
-                    {plan.nombre}
-                  </h2>
-                </div>
-                {highlighted ? (
-                  <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
-                    recomendado
-                  </span>
-                ) : null}
-              </div>
-
-              <p className={`mt-4 text-sm leading-7 ${highlighted ? 'text-white/76' : 'text-[#567185]'}`}>
-                {plan.subtitulo}
-              </p>
-              <p className="mt-5 text-3xl font-semibold">
-                {formatPrice(price)}
-                {price !== null && price !== 0 ? (
-                  <span
-                    className={`ml-1 text-sm font-medium ${highlighted ? 'text-white/62' : 'text-[#68839a]'}`}
-                  >
-                    /mes
-                  </span>
-                ) : null}
-              </p>
-              <p className={`mt-4 text-sm leading-7 ${highlighted ? 'text-white/82' : 'text-[#48647b]'}`}>
-                {plan.resumen}
-              </p>
-
-              <div className="mt-6 space-y-3">
-                {plan.incluye.map((item) => (
-                  <div key={item} className={`flex items-start gap-3 text-sm leading-6 ${highlighted ? 'text-white/88' : 'text-[#24435c]'}`}>
-                    <Check className={`mt-1 h-4 w-4 shrink-0 ${highlighted ? 'text-[#9debe4]' : 'text-[#2c7d7a]'}`} />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 rounded-[24px] border border-black/5 bg-black/[0.03] p-4">
-                <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${highlighted ? 'text-white/60' : 'text-[#68839a]'}`}>
-                  Limites y alcance
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {plan.limites.map((item) => (
-                    <span
-                      key={item}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold ${highlighted ? 'bg-white/10 text-white/86' : 'bg-[#eef5fb] text-[#35536b]'}`}
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <PlanCTA
-                plan={plan}
-                className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold no-underline transition ${highlighted ? 'bg-white text-[#10263a] hover:bg-[#effaf8]' : 'bg-[#10263a] text-white hover:bg-[#17364f]'}`}
-              />
-            </article>
-          )
-        })}
-      </section>
-
-      <section className="mb-20 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-[32px] border border-[#d7e4ee] bg-white p-6 shadow-[0_18px_60px_rgba(8,25,39,0.05)] md:p-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3c7d8d]">
-            Como suele decidir una clinica
-          </p>
-          <h2
-            className="mt-4 text-4xl leading-none tracking-[-0.05em] text-[#10263a] md:text-5xl"
-            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-          >
-            No es una tabla infinita. Es una eleccion segun el momento de la operacion.
-          </h2>
-          <div className="mt-8 space-y-4">
-            {PLAN_MATCH.map((item) => (
-              <div key={item.title} className="rounded-[26px] border border-[#d7e4ee] bg-[#f7fafc] p-5">
-                <h3 className="text-lg font-semibold text-[#10263a]">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#567185]">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-[32px] border border-[#d7e4ee] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-6 text-white shadow-[0_30px_90px_rgba(8,25,39,0.18)] md:p-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/10 text-[#9debe4]">
-            <Shield className="h-5 w-5" />
-          </div>
-          <h3
-            className="mt-5 text-4xl leading-none tracking-[-0.05em]"
-            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-          >
-            Profesional suele ser el ancla correcta.
-          </h3>
-          <p className="mt-4 text-sm leading-7 text-white/78">
-            Es el plan que mejor cuenta la propuesta de valor completa de Bourgelat: operacion
-            clinica, administracion y facturacion electronica DIAN dentro del mismo flujo.
-          </p>
-
-          <div className="mt-6 space-y-3">
-            {[
-              'Muestra el valor real del producto.',
-              'No obliga a vender complejidad demasiado pronto.',
-              'Se siente como una evolucion natural desde Esencial o Clinica.',
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-3 text-sm leading-6 text-white/86">
-                <Check className="mt-1 h-4 w-4 shrink-0 text-[#9debe4]" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            to="/registro"
-            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-semibold text-[#10263a] no-underline transition hover:bg-[#effaf8]"
-          >
-            Empezar con Bourgelat
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-20 overflow-hidden rounded-[32px] border border-[#d7e4ee] bg-white shadow-[0_18px_60px_rgba(8,25,39,0.05)]">
-        <div className="overflow-x-auto">
-          <div className="min-w-[920px]">
-            <div className="grid grid-cols-[290px_repeat(4,minmax(0,1fr))] border-b border-[#e3edf4] bg-[#f7fafc]">
-              <div className="px-5 py-4 text-sm font-semibold text-[#5e7b91]">Comparativa rapida</div>
-              {PLANES.map((plan) => (
-                <div key={plan.key} className="border-l border-[#e3edf4] px-4 py-4 text-sm font-semibold text-[#10263a]">
-                  {plan.nombre}
-                </div>
-              ))}
-            </div>
-
-            {COMPARISON_ROWS.map((row) => (
-              <div key={row.label} className="grid grid-cols-[290px_repeat(4,minmax(0,1fr))] border-b border-[#e3edf4]">
-                <div className="px-5 py-4 text-sm font-medium text-[#264158]">{row.label}</div>
-                {PLANES.map((plan) => {
-                  const value = row.values[plan.key]
-                  return (
-                    <div key={`${row.label}-${plan.key}`} className="flex items-center justify-center border-l border-[#e3edf4] px-4 py-4">
-                      {row.type === 'text' ? (
-                        <span className="text-sm font-semibold text-[#10263a]">{value}</span>
-                      ) : value ? (
-                        <Check className="h-4 w-4 text-[#2c7d7a]" />
-                      ) : (
-                        <X className="h-4 w-4 text-[#9fb2c2]" />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mb-20">
-        <div className="mb-8 max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3c7d8d]">
-            Preguntas frecuentes
-          </p>
-          <h2
-            className="mt-4 text-4xl leading-none tracking-[-0.05em] text-[#10263a] md:text-5xl"
-            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-          >
-            Lo importante antes de elegir.
-          </h2>
-        </div>
-
-        <div className="grid gap-3">
-          {FAQS.map((faq) => (
-            <FAQItem key={faq.pregunta} pregunta={faq.pregunta} respuesta={faq.respuesta} />
           ))}
         </div>
-      </section>
 
-      <section className="overflow-hidden rounded-[36px] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-8 text-white shadow-[0_36px_120px_rgba(8,25,39,0.18)] md:p-12">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9debe4]">
-              Siguiente paso
-            </p>
-            <h2
-              className="mt-4 text-4xl leading-none tracking-[-0.05em] text-white md:text-5xl"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-            >
-              Cuando el plan correcto esta claro, el siguiente paso debe ser simple.
-            </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-8 text-white/78 md:text-base">
-              Crea la cuenta de tu clinica o escribe al equipo si necesitas revisar migracion,
-              implementacion o una propuesta mas acompasada.
-            </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          {plan.limites.map((item) => (
+            <span key={item} className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80">{item}</span>
+          ))}
+        </div>
+
+        <div className="mt-auto pt-7">
+          <PlanCTA
+            plan={plan}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:bg-[#f1e9dc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            style={{ color: INK }}
+          />
+          <p className="mt-3 text-center text-xs text-white/55">{plan.nota}</p>
+        </div>
+      </Motion.article>
+    )
+  }
+
+  return (
+    <Motion.article
+      {...reveal}
+      {...hover}
+      className="flex h-full flex-col rounded-2xl border p-7 transition-[filter,border-color,box-shadow] duration-300"
+      style={{
+        background: GRAD_CARD,
+        borderColor: active ? ACCENT : LINE,
+        color: INK,
+        filter: dim ? DIM_FILTER : 'none',
+        boxShadow: active ? GLOW_ACTIVE : '0 1px 0 rgba(255,255,255,0.6)',
+      }}
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
+        {plan.subtitulo}
+      </p>
+      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+        {plan.nombre}
+      </h3>
+      <AnimatedPrice price={price} reduce={reduce} />
+      <div className="min-h-[20px]">
+        {ahorro ? (
+          <span className="text-xs font-semibold" style={{ color: ACCENT }}>
+            Ahorras {pesos.format(ahorro)}/mes
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-3 text-sm leading-7" style={{ color: BODY }}>{plan.resumen}</p>
+
+      <div className="mt-6 space-y-3">
+        {plan.incluye.map((item) => (
+          <div key={item} className="flex items-start gap-3 text-sm leading-6" style={{ color: '#3f342a' }}>
+            <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ACCENT }} />
+            <span>{item}</span>
           </div>
+        ))}
+      </div>
 
-          <div className="flex flex-col gap-3">
-            <Link
-              to="/registro"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-semibold text-[#10263a] no-underline transition hover:bg-[#effaf8]"
-            >
+      <div className="mt-6 flex flex-wrap gap-2">
+        {plan.limites.map((item) => (
+          <span key={item} className="rounded-full px-3 py-1 text-xs font-medium" style={{ backgroundColor: CHIP, color: '#5b4c3c' }}>{item}</span>
+        ))}
+      </div>
+
+      <div className="mt-auto pt-7">
+        <PlanCTA
+          plan={plan}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md border px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b07645]"
+          style={{ borderColor: LINE, color: INK }}
+        />
+        <p className="mt-3 text-center text-xs" style={{ color: BODY }}>{plan.nota}</p>
+      </div>
+    </Motion.article>
+  )
+}
+
+// Celda de comparativa: booleano → check/guion; 'soon' → píldora; texto → valor.
+function CompareCell({ value }) {
+  if (value === true) return <Check className="mx-auto h-4 w-4" style={{ color: ACCENT }} aria-label="Incluido" />
+  if (value === false) return <Minus className="mx-auto h-4 w-4" style={{ color: '#c9bba9' }} aria-label="No incluido" />
+  if (value === 'soon') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]"
+        style={{ backgroundColor: CHIP, color: EYEBROW }}
+      >
+        <Clock className="h-3 w-3" />
+        Pronto
+      </span>
+    )
+  }
+  return <span className="text-sm font-semibold" style={{ color: INK }}>{value}</span>
+}
+
+export default function PlanesPage() {
+  const [anual, setAnual] = useState(false)
+  const [hovered, setHovered] = useState(null)
+  const reduce = useReducedMotion()
+
+  useEffect(() => {
+    document.title = 'Planes | Bourgelat'
+    window.scrollTo(0, 0)
+  }, [])
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: CREAM, color: INK }}>
+      {/* ── Header cálido propio ── */}
+      <header className="sticky top-0 z-40 border-b backdrop-blur-xl" style={{ borderColor: LINE, backgroundColor: 'rgba(248,244,238,0.85)' }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-6 lg:px-8">
+          <Link to="/" className="group no-underline"><BrandMark /></Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link to="/" className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium no-underline transition-colors hover:text-[#b07645] sm:inline-flex" style={{ color: BODY }}>
+              <ArrowLeft className="h-4 w-4" />
+              Inicio
+            </Link>
+            <Link to="/login" className="rounded-md border px-4 py-2 text-sm font-semibold no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]" style={{ borderColor: 'rgba(43,32,24,0.25)', color: INK }}>
+              Iniciar sesión
+            </Link>
+            <Link to="/registro" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645]" style={{ backgroundColor: INK }}>
               Crear cuenta
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href="mailto:hola@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/8 px-5 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/12"
-            >
-              Hablar con el equipo
-            </a>
           </div>
         </div>
-      </section>
-    </PublicPageShell>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
+        {/* ── Hero ── */}
+        <section className="pb-12 pt-16 sm:pt-20">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
+                Planes Bourgelat
+              </p>
+              <h1 className="mt-4 text-[2.8rem] leading-[0.95] tracking-[-0.045em] sm:text-6xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+                Un plan por cada
+                <br />
+                momento de la clínica.
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-8 sm:text-lg" style={{ color: BODY }}>
+                No es una tabla infinita. Es elegir según dónde está hoy la operación:
+                ordenando lo esencial, atendiendo el día completo o cerrando el círculo
+                clínico, administrativo y fiscal.
+              </p>
+            </div>
+
+            {/* Toggle mensual / anual */}
+            <div className="shrink-0">
+              <div className="inline-flex rounded-full border p-1" style={{ borderColor: LINE, backgroundColor: SURFACE }} role="group" aria-label="Periodicidad de precios">
+                <button
+                  type="button"
+                  onClick={() => setAnual(false)}
+                  aria-pressed={!anual}
+                  className="rounded-full px-5 py-2 text-sm font-semibold transition-colors"
+                  style={!anual ? { backgroundColor: INK, color: '#fff' } : { color: BODY }}
+                >
+                  Mensual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAnual(true)}
+                  aria-pressed={anual}
+                  className="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors"
+                  style={anual ? { backgroundColor: INK, color: '#fff' } : { color: BODY }}
+                >
+                  Anual
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                    style={anual ? { backgroundColor: ACCENT_ON_INK, color: INK } : { backgroundColor: CHIP, color: EYEBROW }}
+                  >
+                    −20%
+                  </span>
+                </button>
+              </div>
+              <p className="mt-2 max-w-[210px] text-right text-xs leading-5" style={{ color: BODY }}>
+                Plan anual: hasta dos meses gratis frente al mensual.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Cards de planes ── */}
+        <section className="grid items-stretch gap-5 pb-16 lg:grid-cols-3">
+          {PLANES.map((plan, i) => (
+            <PlanCard
+              key={plan.key}
+              plan={plan}
+              anual={anual}
+              index={i}
+              reduce={reduce}
+              hovered={hovered}
+              setHovered={setHovered}
+            />
+          ))}
+        </section>
+
+        {/* ── Franja de confianza ── */}
+        <section className="mb-20 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-y py-4 text-center" style={{ borderColor: LINE }}>
+          {TRUST.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: BODY }}>
+              <ShieldCheck className="h-3.5 w-3.5" style={{ color: ACCENT }} />
+              {t}
+            </span>
+          ))}
+        </section>
+
+        {/* ── Cómo decide una clínica ── */}
+        <section className="pb-20">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
+            Cómo suele decidir una clínica
+          </p>
+          <h2 className="mt-4 max-w-2xl text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+            Una elección según el momento, no un catálogo.
+          </h2>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {PLAN_MATCH.map((item) => (
+              <div key={item.title} className="rounded-2xl border p-6" style={{ backgroundColor: SURFACE, borderColor: LINE }}>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: ACCENT }}>{item.momento}</span>
+                <h3 className="mt-3 text-lg font-semibold" style={{ color: INK }}>{item.title}</h3>
+                <p className="mt-3 text-sm leading-7" style={{ color: BODY }}>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Comparativa profesional ── */}
+        <section className="pb-20">
+          <div className="mb-8 max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
+              Comparativa completa
+            </p>
+            <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+              Todo lo que entra en cada plan.
+            </h2>
+          </div>
+
+          <p className="mb-3 text-xs lg:hidden" style={{ color: BODY }}>Desliza para comparar →</p>
+          <div className="overflow-hidden rounded-2xl border" style={{ backgroundColor: SURFACE, borderColor: LINE }}>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[580px] border-collapse text-left">
+                <thead>
+                  <tr>
+                    <th
+                      className="sticky top-[68px] z-10 px-5 py-4 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                      style={{ color: BODY, backgroundColor: SURFACE }}
+                    >
+                      Funcionalidad
+                    </th>
+                    {PLANES.map((plan) => {
+                      const rec = plan.popular
+                      return (
+                        <th
+                          key={plan.key}
+                          className="sticky top-[68px] z-10 px-4 py-4 text-center"
+                          style={{ backgroundColor: rec ? '#f4e8da' : SURFACE }}
+                        >
+                          {rec ? (
+                            <span className="mb-1 block text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: ACCENT }}>
+                              Recomendado
+                            </span>
+                          ) : null}
+                          {plan.comingSoon ? (
+                            <span className="mb-1 block text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: EYEBROW }}>
+                              Próximamente
+                            </span>
+                          ) : null}
+                          <span className="text-sm font-semibold" style={{ color: rec ? ACCENT : INK }}>{plan.nombre}</span>
+                        </th>
+                      )
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON_GROUPS.map((group) => (
+                    <Fragment key={group.grupo}>
+                      <tr>
+                        <td className="px-5 pb-2 pt-6 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: EYEBROW }}>
+                          {group.grupo}
+                        </td>
+                        {PLANES.map((plan) => (
+                          <td key={plan.key} style={{ backgroundColor: plan.popular ? REC_BAND : undefined }} />
+                        ))}
+                      </tr>
+                      {group.filas.map((fila) => (
+                        <tr key={fila.label} className="border-t transition-colors hover:bg-[#faf5ec]" style={{ borderColor: LINE }}>
+                          <td className="px-5 py-3.5 text-sm font-medium" style={{ color: '#3f342a' }}>
+                            <span className="inline-flex items-center gap-1.5">
+                              {fila.label}
+                              {fila.hint ? (
+                                <span
+                                  title={fila.hint}
+                                  className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-[10px] font-bold"
+                                  style={{ backgroundColor: CHIP, color: EYEBROW }}
+                                >
+                                  ?
+                                </span>
+                              ) : null}
+                            </span>
+                          </td>
+                          {PLANES.map((plan) => (
+                            <td
+                              key={plan.key}
+                              className="px-4 py-3.5 text-center"
+                              style={{ backgroundColor: plan.popular ? REC_BAND : undefined }}
+                            >
+                              <CompareCell value={fila.values[plan.key]} />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                  {/* Fila de cierre con CTA por columna */}
+                  <tr className="border-t" style={{ borderColor: LINE }}>
+                    <td className="px-5 py-5" />
+                    {PLANES.map((plan) => (
+                      <td key={plan.key} className="px-4 py-5 text-center" style={{ backgroundColor: plan.popular ? REC_BAND : undefined }}>
+                        {plan.comingSoon ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: EYEBROW }}>
+                            <Clock className="h-3.5 w-3.5" />
+                            Pronto
+                          </span>
+                        ) : (
+                          <PlanCTA
+                            plan={plan}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold no-underline transition-colors"
+                            style={plan.popular ? { backgroundColor: INK, color: '#fff' } : { color: ACCENT }}
+                          />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA final ── */}
+        <section className="pb-24">
+          <div className="overflow-hidden rounded-3xl px-7 py-12 text-white sm:px-12" style={{ backgroundColor: INK }}>
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: ACCENT_ON_INK }}>
+                  Siguiente paso
+                </p>
+                <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}>
+                  Cuando el plan está claro,
+                  <br />
+                  empezar debe ser simple.
+                </h2>
+                <p className="mt-5 max-w-xl text-base leading-8 text-white/75">
+                  Crea la cuenta de tu clínica o escríbenos si necesitas revisar migración,
+                  implementación o una propuesta más acompañada.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-3 sm:w-64">
+                <Link to="/registro" className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:bg-[#f1e9dc]" style={{ color: INK }}>
+                  Crear cuenta
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="mailto:hola@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat" className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/15">
+                  Hablar con el equipo
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ── Footer cálido ── */}
+      <footer className="border-t" style={{ borderColor: LINE, backgroundColor: SURFACE }}>
+        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <p className="max-w-2xl text-sm leading-7" style={{ color: BODY }}>
+            Bourgelat construye una experiencia más clara para recepción, consulta, caja y
+            seguimiento dentro de la operación veterinaria en Colombia.
+          </p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Link to="/nosotros" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Nosotros</Link>
+            <Link to="/privacidad" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Privacidad</Link>
+            <Link to="/terminos" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Términos</Link>
+            <Link to="/cookies" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Cookies</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
   )
 }

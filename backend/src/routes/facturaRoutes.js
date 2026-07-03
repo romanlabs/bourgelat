@@ -8,6 +8,7 @@ const {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -26,7 +27,10 @@ router.post(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionInterna,
   [
-    body('propietarioId').isUUID().withMessage('Propietario no valido'),
+    body('propietarioId')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Propietario no valido'),
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
     body('items.*.descripcion').notEmpty().withMessage('Descripcion del item requerida'),
     body('items.*.cantidad').isFloat({ min: 0.01 }).withMessage('Cantidad debe ser mayor a 0'),
@@ -98,6 +102,22 @@ router.get(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionElectronica,
   descargarFacturaElectronica
+)
+
+router.patch(
+  '/:id/pagar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  [
+    body('metodoPago')
+      .optional()
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .withMessage('Metodo de pago no valido'),
+    body('observaciones').optional().trim(),
+    validar,
+  ],
+  registrarPago
 )
 
 router.patch(

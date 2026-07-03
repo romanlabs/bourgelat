@@ -348,7 +348,7 @@ export default function FinanzasPage() {
                   emptyTitle="Aun no hay facturas para este filtro"
                   emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenara automaticamente."
                   action={
-                    <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap gap-3">
+                    <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap items-center gap-3">
                       <label className="relative">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
@@ -359,6 +359,25 @@ export default function FinanzasPage() {
                           className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
                       </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={historialHook.fechaInicio}
+                          max={historialHook.fechaFin}
+                          onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
+                          aria-label="Fecha inicial del filtro"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        />
+                        <span className="text-xs text-muted-foreground">a</span>
+                        <input
+                          type="date"
+                          value={historialHook.fechaFin}
+                          min={historialHook.fechaInicio}
+                          onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
+                          aria-label="Fecha final del filtro"
+                          className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        />
+                      </div>
                       <select
                         value={historialHook.estado}
                         onChange={(event) => {
@@ -441,35 +460,44 @@ export default function FinanzasPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-3">
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Fecha:{' '}
-                          <span className="font-semibold text-slate-950">
+                      <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          Total facturado
+                        </p>
+                        <p className="text-2xl font-bold tabular-nums text-slate-950">
+                          {formatCurrency(historialHook.facturaSeleccionada.total)}
+                        </p>
+                      </div>
+
+                      <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Fecha
+                          </dt>
+                          <dd className="mt-1 text-sm font-semibold text-slate-950">
                             {formatLongDate(historialHook.facturaSeleccionada.fecha)}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Metodo de pago:{' '}
-                          <span className="font-semibold text-slate-950">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Pago
+                          </dt>
+                          <dd className="mt-1 text-sm font-semibold text-slate-950">
                             {PAYMENT_METHOD_LABELS[
                               historialHook.facturaSeleccionada.metodoPago
                             ] || 'Sin definir'}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Responsable:{' '}
-                          <span className="font-semibold text-slate-950">
+                        <div className="bg-card px-4 py-3">
+                          <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Responsable
+                          </dt>
+                          <dd className="mt-1 truncate text-sm font-semibold text-slate-950">
                             {historialHook.facturaSeleccionada.usuario?.nombre ||
                               'Sin usuario asignado'}
-                          </span>
+                          </dd>
                         </div>
-                        <div className="border border-border bg-muted px-4 py-3 text-sm text-foreground">
-                          Total:{' '}
-                          <span className="font-semibold text-slate-950">
-                            {formatCurrency(historialHook.facturaSeleccionada.total)}
-                          </span>
-                        </div>
-                      </div>
+                      </dl>
 
                       <div className="overflow-x-auto border border-border">
                         <table className="min-w-full divide-y divide-border text-sm">
@@ -478,11 +506,11 @@ export default function FinanzasPage() {
                               <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Item
                               </th>
-                              <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                                 Cantidad
                               </th>
-                              <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Precio
+                              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Subtotal
                               </th>
                             </tr>
                           </thead>
@@ -490,15 +518,25 @@ export default function FinanzasPage() {
                             {(historialHook.facturaSeleccionada.items || []).map((item) => (
                               <tr key={item.id}>
                                 <td className="px-3 py-3 text-foreground">{item.descripcion}</td>
-                                <td className="px-3 py-3 text-foreground">
+                                <td className="px-3 py-3 text-right tabular-nums text-foreground">
                                   {formatNumber(item.cantidad)}
                                 </td>
-                                <td className="px-3 py-3 text-foreground">
+                                <td className="px-3 py-3 text-right tabular-nums text-foreground">
                                   {formatCurrency(item.subtotal)}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
+                          <tfoot>
+                            <tr className="border-t border-border bg-muted">
+                              <td className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" colSpan={2}>
+                                Total
+                              </td>
+                              <td className="px-3 py-3 text-right font-bold tabular-nums text-slate-950">
+                                {formatCurrency(historialHook.facturaSeleccionada.total)}
+                              </td>
+                            </tr>
+                          </tfoot>
                         </table>
                       </div>
 
@@ -624,6 +662,40 @@ export default function FinanzasPage() {
                             {historialHook.emitirFacturaMutation.isPending
                               ? 'Emitiendo...'
                               : 'Reintentar emision'}
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {historialHook.canRegisterPayment ? (
+                        <div className="space-y-4 border-t border-border pt-4">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-primary" />
+                            <p className="text-sm font-semibold text-slate-950">Registrar pago</p>
+                          </div>
+                          <select
+                            value={historialHook.pagoMetodo}
+                            onChange={(event) => historialHook.setPagoMetodo(event.target.value)}
+                            className="w-full border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary"
+                          >
+                            <option value="">Método de pago (opcional)</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="nequi">Nequi</option>
+                            <option value="daviplata">Daviplata</option>
+                            <option value="tarjeta_debito">Tarjeta débito</option>
+                            <option value="tarjeta_credito">Tarjeta crédito</option>
+                            <option value="otro">Otro</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={historialHook.handleRegistrarPago}
+                            disabled={historialHook.registrarPagoMutation.isPending}
+                            className="inline-flex items-center gap-2 border border-primary bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Wallet className="h-4 w-4" />
+                            {historialHook.registrarPagoMutation.isPending
+                              ? 'Registrando...'
+                              : 'Marcar como pagada'}
                           </button>
                         </div>
                       ) : null}

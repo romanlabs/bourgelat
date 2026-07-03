@@ -102,8 +102,9 @@ export default function CartSidebar({
             {items.map((item) => {
               const qty = toAmount(item.cantidad)
               const precio = toAmount(item.precioUnitario)
-              const descuento = toAmount(item.descuento)
-              const subtotalItem = Math.max(qty * precio - descuento, 0)
+              const precioMinimo = toAmount(item.precioMinimo)
+              const bajoCosto = item.tipo === 'producto' && precioMinimo > 0 && precio < precioMinimo
+              const subtotalItem = Math.max(qty * precio, 0)
 
               return (
                 <motion.div
@@ -133,69 +134,69 @@ export default function CartSidebar({
                         </p>
                       )}
 
-                      {/* Precio editable */}
+                      {/* Precio editable (con piso en el costo para productos) */}
                       <div className="mt-1 flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">$</span>
                         <input
                           type="number"
                           value={item.precioUnitario}
+                          min={precioMinimo || undefined}
                           onChange={(e) => updateInvoiceItem(item.id, 'precioUnitario', e.target.value)}
-                          className="w-20 border-b border-dashed border-border bg-transparent text-xs font-semibold text-foreground focus:border-primary focus:outline-none"
+                          className={`w-20 border-b border-dashed bg-transparent text-xs font-semibold focus:outline-none ${
+                            bajoCosto
+                              ? 'border-red-400 text-red-600 focus:border-red-500'
+                              : 'border-border text-foreground focus:border-primary'
+                          }`}
                           placeholder="0"
                         />
                         <span className="text-xs text-muted-foreground">c/u</span>
                       </div>
+                      {bajoCosto && (
+                        <p className="mt-0.5 text-[11px] font-semibold text-red-600">
+                          Mínimo {formatCOP(precioMinimo)} (costo)
+                        </p>
+                      )}
 
+                    </div>
+
+                    {/* Cantidad + subtotal en la columna de números */}
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => decrementQty(item.id, item.cantidad)}
+                          aria-label="Restar una unidad"
+                          className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-6 text-center text-xs font-bold tabular-nums text-foreground">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => incrementQty(item.id, item.cantidad)}
+                          aria-label="Sumar una unidad"
+                          className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeInvoiceItem(item.id)}
+                          aria-label="Quitar del carrito"
+                          className="ml-1 flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:text-red-500"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                       {subtotalItem > 0 && (
-                        <p className="mt-0.5 text-xs font-bold text-primary">
+                        <p className="text-xs font-bold tabular-nums text-primary">
                           {formatCOP(subtotalItem)}
                         </p>
                       )}
                     </div>
-
-                    {/* Controles cantidad */}
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => decrementQty(item.id, item.cantidad)}
-                        className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-6 text-center text-xs font-bold text-foreground">
-                        {qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => incrementQty(item.id, item.cantidad)}
-                        className="flex h-6 w-6 items-center justify-center border border-border bg-muted text-foreground transition hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-
-                    {/* Eliminar */}
-                    <button
-                      type="button"
-                      onClick={() => removeInvoiceItem(item.id)}
-                      className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground transition hover:text-red-500"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
                   </div>
-
-                  {/* Descuento por ítem */}
-                  {toAmount(item.descuento) > 0 && (
-                    <div className="mt-1.5 flex items-center gap-1">
-                      <span className="text-xs text-muted-foreground">Descuento:</span>
-                      <input
-                        type="number"
-                        value={item.descuento}
-                        onChange={(e) => updateInvoiceItem(item.id, 'descuento', e.target.value)}
-                        className="w-20 border-b border-dashed border-border bg-transparent text-xs text-muted-foreground focus:outline-none"
-                      />
-                    </div>
-                  )}
                 </motion.div>
               )
             })}
@@ -204,29 +205,14 @@ export default function CartSidebar({
       </div>
 
       {/* ── Totales ── */}
-      <div className="border-t border-border px-4 py-3 space-y-1.5">
+      <div className="space-y-1.5 border-t border-border px-4 py-3">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Subtotal</span>
-          <span>{formatCOP(invoiceTotals?.subtotal ?? 0)}</span>
+          <span className="tabular-nums">{formatCOP(invoiceTotals?.subtotal ?? 0)}</span>
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Descuento general</span>
-          <div className="flex items-center gap-1">
-            <span>$</span>
-            <input
-              type="number"
-              value={invoiceForm?.descuentoGeneral ?? '0'}
-              onChange={(e) =>
-                setInvoiceForm((f) => ({ ...f, descuentoGeneral: e.target.value }))
-              }
-              className="w-16 border-b border-dashed border-border bg-transparent text-right text-xs text-muted-foreground focus:border-primary focus:outline-none"
-              placeholder="0"
-            />
-          </div>
-        </div>
-        <div className="flex justify-between pt-1">
+        <div className="flex items-baseline justify-between pt-1">
           <span className="text-sm font-bold text-foreground">Total</span>
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-lg font-bold tabular-nums text-foreground">
             {formatCOP(invoiceTotals?.total ?? 0)}
           </span>
         </div>
@@ -284,16 +270,17 @@ export default function CartSidebar({
         <button
           type="button"
           onClick={onOpenPaymentModal}
-          disabled={!hasItems || !selectedOwnerData}
+          disabled={!hasItems}
           className="flex w-full items-center justify-center gap-2 bg-slate-950 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ShoppingCart className="h-4 w-4" />
-          {!selectedOwnerData
-            ? 'Selecciona un cliente'
-            : !hasItems
-            ? 'Agrega productos'
-            : `Cobrar ${formatCOP(invoiceTotals?.total ?? 0)}`}
+          {!hasItems ? 'Agrega productos' : `Cobrar ${formatCOP(invoiceTotals?.total ?? 0)}`}
         </button>
+        {!selectedOwnerData && hasItems && (
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            Venta de mostrador — sin cliente asociado
+          </p>
+        )}
       </div>
     </div>
   )

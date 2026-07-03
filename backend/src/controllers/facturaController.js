@@ -419,9 +419,16 @@ const crearFactura = async (req, res) => {
     } = req.body
     const { clinicaId } = req.usuario
 
-    if (!propietarioId || !items || items.length === 0) {
+    if (!items || items.length === 0) {
       await transaction.rollback()
-      return res.status(400).json({ message: 'Propietario e items son obligatorios' })
+      return res.status(400).json({ message: 'La factura debe tener al menos un item' })
+    }
+
+    if (emitirElectronica && !propietarioId) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'La facturacion electronica requiere un cliente con datos fiscales. Selecciona un tutor o crea la factura interna.',
+      })
     }
 
     if (emitirElectronica) {
@@ -438,15 +445,17 @@ const crearFactura = async (req, res) => {
       }
     }
 
-    const propietario = await Propietario.findOne({
-      where: { id: propietarioId, clinicaId },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    })
+    if (propietarioId) {
+      const propietario = await Propietario.findOne({
+        where: { id: propietarioId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
 
-    if (!propietario) {
-      await transaction.rollback()
-      return res.status(404).json({ message: 'Propietario no encontrado' })
+      if (!propietario) {
+        await transaction.rollback()
+        return res.status(404).json({ message: 'Propietario no encontrado' })
+      }
     }
 
     let subtotal = 0
@@ -495,6 +504,15 @@ const crearFactura = async (req, res) => {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
         }
+
+        // Piso de precio: un producto no se puede vender por debajo de su costo.
+        const precioCompra = convertirANumero(producto.precioCompra, 0)
+        if (precioCompra > 0 && precioUnitario < precioCompra) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `"${producto.nombre}" no se puede vender por debajo de su costo ($${precioCompra})`,
+          })
+        }
       }
 
       const itemSubtotal = Math.max((precioUnitario * cantidad) - descuentoItem, 0)
@@ -529,7 +547,7 @@ const crearFactura = async (req, res) => {
       estadoElectronico: emitirElectronica ? 'pendiente' : 'no_aplica',
       documentoElectronico: emitirElectronica ? documentoElectronico : null,
       rangoNumeracionId: emitirElectronica ? rangoNumeracionId : null,
-      propietarioId,
+      propietarioId: propietarioId || null,
       usuarioId: usuarioId || req.usuario.id,
       clinicaId,
     }, { transaction })
@@ -722,6 +740,12 @@ const emitirFacturaElectronica = async (req, res) => {
     const factura = await obtenerFacturaDetallada(id, clinicaId)
     validarFacturaParaEmision(factura)
 
+    if (!factura.propietario) {
+      return res.status(400).json({
+        message: 'La factura no tiene cliente asociado. La facturacion electronica requiere un cliente con datos fiscales.',
+      })
+    }
+
     const camposFaltantesPropietario = obtenerCamposFiscalesPropietarioFaltantes(factura.propietario)
     if (camposFaltantesPropietario.length > 0) {
       return res.status(400).json({
@@ -895,6 +919,55 @@ const emitirFacturaElectronica = async (req, res) => {
       error: error.message,
       payload: error.payload || null,
     })
+  }
+}
+
+const registrarPago = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+    const { metodoPago, observaciones } = req.body
+
+    const factura = await Factura.findOne({ where: { id, clinicaId } })
+
+    if (!factura) {
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (factura.estado !== 'emitida') {
+      return res.status(400).json({
+        message: `Solo se pueden marcar como pagadas facturas en estado "emitida". Estado actual: ${factura.estado}`,
+      })
+    }
+
+    const estadoAnterior = factura.estado
+    const metodoPagoAnterior = factura.metodoPago
+
+    await factura.update({
+      estado: 'pagada',
+      ...(metodoPago ? { metodoPago } : {}),
+      ...(observaciones ? { observaciones } : {}),
+    })
+
+    await registrarAuditoria({
+      accion: 'REGISTRAR_PAGO_FACTURA',
+      entidad: 'Factura',
+      entidadId: factura.id,
+      descripcion: `Factura ${factura.numero} marcada como pagada. Método: ${metodoPago || metodoPagoAnterior || 'no especificado'}`,
+      datosAnteriores: { estado: estadoAnterior, metodoPago: metodoPagoAnterior },
+      datosNuevos: { estado: 'pagada', metodoPago: metodoPago || metodoPagoAnterior },
+      req,
+      resultado: 'exitoso',
+    })
+
+    const facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+
+    res.json({
+      message: 'Pago registrado exitosamente',
+      factura: facturaActualizada,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
 
@@ -1089,4 +1162,5 @@ module.exports = {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
 }
