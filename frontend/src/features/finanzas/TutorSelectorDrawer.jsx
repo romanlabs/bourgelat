@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 
@@ -22,7 +23,9 @@ export default function TutorSelectorDrawer({
 
   const propietarios = propietariosQuery.data?.propietarios || []
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       <div
         onClick={onClose}
@@ -36,7 +39,7 @@ export default function TutorSelectorDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Seleccionar tutor"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -133,6 +136,7 @@ export default function TutorSelectorDrawer({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

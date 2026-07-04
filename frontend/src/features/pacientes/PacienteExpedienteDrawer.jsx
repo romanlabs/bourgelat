@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { CalendarClock, FileText, HeartPulse, PawPrint, X } from 'lucide-react'
@@ -125,7 +126,9 @@ export default function PacienteExpedienteDrawer({ open, mascota, featureSet, on
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -139,7 +142,7 @@ export default function PacienteExpedienteDrawer({ open, mascota, featureSet, on
         role="dialog"
         aria-modal="true"
         aria-label="Expediente del paciente"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[600px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[600px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="flex items-start gap-3 border-b border-border px-5 py-4">
@@ -272,6 +275,7 @@ export default function PacienteExpedienteDrawer({ open, mascota, featureSet, on
           </button>
         </div>
       </aside>
-    </>
+    </>,
+    document.body
   )
 }

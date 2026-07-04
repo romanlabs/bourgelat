@@ -252,41 +252,21 @@ function CommandKpiCard({
   }
 
   return (
-    <div className={cn('rounded-2xl border border-border bg-card p-5 shadow-card', className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-card-foreground">{value}</p>
-        </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-muted text-muted-foreground">
+    <div className={cn('flex flex-col rounded-2xl border border-border bg-card p-5 shadow-card', className)}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-muted-foreground">
+          {label}
+        </p>
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${color}1a`, color }}
+        >
           <Icon className="h-4 w-4" />
         </span>
       </div>
 
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
-
-      <div className="mt-3 h-12">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.28} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={color}
-              fill={`url(#${rawId})`}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 3 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <p className="mt-4 text-3xl font-bold tabular-nums text-card-foreground">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
     </div>
   )
 }
@@ -331,8 +311,8 @@ function TacticalAlertStrip({ alerts }) {
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-2 shadow-card">
-      <div className="flex flex-wrap gap-2">
+    <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
+      <div className="flex flex-wrap items-center gap-1">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = tab.id === activeTab
@@ -343,27 +323,22 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition',
-                active ? 'bg-foreground text-background shadow-sm' : 'bg-card text-muted-foreground hover:bg-muted'
+                'flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition',
+                active
+                  ? 'bg-foreground text-background shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <span className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                    active ? 'bg-background/10 text-primary' : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="text-sm font-semibold">{tab.label}</span>
-              </span>
+              <Icon
+                className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')}
+              />
+              <span>{tab.label}</span>
 
               {tabBadges[tab.id] ? (
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                    active ? 'bg-background/10 text-background' : 'bg-muted text-muted-foreground'
+                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
+                    active ? 'bg-background/15 text-background' : 'bg-primary/10 text-primary'
                   )}
                 >
                   {tabBadges[tab.id]}
@@ -561,6 +536,8 @@ export default function DashboardPage() {
   const puedeAbrirAgenda = esAdministrador && featureSet.has('citas')
   const puedeAbrirHistorias = esAdministrador && featureSet.has('historias')
   const puedeAbrirCaja = esAdministrador && featureSet.has('facturacion_interna')
+  // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
+  const mostrarDian = puedeVerIngresos && featureSet.has('facturacion_electronica')
 
   const quickActions = useMemo(() => {
     const keys = ['agenda', 'paciente', 'historia', 'facturar']
@@ -946,47 +923,45 @@ export default function DashboardPage() {
           formatter={formatCurrency}
         />
 
-        <div className={cn('grid grid-cols-1 gap-4 lg:col-span-7', puedeAbrirHistorias ? 'sm:grid-cols-4 lg:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-3')}>
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-7',
+            (() => {
+              const count = 2 + (mostrarDian ? 1 : 0) + (puedeAbrirHistorias ? 1 : 0)
+              return { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[count]
+            })()
+          )}
+        >
           <CommandKpiCard
             label="Citas de hoy"
             value={formatNumber(citasHoy)}
             helper={`${formatNumber(citasPendientesHoy)} pendientes`}
             icon={CalendarClock}
-            data={sparklineAgenda}
             color="#0f4c81"
-            formatter={formatNumber}
           />
           <CommandKpiCard
             label="Stock crítico"
             value={formatNumber(alertasInventario)}
             helper="Bajo mínimo o en vigilancia"
             icon={Boxes}
-            data={sparklineInventario}
             color="#ea580c"
-            formatter={formatNumber}
           />
-          <CommandKpiCard
-            label="Control DIAN"
-            value={formatNumber(dianErrores)}
-            helper={
-              puedeVerIngresos
-                ? `${formatNumber(dianPendientes)} pendientes`
-                : 'Activa caja para ver emisión'
-            }
-            icon={ShieldAlert}
-            data={sparklineDian}
-            color="#7c3aed"
-            formatter={formatNumber}
-          />
+          {mostrarDian ? (
+            <CommandKpiCard
+              label="Control DIAN"
+              value={formatNumber(dianErrores)}
+              helper={`${formatNumber(dianPendientes)} pendientes`}
+              icon={ShieldAlert}
+              color="#7c3aed"
+            />
+          ) : null}
           {puedeAbrirHistorias ? (
             <CommandKpiCard
               label="Sin documentar"
               value={formatNumber(sinDocumentar)}
               helper="Consultas de hoy sin historia clínica"
               icon={FileText}
-              data={[{ label: 'hoy', value: sinDocumentar }]}
               color="#0891b2"
-              formatter={formatNumber}
             />
           ) : null}
         </div>
@@ -1479,7 +1454,7 @@ export default function DashboardPage() {
     ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
     inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
     pacientes: limiteMascotas !== null ? `${Math.max(cupoMascotas, 0)}` : null,
-    plan: typeof diasRestantes === 'number' ? `${diasRestantes}d` : null,
+    plan: typeof diasRestantes === 'number' && diasRestantes <= 60 ? `${diasRestantes}d` : null,
   }
 
   const queryErrors = [

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, ScanLine, Search, X } from 'lucide-react'
 import {
   formatCurrency,
@@ -46,7 +47,9 @@ export default function ProductSelectorDrawer({
 
   const addedCount = addedIds.size
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       <div
         onClick={onClose}
@@ -60,7 +63,7 @@ export default function ProductSelectorDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Agregar productos al borrador"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[540px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[540px] sm:border-l sm:border-border ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -224,6 +227,7 @@ export default function ProductSelectorDrawer({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

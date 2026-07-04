@@ -103,18 +103,20 @@ function QuickActionLink({ item }) {
   return (
     <Link
       to={item.to}
-      className="group rounded-2xl border border-border bg-card p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/10"
+      className={cn(
+        'group flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 transition',
+        item.cardHover || 'hover:border-primary/30 hover:bg-primary/5'
+      )}
     >
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-foreground transition group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
-          <Icon className="h-5 w-5" />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-card-foreground">{item.label}</p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-        </div>
-      </div>
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+          item.accent || 'bg-muted text-foreground'
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <p className="truncate text-sm font-semibold text-card-foreground">{item.label}</p>
     </Link>
   )
 }
@@ -354,32 +356,27 @@ export default function AdminShell({
             </header>
 
             {visibleQuickActions.length > 0 ? (
-              <section className="rounded-2xl border border-border bg-card p-4 shadow-[0_4px_24px_rgba(8,25,39,0.06)] lg:p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      Acciones rapidas
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      Lo que el equipo debe tener a la vista cuando necesita operar rapido.
-                    </p>
-                  </div>
+              <section className="rounded-2xl border border-border bg-card p-3.5 shadow-[0_4px_24px_rgba(8,25,39,0.06)] lg:p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Acciones rapidas
+                  </p>
 
                   <button
                     type="button"
                     onClick={() => setIsSidebarCollapsed((current) => !current)}
-                    className="hidden items-center gap-2 self-start rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-border hover:bg-muted lg:inline-flex"
+                    className="hidden items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground lg:inline-flex"
                   >
                     {isSidebarCollapsed ? (
-                      <ChevronsRight className="h-4 w-4" />
+                      <ChevronsRight className="h-3.5 w-3.5" />
                     ) : (
-                      <ChevronsLeft className="h-4 w-4" />
+                      <ChevronsLeft className="h-3.5 w-3.5" />
                     )}
                     {isSidebarCollapsed ? 'Expandir menu' : 'Contraer menu'}
                   </button>
                 </div>
 
-                <div className="mt-4 grid gap-3 xl:grid-cols-4">
+                <div className="flex flex-wrap gap-2.5">
                   {visibleQuickActions.map((item) => (
                     <QuickActionLink key={item.key} item={item} />
                   ))}

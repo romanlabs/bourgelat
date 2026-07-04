@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -851,6 +852,8 @@ export default function AntecedentesPage() {
       )}
 
       {/* ── Drawer: Antecedentes ── */}
+      {createPortal(
+        <>
       <div
         className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${antDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setAntDrawerOpen(false)}
@@ -859,7 +862,7 @@ export default function AntecedentesPage() {
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${antDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${antDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
@@ -958,6 +961,9 @@ export default function AntecedentesPage() {
           </button>
         </div>
       </div>
+        </>,
+        document.body
+      )}
     </AdminShell>
   )
 }

@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -432,7 +433,9 @@ export default function HistoriaClinicaFormDrawer({
   const isSaving = crearHistoriaMutation.isPending || editarHistoriaMutation.isPending
 
   // ── Render ───────────────────────────────────────────────────────────────────
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -446,7 +449,7 @@ export default function HistoriaClinicaFormDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={historiaActual ? 'Editar historia clinica' : 'Nueva historia clinica'}
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="border-b border-border px-5 py-4">
@@ -807,6 +810,7 @@ export default function HistoriaClinicaFormDrawer({
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }

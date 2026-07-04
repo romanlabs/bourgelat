@@ -1,17 +1,30 @@
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { createPortal } from 'react-dom'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { CATEGORY_OPTIONS } from './useInventarioProductos'
 
-const UNIT_OPTIONS_LIST = ['unidad', 'caja', 'frasco', 'ml', 'kg', 'bolsa']
+// Unidades pensadas para como una clinica veterinaria cuenta su inventario:
+// presentaciones que se cuentan enteras en la estanteria, no volumen/peso fraccional.
+const UNIT_OPTIONS = [
+  { value: 'unidad', label: 'Unidad' },
+  { value: 'frasco', label: 'Frasco' },
+  { value: 'caja', label: 'Caja' },
+  { value: 'sobre', label: 'Sobre' },
+  { value: 'tableta', label: 'Tableta' },
+  { value: 'ampolla', label: 'Ampolla / Vial' },
+  { value: 'dosis', label: 'Dosis' },
+  { value: 'pipeta', label: 'Pipeta' },
+  { value: 'bolsa', label: 'Bolsa' },
+]
 
 const productoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
   categoria: z.enum(['medicamento', 'vacuna', 'insumo', 'alimento', 'antiparasitario', 'suplemento', 'accesorio', 'otro']),
-  unidadMedida: z.enum(['unidad', 'caja', 'frasco', 'ml', 'kg', 'bolsa']),
+  unidadMedida: z.string().min(1, 'La unidad es requerida'),
   stock: z.coerce.number().min(0).default(0),
   stockMinimo: z.coerce.number().min(0).default(5),
   precioCompra: z.coerce.number().min(0).default(0),
@@ -36,18 +49,71 @@ const DEFAULT_VALUES = {
   requiereFormula: false,
 }
 
+const milesFormatter = new Intl.NumberFormat('es-CO')
+const formatCOP = (value) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+
+const displayMiles = (value) => {
+  if (value === '' || value === null || value === undefined) return ''
+  const num = Number(value)
+  return Number.isFinite(num) ? milesFormatter.format(num) : ''
+}
+
+// Campo numerico con separador de miles en vivo (guarda el numero crudo)
+function NumberField({ id, value, onChange, hasError, prefix, suffix, placeholder }) {
+  const handleChange = (e) => {
+    const raw = e.target.value.replace(/[^\d]/g, '')
+    onChange(raw === '' ? 0 : Number(raw))
+  }
+
+  return (
+    <div className="relative">
+      {prefix ? (
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+          {prefix}
+        </span>
+      ) : null}
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        value={displayMiles(value)}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={`h-11 w-full border bg-card text-sm tabular-nums text-foreground outline-none transition focus:border-primary ${
+          prefix ? 'pl-7' : 'pl-3'
+        } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-red-400' : 'border-border'}`}
+      />
+      {suffix ? (
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+          {suffix}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit, isPending }) {
   const [additionalOpen, setAdditionalOpen] = useState(false)
 
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productoSchema),
     defaultValues: DEFAULT_VALUES,
   })
+
+  const precioCompra = useWatch({ control, name: 'precioCompra' })
+  const precioVenta = useWatch({ control, name: 'precioVenta' })
+  const unidadMedida = useWatch({ control, name: 'unidadMedida' })
+
+  const ganancia = Number(precioVenta || 0) - Number(precioCompra || 0)
+  const margen = Number(precioVenta) > 0 ? (ganancia / Number(precioVenta)) * 100 : null
+  const ventaBajoCosto = Number(precioVenta) > 0 && Number(precioCompra) > 0 && ganancia < 0
 
   useEffect(() => {
     if (!open) return
@@ -86,7 +152,12 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
       hasError ? 'border-red-400' : 'border-border'
     }`
 
-  return (
+  const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+  const unidadLabel = UNIT_OPTIONS.find((u) => u.value === unidadMedida)?.label?.toLowerCase() || 'unidad'
+
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -102,7 +173,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         role="dialog"
         aria-modal="true"
         aria-label={editingProduct ? `Editar ${editingProduct.nombre}` : 'Nuevo producto'}
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -130,7 +201,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          <form id="product-drawer-form" className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
+          <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -138,7 +209,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               </p>
 
               <div className="grid gap-1.5">
-                <label htmlFor="d-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="d-nombre" className={labelClass}>
                   Nombre del producto *
                 </label>
                 <input
@@ -153,7 +224,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-categoria" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <label htmlFor="d-categoria" className={labelClass}>
                     Categoria *
                   </label>
                   <select
@@ -165,101 +236,148 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  {errors.categoria && <p className="text-xs text-red-600">{errors.categoria.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-unidad" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Unidad de medida *
+                  <label htmlFor="d-unidad" className={labelClass}>
+                    Se cuenta por *
                   </label>
                   <select
                     id="d-unidad"
                     className={fieldClass(errors.unidadMedida)}
                     {...register('unidadMedida')}
                   >
-                    {UNIT_OPTIONS_LIST.map((o) => (
-                      <option key={o} value={o}>{o}</option>
+                    {UNIT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
                 </div>
               </div>
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                Elige como cuentas una unidad en la estanteria. El stock baja de a una cada venta.
+              </p>
             </div>
 
-            {/* Seccion: Stock y precios */}
-            <div className="grid gap-4 border-t border-border pt-4">
+            {/* Seccion: Existencias */}
+            <div className="grid gap-4 border-t border-border pt-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Stock y precios
+                Existencias
               </p>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-stock" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <label htmlFor="d-stock" className={labelClass}>
                     {editingProduct ? 'Stock actual' : 'Stock inicial'}
                   </label>
                   {editingProduct ? (
                     <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
-                      {formatNumber(editingProduct.stock || 0)} unidades
+                      {formatNumber(editingProduct.stock || 0)} {unidadLabel}
                     </div>
                   ) : (
-                    <input
-                      id="d-stock"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      className={fieldClass(errors.stock)}
-                      {...register('stock')}
+                    <Controller
+                      name="stock"
+                      control={control}
+                      render={({ field }) => (
+                        <NumberField
+                          id="d-stock"
+                          value={field.value}
+                          onChange={field.onChange}
+                          hasError={errors.stock}
+                          placeholder="0"
+                        />
+                      )}
                     />
                   )}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-stock-min" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Stock minimo
+                  <label htmlFor="d-stock-min" className={labelClass}>
+                    Alerta de stock bajo
                   </label>
-                  <input
-                    id="d-stock-min"
-                    type="number"
-                    min="0"
-                    placeholder="5"
-                    className={fieldClass(errors.stockMinimo)}
-                    {...register('stockMinimo')}
+                  <Controller
+                    name="stockMinimo"
+                    control={control}
+                    render={({ field }) => (
+                      <NumberField
+                        id="d-stock-min"
+                        value={field.value}
+                        onChange={field.onChange}
+                        hasError={errors.stockMinimo}
+                        placeholder="5"
+                      />
+                    )}
                   />
-                  <p className="text-[11px] text-muted-foreground">Alerta cuando baje de este numero</p>
                 </div>
               </div>
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                El sistema avisa cuando el stock quede en el numero de alerta o menos.
+              </p>
+            </div>
+
+            {/* Seccion: Precios */}
+            <div className="grid gap-4 border-t border-border pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Precios
+              </p>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-precio-compra" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Precio compra
+                  <label htmlFor="d-precio-compra" className={labelClass}>
+                    Precio de compra
                   </label>
-                  <input
-                    id="d-precio-compra"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                    className={fieldClass(errors.precioCompra)}
-                    {...register('precioCompra')}
+                  <Controller
+                    name="precioCompra"
+                    control={control}
+                    render={({ field }) => (
+                      <NumberField
+                        id="d-precio-compra"
+                        value={field.value}
+                        onChange={field.onChange}
+                        hasError={errors.precioCompra}
+                        prefix="$"
+                        placeholder="0"
+                      />
+                    )}
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="d-precio-venta" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Precio venta
+                  <label htmlFor="d-precio-venta" className={labelClass}>
+                    Precio de venta
                   </label>
-                  <input
-                    id="d-precio-venta"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                    className={fieldClass(errors.precioVenta)}
-                    {...register('precioVenta')}
+                  <Controller
+                    name="precioVenta"
+                    control={control}
+                    render={({ field }) => (
+                      <NumberField
+                        id="d-precio-venta"
+                        value={field.value}
+                        onChange={field.onChange}
+                        hasError={errors.precioVenta || ventaBajoCosto}
+                        prefix="$"
+                        placeholder="0"
+                      />
+                    )}
                   />
                 </div>
               </div>
+
+              {/* Ganancia / margen calculado */}
+              {ventaBajoCosto ? (
+                <div className="flex items-center gap-2 border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  El precio de venta esta por debajo del costo.
+                </div>
+              ) : margen !== null && Number(precioCompra) > 0 ? (
+                <div className="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs">
+                  <span className="text-muted-foreground">Ganancia por unidad</span>
+                  <span className="font-semibold text-foreground">
+                    {formatCOP(ganancia)}
+                    <span className="ml-1.5 text-primary">({margen.toFixed(0)}% margen)</span>
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             {/* Seccion: Informacion adicional (colapsable) */}
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-5">
               <button
                 type="button"
                 onClick={() => setAdditionalOpen((v) => !v)}
@@ -273,7 +391,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 <div className="mt-4 grid gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="grid gap-1.5">
-                      <label htmlFor="d-laboratorio" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <label htmlFor="d-laboratorio" className={labelClass}>
                         Laboratorio
                       </label>
                       <input
@@ -285,7 +403,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       />
                     </div>
                     <div className="grid gap-1.5">
-                      <label htmlFor="d-lote" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <label htmlFor="d-lote" className={labelClass}>
                         Lote
                       </label>
                       <input
@@ -298,7 +416,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     </div>
                   </div>
                   <div className="grid gap-1.5">
-                    <label htmlFor="d-vencimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <label htmlFor="d-vencimiento" className={labelClass}>
                       Fecha de vencimiento
                     </label>
                     <input
@@ -341,6 +459,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

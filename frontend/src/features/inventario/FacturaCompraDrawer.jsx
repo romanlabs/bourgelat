@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Plus, Trash2 } from 'lucide-react'
 
 const fieldClass = (hasError) =>
@@ -39,7 +40,9 @@ export default function FacturaCompraDrawer({
   const plazoValido = form.tipoPago !== 'credito' || !!form.fechaPagoFinal
   const formularioValido = form.proveedor.trim() && form.fecha && itemsValidos && plazoValido
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -55,7 +58,7 @@ export default function FacturaCompraDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] sm:border-l sm:border-border ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -299,6 +302,7 @@ export default function FacturaCompraDrawer({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

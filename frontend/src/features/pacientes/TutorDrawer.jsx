@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -49,7 +50,9 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       <div
         className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -60,7 +63,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
         role="dialog"
         aria-modal="true"
         aria-label="Nuevo tutor"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
@@ -145,6 +148,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
