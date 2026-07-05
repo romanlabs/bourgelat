@@ -117,6 +117,10 @@ export function useFinanzasFacturacion({
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear la factura.'))
+      if (error?.response?.data?.code === 'TURNO_CAJA_REQUERIDO') {
+        // El turno pudo cerrarse en otra pestana/dispositivo mientras se armaba la venta.
+        queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
+      }
     },
   })
 

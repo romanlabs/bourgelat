@@ -6,6 +6,7 @@ const Producto = require('../models/Producto')
 const MovimientoInventario = require('../models/MovimientoInventario')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
+const CajaTurno = require('../models/CajaTurno')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
 const {
@@ -458,6 +459,20 @@ const crearFactura = async (req, res) => {
       }
     }
 
+    const turnoActivo = await CajaTurno.findOne({
+      where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
+
+    if (!turnoActivo) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'Debes abrir un turno de caja antes de facturar',
+        code: 'TURNO_CAJA_REQUERIDO',
+      })
+    }
+
     let subtotal = 0
     const itemsCalculados = []
 
@@ -550,6 +565,7 @@ const crearFactura = async (req, res) => {
       propietarioId: propietarioId || null,
       usuarioId: usuarioId || req.usuario.id,
       clinicaId,
+      cajaTurnoId: turnoActivo.id,
     }, { transaction })
 
     for (const item of itemsCalculados) {
@@ -586,6 +602,10 @@ const crearFactura = async (req, res) => {
           clinicaId,
         }, { transaction })
       }
+    }
+
+    if (metodoPago === 'efectivo') {
+      await turnoActivo.increment('totalVentasEfectivo', { by: total, transaction })
     }
 
     await transaction.commit()
