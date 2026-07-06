@@ -34,7 +34,7 @@ import {
 import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturacion'
 import { useFinanzasHistorial, STATUS_OPTIONS, PAYMENT_FORM_OPTIONS } from '@/features/finanzas/useFinanzasHistorial'
 import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
-import QuickSaleLayout from '@/features/finanzas/QuickSaleLayout'
+import PosModal from '@/features/finanzas/PosModal'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -45,7 +45,7 @@ import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
-  { id: 'facturacion', label: 'Facturacion' },
+  { id: 'facturacion', label: 'Venta' },
   { id: 'turnos', label: 'Turnos de caja' },
   { id: 'historial', label: 'Historial' },
 ]
@@ -114,6 +114,22 @@ export default function FinanzasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const [activeTab, setActiveTab] = useState('facturacion')
+  const [posOpen, setPosOpen] = useState(false)
+  const [ventaExitosa, setVentaExitosa] = useState(false)
+
+  const abrirPos = () => {
+    // Sin turno de caja no se puede facturar: llevamos al guard de la pestana.
+    if (!cajaHook.turnoActivo) {
+      setActiveTab('facturacion')
+      return
+    }
+    setVentaExitosa(false)
+    setPosOpen(true)
+  }
+  const cerrarPos = () => {
+    setPosOpen(false)
+    setVentaExitosa(false)
+  }
 
   useEffect(() => {
     document.title = 'Caja y facturacion | Bourgelat'
@@ -148,9 +164,9 @@ export default function FinanzasPage() {
     enabled: puedeVerFinanzas,
     puedeConsultarInventario,
     emisionAutomaticaActiva,
-    onFacturaCreada: (facturaId) => {
-      historialHook.seleccionarFactura(facturaId)
-      setActiveTab('historial')
+    // La venta se cierra dentro del modal (paso de vuelto), no saltamos de tab.
+    onFacturaCreada: () => {
+      setVentaExitosa(true)
     },
   })
 
@@ -203,16 +219,14 @@ export default function FinanzasPage() {
                 </button>
               ))}
             </div>
-            {activeTab !== 'facturacion' && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('facturacion')}
-                className="mr-1 inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-primary/10 hover:text-primary hover:border-primary/30"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Nueva factura
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={abrirPos}
+              className="mr-1 inline-flex items-center gap-1.5 border border-primary bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Nueva venta
+            </button>
           </div>
 
           {/* ── Tab: Resumen ── */}
@@ -311,11 +325,29 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : (
-              <QuickSaleLayout
-                facturacionHook={facturacionHook}
-                puedeConsultarInventario={puedeConsultarInventario}
-                emisionAutomaticaActiva={emisionAutomaticaActiva}
-              />
+              <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-card">
+                <div className="max-w-sm text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Receipt className="h-8 w-8" />
+                  </div>
+                  <h2 className="mt-5 text-xl font-bold text-foreground">Registrar una venta</h2>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Abre el punto de venta para armar la compra, cobrar y calcular el vuelto — todo
+                    en una sola ventana.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={abrirPos}
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nueva venta
+                  </button>
+                  <p className="mt-4 text-[11px] text-muted-foreground">
+                    Turno de caja abierto · fondo {formatCurrency(cajaHook.turnoActivo.montoInicial)}
+                  </p>
+                </div>
+              </div>
             )
           )}
 
@@ -833,6 +865,19 @@ export default function FinanzasPage() {
               ) : null}
             </div>
           )}
+
+          {/* Punto de venta: modal global, disponible desde cualquier pestana
+              mientras haya turno de caja abierto. */}
+          {cajaHook.turnoActivo ? (
+            <PosModal
+              open={posOpen}
+              onClose={cerrarPos}
+              facturacionHook={facturacionHook}
+              puedeConsultarInventario={puedeConsultarInventario}
+              ventaExitosa={ventaExitosa}
+              onNuevaVenta={() => setVentaExitosa(false)}
+            />
+          ) : null}
         </div>
       )}
     </AdminShell>
