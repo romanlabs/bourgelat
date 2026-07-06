@@ -9,6 +9,8 @@ const {
   descargarFacturaElectronica,
   anularFactura,
   registrarPago,
+  registrarAbono,
+  listarCuentasPorCobrar,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -46,12 +48,22 @@ router.post(
         'transferencia',
         'nequi',
         'daviplata',
+        'credito',
         'otro',
       ])
       .withMessage('Metodo de pago no valido'),
     validar,
   ],
   crearFactura
+)
+
+// Antes de '/:id' para que el path literal no sea capturado como UUID.
+router.get(
+  '/cuentas-por-cobrar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  listarCuentasPorCobrar
 )
 
 router.get(
@@ -118,6 +130,23 @@ router.patch(
     validar,
   ],
   registrarPago
+)
+
+router.post(
+  '/:id/abonos',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  [
+    body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
+    body('metodoPago')
+      .optional()
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .withMessage('Metodo de pago no valido'),
+    body('observaciones').optional({ values: 'falsy' }).trim(),
+    validar,
+  ],
+  registrarAbono
 )
 
 router.patch(

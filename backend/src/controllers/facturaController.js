@@ -7,6 +7,7 @@ const MovimientoInventario = require('../models/MovimientoInventario')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
+const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
 const {
@@ -546,12 +547,25 @@ const crearFactura = async (req, res) => {
     const baseGravable = subtotal - descuento
     const impuesto = 0
     const total = baseGravable + impuesto
+
+    // Venta a crédito (fiado): nace con todo el total como saldo por cobrar.
+    // Exige cliente identificado — no se fía a ventas de mostrador anónimas.
+    const esCredito = metodoPago === 'credito'
+    if (esCredito && !propietarioId) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'Las ventas a crédito requieren un cliente asociado',
+        code: 'CREDITO_REQUIERE_CLIENTE',
+      })
+    }
+
     const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
       numero,
       fecha: new Date(),
       estado: 'emitida',
+      saldoPendiente: esCredito ? total : 0,
       subtotal,
       descuento,
       impuesto,
@@ -960,6 +974,15 @@ const registrarPago = async (req, res) => {
       })
     }
 
+    // Ventas a crédito se saldan con abonos (que actualizan saldo y caja),
+    // no con un marcado directo que dejaría el cobro sin rastro.
+    if (convertirANumero(factura.saldoPendiente) > 0) {
+      return res.status(409).json({
+        message: 'Esta factura tiene saldo pendiente. Registra el cobro como abono.',
+        code: 'USAR_ABONOS',
+      })
+    }
+
     const estadoAnterior = factura.estado
     const metodoPagoAnterior = factura.metodoPago
 
@@ -985,6 +1008,177 @@ const registrarPago = async (req, res) => {
     res.json({
       message: 'Pago registrado exitosamente',
       factura: facturaActualizada,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Registra un abono (pago parcial o total) a una factura con saldo pendiente.
+// Si el abono es en efectivo y el cobrador tiene turno abierto, el monto entra
+// a la caja del turno (mismo contador que las ventas de contado de Sergio).
+const registrarAbono = async (req, res) => {
+  const transaction = await sequelize.transaction()
+
+  try {
+    const { id } = req.params
+    const { monto, metodoPago, observaciones } = req.body
+    const { clinicaId } = req.usuario
+    const montoNumero = convertirANumero(monto, NaN)
+
+    if (!Number.isFinite(montoNumero) || montoNumero <= 0) {
+      await transaction.rollback()
+      return res.status(400).json({ message: 'Monto de abono invalido' })
+    }
+
+    const factura = await Factura.findOne({
+      where: { id, clinicaId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
+
+    if (!factura) {
+      await transaction.rollback()
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (!['emitida', 'parcial'].includes(factura.estado)) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: `No se pueden abonar facturas en estado "${factura.estado}"`,
+      })
+    }
+
+    const saldoActual = convertirANumero(factura.saldoPendiente)
+
+    if (saldoActual <= 0) {
+      await transaction.rollback()
+      return res.status(409).json({ message: 'La factura no tiene saldo pendiente' })
+    }
+
+    if (montoNumero > saldoActual + 0.009) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: `El abono ($${montoNumero}) supera el saldo pendiente ($${saldoActual})`,
+      })
+    }
+
+    // Efectivo entra a la caja del cobrador si tiene turno abierto.
+    let cajaTurnoId = null
+    if (metodoPago === 'efectivo') {
+      const turno = await CajaTurno.findOne({
+        where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (turno) {
+        await turno.increment('totalVentasEfectivo', { by: montoNumero, transaction })
+        cajaTurnoId = turno.id
+      }
+    }
+
+    const abono = await AbonoFactura.create({
+      monto: montoNumero,
+      metodoPago: metodoPago || null,
+      observaciones: observaciones || null,
+      facturaId: factura.id,
+      cajaTurnoId,
+      usuarioId: req.usuario.id,
+      clinicaId,
+    }, { transaction })
+
+    const nuevoSaldo = Math.max(0, Math.round((saldoActual - montoNumero) * 100) / 100)
+    const nuevoEstado = nuevoSaldo === 0 ? 'pagada' : 'parcial'
+
+    await factura.update({
+      saldoPendiente: nuevoSaldo,
+      estado: nuevoEstado,
+    }, { transaction })
+
+    await transaction.commit()
+
+    await registrarAuditoria({
+      accion: 'REGISTRAR_ABONO_FACTURA',
+      entidad: 'AbonoFactura',
+      entidadId: abono.id,
+      descripcion: `Abono de $${montoNumero} a factura ${factura.numero}. Saldo restante: $${nuevoSaldo}`,
+      datosNuevos: { facturaId: factura.id, monto: montoNumero, metodoPago, nuevoSaldo, nuevoEstado, cajaTurnoId },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.status(201).json({
+      message: nuevoSaldo === 0 ? 'Abono registrado. Factura saldada.' : 'Abono registrado',
+      abono,
+      saldoPendiente: nuevoSaldo,
+      estado: nuevoEstado,
+    })
+  } catch (error) {
+    await transaction.rollback()
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Cuentas por cobrar: facturas con saldo, agrupadas por cliente y ordenadas
+// por deuda total (la vista "quién me debe y cuánto" estilo Treinta).
+const listarCuentasPorCobrar = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+
+    const facturas = await Factura.findAll({
+      where: {
+        clinicaId,
+        estado: { [Op.in]: ['emitida', 'parcial'] },
+        saldoPendiente: { [Op.gt]: 0 },
+      },
+      attributes: ['id', 'numero', 'fecha', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
+      include: [{
+        model: Propietario,
+        as: 'propietario',
+        attributes: ['id', 'nombre', 'telefono', 'email'],
+      }],
+      order: [['fecha', 'ASC']],
+    })
+
+    const porCliente = new Map()
+    let totalPorCobrar = 0
+
+    for (const f of facturas) {
+      const saldo = convertirANumero(f.saldoPendiente)
+      totalPorCobrar += saldo
+
+      const key = f.propietarioId || 'sin-cliente'
+      const entrada = porCliente.get(key) || {
+        propietarioId: f.propietarioId,
+        nombre: f.propietario?.nombre || 'Venta de mostrador',
+        telefono: f.propietario?.telefono || null,
+        email: f.propietario?.email || null,
+        totalDeuda: 0,
+        facturaMasAntigua: f.fecha,
+        facturas: [],
+      }
+
+      entrada.totalDeuda = Math.round((entrada.totalDeuda + saldo) * 100) / 100
+      entrada.facturas.push({
+        id: f.id,
+        numero: f.numero,
+        fecha: f.fecha,
+        total: f.total,
+        saldoPendiente: f.saldoPendiente,
+        estado: f.estado,
+      })
+      porCliente.set(key, entrada)
+    }
+
+    const clientes = Array.from(porCliente.values())
+      .sort((a, b) => b.totalDeuda - a.totalDeuda)
+
+    res.json({
+      totalPorCobrar: Math.round(totalPorCobrar * 100) / 100,
+      totalClientes: clientes.length,
+      totalFacturas: facturas.length,
+      clientes,
     })
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
@@ -1029,6 +1223,22 @@ const anularFactura = async (req, res) => {
       })
     }
 
+    // Una factura con abonos ya recibió dinero del cliente: anularla dejaría
+    // ese dinero sin rastro contable. Debe resolverse la devolución primero.
+    const abonosExistentes = await AbonoFactura.count({
+      where: { facturaId: factura.id, clinicaId },
+      transaction,
+    })
+
+    if (abonosExistentes > 0) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message:
+          'La factura tiene abonos registrados. Gestiona la devolución al cliente antes de anularla.',
+        code: 'FACTURA_CON_ABONOS',
+      })
+    }
+
     for (const item of factura.items) {
       if (item.tipo === 'producto' && item.productoId) {
         const producto = await Producto.findOne({
@@ -1063,6 +1273,28 @@ const anularFactura = async (req, res) => {
       }
     }
 
+    // Revertir el efecto en la caja: si la venta fue en efectivo y el turno
+    // sigue abierto, descontar el total de totalVentasEfectivo para que el
+    // cajero no cargue con un descuadre falso al cierre. Si el turno ya
+    // cerró, no se toca (el arqueo histórico es inmutable); queda constancia
+    // en la auditoría de la anulación.
+    let cajaAjustada = false
+    if (factura.cajaTurnoId && factura.metodoPago === 'efectivo') {
+      const turnoVenta = await CajaTurno.findOne({
+        where: { id: factura.cajaTurnoId, clinicaId, estado: 'abierto' },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (turnoVenta) {
+        await turnoVenta.decrement('totalVentasEfectivo', {
+          by: convertirANumero(factura.total),
+          transaction,
+        })
+        cajaAjustada = true
+      }
+    }
+
     await factura.update({ estado: 'anulada', motivoAnulacion }, { transaction })
     await transaction.commit()
 
@@ -1072,7 +1304,7 @@ const anularFactura = async (req, res) => {
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} anulada. Motivo: ${motivoAnulacion}`,
       datosAnteriores: { estado: 'emitida' },
-      datosNuevos: { estado: 'anulada', motivoAnulacion },
+      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada },
       req,
       resultado: 'exitoso',
     })
@@ -1183,4 +1415,6 @@ module.exports = {
   descargarFacturaElectronica,
   anularFactura,
   registrarPago,
+  registrarAbono,
+  listarCuentasPorCobrar,
 }

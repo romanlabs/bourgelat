@@ -25,9 +25,18 @@ const Factura = sequelize.define('Factura', {
     defaultValue: DataTypes.NOW,
   },
   estado: {
-    type: DataTypes.ENUM('borrador', 'emitida', 'pagada', 'anulada'),
+    // 'parcial': factura a crédito con abonos registrados pero saldo pendiente.
+    type: DataTypes.ENUM('borrador', 'emitida', 'parcial', 'pagada', 'anulada'),
     allowNull: false,
     defaultValue: 'borrador',
+  },
+  // Saldo por cobrar de ventas a crédito (fiado). Denormalizado: se descuenta
+  // con cada abono dentro de la misma transacción. 0 = saldada; null = factura
+  // histórica anterior al módulo de fiado (se trata como sin saldo).
+  saldoPendiente: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    defaultValue: 0,
   },
   // Los montos no se cifran: son necesarios para SUM/AVG en reportes SQL.
   // El quién pagó y cómo pagó sí se cifra (ver metodoPago y propietarioId en factura).
