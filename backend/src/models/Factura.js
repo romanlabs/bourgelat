@@ -5,6 +5,7 @@ const sequelize = require('../config/database')
 const Clinica = require('./Clinica')
 const Propietario = require('./Propietario')
 const Usuario = require('./Usuario')
+const CajaTurno = require('./CajaTurno')
 const { registrarHooksCifrado, aplicarDescifrado } = require('../config/modelEncryption')
 
 const Factura = sequelize.define('Factura', {
@@ -149,6 +150,16 @@ const Factura = sequelize.define('Factura', {
       key: 'id',
     },
   },
+  // Nullable a nivel de modelo (facturas históricas no lo tienen), pero
+  // obligatorio a nivel de controlador para facturas nuevas (ver crearFactura).
+  cajaTurnoId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: CajaTurno,
+      key: 'id',
+    },
+  },
 }, {
   tableName: 'facturas',
   timestamps: true,
@@ -157,6 +168,7 @@ const Factura = sequelize.define('Factura', {
     { fields: ['clinicaId', 'fecha'] },
     { fields: ['propietarioId'] },
     { fields: ['numero', 'clinicaId'], unique: true },
+    { fields: ['cajaTurnoId'] },
   ],
 })
 
@@ -171,6 +183,8 @@ Usuario.hasMany(Factura, { foreignKey: 'usuarioId', as: 'facturas' })
 Factura.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' })
 Clinica.hasMany(Factura, { foreignKey: 'clinicaId' })
 Factura.belongsTo(Clinica, { foreignKey: 'clinicaId' })
+CajaTurno.hasMany(Factura, { foreignKey: 'cajaTurnoId', as: 'facturas' })
+Factura.belongsTo(CajaTurno, { foreignKey: 'cajaTurnoId', as: 'cajaTurno' })
 
 Factura.addHook('afterFind', (resultado) => {
   if (!resultado) return

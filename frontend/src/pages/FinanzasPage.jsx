@@ -35,12 +35,18 @@ import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturaci
 import { useFinanzasHistorial, STATUS_OPTIONS, PAYMENT_FORM_OPTIONS } from '@/features/finanzas/useFinanzasHistorial'
 import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
 import QuickSaleLayout from '@/features/finanzas/QuickSaleLayout'
+import { useCajaTurno } from '@/features/caja/useCajaTurno'
+import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
+import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
+import ReporteDescuadresPanel from '@/features/caja/ReporteDescuadresPanel'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'facturacion', label: 'Facturacion' },
+  { id: 'turnos', label: 'Turnos de caja' },
   { id: 'historial', label: 'Historial' },
 ]
 
@@ -132,10 +138,12 @@ export default function FinanzasPage() {
     funcionalidades.includes('facturacion_electronica') &&
     hasAnyRole(usuario, ['admin', 'superadmin', 'facturador'])
   const puedeAnular = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const esAdminCaja = hasAnyRole(usuario, ['admin', 'superadmin'])
   const emisionAutomaticaActiva = puedeEmitirElectronica
 
   const resumenHook = useFinanzasResumen({ enabled: puedeVerFinanzas })
   const historialHook = useFinanzasHistorial({ enabled: puedeVerFinanzas, puedeAnular, puedeEmitirElectronica })
+  const cajaHook = useCajaTurno({ enabled: puedeVerFinanzas, esAdmin: esAdminCaja })
   const facturacionHook = useFinanzasFacturacion({
     enabled: puedeVerFinanzas,
     puedeConsultarInventario,
@@ -281,13 +289,44 @@ export default function FinanzasPage() {
 
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (
-            <QuickSaleLayout
-              facturacionHook={facturacionHook}
-              puedeConsultarInventario={puedeConsultarInventario}
-              emisionAutomaticaActiva={emisionAutomaticaActiva}
-            />
+            cajaHook.turnoActivoQuery.isLoading ? (
+              <div className="h-40 animate-pulse rounded-[28px] border border-border bg-muted" />
+            ) : !cajaHook.turnoActivo ? (
+              <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
+                <EmptyState
+                  icon={<Wallet />}
+                  variant="primary"
+                  title="Necesitas abrir un turno de caja para facturar"
+                  description="Abre tu turno registrando el fondo inicial en efectivo desde la pestana Turnos de caja."
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('turnos')}
+                      className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      <Wallet className="h-4 w-4" />
+                      Ir a turnos de caja
+                    </button>
+                  }
+                />
+              </div>
+            ) : (
+              <QuickSaleLayout
+                facturacionHook={facturacionHook}
+                puedeConsultarInventario={puedeConsultarInventario}
+                emisionAutomaticaActiva={emisionAutomaticaActiva}
+              />
+            )
           )}
 
+          {/* ── Tab: Turnos de caja ── */}
+          {activeTab === 'turnos' && (
+            <div className="space-y-5">
+              <TurnoActivoPanel cajaHook={cajaHook} />
+              <HistorialTurnosPanel cajaHook={cajaHook} esAdmin={esAdminCaja} />
+              {esAdminCaja ? <ReporteDescuadresPanel cajaHook={cajaHook} /> : null}
+            </div>
+          )}
 
           {/* ── Tab: Historial ── */}
           {activeTab === 'historial' && (
