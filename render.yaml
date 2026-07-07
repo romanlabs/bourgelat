@@ -76,6 +76,12 @@ services:
         value: 7d
       - key: INTEGRACIONES_SECRET
         generateValue: true
+      # Claves de cifrado de PII: se ingresan a mano (npm run secrets:generate) y se
+      # respaldan fuera de Render; perderlas hace irrecuperable la PII cifrada.
+      - key: ENCRYPTION_KEYS
+        sync: false
+      - key: BLIND_INDEX_KEY
+        sync: false
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
@@ -210,6 +216,12 @@ services:
         value: 7d
       - key: INTEGRACIONES_SECRET
         generateValue: true
+      # Claves de cifrado de PII: se ingresan a mano (npm run secrets:generate) y se
+      # respaldan fuera de Render; perderlas hace irrecuperable la PII cifrada.
+      - key: ENCRYPTION_KEYS
+        sync: false
+      - key: BLIND_INDEX_KEY
+        sync: false
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS

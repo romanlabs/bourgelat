@@ -1,10 +1,12 @@
 'use strict'
 
 const { cifrarTexto, descifrarTexto, hmacTexto } = require('./crypto')
+const logger = require('../utils/logger')
 
-// Detecta si un valor ya está cifrado con nuestro formato IV:tag:contenido.
+// Detecta si un valor ya está cifrado con nuestro formato, en cualquiera de
+// sus dos variantes: "vN:iv:tag:contenido" (keyring) o "iv:tag:contenido" (legacy).
 // Previene doble cifrado en caso de que un hook se llame dos veces.
-const CIPHER_RE = /^[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/
+const CIPHER_RE = /^(?:v\d+:)?[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/
 const estaCifrado = (val) => typeof val === 'string' && CIPHER_RE.test(val)
 
 // Cifra un campo de texto plano. Si ya está cifrado, lo deja intacto.
@@ -14,14 +16,19 @@ const cifrarCampo = (val) => {
   return estaCifrado(str) ? str : cifrarTexto(str)
 }
 
-// Descifra un campo. Si falla (e.g. valor en texto plano de antes de la
-// migración), devuelve el valor original para no romper la lectura.
+// Descifra un campo. El texto plano de antes de la migración se devuelve tal
+// cual (fallback legítimo); un valor que PARECE cifrado pero no descifra indica
+// clave ausente/incorrecta o dato corrupto: se loguea y se devuelve null para
+// no exponer ciphertext crudo a la aplicación.
 const descifrarCampo = (val) => {
   if (val == null) return val
+  const str = String(val)
+  if (!estaCifrado(str)) return val
   try {
-    return descifrarTexto(String(val))
-  } catch {
-    return val
+    return descifrarTexto(str)
+  } catch (error) {
+    logger.error('Fallo al descifrar campo cifrado', { motivo: error.message })
+    return null
   }
 }
 
@@ -32,16 +39,25 @@ const cifrarJsonCampo = (val) => {
   return estaCifrado(str) ? str : cifrarTexto(str)
 }
 
-// Descifra y parsea un campo JSON cifrado. Maneja texto plano como fallback.
+// Descifra y parsea un campo JSON cifrado. Los valores pre-migración (objetos
+// JSONB ya parseados o strings JSON planos) se manejan como fallback; un fallo
+// de descifrado real se loguea y devuelve null, igual que descifrarCampo.
 const descifrarJsonCampo = (val) => {
   if (val == null) return val
-  try {
-    return JSON.parse(descifrarTexto(String(val)))
-  } catch {
+
+  if (typeof val !== 'string' || !estaCifrado(val)) {
     if (typeof val === 'string') {
       try { return JSON.parse(val) } catch { /* texto plano no-JSON */ }
     }
     return val
+  }
+
+  try {
+    const plano = descifrarTexto(val)
+    try { return JSON.parse(plano) } catch { return plano }
+  } catch (error) {
+    logger.error('Fallo al descifrar campo JSON cifrado', { motivo: error.message })
+    return null
   }
 }
 

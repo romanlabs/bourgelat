@@ -10,7 +10,8 @@
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
-    "secrets:generate": "node src/scripts/generateSecrets.js"
+    "secrets:generate": "node src/scripts/generateSecrets.js",
+    "cifrado:rotar": "node src/scripts/rotarCifrado.js"
   },
   "keywords": [],
   "author": "",
