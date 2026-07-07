@@ -13,6 +13,7 @@ const limpiarTokensVencidos = async () => {
           { revocado: true },
         ],
       },
+      sinTenant: true,
     })
 
     if (eliminados > 0) {
@@ -33,6 +34,7 @@ const limpiarLogsAntiguos = async () => {
         createdAt: { [Op.lt]: fechaLimite },
         resultado: 'exitoso',
       },
+      sinTenant: true,
     })
 
     if (eliminados > 0) {

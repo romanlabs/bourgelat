@@ -357,7 +357,7 @@ const crearHistoria = async (req, res) => {
     })
 
     const historiaCompleta = await HistoriaClinica.findOne({
-      where: { id: historia.id },
+      where: { id: historia.id, clinicaId },
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },

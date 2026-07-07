@@ -220,7 +220,7 @@ const registro = async (req, res) => {
 
     const [clinicaPorEmail, usuarioPorEmail, clinicaPorNit] = await Promise.all([
       Clinica.findOne({ where: { email: emailContactoClinica } }),
-      Usuario.findOne({ where: { email: emailAdministrador } }),
+      Usuario.findOne({ where: { email: emailAdministrador }, sinTenant: true }),
       nitNormalizado
         ? Clinica.findOne({ where: { nit: nitNormalizado } })
         : Promise.resolve(null),
@@ -358,6 +358,7 @@ const login = async (req, res) => {
 
     const usuario = await Usuario.findOne({
       where: { email },
+      sinTenant: true,
       include: [
         {
           model: Clinica,
@@ -496,6 +497,7 @@ const refresh = async (req, res) => {
           revocado: false,
           expiracion: { [Op.gt]: new Date() },
         },
+        sinTenant: true,
       }
     )
 
@@ -505,12 +507,13 @@ const refresh = async (req, res) => {
       // la misma cadena). Revocamos toda la familia de sesiones del usuario.
       const tokenReutilizado = await RefreshToken.findOne({
         where: { token: refreshToken },
+        sinTenant: true,
       })
 
       if (tokenReutilizado) {
         await RefreshToken.update(
           { revocado: true },
-          { where: { usuarioId: tokenReutilizado.usuarioId, revocado: false } }
+          { where: { usuarioId: tokenReutilizado.usuarioId, revocado: false }, sinTenant: true }
         )
 
         await registrarAuditoria({
@@ -530,12 +533,14 @@ const refresh = async (req, res) => {
 
     const tokenDB = await RefreshToken.findOne({
       where: { token: refreshToken },
+      sinTenant: true,
     })
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
 
     const usuario = await Usuario.findOne({
       where: { id: tokenDB.usuarioId || decoded.id },
+      sinTenant: true,
       include: [
         {
           model: Clinica,
@@ -605,7 +610,7 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await RefreshToken.update(
         { revocado: true },
-        { where: { token: refreshToken } }
+        { where: { token: refreshToken }, sinTenant: true }
       )
     }
 
@@ -625,7 +630,7 @@ const logoutAll = async (req, res) => {
 
     await RefreshToken.update(
       { revocado: true },
-      { where: { usuarioId, revocado: false } }
+      { where: { usuarioId, revocado: false }, sinTenant: true }
     )
 
     clearAuthCookies(res)
@@ -651,6 +656,7 @@ const me = async (req, res) => {
   try {
     const usuario = await Usuario.findOne({
       where: { id: req.auth?.usuarioId || req.usuario.id },
+      sinTenant: true,
       attributes: { exclude: ['password'] },
       include: [
         {

@@ -133,6 +133,9 @@ const obtenerAuditoria = async (req, res) => {
           where: { id: { [Op.in]: usuarioIds } },
           attributes: ['id', 'nombre', 'email'],
           raw: true,
+          // Los ids salen de logs ya filtrados por clínica; puede incluir
+          // superadmins (clinicaId null) que actuaron sobre la clínica.
+          sinTenant: true,
         })
       : []
 

@@ -284,6 +284,7 @@ const editarUsuario = async (req, res) => {
           email: emailNormalizado,
           id: { [Op.ne]: usuario.id },
         },
+        sinTenant: true,
       })
 
       if (emailEnUso) {

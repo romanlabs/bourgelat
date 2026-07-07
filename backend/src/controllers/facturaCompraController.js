@@ -132,7 +132,8 @@ const crearFacturaCompra = async (req, res) => {
       return nuevaFactura;
     });
 
-    const facturaConItems = await FacturaCompra.findByPk(factura.id, {
+    const facturaConItems = await FacturaCompra.findOne({
+      where: { id: factura.id, clinicaId },
       include: [{ model: FacturaCompraItem, as: 'items', include: [{ model: Producto, as: 'producto', attributes: ['id', 'nombre', 'unidadMedida'] }] }],
     });
 
@@ -182,7 +183,8 @@ const editarFacturaCompra = async (req, res) => {
       }
     });
 
-    const facturaActualizada = await FacturaCompra.findByPk(id, {
+    const facturaActualizada = await FacturaCompra.findOne({
+      where: { id, clinicaId },
       include: [{ model: FacturaCompraItem, as: 'items', include: [{ model: Producto, as: 'producto', attributes: ['id', 'nombre', 'unidadMedida'] }] }],
     });
 
