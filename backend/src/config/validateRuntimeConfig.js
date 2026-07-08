@@ -40,6 +40,36 @@ const isHttpsUrl = (value) => {
   return parsed?.protocol === 'https:'
 }
 
+// Valida el formato del keyring ENCRYPTION_KEYS ("v2:clave,v1:clave").
+// Devuelve un mensaje de error o null si es valido.
+const validarEncryptionKeys = (value) => {
+  const versiones = new Set()
+
+  for (const entrada of String(value).split(',')) {
+    const idx = entrada.indexOf(':')
+    if (idx === -1) {
+      return 'cada entrada debe tener formato "version:clave" (ej. v1:...).'
+    }
+
+    const version = entrada.slice(0, idx).trim()
+    const clave = entrada.slice(idx + 1).trim()
+
+    if (!/^v\d+$/.test(version)) {
+      return `la version '${version}' es invalida (usar v1, v2, ...).`
+    }
+    if (versiones.has(version)) {
+      return `la version '${version}' esta duplicada.`
+    }
+    versiones.add(version)
+
+    if (!isStrongSecret(clave)) {
+      return `la clave de '${version}' debe ser aleatoria y de al menos 32 caracteres.`
+    }
+  }
+
+  return null
+}
+
 const isLocalOrigin = (value) => {
   const parsed = parseUrl(value)
 
@@ -149,6 +179,27 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
 
   if (env.INTEGRACIONES_SECRET && env.INTEGRACIONES_SECRET === env.JWT_SECRET) {
     errors.push('INTEGRACIONES_SECRET no debe reutilizar JWT_SECRET.')
+  }
+
+  if (env.ENCRYPTION_KEYS) {
+    const errorKeyring = validarEncryptionKeys(env.ENCRYPTION_KEYS)
+    if (errorKeyring) {
+      errors.push(`ENCRYPTION_KEYS invalido: ${errorKeyring}`)
+    }
+  } else {
+    warnings.push(
+      'ENCRYPTION_KEYS no esta definido: el cifrado de PII usa la clave derivada de INTEGRACIONES_SECRET/JWT_SECRET (modo legacy). Rotar esos secretos en este modo hace indescifrables los datos; configura claves dedicadas segun docs/secrets-rotation.md.'
+    )
+  }
+
+  if (env.BLIND_INDEX_KEY) {
+    if (!isStrongSecret(env.BLIND_INDEX_KEY)) {
+      errors.push('BLIND_INDEX_KEY debe ser un secreto aleatorio de al menos 32 caracteres.')
+    }
+  } else {
+    warnings.push(
+      'BLIND_INDEX_KEY no esta definido: los indices ciegos usan la clave legacy. Configura una clave dedicada y corre `npm run cifrado:rotar` para re-indexar; ver docs/secrets-rotation.md.'
+    )
   }
 
   config.frontendOrigins.forEach((origin) => {
