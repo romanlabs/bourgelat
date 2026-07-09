@@ -4,6 +4,7 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const Factura = require('./Factura')
 const Producto = require('./Producto')
+const ServicioClinico = require('./ServicioClinico')
 const { registrarHooksCifrado } = require('../config/modelEncryption')
 
 const FacturaItem = sequelize.define('FacturaItem', {
@@ -49,6 +50,15 @@ const FacturaItem = sequelize.define('FacturaItem', {
       key: 'id',
     },
   },
+  servicioClinicoId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: 'Servicio del catalogo clinico facturado, cuando tipo=servicio',
+    references: {
+      model: ServicioClinico,
+      key: 'id',
+    },
+  },
   facturaId: {
     type: DataTypes.UUID,
     allowNull: false,
@@ -64,6 +74,7 @@ const FacturaItem = sequelize.define('FacturaItem', {
   indexes: [
     { fields: ['facturaId'] },
     { fields: ['productoId'] },
+    { fields: ['servicioClinicoId'] },
   ],
 })
 
@@ -75,5 +86,7 @@ Factura.hasMany(FacturaItem, { foreignKey: 'facturaId', as: 'items' })
 FacturaItem.belongsTo(Factura, { foreignKey: 'facturaId', as: 'factura' })
 Producto.hasMany(FacturaItem, { foreignKey: 'productoId', as: 'itemsFactura' })
 FacturaItem.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' })
+ServicioClinico.hasMany(FacturaItem, { foreignKey: 'servicioClinicoId', as: 'itemsFactura' })
+FacturaItem.belongsTo(ServicioClinico, { foreignKey: 'servicioClinicoId', as: 'servicioClinico' })
 
 module.exports = FacturaItem

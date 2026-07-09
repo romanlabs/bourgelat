@@ -4,6 +4,10 @@ const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
 const MovimientoInventario = require('../models/MovimientoInventario')
+const ServicioClinico = require('../models/ServicioClinico')
+const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo')
+const InsumoClinico = require('../models/InsumoClinico')
+const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
@@ -496,6 +500,46 @@ const crearFactura = async (req, res) => {
       }
 
       let producto = null
+      let insumosConsumo = null
+      if (item.tipo === 'servicio' && item.servicioClinicoId) {
+        const servicioClinico = await ServicioClinico.findOne({
+          where: { id: item.servicioClinicoId, clinicaId, activo: true },
+          include: [{
+            model: ServicioClinicoInsumo,
+            as: 'insumos',
+          }],
+          transaction,
+        })
+
+        if (!servicioClinico) {
+          await transaction.rollback()
+          return res.status(404).json({ message: `Servicio no encontrado: ${item.descripcion}` })
+        }
+
+        insumosConsumo = []
+        for (const receta of servicioClinico.insumos) {
+          const cantidadRequerida = Number(receta.cantidadConsumida) * cantidad
+
+          const insumoClinico = await InsumoClinico.findOne({
+            where: { id: receta.insumoClinicoId, clinicaId },
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          })
+
+          if (!insumoClinico) {
+            await transaction.rollback()
+            return res.status(404).json({ message: `Insumo clinico no encontrado para el servicio: ${item.descripcion}` })
+          }
+
+          if (Number(insumoClinico.stock) < cantidadRequerida) {
+            await transaction.rollback()
+            return res.status(400).json({ message: `Stock insuficiente de "${insumoClinico.nombre}" para: ${item.descripcion}` })
+          }
+
+          insumosConsumo.push({ insumoClinico, cantidadRequerida })
+        }
+      }
+
       if (item.tipo === 'producto' && item.productoId) {
         if (!Number.isInteger(cantidad)) {
           await transaction.rollback()
@@ -539,6 +583,7 @@ const crearFactura = async (req, res) => {
         descuento: descuentoItem,
         subtotal: itemSubtotal,
         producto,
+        insumosConsumo,
       })
     }
 
@@ -577,6 +622,7 @@ const crearFactura = async (req, res) => {
         descuento: item.descuento || 0,
         subtotal: item.subtotal,
         productoId: item.productoId || null,
+        servicioClinicoId: item.servicioClinicoId || null,
         facturaId: factura.id,
       }, { transaction })
 
@@ -601,6 +647,33 @@ const crearFactura = async (req, res) => {
           usuarioId: req.usuario.id,
           clinicaId,
         }, { transaction })
+      }
+
+      if (item.tipo === 'servicio' && item.insumosConsumo) {
+        for (const { insumoClinico, cantidadRequerida } of item.insumosConsumo) {
+          const stockAnterior = Number(insumoClinico.stock)
+          const stockNuevo = stockAnterior - cantidadRequerida
+
+          await insumoClinico.update(
+            { stock: stockNuevo },
+            { transaction }
+          )
+
+          await MovimientoInventarioClinico.create({
+            tipo: 'salida',
+            cantidad: cantidadRequerida,
+            stockAnterior,
+            stockNuevo,
+            motivo: 'uso_servicio',
+            observaciones: `Consumo por factura ${numero}`,
+            precioUnitario: insumoClinico.precioUnitarioBase,
+            insumoClinicoId: insumoClinico.id,
+            usuarioId: req.usuario.id,
+            clinicaId,
+            facturaId: factura.id,
+            servicioClinicoId: item.servicioClinicoId,
+          }, { transaction })
+        }
       }
     }
 
@@ -1060,6 +1133,45 @@ const anularFactura = async (req, res) => {
             clinicaId,
           }, { transaction })
         }
+      }
+    }
+
+    const movimientosClinicosFactura = await MovimientoInventarioClinico.findAll({
+      where: { facturaId: factura.id, motivo: 'uso_servicio' },
+      transaction,
+    })
+
+    for (const movimientoOriginal of movimientosClinicosFactura) {
+      const insumoClinico = await InsumoClinico.findOne({
+        where: { id: movimientoOriginal.insumoClinicoId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (insumoClinico) {
+        const cantidad = Number(movimientoOriginal.cantidad)
+        const stockAnterior = Number(insumoClinico.stock)
+        const stockNuevo = stockAnterior + cantidad
+
+        await insumoClinico.update(
+          { stock: stockNuevo },
+          { transaction }
+        )
+
+        await MovimientoInventarioClinico.create({
+          tipo: 'entrada',
+          cantidad,
+          stockAnterior,
+          stockNuevo,
+          motivo: 'devolucion',
+          observaciones: `Reingreso por anulacion de factura ${factura.numero}`,
+          precioUnitario: movimientoOriginal.precioUnitario,
+          insumoClinicoId: insumoClinico.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+          facturaId: factura.id,
+          servicioClinicoId: movimientoOriginal.servicioClinicoId,
+        }, { transaction })
       }
     }
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Barcode, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
+import { Barcode, ClipboardList, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
 import { PRODUCT_CATEGORIES } from './finanzasConstants'
 
 const formatCOP = (value) =>
@@ -12,7 +12,12 @@ export default function ProductCommandSearch({
   setCategoriaFiltro,
   productosDisponibles,
   productosQuery,
+  servicioSearch,
+  setServicioSearch,
+  serviciosDisponibles = [],
+  serviciosQuery,
   addProductToInvoice,
+  addServiceFromCatalog,
   puedeConsultarInventario,
   barcodeInput,
   setBarcodeInput,
@@ -81,7 +86,8 @@ export default function ProductCommandSearch({
         <div className="flex gap-0">
           {[
             { id: 'productos', label: 'Productos', icon: Package },
-            { id: 'servicio', label: 'Servicio manual', icon: Stethoscope },
+            { id: 'servicios', label: 'Servicios', icon: ClipboardList },
+            { id: 'servicio', label: 'Servicio libre', icon: Stethoscope },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -250,6 +256,70 @@ export default function ProductCommandSearch({
                     </button>
                   )
                 })}
+              </div>
+            )}
+          </div>
+        </>
+      ) : activeTab === 'servicios' ? (
+        <>
+          {/* Barra de búsqueda del catalogo de servicios */}
+          <div className="border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2 border border-border bg-background px-3 py-2.5 focus-within:border-primary">
+              <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={servicioSearch}
+                onChange={(e) => setServicioSearch(e.target.value)}
+                placeholder="Buscar servicio del catalogo..."
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              {servicioSearch && (
+                <button type="button" onClick={() => setServicioSearch('')} className="shrink-0 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {serviciosQuery?.isLoading ? (
+              <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-28 animate-pulse border border-border bg-muted" />
+                ))}
+              </div>
+            ) : serviciosDisponibles.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 py-12 text-center">
+                <ClipboardList className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">
+                  {servicioSearch ? 'Sin resultados para ese filtro.' : 'Aun no hay servicios en el catalogo.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-2 grid-cols-2 lg:grid-cols-3">
+                {serviciosDisponibles.map((servicio) => (
+                  <button
+                    key={servicio.id}
+                    type="button"
+                    onClick={() => addServiceFromCatalog(servicio)}
+                    className="group relative flex flex-col items-start gap-1 border border-border bg-card p-3 text-left transition hover:border-primary hover:bg-primary/5"
+                  >
+                    <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground">
+                      {servicio.nombre}
+                    </p>
+                    <p className="text-sm font-bold text-primary">
+                      {formatCOP(servicio.precioVenta || 0)}
+                    </p>
+                    {servicio.categoria && (
+                      <p className="text-xs text-muted-foreground">{servicio.categoria}</p>
+                    )}
+                    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center border border-primary/30 bg-primary/10 text-primary opacity-0 transition group-hover:opacity-100">
+                      <Plus className="h-3 w-3" />
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
