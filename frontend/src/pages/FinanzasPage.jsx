@@ -41,12 +41,8 @@ import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
 import ReporteDescuadresPanel from '@/features/caja/ReporteDescuadresPanel'
 import { EmptyState } from '@/components/shared/EmptyState'
-import Paginacion from '@/components/shared/Paginacion'
 import { hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
-import ServicioDrawer from '@/features/servicios/ServicioDrawer'
-import { useServicios } from '@/features/servicios/useServicios'
-import { useInsumosClinicos } from '@/features/inventarioClinico/useInsumosClinicos'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -54,7 +50,6 @@ const TABS = [
   { id: 'gastos', label: 'Gastos y rentabilidad' },
   { id: 'turnos', label: 'Turnos de caja' },
   { id: 'historial', label: 'Historial' },
-  { id: 'servicios', label: 'Servicios' },
 ]
 
 
@@ -176,8 +171,6 @@ export default function FinanzasPage() {
       setVentaExitosa(true)
     },
   })
-  const serviciosHook = useServicios({ enabled: puedeVerFinanzas })
-  const insumosClinicosSelectorHook = useInsumosClinicos({ enabled: puedeVerFinanzas && activeTab === 'servicios' })
 
   if (!rolPermitido) {
     return <RestrictedFinancePage />
@@ -878,115 +871,6 @@ export default function FinanzasPage() {
             </div>
           )}
 
-          {/* ── Tab: Servicios ── */}
-          {activeTab === 'servicios' && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="relative max-w-sm flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={serviciosHook.buscar}
-                    onChange={(e) => { serviciosHook.setBuscar(e.target.value); serviciosHook.setPagina(1) }}
-                    placeholder="Buscar servicio por nombre"
-                    aria-label="Buscar servicios"
-                    className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={serviciosHook.openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nuevo servicio
-                </button>
-              </div>
-
-              <DataTable
-                title="Catalogo de servicios"
-                subtitle="Servicios predeterminados que, al facturarse, descuentan automaticamente el inventario clinico."
-                rows={serviciosHook.serviciosRows}
-                columns={[
-                  { key: 'nombre', label: 'Servicio' },
-                  { key: 'categoria', label: 'Categoria' },
-                  { key: 'precioVenta', label: 'Precio de venta' },
-                  { key: 'costoEstimado', label: 'Costo estimado' },
-                  { key: 'insumos', label: 'Insumos en receta' },
-                  {
-                    key: 'accion',
-                    label: 'Acciones',
-                    render: (row) => (
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => serviciosHook.openEditDrawer(row.raw)}
-                          className="text-sm font-semibold text-slate-700 hover:text-slate-900"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => serviciosHook.openConfirmDelete(row.raw)}
-                          className="text-sm font-semibold text-red-600 hover:text-red-800"
-                        >
-                          Desactivar
-                        </button>
-                      </div>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay servicios en el catalogo"
-                emptyBody="Crea el primer servicio y define que insumos clinicos consume."
-              />
-
-              <Paginacion
-                pagina={serviciosHook.serviciosQuery.data?.paginaActual || 1}
-                paginas={serviciosHook.serviciosQuery.data?.paginas || 1}
-                onChange={serviciosHook.setPagina}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      <ServicioDrawer
-        open={serviciosHook.drawerOpen}
-        editingServicio={serviciosHook.editingServicio}
-        onClose={serviciosHook.closeDrawer}
-        onSubmit={serviciosHook.handleDrawerSubmit}
-        isPending={serviciosHook.isPendingServicio}
-        insumosDisponibles={insumosClinicosSelectorHook.insumosSelectorQuery.data?.insumos || []}
-      />
-
-      {serviciosHook.confirmDialog.open && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm border border-border bg-card p-6 shadow-xl">
-            <p className="text-sm font-semibold text-foreground">
-              Desactivar &ldquo;{serviciosHook.confirmDialog.servicio?.nombre}&rdquo;
-            </p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Esta accion retirara el servicio del catalogo activo. Las facturas ya emitidas no se ven afectadas.
-            </p>
-            <div className="mt-5 flex gap-3">
-              <button
-                type="button"
-                onClick={serviciosHook.confirmDelete}
-                disabled={serviciosHook.isPendingDelete}
-                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-              >
-                {serviciosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
-              </button>
-              <button
-                type="button"
-                onClick={() => serviciosHook.setConfirmDialog({ open: false, servicio: null })}
-                disabled={serviciosHook.isPendingDelete}
-                className="flex-1 border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
