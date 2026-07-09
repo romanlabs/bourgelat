@@ -45,16 +45,17 @@ export default function PosModal({
     ownerSearch, setOwnerSearch,
     productSearch, setProductSearch,
     categoriaFiltro, setCategoriaFiltro,
+    servicioSearch, setServicioSearch,
     barcodeInput, setBarcodeInput,
     invoiceForm, setInvoiceForm,
-    productosDisponibles,
+    productosDisponibles, serviciosDisponibles,
     selectedOwnerData, selectOwner,
     invoiceTotals,
-    propietariosQuery, productosQuery,
+    propietariosQuery, productosQuery, serviciosQuery,
     crearFacturaMutation,
     buscarProductoPorBarcodeMutation,
     handleCrearFactura, handleBarcodeScan,
-    addServiceItem, addProductToInvoice,
+    addServiceFromCatalog, addProductToInvoice,
     removeInvoiceItem, updateInvoiceItem,
   } = facturacionHook
 
@@ -149,8 +150,12 @@ export default function PosModal({
                       setCategoriaFiltro={setCategoriaFiltro}
                       productosDisponibles={productosDisponibles}
                       productosQuery={productosQuery}
+                      servicioSearch={servicioSearch}
+                      setServicioSearch={setServicioSearch}
+                      serviciosDisponibles={serviciosDisponibles}
+                      serviciosQuery={serviciosQuery}
                       addProductToInvoice={addProductToInvoice}
-                      addServiceItem={addServiceItem}
+                      addServiceFromCatalog={addServiceFromCatalog}
                       setInvoiceForm={setInvoiceForm}
                       puedeConsultarInventario={puedeConsultarInventario}
                       barcodeInput={barcodeInput}
@@ -207,8 +212,12 @@ export default function PosModal({
                         setCategoriaFiltro={setCategoriaFiltro}
                         productosDisponibles={productosDisponibles}
                         productosQuery={productosQuery}
+                        servicioSearch={servicioSearch}
+                        setServicioSearch={setServicioSearch}
+                        serviciosDisponibles={serviciosDisponibles}
+                        serviciosQuery={serviciosQuery}
                         addProductToInvoice={(p) => { addProductToInvoice(p); setMobilePane('carrito') }}
-                        addServiceItem={() => { addServiceItem(); setMobilePane('carrito') }}
+                        addServiceFromCatalog={(s) => { addServiceFromCatalog(s); setMobilePane('carrito') }}
                         setInvoiceForm={setInvoiceForm}
                         puedeConsultarInventario={puedeConsultarInventario}
                         barcodeInput={barcodeInput}
