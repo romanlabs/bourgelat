@@ -91,6 +91,16 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar la compra.')),
   })
 
+  const registrarMermaMutation = useMutation({
+    mutationFn: ({ insumoId, payload }) => inventarioClinicoApi.registrarMovimiento(insumoId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Merma registrada exitosamente')
+      closeDrawer()
+      invalidateInventarioClinicoQueries(queryClient)
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar la merma.')),
+  })
+
   const insumosRows = useMemo(
     () =>
       (insumosQuery.data?.insumos || []).map((i) => ({
@@ -175,6 +185,18 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     })
   }
 
+  function handleRegistrarMerma(insumoId, { cantidad, motivo, observaciones }) {
+    registrarMermaMutation.mutate({
+      insumoId,
+      payload: {
+        tipo: 'salida',
+        motivo,
+        cantidad,
+        observaciones: observaciones?.trim() || undefined,
+      },
+    })
+  }
+
   return {
     insumosQuery,
     insumosSelectorQuery,
@@ -182,6 +204,7 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     isPendingInsumo: crearInsumoMutation.isPending || editarInsumoMutation.isPending,
     isPendingDelete: eliminarInsumoMutation.isPending,
     isPendingCompra: registrarCompraMutation.isPending,
+    isPendingMerma: registrarMermaMutation.isPending,
     buscar, setBuscar,
     categoria, setCategoria,
     bajoStock, setBajoStock,
@@ -196,5 +219,6 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     confirmDelete,
     handleDrawerSubmit,
     handleRegistrarCompra,
+    handleRegistrarMerma,
   }
 }

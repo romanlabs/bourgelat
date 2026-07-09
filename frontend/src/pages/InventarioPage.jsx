@@ -1090,8 +1090,10 @@ export default function InventarioPage() {
         onClose={insumosClinicosHook.closeDrawer}
         onSubmit={insumosClinicosHook.handleDrawerSubmit}
         onRegistrarCompra={insumosClinicosHook.handleRegistrarCompra}
+        onRegistrarMerma={insumosClinicosHook.handleRegistrarMerma}
         isPending={insumosClinicosHook.isPendingInsumo}
         isPendingCompra={insumosClinicosHook.isPendingCompra}
+        isPendingMerma={insumosClinicosHook.isPendingMerma}
       />
 
       {/* Drawer del catalogo de servicios */}
