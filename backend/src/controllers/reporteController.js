@@ -22,7 +22,7 @@ const reporteIngresos = async (req, res) => {
     const facturas = await Factura.findAll({
       where: {
         clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada'] },
+        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
         fecha: { [Op.between]: [fechaInicio, fechaFin] },
       },
       attributes: ['id', 'numero', 'fecha', 'total', 'metodoPago'],
@@ -157,7 +157,7 @@ const dashboardGeneral = async (req, res) => {
     const ingresosMes = await Factura.sum('total', {
       where: {
         clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada'] },
+        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
         fecha: { [Op.between]: [inicioMes, finMes] },
       },
     });
@@ -214,7 +214,7 @@ const reporteRentabilidad = async (req, res) => {
       Factura.findAll({
         where: {
           clinicaId,
-          estado: { [Op.in]: ['emitida', 'pagada'] },
+          estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
           fecha: { [Op.between]: [fechaInicio, fechaFin] },
         },
         attributes: ['fecha', 'total'],
