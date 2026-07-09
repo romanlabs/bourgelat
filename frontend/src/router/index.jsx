@@ -19,7 +19,6 @@ const UsuariosPage = lazy(() => import('@/pages/UsuariosPage'))
 const AuditoriaPage = lazy(() => import('@/pages/AuditoriaPage'))
 const InventarioPage = lazy(() => import('@/pages/InventarioPage'))
 const FinanzasPage = lazy(() => import('@/pages/FinanzasPage'))
-const AdministracionPage = lazy(() => import('@/pages/AdministracionPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
@@ -92,7 +91,6 @@ const router = createBrowserRouter([
           { path: '/auditoria', element: <Suspense fallback={<Loader />}><AuditoriaPage /></Suspense> },
           { path: '/inventario', element: <Suspense fallback={<Loader />}><InventarioPage /></Suspense> },
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage /></Suspense> },
-          { path: '/administracion', element: <Suspense fallback={<Loader />}><AdministracionPage /></Suspense> },
         ],
       },
       { path: '/',       element: <HostAwareHome /> },

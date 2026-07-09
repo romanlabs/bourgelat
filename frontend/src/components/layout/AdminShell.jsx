@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BookOpenText,
   Boxes,
   Building2,
   CalendarClock,
@@ -34,7 +33,6 @@ const NAV_ITEMS = [
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
-  { key: 'administracion', label: 'Libro', to: '/administracion', icon: BookOpenText },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
   { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: Users },
   { key: 'configuracion', label: 'Clinica', to: '/configuracion', icon: Building2 },
@@ -51,7 +49,7 @@ const NAV_SECTIONS = [
   {
     key: 'gestion',
     label: 'Gestion administrativa',
-    items: ['finanzas', 'administracion', 'inventario', 'usuarios'],
+    items: ['finanzas', 'inventario', 'usuarios'],
   },
   {
     key: 'control',
