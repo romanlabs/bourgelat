@@ -133,6 +133,7 @@ const obtenerResumenGlobal = async (req, res) => {
         },
       }),
       Suscripcion.findAll({
+        sinTenant: true,
         where: {
           estado: {
             [Op.in]: ESTADOS_SUSCRIPCION_VIGENTES,
@@ -170,6 +171,7 @@ const obtenerResumenGlobal = async (req, res) => {
         ],
       }),
       Factura.sum('total', {
+        sinTenant: true,
         where: {
           fecha: {
             [Op.between]: [serializeDateOnly(inicioMes), serializeDateOnly(finMes)],
@@ -180,6 +182,7 @@ const obtenerResumenGlobal = async (req, res) => {
         },
       }),
       Factura.findAll({
+        sinTenant: true,
         where: {
           fecha: {
             [Op.between]: [serializeDateOnly(inicioMes), serializeDateOnly(finMes)],
@@ -193,6 +196,7 @@ const obtenerResumenGlobal = async (req, res) => {
         raw: true,
       }),
       IntegracionFacturacion.findAll({
+        sinTenant: true,
         attributes: [
           'clinicaId',
           'activa',
@@ -204,6 +208,7 @@ const obtenerResumenGlobal = async (req, res) => {
         raw: true,
       }),
       AuditoriaLog.count({
+        sinTenant: true,
         where: {
           createdAt: {
             [Op.gte]: inicioSemana,
@@ -211,6 +216,7 @@ const obtenerResumenGlobal = async (req, res) => {
         },
       }),
       AuditoriaLog.count({
+        sinTenant: true,
         where: {
           createdAt: {
             [Op.gte]: inicioSemana,
@@ -219,6 +225,7 @@ const obtenerResumenGlobal = async (req, res) => {
         },
       }),
       AuditoriaLog.findAll({
+        sinTenant: true,
         where: {
           createdAt: {
             [Op.gte]: inicioSemana,
@@ -402,6 +409,7 @@ const listarClinicas = async (req, res) => {
         raw: true,
       }),
       Suscripcion.findAll({
+        sinTenant: true,
         where: { estado: { [Op.in]: ESTADOS_SUSCRIPCION_VIGENTES } },
         order: [
           ['clinicaId', 'ASC'],

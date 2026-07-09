@@ -231,7 +231,8 @@ const cancelarSuscripcion = async (req, res) => {
     const { id } = req.params
 
     const resultado = await sequelize.transaction(async (transaction) => {
-      const suscripcion = await Suscripcion.findOne({ where: { id }, transaction })
+      // Ruta global de superadmin: cancela suscripciones de cualquier clínica.
+      const suscripcion = await Suscripcion.findOne({ where: { id }, transaction, sinTenant: true })
 
       if (!suscripcion) {
         throw new Error('Suscripcion no encontrada')

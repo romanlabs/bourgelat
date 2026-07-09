@@ -92,7 +92,7 @@ const crearCita = async (req, res) => {
     });
 
     const citaCompleta = await Cita.findOne({
-      where: { id: cita.id },
+      where: { id: cita.id, clinicaId },
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
