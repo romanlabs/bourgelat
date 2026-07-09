@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { invalidateInventarioQueries } from '@/features/inventario/inventarioUtils'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
+import { serviciosApi } from '@/features/servicios/serviciosApi'
 import { finanzasApi } from './finanzasApi'
 
 const createBlankInvoiceItem = () => ({
@@ -13,6 +14,7 @@ const createBlankInvoiceItem = () => ({
   cantidad: '1',
   precioUnitario: '',
   productoId: '',
+  servicioClinicoId: '',
   stock: null,
   precioMinimo: 0,
 })
@@ -52,6 +54,7 @@ export function useFinanzasFacturacion({
   const queryClient = useQueryClient()
   const [ownerSearch, setOwnerSearch] = useState('')
   const [productSearch, setProductSearch] = useState('')
+  const [servicioSearch, setServicioSearch] = useState('')
   const [barcodeInput, setBarcodeInput] = useState('')
   const [invoiceForm, setInvoiceForm] = useState(buildInitialForm)
   const [selectedOwnerData, setSelectedOwnerData] = useState(null)
@@ -60,6 +63,7 @@ export function useFinanzasFacturacion({
 
   const deferredOwnerSearch = useDeferredValue(ownerSearch)
   const deferredProductSearch = useDeferredValue(productSearch)
+  const deferredServicioSearch = useDeferredValue(servicioSearch)
 
   const propietariosQuery = useQuery({
     queryKey: ['finanzas-propietarios', deferredOwnerSearch],
@@ -74,6 +78,14 @@ export function useFinanzasFacturacion({
     queryFn: () =>
       inventarioApi.obtenerProductos({ buscar: deferredProductSearch || undefined, limite: 8 }),
     enabled: enabled && puedeConsultarInventario,
+    placeholderData: (prev) => prev,
+  })
+
+  const serviciosQuery = useQuery({
+    queryKey: ['finanzas-servicios', deferredServicioSearch],
+    queryFn: () =>
+      serviciosApi.obtenerServicios({ buscar: deferredServicioSearch || undefined, limite: 12 }),
+    enabled,
     placeholderData: (prev) => prev,
   })
 
@@ -140,6 +152,7 @@ export function useFinanzasFacturacion({
 
   const propietariosDisponibles = propietariosQuery.data?.propietarios || []
   const productosDisponibles = productosQuery.data?.productos || []
+  const serviciosDisponibles = serviciosQuery.data?.servicios || []
 
   const selectOwner = (propietario) => {
     setInvoiceForm((curr) => ({ ...curr, propietarioId: propietario.id }))
@@ -172,6 +185,26 @@ export function useFinanzasFacturacion({
     setInvoiceForm((curr) => ({
       ...curr,
       items: curr.items.filter((item) => item.id !== itemId),
+    }))
+  }
+
+  const addServiceFromCatalog = (servicio) => {
+    setInvoiceForm((curr) => ({
+      ...curr,
+      items: [
+        ...curr.items,
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          tipo: 'servicio',
+          descripcion: servicio.nombre,
+          cantidad: '1',
+          precioUnitario: String(servicio.precioVenta || 0),
+          productoId: '',
+          servicioClinicoId: servicio.id,
+          stock: null,
+          precioMinimo: 0,
+        },
+      ],
     }))
   }
 
@@ -212,6 +245,7 @@ export function useFinanzasFacturacion({
         precioUnitario: toAmount(item.precioUnitario),
         tipo: item.tipo,
         productoId: item.productoId || undefined,
+        servicioClinicoId: item.servicioClinicoId || undefined,
       }))
       .filter((item) => item.descripcion && item.cantidad > 0)
 
@@ -268,12 +302,15 @@ export function useFinanzasFacturacion({
     setOwnerSearch,
     productSearch,
     setProductSearch,
+    servicioSearch,
+    setServicioSearch,
     barcodeInput,
     setBarcodeInput,
     invoiceForm,
     setInvoiceForm,
     propietariosDisponibles,
     productosDisponibles,
+    serviciosDisponibles,
     selectedOwnerData,
     selectOwner,
     tutorDrawerOpen,
@@ -283,11 +320,13 @@ export function useFinanzasFacturacion({
     invoiceTotals,
     propietariosQuery,
     productosQuery,
+    serviciosQuery,
     crearFacturaMutation,
     buscarProductoPorBarcodeMutation,
     handleCrearFactura,
     handleBarcodeScan,
     addServiceItem,
+    addServiceFromCatalog,
     addProductToInvoice,
     removeInvoiceItem,
     updateInvoiceItem,

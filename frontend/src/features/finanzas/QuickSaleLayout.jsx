@@ -22,6 +22,8 @@ export default function QuickSaleLayout({
     setOwnerSearch,
     productSearch,
     setProductSearch,
+    servicioSearch,
+    setServicioSearch,
     categoriaFiltro,
     setCategoriaFiltro,
     barcodeInput,
@@ -29,16 +31,19 @@ export default function QuickSaleLayout({
     invoiceForm,
     setInvoiceForm,
     productosDisponibles,
+    serviciosDisponibles,
     selectedOwnerData,
     selectOwner,
     invoiceTotals,
     propietariosQuery,
     productosQuery,
+    serviciosQuery,
     crearFacturaMutation,
     buscarProductoPorBarcodeMutation,
     handleCrearFactura,
     handleBarcodeScan,
     addServiceItem,
+    addServiceFromCatalog,
     addProductToInvoice,
     removeInvoiceItem,
     updateInvoiceItem,
@@ -71,8 +76,13 @@ export default function QuickSaleLayout({
             setCategoriaFiltro={setCategoriaFiltro}
             productosDisponibles={productosDisponibles}
             productosQuery={productosQuery}
+            servicioSearch={servicioSearch}
+            setServicioSearch={setServicioSearch}
+            serviciosDisponibles={serviciosDisponibles}
+            serviciosQuery={serviciosQuery}
             addProductToInvoice={addProductToInvoice}
             addServiceItem={addServiceItem}
+            addServiceFromCatalog={addServiceFromCatalog}
             setInvoiceForm={setInvoiceForm}
             puedeConsultarInventario={puedeConsultarInventario}
             barcodeInput={barcodeInput}
@@ -112,8 +122,13 @@ export default function QuickSaleLayout({
             setCategoriaFiltro={setCategoriaFiltro}
             productosDisponibles={productosDisponibles}
             productosQuery={productosQuery}
+            servicioSearch={servicioSearch}
+            setServicioSearch={setServicioSearch}
+            serviciosDisponibles={serviciosDisponibles}
+            serviciosQuery={serviciosQuery}
             addProductToInvoice={addProductToInvoice}
             addServiceItem={addServiceItem}
+            addServiceFromCatalog={addServiceFromCatalog}
             setInvoiceForm={setInvoiceForm}
             puedeConsultarInventario={puedeConsultarInventario}
             barcodeInput={barcodeInput}

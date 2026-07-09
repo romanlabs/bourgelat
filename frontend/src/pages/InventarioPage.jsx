@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CircleAlert, PackagePlus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart } from 'lucide-react'
+import { CircleAlert, PackagePlus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -24,10 +24,14 @@ import {
   MOVEMENT_REASON_OPTIONS,
 } from '@/features/inventario/useInventarioMovimientos'
 import { useFacturaCompra, ESTADO_COLORS } from '@/features/inventario/useFacturaCompra'
+import InsumoClinicoDrawer from '@/features/inventarioClinico/InsumoClinicoDrawer'
+import { useInsumosClinicos, CATEGORY_OPTIONS as CLINICO_CATEGORY_OPTIONS } from '@/features/inventarioClinico/useInsumosClinicos'
+import { useMovimientosClinicos } from '@/features/inventarioClinico/useMovimientosClinicos'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'productos', label: 'Productos' },
+  { id: 'inventario-clinico', label: 'Inventario Clinico' },
   { id: 'movimientos', label: 'Movimientos' },
   { id: 'facturas-compra', label: 'Facturas de Compra' },
 ]
@@ -109,6 +113,17 @@ export default function InventarioPage() {
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
+      }
+    },
+  })
+
+  const movimientosClinicosHook = useMovimientosClinicos({ enabled: puedeVerInventario })
+
+  const insumosClinicosHook = useInsumosClinicos({
+    enabled: puedeVerInventario,
+    onInsumoDeleted: (insumoId) => {
+      if (movimientosClinicosHook.selectedInsumo?.id === insumoId) {
+        movimientosClinicosHook.clearSelection()
       }
     },
   })
@@ -438,6 +453,168 @@ export default function InventarioPage() {
                 pagina={productosQuery.data?.paginaActual || 1}
                 paginas={productosQuery.data?.paginas || 1}
                 onChange={setPaginaProductos}
+              />
+            </div>
+          )}
+
+          {/* Tab: Inventario Clinico */}
+          {activeTab === 'inventario-clinico' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-1 flex-col gap-3 min-w-0">
+                  <div className="relative max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      id="buscar-insumos-clinicos"
+                      type="text"
+                      value={insumosClinicosHook.buscar}
+                      onChange={(e) => { insumosClinicosHook.setBuscar(e.target.value); insumosClinicosHook.setPagina(1) }}
+                      placeholder="Buscar por nombre, lote o laboratorio"
+                      aria-label="Buscar insumos clinicos"
+                      className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {CLINICO_CATEGORY_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { insumosClinicosHook.setCategoria(opt.value); insumosClinicosHook.setPagina(1) }}
+                        className={`border px-3 py-1.5 text-xs font-semibold transition ${
+                          insumosClinicosHook.categoria === opt.value
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
+                      className={`border px-3 py-1.5 text-xs font-semibold transition ${
+                        insumosClinicosHook.bajoStock
+                          ? 'border-amber-400 bg-amber-50 text-amber-700'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      Solo bajo stock
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={insumosClinicosHook.openCreateDrawer}
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  <FlaskConical className="h-4 w-4" />
+                  Nuevo insumo clinico
+                </button>
+              </div>
+
+              {insumosClinicosHook.insumosQuery.isLoading ? (
+                <DashboardPanel title="Insumos clinicos" subtitle="Existencias de consumo interno para servicios y procedimientos.">
+                  <TableSkeleton rows={6} />
+                </DashboardPanel>
+              ) : (
+                <DataTable
+                  title="Insumos clinicos"
+                  subtitle="Existencias de consumo interno para servicios y procedimientos. No se venden directamente."
+                  rows={insumosClinicosHook.insumosRows}
+                  columns={[
+                    { key: 'nombre', label: 'Insumo' },
+                    { key: 'categoria', label: 'Categoria' },
+                    {
+                      key: 'stock',
+                      label: 'Stock / Min',
+                      render: (row) => (
+                        <span className="text-sm text-foreground">
+                          {formatNumber(row.stock)} / {formatNumber(row.stockMinimo)} {row.unidadBase}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'costo',
+                      label: 'Costo unitario',
+                      render: (row) => (
+                        <span className="text-sm text-foreground">
+                          {formatCurrency(row.precioUnitarioBase)} / {row.unidadBase}
+                        </span>
+                      ),
+                    },
+                    { key: 'valor', label: 'Valor en stock' },
+                    {
+                      key: 'alertas',
+                      label: 'Alertas',
+                      render: (row) =>
+                        row.alertas.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {row.alertas.map((alerta) => (
+                              <StatusPill
+                                key={`${row.id}-${alerta}`}
+                                tone={
+                                  alerta === 'vencido'
+                                    ? 'border-red-200 bg-red-50 text-red-700'
+                                    : alerta === 'proximo_vencimiento'
+                                      ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                      : 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                                }
+                              >
+                                {alerta.replaceAll('_', ' ')}
+                              </StatusPill>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">Sin alertas</span>
+                        ),
+                    },
+                    {
+                      key: 'accion',
+                      label: 'Acciones',
+                      render: (row) => (
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => insumosClinicosHook.openEditDrawer(row.raw)}
+                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                          >
+                            Editar / Comprar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => insumosClinicosHook.openConfirmDelete(row.raw)}
+                            className="text-sm font-semibold text-red-600 hover:text-red-800"
+                          >
+                            Desactivar
+                          </button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                  emptyTitle="No hay insumos clinicos para este filtro"
+                  emptyBody="Ajusta la busqueda o crea el primer insumo clinico con el boton Nuevo insumo clinico."
+                />
+              )}
+
+              <Paginacion
+                pagina={insumosClinicosHook.insumosQuery.data?.paginaActual || 1}
+                paginas={insumosClinicosHook.insumosQuery.data?.paginas || 1}
+                onChange={insumosClinicosHook.setPagina}
+              />
+
+              <DataTable
+                title="Ultimos movimientos de inventario clinico"
+                subtitle="Traza de compras y consumos por servicios facturados."
+                rows={movimientosClinicosHook.movimientosRows}
+                columns={[
+                  { key: 'fecha', label: 'Fecha' },
+                  { key: 'insumo', label: 'Insumo' },
+                  { key: 'tipo', label: 'Tipo' },
+                  { key: 'motivo', label: 'Motivo' },
+                  { key: 'cambio', label: 'Stock total' },
+                ]}
+                emptyTitle="Aun no hay movimientos registrados"
+                emptyBody="Cuando registres compras o se facturen servicios que consuman insumos, veras la traza aqui."
               />
             </div>
           )}
@@ -831,6 +1008,17 @@ export default function InventarioPage() {
         isPending={isPendingProduct}
       />
 
+      {/* Drawer de insumos clinicos */}
+      <InsumoClinicoDrawer
+        open={insumosClinicosHook.drawerOpen}
+        editingInsumo={insumosClinicosHook.editingInsumo}
+        onClose={insumosClinicosHook.closeDrawer}
+        onSubmit={insumosClinicosHook.handleDrawerSubmit}
+        onRegistrarCompra={insumosClinicosHook.handleRegistrarCompra}
+        isPending={insumosClinicosHook.isPendingInsumo}
+        isPendingCompra={insumosClinicosHook.isPendingCompra}
+      />
+
       {/* Drawer de facturas de compra */}
       <FacturaCompraDrawer
         open={facturaCompraHook.drawerOpen}
@@ -893,6 +1081,42 @@ export default function InventarioPage() {
                 type="button"
                 onClick={facturaCompraHook.cancelarAccion}
                 disabled={facturaCompraHook.isActuando}
+                className="flex-1 border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ConfirmDialog insumos clinicos */}
+      {insumosClinicosHook.confirmDialog.open && (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-sm border border-border bg-card p-6 shadow-xl">
+            <p className="text-sm font-semibold text-foreground">
+              Desactivar &ldquo;{insumosClinicosHook.confirmDialog.insumo?.nombre}&rdquo;
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Esta accion retirara el insumo del inventario clinico activo. Los movimientos historicos se conservan.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={insumosClinicosHook.confirmDelete}
+                disabled={insumosClinicosHook.isPendingDelete}
+                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {insumosClinicosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => insumosClinicosHook.setConfirmDialog({ open: false, insumo: null })}
+                disabled={insumosClinicosHook.isPendingDelete}
                 className="flex-1 border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
               >
                 Cancelar
