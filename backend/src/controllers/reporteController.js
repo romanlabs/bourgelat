@@ -7,6 +7,7 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
+const Gasto = require('../models/Gasto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 
 const reporteIngresos = async (req, res) => {
@@ -21,7 +22,7 @@ const reporteIngresos = async (req, res) => {
     const facturas = await Factura.findAll({
       where: {
         clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada'] },
+        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
         fecha: { [Op.between]: [fechaInicio, fechaFin] },
       },
       attributes: ['id', 'numero', 'fecha', 'total', 'metodoPago'],
@@ -156,7 +157,7 @@ const dashboardGeneral = async (req, res) => {
     const ingresosMes = await Factura.sum('total', {
       where: {
         clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada'] },
+        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
         fecha: { [Op.between]: [inicioMes, finMes] },
       },
     });
@@ -198,4 +199,69 @@ const dashboardGeneral = async (req, res) => {
   }
 };
 
-module.exports = { reporteIngresos, reporteCitas, reporteInventario, dashboardGeneral };
+// El corazón del ciclo administrativo: ¿la clínica ganó o perdió en el periodo?
+// Ganancia = ingresos por facturas (emitidas/pagadas) − gastos no anulados.
+const reporteRentabilidad = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario;
+    const { fechaInicio, fechaFin } = req.query;
+
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ message: 'fechaInicio y fechaFin son obligatorios' });
+    }
+
+    const [facturas, gastos] = await Promise.all([
+      Factura.findAll({
+        where: {
+          clinicaId,
+          estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
+          fecha: { [Op.between]: [fechaInicio, fechaFin] },
+        },
+        attributes: ['fecha', 'total'],
+      }),
+      Gasto.findAll({
+        where: {
+          clinicaId,
+          anulado: false,
+          fecha: { [Op.between]: [fechaInicio, fechaFin] },
+        },
+        attributes: ['fecha', 'monto', 'categoria'],
+      }),
+    ]);
+
+    const totalIngresos = facturas.reduce((sum, f) => sum + parseFloat(f.total), 0);
+    const totalGastos = gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
+    const ganancia = totalIngresos - totalGastos;
+    const margen = totalIngresos > 0 ? ((ganancia / totalIngresos) * 100).toFixed(1) : null;
+
+    const gastosPorCategoria = gastos.reduce((acc, g) => {
+      acc[g.categoria] = (acc[g.categoria] || 0) + parseFloat(g.monto);
+      return acc;
+    }, {});
+
+    // Serie diaria para graficar ingresos vs gastos en el mismo eje.
+    const porDia = {};
+    for (const f of facturas) {
+      if (!porDia[f.fecha]) porDia[f.fecha] = { ingresos: 0, gastos: 0 };
+      porDia[f.fecha].ingresos += parseFloat(f.total);
+    }
+    for (const g of gastos) {
+      if (!porDia[g.fecha]) porDia[g.fecha] = { ingresos: 0, gastos: 0 };
+      porDia[g.fecha].gastos += parseFloat(g.monto);
+    }
+
+    res.json({
+      periodo: { fechaInicio, fechaFin },
+      totalIngresos,
+      totalGastos,
+      ganancia,
+      margen: margen !== null ? `${margen}%` : null,
+      gastosPorCategoria,
+      porDia,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+module.exports = { reporteIngresos, reporteCitas, reporteInventario, dashboardGeneral, reporteRentabilidad };

@@ -28,6 +28,10 @@ const MovimientoCaja = sequelize.define('MovimientoCaja', {
       'gasto_menor',
       'pago_proveedor',
       'prestamo_caja_chica',
+      // Generado por el sistema al registrar un Gasto del negocio pagado en
+      // efectivo con turno abierto. No se acepta desde la API de movimientos
+      // manuales (ver MOTIVOS_MOVIMIENTO_CAJA en cajaRoutes).
+      'gasto_negocio',
       'otro'
     ),
     allowNull: false,
