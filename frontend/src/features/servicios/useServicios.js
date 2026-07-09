@@ -10,6 +10,9 @@ const getErrorMessage = (error, fallback) =>
 function invalidateServiciosQueries(queryClient) {
   queryClient.invalidateQueries({ queryKey: ['servicios-clinicos'] })
   queryClient.invalidateQueries({ queryKey: ['servicios-clinicos-selector'] })
+  // El POS consulta el catalogo con su propia clave; sin esto, un servicio
+  // recien creado no aparece en el punto de venta hasta recargar la pagina.
+  queryClient.invalidateQueries({ queryKey: ['finanzas-servicios'] })
 }
 
 export function useServicios({ enabled, forSelector = false } = {}) {
