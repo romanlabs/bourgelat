@@ -45,17 +45,28 @@ const DEFAULT_VALUES = {
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 }).format(value)
 
+// Motivos de salida manual: perdidas que no pasan por una factura.
+const MERMA_MOTIVO_OPTIONS = [
+  { value: 'ajuste_inventario', label: 'Ajuste de inventario' },
+  { value: 'vencimiento', label: 'Vencimiento' },
+  { value: 'otro', label: 'Otro (derrame, daño...)' },
+]
+
 export default function InsumoClinicoDrawer({
   open,
   editingInsumo,
   onClose,
   onSubmit,
   onRegistrarCompra,
+  onRegistrarMerma,
   isPending,
   isPendingCompra,
+  isPendingMerma,
 }) {
   const [compraForm, setCompraForm] = useState({ cantidadPresentacion: '', unidadPresentacion: '', precioPresentacion: '' })
   const [compraOpen, setCompraOpen] = useState(false)
+  const [mermaForm, setMermaForm] = useState({ cantidad: '', motivo: 'ajuste_inventario', observaciones: '' })
+  const [mermaOpen, setMermaOpen] = useState(false)
 
   const {
     register,
@@ -92,6 +103,8 @@ export default function InsumoClinicoDrawer({
       })
       setCompraForm({ cantidadPresentacion: '', unidadPresentacion: editingInsumo.unidadPresentacion || '', precioPresentacion: '' })
       setCompraOpen(false)
+      setMermaForm({ cantidad: '', motivo: 'ajuste_inventario', observaciones: '' })
+      setMermaOpen(false)
     } else {
       reset(DEFAULT_VALUES)
     }
@@ -124,6 +137,19 @@ export default function InsumoClinicoDrawer({
     })
   }
 
+  const stockActual = Number(editingInsumo?.stock || 0)
+  const mermaValida =
+    Number(mermaForm.cantidad) > 0 && Number(mermaForm.cantidad) <= stockActual
+
+  function submitMerma() {
+    if (!mermaValida) return
+    onRegistrarMerma?.(editingInsumo.id, {
+      cantidad: Number(mermaForm.cantidad),
+      motivo: mermaForm.motivo,
+      observaciones: mermaForm.observaciones,
+    })
+  }
+
   if (typeof document === 'undefined') return null
 
   return createPortal(
@@ -151,7 +177,7 @@ export default function InsumoClinicoDrawer({
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {editingInsumo
-                ? 'El stock solo cambia registrando una nueva compra.'
+                ? 'El stock cambia registrando compras, mermas o ajustes.'
                 : 'Declara la presentacion comprada; el sistema calcula el costo por unidad.'}
             </p>
           </div>
@@ -353,6 +379,71 @@ export default function InsumoClinicoDrawer({
                       className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingCompra ? 'Registrando...' : 'Registrar compra y recalcular costo'}
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setMermaOpen((v) => !v)}
+                  className="flex w-full items-center gap-2 border border-dashed border-border bg-muted px-3 py-2.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/80"
+                >
+                  <span className="text-base leading-none">{mermaOpen ? '−' : '+'}</span>
+                  {mermaOpen ? 'Ocultar merma o ajuste' : 'Registrar merma o ajuste'}
+                </button>
+
+                {mermaOpen && (
+                  <div className="grid gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Cantidad a descontar ({unidadLabel})</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          max={stockActual}
+                          placeholder="Ej. 5"
+                          value={mermaForm.cantidad}
+                          onChange={(e) => setMermaForm((f) => ({ ...f, cantidad: e.target.value }))}
+                          className={fieldClass(false)}
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Motivo</label>
+                        <select
+                          value={mermaForm.motivo}
+                          onChange={(e) => setMermaForm((f) => ({ ...f, motivo: e.target.value }))}
+                          className={fieldClass(false)}
+                        >
+                          {MERMA_MOTIVO_OPTIONS.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className={labelClass}>Observaciones (opcional)</label>
+                      <input
+                        type="text"
+                        maxLength={255}
+                        placeholder="Ej. frasco vencido lote 4432"
+                        value={mermaForm.observaciones}
+                        onChange={(e) => setMermaForm((f) => ({ ...f, observaciones: e.target.value }))}
+                        className={fieldClass(false)}
+                      />
+                    </div>
+                    {Number(mermaForm.cantidad) > stockActual ? (
+                      <p className="text-xs text-red-600">
+                        No puedes descontar mas del stock actual ({formatNumber(stockActual)} {unidadLabel}).
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={submitMerma}
+                      disabled={!mermaValida || isPendingMerma}
+                      className="border border-red-200 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isPendingMerma ? 'Registrando...' : 'Descontar del inventario'}
                     </button>
                   </div>
                 )}
