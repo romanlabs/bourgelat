@@ -35,6 +35,7 @@ import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturaci
 import { useFinanzasHistorial, STATUS_OPTIONS, PAYMENT_FORM_OPTIONS } from '@/features/finanzas/useFinanzasHistorial'
 import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
 import PosModal from '@/features/finanzas/PosModal'
+import GastosRentabilidadPanel from '@/features/finanzas/GastosRentabilidadPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -46,6 +47,7 @@ import { useAuthStore } from '@/store/authStore'
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'facturacion', label: 'Venta' },
+  { id: 'gastos', label: 'Gastos y rentabilidad' },
   { id: 'turnos', label: 'Turnos de caja' },
   { id: 'historial', label: 'Historial' },
 ]
@@ -350,6 +352,9 @@ export default function FinanzasPage() {
               </div>
             )
           )}
+
+          {/* ── Tab: Gastos y rentabilidad ── */}
+          {activeTab === 'gastos' && <GastosRentabilidadPanel />}
 
           {/* ── Tab: Turnos de caja ── */}
           {activeTab === 'turnos' && (
