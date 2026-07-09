@@ -6,11 +6,12 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node src/config/smokeTest.js",
+    "test": "node src/config/smokeTest.js && node src/config/tenantGuard.test.js",
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
-    "secrets:generate": "node src/scripts/generateSecrets.js"
+    "secrets:generate": "node src/scripts/generateSecrets.js",
+    "cifrado:rotar": "node src/scripts/rotarCifrado.js"
   },
   "keywords": [],
   "author": "",

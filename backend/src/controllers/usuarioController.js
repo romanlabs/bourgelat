@@ -79,7 +79,7 @@ const crearUsuario = async (req, res) => {
       })
     }
 
-    const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado } })
+    const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado }, sinTenant: true })
     if (usuarioExiste) {
       return res.status(400).json({ message: 'El email ya esta registrado' })
     }
@@ -284,6 +284,7 @@ const editarUsuario = async (req, res) => {
           email: emailNormalizado,
           id: { [Op.ne]: usuario.id },
         },
+        sinTenant: true,
       })
 
       if (emailEnUso) {
