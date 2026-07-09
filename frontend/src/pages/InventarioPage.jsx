@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CircleAlert, PackagePlus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
+import { CircleAlert, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -27,11 +27,14 @@ import { useFacturaCompra, ESTADO_COLORS } from '@/features/inventario/useFactur
 import InsumoClinicoDrawer from '@/features/inventarioClinico/InsumoClinicoDrawer'
 import { useInsumosClinicos, CATEGORY_OPTIONS as CLINICO_CATEGORY_OPTIONS } from '@/features/inventarioClinico/useInsumosClinicos'
 import { useMovimientosClinicos } from '@/features/inventarioClinico/useMovimientosClinicos'
+import ServicioDrawer from '@/features/servicios/ServicioDrawer'
+import { useServicios } from '@/features/servicios/useServicios'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'productos', label: 'Productos' },
   { id: 'inventario-clinico', label: 'Inventario Clinico' },
+  { id: 'servicios', label: 'Servicios' },
   { id: 'movimientos', label: 'Movimientos' },
   { id: 'facturas-compra', label: 'Facturas de Compra' },
 ]
@@ -127,6 +130,8 @@ export default function InventarioPage() {
       }
     },
   })
+
+  const serviciosHook = useServicios({ enabled: puedeVerInventario })
 
   useEffect(() => {
     document.title = 'Inventario | Bourgelat'
@@ -619,6 +624,76 @@ export default function InventarioPage() {
             </div>
           )}
 
+          {/* Tab: Servicios */}
+          {activeTab === 'servicios' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="relative max-w-sm flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={serviciosHook.buscar}
+                    onChange={(e) => { serviciosHook.setBuscar(e.target.value); serviciosHook.setPagina(1) }}
+                    placeholder="Buscar servicio por nombre"
+                    aria-label="Buscar servicios"
+                    className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={serviciosHook.openCreateDrawer}
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nuevo servicio
+                </button>
+              </div>
+
+              <DataTable
+                title="Catalogo de servicios"
+                subtitle="Servicios predeterminados que, al facturarse, descuentan automaticamente el inventario clinico."
+                rows={serviciosHook.serviciosRows}
+                columns={[
+                  { key: 'nombre', label: 'Servicio' },
+                  { key: 'categoria', label: 'Categoria' },
+                  { key: 'precioVenta', label: 'Precio de venta' },
+                  { key: 'costoEstimado', label: 'Costo estimado' },
+                  { key: 'insumos', label: 'Insumos en receta' },
+                  {
+                    key: 'accion',
+                    label: 'Acciones',
+                    render: (row) => (
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => serviciosHook.openEditDrawer(row.raw)}
+                          className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => serviciosHook.openConfirmDelete(row.raw)}
+                          className="text-sm font-semibold text-red-600 hover:text-red-800"
+                        >
+                          Desactivar
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+                emptyTitle="No hay servicios en el catalogo"
+                emptyBody="Crea el primer servicio y define que insumos clinicos consume."
+              />
+
+              <Paginacion
+                pagina={serviciosHook.serviciosQuery.data?.paginaActual || 1}
+                paginas={serviciosHook.serviciosQuery.data?.paginas || 1}
+                onChange={serviciosHook.setPagina}
+              />
+            </div>
+          )}
+
           {/* Tab: Movimientos */}
           {activeTab === 'movimientos' && (
             <div className="space-y-5">
@@ -1018,6 +1093,48 @@ export default function InventarioPage() {
         isPending={insumosClinicosHook.isPendingInsumo}
         isPendingCompra={insumosClinicosHook.isPendingCompra}
       />
+
+      {/* Drawer del catalogo de servicios */}
+      <ServicioDrawer
+        open={serviciosHook.drawerOpen}
+        editingServicio={serviciosHook.editingServicio}
+        onClose={serviciosHook.closeDrawer}
+        onSubmit={serviciosHook.handleDrawerSubmit}
+        isPending={serviciosHook.isPendingServicio}
+        insumosDisponibles={insumosClinicosHook.insumosSelectorQuery.data?.insumos || []}
+      />
+
+      {/* ConfirmDialog desactivar servicio */}
+      {serviciosHook.confirmDialog.open && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm border border-border bg-card p-6 shadow-xl">
+            <p className="text-sm font-semibold text-foreground">
+              Desactivar &ldquo;{serviciosHook.confirmDialog.servicio?.nombre}&rdquo;
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Esta accion retirara el servicio del catalogo activo. Las facturas ya emitidas no se ven afectadas.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={serviciosHook.confirmDelete}
+                disabled={serviciosHook.isPendingDelete}
+                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {serviciosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => serviciosHook.setConfirmDialog({ open: false, servicio: null })}
+                disabled={serviciosHook.isPendingDelete}
+                className="flex-1 border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Drawer de facturas de compra */}
       <FacturaCompraDrawer
