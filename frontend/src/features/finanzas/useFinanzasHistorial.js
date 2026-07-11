@@ -274,6 +274,9 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
       queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
       queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
+      // La anulacion revierte el efectivo del turno de caja abierto.
+      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible anular la factura.'))

@@ -115,6 +115,9 @@ export function useFinanzasFacturacion({
       // La venta descuenta stock: refrescar productos y movimientos de inventario.
       invalidateInventarioQueries(queryClient)
       queryClient.invalidateQueries({ queryKey: ['finanzas-productos'] })
+      // La venta suma al turno de caja abierto: refrescar totales y movimientos.
+      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
 
       if (emisionAutomaticaActiva && data?.factura?.id && data?.factura?.estadoElectronico === 'pendiente') {
         emitirParaAutoEmision.mutate({
