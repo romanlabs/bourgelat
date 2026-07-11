@@ -165,6 +165,10 @@ UUIDs como primary keys en la mayoría de tablas.
 ### Backend
 - Controladores delgados: lógica de negocio pesada va a `services/`
 - Toda mutación pasa por `auditoriaMiddleware` — no saltárselo
+- **Multi-tenancy**: toda query sobre modelos con `clinicaId` debe filtrar por tenant
+  (helper `tenantWhere(req)` en `utils/tenant.js`). El `tenantGuard`
+  (`config/tenantGuard.js`) rechaza en dev cualquier query sin ese filtro; las
+  queries globales legítimas (auth, superadmin, jobs) se marcan con `sinTenant: true`
 - Validación de requests: `express-validator` en las rutas, no en los controladores
 - Errores en producción: sanitizados por `sanitizeErrorResponseMiddleware`
 - Variables de entorno: validadas al inicio en `validateRuntimeConfig.js`

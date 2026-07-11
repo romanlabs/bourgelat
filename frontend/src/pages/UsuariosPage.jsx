@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -218,6 +218,11 @@ export default function UsuariosPage() {
   const [estado, setEstado] = useState('todos')
   const [rolFiltro, setRolFiltro] = useState('todos')
   const [activeSection, setActiveSection] = useState('equipo')
+  const operationalSectionRef = useRef(null)
+  const goToSection = (section) => {
+    setActiveSection(section)
+    operationalSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
@@ -471,20 +476,12 @@ export default function UsuariosPage() {
         </StatusPill>
       }
       actions={
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Volver al dashboard
-          </Link>
-          <Link
-            to="/planes"
-            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            Revisar plan
-          </Link>
-        </div>
+        <Link
+          to="/planes"
+          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Revisar plan
+        </Link>
       }
       asideNote="Aqui se administra el equipo real de la clinica: altas, roles, estado activo y cupo disponible frente a la suscripcion."
     >
@@ -536,7 +533,7 @@ export default function UsuariosPage() {
                 <button
                   key={section.id}
                   type="button"
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => goToSection(section.id)}
                   className={`border px-4 py-4 text-left transition ${
                     activeSection === section.id
                       ? 'border-primary bg-primary/10'
@@ -552,79 +549,8 @@ export default function UsuariosPage() {
             </div>
           </DashboardPanel>
 
-          <div className="grid gap-4 xl:grid-cols-4">
-            <KpiCard
-              icon={Users}
-              label="Usuarios activos"
-              value={formatNumber(activos.length)}
-              helper="Equipo actualmente habilitado para ingresar al sistema."
-              tone="text-primary"
-            />
-            <KpiCard
-              icon={ShieldCheck}
-              label="Acceso administrativo"
-              value={formatNumber(totalAdministrativos)}
-              helper="Usuarios activos con capacidad de administracion."
-              tone="text-violet-700"
-            />
-            <KpiCard
-              icon={Stethoscope}
-              label="Equipo clinico"
-              value={formatNumber(totalVeterinarios)}
-              helper="Profesionales que pueden operar consulta y agenda medica."
-              tone="text-emerald-700"
-            />
-            <KpiCard
-              icon={CircleAlert}
-              label="Cupo disponible"
-              value={limiteUsuarios === null ? 'Sin limite' : formatNumber(cupoDisponible)}
-              helper={
-                limiteUsuarios === null
-                  ? 'La suscripcion actual no limita usuarios activos.'
-                  : `${formatNumber(activos.length)} de ${formatNumber(limiteUsuarios)} usuarios en uso.`
-              }
-              tone="text-amber-700"
-            />
-          </div>
-
-          <div className="grid gap-5 2xl:grid-cols-[420px_420px_minmax(0,1fr)]">
-            <DonutCard
-              title="Roles principales"
-              subtitle="Composicion actual del equipo activo por cargo principal."
-              data={roleDistribution}
-              centerLabel="Activos"
-              centerValue={formatNumber(activos.length)}
-              formatter={formatNumber}
-              emptyMessage="Aun no hay roles activos para mostrar."
-            />
-            <DonutCard
-              title="Estado del equipo"
-              subtitle="Lectura rapida entre usuarios activos e inactivos."
-              data={statusDistribution}
-              centerLabel="Total"
-              centerValue={formatNumber(usuarios.length)}
-              formatter={formatNumber}
-              emptyMessage="Aun no hay estados para mostrar."
-            />
-            <DashboardPanel
-              title="Criterio de control"
-              subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el ultimo admin de la clinica."
-            >
-              <div className="grid gap-4">
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuracion, suscripcion y equipo.
-                </div>
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
-                </div>
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  La plataforma ya bloquea desactivar o degradar al ultimo administrador activo para evitar dejar la clinica sin control.
-                </div>
-              </div>
-            </DashboardPanel>
-          </div>
-
           <div
+            ref={operationalSectionRef}
             className={
               activeSection === 'crear'
                 ? 'grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_420px]'
@@ -736,7 +662,7 @@ export default function UsuariosPage() {
                           onClick={() => {
                             setSelectedUserId(row.raw.id)
                             setEditForm(buildEditForm(row.raw))
-                            setActiveSection('editar')
+                            goToSection('editar')
                           }}
                           className="text-sm font-semibold text-primary hover:text-primary"
                         >
@@ -1054,6 +980,87 @@ export default function UsuariosPage() {
             </DashboardPanel>
           </div>
           ) : null}
+
+          <details className="group rounded-none border border-border bg-card">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-foreground">
+              Ver metricas del equipo
+              <span className="text-xs font-normal text-muted-foreground group-open:hidden">Mostrar</span>
+              <span className="hidden text-xs font-normal text-muted-foreground group-open:inline">Ocultar</span>
+            </summary>
+            <div className="space-y-5 border-t border-border px-4 py-5">
+              <div className="grid gap-4 xl:grid-cols-4">
+                <KpiCard
+                  icon={Users}
+                  label="Usuarios activos"
+                  value={formatNumber(activos.length)}
+                  helper="Equipo actualmente habilitado para ingresar al sistema."
+                  tone="text-primary"
+                />
+                <KpiCard
+                  icon={ShieldCheck}
+                  label="Acceso administrativo"
+                  value={formatNumber(totalAdministrativos)}
+                  helper="Usuarios activos con capacidad de administracion."
+                  tone="text-violet-700"
+                />
+                <KpiCard
+                  icon={Stethoscope}
+                  label="Equipo clinico"
+                  value={formatNumber(totalVeterinarios)}
+                  helper="Profesionales que pueden operar consulta y agenda medica."
+                  tone="text-emerald-700"
+                />
+                <KpiCard
+                  icon={CircleAlert}
+                  label="Cupo disponible"
+                  value={limiteUsuarios === null ? 'Sin limite' : formatNumber(cupoDisponible)}
+                  helper={
+                    limiteUsuarios === null
+                      ? 'La suscripcion actual no limita usuarios activos.'
+                      : `${formatNumber(activos.length)} de ${formatNumber(limiteUsuarios)} usuarios en uso.`
+                  }
+                  tone="text-amber-700"
+                />
+              </div>
+
+              <div className="grid gap-5 2xl:grid-cols-[420px_420px_minmax(0,1fr)]">
+                <DonutCard
+                  title="Roles principales"
+                  subtitle="Composicion actual del equipo activo por cargo principal."
+                  data={roleDistribution}
+                  centerLabel="Activos"
+                  centerValue={formatNumber(activos.length)}
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay roles activos para mostrar."
+                />
+                <DonutCard
+                  title="Estado del equipo"
+                  subtitle="Lectura rapida entre usuarios activos e inactivos."
+                  data={statusDistribution}
+                  centerLabel="Total"
+                  centerValue={formatNumber(usuarios.length)}
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay estados para mostrar."
+                />
+                <DashboardPanel
+                  title="Criterio de control"
+                  subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el ultimo admin de la clinica."
+                >
+                  <div className="grid gap-4">
+                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                      Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuracion, suscripcion y equipo.
+                    </div>
+                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                      Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
+                    </div>
+                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                      La plataforma ya bloquea desactivar o degradar al ultimo administrador activo para evitar dejar la clinica sin control.
+                    </div>
+                  </div>
+                </DashboardPanel>
+              </div>
+            </div>
+          </details>
         </div>
       )}
     </AdminShell>

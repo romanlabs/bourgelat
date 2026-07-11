@@ -53,6 +53,7 @@ const verificarToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
     const usuario = await Usuario.findByPk(decoded.id, {
+      sinTenant: true,
       include: [
         {
           model: Clinica,

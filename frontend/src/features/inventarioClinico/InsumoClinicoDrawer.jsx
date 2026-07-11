@@ -1,0 +1,510 @@
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Controller, useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { X } from 'lucide-react'
+import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import { CATEGORY_OPTIONS } from './useInsumosClinicos'
+
+// Unidades base para consumo clinico: fraccionables, no presentaciones enteras.
+const UNIDAD_BASE_OPTIONS = [
+  { value: 'ml', label: 'Mililitro (ml)' },
+  { value: 'mg', label: 'Miligramo (mg)' },
+  { value: 'gr', label: 'Gramo (gr)' },
+  { value: 'unidad', label: 'Unidad' },
+  { value: 'dosis', label: 'Dosis' },
+]
+
+const insumoSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es requerido'),
+  categoria: z.enum(['medicamento', 'vacuna', 'insumo', 'antiparasitario', 'suplemento', 'otro']),
+  unidadBase: z.string().min(1, 'La unidad base es requerida'),
+  cantidadPresentacion: z.coerce.number().min(0.01, 'Debe ser mayor a 0'),
+  unidadPresentacion: z.string().optional(),
+  precioPresentacion: z.coerce.number().min(0).default(0),
+  stockMinimo: z.coerce.number().min(0).default(0),
+  fechaVencimiento: z.string().optional(),
+  lote: z.string().optional(),
+  laboratorio: z.string().optional(),
+})
+
+const DEFAULT_VALUES = {
+  nombre: '',
+  categoria: 'insumo',
+  unidadBase: 'ml',
+  cantidadPresentacion: '',
+  unidadPresentacion: '',
+  precioPresentacion: '',
+  stockMinimo: 0,
+  fechaVencimiento: '',
+  lote: '',
+  laboratorio: '',
+}
+
+const formatCOP = (value) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 }).format(value)
+
+// Motivos de salida manual: perdidas que no pasan por una factura.
+const MERMA_MOTIVO_OPTIONS = [
+  { value: 'ajuste_inventario', label: 'Ajuste de inventario' },
+  { value: 'vencimiento', label: 'Vencimiento' },
+  { value: 'otro', label: 'Otro (derrame, daño...)' },
+]
+
+export default function InsumoClinicoDrawer({
+  open,
+  editingInsumo,
+  onClose,
+  onSubmit,
+  onRegistrarCompra,
+  onRegistrarMerma,
+  isPending,
+  isPendingCompra,
+  isPendingMerma,
+}) {
+  const [compraForm, setCompraForm] = useState({ cantidadPresentacion: '', unidadPresentacion: '', precioPresentacion: '' })
+  const [compraOpen, setCompraOpen] = useState(false)
+  const [mermaForm, setMermaForm] = useState({ cantidad: '', motivo: 'ajuste_inventario', observaciones: '' })
+  const [mermaOpen, setMermaOpen] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(insumoSchema),
+    defaultValues: DEFAULT_VALUES,
+  })
+
+  const cantidadPresentacion = useWatch({ control, name: 'cantidadPresentacion' })
+  const precioPresentacion = useWatch({ control, name: 'precioPresentacion' })
+  const unidadBase = useWatch({ control, name: 'unidadBase' })
+
+  const precioUnitarioCalculado =
+    Number(cantidadPresentacion) > 0 ? Number(precioPresentacion || 0) / Number(cantidadPresentacion) : null
+
+  useEffect(() => {
+    if (!open) return
+    if (editingInsumo) {
+      reset({
+        nombre: editingInsumo.nombre || '',
+        categoria: editingInsumo.categoria || 'insumo',
+        unidadBase: editingInsumo.unidadBase || 'ml',
+        cantidadPresentacion: editingInsumo.cantidadPresentacion ?? '',
+        unidadPresentacion: editingInsumo.unidadPresentacion || '',
+        precioPresentacion: editingInsumo.precioPresentacion ?? '',
+        stockMinimo: editingInsumo.stockMinimo ?? 0,
+        fechaVencimiento: editingInsumo.fechaVencimiento || '',
+        lote: editingInsumo.lote || '',
+        laboratorio: editingInsumo.laboratorio || '',
+      })
+      setCompraForm({ cantidadPresentacion: '', unidadPresentacion: editingInsumo.unidadPresentacion || '', precioPresentacion: '' })
+      setCompraOpen(false)
+      setMermaForm({ cantidad: '', motivo: 'ajuste_inventario', observaciones: '' })
+      setMermaOpen(false)
+    } else {
+      reset(DEFAULT_VALUES)
+    }
+  }, [open, editingInsumo, reset])
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open, onClose])
+
+  const fieldClass = (hasError) =>
+    `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
+      hasError ? 'border-red-400' : 'border-border'
+    }`
+
+  const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+  const unidadLabel = UNIDAD_BASE_OPTIONS.find((u) => u.value === unidadBase)?.value || unidadBase
+
+  const compraValida =
+    Number(compraForm.cantidadPresentacion) > 0 && Number(compraForm.precioPresentacion) >= 0
+
+  function submitCompra() {
+    if (!compraValida) return
+    onRegistrarCompra?.(editingInsumo.id, {
+      cantidadPresentacion: Number(compraForm.cantidadPresentacion),
+      unidadPresentacion: compraForm.unidadPresentacion,
+      precioPresentacion: Number(compraForm.precioPresentacion),
+    })
+  }
+
+  const stockActual = Number(editingInsumo?.stock || 0)
+  const mermaValida =
+    Number(mermaForm.cantidad) > 0 && Number(mermaForm.cantidad) <= stockActual
+
+  function submitMerma() {
+    if (!mermaValida) return
+    onRegistrarMerma?.(editingInsumo.id, {
+      cantidad: Number(mermaForm.cantidad),
+      motivo: mermaForm.motivo,
+      observaciones: mermaForm.observaciones,
+    })
+  }
+
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <>
+      <div
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={editingInsumo ? `Editar ${editingInsumo.nombre}` : 'Nuevo insumo clinico'}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${
+          open ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {editingInsumo ? 'Editar insumo clinico' : 'Nuevo insumo clinico'}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {editingInsumo
+                ? 'El stock cambia registrando compras, mermas o ajustes.'
+                : 'Declara la presentacion comprada; el sistema calcula el costo por unidad.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar formulario"
+            className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          <form id="insumo-clinico-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Informacion basica
+              </p>
+
+              <div className="grid gap-1.5">
+                <label htmlFor="ic-nombre" className={labelClass}>Nombre del insumo *</label>
+                <input
+                  id="ic-nombre"
+                  type="text"
+                  placeholder="Ej. Lidocaina 2% inyectable"
+                  className={fieldClass(errors.nombre)}
+                  {...register('nombre')}
+                />
+                {errors.nombre && <p className="text-xs text-red-600">{errors.nombre.message}</p>}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="ic-categoria" className={labelClass}>Categoria *</label>
+                  <select id="ic-categoria" className={fieldClass(errors.categoria)} {...register('categoria')}>
+                    {CATEGORY_OPTIONS.filter((o) => o.value !== 'todas').map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-1.5">
+                  <label htmlFor="ic-unidad-base" className={labelClass}>Unidad base *</label>
+                  <select
+                    id="ic-unidad-base"
+                    className={fieldClass(errors.unidadBase)}
+                    disabled={Boolean(editingInsumo)}
+                    {...register('unidadBase')}
+                  >
+                    {UNIDAD_BASE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                El stock y el costo se llevan en esta unidad (ej. mililitros restantes), sin importar la presentacion en la que se compre.
+              </p>
+            </div>
+
+            {!editingInsumo && (
+              <div className="grid gap-4 border-t border-border pt-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Presentacion de compra
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <label htmlFor="ic-cantidad-presentacion" className={labelClass}>
+                      Cantidad en {unidadLabel} *
+                    </label>
+                    <input
+                      id="ic-cantidad-presentacion"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="Ej. 100"
+                      className={fieldClass(errors.cantidadPresentacion)}
+                      {...register('cantidadPresentacion')}
+                    />
+                    {errors.cantidadPresentacion && (
+                      <p className="text-xs text-red-600">{errors.cantidadPresentacion.message}</p>
+                    )}
+                  </div>
+                  <div className="grid gap-1.5">
+                    <label htmlFor="ic-unidad-presentacion" className={labelClass}>
+                      Presentacion (opcional)
+                    </label>
+                    <input
+                      id="ic-unidad-presentacion"
+                      type="text"
+                      placeholder="Ej. frasco, caja"
+                      className={fieldClass(false)}
+                      {...register('unidadPresentacion')}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <label htmlFor="ic-precio-presentacion" className={labelClass}>
+                    Precio pagado por esta presentacion *
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                    <input
+                      id="ic-precio-presentacion"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Ej. 50000"
+                      className={`${fieldClass(errors.precioPresentacion)} pl-7 w-full`}
+                      {...register('precioPresentacion')}
+                    />
+                  </div>
+                </div>
+
+                {precioUnitarioCalculado !== null && (
+                  <div className="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs">
+                    <span className="text-muted-foreground">Costo calculado por {unidadLabel}</span>
+                    <span className="font-semibold text-foreground">
+                      {formatCOP(precioUnitarioCalculado)} / {unidadLabel}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {editingInsumo && (
+              <div className="grid gap-4 border-t border-border pt-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Existencias
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <span className={labelClass}>Stock actual</span>
+                    <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
+                      {formatNumber(editingInsumo.stock || 0)} {unidadLabel}
+                    </div>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <span className={labelClass}>Costo por {unidadLabel}</span>
+                    <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
+                      {formatCOP(editingInsumo.precioUnitarioBase || 0)}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCompraOpen((v) => !v)}
+                  className="flex w-full items-center gap-2 border border-dashed border-border bg-muted px-3 py-2.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/80"
+                >
+                  <span className="text-base leading-none">{compraOpen ? '−' : '+'}</span>
+                  {compraOpen ? 'Ocultar registro de compra' : 'Registrar nueva compra'}
+                </button>
+
+                {compraOpen && (
+                  <div className="grid gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Cantidad en {unidadLabel}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          placeholder="Ej. 100"
+                          value={compraForm.cantidadPresentacion}
+                          onChange={(e) => setCompraForm((f) => ({ ...f, cantidadPresentacion: e.target.value }))}
+                          className={fieldClass(false)}
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Presentacion (opcional)</label>
+                        <input
+                          type="text"
+                          placeholder="Ej. frasco"
+                          value={compraForm.unidadPresentacion}
+                          onChange={(e) => setCompraForm((f) => ({ ...f, unidadPresentacion: e.target.value }))}
+                          className={fieldClass(false)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className={labelClass}>Precio pagado por esta presentacion</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="Ej. 50000"
+                        value={compraForm.precioPresentacion}
+                        onChange={(e) => setCompraForm((f) => ({ ...f, precioPresentacion: e.target.value }))}
+                        className={fieldClass(false)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={submitCompra}
+                      disabled={!compraValida || isPendingCompra}
+                      className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isPendingCompra ? 'Registrando...' : 'Registrar compra y recalcular costo'}
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setMermaOpen((v) => !v)}
+                  className="flex w-full items-center gap-2 border border-dashed border-border bg-muted px-3 py-2.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/80"
+                >
+                  <span className="text-base leading-none">{mermaOpen ? '−' : '+'}</span>
+                  {mermaOpen ? 'Ocultar merma o ajuste' : 'Registrar merma o ajuste'}
+                </button>
+
+                {mermaOpen && (
+                  <div className="grid gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Cantidad a descontar ({unidadLabel})</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          max={stockActual}
+                          placeholder="Ej. 5"
+                          value={mermaForm.cantidad}
+                          onChange={(e) => setMermaForm((f) => ({ ...f, cantidad: e.target.value }))}
+                          className={fieldClass(false)}
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className={labelClass}>Motivo</label>
+                        <select
+                          value={mermaForm.motivo}
+                          onChange={(e) => setMermaForm((f) => ({ ...f, motivo: e.target.value }))}
+                          className={fieldClass(false)}
+                        >
+                          {MERMA_MOTIVO_OPTIONS.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className={labelClass}>Observaciones (opcional)</label>
+                      <input
+                        type="text"
+                        maxLength={255}
+                        placeholder="Ej. frasco vencido lote 4432"
+                        value={mermaForm.observaciones}
+                        onChange={(e) => setMermaForm((f) => ({ ...f, observaciones: e.target.value }))}
+                        className={fieldClass(false)}
+                      />
+                    </div>
+                    {Number(mermaForm.cantidad) > stockActual ? (
+                      <p className="text-xs text-red-600">
+                        No puedes descontar mas del stock actual ({formatNumber(stockActual)} {unidadLabel}).
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={submitMerma}
+                      disabled={!mermaValida || isPendingMerma}
+                      className="border border-red-200 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isPendingMerma ? 'Registrando...' : 'Descontar del inventario'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="grid gap-4 border-t border-border pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Alerta y trazabilidad
+              </p>
+              <div className="grid gap-1.5">
+                <label htmlFor="ic-stock-min" className={labelClass}>
+                  Alerta de stock bajo (en {unidadLabel})
+                </label>
+                <input
+                  id="ic-stock-min"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0"
+                  className={fieldClass(errors.stockMinimo)}
+                  {...register('stockMinimo')}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <label htmlFor="ic-laboratorio" className={labelClass}>Laboratorio</label>
+                  <input id="ic-laboratorio" type="text" className={fieldClass(false)} {...register('laboratorio')} />
+                </div>
+                <div className="grid gap-1.5">
+                  <label htmlFor="ic-lote" className={labelClass}>Lote</label>
+                  <input id="ic-lote" type="text" className={fieldClass(false)} {...register('lote')} />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="ic-vencimiento" className={labelClass}>Fecha de vencimiento</label>
+                <input id="ic-vencimiento" type="date" className={fieldClass(false)} {...register('fechaVencimiento')} />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div className="flex gap-3 border-t border-border px-5 py-4">
+          <button
+            type="submit"
+            form="insumo-clinico-drawer-form"
+            disabled={isPending}
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? 'Guardando...' : editingInsumo ? 'Actualizar insumo' : 'Guardar insumo'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  )
+}

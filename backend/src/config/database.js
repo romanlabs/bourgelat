@@ -37,4 +37,9 @@ const sequelize = new Sequelize(
   }
 )
 
+// Red de seguridad multi-tenant: rechaza queries sin filtro de clinicaId
+// sobre modelos tenant. Ver config/tenantGuard.js.
+const { instalarTenantGuard } = require('./tenantGuard')
+instalarTenantGuard(sequelize)
+
 module.exports = sequelize

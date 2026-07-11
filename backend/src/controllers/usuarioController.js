@@ -9,9 +9,7 @@ const passwordFuerteRegex =
 const telefonoColombiaRegex = /^3\d{9}$/
 const ROLES_VALIDOS = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
-const normalizarTexto = (value) => (typeof value === 'string' ? value.trim() : '')
-const normalizarEmail = (value) => normalizarTexto(value).toLowerCase()
-const normalizarTelefono = (value) => normalizarTexto(value).replace(/\D/g, '').slice(0, 10)
+const { normalizarTexto, normalizarEmail, normalizarTelefonoColombiano: normalizarTelefono } = require('../utils/normalizar')
 
 const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
   if (!Array.isArray(rolesAdicionales)) return []
@@ -81,7 +79,7 @@ const crearUsuario = async (req, res) => {
       })
     }
 
-    const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado } })
+    const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado }, sinTenant: true })
     if (usuarioExiste) {
       return res.status(400).json({ message: 'El email ya esta registrado' })
     }
@@ -286,6 +284,7 @@ const editarUsuario = async (req, res) => {
           email: emailNormalizado,
           id: { [Op.ne]: usuario.id },
         },
+        sinTenant: true,
       })
 
       if (emailEnUso) {

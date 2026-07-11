@@ -10,30 +10,11 @@ const sanitizeErrorPayload = (payload, statusCode, exposeInternalErrors) => {
     return payload
   }
 
-  if (payload instanceof Error) {
-    return {
-      message: 'Error interno del servidor',
-    }
-  }
-
-  if (Array.isArray(payload) || typeof payload !== 'object') {
-    return payload
-  }
-
-  const sanitizedPayload = { ...payload }
-
-  delete sanitizedPayload.error
-  delete sanitizedPayload.stack
-
-  if (!sanitizedPayload.message) {
-    sanitizedPayload.message = 'Error interno del servidor'
-  }
-
-  return sanitizedPayload
+  return { message: 'Error interno del servidor' }
 }
 
 const sanitizarRespuestasErrorInterno = (req, res, next) => {
-  if (appConfig.security.exposeInternalErrors) {
+  if (appConfig.security.exposeInternalErrors || req.path === '/health') {
     return next()
   }
 

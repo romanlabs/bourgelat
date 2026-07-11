@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
+import { debeIntentarRefresh } from '@/lib/authFlow'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
@@ -27,11 +28,7 @@ api.interceptors.response.use(
     const solicitudOriginal = error.config
     const omitirRedireccionAuth = solicitudOriginal?.skipAuthRedirect
 
-    if (
-      error.response?.status === 401 &&
-      error.response?.data?.code === 'TOKEN_EXPIRED' &&
-      !solicitudOriginal?._retry
-    ) {
+    if (debeIntentarRefresh(error)) {
       if (refrescando) {
         return new Promise((resolve, reject) => {
           cola.push({ resolve, reject })

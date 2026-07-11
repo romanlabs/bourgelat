@@ -141,3 +141,14 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 frontend/vite-dev-test.err
 frontend/vite-dev-test.out
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+**/test-results/
+**/playwright-report/
+
+# Local agent / tooling artifacts
+.claude/
+.superpowers/
+ruvector.db

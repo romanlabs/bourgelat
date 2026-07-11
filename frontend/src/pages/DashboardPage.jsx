@@ -8,6 +8,7 @@ import {
   Boxes,
   CalendarClock,
   CircleAlert,
+  FileText,
   LayoutDashboard,
   PawPrint,
   Receipt,
@@ -19,6 +20,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ALL_QUICK_ACTIONS } from '@/components/layout/quickActions'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
@@ -69,6 +71,17 @@ const PRIMARY_BUTTON =
 const SECONDARY_BUTTON =
   'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted'
 
+function OpenModuleButton({ to, label }) {
+  return (
+    <div className="flex justify-end">
+      <Link to={to} className={SECONDARY_BUTTON}>
+        {label}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  )
+}
+
 const serializeDate = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -112,42 +125,10 @@ const buildCapacityChart = (used, limit, label) => {
   }
 }
 
-const buildHourlyAppointmentSeries = (appointments) => {
-  const buckets = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00']
-
-  return buckets.map((bucket) => {
-    const total = appointments.filter((appointment) => {
-      const hour = Number.parseInt(String(appointment.horaInicio || '0').slice(0, 2), 10)
-      const bucketHour = Number.parseInt(bucket.slice(0, 2), 10)
-      return Number.isFinite(hour) && hour <= bucketHour
-    }).length
-
-    return { label: bucket.slice(0, 2), value: total }
-  })
-}
-
-const buildInventorySparkline = (products) =>
-  [...products]
-    .filter((product) => Number(product.stock || 0) <= Number(product.stockMinimo || 0))
-    .sort((left, right) => {
-      const leftGap = Number(left.stockMinimo || 0) - Number(left.stock || 0)
-      const rightGap = Number(right.stockMinimo || 0) - Number(right.stock || 0)
-      return rightGap - leftGap
-    })
-    .slice(0, 6)
-    .map((product) => ({
-      label: String(product.nombre || 'Stock').slice(0, 6),
-      value: Math.max(Number(product.stockMinimo || 0) - Number(product.stock || 0), 0),
-    }))
-
-const buildStatusSparkline = (record, labels = {}) =>
-  Object.entries(record || {}).map(([key, value]) => ({
-    label: String(labels[key] || key).slice(0, 6),
-    value: Number(value || 0),
-  }))
-
 const buildHistoryHref = (appointment) =>
-  `/historias?mascotaId=${appointment?.mascota?.id || ''}&propietarioId=${appointment?.propietario?.id || ''}&citaId=${appointment?.id || ''}`
+  appointment?.mascota?.id
+    ? `/pacientes/${appointment.mascota.id}/historial`
+    : '/pacientes'
 
 const buildBillingHref = (appointment) =>
   `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`
@@ -237,41 +218,21 @@ function CommandKpiCard({
   }
 
   return (
-    <div className={cn('rounded-2xl border border-border bg-card p-5 shadow-card', className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-card-foreground">{value}</p>
-        </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-muted text-muted-foreground">
+    <div className={cn('flex flex-col rounded-2xl border border-border bg-card p-5 shadow-card', className)}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase leading-4 tracking-[0.1em] text-muted-foreground">
+          {label}
+        </p>
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${color}1a`, color }}
+        >
           <Icon className="h-4 w-4" />
         </span>
       </div>
 
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">{helper}</p>
-
-      <div className="mt-3 h-12">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.28} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={color}
-              fill={`url(#${rawId})`}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 3 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <p className="mt-4 text-3xl font-bold tabular-nums text-card-foreground">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{helper}</p>
     </div>
   )
 }
@@ -316,8 +277,8 @@ function TacticalAlertStrip({ alerts }) {
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-2 shadow-card">
-      <div className="flex flex-wrap gap-2">
+    <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
+      <div className="flex flex-wrap items-center gap-1">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = tab.id === activeTab
@@ -328,27 +289,22 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition',
-                active ? 'bg-foreground text-background shadow-sm' : 'bg-card text-muted-foreground hover:bg-muted'
+                'flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition',
+                active
+                  ? 'bg-foreground text-background shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <span className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                    active ? 'bg-background/10 text-primary' : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="text-sm font-semibold">{tab.label}</span>
-              </span>
+              <Icon
+                className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')}
+              />
+              <span>{tab.label}</span>
 
               {tabBadges[tab.id] ? (
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                    active ? 'bg-background/10 text-background' : 'bg-muted text-muted-foreground'
+                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
+                    active ? 'bg-background/15 text-background' : 'bg-primary/10 text-primary'
                   )}
                 >
                   {tabBadges[tab.id]}
@@ -546,6 +502,14 @@ export default function DashboardPage() {
   const puedeAbrirAgenda = esAdministrador && featureSet.has('citas')
   const puedeAbrirHistorias = esAdministrador && featureSet.has('historias')
   const puedeAbrirCaja = esAdministrador && featureSet.has('facturacion_interna')
+  // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
+  const mostrarDian = puedeVerIngresos && featureSet.has('facturacion_electronica')
+
+  const quickActions = useMemo(() => {
+    const keys = ['agenda', 'paciente', 'historia', 'facturar']
+    if (puedeVerInventario) keys.splice(1, 0, 'inventario')
+    return keys.map((key) => ALL_QUICK_ACTIONS[key])
+  }, [puedeVerInventario])
 
   const ingresosQuery = useQuery({
     queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
@@ -698,120 +662,9 @@ export default function DashboardPage() {
       limite: limiteMascotas === null ? 'Sin limite' : formatNumber(limiteMascotas),
       estado: limiteMascotas === null ? 'Abierto' : `${cupoMascotas} disponibles`,
     },
-    {
-      id: 'propietarios',
-      area: 'Propietarios',
-      uso: formatNumber(propietariosActivos),
-      limite: 'No aplica',
-      estado: 'Base activa',
-    },
   ]
 
   const featureRows = getFeatureStateRows(funcionalidades)
-
-  const adminAlerts = useMemo(() => {
-    const rows = []
-
-    if (citasPendientesHoy > 0) {
-      rows.push({
-        id: 'agenda-pendiente',
-        area: 'Agenda',
-        estado: 'Pendiente',
-        detalle: `${formatNumber(citasPendientesHoy)} pacientes siguen programados y aun no salen al flujo de atencion.`,
-        actionTo: '/agenda',
-        actionLabel: 'Abrir agenda',
-      })
-    }
-
-    if (dianPendientes > 0) {
-      rows.push({
-        id: 'dian-pendiente',
-        area: 'Facturacion',
-        estado: 'Seguimiento',
-        detalle: `${formatNumber(dianPendientes)} facturas siguen pendientes o enviadas sin validacion final.`,
-        actionTo: '/finanzas',
-        actionLabel: 'Revisar DIAN',
-      })
-    }
-
-    if (typeof diasRestantes === 'number' && diasRestantes <= 5) {
-      rows.push({
-        id: 'vigencia',
-        area: 'Plan',
-        estado: 'Atencion',
-        detalle: `Quedan ${diasRestantes} dias para el cierre de la vigencia actual.`,
-        actionTo: '/planes',
-        actionLabel: 'Ver planes',
-      })
-    }
-
-    if (advertenciaPlan) {
-      rows.push({
-        id: 'warning-plan',
-        area: 'Plan',
-        estado: 'Seguimiento',
-        detalle: advertenciaPlan,
-        actionTo: '/planes',
-        actionLabel: 'Gestionar',
-      })
-    }
-
-    if (limiteMascotas !== null && cupoMascotas <= 10) {
-      rows.push({
-        id: 'pacientes',
-        area: 'Pacientes',
-        estado: 'Cupo bajo',
-        detalle: `Solo quedan ${Math.max(cupoMascotas, 0)} cupos disponibles para pacientes activos.`,
-        actionTo: '/pacientes',
-        actionLabel: 'Abrir modulo',
-      })
-    }
-
-    if (limiteUsuarios !== null && cupoUsuarios <= 2) {
-      rows.push({
-        id: 'usuarios',
-        area: 'Equipo',
-        estado: 'Cupo bajo',
-        detalle: `Solo quedan ${Math.max(cupoUsuarios, 0)} cupos disponibles para usuarios activos.`,
-        actionTo: '/usuarios',
-        actionLabel: 'Abrir usuarios',
-      })
-    }
-
-    if (alertasInventario > 0) {
-      rows.push({
-        id: 'inventario',
-        area: 'Inventario',
-        estado: 'Prioridad',
-        detalle: `${alertasInventario} productos requieren atencion por stock bajo.`,
-        actionTo: '/inventario',
-        actionLabel: 'Revisar inventario',
-      })
-    }
-
-    if (rows.length === 0) {
-      rows.push({
-        id: 'ok',
-        area: 'General',
-        estado: 'Estable',
-        detalle: 'No hay alertas administrativas criticas para el corte actual.',
-        actionTo: '/pacientes',
-        actionLabel: 'Abrir pacientes',
-      })
-    }
-
-    return rows
-  }, [
-    advertenciaPlan,
-    alertasInventario,
-    citasPendientesHoy,
-    cupoMascotas,
-    cupoUsuarios,
-    dianPendientes,
-    diasRestantes,
-    limiteMascotas,
-    limiteUsuarios,
-  ])
 
   const tacticalAlerts = useMemo(() => {
     const rows = []
@@ -858,35 +711,32 @@ export default function DashboardPage() {
     [ingresosPorDia]
   )
 
-  const sparklineAgenda = useMemo(
-    () => buildHourlyAppointmentSeries(citasHoyRows),
+  const todayBridgeRows = useMemo(() => {
+    const filtered = [...citasHoyRows]
+      .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
+      .slice(0, 12)
+
+    if (usuario?.rol === 'veterinario' && usuario?.id) {
+      return [
+        ...filtered.filter((c) => c.veterinario?.id === usuario.id),
+        ...filtered.filter((c) => c.veterinario?.id !== usuario.id),
+      ]
+    }
+    return filtered
+  }, [citasHoyRows, usuario])
+
+  const sinDocumentar = useMemo(
+    () =>
+      citasHoyRows.filter(
+        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
+      ).length,
     [citasHoyRows]
   )
 
-  const sparklineInventario = useMemo(
-    () => buildInventorySparkline(inventarioQuery.data?.productos || []),
-    [inventarioQuery.data?.productos]
-  )
-
-  const sparklineDian = useMemo(
-    () =>
-      buildStatusSparkline(resumenElectronico, {
-        validada: 'Valida',
-        pendiente: 'Pendte',
-        enviada: 'Enviad',
-        rechazada: 'Rechaz',
-        error: 'Error',
-      }),
-    [resumenElectronico]
-  )
-
-  const todayBridgeRows = useMemo(
-    () =>
-      [...citasHoyRows]
-        .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
-        .slice(0, 8),
-    [citasHoyRows]
-  )
+  const ingresosHoy = useMemo(() => {
+    const entry = ingresosPorDia.find((d) => d.fecha === hoy)
+    return entry?.total ?? 0
+  }, [ingresosPorDia, hoy])
 
   if (!esAdministrador) {
     return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
@@ -913,42 +763,51 @@ export default function DashboardPage() {
           formatter={formatCurrency}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7 lg:grid-cols-3">
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-7',
+            (() => {
+              const count = 2 + (mostrarDian ? 1 : 0) + (puedeAbrirHistorias ? 1 : 0)
+              return { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[count]
+            })()
+          )}
+        >
           <CommandKpiCard
             label="Citas de hoy"
             value={formatNumber(citasHoy)}
             helper={`${formatNumber(citasPendientesHoy)} pendientes`}
             icon={CalendarClock}
-            data={sparklineAgenda}
             color="#0f4c81"
-            formatter={formatNumber}
           />
           <CommandKpiCard
             label="Stock crítico"
             value={formatNumber(alertasInventario)}
             helper="Bajo mínimo o en vigilancia"
             icon={Boxes}
-            data={sparklineInventario}
             color="#ea580c"
-            formatter={formatNumber}
           />
-          <CommandKpiCard
-            label="Control DIAN"
-            value={formatNumber(dianErrores)}
-            helper={
-              puedeVerIngresos
-                ? `${formatNumber(dianPendientes)} pendientes`
-                : 'Activa caja para ver emisión'
-            }
-            icon={ShieldAlert}
-            data={sparklineDian}
-            color="#7c3aed"
-            formatter={formatNumber}
-          />
+          {mostrarDian ? (
+            <CommandKpiCard
+              label="Control DIAN"
+              value={formatNumber(dianErrores)}
+              helper={`${formatNumber(dianPendientes)} pendientes`}
+              icon={ShieldAlert}
+              color="#7c3aed"
+            />
+          ) : null}
+          {puedeAbrirHistorias ? (
+            <CommandKpiCard
+              label="Sin documentar"
+              value={formatNumber(sinDocumentar)}
+              helper="Consultas de hoy sin historia clínica"
+              icon={FileText}
+              color="#0891b2"
+            />
+          ) : null}
         </div>
 
         <CommandPanel
-          className="lg:col-span-8"
+          className="lg:col-span-12 ring-1 ring-primary/15 shadow-lg"
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
@@ -963,43 +822,6 @@ export default function DashboardPage() {
             canUseHistories={puedeAbrirHistorias}
             canUseBilling={puedeAbrirCaja}
           />
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-4"
-          title="Radar del dia"
-          subtitle="La lectura rapida que deberia resolver el administrador antes de las 8:15."
-          action={<StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>}
-        >
-          <div className="space-y-3">
-            {adminAlerts.slice(0, 4).map((alert) => (
-              <div key={alert.id} className="rounded-2xl border border-border bg-muted/60 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill
-                    tone={
-                      alert.estado === 'Prioridad'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : alert.estado === 'Cupo bajo'
-                          ? 'border-amber-200 bg-amber-50 text-amber-700'
-                          : alert.estado === 'Estable'
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-sky-200 bg-sky-50 text-sky-700'
-                    }
-                  >
-                    {alert.estado}
-                  </StatusPill>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {alert.area}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{alert.detalle}</p>
-                <Link to={alert.actionTo} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
-                  {alert.actionLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
-          </div>
         </CommandPanel>
 
       </div>
@@ -1019,6 +841,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={CalendarClock}
@@ -1069,17 +893,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        <DataTable
-          title="Lectura operativa de agenda"
-          subtitle="Resumen directo para recepcion y coordinacion del equipo."
-          rows={estadosCita}
-          columns={[
-            { key: 'name', label: 'Estado' },
-            { key: 'value', label: 'Cantidad', render: (row) => formatNumber(row.value) },
-          ]}
-          emptyTitle="No hay estados para mostrar"
-          emptyBody="Cuando existan citas en el periodo, aqui veras una lectura simple del estado operativo."
-        />
       </div>
     )
   }
@@ -1100,6 +913,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={Wallet}
@@ -1122,10 +937,11 @@ export default function DashboardPage() {
             tone="text-primary"
           />
           <KpiCard
-            icon={ShieldCheck}
-            label="Metodos activos"
-            value={formatNumber(metodosPago.length)}
-            helper="Cantidad de formas de pago usadas en el periodo."
+            icon={Wallet}
+            label="Ingresos de hoy"
+            value={formatCurrency(ingresosHoy)}
+            helper="Facturado hoy en el modulo de caja."
+            tone="text-primary"
           />
         </div>
 
@@ -1190,6 +1006,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
+        <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
+
         <div className="grid gap-4 xl:grid-cols-4">
           <KpiCard
             icon={Boxes}
@@ -1269,6 +1087,8 @@ export default function DashboardPage() {
 
   const renderPacientesTab = () => (
     <div className="space-y-5">
+      <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
+
       <div className="grid gap-4 xl:grid-cols-4">
         <KpiCard
           icon={PawPrint}
@@ -1324,40 +1144,19 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <DataTable
-          title="Capacidad y estado"
-          subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
-          rows={capacityRows}
-          columns={[
-            { key: 'area', label: 'Area' },
-            { key: 'uso', label: 'Uso actual' },
-            { key: 'limite', label: 'Limite' },
-            { key: 'estado', label: 'Estado' },
-          ]}
-          emptyTitle="Sin datos"
-          emptyBody="No hay informacion de capacidad disponible."
-        />
-
-        <DashboardPanel
-          title="Modulo operativo publicado"
-          subtitle="Acceso directo a la base real de pacientes y tutores."
-        >
-          <div className="space-y-4">
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              La primera pantalla interna ya esta resuelta: registrar tutor, registrar paciente y
-              consultar la base activa sin depender de cards decorativas.
-            </div>
-            <Link
-              to="/pacientes"
-              className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Abrir pacientes y tutores
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </DashboardPanel>
-      </div>
+      <DataTable
+        title="Capacidad y estado"
+        subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
+        rows={capacityRows}
+        columns={[
+          { key: 'area', label: 'Area' },
+          { key: 'uso', label: 'Uso actual' },
+          { key: 'limite', label: 'Limite' },
+          { key: 'estado', label: 'Estado' },
+        ]}
+        emptyTitle="Sin datos"
+        emptyBody="No hay informacion de capacidad disponible."
+      />
     </div>
   )
 
@@ -1415,46 +1214,31 @@ export default function DashboardPage() {
         </div>
       </DashboardPanel>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <DataTable
-          title="Funcionalidades habilitadas"
-          subtitle="Cada modulo del producto segun la suscripcion activa de la clinica."
-          rows={featureRows}
-          columns={[
-            { key: 'label', label: 'Modulo' },
-            {
-              key: 'enabled',
-              label: 'Estado',
-              render: (row) => (
-                <StatusPill
-                  tone={
-                    row.enabled
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-border bg-slate-100 text-muted-foreground'
-                  }
-                >
-                  {row.enabled ? 'Incluido' : 'No incluido'}
-                </StatusPill>
-              ),
-            },
-          ]}
-          emptyTitle="Sin funcionalidades"
-          emptyBody="No fue posible cargar el estado de funcionalidades del plan."
-        />
-
-        <DataTable
-          title="Alertas comerciales"
-          subtitle="Lo que puede afectar la continuidad operativa si no se revisa a tiempo."
-          rows={adminAlerts}
-          columns={[
-            { key: 'area', label: 'Area' },
-            { key: 'estado', label: 'Estado' },
-            { key: 'detalle', label: 'Detalle' },
-          ]}
-          emptyTitle="Sin alertas"
-          emptyBody="No hay alertas comerciales relevantes para mostrar."
-        />
-      </div>
+      <DataTable
+        title="Funcionalidades habilitadas"
+        subtitle="Cada modulo del producto segun la suscripcion activa de la clinica."
+        rows={featureRows}
+        columns={[
+          { key: 'label', label: 'Modulo' },
+          {
+            key: 'enabled',
+            label: 'Estado',
+            render: (row) => (
+              <StatusPill
+                tone={
+                  row.enabled
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-border bg-slate-100 text-muted-foreground'
+                }
+              >
+                {row.enabled ? 'Incluido' : 'No incluido'}
+              </StatusPill>
+            ),
+          },
+        ]}
+        emptyTitle="Sin funcionalidades"
+        emptyBody="No fue posible cargar el estado de funcionalidades del plan."
+      />
     </div>
   )
 
@@ -1473,7 +1257,7 @@ export default function DashboardPage() {
     ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
     inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
     pacientes: limiteMascotas !== null ? `${Math.max(cupoMascotas, 0)}` : null,
-    plan: typeof diasRestantes === 'number' ? `${diasRestantes}d` : null,
+    plan: typeof diasRestantes === 'number' && diasRestantes <= 60 ? `${diasRestantes}d` : null,
   }
 
   const queryErrors = [
@@ -1521,7 +1305,8 @@ export default function DashboardPage() {
         ) : null
       }
       showQuickActions
-      asideNote="Lee el tablero, detecta el frente critico y entra al modulo correcto solo cuando ya sabes que accion tomar."
+      quickActions={quickActions}
+      asideNote="Usa las acciones rapidas para entrar directo al modulo si necesitas mas contexto primero."
     >
       <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
 

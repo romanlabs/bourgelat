@@ -4,16 +4,28 @@ const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
 const MovimientoInventario = require('../models/MovimientoInventario')
+const ServicioClinico = require('../models/ServicioClinico')
+const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo')
+const InsumoClinico = require('../models/InsumoClinico')
+const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
+const CajaTurno = require('../models/CajaTurno')
+const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
-const { solicitarTokenFactus, validarFacturaFactus } = require('../services/factusService')
+const {
+  solicitarTokenFactus,
+  validarFacturaFactus,
+  descargarPdfFactura,
+  descargarXmlFactura,
+} = require('../services/factusService')
 const {
   obtenerNombrePlan,
   obtenerSuscripcionActivaClinica,
   suscripcionTieneFuncionalidad,
 } = require('../services/suscripcionService')
+const { parsePaginacion } = require('../utils/paginacion')
 
 const METODOS_PAGO_FACTUS = {
   efectivo: '10',
@@ -37,10 +49,9 @@ const ORGANIZACIONES_JURIDICAS_FACTUS = {
   persona_natural: '2',
 }
 
-const DEFAULT_UNIT_MEASURE_ID = 70
-const DEFAULT_STANDARD_CODE_ID = 1
-const DEFAULT_PRODUCT_TRIBUTE_ID = 1
-const DEFAULT_CUSTOMER_TRIBUTE_ID = '21'
+const DEFAULT_UNIT_MEASURE_CODE = '94'
+const DEFAULT_STANDARD_CODE = '999'
+const DEFAULT_CUSTOMER_TRIBUTE_CODE = 'ZZ'
 
 const convertirANumero = (valor, valorPorDefecto = 0) => {
   if (valor === undefined || valor === null || valor === '') {
@@ -60,10 +71,7 @@ const convertirAEntero = (valor, valorPorDefecto = null) => {
   return Number.isNaN(numero) ? valorPorDefecto : numero
 }
 
-const limpiarTexto = (valor) => {
-  if (valor === undefined || valor === null) return ''
-  return String(valor).trim()
-}
+const { limpiarTexto } = require('../utils/normalizar')
 
 const redondear = (valor, decimales = 2) => {
   const factor = 10 ** decimales
@@ -193,7 +201,7 @@ const resolverOrganizacionJuridicaFactus = (propietario) => {
 }
 
 const resolverTributoClienteFactus = (propietario) => {
-  return limpiarTexto(propietario.tributoId) || DEFAULT_CUSTOMER_TRIBUTE_ID
+  return limpiarTexto(propietario.tributoId) || DEFAULT_CUSTOMER_TRIBUTE_CODE
 }
 
 const resolverMetodoPagoFactus = (factura, configuracionEfectiva, metodoPagoCodigo) => {
@@ -275,10 +283,10 @@ const construirClienteFactus = (propietario) => {
     address: limpiarTexto(propietario.direccion),
     email: limpiarTexto(propietario.email),
     phone: limpiarTexto(propietario.telefono),
-    legal_organization_id: organizacionJuridicaId,
-    tribute_id: resolverTributoClienteFactus(propietario),
-    identification_document_id: tipoDocumentoFacturacionId,
-    municipality_id: convertirAEntero(propietario.municipioId),
+    legal_organization_code: organizacionJuridicaId,
+    tribute_code: resolverTributoClienteFactus(propietario),
+    identification_document_code: String(tipoDocumentoFacturacionId),
+    municipality_code: limpiarTexto(propietario.municipioId) || undefined,
   }
 }
 
@@ -304,14 +312,12 @@ const construirItemsFactus = (factura) => {
         limpiarTexto(item.productoId) ||
         `${factura.numero}-ITEM-${index + 1}`,
       name: limpiarTexto(item.descripcion),
-      quantity: cantidad,
-      discount_rate: descuentoRate,
-      price: redondear(precioUnitario, 2),
-      tax_rate: '0.00',
-      unit_measure_id: DEFAULT_UNIT_MEASURE_ID,
-      standard_code_id: DEFAULT_STANDARD_CODE_ID,
-      is_excluded: 1,
-      tribute_id: DEFAULT_PRODUCT_TRIBUTE_ID,
+      quantity: String(cantidad),
+      discount_rate: String(descuentoRate),
+      price: String(redondear(precioUnitario, 2)),
+      unit_measure_code: DEFAULT_UNIT_MEASURE_CODE,
+      standard_code: DEFAULT_STANDARD_CODE,
+      taxes: [{ code: '01', rate: '0.00', is_excluded: true }],
       withholding_taxes: [],
     }
   })
@@ -327,20 +333,24 @@ const construirPayloadFacturaFactus = ({
   enviarEmail,
   fechaVencimientoPago,
 }) => {
-  const payload = {
-    document: documentoCodigo,
-    numbering_range_id: rangoNumeracionId,
-    reference_code: factura.numero,
-    observation: limpiarTexto(factura.observaciones) || undefined,
+  const pagoEntry = {
     payment_form: formaPagoCodigo,
     payment_method_code: metodoPagoCodigo,
-    send_email: enviarEmail ? 1 : 0,
-    customer: construirClienteFactus(factura.propietario),
-    items: construirItemsFactus(factura),
+    amount: String(redondear(factura.total, 2)),
+  }
+  if (formaPagoCodigo === '2' && fechaVencimientoPago) {
+    pagoEntry.due_date = fechaVencimientoPago
   }
 
-  if (fechaVencimientoPago) {
-    payload.payment_due_date = fechaVencimientoPago
+  const payload = {
+    numbering_range_id: rangoNumeracionId,
+    reference_code: factura.numero,
+    document: documentoCodigo,
+    observation: limpiarTexto(factura.observaciones) || undefined,
+    send_email: enviarEmail ? 1 : 0,
+    payment_details: [pagoEntry],
+    customer: construirClienteFactus(factura.propietario),
+    items: construirItemsFactus(factura),
   }
 
   return payload
@@ -415,9 +425,16 @@ const crearFactura = async (req, res) => {
     } = req.body
     const { clinicaId } = req.usuario
 
-    if (!propietarioId || !items || items.length === 0) {
+    if (!items || items.length === 0) {
       await transaction.rollback()
-      return res.status(400).json({ message: 'Propietario e items son obligatorios' })
+      return res.status(400).json({ message: 'La factura debe tener al menos un item' })
+    }
+
+    if (emitirElectronica && !propietarioId) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'La facturacion electronica requiere un cliente con datos fiscales. Selecciona un tutor o crea la factura interna.',
+      })
     }
 
     if (emitirElectronica) {
@@ -434,15 +451,31 @@ const crearFactura = async (req, res) => {
       }
     }
 
-    const propietario = await Propietario.findOne({
-      where: { id: propietarioId, clinicaId },
+    if (propietarioId) {
+      const propietario = await Propietario.findOne({
+        where: { id: propietarioId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (!propietario) {
+        await transaction.rollback()
+        return res.status(404).json({ message: 'Propietario no encontrado' })
+      }
+    }
+
+    const turnoActivo = await CajaTurno.findOne({
+      where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
       transaction,
       lock: transaction.LOCK.UPDATE,
     })
 
-    if (!propietario) {
+    if (!turnoActivo) {
       await transaction.rollback()
-      return res.status(404).json({ message: 'Propietario no encontrado' })
+      return res.status(409).json({
+        message: 'Debes abrir un turno de caja antes de facturar',
+        code: 'TURNO_CAJA_REQUERIDO',
+      })
     }
 
     let subtotal = 0
@@ -468,6 +501,46 @@ const crearFactura = async (req, res) => {
       }
 
       let producto = null
+      let insumosConsumo = null
+      if (item.tipo === 'servicio' && item.servicioClinicoId) {
+        const servicioClinico = await ServicioClinico.findOne({
+          where: { id: item.servicioClinicoId, clinicaId, activo: true },
+          include: [{
+            model: ServicioClinicoInsumo,
+            as: 'insumos',
+          }],
+          transaction,
+        })
+
+        if (!servicioClinico) {
+          await transaction.rollback()
+          return res.status(404).json({ message: `Servicio no encontrado: ${item.descripcion}` })
+        }
+
+        insumosConsumo = []
+        for (const receta of servicioClinico.insumos) {
+          const cantidadRequerida = Number(receta.cantidadConsumida) * cantidad
+
+          const insumoClinico = await InsumoClinico.findOne({
+            where: { id: receta.insumoClinicoId, clinicaId },
+            transaction,
+            lock: transaction.LOCK.UPDATE,
+          })
+
+          if (!insumoClinico) {
+            await transaction.rollback()
+            return res.status(404).json({ message: `Insumo clinico no encontrado para el servicio: ${item.descripcion}` })
+          }
+
+          if (Number(insumoClinico.stock) < cantidadRequerida) {
+            await transaction.rollback()
+            return res.status(400).json({ message: `Stock insuficiente de "${insumoClinico.nombre}" para: ${item.descripcion}` })
+          }
+
+          insumosConsumo.push({ insumoClinico, cantidadRequerida })
+        }
+      }
+
       if (item.tipo === 'producto' && item.productoId) {
         if (!Number.isInteger(cantidad)) {
           await transaction.rollback()
@@ -491,6 +564,15 @@ const crearFactura = async (req, res) => {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
         }
+
+        // Piso de precio: un producto no se puede vender por debajo de su costo.
+        const precioCompra = convertirANumero(producto.precioCompra, 0)
+        if (precioCompra > 0 && precioUnitario < precioCompra) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `"${producto.nombre}" no se puede vender por debajo de su costo ($${precioCompra})`,
+          })
+        }
       }
 
       const itemSubtotal = Math.max((precioUnitario * cantidad) - descuentoItem, 0)
@@ -502,6 +584,7 @@ const crearFactura = async (req, res) => {
         descuento: descuentoItem,
         subtotal: itemSubtotal,
         producto,
+        insumosConsumo,
       })
     }
 
@@ -509,12 +592,25 @@ const crearFactura = async (req, res) => {
     const baseGravable = subtotal - descuento
     const impuesto = 0
     const total = baseGravable + impuesto
+
+    // Venta a crédito (fiado): nace con todo el total como saldo por cobrar.
+    // Exige cliente identificado — no se fía a ventas de mostrador anónimas.
+    const esCredito = metodoPago === 'credito'
+    if (esCredito && !propietarioId) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'Las ventas a crédito requieren un cliente asociado',
+        code: 'CREDITO_REQUIERE_CLIENTE',
+      })
+    }
+
     const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
       numero,
       fecha: new Date(),
       estado: 'emitida',
+      saldoPendiente: esCredito ? total : 0,
       subtotal,
       descuento,
       impuesto,
@@ -525,9 +621,10 @@ const crearFactura = async (req, res) => {
       estadoElectronico: emitirElectronica ? 'pendiente' : 'no_aplica',
       documentoElectronico: emitirElectronica ? documentoElectronico : null,
       rangoNumeracionId: emitirElectronica ? rangoNumeracionId : null,
-      propietarioId,
+      propietarioId: propietarioId || null,
       usuarioId: usuarioId || req.usuario.id,
       clinicaId,
+      cajaTurnoId: turnoActivo.id,
     }, { transaction })
 
     for (const item of itemsCalculados) {
@@ -539,6 +636,7 @@ const crearFactura = async (req, res) => {
         descuento: item.descuento || 0,
         subtotal: item.subtotal,
         productoId: item.productoId || null,
+        servicioClinicoId: item.servicioClinicoId || null,
         facturaId: factura.id,
       }, { transaction })
 
@@ -564,6 +662,37 @@ const crearFactura = async (req, res) => {
           clinicaId,
         }, { transaction })
       }
+
+      if (item.tipo === 'servicio' && item.insumosConsumo) {
+        for (const { insumoClinico, cantidadRequerida } of item.insumosConsumo) {
+          const stockAnterior = Number(insumoClinico.stock)
+          const stockNuevo = stockAnterior - cantidadRequerida
+
+          await insumoClinico.update(
+            { stock: stockNuevo },
+            { transaction }
+          )
+
+          await MovimientoInventarioClinico.create({
+            tipo: 'salida',
+            cantidad: cantidadRequerida,
+            stockAnterior,
+            stockNuevo,
+            motivo: 'uso_servicio',
+            observaciones: `Consumo por factura ${numero}`,
+            precioUnitario: insumoClinico.precioUnitarioBase,
+            insumoClinicoId: insumoClinico.id,
+            usuarioId: req.usuario.id,
+            clinicaId,
+            facturaId: factura.id,
+            servicioClinicoId: item.servicioClinicoId,
+          }, { transaction })
+        }
+      }
+    }
+
+    if (metodoPago === 'efectivo') {
+      await turnoActivo.increment('totalVentasEfectivo', { by: total, transaction })
     }
 
     await transaction.commit()
@@ -593,7 +722,8 @@ const crearFactura = async (req, res) => {
 const obtenerFacturas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario
-    const { fechaInicio, fechaFin, estado, pagina = 1, limite = 20, buscar } = req.query
+    const { fechaInicio, fechaFin, estado, buscar } = req.query
+    const { pagina: paginaNumero, limite: limiteNumero, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
     const where = { clinicaId }
     if (estado) where.estado = estado
@@ -609,10 +739,6 @@ const obtenerFacturas = async (req, res) => {
         { '$usuario.nombre$': { [Op.iLike]: `%${textoBusqueda}%` } },
       ]
     }
-
-    const limiteNumero = parseInt(limite, 10)
-    const paginaNumero = parseInt(pagina, 10)
-    const offset = (paginaNumero - 1) * limiteNumero
 
     const includeListado = [
       { model: Propietario, as: 'propietario', attributes: ['id', 'nombre'], required: false },
@@ -721,6 +847,12 @@ const emitirFacturaElectronica = async (req, res) => {
     const factura = await obtenerFacturaDetallada(id, clinicaId)
     validarFacturaParaEmision(factura)
 
+    if (!factura.propietario) {
+      return res.status(400).json({
+        message: 'La factura no tiene cliente asociado. La facturacion electronica requiere un cliente con datos fiscales.',
+      })
+    }
+
     const camposFaltantesPropietario = obtenerCamposFiscalesPropietarioFaltantes(factura.propietario)
     if (camposFaltantesPropietario.length > 0) {
       return res.status(400).json({
@@ -767,7 +899,7 @@ const emitirFacturaElectronica = async (req, res) => {
 
     if (formaPagoEfectiva === '2' && !fechaVencimientoPago) {
       return res.status(400).json({
-        message: 'La fecha de vencimiento es obligatoria cuando la forma de pago es credito',
+        message: 'La fecha de vencimiento (fechaVencimientoPago) es obligatoria cuando la forma de pago es credito',
       })
     }
 
@@ -897,6 +1029,235 @@ const emitirFacturaElectronica = async (req, res) => {
   }
 }
 
+const registrarPago = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+    const { metodoPago, observaciones } = req.body
+
+    const factura = await Factura.findOne({ where: { id, clinicaId } })
+
+    if (!factura) {
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (factura.estado !== 'emitida') {
+      return res.status(400).json({
+        message: `Solo se pueden marcar como pagadas facturas en estado "emitida". Estado actual: ${factura.estado}`,
+      })
+    }
+
+    // Ventas a crédito se saldan con abonos (que actualizan saldo y caja),
+    // no con un marcado directo que dejaría el cobro sin rastro.
+    if (convertirANumero(factura.saldoPendiente) > 0) {
+      return res.status(409).json({
+        message: 'Esta factura tiene saldo pendiente. Registra el cobro como abono.',
+        code: 'USAR_ABONOS',
+      })
+    }
+
+    const estadoAnterior = factura.estado
+    const metodoPagoAnterior = factura.metodoPago
+
+    await factura.update({
+      estado: 'pagada',
+      ...(metodoPago ? { metodoPago } : {}),
+      ...(observaciones ? { observaciones } : {}),
+    })
+
+    await registrarAuditoria({
+      accion: 'REGISTRAR_PAGO_FACTURA',
+      entidad: 'Factura',
+      entidadId: factura.id,
+      descripcion: `Factura ${factura.numero} marcada como pagada. Método: ${metodoPago || metodoPagoAnterior || 'no especificado'}`,
+      datosAnteriores: { estado: estadoAnterior, metodoPago: metodoPagoAnterior },
+      datosNuevos: { estado: 'pagada', metodoPago: metodoPago || metodoPagoAnterior },
+      req,
+      resultado: 'exitoso',
+    })
+
+    const facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+
+    res.json({
+      message: 'Pago registrado exitosamente',
+      factura: facturaActualizada,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Registra un abono (pago parcial o total) a una factura con saldo pendiente.
+// Si el abono es en efectivo y el cobrador tiene turno abierto, el monto entra
+// a la caja del turno (mismo contador que las ventas de contado de Sergio).
+const registrarAbono = async (req, res) => {
+  const transaction = await sequelize.transaction()
+
+  try {
+    const { id } = req.params
+    const { monto, metodoPago, observaciones } = req.body
+    const { clinicaId } = req.usuario
+    const montoNumero = convertirANumero(monto, NaN)
+
+    if (!Number.isFinite(montoNumero) || montoNumero <= 0) {
+      await transaction.rollback()
+      return res.status(400).json({ message: 'Monto de abono invalido' })
+    }
+
+    const factura = await Factura.findOne({
+      where: { id, clinicaId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
+
+    if (!factura) {
+      await transaction.rollback()
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (!['emitida', 'parcial'].includes(factura.estado)) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: `No se pueden abonar facturas en estado "${factura.estado}"`,
+      })
+    }
+
+    const saldoActual = convertirANumero(factura.saldoPendiente)
+
+    if (saldoActual <= 0) {
+      await transaction.rollback()
+      return res.status(409).json({ message: 'La factura no tiene saldo pendiente' })
+    }
+
+    if (montoNumero > saldoActual + 0.009) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: `El abono ($${montoNumero}) supera el saldo pendiente ($${saldoActual})`,
+      })
+    }
+
+    // Efectivo entra a la caja del cobrador si tiene turno abierto.
+    let cajaTurnoId = null
+    if (metodoPago === 'efectivo') {
+      const turno = await CajaTurno.findOne({
+        where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (turno) {
+        await turno.increment('totalVentasEfectivo', { by: montoNumero, transaction })
+        cajaTurnoId = turno.id
+      }
+    }
+
+    const abono = await AbonoFactura.create({
+      monto: montoNumero,
+      metodoPago: metodoPago || null,
+      observaciones: observaciones || null,
+      facturaId: factura.id,
+      cajaTurnoId,
+      usuarioId: req.usuario.id,
+      clinicaId,
+    }, { transaction })
+
+    const nuevoSaldo = Math.max(0, Math.round((saldoActual - montoNumero) * 100) / 100)
+    const nuevoEstado = nuevoSaldo === 0 ? 'pagada' : 'parcial'
+
+    await factura.update({
+      saldoPendiente: nuevoSaldo,
+      estado: nuevoEstado,
+    }, { transaction })
+
+    await transaction.commit()
+
+    await registrarAuditoria({
+      accion: 'REGISTRAR_ABONO_FACTURA',
+      entidad: 'AbonoFactura',
+      entidadId: abono.id,
+      descripcion: `Abono de $${montoNumero} a factura ${factura.numero}. Saldo restante: $${nuevoSaldo}`,
+      datosNuevos: { facturaId: factura.id, monto: montoNumero, metodoPago, nuevoSaldo, nuevoEstado, cajaTurnoId },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.status(201).json({
+      message: nuevoSaldo === 0 ? 'Abono registrado. Factura saldada.' : 'Abono registrado',
+      abono,
+      saldoPendiente: nuevoSaldo,
+      estado: nuevoEstado,
+    })
+  } catch (error) {
+    await transaction.rollback()
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Cuentas por cobrar: facturas con saldo, agrupadas por cliente y ordenadas
+// por deuda total (la vista "quién me debe y cuánto" estilo Treinta).
+const listarCuentasPorCobrar = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+
+    const facturas = await Factura.findAll({
+      where: {
+        clinicaId,
+        estado: { [Op.in]: ['emitida', 'parcial'] },
+        saldoPendiente: { [Op.gt]: 0 },
+      },
+      attributes: ['id', 'numero', 'fecha', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
+      include: [{
+        model: Propietario,
+        as: 'propietario',
+        attributes: ['id', 'nombre', 'telefono', 'email'],
+      }],
+      order: [['fecha', 'ASC']],
+    })
+
+    const porCliente = new Map()
+    let totalPorCobrar = 0
+
+    for (const f of facturas) {
+      const saldo = convertirANumero(f.saldoPendiente)
+      totalPorCobrar += saldo
+
+      const key = f.propietarioId || 'sin-cliente'
+      const entrada = porCliente.get(key) || {
+        propietarioId: f.propietarioId,
+        nombre: f.propietario?.nombre || 'Venta de mostrador',
+        telefono: f.propietario?.telefono || null,
+        email: f.propietario?.email || null,
+        totalDeuda: 0,
+        facturaMasAntigua: f.fecha,
+        facturas: [],
+      }
+
+      entrada.totalDeuda = Math.round((entrada.totalDeuda + saldo) * 100) / 100
+      entrada.facturas.push({
+        id: f.id,
+        numero: f.numero,
+        fecha: f.fecha,
+        total: f.total,
+        saldoPendiente: f.saldoPendiente,
+        estado: f.estado,
+      })
+      porCliente.set(key, entrada)
+    }
+
+    const clientes = Array.from(porCliente.values())
+      .sort((a, b) => b.totalDeuda - a.totalDeuda)
+
+    res.json({
+      totalPorCobrar: Math.round(totalPorCobrar * 100) / 100,
+      totalClientes: clientes.length,
+      totalFacturas: facturas.length,
+      clientes,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 const anularFactura = async (req, res) => {
   const transaction = await sequelize.transaction()
 
@@ -935,6 +1296,22 @@ const anularFactura = async (req, res) => {
       })
     }
 
+    // Una factura con abonos ya recibió dinero del cliente: anularla dejaría
+    // ese dinero sin rastro contable. Debe resolverse la devolución primero.
+    const abonosExistentes = await AbonoFactura.count({
+      where: { facturaId: factura.id, clinicaId },
+      transaction,
+    })
+
+    if (abonosExistentes > 0) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message:
+          'La factura tiene abonos registrados. Gestiona la devolución al cliente antes de anularla.',
+        code: 'FACTURA_CON_ABONOS',
+      })
+    }
+
     for (const item of factura.items) {
       if (item.tipo === 'producto' && item.productoId) {
         const producto = await Producto.findOne({
@@ -969,6 +1346,67 @@ const anularFactura = async (req, res) => {
       }
     }
 
+    const movimientosClinicosFactura = await MovimientoInventarioClinico.findAll({
+      where: { facturaId: factura.id, motivo: 'uso_servicio' },
+      transaction,
+    })
+
+    for (const movimientoOriginal of movimientosClinicosFactura) {
+      const insumoClinico = await InsumoClinico.findOne({
+        where: { id: movimientoOriginal.insumoClinicoId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (insumoClinico) {
+        const cantidad = Number(movimientoOriginal.cantidad)
+        const stockAnterior = Number(insumoClinico.stock)
+        const stockNuevo = stockAnterior + cantidad
+
+        await insumoClinico.update(
+          { stock: stockNuevo },
+          { transaction }
+        )
+
+        await MovimientoInventarioClinico.create({
+          tipo: 'entrada',
+          cantidad,
+          stockAnterior,
+          stockNuevo,
+          motivo: 'devolucion',
+          observaciones: `Reingreso por anulacion de factura ${factura.numero}`,
+          precioUnitario: movimientoOriginal.precioUnitario,
+          insumoClinicoId: insumoClinico.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+          facturaId: factura.id,
+          servicioClinicoId: movimientoOriginal.servicioClinicoId,
+        }, { transaction })
+      }
+    }
+
+    // Revertir el efecto en la caja: si la venta fue en efectivo y el turno
+    // sigue abierto, descontar el total de totalVentasEfectivo para que el
+    // cajero no cargue con un descuadre falso al cierre. Si el turno ya
+    // cerró, no se toca (el arqueo histórico es inmutable); queda constancia
+    // en la auditoría de la anulación.
+    let cajaAjustada = false
+    if (factura.cajaTurnoId && factura.metodoPago === 'efectivo') {
+      const turnoVenta = await CajaTurno.findOne({
+        where: { id: factura.cajaTurnoId, clinicaId, estado: 'abierto' },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (turnoVenta) {
+        await turnoVenta.decrement('totalVentasEfectivo', {
+          by: convertirANumero(factura.total),
+          transaction,
+        })
+        cajaAjustada = true
+      }
+    }
+
     await factura.update({ estado: 'anulada', motivoAnulacion }, { transaction })
     await transaction.commit()
 
@@ -978,7 +1416,7 @@ const anularFactura = async (req, res) => {
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} anulada. Motivo: ${motivoAnulacion}`,
       datosAnteriores: { estado: 'emitida' },
-      datosNuevos: { estado: 'anulada', motivoAnulacion },
+      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada },
       req,
       resultado: 'exitoso',
     })
@@ -990,10 +1428,105 @@ const anularFactura = async (req, res) => {
   }
 }
 
+const descargarFacturaElectronica = async (req, res) => {
+  try {
+    const { id, formato } = req.params
+    const { clinicaId } = req.usuario
+
+    const formatoNormalizado = String(formato || '').toLowerCase()
+    if (!['pdf', 'xml'].includes(formatoNormalizado)) {
+      return res.status(400).json({ message: 'Formato no valido. Use pdf o xml.' })
+    }
+
+    const factura = await Factura.findOne({ where: { id, clinicaId } })
+
+    if (!factura) {
+      return res.status(404).json({ message: 'Factura no encontrada' })
+    }
+
+    if (factura.estadoElectronico !== 'validada') {
+      return res.status(409).json({
+        message: 'La factura no ha sido validada electronicamente en Factus',
+      })
+    }
+
+    const numeroFactus = factura.respuestaElectronica?.data?.bill?.number || factura.referenciaExterna
+
+    if (!numeroFactus) {
+      return res.status(409).json({
+        message: 'No se encontro el numero de factura electronica para descargar',
+      })
+    }
+
+    const { configuracionEfectiva } = await obtenerContextoFactusPorClinica(clinicaId)
+
+    if (!configuracionEfectiva.credencialesCompletas) {
+      return res.status(400).json({
+        message: 'Faltan credenciales de Factus para descargar la factura',
+      })
+    }
+
+    const tokenFactus = await solicitarTokenFactus({
+      baseUrl: configuracionEfectiva.baseUrl,
+      clientId: configuracionEfectiva.clientId,
+      clientSecret: configuracionEfectiva.clientSecret,
+      username: configuracionEfectiva.username,
+      password: configuracionEfectiva.password,
+    })
+
+    const descargar = formatoNormalizado === 'pdf' ? descargarPdfFactura : descargarXmlFactura
+    const respuesta = await descargar({
+      baseUrl: configuracionEfectiva.baseUrl,
+      token: tokenFactus.access_token,
+      numero: numeroFactus,
+    })
+
+    const data = respuesta?.data || {}
+    const base64 =
+      formatoNormalizado === 'pdf' ? data.pdf_base_64_encoded : data.xml_base_64_encoded
+
+    if (!base64) {
+      return res.status(502).json({ message: 'Factus no devolvio el archivo solicitado' })
+    }
+
+    const buffer = Buffer.from(base64, 'base64')
+    const baseName = limpiarTexto(data.file_name) || `factura-${factura.numero}`
+    const nombreArchivo = baseName.toLowerCase().endsWith(`.${formatoNormalizado}`)
+      ? baseName
+      : `${baseName}.${formatoNormalizado}`
+    const contentType = formatoNormalizado === 'pdf' ? 'application/pdf' : 'application/xml'
+
+    await registrarAuditoria({
+      accion: 'DESCARGAR_FACTURA_ELECTRONICA',
+      entidad: 'Factura',
+      entidadId: factura.id,
+      descripcion: `Descarga ${formatoNormalizado.toUpperCase()} de factura ${factura.numero} desde Factus`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.setHeader('Content-Type', contentType)
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`)
+    res.setHeader('Content-Length', buffer.length)
+    return res.send(buffer)
+  } catch (error) {
+    const status = error.status && error.status >= 400 && error.status < 600 ? error.status : 500
+    return res.status(status).json({
+      message: 'No fue posible descargar la factura electronica',
+      error: error.message,
+      payload: error.payload || null,
+    })
+  }
+}
+
 module.exports = {
   crearFactura,
   obtenerFacturas,
   obtenerFactura,
   emitirFacturaElectronica,
+  descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
+  registrarAbono,
+  listarCuentasPorCobrar,
 }

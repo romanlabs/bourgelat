@@ -16,6 +16,7 @@ const {
 } = require('../config/cookies')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
+const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -43,47 +44,26 @@ const estaTemporalmenteBloqueado = (usuario) =>
       new Date(usuario.bloqueadoHasta).getTime() > Date.now()
   )
 
-const limpiarTexto = (valor) => {
-  if (typeof valor !== 'string') return valor ?? null
-  const limpio = valor.trim()
-  return limpio || null
-}
-
-const normalizarEmail = (valor) => {
-  const limpio = limpiarTexto(valor)
-  return limpio ? limpio.toLowerCase() : null
-}
-
-const normalizarTelefonoColombiano = (valor) => {
-  const limpio = limpiarTexto(valor)
-  if (!limpio) return null
-
-  const soloNumeros = limpio.replace(/\D/g, '')
-  const sinPrefijo =
-    soloNumeros.length > 10 && soloNumeros.startsWith('57')
-      ? soloNumeros.slice(2)
-      : soloNumeros
-
-  return sinPrefijo.slice(0, 10) || null
-}
-
 const esTelefonoColombianoValido = (valor) => /^3\d{9}$/.test(valor)
 
 const registrarIntentoFallido = async (usuario) => {
-  const intentosFallidos = (usuario.intentosFallidos || 0) + 1
-  const data = { intentosFallidos }
+  // Incremento atomico en SQL (SET intentosFallidos = intentosFallidos + 1)
+  // para que rafagas concurrentes de login no se pisen el contador y
+  // permitan saltarse el bloqueo. reload() trae el valor real ya aplicado.
+  await usuario.increment('intentosFallidos')
+  await usuario.reload()
 
-  if (intentosFallidos >= appConfig.auth.maxIntentosFallidos) {
+  if (usuario.intentosFallidos >= appConfig.auth.maxIntentosFallidos) {
     const bloqueadoHasta = new Date()
     bloqueadoHasta.setMinutes(
       bloqueadoHasta.getMinutes() + appConfig.auth.minutosBloqueo
     )
 
-    data.bloqueadoHasta = bloqueadoHasta
-    data.intentosFallidos = 0
+    await usuario.update({
+      bloqueadoHasta,
+      intentosFallidos: 0,
+    })
   }
-
-  await usuario.update(data)
 }
 
 const limpiarEstadoAccesoUsuario = async (usuario) => {
@@ -240,7 +220,7 @@ const registro = async (req, res) => {
 
     const [clinicaPorEmail, usuarioPorEmail, clinicaPorNit] = await Promise.all([
       Clinica.findOne({ where: { email: emailContactoClinica } }),
-      Usuario.findOne({ where: { email: emailAdministrador } }),
+      Usuario.findOne({ where: { email: emailAdministrador }, sinTenant: true }),
       nitNormalizado
         ? Clinica.findOne({ where: { nit: nitNormalizado } })
         : Promise.resolve(null),
@@ -378,6 +358,7 @@ const login = async (req, res) => {
 
     const usuario = await Usuario.findOne({
       where: { email },
+      sinTenant: true,
       include: [
         {
           model: Clinica,
@@ -504,30 +485,62 @@ const refresh = async (req, res) => {
       })
     }
 
-    const tokenDB = await RefreshToken.findOne({
-      where: {
-        token: refreshToken,
-        revocado: false,
-        expiracion: {
-          [Op.gt]: new Date(),
+    // Rotacion atomica: el UPDATE condicionado a revocado:false garantiza que
+    // solo UNA peticion concurrente con la misma cookie consiga canjear el
+    // token. Las demas afectan 0 filas y se rechazan, cerrando la race condition
+    // de doble canje.
+    const [filasRotadas] = await RefreshToken.update(
+      { revocado: true },
+      {
+        where: {
+          token: refreshToken,
+          revocado: false,
+          expiracion: { [Op.gt]: new Date() },
         },
-      },
-    })
+        sinTenant: true,
+      }
+    )
 
-    if (!tokenDB) {
+    if (filasRotadas !== 1) {
+      // El token no esta activo. Si existe pero ya fue rotado/revocado, es una
+      // reutilizacion: senal canonica de robo (la victima y el atacante tienen
+      // la misma cadena). Revocamos toda la familia de sesiones del usuario.
+      const tokenReutilizado = await RefreshToken.findOne({
+        where: { token: refreshToken },
+        sinTenant: true,
+      })
+
+      if (tokenReutilizado) {
+        await RefreshToken.update(
+          { revocado: true },
+          { where: { usuarioId: tokenReutilizado.usuarioId, revocado: false }, sinTenant: true }
+        )
+
+        await registrarAuditoria({
+          accion: 'REFRESH_TOKEN_REUSE',
+          entidad: 'Usuario',
+          entidadId: tokenReutilizado.usuarioId,
+          descripcion: 'Reutilizacion de refresh token detectada; sesiones revocadas',
+          req,
+          resultado: 'fallido',
+        })
+      }
+
       return res.status(401).json({
         message: 'Refresh token invalido o expirado',
       })
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
-
-    await tokenDB.update({
-      revocado: true,
+    const tokenDB = await RefreshToken.findOne({
+      where: { token: refreshToken },
+      sinTenant: true,
     })
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
 
     const usuario = await Usuario.findOne({
       where: { id: tokenDB.usuarioId || decoded.id },
+      sinTenant: true,
       include: [
         {
           model: Clinica,
@@ -597,7 +610,7 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await RefreshToken.update(
         { revocado: true },
-        { where: { token: refreshToken } }
+        { where: { token: refreshToken }, sinTenant: true }
       )
     }
 
@@ -617,7 +630,7 @@ const logoutAll = async (req, res) => {
 
     await RefreshToken.update(
       { revocado: true },
-      { where: { usuarioId, revocado: false } }
+      { where: { usuarioId, revocado: false }, sinTenant: true }
     )
 
     clearAuthCookies(res)
@@ -643,6 +656,7 @@ const me = async (req, res) => {
   try {
     const usuario = await Usuario.findOne({
       where: { id: req.auth?.usuarioId || req.usuario.id },
+      sinTenant: true,
       attributes: { exclude: ['password'] },
       include: [
         {

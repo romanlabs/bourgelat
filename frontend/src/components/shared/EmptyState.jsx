@@ -16,7 +16,7 @@ const wrapperVariants = cva(
 )
 
 const iconWrapperVariants = cva(
-  'flex items-center justify-center rounded-2xl border border-border bg-muted text-muted-foreground',
+  'flex items-center justify-center rounded-2xl border',
   {
     variants: {
       size: {
@@ -24,8 +24,13 @@ const iconWrapperVariants = cva(
         md: 'h-14 w-14 [&_svg]:h-7 [&_svg]:w-7',
         lg: 'h-18 w-18 [&_svg]:h-9 [&_svg]:w-9',
       },
+      variant: {
+        default: 'border-border bg-muted text-muted-foreground',
+        warm: 'border-caramel/30 bg-caramel/10 text-caramel',
+        primary: 'border-primary/30 bg-primary/10 text-primary',
+      },
     },
-    defaultVariants: { size: 'md' },
+    defaultVariants: { size: 'md', variant: 'default' },
   }
 )
 
@@ -54,7 +59,7 @@ const iconWrapperVariants = cva(
  * Dentro de tabla (bordado):
  *   <EmptyState icon={<Search />} title="Sin resultados" bordered />
  */
-export function EmptyState({ icon, title, description, action, size = 'md', bordered = false, className }) {
+export function EmptyState({ icon, title, description, action, size = 'md', variant = 'default', bordered = false, className }) {
   return (
     <div
       className={cn(
@@ -64,7 +69,7 @@ export function EmptyState({ icon, title, description, action, size = 'md', bord
       )}
     >
       {icon && (
-        <div className={cn(iconWrapperVariants({ size }))}>
+        <div className={cn(iconWrapperVariants({ size, variant }))}>
           {icon}
         </div>
       )}

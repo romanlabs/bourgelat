@@ -85,23 +85,24 @@ export const formatNumber = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0))
 
-export const formatShortDate = (value) => {
-  if (!value) return '-'
+const toLocalDate = (value) => {
+  if (!value) return null
+  const s = String(value)
+  const dateStr = s.includes('T') ? s : `${s}T00:00:00`
+  const d = new Date(dateStr)
+  return isNaN(d.getTime()) ? null : d
+}
 
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit',
-    month: 'short',
-  }).format(new Date(`${value}T00:00:00`))
+export const formatShortDate = (value) => {
+  const d = toLocalDate(value)
+  if (!d) return '-'
+  return new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short' }).format(d)
 }
 
 export const formatLongDate = (value) => {
-  if (!value) return 'Sin fecha'
-
-  return new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(`${value}T00:00:00`))
+  const d = toLocalDate(value)
+  if (!d) return 'Sin fecha'
+  return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).format(d)
 }
 
 export const toNumber = (value) => {

@@ -6,10 +6,8 @@ import {
   CalendarClock,
   ChevronsLeft,
   ChevronsRight,
-  FileText,
   HeartPulse,
   History,
-  Info,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -25,6 +23,7 @@ import { useLogout } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
+import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 
 const SIDEBAR_STORAGE_KEY = 'bourgelat-admin-sidebar-collapsed'
 
@@ -32,7 +31,6 @@ const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
-  { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
@@ -46,7 +44,7 @@ const NAV_SECTIONS = [
   {
     key: 'operacion',
     label: 'Operacion diaria',
-    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes'],
+    items: ['dashboard', 'agenda', 'pacientes', 'antecedentes'],
   },
   {
     key: 'gestion',
@@ -62,37 +60,6 @@ const NAV_SECTIONS = [
 
 const NAV_ITEMS_BY_KEY = Object.fromEntries(NAV_ITEMS.map((item) => [item.key, item]))
 
-const DEFAULT_QUICK_ACTIONS = [
-  {
-    key: 'facturar',
-    label: 'Facturar',
-    detail: 'Entrar a caja y emitir una factura sin buscar el modulo.',
-    to: '/finanzas',
-    icon: Receipt,
-  },
-  {
-    key: 'paciente',
-    label: 'Nuevo paciente',
-    detail: 'Registrar tutor y paciente desde el flujo operativo.',
-    to: '/pacientes',
-    icon: PawPrint,
-  },
-  {
-    key: 'historia',
-    label: 'Historia clinica',
-    detail: 'Abrir consulta y documentar el caso sin rodeos.',
-    to: '/historias',
-    icon: FileText,
-  },
-  {
-    key: 'agenda',
-    label: 'Nueva cita',
-    detail: 'Programar o reorganizar la agenda del dia.',
-    to: '/agenda',
-    icon: CalendarClock,
-  },
-]
-
 function SidebarLink({ item, active, collapsed = false }) {
   const Icon = item.icon
 
@@ -102,24 +69,22 @@ function SidebarLink({ item, active, collapsed = false }) {
         to={item.to}
         title={collapsed ? item.label : undefined}
         className={cn(
-          'flex items-center rounded-xl border text-sm font-medium transition-all duration-200',
-          collapsed ? 'h-12 justify-center px-0' : 'gap-3 px-3.5 py-2.5',
+          'relative flex items-center rounded-lg text-sm font-medium transition-colors duration-150',
+          collapsed ? 'h-10 justify-center px-0' : 'gap-2.5 px-3 py-2',
           active
-            ? 'border-[#91e7e0]/50 bg-[#91e7e0]/10 text-white shadow-[0_10px_30px_rgba(92,232,220,0.18)]'
-            : 'border-transparent text-[#91e7e0]/40 hover:border-[#0c2235] hover:bg-[#081827] hover:text-white'
+            ? 'bg-[#91e7e0]/10 text-white'
+            : 'text-[#91e7e0]/45 hover:bg-[#081827] hover:text-white'
         )}
       >
-        <span
+        {active && !collapsed ? (
+          <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#91e7e0]" />
+        ) : null}
+        <Icon
           className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition',
-            active
-              ? 'border-[#91e7e0]/30 bg-[#91e7e0]/10 text-[#91e7e0]'
-              : 'border-[#0c2235] bg-[#081827] text-[#91e7e0]/40'
+            'h-4 w-4 shrink-0 transition-colors',
+            active ? 'text-[#91e7e0]' : 'text-[#91e7e0]/40 group-hover:text-[#91e7e0]/70'
           )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-
+        />
         {!collapsed ? <span className="truncate">{item.label}</span> : null}
       </Link>
 
@@ -138,18 +103,20 @@ function QuickActionLink({ item }) {
   return (
     <Link
       to={item.to}
-      className="group rounded-2xl border border-border bg-card p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/10"
+      className={cn(
+        'group flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 transition',
+        item.cardHover || 'hover:border-primary/30 hover:bg-primary/5'
+      )}
     >
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-foreground transition group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
-          <Icon className="h-5 w-5" />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-card-foreground">{item.label}</p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-        </div>
-      </div>
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+          item.accent || 'bg-muted text-foreground'
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <p className="truncate text-sm font-semibold text-card-foreground">{item.label}</p>
     </Link>
   )
 }
@@ -161,8 +128,7 @@ export default function AdminShell({
   children,
   actions,
   headerBadge,
-  asideNote,
-  quickActions = DEFAULT_QUICK_ACTIONS,
+  quickActions = null,
   showQuickActions = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
@@ -192,7 +158,13 @@ export default function AdminShell({
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
   const plan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
-  const visibleQuickActions = showQuickActions ? quickActions : []
+  const visibleQuickActions = useMemo(() => {
+    if (!showQuickActions) return []
+    if (quickActions) return quickActions
+    const order = ROL_ACTION_ORDER[usuario?.rol]
+    if (!order) return DEFAULT_QUICK_ACTIONS
+    return order.map((key) => ALL_QUICK_ACTIONS[key])
+  }, [showQuickActions, quickActions, usuario?.rol])
   const usuarioIniciales = useMemo(() => {
     const source = usuario?.nombre || usuario?.email || 'BC'
     return source
@@ -215,18 +187,18 @@ export default function AdminShell({
           >
             <div
               className={cn(
-                'flex items-center border-b border-white/10 px-4 py-3.5',
-                isSidebarCollapsed ? 'justify-center' : 'gap-3'
+                'flex items-center border-b border-white/10 px-4 py-3',
+                isSidebarCollapsed ? 'justify-center' : 'gap-2.5'
               )}
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]">
-                <Stethoscope className="h-5 w-5" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#91e7e0]/10 text-[#91e7e0]">
+                <Stethoscope className="h-4 w-4" />
               </div>
 
               {!isSidebarCollapsed ? (
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{nombreClinica}</p>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                  <p className="truncate text-[11px] text-[#91e7e0]/40">
                     {ubicacionClinica || 'Operacion clinica'}
                   </p>
                 </div>
@@ -236,7 +208,7 @@ export default function AdminShell({
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(true)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-[#91e7e0]"
                   title="Contraer barra lateral"
                 >
                   <ChevronsLeft className="h-4 w-4" />
@@ -244,19 +216,19 @@ export default function AdminShell({
               ) : null}
             </div>
 
-            <div className="flex flex-1 flex-col overflow-hidden px-3 py-3.5">
+            <div className="flex flex-1 flex-col overflow-hidden px-3 py-3">
               {isSidebarCollapsed ? (
                 <button
                   type="button"
                   onClick={() => setIsSidebarCollapsed(false)}
-                  className="mb-4 inline-flex h-10 w-10 self-center items-center justify-center rounded-xl border border-[#0c2235] bg-[#081827] text-[#91e7e0]/50 transition hover:border-[#91e7e0]/30 hover:bg-[#0c2235] hover:text-[#91e7e0]"
+                  className="mb-3 inline-flex h-9 w-9 self-center items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-[#91e7e0]"
                   title="Expandir barra lateral"
                 >
                   <ChevronsRight className="h-4 w-4" />
                 </button>
               ) : null}
 
-              <nav className="flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
+              <nav className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
                 {NAV_SECTIONS.map((section) => {
                   const sectionItems = section.items
                     .map((itemKey) => NAV_ITEMS_BY_KEY[itemKey])
@@ -265,12 +237,12 @@ export default function AdminShell({
                   return (
                     <section key={section.key}>
                       {!isSidebarCollapsed ? (
-                        <p className="mb-2.5 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#91e7e0]/30">
                           {section.label}
                         </p>
                       ) : null}
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-0.5">
                         {sectionItems.map((item) => (
                           <SidebarLink
                             key={item.key}
@@ -285,86 +257,47 @@ export default function AdminShell({
                 })}
               </nav>
 
-              <div className="mt-auto border-t border-white/10 pt-4">
-                {asideNote && !isSidebarCollapsed ? (
-                  <details className="mb-3 overflow-hidden rounded-xl border border-[#0c2235] bg-[#020d16]/80">
-                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-[#91e7e0]/50">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#06111c] text-[#91e7e0]/50">
-                        <Info className="h-3.5 w-3.5" />
-                      </span>
-                      Guia del modulo
-                    </summary>
-                    <p className="border-t border-[#0c2235] px-3 py-2 text-[11px] leading-5 text-[#91e7e0]/40">
-                      {asideNote}
-                    </p>
-                  </details>
-                ) : null}
-
-                <div
-                  className={cn(
-                    'rounded-2xl border border-white/8 bg-[#020d16]/80 p-3',
-                    isSidebarCollapsed ? 'flex flex-col items-center gap-3' : 'space-y-3'
-                  )}
-                >
-                  {isSidebarCollapsed ? (
-                    <>
-                      <div
-                        title={`Plan actual: ${plan.nombre}`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#91e7e0]/10 text-[#91e7e0]"
-                      >
-                        <ShieldCheck className="h-4 w-4" />
-                      </div>
-                      <div
-                        title={usuario?.nombre || 'Usuario principal'}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]"
-                      >
-                        {usuarioIniciales}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={logout}
-                        title="Cerrar sesion"
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#0c2235] bg-[#06111c] text-[#91e7e0]/70 transition hover:border-[#91e7e0]/30 hover:bg-[#081827] hover:text-[#91e7e0]"
-                      >
-                        <LogOut className="h-4 w-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Plan actual
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-white">{plan.nombre}</p>
-                      </div>
-
-                      <div className="rounded-xl border border-[#0c2235]/80 bg-[#04101a] p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#081827] text-sm font-semibold text-[#91e7e0]">
-                            {usuarioIniciales}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">
-                              {usuario?.nombre || 'Sin nombre'}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {usuario?.email || 'Sin email principal'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={logout}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#0c2235] bg-[#06111c] px-4 py-3 text-sm font-semibold text-white transition hover:border-[#91e7e0]/25 hover:bg-[#081827]"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Cerrar sesion
-                      </button>
-                    </>
-                  )}
-                </div>
+              <div className="mt-auto shrink-0 border-t border-white/10 pt-3">
+                {isSidebarCollapsed ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      title={`${usuario?.nombre || 'Usuario'} · Plan ${plan.nombre}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]"
+                    >
+                      {usuarioIniciales}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      title="Cerrar sesion"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#91e7e0]/50 transition hover:bg-[#081827] hover:text-[#91e7e0]"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]">
+                      {usuarioIniciales}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">
+                        {usuario?.nombre || 'Sin nombre'}
+                      </p>
+                      <p className="truncate text-[11px] text-[#91e7e0]/40">
+                        Plan {plan.nombre}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      title="Cerrar sesion"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#91e7e0]/40 transition hover:bg-[#081827] hover:text-red-400"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </aside>
@@ -374,7 +307,7 @@ export default function AdminShell({
               <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <h1 className="text-xl font-semibold leading-tight text-foreground sm:text-2xl">{title}</h1>
+                    <h1 className="font-display text-xl font-semibold leading-tight text-foreground sm:text-2xl">{title}</h1>
                     {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                   </div>
                   {description ? (
@@ -423,32 +356,27 @@ export default function AdminShell({
             </header>
 
             {visibleQuickActions.length > 0 ? (
-              <section className="rounded-2xl border border-border bg-card p-4 shadow-[0_4px_24px_rgba(8,25,39,0.06)] lg:p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      Acciones rapidas
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      Lo que el equipo debe tener a la vista cuando necesita operar rapido.
-                    </p>
-                  </div>
+              <section className="rounded-2xl border border-border bg-card p-3.5 shadow-[0_4px_24px_rgba(8,25,39,0.06)] lg:p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Acciones rapidas
+                  </p>
 
                   <button
                     type="button"
                     onClick={() => setIsSidebarCollapsed((current) => !current)}
-                    className="hidden items-center gap-2 self-start rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-border hover:bg-muted lg:inline-flex"
+                    className="hidden items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground lg:inline-flex"
                   >
                     {isSidebarCollapsed ? (
-                      <ChevronsRight className="h-4 w-4" />
+                      <ChevronsRight className="h-3.5 w-3.5" />
                     ) : (
-                      <ChevronsLeft className="h-4 w-4" />
+                      <ChevronsLeft className="h-3.5 w-3.5" />
                     )}
                     {isSidebarCollapsed ? 'Expandir menu' : 'Contraer menu'}
                   </button>
                 </div>
 
-                <div className="mt-4 grid gap-3 xl:grid-cols-4">
+                <div className="flex flex-wrap gap-2.5">
                   {visibleQuickActions.map((item) => (
                     <QuickActionLink key={item.key} item={item} />
                   ))}

@@ -5,6 +5,7 @@ const {
   reporteCitas,
   reporteInventario,
   dashboardGeneral,
+  reporteRentabilidad,
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -19,6 +20,15 @@ router.get(
   verificarRol('admin', 'superadmin', 'facturador'),
   requerirFuncionalidades('facturacion_interna', 'reportes_operativos'),
   reporteIngresos
+)
+
+// Rentabilidad: solo el dueño/admin ve la ganancia del negocio.
+router.get(
+  '/rentabilidad',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirFuncionalidades('facturacion_interna', 'reportes_operativos'),
+  reporteRentabilidad
 )
 
 router.get(

@@ -6,7 +6,11 @@ const {
   obtenerFacturas,
   obtenerFactura,
   emitirFacturaElectronica,
+  descargarFacturaElectronica,
   anularFactura,
+  registrarPago,
+  registrarAbono,
+  listarCuentasPorCobrar,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
@@ -25,7 +29,10 @@ router.post(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionInterna,
   [
-    body('propietarioId').isUUID().withMessage('Propietario no valido'),
+    body('propietarioId')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Propietario no valido'),
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
     body('items.*.descripcion').notEmpty().withMessage('Descripcion del item requerida'),
     body('items.*.cantidad').isFloat({ min: 0.01 }).withMessage('Cantidad debe ser mayor a 0'),
@@ -41,12 +48,22 @@ router.post(
         'transferencia',
         'nequi',
         'daviplata',
+        'credito',
         'otro',
       ])
       .withMessage('Metodo de pago no valido'),
     validar,
   ],
   crearFactura
+)
+
+// Antes de '/:id' para que el path literal no sea capturado como UUID.
+router.get(
+  '/cuentas-por-cobrar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  listarCuentasPorCobrar
 )
 
 router.get(
@@ -89,6 +106,47 @@ router.post(
     validar,
   ],
   emitirFacturaElectronica
+)
+
+router.get(
+  '/:id/descargar/:formato',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
+  requiereFacturacionElectronica,
+  descargarFacturaElectronica
+)
+
+router.patch(
+  '/:id/pagar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  [
+    body('metodoPago')
+      .optional()
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .withMessage('Metodo de pago no valido'),
+    body('observaciones').optional().trim(),
+    validar,
+  ],
+  registrarPago
+)
+
+router.post(
+  '/:id/abonos',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
+  requiereFacturacionInterna,
+  [
+    body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
+    body('metodoPago')
+      .optional()
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .withMessage('Metodo de pago no valido'),
+    body('observaciones').optional({ values: 'falsy' }).trim(),
+    validar,
+  ],
+  registrarAbono
 )
 
 router.patch(

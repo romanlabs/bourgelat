@@ -1,1298 +1,262 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion as Motion } from 'motion/react'
-import { Link } from 'react-router-dom'
-import medicaPerritoImage from '@/assets/landing/Medica-perrito.webp'
-import {
-  ArrowRight,
-  Calendar,
-  CheckCircle,
-  Clock,
-  HeartPulse,
-  Mail,
-  Menu,
-  Package,
-  Shield,
-  Stethoscope,
-  X,
-} from 'lucide-react'
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { ArrowRight, ChevronDown, Mail, MapPin } from "lucide-react"
 
-const NAV_ITEMS = [
-  { label: 'Flujo', href: '#flujo' },
-  { label: 'Planes', href: '#planes' },
-  { label: 'Contacto', href: '#contacto' },
-]
+import LandingNav from "@/components/landing/LandingNav"
+import TrustBar from "@/components/landing/TrustBar"
+import PlatformSection from "@/components/landing/PlatformSection"
+import FlowCarousel from "@/components/landing/FlowCarousel"
+import FlowDog from "@/components/landing/FlowDog"
+import FlowDogMedic from "@/components/landing/FlowDogMedic"
+import SectionHeading from "@/components/landing/SectionHeading"
+import BrandMark from "@/components/landing/BrandMark"
+import FooterPulse from "@/components/landing/FooterPulse"
+import WhatsAppFab from "@/components/landing/WhatsAppFab"
+import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
 
-const FLOW_STEPS = [
+const FAQS = [
   {
-    step: '01',
-    title: 'Llaman, agendan y llegan',
-    body:
-      'La recepcion ve que paciente viene, por que viene y que debe pasar antes de entrar a consulta.',
+    pregunta: '¿Puedo empezar con Esencial y subir después?',
+    respuesta:
+      'Sí. La idea es empezar con orden y subir de plan cuando la operación diaria pida más control.',
   },
   {
-    step: '02',
-    title: 'El caso se atiende con memoria',
-    body:
-      'El veterinario registra la evolucion sobre el historial real del paciente, no sobre una nota aislada.',
+    pregunta: '¿Qué plan elige una clínica que ya cobra y controla inventario?',
+    respuesta:
+      'Normalmente Clínica: cubre agenda, consulta, inventario, caja y reportes en el mismo flujo.',
   },
   {
-    step: '03',
-    title: 'Caja, stock y proximo paso',
-    body:
-      'El cierre queda amarrado al caso: cobro, consumo, alerta de reposicion y siguiente contacto con el tutor.',
+    pregunta: '¿La facturación electrónica DIAN está disponible?',
+    respuesta:
+      'Próximamente. Estamos integrándola para la v2 del producto. Si ya la necesitas, escríbenos y te avisamos cuando esté lista.',
+  },
+  {
+    pregunta: '¿Cuándo conviene hablar con el equipo?',
+    respuesta:
+      'Cuando tienes dudas sobre el plan que mejor se ajusta a tu clínica, o quieres conocer la hoja de ruta del producto.',
   },
 ]
 
-
-const PLAN_PREVIEW = [
-  {
-    name: 'Esencial',
-    subtitle: 'Para empezar con orden',
-    price: 'Sin cargo mensual',
-    note: 'Agenda, pacientes e historia clinica para arrancar con una base clara.',
-  },
-  {
-    name: 'Clinica',
-    subtitle: 'Para operar el dia completo',
-    price: 'COP 99.000/mes',
-    note: 'Inventario, caja y reportes para una clinica que ya necesita control operativo.',
-  },
-  {
-    name: 'Profesional',
-    subtitle: 'El plan principal',
-    price: 'COP 189.000/mes',
-    note: 'Incluye facturacion electronica DIAN y una operacion mas completa.',
-    featured: true,
-  },
-  {
-    name: 'Personalizado',
-    subtitle: 'Para migracion y acompanamiento',
-    price: 'Cotizacion guiada',
-    note: 'Cuando la clinica necesita una implementacion mas acompasada con el equipo.',
-  },
-]
-
-const footerLinks = [
-  { label: 'Planes', to: '/planes' },
-  { label: 'Nosotros', to: '/nosotros' },
-  { label: 'Privacidad', to: '/privacidad' },
-  { label: 'Terminos', to: '/terminos' },
-  { label: 'Cookies', to: '/cookies' },
-]
-
-const TRUST_LOGOS = [
-  { src: '/logos/dian.svg', alt: 'DIAN', h: 28, caption: 'Facturación electrónica' },
-  { src: '/logos/cloudflare.svg', alt: 'Cloudflare', h: 28, caption: 'Protegido por Cloudflare' },
-  { src: '/logos/colombia.svg', alt: 'Bandera de Colombia', h: 24, rounded: true, caption: 'Hecho en Colombia' },
-]
-// TODO: agregar Factus cuando la integración como partner esté cerrada y publicada
-
-const WARM_BAND_BACKGROUND =
-  'linear-gradient(180deg, #f8f4ee 0%, #f4eee6 44%, #f8f4ee 100%)'
-
-
-function useVisible(threshold = 0.4) {
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return undefined
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true) },
-      { threshold }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [threshold])
-  return { ref, visible }
-}
-
-const ARRIVAL_ITEMS = [
-  'Citas con contexto clínico',
-  'Antecedentes visibles desde recepción',
-  'Sin preguntar dos veces',
-]
-
-const CARE_ITEMS = [
-  'Caja conectada al cierre del caso',
-  'Stock que se descuenta automáticamente',
-  'Seguimiento programado al tutor',
-]
-
-function CinematicCard({ visible, isMobile, alignRight = false, eyebrow, title, body, items }) {
-  const desktopPos = alignRight ? { right: 0 } : { left: 0 }
-  const entranceX = alignRight ? 30 : -30
-
-  const cardStyle = isMobile
-    ? {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 24,
-        padding: '24px 0',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateX(0)' : `translateX(${entranceX}px)`,
-        transition: visible ? 'opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s' : 'none',
-      }
-    : {
-        position: 'absolute',
-        top: '50%',
-        ...desktopPos,
-        maxWidth: '32rem',
-        padding: '40px 0',
-        opacity: visible ? 1 : 0,
-        transform: visible
-          ? 'translateY(-50%) translateX(0)'
-          : `translateY(-50%) translateX(${entranceX}px)`,
-        transition: visible
-          ? 'opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s'
-          : 'none',
-      }
-
-  return (
-    <div
-      style={{
-        ...cardStyle,
-        background: 'transparent',
-      }}
-    >
-      <p style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-        letterSpacing: '0.2em', color: '#91e7e0', margin: 0,
-      }}>
-        <span style={{ width: 24, height: 1, backgroundColor: '#91e7e0', flexShrink: 0 }} />
-        {eyebrow}
-      </p>
-
-      <h2 style={{
-        fontFamily: '"Spectral", Georgia, serif',
-        fontWeight: 700,
-        fontSize: isMobile ? '1.6rem' : '2.2rem',
-        lineHeight: 0.95,
-        letterSpacing: '-0.04em',
-        color: '#ffffff',
-        margin: 0,
-        marginTop: 16,
-      }}>
-        {title}
-      </h2>
-
-      <p style={{
-        fontSize: 14, lineHeight: 1.6,
-        color: 'rgba(255,255,255,0.75)', margin: 0, marginTop: 20,
-      }}>
-        {body}
-      </p>
-
-      <ul style={{ display: 'flex', flexDirection: 'column', gap: 14, margin: 0, marginTop: 28, padding: 0, listStyle: 'none' }}>
-        {items.map((item, idx) => (
-          <li key={item} style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateX(0)' : `translateX(${entranceX * 0.6}px)`,
-            transition: visible
-              ? `opacity 600ms ease-out ${400 + idx * 100}ms, transform 600ms ease-out ${400 + idx * 100}ms`
-              : 'none',
-          }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: '50%',
-              border: '1.5px solid #91e7e0',
-              background: 'rgba(145,231,224,0.10)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-              fontFamily: '"Spectral", Georgia, serif',
-              fontSize: 11, fontWeight: 600, color: '#91e7e0',
-              lineHeight: 1, paddingTop: 1,
-            }}>
-              {String(idx + 1).padStart(2, '0')}
-            </div>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function ArrivalSection() {
-  const { ref: sectionRef, visible } = useVisible(0.15)
-  const [isMobile, setIsMobile] = useState(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  ))
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  return (
-    <section
-      ref={sectionRef}
-      style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
-    >
-      <video
-        src="/videos/landing-cinema/escena-2-llegada.mp4"
-        muted autoPlay loop playsInline preload="auto"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-          transform: visible ? 'scale(1.0)' : 'scale(1.05)',
-          transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to right, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
-      }} />
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
-          <div className="relative h-full">
-            <CinematicCard
-              visible={visible}
-              isMobile={isMobile}
-              alignRight={false}
-              eyebrow="El primer momento"
-              title="Cuando el paciente llega, el equipo ya sabe."
-              body="La recepción ve al paciente, el motivo y los antecedentes antes de que el tutor termine de parquear. Sin llamadas internas, sin notas sueltas."
-              items={ARRIVAL_ITEMS}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CareSection() {
-  const { ref: sectionRef, visible } = useVisible(0.15)
-  const [isMobile, setIsMobile] = useState(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  ))
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  return (
-    <section
-      ref={sectionRef}
-      style={{ position: 'relative', height: '100vh', overflow: 'hidden', backgroundColor: '#06111c' }}
-    >
-      <video
-        src="/videos/landing-cinema/escena-3-consulta.mp4"
-        muted autoPlay loop playsInline preload="auto"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-          transform: visible ? 'scale(1.0)' : 'scale(1.05)',
-          transition: 'transform 1.4s cubic-bezier(0.25,0.46,0.45,0.94)',
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to left, rgba(6,17,28,0.85) 0%, rgba(6,17,28,0.55) 45%, rgba(6,17,28,0.15) 75%, transparent 100%)',
-      }} />
-      <div style={{ position: 'absolute', inset: 0 }}>
-        <div className="mx-auto h-full max-w-7xl px-6 sm:px-8 lg:px-12">
-          <div className="relative h-full">
-            <CinematicCard
-              visible={visible}
-              isMobile={isMobile}
-              alignRight={true}
-              eyebrow="Continuidad real"
-              title="El cuidado no termina en la consulta."
-              body="Bourgelat cierra el caso con caja, consumo de inventario y recordatorio de seguimiento para que el tutor sepa que el siguiente paso ya está programado."
-              items={CARE_ITEMS}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-const PLATFORM_FEATURES = [
-  { icon: Calendar, label: 'Agenda con contexto del paciente' },
-  { icon: HeartPulse, label: 'Historia que acompaña cada visita' },
-  { icon: Package, label: 'Inventario que se descuenta solo' },
-]
-
-const AGENDA_SLOTS = [
-  { time: '09:00', name: 'Luna', type: 'vacunación', bg: '#f0faf8', borderColor: '#91c4c0', useBorderLeft: true },
-  { time: '10:30', name: 'Milo', type: 'revisión',   bg: '#ffffff', borderColor: '#e8f1f4', useBorderLeft: false },
-  { time: '14:00', name: 'Kira', type: 'cirugía',    bg: '#fef3e8', borderColor: '#d4a574', useBorderLeft: true },
-]
-
-const BAR_SPECS = [
-  { h: '60%' }, { h: '85%' }, { h: '45%' }, { h: '75%' }, { h: '55%' },
-]
-
-function PlatformSection() {
-  const { ref: sectionRef, visible } = useVisible(0.2)
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  )
-  const [hoveredCard, setHoveredCard] = useState(null)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  const entrance = (delay) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? 'scale(1) translateY(0px)' : 'scale(0.94) translateY(30px)',
-    transition: visible
-      ? `opacity 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms, transform 900ms cubic-bezier(0.25,0.46,0.45,0.94) ${delay}ms`
-      : 'none',
-  })
-
-  const cardHover = (idx) => {
-    if (hoveredCard === null) return {}
-    return hoveredCard === idx
-      ? { transform: 'scale(1.03)', boxShadow: '0 40px 100px rgba(83,62,41,0.20), 0 12px 32px rgba(83,62,41,0.12)', zIndex: 40 }
-      : { opacity: 0.65 }
-  }
-
-  const CARD_TRANSITION = 'transform 350ms ease-out, box-shadow 350ms ease-out, opacity 350ms ease-out'
-
-  return (
-    <section ref={sectionRef} className="relative overflow-hidden text-[#10263a]">
-      <style>{`
-        @keyframes floatCard {
-          0%, 100% { transform: translateY(0px) rotate(var(--card-rotate, 0deg)); }
-          50%       { transform: translateY(-5px) rotate(var(--card-rotate, 0deg)); }
-        }
-      `}</style>
-
-      <div className="mx-auto max-w-7xl px-5 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8 lg:pb-28 lg:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-
-          {/* ── Columna texto ── */}
-          <div style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(24px)',
-            transition: visible ? 'opacity 800ms ease-out, transform 800ms ease-out' : 'none',
-          }}>
-            <p style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-              letterSpacing: '0.2em', color: '#3c7d8d', margin: 0,
-            }}>
-              <span style={{ width: 24, height: 1, backgroundColor: '#91c4c0', flexShrink: 0 }} />
-              Plataforma
-            </p>
-
-            <h2 style={{
-              fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
-              fontSize: 'clamp(2.4rem, 4vw, 3rem)', lineHeight: 0.95,
-              letterSpacing: '-0.045em', color: '#10263a',
-              maxWidth: '24rem', marginTop: 20,
-            }}>
-              Toda la operación, en una sola vista.
-            </h2>
-
-            <p style={{
-              fontSize: 15, lineHeight: 1.7, color: '#52697a',
-              maxWidth: '22rem', marginTop: 24,
-            }}>
-              Bourgelat conecta agenda, historia clínica, caja e inventario en módulos que se
-              entienden entre sí. Sin copiar datos. Sin perder contexto.
-            </p>
-
-            <ul style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, padding: 0, listStyle: 'none' }}>
-              {PLATFORM_FEATURES.map(({ icon: Icon, label }) => (
-                <li key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <Icon style={{ width: 14, height: 14, color: '#2c7d7a', flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#24435c' }}>{label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* ── Columna mockup ── */}
-          {isMobile ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <CardPatient style={entrance(150)} />
-              <CardAgenda style={entrance(280)} />
-              <CardStock style={entrance(410)} />
-              <CardFactura style={entrance(540)} />
-            </div>
-          ) : (
-            <div style={{ position: 'relative', height: 580 }}>
-
-              {/* Card 1 — Paciente · top-left · z30 */}
-              <CardPatient
-                style={{
-                  position: 'absolute', top: '5%', left: '3%',
-                  width: 300, zIndex: 30,
-                  '--card-rotate': '0deg',
-                  animation: 'floatCard 6s ease-in-out infinite',
-                  animationDelay: '0s',
-                  ...entrance(150),
-                  ...cardHover(0),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(0)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 2 — Agenda · mid-right · z20 · tilt +2.5° */}
-              <CardAgenda
-                style={{
-                  position: 'absolute', top: '28%', right: '5%',
-                  width: 260, zIndex: 20,
-                  '--card-rotate': '2.5deg',
-                  animation: 'floatCard 7.5s ease-in-out infinite',
-                  animationDelay: '1.5s',
-                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
-                  ...entrance(280),
-                  ...cardHover(1),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(1)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 3 — Stock · bottom-left · z25 · tilt -2.5° */}
-              <CardStock
-                style={{
-                  position: 'absolute', bottom: '20%', left: '8%',
-                  width: 240, zIndex: 25,
-                  '--card-rotate': '-2.5deg',
-                  animation: 'floatCard 6.8s ease-in-out infinite',
-                  animationDelay: '3s',
-                  boxShadow: '0 24px 60px rgba(83,62,41,0.10)',
-                  ...entrance(410),
-                  ...cardHover(2),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(2)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-              {/* Card 4 — Factura · bottom-right · z35 */}
-              <CardFactura
-                style={{
-                  position: 'absolute', bottom: '4%', right: '2%',
-                  width: 220, zIndex: 35,
-                  '--card-rotate': '0deg',
-                  animation: 'floatCard 8s ease-in-out infinite',
-                  animationDelay: '4.5s',
-                  ...entrance(540),
-                  ...cardHover(3),
-                  transition: CARD_TRANSITION,
-                }}
-                onMouseEnter={() => setHoveredCard(3)}
-                onMouseLeave={() => setHoveredCard(null)}
-              />
-
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function CardPatient({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 20, padding: 20,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{
-          width: 38, height: 38, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #8fe0da, #b8eff0)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, fontSize: 16, fontWeight: 600, color: '#082033',
-        }}>
-          M
-        </div>
-        <div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#10263a', margin: 0 }}>Milo García</p>
-          <p style={{ fontSize: 11, color: '#7a8da0', margin: 0, marginTop: 2 }}>Golden Retriever · 4 años</p>
-        </div>
-      </div>
-      <div style={{ marginTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[
-          { Icon: Clock,    iconColor: '#3c7d8d', text: 'Última visita: hace 2 meses' },
-          { Icon: Shield,   iconColor: '#2c7d7a', text: 'Vacunas: al día' },
-          { Icon: Calendar, iconColor: '#3c7d8d', text: 'Próxima cita: mañana 10am' },
-        ].map(({ Icon, iconColor, text }) => (
-          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Icon style={{ width: 12, height: 12, color: iconColor, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#52697a' }}>{text}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CardAgenda({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 18, padding: 18,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
-        Agenda · Hoy
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {AGENDA_SLOTS.map((s) => (
-          <div key={s.time} style={{
-            background: s.bg,
-            ...(s.useBorderLeft
-              ? { borderLeft: `3px solid ${s.borderColor}`, borderRadius: '0 8px 8px 0', padding: '8px 12px' }
-              : { border: `1px solid ${s.borderColor}`, borderRadius: 8, padding: '8px 12px' }),
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#3c7d8d' }}>{s.time}</span>
-            <span style={{ fontSize: 12, color: '#10263a' }}>{s.name} · {s.type}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function CardStock({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        background: '#ffffff', borderRadius: 18, padding: 18,
-        border: '1px solid rgba(255,255,255,0.9)',
-        boxShadow: '0 30px 80px rgba(83,62,41,0.12), 0 8px 24px rgba(83,62,41,0.06)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#3c7d8d', margin: '0 0 12px' }}>
-        Inventario
-      </p>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 48 }}>
-        {BAR_SPECS.map((bar, i) => (
-          <div key={i} style={{
-            width: 12, height: bar.h, borderRadius: '3px 3px 0 0',
-            background: 'linear-gradient(to top, #6bc4be, #91e7e0)',
-          }} />
-        ))}
-      </div>
-      <p style={{ fontSize: 12, color: '#52697a', margin: '12px 0 8px' }}>
-        23 productos por reordenar
-      </p>
-      <span style={{
-        display: 'inline-block',
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em',
-        color: '#2c7d7a', background: 'rgba(145,231,224,0.15)',
-        border: '1px solid rgba(145,231,224,0.30)',
-        padding: '3px 8px', borderRadius: 999,
-      }}>
-        Automático
-      </span>
-    </div>
-  )
-}
-
-function CardFactura({ style = {}, onMouseEnter, onMouseLeave }) {
-  return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      style={{
-        position: 'relative',
-        background: 'linear-gradient(135deg, #06111c 0%, #0d2435 100%)',
-        borderRadius: 20, padding: 20,
-        boxShadow: '0 30px 80px rgba(6,17,28,0.30), 0 0 0 1px rgba(145,231,224,0.10)',
-        willChange: 'transform',
-        ...style,
-      }}
-    >
-      <CheckCircle style={{
-        position: 'absolute', top: 16, right: 16,
-        width: 16, height: 16, color: '#91e7e0',
-      }} />
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#91e7e0', margin: '0 0 8px' }}>
-        Factura generada
-      </p>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-        <span style={{
-          fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
-          fontSize: 22, lineHeight: 1, color: '#ffffff',
-        }}>
-          $ 145.000
-        </span>
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>COP</span>
-      </div>
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 8 }}>
-        Enviada al tutor · 2 min
-      </p>
-    </div>
-  )
-}
-
-function BrandMark({ dark = false }) {
-  return (
-    <div className="flex items-center gap-2.5 sm:gap-3">
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${
-          dark
-            ? 'bg-white/10 text-white'
-            : 'bg-[linear-gradient(135deg,#8fe0da,#b8eff0)] text-[#082033]'
-        }`}
-        style={dark
-          ? { boxShadow: '0 18px 40px rgba(92,206,198,0.2), 0 0 24px rgba(145,231,224,0.15)' }
-          : { boxShadow: '0 18px 40px rgba(92,206,198,0.2)' }
-        }
-      >
-        <Stethoscope className="h-5 w-5" />
-      </div>
-      <div>
-        <p className={`text-base font-semibold tracking-[-0.03em] sm:text-lg ${dark ? 'text-white' : 'text-[#0f2437]'}`}>
-          Bourgelat
-        </p>
-        <p
-          className={`hidden text-[11px] uppercase tracking-[0.22em] sm:block ${
-            dark ? 'text-white/50' : 'text-[#5a7188]'
-          }`}
-        >
-          plataforma para clinicas veterinarias
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function SectionHeading({ eyebrow, title, body, dark = false, center = false }) {
-  return (
-    <div className={`${center ? 'mx-auto text-center' : ''} max-w-3xl`}>
-      <p
-        className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${
-          dark ? 'text-[#91e7e0]' : 'text-[#3c7d8d]'
-        }`}
-      >
-        {eyebrow}
-      </p>
-      <h2
-        className={`mt-4 text-[2.7rem] leading-[0.94] tracking-[-0.05em] sm:text-5xl md:text-6xl ${
-          dark ? 'text-white' : 'text-[#10263a]'
-        }`}
-        style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-      >
-        {title}
-      </h2>
-      <p
-        className={`mt-5 text-[15px] leading-7 sm:text-lg sm:leading-8 ${
-          dark ? 'text-white/70' : 'text-[#51697d]'
-        }`}
-      >
-        {body}
-      </p>
-    </div>
-  )
-}
-
-function LandingNav() {
+function FAQItem({ pregunta, respuesta }) {
   const [open, setOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [navTheme, setNavTheme] = useState('dark')
-  const headerRef = useRef(null)
-
-  useEffect(() => {
-    const parseRgbChannels = (value) => {
-      const match = value.match(/\d+(\.\d+)?/g)
-
-      if (!match || match.length < 3) {
-        return null
-      }
-
-      return [
-        Number(match[0]),
-        Number(match[1]),
-        Number(match[2]),
-        match.length >= 4 ? Number(match[3]) : 1,
-      ]
-    }
-
-    const isLightColor = ([r, g, b]) => {
-      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-      return luminance > 150
-    }
-
-    const findSolidBackground = (element) => {
-      let current = element
-
-      while (current && current instanceof HTMLElement) {
-        const background = window.getComputedStyle(current).backgroundColor
-        const rgba = parseRgbChannels(background)
-
-        if (rgba && rgba[3] > 0.08) {
-          return rgba
-        }
-
-        current = current.parentElement
-      }
-
-      return null
-    }
-
-    const syncHeader = () => {
-      const scrolled = window.scrollY > 24
-      setIsScrolled(scrolled)
-
-      if (!scrolled) {
-        setNavTheme('dark')
-        return
-      }
-
-      const headerBottom = headerRef.current?.getBoundingClientRect().bottom ?? 78
-      const probeX = Math.max(0, Math.min(window.innerWidth / 2, window.innerWidth - 1))
-      const probeY = Math.max(0, Math.min(Math.round(headerBottom + 18), window.innerHeight - 1))
-      const elements = document.elementsFromPoint(probeX, probeY)
-
-      for (const element of elements) {
-        if (!(element instanceof HTMLElement)) {
-          continue
-        }
-
-        if (element === headerRef.current || headerRef.current?.contains(element)) {
-          continue
-        }
-
-        const background = findSolidBackground(element)
-
-        if (background) {
-          setNavTheme(isLightColor(background) ? 'light' : 'dark')
-          return
-        }
-      }
-
-      setNavTheme('dark')
-    }
-
-    syncHeader()
-    window.addEventListener('scroll', syncHeader, { passive: true })
-    window.addEventListener('resize', syncHeader)
-
-    return () => {
-      window.removeEventListener('scroll', syncHeader)
-      window.removeEventListener('resize', syncHeader)
-    }
-  }, [])
-
-  const compact = isScrolled || open
-  const isLight = compact && navTheme === 'light'
-
   return (
-    <header
-      ref={headerRef}
-      className={`fixed z-50 transition-all duration-700 ${
-        compact
-          ? 'left-3 right-3 top-3 sm:left-5 sm:right-5 sm:top-4'
-          : 'left-0 right-0 top-0'
-      }`}
-    >
-      <div
-        className={`mx-auto flex items-center justify-between px-4 transition-all duration-500 sm:px-6 lg:px-8 ${
-          compact
-            ? isLight
-              ? 'max-w-[1200px] rounded-[28px] border border-transparent bg-[rgba(248,251,252,0.9)] py-3 shadow-[0_24px_70px_rgba(11,34,50,0.12)] backdrop-blur-xl'
-              : 'max-w-[1200px] rounded-[28px] py-3'
-            : 'max-w-[1400px] rounded-none border border-transparent bg-transparent py-5'
-        }`}
-        style={compact && !isLight ? {
-          background: 'rgba(6,17,28,0.55)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 8px 32px rgba(2,8,14,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-        } : undefined}
+    <div className="rounded-2xl border border-[#2b2018]/10 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 bg-transparent px-5 py-4 text-left"
       >
-        <Link to="/" className="no-underline">
-          <BrandMark dark={!isLight} />
-        </Link>
-
-        <nav className="hidden items-center gap-8 lg:flex">
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className={`rounded-full px-4 py-2 text-sm font-semibold no-underline transition-[background-color,color] duration-[250ms] ease-out ${
-                isLight
-                  ? 'text-[#173048] hover:bg-[#e8f1f4] hover:text-[#0d2435]'
-                  : 'text-[rgba(255,255,255,0.85)] hover:bg-[rgba(145,231,224,0.08)] hover:text-[#c4f3ed]'
-              }`}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            to="/login"
-            className={`rounded-full border px-4 py-2 text-sm font-semibold no-underline transition-[background-color,border-color,color] duration-[300ms] ease-out ${
-              isLight
-                ? 'border-[#b9ccd8] bg-white/70 text-[#10263a] hover:border-[#9cb5c6] hover:bg-white'
-                : 'hover:text-[#91e7e0]'
-            }`}
-            style={isLight ? undefined : {
-              color: 'rgba(255,255,255,0.92)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.04)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
-            onMouseEnter={isLight ? undefined : (e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.10)'
-              e.currentTarget.style.borderColor = 'rgba(145,231,224,0.35)'
-            }}
-            onMouseLeave={isLight ? undefined : (e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-            }}
-          >
-            Iniciar sesion
-          </Link>
-          <Link
-            to="/registro"
-            className="group inline-flex items-center gap-2 rounded-full border border-[#dff0ee] px-6 py-3 text-sm font-semibold text-[#0d2435] no-underline transition-[box-shadow,transform] duration-[300ms] ease-out hover:-translate-y-px"
-            style={{
-              background: 'linear-gradient(135deg, #effaf8, #ffffff)',
-              boxShadow: '0 12px 32px rgba(143,224,218,0.20), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 18px 44px rgba(143,224,218,0.30), 0 4px 12px rgba(0,0,0,0.12)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 12px 32px rgba(143,224,218,0.20), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)'
-            }}
-          >
-            Crear cuenta
-            <ArrowRight className="h-4 w-4 transition-transform duration-[250ms] ease-out group-hover:translate-x-[3px]" />
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-colors lg:hidden ${
-            isLight
-              ? 'border-[#c5d6e1] text-[#173048] hover:bg-[#e8f1f4]'
-              : 'border-white/20 text-white hover:bg-white/10'
-          }`}
-          aria-label="Abrir menu"
-        >
-          {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </button>
-      </div>
-
+        <span className="text-base font-semibold text-[#2b2018]">{pregunta}</span>
+        <ChevronDown
+          className={`h-5 w-5 shrink-0 text-[#b07645] transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
       {open ? (
-        <div
-          className={`mt-2 overflow-hidden rounded-[24px] border px-5 py-5 shadow-[0_24px_70px_rgba(2,8,14,0.26)] backdrop-blur-xl lg:hidden ${
-            isLight
-              ? 'border-[#d4e2ea] bg-[rgba(248,251,252,0.96)]'
-              : 'border-white/10 bg-[rgba(2,11,18,0.96)]'
-          }`}
-        >
-          <div className="flex flex-col gap-4">
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`rounded-full px-4 py-3 text-sm font-medium no-underline transition-colors ${
-                  isLight
-                    ? 'text-[#173048] hover:bg-[#e8f1f4]'
-                    : 'text-white/90 hover:bg-white/10'
-                }`}
-              >
-                {item.label}
-              </a>
-            ))}
-            <div className="mt-2 flex flex-col gap-3">
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className={`rounded-full border px-4 py-3 text-center text-sm font-semibold no-underline transition-colors ${
-                  isLight
-                    ? 'border-[#b9ccd8] bg-white/70 text-[#10263a] hover:bg-white'
-                    : 'border-white/30 bg-[#081827] text-white hover:bg-white/10'
-                }`}
-              >
-                Iniciar sesion
-              </Link>
-              <Link
-                to="/registro"
-                onClick={() => setOpen(false)}
-                className="rounded-full border border-[#dff0ee] bg-[#effaf8] px-4 py-3 text-center text-sm font-semibold text-[#0d2435] no-underline transition-colors hover:bg-white"
-              >
-                Crear cuenta
-              </Link>
-            </div>
-          </div>
-        </div>
+        <p className="px-5 pb-5 text-sm leading-7 text-[#6b5d4d]">{respuesta}</p>
       ) : null}
-    </header>
-  )
-}
-
-function FlowStepper() {
-  const [active, setActive] = useState(0)
-  const [tick, setTick] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setActive((prev) => (prev + 1) % FLOW_STEPS.length)
-      setTick((prev) => prev + 1)
-    }, 4000)
-    return () => clearInterval(id)
-  }, [])
-
-  const handleSelect = (index) => {
-    setActive(index)
-    setTick((prev) => prev + 1)
-  }
-
-  return (
-    <div className="mt-10 space-y-2">
-      {FLOW_STEPS.map((step, index) => {
-        const isActive = active === index
-        return (
-          <button
-            key={step.step}
-            type="button"
-            onClick={() => handleSelect(index)}
-            className={`w-full rounded-[28px] border px-6 py-5 text-left transition-all duration-300 ${
-              isActive
-                ? 'border-[#c8dde9] bg-white shadow-[0_18px_60px_rgba(8,25,39,0.07)]'
-                : 'border-transparent bg-transparent hover:bg-white/60'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <span
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-300 ${
-                  isActive ? 'bg-[#edf5fb] text-[#3a6d87]' : 'bg-[#e4ecf2] text-[#7a9db5]'
-                }`}
-              >
-                {step.step}
-              </span>
-              <span
-                className={`text-base font-semibold transition-colors duration-300 ${
-                  isActive ? 'text-[#12283c]' : 'text-[#7a9db5]'
-                }`}
-              >
-                {step.title}
-              </span>
-            </div>
-
-            <AnimatePresence>
-              {isActive && (
-                <Motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <p className="mt-4 pl-14 text-sm leading-7 text-[#567185]">{step.body}</p>
-                  <div className="mt-4 pl-14">
-                    <div className="h-px w-full overflow-hidden rounded-full bg-[#d7e4ee]">
-                      <Motion.div
-                        key={tick}
-                        className="h-full origin-left bg-[#3a6d87]"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 4, ease: 'linear' }}
-                      />
-                    </div>
-                  </div>
-                </Motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-
-function TrustBar() {
-  const doubled = [...TRUST_LOGOS, ...TRUST_LOGOS]
-  const { ref: sectionRef, visible } = useVisible(0.3)
-  const [carouselDuration, setCarouselDuration] = useState(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 18 : 32
-  ))
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setCarouselDuration(e.matches ? 18 : 32)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
-  const fadeIn = (delay = 0) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? 'translateY(0px)' : 'translateY(20px)',
-    transition: visible
-      ? `opacity 800ms ease ${delay}ms, transform 800ms ease ${delay}ms`
-      : 'none',
-  })
-
-  return (
-    <section
-      ref={sectionRef}
-      className="relative -mt-px overflow-hidden py-8 text-[#10263a] sm:py-9 lg:py-10"
-    >
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
-          <div className="mx-auto max-w-[23rem] text-center lg:mx-0 lg:text-left">
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#3c7d8d]"
-              style={fadeIn(0)}
-            >
-              Confianza y cumplimiento
-            </p>
-            <h2
-              className="mx-auto mt-2.5 max-w-[20rem] text-[1.45rem] leading-[1.05] tracking-[-0.03em] text-[#10263a] sm:text-[1.65rem] lg:mx-0"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
-            >
-              Operación segura para clínicas en Colombia.
-            </h2>
-            <p
-              className="mt-3 text-[13px] leading-6 text-[#52697a] sm:text-sm"
-              style={fadeIn(200)}
-            >
-              Facturación electrónica, protección de red y una base local para operar con más calma.
-            </p>
-          </div>
-
-          <div
-            className="relative overflow-hidden"
-            style={{
-              opacity: visible ? 1 : 0,
-              transition: visible ? 'opacity 900ms ease 350ms' : 'none',
-              WebkitMaskImage:
-                'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
-              maskImage:
-                'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)',
-            }}
-          >
-            <Motion.div
-              className="flex items-center"
-              style={{ gap: 0 }}
-              animate={{ x: ['0%', '-50%'] }}
-              transition={{ duration: carouselDuration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
-              aria-hidden="true"
-            >
-              {doubled.map((logo, i) => (
-                <div key={i} className="flex shrink-0 items-stretch">
-                  <div className="flex min-w-[168px] flex-col items-center px-5 sm:min-w-[210px] sm:px-8">
-                    <div className="flex h-9 items-center justify-center sm:h-10">
-                      <img
-                        src={logo.src}
-                        alt={logo.alt}
-                        style={{
-                          height: logo.h,
-                          width: 'auto',
-                          maxWidth: 136,
-                          objectFit: 'contain',
-                          display: 'block',
-                          opacity: 0.86,
-                          filter: 'saturate(0.9) contrast(0.96)',
-                          ...(logo.rounded && { borderRadius: 3, boxShadow: '0 2px 8px rgba(16,38,58,0.10)' }),
-                        }}
-                      />
-                    </div>
-                    <span
-                      className="mt-1.5 whitespace-nowrap"
-                      style={{ fontSize: 11, fontWeight: 500, color: '#5d7180' }}
-                    >
-                      {logo.caption}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <div style={{ width: 1, height: 26, backgroundColor: 'rgba(16,38,58,0.13)', flexShrink: 0 }} />
-                  </div>
-                </div>
-              ))}
-            </Motion.div>
-
-            <ul className="sr-only">
-              {TRUST_LOGOS.map((logo) => <li key={logo.alt}>{logo.alt} — {logo.caption}</li>)}
-            </ul>
-          </div>
-
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function DailyFlowVisual() {
-  return (
-    <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[#10263a] shadow-[0_30px_90px_rgba(8,25,39,0.16)] sm:rounded-[36px]">
-      <img
-        src={medicaPerritoImage}
-        alt="Medica veterinaria abrazando a un paciente canino en consulta"
-        className="h-full w-full object-cover"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,15,25,0.78),rgba(4,15,25,0.22)_56%,rgba(4,15,25,0.04))]" />
     </div>
   )
 }
 
 export default function LandingPage() {
   useEffect(() => {
-    document.title = 'Bourgelat | Software para clinicas veterinarias'
+    document.title = 'Bourgelat | Software para clínicas veterinarias'
     window.scrollTo(0, 0)
   }, [])
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f4f7fb] text-[#112739]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8f4ee] text-[#2b2018]">
       <LandingNav />
 
-      <section className="relative flex h-[100dvh] flex-col justify-end overflow-hidden bg-[#06111c] text-white">
+      <section
+        id="hero"
+        className="hero-bg relative flex h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] sm:justify-center"
+      >
+        {/* ── Video hero: perro completo, contenido y anclado abajo a la derecha.
+            object-contain (no cover) muestra al perro entero; su fondo beige funde
+            con el degradado cálido del hero. ── */}
         <video
-          src="/videos/landing-cinema/escena-1-perro.mp4"
-          muted
           autoPlay
+          muted
           loop
           playsInline
+          poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="absolute inset-0 z-0 h-full w-full object-cover object-[42%_center] sm:object-[48%_center] lg:object-center"
-        />
+          className="hero-video absolute inset-x-0 bottom-0 top-auto h-[48dvh] w-full object-contain object-bottom sm:inset-0 sm:top-0 sm:h-full sm:object-[right_bottom]"
+          style={{ transform: 'translateZ(0)' }}
+        >
+          {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
+              evitando el thermal throttling del VP9 por software que entrecortaba
+              el video tras un rato. WebM queda como fallback. */}
+          <source src="/videos/perroHero.mp4"  type="video/mp4"  />
+          <source src="/videos/perroHero.webm" type="video/webm" />
+        </video>
+
+        {/* Móvil: lavado cálido suave (el perro va en banda inferior). */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1]"
+          className="pointer-events-none absolute inset-0 z-[1] sm:hidden"
+          style={{ background: 'linear-gradient(100deg, rgba(249,236,216,0.95) 0%, rgba(249,236,216,0.72) 32%, rgba(249,236,216,0.18) 56%, rgba(249,236,216,0) 70%)' }}
+        />
+        {/* Desktop: velo crema OPACO del mismo color del fondo del video
+            (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
+            antes del perro, así no queda canto entre el relleno y el video. */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] hidden sm:block"
+          style={{ background: 'linear-gradient(90deg, rgb(251,229,195) 0%, rgb(251,229,195) 36%, rgba(251,229,195,0.5) 48%, rgba(251,229,195,0) 57%)' }}
+        />
+
+        {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee).
+            Degradado con easing (no lineal) para un empalme sin banding visible. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[12dvh] sm:h-[28dvh]"
           style={{
             background:
-              'linear-gradient(to top right, rgba(6,17,28,0.5), rgba(6,17,28,0.08) 70%)',
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[30dvh] sm:h-[34dvh] lg:h-[38dvh]"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0) 42%, rgba(248,244,238,0.06) 58%, rgba(248,244,238,0.24) 74%, rgba(248,244,238,0.68) 91%, #f8f4ee 100%)',
+              'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0.08) 28%, rgba(248,244,238,0.28) 50%, rgba(248,244,238,0.58) 68%, rgba(248,244,238,0.85) 84%, #f8f4ee 100%)',
           }}
         />
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-8 pt-24 sm:px-6 sm:pb-10 sm:pt-32 lg:px-8 lg:pb-12 lg:pt-36">
-          <div className="max-w-[34rem]">
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-40 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
+          <div className="max-w-[36rem]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">
+              Software para clínicas veterinarias
+            </p>
+
+            {/* Firma: línea de signo vital. El barrido recorre el trazo como el
+                monitor de un paciente — guiño al ECGHeartbeatCanvas de la marca. */}
+            <div className="hero-ecg mt-4" aria-hidden="true">
+              <svg viewBox="0 0 320 24" preserveAspectRatio="xMinYMid meet">
+                <path className="hero-ecg__base" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
+                <path className="hero-ecg__pulse" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
+              </svg>
+            </div>
+
             <h1
-              className="mt-2 max-w-[22rem] text-[2.15rem] leading-[0.94] tracking-[-0.06em] sm:max-w-[32rem] sm:text-[2.9rem] lg:max-w-[34rem] lg:text-[3.25rem] xl:text-[3.45rem]"
+              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[34rem] lg:text-[3.35rem] xl:text-[3.6rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
-              Tu clinica veterinaria merece una operacion a la altura de su medicina.
+              Tu clínica merece una operación
+              <span style={{ fontStyle: 'italic', fontWeight: 600, color: '#a8662e' }}> a la altura de su medicina.</span>
             </h1>
 
-            <p className="mt-5 max-w-[31rem] text-[15px] leading-7 text-white/76 sm:mt-6 sm:text-base sm:leading-8">
-              Bourgelat integra agenda, historia clinica, caja, inventario y seguimiento en un
-              solo sistema para reducir reprocesos, ordenar al equipo y ofrecer una experiencia
-              mas profesional a cada tutor.
+            <p className="mt-6 max-w-[30rem] text-[15px] leading-7 text-[#6a5038] sm:text-[16.5px] sm:leading-8">
+              Agenda, historia clínica, caja e inventario en un solo lugar. Menos reprocesos,
+              un equipo coordinado y una experiencia más profesional para cada tutor.
             </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                to="/registro"
+                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
+              >
+                Crear cuenta
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
+              </Link>
+              <Link
+                to="/planes"
+                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
+              >
+                Ver planes
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       <div
-        className="relative overflow-hidden"
+        className="relative -mt-px overflow-x-clip"
         style={{
           background: WARM_BAND_BACKGROUND,
-          boxShadow: 'inset 0 -1px 0 rgba(9,31,48,0.04)',
         }}
       >
         <TrustBar />
-        <PlatformSection />
+        <div id="plataforma" className="scroll-mt-20">
+          <PlatformSection />
+        </div>
       </div>
 
-      <ArrivalSection />
+      <div className="relative -mt-px">
+      <FlowDog />
+      <FlowDogMedic />
+      <section id="flujo" className="relative -mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018] overflow-x-clip">
+        <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-10">
+          <SectionHeading
+            eyebrow="Flujo diario"
+            title="De la llamada al seguimiento, el día avanza sin perder el caso."
+            body="La clínica deja de pasar información de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una señal para el siguiente."
+            center
+            compact
+          />
 
-      <section id="flujo" className="bg-[#edf4f8]">
-        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:grid lg:grid-cols-[minmax(360px,0.78fr)_minmax(0,1.05fr)] lg:items-center lg:gap-14 lg:px-8 lg:py-24">
-          <div>
-            <SectionHeading
-              eyebrow="Flujo diario"
-              title="De la llamada al seguimiento, el dia avanza sin perder el caso."
-              body="La clinica deja de pasar informacion de mano en mano. Bourgelat conserva el contexto y convierte cada paso en una senal para el siguiente."
-            />
-
-            <FlowStepper />
-          </div>
-
-          <div className="mt-12 lg:mt-0">
-            <DailyFlowVisual />
-          </div>
+          <FlowCarousel />
         </div>
       </section>
+      </div>
 
-      <CareSection />
-
-      <section id="planes" className="bg-[#07131f] text-white">
+      <section id="planes" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
           <SectionHeading
             eyebrow="Planes"
             title="Planes para entrar sin miedo y crecer sin rearmar todo."
-            body="Puedes empezar con orden clinico y sumar caja, inventario, reportes y facturacion electronica cuando la operacion lo pida."
-            dark
+            body="Empieza con el orden clínico y suma caja, inventario y reportes cuando tu clínica lo pida. Sin costos ocultos ni configuraciones complejas."
             center
           />
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-4">
+          <div className="plans-grid mt-10 grid gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-3">
             {PLAN_PREVIEW.map((plan) => (
               <article
                 key={plan.name}
-                className={`rounded-[30px] border p-6 ${
+                className={`plan-card relative rounded-2xl p-5 sm:p-6 ${
                   plan.featured
-                    ? 'border-[#91e7e0]/40 bg-[linear-gradient(160deg,rgba(15,49,74,0.96),rgba(11,31,50,0.98),rgba(12,57,65,0.98))] shadow-[0_32px_90px_rgba(10,34,48,0.36)]'
-                    : 'border-white/10 bg-white/6'
+                    ? 'border border-[#b07645] bg-white shadow-[0_24px_60px_rgba(43,32,24,0.12)]'
+                    : plan.comingSoon
+                    ? 'border-2 border-dashed border-[#e0cdb4]'
+                    : 'border border-[#2b2018]/10 bg-white shadow-[0_12px_30px_rgba(43,32,24,0.06)]'
                 }`}
+                style={plan.comingSoon ? { background: 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)', filter: 'blur(0.6px) brightness(0.98) saturate(0.9)' } : undefined}
               >
+                {plan.featured && (
+                  <span className="absolute -top-3 right-5 rounded-full bg-[#b07645] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                    Más elegido
+                  </span>
+                )}
+                {plan.comingSoon && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-4 top-4 -rotate-[6deg] select-none rounded-[6px] px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.22em]"
+                    style={{
+                      color: '#b07645',
+                      border: '1.5px solid #b07645',
+                      backgroundColor: 'rgba(176,118,69,0.06)',
+                      boxShadow: 'inset 0 0 0 2px #fdf8f0, inset 0 0 0 3px rgba(176,118,69,0.45)',
+                    }}
+                  >
+                    Próximamente
+                  </span>
+                )}
                 <p
                   className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                    plan.featured ? 'text-[#91e7e0]' : 'text-white/55'
+                    plan.featured ? 'text-[#b07645]' : 'text-[#2b2018]/55'
                   }`}
                 >
                   {plan.subtitle}
                 </p>
-                <h3
-                  className="mt-4 text-[2rem] leading-none tracking-[-0.04em] sm:text-4xl"
-                  style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-                >
-                  {plan.name}
-                </h3>
-                <p className="mt-4 text-lg font-semibold text-white">{plan.price}</p>
+                <div className="mt-3 flex items-baseline justify-between gap-3 sm:mt-4 sm:block">
+                  <h3
+                    className="text-[1.7rem] leading-none tracking-[-0.04em] sm:text-4xl"
+                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+                  >
+                    {plan.name}
+                  </h3>
+                  {plan.price && (
+                    <p className="shrink-0 text-base font-semibold text-[#2b2018] sm:mt-4 sm:text-lg">
+                      {plan.price}
+                    </p>
+                  )}
+                </div>
                 <p
-                  className={`mt-4 text-sm leading-7 ${
-                    plan.featured ? 'text-white/84' : 'text-white/68'
+                  className={`mt-3 text-sm leading-6 sm:mt-4 sm:leading-7 ${
+                    plan.featured ? 'text-[#2b2018]/80' : 'text-[#2b2018]/65'
                   }`}
                 >
                   {plan.note}
@@ -1304,14 +268,14 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Link
               to="/planes"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#effaf8] px-6 py-3.5 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-white"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645] sm:w-auto"
             >
               Ver comparativa completa
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
             </Link>
             <Link
               to="/registro"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/6 px-6 py-3.5 text-sm font-semibold text-white no-underline transition hover:bg-white/10"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
             >
               Crear cuenta
             </Link>
@@ -1319,68 +283,224 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="contacto" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="overflow-hidden rounded-[30px] bg-[linear-gradient(145deg,#0b1724,#13314a,#0f3f43)] p-6 text-white shadow-[0_36px_120px_rgba(7,20,32,0.24)] sm:rounded-[38px] sm:p-8 md:p-12">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#91e7e0]">
-                Contacto
-              </p>
-              <h2
-                className="mt-4 text-[2.8rem] leading-[0.94] tracking-[-0.05em] text-white sm:text-5xl md:text-6xl"
-                style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-              >
-                Si tu clinica ya siente friccion, revisemos donde se rompe el dia.
-              </h2>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-white/74">
-                Cuentanos como trabajan hoy: agenda, historias, inventario, caja y DIAN. Con eso
-                vemos si Bourgelat encaja y que habria que ordenar primero.
-              </p>
-            </div>
+      <section id="preguntas" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
+        <div className="mx-auto max-w-3xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <SectionHeading
+            eyebrow="Preguntas frecuentes"
+            title="Lo importante antes de elegir."
+            body="Si te queda una duda puntual, escríbenos y la resolvemos sin vueltas."
+            center
+            compact
+          />
 
-            <div className="space-y-4">
+          <div className="mt-10 grid gap-3">
+            {FAQS.map((faq) => (
+              <FAQItem key={faq.pregunta} pregunta={faq.pregunta} respuesta={faq.respuesta} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="contacto" className="-mt-px scroll-mt-40 bg-[#f8f4ee] px-5 pb-16 pt-2 sm:px-6 lg:px-8 lg:pb-24">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-[#2b2018] px-6 py-12 shadow-[0_40px_120px_rgba(43,32,24,0.28)] sm:px-10 sm:py-14 lg:px-16 lg:py-20">
+          {/* Glow ámbar cálido detrás del perro */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-[-8%] top-1/2 h-[130%] w-[60%] -translate-y-1/2"
+            style={{
+              background:
+                'radial-gradient(ellipse at 62% 50%, rgba(233,192,137,0.22) 0%, rgba(176,118,69,0.10) 38%, transparent 70%)',
+            }}
+          />
+
+          <div className="relative z-[1] max-w-xl lg:max-w-2xl">
+            {/* Texto + CTAs */}
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9a06b]">
+              Da el primer paso
+            </p>
+            <h2
+              className="mt-4 text-[2.6rem] leading-[0.96] tracking-[-0.045em] text-[#fdf6ee] sm:text-5xl md:text-[3.4rem]"
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+            >
+              Prueba Bourgelat hoy.{' '}
+              <span className="italic text-[#e9c089]">Mañana tu clínica respira distinto.</span>
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-8 text-[#fdf6ee]/70">
+              Cuéntanos cómo trabajan hoy —agenda, historias, inventario y caja— y vemos
+              juntos por dónde empezar. Sin compromiso y a tu ritmo.
+            </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/registro"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#0d2435] no-underline transition hover:bg-[#effaf8]"
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
               >
                 Crear cuenta
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
               <a
                 href="mailto:hola@bourgelat.co"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/8 px-6 py-4 text-sm font-semibold text-white no-underline transition hover:bg-white/12"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
               >
                 <Mail className="h-4 w-4" />
                 hola@bourgelat.co
               </a>
             </div>
           </div>
+
+          {/* Perro despidiéndose — firma del cierre, asomado en la esquina */}
+          <img
+            src="/images/perro-despedida.webp"
+            alt="El perro de Bourgelat saluda con la pata"
+            loading="lazy"
+            className="contact-dog pointer-events-none absolute bottom-0 right-0 hidden w-[380px] md:block lg:right-4 lg:w-[540px] xl:w-[620px]"
+          />
         </div>
       </section>
 
-      <footer className="border-t border-[#d7e4ee] bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-9 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="max-w-xl">
-            <BrandMark />
-            <p className="mt-4 text-sm leading-7 text-[#5a7185]">
-              Software para clinicas veterinarias que quieren una operacion mas clara, mas humana y
-              mas confiable desde la recepcion hasta el cierre del dia.
-            </p>
+      <footer className="relative overflow-hidden bg-[#1c140d] text-[#fdf6ee]">
+        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-12 sm:px-6 lg:px-8">
+          <FooterPulse />
+        </div>
+        <div className="relative z-10 mx-auto max-w-7xl px-5 pb-14 pt-10 sm:px-6 lg:px-8 lg:pb-16">
+          <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            {/* Marca */}
+            <div className="max-w-sm">
+              <BrandMark dark />
+              <p className="mt-5 text-sm leading-7 text-[#fdf6ee]/70">
+                Software para clínicas veterinarias que quieren llevar el día con más orden, más
+                calma y más confianza, de la recepción al cierre.
+              </p>
+              <a
+                href="mailto:hola@bourgelat.co"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:text-[#e9c089]"
+              >
+                <Mail className="h-4 w-4" />
+                hola@bourgelat.co
+              </a>
+              <p className="mt-6 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[#fdf6ee]/55">
+                <MapPin className="h-3.5 w-3.5 text-[#e9c089]" />
+                Hecho en Colombia
+              </p>
+            </div>
+
+            {/* Columnas de enlaces: 2 col en móvil, 3 en sm, y se integran a la
+                grilla de 4 columnas en desktop con lg:contents */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:contents">
+            {/* Producto */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
+                Producto
+              </p>
+              <ul className="mt-5 space-y-3.5">
+                {[
+                  { label: 'Plataforma', href: '#plataforma' },
+                  { label: 'Flujo diario', href: '#flujo' },
+                  { label: 'Planes', to: '/planes' },
+                  { label: 'Empezar', href: '#contacto' },
+                ].map((item) => (
+                  <li key={item.label}>
+                    {item.to ? (
+                      <Link
+                        to={item.to}
+                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={item.href}
+                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                      >
+                        {item.label}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Empresa */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
+                Empresa
+              </p>
+              <ul className="mt-5 space-y-3.5">
+                <li>
+                  <Link to="/nosotros" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                    Nosotros
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/planes" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                    Comparar planes
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/registro" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                    Crear cuenta
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
+                Legal
+              </p>
+              <ul className="mt-5 space-y-3.5">
+                {footerLinks
+                  .filter((l) => ['Privacidad', 'Terminos', 'Cookies'].includes(l.label))
+                  .map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                      >
+                        {link.label === 'Terminos' ? 'Términos' : link.label}
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-3">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="text-sm font-medium text-[#49647b] no-underline transition hover:text-[#10263a]"
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Redes sociales — encima de la línea divisoria */}
+          <div className="mt-12 flex items-center justify-center gap-3 sm:justify-end">
+            <a
+              href="https://instagram.com/bourgelat.co"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Bourgelat en Instagram"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+              </svg>
+            </a>
+            <a
+              href="https://tiktok.com/@bourgelat"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Bourgelat en TikTok"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#fdf6ee]/20 bg-white/5 text-[#fdf6ee] transition-colors hover:border-white hover:bg-[#fdf6ee] hover:text-[#1c140d]"
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+              </svg>
+            </a>
+          </div>
+
+          <div className="mt-6 border-t border-[#fdf6ee]/12 pt-7 text-xs text-[#fdf6ee]/60">
+            <p>© {new Date().getFullYear()} Bourgelat. Todos los derechos reservados.</p>
+            <p className="mt-1 text-[#fdf6ee]/40">bourgelat.co · app.bourgelat.co</p>
           </div>
         </div>
       </footer>
+
+      <WhatsAppFab />
     </div>
   )
 }

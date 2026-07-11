@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const sequelize = require('../config/database');
 const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
+const { parsePaginacion } = require('../utils/paginacion');
 
 const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento'];
 const MOVEMENT_REASON_ALIASES = {
@@ -88,8 +89,7 @@ const crearProducto = async (req, res) => {
           cantidad: stockInicial,
           stockAnterior: 0,
           stockNuevo: stockInicial,
-          motivo: 'compra',
-          observaciones: 'Stock inicial',
+          motivo: 'inventario_inicial',
           precioUnitario: precioCompraNormalizado,
           productoId: nuevoProducto.id,
           usuarioId: req.usuario.id,
@@ -116,7 +116,8 @@ const crearProducto = async (req, res) => {
 const obtenerProductos = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { buscar, categoria, bajoStock, pagina = 1, limite = 20 } = req.query;
+    const { buscar, categoria, bajoStock } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
     const where = { clinicaId, activo: true };
 
@@ -137,12 +138,10 @@ const obtenerProductos = async (req, res) => {
       );
     }
 
-    const offset = (pagina - 1) * limite;
-
     const { count, rows } = await Producto.findAndCountAll({
       where,
-      limit: parseInt(limite),
-      offset: parseInt(offset),
+      limit: limite,
+      offset,
       order: [['nombre', 'ASC']],
     });
 
@@ -458,7 +457,8 @@ const obtenerProductoPorBarcode = async (req, res) => {
 const obtenerCatalogoMedicamentos = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const { buscar, pagina = 1, limite = 8 } = req.query;
+    const { buscar } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 8 });
 
     const where = {
       clinicaId,
@@ -476,8 +476,6 @@ const obtenerCatalogoMedicamentos = async (req, res) => {
       ];
     }
 
-    const offset = (Number(pagina) - 1) * Number(limite);
-
     const { count, rows } = await Producto.findAndCountAll({
       where,
       attributes: [
@@ -492,7 +490,7 @@ const obtenerCatalogoMedicamentos = async (req, res) => {
         'precioVenta',
         'requiereFormula',
       ],
-      limit: Number(limite),
+      limit: limite,
       offset,
       order: [['nombre', 'ASC']],
     });
@@ -519,19 +517,18 @@ const obtenerMovimientos = async (req, res) => {
 
     const { clinicaId } = req.usuario;
 
-    const { productoId, tipo, pagina = 1, limite = 20 } = req.query;
+    const { productoId, tipo } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
     const where = { clinicaId };
 
     if (productoId) where.productoId = productoId;
     if (tipo) where.tipo = tipo;
 
-    const offset = (pagina - 1) * limite;
-
     const { count, rows } = await MovimientoInventario.findAndCountAll({
       where,
-      limit: parseInt(limite),
-      offset: parseInt(offset),
+      limit: limite,
+      offset,
       order: [['createdAt', 'DESC']],
       include: [{
       model: Producto,

@@ -5,8 +5,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Posición del video/imagen de login: centrado en desktop, animales visibles en móvil */
+.login-media { object-position: 70% 45%; }
+@media (min-width: 1024px) {
+  .login-media { object-position: center; }
+}
+
+/* Neutraliza el azul del autofill del navegador en los inputs del login */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #fdf8f3 inset;
+  -webkit-text-fill-color: #2b2018;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 :root {
-  --background: 214 49% 97%;
+  --background: 214 25% 97%;
   --foreground: 210 55% 15%;
   --card: 0 0% 100%;
   --card-foreground: 210 55% 15%;
@@ -16,15 +31,18 @@
   --primary-foreground: 0 0% 100%;
   --secondary: 152 60% 94%;
   --secondary-foreground: 163 78% 20%;
-  --muted: 214 30% 94%;
+  --muted: 214 20% 94%;
   --muted-foreground: 210 20% 45%;
   --accent: 214 80% 95%;
   --accent-foreground: 221 70% 35%;
   --destructive: 2 72% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 208 35% 88%;
-  --input: 208 35% 88%;
+  --border: 208 25% 88%;
+  --input: 208 25% 88%;
   --ring: 160 70% 55%;
+  --caramel: 27 44% 48%;
+  --caramel-foreground: 0 0% 100%;
+  --caramel-muted: 27 55% 94%;
   --chart-1: 160 84% 39%;
   --chart-2: 221 83% 53%;
   --chart-3: 38 92% 50%;
@@ -61,6 +79,9 @@
   --border: 217 33% 18%;
   --input: 217 33% 18%;
   --ring: 174 72% 56%;
+  --caramel: 27 55% 58%;
+  --caramel-foreground: 27 20% 10%;
+  --caramel-muted: 27 30% 15%;
   --chart-1: 221 83% 53%;
   --chart-2: 212 95% 68%;
   --chart-3: 173 58% 39%;
@@ -247,4 +268,827 @@
 .dark .admin-workspace .text-blue-700,
 .dark .admin-workspace .text-blue-800 {
   color: rgb(147 197 253);
+}
+
+/* ── Flow carousel (#flujo) ─────────────────────────────────── */
+.flow-carousel {
+  --flow-slide-w: min(62vw, 240px);
+  --flow-dur: 1100ms;
+  --flow-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 1024px) {
+  .flow-carousel {
+    --flow-slide-w: min(20vw, 280px);
+  }
+}
+
+.flow-carousel__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 540px;
+  perspective: 660px;
+  overflow: visible;
+  padding: 50px 0 36px;
+}
+
+.flow-carousel__slides {
+  position: relative;
+  width: var(--flow-slide-w);
+  height: 500px;
+  transform-style: preserve-3d;
+}
+
+.flow-slide {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform var(--flow-dur) var(--flow-ease),
+    opacity var(--flow-dur) var(--flow-ease);
+  will-change: transform, opacity;
+}
+
+.flow-slide[data-role='current'] {
+  transform: translateX(0) translateZ(60px) scale(1.18) rotateY(0deg);
+  opacity: 1;
+  z-index: 3;
+}
+
+.flow-slide[data-role='next'] {
+  transform: translateX(112%) translateZ(-20px) scale(0.82) rotateY(-72deg);
+  opacity: 1;
+  z-index: 2;
+}
+
+.flow-slide[data-role='previous'] {
+  transform: translateX(-112%) translateZ(-20px) scale(0.82) rotateY(72deg) scaleX(-1);
+  opacity: 1;
+  z-index: 2;
+}
+
+.flow-slide[data-role='hidden'] {
+  transform: scale(0.75);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.flow-slide[data-role='next'],
+.flow-slide[data-role='previous'] {
+  cursor: pointer;
+}
+
+/* contenedor = ficha clínica cálida (foto arriba, placa de texto abajo) */
+.flow-slide__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  border-radius: 18px;
+  background: #fdf6ee;
+  box-shadow:
+    0 22px 44px rgba(56, 26, 6, 0.11),
+    0 6px 14px rgba(56, 26, 6, 0.07),
+    inset 0 0 0 1px rgba(43, 32, 24, 0.07);
+  transform: rotateX(var(--rotX, 0deg)) rotateY(var(--rotY, 0deg));
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+/* La tarjeta activa flota con más profundidad sobre las laterales */
+.flow-slide[data-role='current'] .flow-slide__inner {
+  box-shadow:
+    0 44px 80px rgba(56, 26, 6, 0.22),
+    0 18px 36px rgba(56, 26, 6, 0.14),
+    0 4px 10px rgba(56, 26, 6, 0.10),
+    inset 0 0 0 1px rgba(43, 32, 24, 0.07);
+}
+
+/* lengüeta superior — guiño a una ficha/carpeta de paciente */
+.flow-slide__tab {
+  position: absolute;
+  top: -7px;
+  left: 22px;
+  width: 52px;
+  height: 9px;
+  border-radius: 6px 6px 0 0;
+  background: #b07645;
+  box-shadow: inset 0 1px 0 rgba(255, 228, 180, 0.45);
+  z-index: 4;
+}
+
+/* foto del paso */
+.flow-slide__media {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #e7dccb;
+  box-shadow: inset 0 0 0 1px rgba(43, 32, 24, 0.06);
+}
+
+/* ── Acabado de la ficha (sin chrome de celular) ── */
+
+.flow-slide__media {
+  background: #e7dccb;
+}
+
+.flow-slide[data-role='previous'] .flow-slide__img,
+.flow-slide[data-role='next'] .flow-slide__img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+
+.flow-slide__img {
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  transform: translate3d(var(--imgX, 0%), var(--imgY, 0%), 0);
+  transition: transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.flow-slide[data-role='current'] .flow-slide__img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none !important;
+}
+
+.flow-slide__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(20, 12, 4, 0.42) 0%,
+    rgba(20, 12, 4, 0.14) 22%,
+    transparent 46%
+  );
+}
+
+.flow-carousel__bg {
+  display: none;
+  position: absolute;
+  inset: -40px 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+}
+
+.flow-carousel__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    65% 60% at 50% 50%,
+    rgba(248, 244, 238, 0.45) 0%,
+    rgba(248, 244, 238, 0.82) 50%,
+    #f8f4ee 72%
+  );
+}
+
+.flow-carousel__bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(60px) saturate(1.1);
+  opacity: 0;
+  transition: opacity var(--flow-dur) var(--flow-ease);
+}
+
+.flow-carousel__bg-layer[data-role='current'] {
+  opacity: 0.12;
+}
+
+.flow-carousel__bg-layer[data-role='next'],
+.flow-carousel__bg-layer[data-role='previous'] {
+  opacity: 0;
+}
+
+/* Numeral del paso: serif grande sobre la foto, recortado por la esquina
+   inferior izquierda → firma editorial, no una etiqueta literal. */
+.flow-slide__num {
+  position: absolute;
+  left: 16px;
+  bottom: 8px;
+  z-index: 2;
+  font-family: 'Spectral', Georgia, serif;
+  font-size: 4.6rem;
+  line-height: 0.78;
+  font-weight: 700;
+  font-style: italic;
+  color: rgba(253, 246, 238, 0.97);
+  text-shadow: 0 3px 18px rgba(20, 12, 4, 0.5);
+  pointer-events: none;
+}
+
+/* el numeral solo en la tarjeta activa (evita el dígito espejado en laterales) */
+.flow-slide:not([data-role='current']) .flow-slide__num {
+  display: none;
+}
+
+/* Kicker fino con regla ámbar (reemplaza la píldora plana) */
+.flow-slide__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a35f25;
+}
+.flow-slide__step::before {
+  content: '';
+  width: 20px;
+  height: 1.5px;
+  background: #b07645;
+}
+
+.flow-slide__title {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: clamp(1.1rem, 2.5vw, 1.38rem);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  color: #2b2018;
+}
+
+.flow-slide__desc {
+  font-size: clamp(0.76rem, 1.5vw, 0.84rem);
+  line-height: 1.5;
+  color: #6b5d4d;
+}
+
+.flow-slide__text {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  max-height: 240px;
+  padding: 14px 12px 6px;
+  transition:
+    max-height var(--flow-dur) var(--flow-ease),
+    opacity var(--flow-dur) var(--flow-ease),
+    padding-top var(--flow-dur) var(--flow-ease),
+    padding-bottom var(--flow-dur) var(--flow-ease);
+  transform: translateZ(30px);
+  transform-style: preserve-3d;
+}
+
+.flow-slide:not([data-role='current']) .flow-slide__media {
+  filter: saturate(0.85) brightness(0.96);
+}
+
+.flow-slide:not([data-role='current']) .flow-slide__inner {
+  background: #f6eede;
+}
+
+/* Laterales: la placa de texto se colapsa y la foto ocupa toda la tarjeta.
+   Al pasar a activa, la placa se expande (max-height) y la foto "sube". */
+.flow-slide:not([data-role='current']) .flow-slide__text {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* el degradado oscuro inferior (para el numeral) solo en la activa */
+.flow-slide:not([data-role='current']) .flow-slide__media::after {
+  opacity: 0;
+}
+
+.flow-reveal {
+  overflow: hidden;
+  padding-block: 2px;
+}
+
+.flow-reveal > * {
+  transition: transform var(--flow-dur) var(--flow-ease),
+    opacity var(--flow-dur) var(--flow-ease);
+}
+
+.flow-slide:not([data-role='current']) .flow-reveal > * {
+  opacity: 0;
+  transform: translateY(110%);
+  transition-delay: 0ms;
+}
+
+.flow-slide[data-role='current'] .flow-reveal > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+.flow-slide[data-role='current'] .flow-slide__text .flow-reveal:nth-child(1) > * {
+  transition-delay: 180ms;
+}
+.flow-slide[data-role='current'] .flow-slide__text .flow-reveal:nth-child(2) > * {
+  transition-delay: 280ms;
+}
+.flow-slide[data-role='current'] .flow-slide__text .flow-reveal:nth-child(3) > * {
+  transition-delay: 380ms;
+}
+
+/* ── Perro veterinario que se asoma desde el borde derecho ── */
+.flow-dog {
+  position: absolute;
+  right: -4%;
+  top: 8%;
+  width: clamp(150px, 40vw, 230px);
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(34%) rotate(3deg);
+  filter: drop-shadow(0 18px 28px rgba(56, 26, 6, 0.22));
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+  will-change: transform, opacity;
+}
+
+@media (min-width: 1024px) {
+  .flow-dog {
+    right: -1%;
+    top: 6%;
+    width: clamp(340px, 29vw, 520px);
+  }
+}
+
+.flow-dog.is-visible {
+  opacity: 1;
+  transform: translateX(0) rotate(0deg);
+  animation: flow-dog-bob 5.5s ease-in-out 900ms infinite;
+}
+
+@keyframes flow-dog-bob {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-1.2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dog {
+    transition: none;
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Perro de despedida: estático, asomado en la esquina ── */
+.contact-dog {
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.4));
+}
+
+/* ── Perro veterinario que se asoma desde el borde izquierdo (flujo → planes) ── */
+.flow-dog-medic {
+  position: absolute;
+  left: 0;
+  bottom: -5%;
+  width: clamp(200px, 52vw, 300px);
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-40%) rotate(-3deg);
+  filter: drop-shadow(0 18px 28px rgba(56, 26, 6, 0.22));
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease;
+  will-change: transform, opacity;
+}
+
+@media (min-width: 1024px) {
+  .flow-dog-medic {
+    left: 0;
+    bottom: -7%;
+    width: clamp(440px, 38vw, 660px);
+  }
+}
+
+.flow-dog-medic.is-visible {
+  opacity: 1;
+  transform: translateX(0) rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dog-medic {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Planes: al pasar el cursor por uno, los demás se difuminan ── */
+.plan-card {
+  transition: filter 320ms ease, opacity 320ms ease, transform 320ms ease;
+}
+
+/* El difuminado de los demás planes solo tiene sentido con mouse real. En touch,
+   el :hover se queda "pegado" tras tocar y deja tarjetas borrosas. */
+@media (hover: hover) and (pointer: fine) {
+  .plans-grid:hover .plan-card {
+    filter: blur(3px);
+    opacity: 0.5;
+  }
+
+  .plans-grid .plan-card:hover {
+    filter: none;
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-card,
+  .plans-grid:hover .plan-card,
+  .plans-grid .plan-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.flow-carousel__btn {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  display: inline-flex;
+  height: 48px;
+  width: 48px;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: rgba(23, 48, 72, 0.45);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.flow-carousel__btn:hover {
+  opacity: 1;
+  color: #3a6d87;
+}
+
+.flow-carousel__btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.flow-carousel__btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.flow-carousel__btn--prev {
+  left: 4px;
+}
+
+.flow-carousel__btn--next {
+  right: 4px;
+}
+
+@media (min-width: 1024px) {
+  .flow-carousel__btn--prev {
+    left: 6%;
+  }
+  .flow-carousel__btn--next {
+    right: 6%;
+  }
+}
+
+.flow-carousel__info {
+  margin: 28px auto 0;
+  max-width: 520px;
+  text-align: center;
+}
+
+.flow-carousel__body {
+  min-height: 3.5rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(228, 240, 248, 0.8);
+}
+
+.flow-carousel__dots {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.flow-carousel__dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(58, 109, 135, 0.28);
+  transition: width 250ms ease, background 250ms ease;
+}
+
+.flow-carousel__dot.is-active {
+  width: 28px;
+  background: #3a6d87;
+}
+
+@media (max-width: 767px) {
+  .flow-carousel {
+    --flow-slide-w: min(72vw, 220px);
+  }
+  .flow-carousel__slides {
+    height: 380px;
+  }
+  .flow-slide[data-role='next'],
+  .flow-slide[data-role='previous'] {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-slide,
+  .flow-slide__inner {
+    transition: opacity var(--flow-dur) var(--flow-ease);
+  }
+  .flow-slide[data-role='next'],
+  .flow-slide[data-role='previous'] {
+    opacity: 0;
+  }
+}
+
+/* ── Firma del hero: línea de signo vital (ECG) ──────────────────────────── */
+.hero-ecg {
+  width: 188px;
+  max-width: 58%;
+}
+.hero-ecg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.hero-ecg__base {
+  fill: none;
+  stroke: rgba(176, 118, 69, 0.3);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-ecg__pulse {
+  fill: none;
+  stroke: #b07645;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Un segmento iluminado de ~46u barre un patrón total de 666u: el offset
+     viaja exactamente 666u y el bucle es invisible. */
+  stroke-dasharray: 46 620;
+  filter: drop-shadow(0 0 6px rgba(176, 118, 69, 0.4));
+  animation: hero-ecg-sweep 2.6s linear infinite;
+}
+@keyframes hero-ecg-sweep {
+  to {
+    stroke-dashoffset: -666;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-ecg__pulse {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── Divisor del footer: latido con luz que recorre ──────────────────────── */
+.footer-pulse {
+  width: 100%;
+  margin: 0 auto;
+}
+.footer-pulse svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.footer-pulse__base {
+  fill: none;
+  stroke: rgba(176, 118, 69, 0.28);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.footer-pulse__sweep {
+  fill: none;
+  stroke: #b07645;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* segmento iluminado de ~90u que recorre un trazo normalizado a 1000u */
+  stroke-dasharray: 90 910;
+  filter: drop-shadow(0 0 5px rgba(176, 118, 69, 0.55));
+  animation: footer-pulse-sweep var(--fp-dur, 4.2s) linear infinite;
+}
+@keyframes footer-pulse-sweep {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-pulse__sweep {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.4;
+  }
+}
+
+/* ── Plataforma: tabs horizontales de módulos ────────────────────────────── */
+.plat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 36px 0 0;
+  padding: 0;
+}
+.plat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(176, 118, 69, 0.35);
+  border-radius: 999px;
+  background: #f8f4ee;
+  color: #6b5d4d;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background 240ms ease, color 240ms ease, border-color 240ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
+}
+.plat-tab.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.plat-tab:focus-visible {
+  outline: 2px solid #b07645;
+  outline-offset: 3px;
+}
+.plat-tab:hover {
+  border-color: rgba(176, 118, 69, 0.6);
+  color: #2b2018;
+  transform: translateY(-2px);
+}
+.plat-tab__icon {
+  flex-shrink: 0;
+  color: #b07645;
+  transition: color 240ms ease;
+}
+/* Tab activo: la pantalla de la tablet muestra este módulo. */
+.plat-tab.is-active {
+  background: #2b2018;
+  border-color: #2b2018;
+  color: #f8f4ee;
+  font-weight: 600;
+}
+.plat-tab.is-active .plat-tab__icon {
+  color: #efd3ad;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plat-tab {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ── Hero: fondo del degradado cálido. ───────────────────────────────────── */
+.hero-bg {
+  background: linear-gradient(165deg, #f8e7cf 0%, #f1d6ad 48%, #ecd1a7 100%);
+}
+
+/* ── Registro: video de fondo (object-contain). El borde izquierdo del video
+   marcaba un canto contra el relleno; lo difuminamos con una máscara para que
+   se disuelva en el fondo crema sin diferencia visible. ─────────────────── */
+.registro-bg-video {
+  /* Desktop: el perro va a la derecha; el ~22% izquierdo (fondo vacío del
+     video) se funde hacia el relleno de la página. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.6) 12%, #000 24%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.6) 12%, #000 24%);
+}
+@media (max-width: 639px) {
+  /* Móvil: el video es una banda inferior; fundimos su borde superior. */
+  .registro-bg-video {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+  }
+}
+
+/* En móvil el video es una banda inferior y su fondo beige marcaba un escalón.
+   Igualamos el degradado al color real del fondo del video (#efd0a9) en la mitad
+   inferior y difuminamos el borde superior del video, para que se fundan sin
+   canto. En desktop el video ocupa todo y nada de esto aplica. */
+@media (max-width: 639px) {
+  .hero-bg {
+    /* Base vertical empatada al fondo del video (#efd0a9) en la mitad inferior,
+       + un calentamiento hacia la derecha que copia la viñeta del video (más
+       oscuro a la derecha, #e0bb93), para que no se note el canto en esa esquina. */
+    background:
+      linear-gradient(100deg, rgba(224, 187, 147, 0) 48%, rgba(224, 187, 147, 0.55) 100%),
+      linear-gradient(180deg, #f8e7cf 0%, #f3d8b4 36%, #efd0a9 54%, #efd0a9 100%);
+  }
+  /* El video (object-contain) ocupa solo el ~64% inferior de la banda; su borde
+     superior cae cerca del 36%. La máscara mantiene vacío arriba y recién ahí
+     funde el borde real del video hacia el hero, evitando el canto duro. */
+  .hero-video {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+  }
+}
+
+/* ── TrustBar: tinte cálido + relieve letterpress de los logos ───────────── */
+.trust-logo-img {
+  filter: grayscale(1) brightness(0) invert(1) sepia(1) hue-rotate(330deg) saturate(1.7) brightness(0.52) opacity(0.92)
+    drop-shadow(-0.8px -0.8px 0.2px rgba(255, 252, 247, 0.9))
+    drop-shadow(1px 1.3px 0.8px rgba(43, 32, 24, 0.45));
+}
+.trust-logo-img.is-inverted {
+  filter: invert(1) grayscale(1) brightness(0) invert(1) sepia(1) hue-rotate(330deg) saturate(1.7) brightness(0.52) opacity(0.92)
+    drop-shadow(-0.8px -0.8px 0.2px rgba(255, 252, 247, 0.9))
+    drop-shadow(1px 1.3px 0.8px rgba(43, 32, 24, 0.45));
+}
+/* En móvil ajustamos el relieve para que el efecto 3D se lea bien a tamaño
+   pequeño: realce blanco nítido (0 blur) arriba-izquierda + sombra definida
+   abajo-derecha. Embozado claro, no el halo difuso que se ensuciaba. */
+@media (max-width: 639px) {
+  .trust-logo-img {
+    filter: grayscale(1) brightness(0) invert(1) sepia(1) hue-rotate(330deg) saturate(1.7) brightness(0.52) opacity(0.92)
+      drop-shadow(-0.7px -0.7px 0px rgba(255, 253, 248, 1))
+      drop-shadow(1px 1.4px 0.5px rgba(43, 32, 24, 0.55));
+  }
+  .trust-logo-img.is-inverted {
+    filter: invert(1) grayscale(1) brightness(0) invert(1) sepia(1) hue-rotate(330deg) saturate(1.7) brightness(0.52) opacity(0.92)
+      drop-shadow(-0.7px -0.7px 0px rgba(255, 253, 248, 1))
+      drop-shadow(1px 1.4px 0.5px rgba(43, 32, 24, 0.55));
+  }
+}
+
+/* ── TrustBar: marquee de respaldos en móvil ─────────────────────────────── */
+.trust-marquee {
+  overflow: hidden;
+  /* Desvanece los bordes para que los logos entren y salgan sin canto duro. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%);
+}
+.trust-marquee__track {
+  display: flex;
+  width: max-content;
+  /* La pista lleva los logos duplicados; -50% reinicia justo en la copia. */
+  animation: trust-marquee 16s linear infinite;
+}
+@keyframes trust-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trust-marquee__track {
+    animation: none;
+  }
 }

@@ -20,6 +20,45 @@ const normalizarEntero = (valor) => {
   return Number.isNaN(numero) ? null : numero
 }
 
+// Solo se permite llamar a hosts oficiales de Factus (o el host configurado por
+// env). Evita SSRF: un admin podria guardar baseUrl apuntando a la red interna
+// o al endpoint de metadata de la nube y el servidor haria la peticion.
+const FACTUS_HOSTS_PERMITIDOS = new Set([
+  'api.factus.com.co',
+  'api-sandbox.factus.com.co',
+])
+
+const obtenerHostFactusEnv = () => {
+  try {
+    return process.env.FACTUS_BASE_URL ? new URL(process.env.FACTUS_BASE_URL).host : null
+  } catch (error) {
+    return null
+  }
+}
+
+const esBaseUrlFactusPermitida = (valor) => {
+  let parsed
+
+  try {
+    parsed = new URL(String(valor))
+  } catch (error) {
+    return false
+  }
+
+  if (parsed.protocol !== 'https:') return false
+
+  const hostEnv = obtenerHostFactusEnv()
+  return FACTUS_HOSTS_PERMITIDOS.has(parsed.host) || (Boolean(hostEnv) && parsed.host === hostEnv)
+}
+
+const asegurarBaseUrlFactus = (valor) => {
+  if (!esBaseUrlFactusPermitida(valor)) {
+    const error = new Error('La baseUrl de Factus no esta permitida')
+    error.status = 400
+    throw error
+  }
+}
+
 const obtenerBaseUrlFactus = (integracion) => {
   if (integracion?.baseUrl) return integracion.baseUrl
 
@@ -85,6 +124,8 @@ const solicitarTokenFactus = async ({
     throw new Error('La integraciÃ³n con Factus requiere Node.js 18+ para usar fetch nativo')
   }
 
+  asegurarBaseUrlFactus(baseUrl)
+
   const payload = new URLSearchParams({
     grant_type: 'password',
     client_id: clientId,
@@ -111,40 +152,6 @@ const solicitarTokenFactus = async ({
   return data
 }
 
-const construirPayloadClienteFactus = (propietario) => {
-  if (!propietario) {
-    throw new Error('Se requiere un propietario para construir el cliente de Factus')
-  }
-
-  return {
-    identification: propietario.numeroDocumento,
-    dv: propietario.digitoVerificacion || '',
-    company: propietario.razonSocial || '',
-    trade_name: propietario.nombreComercial || '',
-    names: propietario.nombre,
-    address: propietario.direccion || '',
-    email: propietario.email || '',
-    phone: propietario.telefono || '',
-    legal_organization_id: propietario.organizacionJuridicaId || '',
-    tribute_id: propietario.tributoId || '',
-    identification_document_id: propietario.tipoDocumentoFacturacionId || null,
-    municipality_id: propietario.municipioId || null,
-  }
-}
-
-const construirPayloadEstablecimientoFactus = (clinica) => {
-  if (!clinica) {
-    throw new Error('Se requiere una clÃ­nica para construir el establecimiento de Factus')
-  }
-
-  return {
-    name: clinica.nombreComercial || clinica.razonSocial || clinica.nombre,
-    address: clinica.direccion || '',
-    phone_number: clinica.telefono || '',
-    email: clinica.email || '',
-    municipality_id: clinica.municipioId || null,
-  }
-}
 
 const crearHeadersFactus = (token, extraHeaders = {}) => ({
   Accept: 'application/json',
@@ -160,6 +167,8 @@ const solicitarFactus = async ({
   headers = {},
   body,
 }) => {
+  asegurarBaseUrlFactus(baseUrl)
+
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: crearHeadersFactus(token, headers),
@@ -182,7 +191,7 @@ const solicitarFactus = async ({
 const obtenerEmpresaFactus = async ({ baseUrl, token }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/company',
+    path: '/v2/companies',
     token,
   })
 }
@@ -190,23 +199,7 @@ const obtenerEmpresaFactus = async ({ baseUrl, token }) => {
 const obtenerRangosNumeracionFactus = async ({ baseUrl, token }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/numbering-ranges',
-    token,
-  })
-}
-
-const obtenerUnidadesMedidaFactus = async ({ baseUrl, token }) => {
-  return solicitarFactus({
-    baseUrl,
-    path: '/v1/measurement-units',
-    token,
-  })
-}
-
-const obtenerTributosProductosFactus = async ({ baseUrl, token }) => {
-  return solicitarFactus({
-    baseUrl,
-    path: '/v1/tributes/products',
+    path: '/v2/numbering-ranges',
     token,
   })
 }
@@ -214,7 +207,7 @@ const obtenerTributosProductosFactus = async ({ baseUrl, token }) => {
 const validarFacturaFactus = async ({ baseUrl, token, payload }) => {
   return solicitarFactus({
     baseUrl,
-    path: '/v1/bills/validate',
+    path: '/v2/bills/validate',
     method: 'POST',
     token,
     headers: {
@@ -224,16 +217,32 @@ const validarFacturaFactus = async ({ baseUrl, token, payload }) => {
   })
 }
 
+const descargarPdfFactura = async ({ baseUrl, token, numero }) => {
+  return solicitarFactus({
+    baseUrl,
+    path: `/v2/bills/${encodeURIComponent(numero)}/download-pdf`,
+    token,
+  })
+}
+
+const descargarXmlFactura = async ({ baseUrl, token, numero }) => {
+  return solicitarFactus({
+    baseUrl,
+    path: `/v2/bills/${encodeURIComponent(numero)}/download-xml`,
+    token,
+  })
+}
+
 module.exports = {
   obtenerBaseUrlFactus,
+  esBaseUrlFactusPermitida,
+  asegurarBaseUrlFactus,
   obtenerConfiguracionFactusEnv,
   solicitarTokenFactus,
   solicitarFactus,
   obtenerEmpresaFactus,
   obtenerRangosNumeracionFactus,
-  obtenerUnidadesMedidaFactus,
-  obtenerTributosProductosFactus,
   validarFacturaFactus,
-  construirPayloadClienteFactus,
-  construirPayloadEstablecimientoFactus,
+  descargarPdfFactura,
+  descargarXmlFactura,
 }

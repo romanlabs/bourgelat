@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Propietario = require('./Propietario');
 const Clinica = require('./Clinica');
+const { aplicarDescifrado } = require('../config/modelEncryption');
 
 const Mascota = sequelize.define('Mascota', {
   id: {
@@ -94,5 +95,16 @@ Propietario.hasMany(Mascota, { foreignKey: 'propietarioId' });
 Mascota.belongsTo(Propietario, { foreignKey: 'propietarioId' });
 Clinica.hasMany(Mascota, { foreignKey: 'clinicaId' });
 Mascota.belongsTo(Clinica, { foreignKey: 'clinicaId' });
+
+// Sequelize v6 no dispara afterFind del modelo hijo cuando se carga vía include,
+// por lo que el descifrado del Propietario anidado debe hacerse aquí.
+Mascota.addHook('afterFind', (resultado) => {
+  if (!resultado) return
+  const descifrar = (inst) => {
+    const prop = inst?.dataValues?.Propietario
+    if (prop) aplicarDescifrado({ instance: prop, ...Propietario.CIFRADO })
+  }
+  Array.isArray(resultado) ? resultado.forEach(descifrar) : descifrar(resultado)
+})
 
 module.exports = Mascota;

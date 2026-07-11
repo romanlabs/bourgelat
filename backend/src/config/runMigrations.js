@@ -22,7 +22,7 @@ main()
     await sequelize.close()
   })
   .catch(async (error) => {
-    console.error('Fallo en migraciones:', error.message)
+    process.stderr.write(`Fallo en migraciones: ${error.message}\n`)
     await sequelize.close()
     process.exit(1)
   })

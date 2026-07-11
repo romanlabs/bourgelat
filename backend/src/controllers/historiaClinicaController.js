@@ -7,6 +7,7 @@ const Producto = require('../models/Producto')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { Op } = require('sequelize')
 const { isValidDateOnly } = require('../utils/dateOnly')
+const { parsePaginacion } = require('../utils/paginacion')
 
 const HYDRATION_STATES = [
   'normal',
@@ -188,9 +189,8 @@ const obtenerHistorias = async (req, res) => {
       bloqueada,
       fechaInicio,
       fechaFin,
-      pagina = 1,
-      limite = 20,
     } = req.query
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
     const where = { clinicaId }
 
@@ -207,11 +207,9 @@ const obtenerHistorias = async (req, res) => {
       where.fechaConsulta = { [Op.lte]: fechaFin }
     }
 
-    const offset = (Number(pagina) - 1) * Number(limite)
-
     const { count, rows } = await HistoriaClinica.findAndCountAll({
       where,
-      limit: Number(limite),
+      limit: limite,
       offset,
       order: [['fechaConsulta', 'DESC']],
       include: [
@@ -236,7 +234,7 @@ const obtenerHistorias = async (req, res) => {
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json({ message: error.statusCode ? error.message : 'Error en el servidor', error: error.message })
+      .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
   }
 }
 
@@ -359,7 +357,7 @@ const crearHistoria = async (req, res) => {
     })
 
     const historiaCompleta = await HistoriaClinica.findOne({
-      where: { id: historia.id },
+      where: { id: historia.id, clinicaId },
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
@@ -385,7 +383,7 @@ const crearHistoria = async (req, res) => {
   } catch (error) {
     res
       .status(error.statusCode || 500)
-      .json({ message: error.statusCode ? error.message : 'Error en el servidor', error: error.message })
+      .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
   }
 }
 

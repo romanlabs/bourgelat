@@ -96,7 +96,7 @@ const main = async () => {
 
   await sequelize.authenticate()
 
-  const existente = await Usuario.findOne({ where: { email } })
+  const existente = await Usuario.findOne({ where: { email }, sinTenant: true })
 
   if (existente && existente.rol !== 'superadmin') {
     throw new Error('Ya existe un usuario con ese email y no es superadmin')
