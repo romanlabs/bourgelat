@@ -45,7 +45,11 @@ export function DashboardPanel({ title, subtitle, action, children, className = 
     <section
       className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_8px_32px_rgba(8,25,39,0.07)] ${className}`}
     >
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
+      <div
+        className={`flex flex-col gap-3 px-5 py-4 lg:flex-row lg:justify-between ${
+          subtitle ? 'lg:items-end' : 'lg:items-center'
+        } ${children ? 'border-b border-border' : ''}`}
+      >
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {title}
@@ -54,7 +58,7 @@ export function DashboardPanel({ title, subtitle, action, children, className = 
         </div>
         {action}
       </div>
-      <div className="p-5">{children}</div>
+      {children ? <div className="p-5">{children}</div> : null}
     </section>
   )
 }
@@ -382,18 +386,26 @@ export function BarPanel({ title, subtitle, data, dataKey, color = '#0f766e', fo
   )
 }
 
-export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBody, action }) {
+export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, filters, collapsed = false }) {
   return (
     <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
+      <div
+        className={`flex flex-col gap-2.5 px-5 py-3 lg:flex-row lg:items-center lg:justify-between ${
+          collapsed ? '' : 'border-b border-border'
+        }`}
+      >
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-          {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+          {!collapsed && subtitle ? <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
       </div>
 
-      {rows.length > 0 ? (
+      {!collapsed && filters ? (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/40 px-5 py-2.5">{filters}</div>
+      ) : null}
+
+      {collapsed ? null : rows.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-border text-sm">
             <thead className="bg-muted">
@@ -401,7 +413,7 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                    className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                   >
                     {column.label}
                   </th>
@@ -412,7 +424,7 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
               {rows.map((row) => (
                 <tr key={row.id || row.key} className="transition hover:bg-muted/50">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3 align-top text-foreground break-words [overflow-wrap:anywhere]">
+                    <td key={column.key} className="px-4 py-2 align-top text-foreground break-words [overflow-wrap:anywhere]">
                       {column.render ? column.render(row) : row[column.key]}
                     </td>
                   ))}

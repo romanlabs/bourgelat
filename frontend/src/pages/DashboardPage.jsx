@@ -125,40 +125,6 @@ const buildCapacityChart = (used, limit, label) => {
   }
 }
 
-const buildHourlyAppointmentSeries = (appointments) => {
-  const buckets = ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00']
-
-  return buckets.map((bucket) => {
-    const total = appointments.filter((appointment) => {
-      const hour = Number.parseInt(String(appointment.horaInicio || '0').slice(0, 2), 10)
-      const bucketHour = Number.parseInt(bucket.slice(0, 2), 10)
-      return Number.isFinite(hour) && hour <= bucketHour
-    }).length
-
-    return { label: bucket.slice(0, 2), value: total }
-  })
-}
-
-const buildInventorySparkline = (products) =>
-  [...products]
-    .filter((product) => Number(product.stock || 0) <= Number(product.stockMinimo || 0))
-    .sort((left, right) => {
-      const leftGap = Number(left.stockMinimo || 0) - Number(left.stock || 0)
-      const rightGap = Number(right.stockMinimo || 0) - Number(right.stock || 0)
-      return rightGap - leftGap
-    })
-    .slice(0, 6)
-    .map((product) => ({
-      label: String(product.nombre || 'Stock').slice(0, 6),
-      value: Math.max(Number(product.stockMinimo || 0) - Number(product.stock || 0), 0),
-    }))
-
-const buildStatusSparkline = (record, labels = {}) =>
-  Object.entries(record || {}).map(([key, value]) => ({
-    label: String(labels[key] || key).slice(0, 6),
-    value: Number(value || 0),
-  }))
-
 const buildHistoryHref = (appointment) =>
   appointment?.mascota?.id
     ? `/pacientes/${appointment.mascota.id}/historial`
@@ -700,110 +666,6 @@ export default function DashboardPage() {
 
   const featureRows = getFeatureStateRows(funcionalidades)
 
-  const adminAlerts = useMemo(() => {
-    const rows = []
-
-    if (citasPendientesHoy > 0) {
-      rows.push({
-        id: 'agenda-pendiente',
-        area: 'Agenda',
-        estado: 'Pendiente',
-        detalle: `${formatNumber(citasPendientesHoy)} pacientes siguen programados y aun no salen al flujo de atencion.`,
-        actionTo: '/agenda',
-        actionLabel: 'Abrir agenda',
-      })
-    }
-
-    if (dianPendientes > 0) {
-      rows.push({
-        id: 'dian-pendiente',
-        area: 'Facturacion',
-        estado: 'Seguimiento',
-        detalle: `${formatNumber(dianPendientes)} facturas siguen pendientes o enviadas sin validacion final.`,
-        actionTo: '/finanzas',
-        actionLabel: 'Revisar DIAN',
-      })
-    }
-
-    if (typeof diasRestantes === 'number' && diasRestantes <= 5) {
-      rows.push({
-        id: 'vigencia',
-        area: 'Plan',
-        estado: 'Atencion',
-        detalle: `Quedan ${diasRestantes} dias para el cierre de la vigencia actual.`,
-        actionTo: '/planes',
-        actionLabel: 'Ver planes',
-      })
-    }
-
-    if (advertenciaPlan) {
-      rows.push({
-        id: 'warning-plan',
-        area: 'Plan',
-        estado: 'Seguimiento',
-        detalle: advertenciaPlan,
-        actionTo: '/planes',
-        actionLabel: 'Gestionar',
-      })
-    }
-
-    if (limiteMascotas !== null && cupoMascotas <= 10) {
-      rows.push({
-        id: 'pacientes',
-        area: 'Pacientes',
-        estado: 'Cupo bajo',
-        detalle: `Solo quedan ${Math.max(cupoMascotas, 0)} cupos disponibles para pacientes activos.`,
-        actionTo: '/pacientes',
-        actionLabel: 'Abrir modulo',
-      })
-    }
-
-    if (limiteUsuarios !== null && cupoUsuarios <= 2) {
-      rows.push({
-        id: 'usuarios',
-        area: 'Equipo',
-        estado: 'Cupo bajo',
-        detalle: `Solo quedan ${Math.max(cupoUsuarios, 0)} cupos disponibles para usuarios activos.`,
-        actionTo: '/usuarios',
-        actionLabel: 'Abrir usuarios',
-      })
-    }
-
-    if (alertasInventario > 0) {
-      rows.push({
-        id: 'inventario',
-        area: 'Inventario',
-        estado: 'Prioridad',
-        detalle: `${alertasInventario} productos requieren atencion por stock bajo.`,
-        actionTo: '/inventario',
-        actionLabel: 'Revisar inventario',
-      })
-    }
-
-    if (rows.length === 0) {
-      rows.push({
-        id: 'ok',
-        area: 'General',
-        estado: 'Estable',
-        detalle: 'No hay alertas administrativas criticas para el corte actual.',
-        actionTo: '/pacientes',
-        actionLabel: 'Abrir pacientes',
-      })
-    }
-
-    return rows
-  }, [
-    advertenciaPlan,
-    alertasInventario,
-    citasPendientesHoy,
-    cupoMascotas,
-    cupoUsuarios,
-    dianPendientes,
-    diasRestantes,
-    limiteMascotas,
-    limiteUsuarios,
-  ])
-
   const tacticalAlerts = useMemo(() => {
     const rows = []
 
@@ -849,32 +711,10 @@ export default function DashboardPage() {
     [ingresosPorDia]
   )
 
-  const sparklineAgenda = useMemo(
-    () => buildHourlyAppointmentSeries(citasHoyRows),
-    [citasHoyRows]
-  )
-
-  const sparklineInventario = useMemo(
-    () => buildInventorySparkline(inventarioQuery.data?.productos || []),
-    [inventarioQuery.data?.productos]
-  )
-
-  const sparklineDian = useMemo(
-    () =>
-      buildStatusSparkline(resumenElectronico, {
-        validada: 'Valida',
-        pendiente: 'Pendte',
-        enviada: 'Enviad',
-        rechazada: 'Rechaz',
-        error: 'Error',
-      }),
-    [resumenElectronico]
-  )
-
   const todayBridgeRows = useMemo(() => {
     const filtered = [...citasHoyRows]
       .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
-      .slice(0, 8)
+      .slice(0, 12)
 
     if (usuario?.rol === 'veterinario' && usuario?.id) {
       return [
@@ -967,7 +807,7 @@ export default function DashboardPage() {
         </div>
 
         <CommandPanel
-          className="lg:col-span-8"
+          className="lg:col-span-12 ring-1 ring-primary/15 shadow-lg"
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
@@ -982,43 +822,6 @@ export default function DashboardPage() {
             canUseHistories={puedeAbrirHistorias}
             canUseBilling={puedeAbrirCaja}
           />
-        </CommandPanel>
-
-        <CommandPanel
-          className="lg:col-span-4"
-          title="Radar del dia"
-          subtitle="La lectura rapida que deberia resolver el administrador antes de las 8:15."
-          action={<StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>}
-        >
-          <div className="space-y-3">
-            {adminAlerts.slice(0, 4).map((alert) => (
-              <div key={alert.id} className="rounded-2xl border border-border bg-muted/60 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill
-                    tone={
-                      alert.estado === 'Prioridad'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : alert.estado === 'Cupo bajo'
-                          ? 'border-amber-200 bg-amber-50 text-amber-700'
-                          : alert.estado === 'Estable'
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-sky-200 bg-sky-50 text-sky-700'
-                    }
-                  >
-                    {alert.estado}
-                  </StatusPill>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {alert.area}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{alert.detalle}</p>
-                <Link to={alert.actionTo} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
-                  {alert.actionLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
-          </div>
         </CommandPanel>
 
       </div>
@@ -1503,7 +1306,7 @@ export default function DashboardPage() {
       }
       showQuickActions
       quickActions={quickActions}
-      asideNote="Usa las acciones rapidas para entrar directo al modulo, o revisa el radar del dia si necesitas mas contexto primero."
+      asideNote="Usa las acciones rapidas para entrar directo al modulo si necesitas mas contexto primero."
     >
       <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
 

@@ -18,6 +18,8 @@ import {
 
 const buildInitialForm = () => ({ montoFinalContado: '', observacionesCierre: '', categoriaDiferencia: '' })
 
+const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
+
 export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTurnoMutation }) {
   const [form, setForm] = useState(buildInitialForm)
 
@@ -31,7 +33,7 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
     )
   }, [turnoActivo])
 
-  const montoContado = parseFloat(form.montoFinalContado)
+  const montoContado = parseInt(form.montoFinalContado, 10)
   const tieneMontoValido = Number.isFinite(montoContado) && montoContado >= 0
   const diferencia = tieneMontoValido ? montoContado - montoFinalEsperado : null
   const diferenciaAbs = diferencia === null ? 0 : Math.abs(diferencia)
@@ -86,15 +88,16 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
               Efectivo contado
             </span>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
-              min="0"
-              step="1"
-              value={form.montoFinalContado}
-              onChange={(event) => setForm((curr) => ({ ...curr, montoFinalContado: event.target.value }))}
+              value={formatMiles(form.montoFinalContado)}
+              onChange={(event) => {
+                const digitos = event.target.value.replace(/\D/g, '')
+                setForm((curr) => ({ ...curr, montoFinalContado: digitos }))
+              }}
               placeholder="$ 0"
               autoFocus
-              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
           </label>
 

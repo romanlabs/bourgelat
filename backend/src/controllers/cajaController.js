@@ -119,7 +119,7 @@ const listarMovimientosTurno = async (req, res) => {
     }
 
     const movimientos = await MovimientoCaja.findAll({
-      where: { cajaTurnoId: turnoId },
+      where: { cajaTurnoId: turnoId, clinicaId },
       order: [['createdAt', 'DESC']],
     })
 
@@ -328,7 +328,7 @@ const obtenerDetalleTurno = async (req, res) => {
     }
 
     const movimientos = await MovimientoCaja.findAll({
-      where: { cajaTurnoId: turnoId },
+      where: { cajaTurnoId: turnoId, clinicaId },
       order: [['createdAt', 'DESC']],
     })
 

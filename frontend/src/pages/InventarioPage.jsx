@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CircleAlert, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, CircleAlert, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -14,6 +14,7 @@ import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtil
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
+import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
@@ -33,7 +34,6 @@ import { useServicios } from '@/features/servicios/useServicios'
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'productos', label: 'Productos' },
-  { id: 'inventario-clinico', label: 'Inventario Clinico' },
   { id: 'servicios', label: 'Servicios' },
   { id: 'movimientos', label: 'Movimientos' },
   { id: 'facturas-compra', label: 'Facturas de Compra' },
@@ -76,6 +76,30 @@ function TableSkeleton({ rows = 6 }) {
   )
 }
 
+function InventarioContextBar({ inventario, onCambiar }) {
+  const esVentas = inventario === 'ventas'
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-muted/50 px-4 py-3">
+      <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+        {esVentas ? (
+          <PackagePlus className="h-4 w-4 text-primary" />
+        ) : (
+          <FlaskConical className="h-4 w-4 text-primary" />
+        )}
+        Inventario: {esVentas ? 'Ventas' : 'Clínica'}
+      </span>
+      <button
+        type="button"
+        onClick={onCambiar}
+        className="inline-flex items-center gap-2 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+      >
+        <ArrowLeftRight className="h-4 w-4" />
+        Cambiar de inventario
+      </button>
+    </div>
+  )
+}
+
 function RestrictedInventoryPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -99,6 +123,8 @@ export default function InventarioPage() {
   const suscripcion = useAuthStore((state) => state.suscripcion)
 
   const [activeTab, setActiveTab] = useState('resumen')
+  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(null) // null | 'ventas' | 'clinica'
+  const [selectorOpen, setSelectorOpen] = useState(false)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   const puedeVerInventario =
@@ -136,6 +162,13 @@ export default function InventarioPage() {
   useEffect(() => {
     document.title = 'Inventario | Bourgelat'
   }, [])
+
+  function handleTabClick(tabId) {
+    setActiveTab(tabId)
+    if (tabId === 'productos' && inventarioSeleccionado === null) {
+      setSelectorOpen(true)
+    }
+  }
 
   function handleMovimientoClick(producto) {
     movimientosHook.selectProduct(producto)
@@ -230,7 +263,7 @@ export default function InventarioPage() {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary text-primary'
@@ -319,9 +352,33 @@ export default function InventarioPage() {
             </div>
           )}
 
-          {/* Tab: Productos */}
-          {activeTab === 'productos' && (
+          {/* Tab: Productos — sin inventario seleccionado */}
+          {activeTab === 'productos' && inventarioSeleccionado === null && (
+            <DashboardPanel
+              title="Elige el inventario a gestionar"
+              subtitle="Selecciona Ventas o Clinica para trabajar con los datos correctos."
+            >
+              <div className="flex flex-col items-start gap-4 border border-dashed border-border bg-muted/40 px-5 py-6">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Cada inventario maneja sus propios productos y movimientos. Debes elegir uno para
+                  continuar.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSelectorOpen(true)}
+                  className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Elegir inventario
+                </button>
+              </div>
+            </DashboardPanel>
+          )}
+
+          {/* Tab: Productos — inventario de ventas */}
+          {activeTab === 'productos' && inventarioSeleccionado === 'ventas' && (
             <div className="space-y-4">
+              <InventarioContextBar inventario="ventas" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-1 flex-col gap-3 min-w-0">
                   <div className="relative max-w-sm">
@@ -462,9 +519,10 @@ export default function InventarioPage() {
             </div>
           )}
 
-          {/* Tab: Inventario Clinico */}
-          {activeTab === 'inventario-clinico' && (
+          {/* Tab: Productos — inventario clinico */}
+          {activeTab === 'productos' && inventarioSeleccionado === 'clinica' && (
             <div className="space-y-4">
+              <InventarioContextBar inventario="clinica" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-1 flex-col gap-3 min-w-0">
                   <div className="relative max-w-sm">
@@ -1073,6 +1131,17 @@ export default function InventarioPage() {
           )}
         </div>
       )}
+
+      {/* Selector de inventario (Ventas / Clinica) */}
+      <InventarioSelectorDialog
+        open={selectorOpen}
+        onOpenChange={setSelectorOpen}
+        seleccionActual={inventarioSeleccionado}
+        onSelect={(inv) => {
+          setInventarioSeleccionado(inv)
+          setSelectorOpen(false)
+        }}
+      />
 
       {/* Drawer de producto (Fase 3a+3b) */}
       <ProductoDrawer
