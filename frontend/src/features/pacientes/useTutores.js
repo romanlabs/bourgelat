@@ -1,6 +1,7 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
 
 const getErrorMessage = (error, fallback) =>
@@ -20,7 +21,7 @@ export function useTutores({ enabled }) {
   const [pagina, setPagina] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const buscarDiferido = useDeferredValue(buscar.trim())
+  const buscarDiferido = useDebouncedValue(buscar.trim())
 
   const tutoresQuery = useQuery({
     queryKey: ['pacientes-tutores', buscarDiferido, pagina],

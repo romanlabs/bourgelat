@@ -1,7 +1,8 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { formatearEdad } from '@/lib/utils'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
 
 const getErrorMessage = (error, fallback) =>
@@ -35,8 +36,8 @@ export function usePacientesMascotas({ enabled, featureSet }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [ownerSearch, setOwnerSearch] = useState('')
 
-  const buscarDiferido = useDeferredValue(buscar.trim())
-  const ownerSearchDiferido = useDeferredValue(ownerSearch.trim())
+  const buscarDiferido = useDebouncedValue(buscar.trim())
+  const ownerSearchDiferido = useDebouncedValue(ownerSearch.trim())
 
   const mascotasQuery = useQuery({
     queryKey: ['pacientes-mascotas', buscarDiferido, especie, pagina],

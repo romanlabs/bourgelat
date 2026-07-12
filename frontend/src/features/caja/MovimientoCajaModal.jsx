@@ -11,6 +11,8 @@ import { MOVIMIENTO_CAJA_MOTIVOS } from './cajaConstants'
 
 const buildInitialForm = () => ({ tipo: 'egreso', monto: '', motivo: 'gasto_menor', observaciones: '' })
 
+const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
+
 export default function MovimientoCajaModal({ open, onClose, registrarMovimientoMutation }) {
   const [form, setForm] = useState(buildInitialForm)
 
@@ -23,7 +25,7 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const monto = parseFloat(form.monto)
+    const monto = parseInt(form.monto, 10)
     if (!Number.isFinite(monto) || monto <= 0) return
 
     registrarMovimientoMutation.mutate(
@@ -78,15 +80,16 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
           <label className="grid gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monto</span>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
-              min="0.01"
-              step="1"
-              value={form.monto}
-              onChange={(event) => setForm((curr) => ({ ...curr, monto: event.target.value }))}
+              value={formatMiles(form.monto)}
+              onChange={(event) => {
+                const digitos = event.target.value.replace(/\D/g, '')
+                setForm((curr) => ({ ...curr, monto: digitos }))
+              }}
               placeholder="$ 0"
               autoFocus
-              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
           </label>
 

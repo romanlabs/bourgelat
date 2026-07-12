@@ -8,6 +8,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 
+const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
+
 export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }) {
   const [montoInicial, setMontoInicial] = useState('')
 
@@ -20,7 +22,7 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const monto = parseFloat(montoInicial)
+    const monto = parseInt(montoInicial, 10)
     if (!Number.isFinite(monto) || monto < 0) return
 
     abrirTurnoMutation.mutate(
@@ -48,15 +50,16 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
               Monto inicial
             </span>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
-              min="0"
-              step="1"
-              value={montoInicial}
-              onChange={(event) => setMontoInicial(event.target.value)}
+              value={formatMiles(montoInicial)}
+              onChange={(event) => {
+                const digitos = event.target.value.replace(/\D/g, '')
+                setMontoInicial(digitos)
+              }}
               placeholder="$ 0"
               autoFocus
-              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
             />
           </label>
 

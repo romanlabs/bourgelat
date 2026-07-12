@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const Propietario = require('../models/Propietario');
 const Mascota = require('../models/Mascota');
 const { parsePaginacion } = require('../utils/paginacion');
+const { iLikeSinTildes } = require('../utils/busqueda');
 
 const crearPropietario = async (req, res) => {
   try {
@@ -62,9 +63,9 @@ const obtenerPropietarios = async (req, res) => {
 
     if (buscar) {
       where[Op.or] = [
-        { nombre: { [Op.iLike]: `%${buscar}%` } },
-        { numeroDocumento: { [Op.iLike]: `%${buscar}%` } },
-        { telefono: { [Op.iLike]: `%${buscar}%` } },
+        iLikeSinTildes('Propietario.nombre', buscar),
+        iLikeSinTildes('Propietario.numeroDocumento', buscar),
+        iLikeSinTildes('Propietario.telefono', buscar),
       ];
     }
 

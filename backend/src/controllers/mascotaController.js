@@ -3,6 +3,7 @@ const Propietario = require('../models/Propietario');
 const { validarCupoSuscripcion } = require('../services/suscripcionService')
 const { MASCOTAS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads')
 const { parsePaginacion } = require('../utils/paginacion')
+const { iLikeSinTildes } = require('../utils/busqueda')
 
 const crearMascota = async (req, res) => {
   try {
@@ -87,8 +88,8 @@ const obtenerMascotas = async (req, res) => {
 
     if (buscar) {
       where[Op.or] = [
-        { nombre: { [Op.iLike]: `%${buscar}%` } },
-        { microchip: { [Op.iLike]: `%${buscar}%` } },
+        iLikeSinTildes('Mascota.nombre', buscar),
+        iLikeSinTildes('Mascota.microchip', buscar),
       ];
     }
 

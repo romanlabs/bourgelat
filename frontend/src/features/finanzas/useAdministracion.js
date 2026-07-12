@@ -51,8 +51,11 @@ export function useRegistrarAbono() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['administracion'] })
       // El abono cambia estado/saldo de la factura y puede tocar la caja.
-      queryClient.invalidateQueries({ queryKey: ['finanzas'] })
-      queryClient.invalidateQueries({ queryKey: ['caja'] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
+      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
     },
   })
 }
