@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { DataTable, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatLongDate } from '@/features/dashboard/dashboardUtils'
 import TurnoDetalleModal from './TurnoDetalleModal'
@@ -12,11 +13,13 @@ const getDiferenciaTone = (turno) => {
 
 export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
   const [turnoSeleccionadoId, setTurnoSeleccionadoId] = useState(null)
+  const [expandido, setExpandido] = useState(false)
   const { historialFiltros, setHistorialFiltros, turnosHistorial } = cajaHook
 
   return (
     <>
       <DataTable
+        collapsed={!expandido}
         title="Historial de turnos cerrados"
         subtitle={
           esAdmin
@@ -55,7 +58,7 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
               <button
                 type="button"
                 onClick={() => setTurnoSeleccionadoId(row.id)}
-                className="border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
+                className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
               >
                 Ver detalle
               </button>
@@ -65,21 +68,32 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
         emptyTitle="Aun no hay turnos cerrados"
         emptyBody="Cuando cierres un turno de caja, aparecera aqui con su diferencia y trazabilidad."
         action={
-          <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExpandido((curr) => !curr)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+          >
+            {expandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {expandido ? 'Ocultar' : `Ver historial (${turnosHistorial.length})`}
+          </button>
+        }
+        filters={
+          <>
+            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Periodo</span>
             <input
               type="date"
               value={historialFiltros.fechaInicio}
               onChange={(event) => setHistorialFiltros((curr) => ({ ...curr, fechaInicio: event.target.value }))}
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+              className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
             />
             <span className="text-xs text-muted-foreground">a</span>
             <input
               type="date"
               value={historialFiltros.fechaFin}
               onChange={(event) => setHistorialFiltros((curr) => ({ ...curr, fechaFin: event.target.value }))}
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+              className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
             />
-          </div>
+          </>
         }
       />
 
