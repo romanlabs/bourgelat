@@ -115,7 +115,7 @@ export function useFinanzasFacturacion({
       // La venta descuenta stock: refrescar productos y movimientos de inventario.
       invalidateInventarioQueries(queryClient)
       queryClient.invalidateQueries({ queryKey: ['finanzas-productos'] })
-      // Si la venta se pago en efectivo, el resumen del turno de caja activo queda desactualizado.
+      // La venta suma al turno de caja abierto: refrescar totales y movimientos.
       queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
       queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
 
