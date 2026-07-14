@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftRight, CircleAlert, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, CircleAlert, FileSpreadsheet, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import {
   DashboardPanel,
@@ -17,8 +17,10 @@ import Paginacion from '@/components/shared/Paginacion'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
+import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
+import { useImportarInventario } from '@/features/inventario/useImportarInventario'
 import {
   useInventarioMovimientos,
   MOVEMENT_TYPE_OPTIONS,
@@ -145,6 +147,8 @@ export default function InventarioPage() {
       }
     },
   })
+
+  const importarInventarioHook = useImportarInventario()
 
   const movimientosClinicosHook = useMovimientosClinicos({ enabled: puedeVerInventario })
 
@@ -421,14 +425,24 @@ export default function InventarioPage() {
                     </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  <PackagePlus className="h-4 w-4" />
-                  Nuevo producto
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={importarInventarioHook.openImportDialog}
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Importar Excel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openCreateDrawer}
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <PackagePlus className="h-4 w-4" />
+                    Nuevo producto
+                  </button>
+                </div>
               </div>
 
               {productosQuery.isLoading ? (
@@ -1150,6 +1164,15 @@ export default function InventarioPage() {
         onClose={closeDrawer}
         onSubmit={handleDrawerSubmit}
         isPending={isPendingProduct}
+      />
+
+      {/* Importacion masiva de inventario desde Excel */}
+      <ImportarInventarioDialog
+        open={importarInventarioHook.dialogOpen}
+        onClose={importarInventarioHook.closeImportDialog}
+        onConfirm={importarInventarioHook.confirmImport}
+        isPending={importarInventarioHook.isPending}
+        resultado={importarInventarioHook.resultado}
       />
 
       {/* Drawer de insumos clinicos */}

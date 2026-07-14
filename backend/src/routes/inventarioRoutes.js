@@ -3,6 +3,7 @@ const { body, param, query } = require('express-validator')
 
 const {
   crearProducto,
+  importarProductos,
   obtenerProductos,
   obtenerProducto,
   editarProducto,
@@ -132,6 +133,79 @@ const validarCreacionProducto = [
     .isLength({ max: 120 })
     .withMessage('El laboratorio no puede exceder 120 caracteres'),
   body('requiereFormula')
+    .optional()
+    .isBoolean()
+    .withMessage('requiereFormula debe ser booleano'),
+  validar,
+]
+
+const validarImportacionProductos = [
+  body('productos')
+    .isArray({ min: 1, max: 500 })
+    .withMessage('Se debe enviar un arreglo de entre 1 y 500 productos'),
+  body('productos.*.nombre')
+    .trim()
+    .notEmpty()
+    .withMessage('El nombre es obligatorio')
+    .isLength({ max: 160 })
+    .withMessage('El nombre no puede exceder 160 caracteres'),
+  body('productos.*.categoria')
+    .notEmpty()
+    .withMessage('La categoria es obligatoria')
+    .isIn(categoriasValidas)
+    .withMessage('Categoria no valida'),
+  body('productos.*.unidadMedida')
+    .trim()
+    .notEmpty()
+    .withMessage('La unidad de medida es obligatoria')
+    .isLength({ max: 40 })
+    .withMessage('La unidad de medida no puede exceder 40 caracteres'),
+  body('productos.*.codigoBarras')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 120 })
+    .withMessage('El codigo de barras no puede exceder 120 caracteres'),
+  body('productos.*.descripcion')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('La descripcion no puede exceder 1000 caracteres'),
+  body('productos.*.subcategoria')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 120 })
+    .withMessage('La subcategoria no puede exceder 120 caracteres'),
+  body('productos.*.lote')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 80 })
+    .withMessage('El lote no puede exceder 80 caracteres'),
+  body('productos.*.laboratorio')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 120 })
+    .withMessage('El laboratorio no puede exceder 120 caracteres'),
+  body('productos.*.precioCompra')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('El precio de compra debe ser mayor o igual a 0'),
+  body('productos.*.precioVenta')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('El precio de venta debe ser mayor o igual a 0'),
+  body('productos.*.stock')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 0 })
+    .withMessage('El stock debe ser un entero mayor o igual a 0'),
+  body('productos.*.stockMinimo')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 0 })
+    .withMessage('El stock minimo debe ser un entero mayor o igual a 0'),
+  body('productos.*.fechaVencimiento')
+    .optional({ values: 'falsy' })
+    .isISO8601()
+    .withMessage('La fecha de vencimiento no es valida'),
+  body('productos.*.requiereFormula')
     .optional()
     .isBoolean()
     .withMessage('requiereFormula debe ser booleano'),
@@ -274,6 +348,15 @@ router.post(
   requiereInventario,
   validarCreacionProducto,
   crearProducto
+)
+
+router.post(
+  '/importar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requiereInventario,
+  validarImportacionProductos,
+  importarProductos
 )
 
 router.get(
