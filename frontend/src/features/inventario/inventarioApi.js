@@ -47,6 +47,11 @@ export const inventarioApi = {
     return data
   },
 
+  async importarProductos(productos) {
+    const { data } = await api.post('/inventario/importar', { productos })
+    return data
+  },
+
   async editarProducto(productoId, payload) {
     const { data } = await api.put(`/inventario/${productoId}`, payload)
     return data

@@ -113,6 +113,163 @@ const crearProducto = async (req, res) => {
   }
 };
 
+const MAX_IMPORT_ROWS = 500;
+
+const importarProductos = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario;
+    const productos = Array.isArray(req.body.productos) ? req.body.productos : [];
+
+    if (productos.length === 0) {
+      return res.status(400).json({ message: 'No se recibieron productos para importar' });
+    }
+
+    if (productos.length > MAX_IMPORT_ROWS) {
+      return res.status(400).json({
+        message: `No se pueden importar mas de ${MAX_IMPORT_ROWS} productos por archivo`,
+      });
+    }
+
+    const filasNormalizadas = productos.map((fila, indice) => {
+      const stock = normalizarEntero(fila.stock, 0);
+      const stockMinimo = normalizarEntero(fila.stockMinimo, 5);
+      const precioCompra = normalizarNumero(fila.precioCompra, 0);
+      const precioVenta = normalizarNumero(fila.precioVenta, 0);
+      const nombre = String(fila.nombre || '').trim();
+      const codigoBarras = fila.codigoBarras ? String(fila.codigoBarras).trim() : null;
+
+      const numerosValidos = [stock, stockMinimo, precioCompra, precioVenta].every(
+        (valor) => Number.isFinite(valor) && valor >= 0
+      );
+
+      return {
+        indice,
+        valido: Boolean(nombre) && Boolean(fila.categoria) && Boolean(fila.unidadMedida) && numerosValidos,
+        nombre,
+        codigoBarras,
+        descripcion: fila.descripcion,
+        categoria: fila.categoria,
+        subcategoria: fila.subcategoria,
+        unidadMedida: fila.unidadMedida,
+        precioCompra,
+        precioVenta,
+        stock,
+        stockMinimo,
+        fechaVencimiento: fila.fechaVencimiento || null,
+        lote: fila.lote,
+        laboratorio: fila.laboratorio,
+        requiereFormula: Boolean(fila.requiereFormula),
+      };
+    });
+
+    const nombresBuscados = filasNormalizadas.map((fila) => fila.nombre).filter(Boolean);
+    const codigosBuscados = filasNormalizadas.map((fila) => fila.codigoBarras).filter(Boolean);
+
+    const existentes = await Producto.findAll({
+      where: {
+        clinicaId,
+        [Op.or]: [
+          ...(nombresBuscados.length ? [{ nombre: { [Op.in]: nombresBuscados } }] : []),
+          ...(codigosBuscados.length ? [{ codigoBarras: { [Op.in]: codigosBuscados } }] : []),
+        ],
+      },
+      attributes: ['id', 'nombre', 'codigoBarras'],
+    });
+
+    const nombresExistentes = new Set(existentes.map((p) => p.nombre.trim().toLowerCase()));
+    const codigosExistentes = new Set(
+      existentes.filter((p) => p.codigoBarras).map((p) => p.codigoBarras.trim())
+    );
+
+    const nombresReservados = new Set();
+    const codigosReservados = new Set();
+    const filasACrear = [];
+    const omitidos = [];
+
+    filasNormalizadas.forEach((fila) => {
+      if (!fila.valido) {
+        omitidos.push({ fila: fila.indice + 1, nombre: fila.nombre, motivo: 'datos_invalidos' });
+        return;
+      }
+
+      const nombreClave = fila.nombre.toLowerCase();
+
+      if (nombresExistentes.has(nombreClave)) {
+        omitidos.push({ fila: fila.indice + 1, nombre: fila.nombre, motivo: 'nombre_duplicado' });
+        return;
+      }
+
+      if (fila.codigoBarras && codigosExistentes.has(fila.codigoBarras)) {
+        omitidos.push({ fila: fila.indice + 1, nombre: fila.nombre, motivo: 'codigo_barras_duplicado' });
+        return;
+      }
+
+      if (nombresReservados.has(nombreClave)) {
+        omitidos.push({ fila: fila.indice + 1, nombre: fila.nombre, motivo: 'duplicado_en_archivo' });
+        return;
+      }
+
+      if (fila.codigoBarras && codigosReservados.has(fila.codigoBarras)) {
+        omitidos.push({ fila: fila.indice + 1, nombre: fila.nombre, motivo: 'duplicado_en_archivo' });
+        return;
+      }
+
+      nombresReservados.add(nombreClave);
+      if (fila.codigoBarras) codigosReservados.add(fila.codigoBarras);
+      filasACrear.push(fila);
+    });
+
+    const creados = await sequelize.transaction(async (transaction) => {
+      const productosCreados = [];
+
+      for (const fila of filasACrear) {
+        const nuevoProducto = await Producto.create({
+          nombre: fila.nombre,
+          descripcion: fila.descripcion,
+          categoria: fila.categoria,
+          subcategoria: fila.subcategoria,
+          unidadMedida: fila.unidadMedida,
+          precioCompra: fila.precioCompra,
+          precioVenta: fila.precioVenta,
+          stock: fila.stock,
+          stockMinimo: fila.stockMinimo,
+          fechaVencimiento: fila.fechaVencimiento,
+          lote: fila.lote,
+          laboratorio: fila.laboratorio,
+          requiereFormula: fila.requiereFormula,
+          clinicaId,
+        }, { transaction });
+
+        if (fila.stock > 0) {
+          await MovimientoInventario.create({
+            tipo: 'entrada',
+            cantidad: fila.stock,
+            stockAnterior: 0,
+            stockNuevo: fila.stock,
+            motivo: 'inventario_inicial',
+            precioUnitario: fila.precioCompra,
+            productoId: nuevoProducto.id,
+            usuarioId: req.usuario.id,
+            clinicaId,
+          }, { transaction });
+        }
+
+        productosCreados.push(nuevoProducto);
+      }
+
+      return productosCreados;
+    });
+
+    res.status(201).json({
+      message: 'Importacion completada',
+      creados,
+      omitidos,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const obtenerProductos = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
@@ -554,6 +711,7 @@ const obtenerMovimientos = async (req, res) => {
 
 module.exports = {
   crearProducto,
+  importarProductos,
   obtenerProductos,
   obtenerProducto,
   editarProducto,
