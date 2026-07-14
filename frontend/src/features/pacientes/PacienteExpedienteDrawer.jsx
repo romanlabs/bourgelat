@@ -6,7 +6,10 @@ import { CalendarClock, FileText, HeartPulse, PawPrint, X } from 'lucide-react'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { historiasApi } from '@/features/historias/historiasApi'
+import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 import AntecedentesResumen from './AntecedentesResumen'
+import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
 
 // ─── Helpers locales ─────────────────────────────────────────────────────────
 
@@ -101,6 +104,7 @@ function HistoriasResumen({ historias, historiasTo }) {
 
 export default function PacienteExpedienteDrawer({ open, mascota, featureSet, onClose }) {
   const mascotaId = mascota?.id
+  const usuario = useAuthStore((s) => s.usuario)
 
   const tieneHistorias = featureSet?.has('historias')
   const tieneAntecedentes = featureSet?.has('antecedentes')
@@ -208,6 +212,17 @@ export default function PacienteExpedienteDrawer({ open, mascota, featureSet, on
                   mascotaId={mascotaId}
                 />
               )}
+            </section>
+          )}
+
+          {/* Sección exámenes de laboratorio */}
+          {tieneHistorias && open && mascotaId && (
+            <section className="border-b border-border px-5 py-4">
+              <ExamenesLaboratorioSection
+                mascotaId={mascotaId}
+                puedeEditar={hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar', 'recepcionista'])}
+                puedeEliminar={hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])}
+              />
             </section>
           )}
 

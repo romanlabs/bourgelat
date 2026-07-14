@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  Activity, CalendarCheck, ChevronDown, ClipboardCheck,
+  Activity, CalendarCheck, ChevronDown, ClipboardCheck, FlaskConical,
   HeartPulse, Link2, MessageSquare, Pill, Plus, Search, X,
 } from 'lucide-react'
 import { historiasApi } from '@/features/historias/historiasApi'
@@ -15,6 +15,7 @@ import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
+import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -205,6 +206,7 @@ export default function HistoriaClinicaFormDrawer({
   const [formSections, setFormSections] = useState(new Set(['contexto', 'anamnesis']))
   const [medicationSearch, setMedicationSearch] = useState('')
   const [antecedentesOpen, setAntecedentesOpen] = useState(false)
+  const [examenesOpen, setExamenesOpen] = useState(false)
   const [localHistoria, setLocalHistoria] = useState(null)
 
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
@@ -543,6 +545,32 @@ export default function HistoriaClinicaFormDrawer({
                     mascotaId={mascota.id}
                   />
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Exámenes de laboratorio colapsables */}
+        {mascota?.id && (
+          <div className="border-b border-border">
+            <button
+              type="button"
+              onClick={() => setExamenesOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-5 py-2 transition hover:bg-muted/40"
+            >
+              <div className="flex items-center gap-2">
+                <FlaskConical className="h-3.5 w-3.5 text-cyan-600" />
+                <span className="text-xs font-semibold text-foreground">Exámenes de laboratorio</span>
+              </div>
+              <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition', examenesOpen && 'rotate-180')} />
+            </button>
+            {examenesOpen && (
+              <div className="border-t border-border/60 px-5 py-3">
+                <ExamenesLaboratorioSection
+                  mascotaId={mascota.id}
+                  puedeEditar={hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar', 'recepcionista'])}
+                  puedeEliminar={hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])}
+                />
               </div>
             )}
           </div>
