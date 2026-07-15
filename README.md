@@ -42,6 +42,9 @@ Docker local:
 docker compose up --build
 ```
 
+> Nota: en desarrollo local tambien es valido correr PostgreSQL nativo (fuera de Docker)
+> y levantar `backend`/`frontend` directo con `npm run dev` contra ese Postgres.
+
 ## Documentacion
 
 - [Colaboracion y Git workflow](CONTRIBUTING.md)

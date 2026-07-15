@@ -8,6 +8,9 @@ en un solo sistema multi-tenant.
 
 URLs de producción: `bourgelat.co` / `app.bourgelat.co` / `api.bourgelat.co`
 
+Roadmap y planes de suscripción: ver `docs/roadmap.md` y `backend/src/config/planes.js`
+(fuente de verdad del enforcement, no duplicar valores aquí).
+
 ---
 
 ## Stack tecnológico
@@ -32,8 +35,8 @@ URLs de producción: `bourgelat.co` / `app.bourgelat.co` / `api.bourgelat.co`
 - Integración con **Factus.com.co** para facturación electrónica
 
 ### Infraestructura
-- **Docker** + **Docker Compose** para desarrollo local
-- **Render.com** para despliegue (blueprint en `render.yaml`)
+- **Docker** + **Docker Compose** para desarrollo local (opcional, ver sección Desarrollo local)
+- **Render.com** para despliegue (blueprint en `render.yaml`, debe permanecer en la raíz)
 - **Cloudflare** para DNS, SSL y WAF
 
 ---
@@ -45,11 +48,11 @@ bourgelat/
 ├── backend/
 │   └── src/
 │       ├── config/          # DB, JWT, planes, factus, uploads
-│       ├── controllers/     # Lógica de negocio (15 módulos)
+│       ├── controllers/     # Lógica de negocio (15+ módulos)
 │       ├── middlewares/     # Auth, auditoría, rate limit, sanitización
 │       ├── migrations/      # Migraciones Sequelize (runner propio)
-│       ├── models/          # Modelos Sequelize (15 tablas)
-│       ├── routes/          # Enrutadores Express (15 módulos)
+│       ├── models/          # Modelos Sequelize
+│       ├── routes/          # Enrutadores Express
 │       ├── services/        # factusService, suscripcionService
 │       └── jobs/            # Limpieza de tokens y logs
 │
@@ -62,14 +65,13 @@ bourgelat/
 │       │   └── ui/          # Shadcn components
 │       ├── content/         # publicSiteContent.js (copy del sitio público)
 │       ├── data/            # colombia.js (departamentos y municipios)
-│       ├── features/        # Módulos por dominio (12 features)
-│       │   └── [dominio]/   # *Api.js + hooks + componentes por dominio
+│       ├── features/        # Módulos por dominio — cada uno con *Api.js + hooks + componentes
 │       ├── lib/             # api.js, permissions.js, utils.js, theme.js
-│       ├── pages/           # Páginas completas (19 rutas)
+│       ├── pages/           # Páginas completas
 │       ├── router/          # index.jsx con React Router v7
 │       └── store/           # authStore.js, themeStore.js (Zustand)
 │
-├── docs/                    # Arquitectura, despliegue, rotación de secretos
+├── docs/                    # Arquitectura, roadmap, despliegue, rotación de secretos
 ├── docker-compose.yml
 └── render.yaml
 ```
@@ -182,15 +184,17 @@ UUIDs como primary keys en la mayoría de tablas.
 
 ## Desarrollo local
 
-```bash
-# Levantar todo (postgres + backend + frontend)
-docker compose up
+**PostgreSQL corre nativo en el equipo de Roman (puerto 5432), no vía Docker.**
+Docker Compose es útil para replicar el stack completo o para otros colaboradores,
+pero no es necesario levantarlo si Postgres ya está corriendo localmente.
 
-# Solo frontend
+```bash
+# Opción A — solo lo necesario si Postgres ya corre nativo
+cd backend && npm run dev    # → http://localhost:3000
 cd frontend && npm run dev   # → http://localhost:5173
 
-# Solo backend
-cd backend && npm run dev    # → http://localhost:3000
+# Opción B — stack completo con Docker (postgres + backend + frontend)
+docker compose up
 ```
 
 Variables de entorno:
@@ -199,57 +203,8 @@ Variables de entorno:
 
 ---
 
-## Planes de suscripción
+## Enforcement de planes de suscripción
 
-| Plan | Precio | Usuarios | Mascotas |
-|------|--------|----------|----------|
-| Esencial | $0/mes | 2 | 250 |
-| Clínica | $99k COP/mes | 5 | 2.500 |
-| Profesional | $189k COP/mes | 12 | 10.000 |
-| Personalizado | Cotización | ∞ | ∞ |
-
-Lógica de enforcement en `backend/src/config/planes.js` y `services/suscripcionService.js`.
-
----
-
-## Objetivo actual: Rediseño de Landing Page
-
-### Visión
-Transformar `frontend/src/pages/LandingPage.jsx` en una experiencia visual **inmersiva**
-orientada a clínicas veterinarias colombianas. El objetivo es que el primer contacto
-emocional sea tan fuerte como el argumento funcional del producto.
-
-### Técnicas a implementar
-- **Parallax** en secciones hero y de imágenes (profundidad entre capas a distintas velocidades)
-- **Animaciones scroll-driven** — elementos que entran, se revelan o transforman al hacer scroll
-  (usar CSS `@scroll-timeline` / `animation-timeline: scroll()` o hooks de Intersection Observer)
-- **Assets Lottie** para personajes animados — escena principal: **perro corriendo hacia su dueña**
-  (usar `lottie-react` o `@lottiefiles/react-lottie-player`)
-- Mantener todas las **animaciones de Motion** existentes (`motion/react`)
-
-### Restricciones de diseño
-- **Paleta de colores**: respetar estrictamente los tokens y colores hardcoded actuales
-  (ver sección "Paleta de colores" arriba — no introducir colores nuevos sin aprobación)
-- **Tipografía**: Geist (sans) + Spectral (display) — sin cambios
-- **Stack**: React + Vite + Tailwind — no agregar bundlers ni frameworks de animación ajenos
-- **Performance**: las animaciones no deben degradar LCP ni CLS; usar `will-change` con cuidado
-- **Responsive**: mobile-first, breakpoints `sm` / `lg` como en el diseño actual
-- La landing es pública — no depende de auth ni React Query
-
-### Secciones actuales a conservar (con rediseño visual)
-1. `LandingNav` — navbar flotante con detección automática de tema (dark/light)
-2. Hero — fondo oscuro `#06111c`, título en Spectral, ECG canvas animado
-3. `HeroModuleMarquee` — marquee de módulos del producto
-4. `#experiencia` — cards de propuesta de valor + imagen grande
-5. `#flujo` — stepper animado del flujo diario
-6. Sección de plataforma — 4 panels de producto
-7. `#planes` — preview de precios
-8. `#contacto` — CTA final
-9. Footer
-
-### Archivos clave para la landing
-- `frontend/src/pages/LandingPage.jsx` — componente principal
-- `frontend/src/components/shared/ECGHeartbeatCanvas.jsx` — animación canvas del hero
-- `frontend/src/assets/landing/` — imágenes WebP actuales
-- `frontend/src/content/publicSiteContent.js` — copy del sitio
-- `frontend/src/index.css` — variables CSS y tokens globales
+Lógica en `backend/src/config/planes.js` y `services/suscripcionService.js`.
+Los límites y precios vigentes se consultan ahí directamente (no se duplican en
+este archivo para evitar que queden desactualizados).
