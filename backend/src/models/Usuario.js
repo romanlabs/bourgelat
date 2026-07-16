@@ -22,7 +22,17 @@ const Usuario = sequelize.define('Usuario', {
   },
   password: {
     type: DataTypes.STRING,
+    allowNull: true, // null para usuarios creados via login social
+  },
+  proveedorAuth: {
+    type: DataTypes.ENUM('local', 'google', 'microsoft'),
     allowNull: false,
+    defaultValue: 'local',
+  },
+  proveedorId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Claim sub del id_token del proveedor OIDC',
   },
   rol: {
     type: DataTypes.ENUM(
