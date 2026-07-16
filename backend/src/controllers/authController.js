@@ -360,6 +360,13 @@ const login = async (req, res) => {
       })
     }
 
+    if (!usuario.password) {
+      const proveedorNombre = usuario.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'
+      return res.status(400).json({
+        message: `Esta cuenta usa inicio de sesion con ${proveedorNombre}. Usa el boton "Continuar con ${proveedorNombre}"`,
+      })
+    }
+
     const passwordValido = await bcrypt.compare(password, usuario.password)
 
     if (!passwordValido) {

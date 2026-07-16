@@ -5,6 +5,10 @@ const { generarAccessToken, generarRefreshToken, guardarRefreshToken } = require
 const { setAuthCookies } = require('../config/cookies')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const logger = require('../utils/logger')
+const sequelize = require('../config/database')
+const Clinica = require('../models/Clinica')
+const Suscripcion = require('../models/Suscripcion')
+const { crearSuscripcionEsencial } = require('../config/planes')
 
 const COOKIE_FLUJO = 'bourgelat_oauth_flujo'
 
@@ -96,4 +100,94 @@ const callback = async (req, res) => {
   }
 }
 
-module.exports = { iniciar, callback }
+const completarRegistro = async (req, res) => {
+  try {
+    const { token, nombreClinica } = req.body
+    if (!token || !nombreClinica || !String(nombreClinica).trim()) {
+      return res.status(400).json({ message: 'Token y nombre de la clinica son obligatorios' })
+    }
+
+    let datos
+    try {
+      datos = oauthService.verificarTokenOnboarding(token)
+    } catch {
+      return res.status(401).json({ message: 'El enlace de registro expiro, intenta de nuevo' })
+    }
+
+    const existente = await Usuario.findOne({ where: { email: datos.email }, sinTenant: true })
+    if (existente) {
+      return res.status(409).json({ message: 'Este correo ya esta registrado, inicia sesion' })
+    }
+
+    const resultado = await sequelize.transaction(async (transaction) => {
+      const clinica = await Clinica.create(
+        {
+          nombre: String(nombreClinica).trim(),
+          email: datos.email,
+          password: 'oauth', // Clinica.password sigue NOT NULL; el acceso real es via Usuario
+          nombreComercial: String(nombreClinica).trim(),
+        },
+        { transaction }
+      )
+      const usuario = await Usuario.create(
+        {
+          nombre: datos.nombre,
+          email: datos.email,
+          password: null,
+          proveedorAuth: datos.proveedor,
+          proveedorId: datos.proveedorId,
+          rol: 'admin',
+          clinicaId: clinica.id,
+          activo: true,
+        },
+        { transaction }
+      )
+      const suscripcion = await Suscripcion.create(crearSuscripcionEsencial(clinica.id), { transaction })
+
+      const payload = {
+        id: usuario.id,
+        clinicaId: clinica.id,
+        rol: usuario.rol,
+        rolesAdicionales: usuario.rolesAdicionales || [],
+      }
+      const accessToken = generarAccessToken(payload)
+      const refreshToken = generarRefreshToken(payload)
+      await guardarRefreshToken({
+        token: refreshToken,
+        clinicaId: clinica.id,
+        usuarioId: usuario.id,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        transaction,
+      })
+      return { clinica, usuario, suscripcion, accessToken, refreshToken }
+    })
+
+    await registrarAuditoria({
+      accion: 'REGISTRO_CLINICA',
+      entidad: 'Clinica',
+      entidadId: resultado.clinica.id,
+      descripcion: `Nueva clinica registrada via ${datos.proveedor} ${datos.email}`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    setAuthCookies(res, {
+      accessToken: resultado.accessToken,
+      refreshToken: resultado.refreshToken,
+    })
+    delete resultado.clinica.dataValues.password
+    delete resultado.usuario.dataValues.password
+    return res.status(201).json({
+      message: 'Clinica registrada exitosamente',
+      usuario: resultado.usuario,
+      clinica: resultado.clinica,
+      suscripcion: resultado.suscripcion,
+    })
+  } catch (error) {
+    logger.error({ contexto: 'oauth-completar', mensaje: error.message })
+    return res.status(500).json({ message: 'Error en servidor' })
+  }
+}
+
+module.exports = { iniciar, callback, completarRegistro }

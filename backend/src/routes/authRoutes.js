@@ -9,7 +9,11 @@ const {
   logoutAll,
   me,
 } = require('../controllers/authController')
-const { iniciar: oauthIniciar, callback: oauthCallback } = require('../controllers/oauthController')
+const {
+  iniciar: oauthIniciar,
+  callback: oauthCallback,
+  completarRegistro: oauthCompletarRegistro,
+} = require('../controllers/oauthController')
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
@@ -93,5 +97,16 @@ router.get('/me', verificarToken, me)
 
 router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)
 router.get('/oauth/:proveedor/callback', limitadorAuth, oauthCallback)
+
+router.post(
+  '/oauth/completar-registro',
+  limitadorAuth,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    body('nombreClinica').trim().notEmpty().isLength({ max: 160 }).withMessage('El nombre de la clinica es obligatorio'),
+    validar,
+  ],
+  oauthCompletarRegistro
+)
 
 module.exports = router
