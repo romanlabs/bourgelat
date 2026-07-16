@@ -43,7 +43,7 @@ const PLANES = [
     precioAnual: 0,
     cta: 'Empezar gratis',
     nota: 'Gratis para siempre · sin tarjeta',
-    to: '/registro',
+    registro: true,
     limites: ['2 usuarios', '250 mascotas', '1 GB'],
     incluye: [
       'Agenda de citas',
@@ -63,7 +63,7 @@ const PLANES = [
     precioAnual: 79000,
     cta: 'Elegir Clínica',
     nota: 'Cancela cuando quieras',
-    to: '/registro',
+    registro: true,
     limites: ['5 usuarios', '2.500 mascotas', '5 GB'],
     incluye: [
       'Todo lo de Esencial',
@@ -163,18 +163,24 @@ function formatPrice(value) {
   return pesos.format(value)
 }
 
-function PlanCTA({ plan, className, style }) {
+function PlanCTA({ plan, className, style, onRegistro }) {
   const content = (
     <>
       {plan.cta}
       <ArrowRight className="h-4 w-4" />
     </>
   )
-  return plan.href ? (
-    <a href={plan.href} className={className} style={style}>{content}</a>
-  ) : (
-    <Link to={plan.to} className={className} style={style}>{content}</Link>
-  )
+  if (plan.href) {
+    return <a href={plan.href} className={className} style={style}>{content}</a>
+  }
+  if (plan.registro) {
+    return (
+      <button type="button" onClick={onRegistro} className={className} style={style}>
+        {content}
+      </button>
+    )
+  }
+  return <Link to={plan.to} className={className} style={style}>{content}</Link>
 }
 
 function AnimatedPrice({ price, reduce, onInk }) {
@@ -318,7 +324,7 @@ function ComingSoonCard({ plan, index, reduce, hovered, setHovered }) {
   )
 }
 
-function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
+function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro }) {
   if (plan.comingSoon) {
     return <ComingSoonCard plan={plan} index={index} reduce={reduce} hovered={hovered} setHovered={setHovered} />
   }
@@ -398,6 +404,7 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
         <div className="mt-auto pt-7">
           <PlanCTA
             plan={plan}
+            onRegistro={onRegistro}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:bg-[#f1e9dc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{ color: INK }}
           />
@@ -454,6 +461,7 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
       <div className="mt-auto pt-7">
         <PlanCTA
           plan={plan}
+          onRegistro={onRegistro}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md border px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b07645]"
           style={{ borderColor: LINE, color: INK }}
         />
@@ -580,6 +588,7 @@ export default function PlanesPage() {
               reduce={reduce}
               hovered={hovered}
               setHovered={setHovered}
+              onRegistro={() => setRegistroAbierto(true)}
             />
           ))}
         </section>
@@ -713,6 +722,7 @@ export default function PlanesPage() {
                         ) : (
                           <PlanCTA
                             plan={plan}
+                            onRegistro={() => setRegistroAbierto(true)}
                             className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold no-underline transition-colors"
                             style={plan.popular ? { backgroundColor: INK, color: '#fff' } : { color: ACCENT }}
                           />
