@@ -5,12 +5,27 @@ const crypto = require('crypto')
 const UPLOADS_PUBLIC_PATH = '/uploads'
 const UPLOADS_ROOT_DIR = path.resolve(__dirname, '..', '..', 'uploads')
 const MASCOTAS_SUBDIR = 'mascotas'
+const EXAMENES_SUBDIR = 'examenes'
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
 ])
+
+const ALLOWED_EXAMEN_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+])
+
+const MIME_EXTENSIONS = {
+  'application/pdf': '.pdf',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/jpeg': '.jpg',
+}
 
 const ensureDirectory = (directoryPath) => {
   if (!fs.existsSync(directoryPath)) {
@@ -24,13 +39,14 @@ const getMascotasUploadsDir = () => {
   return mascotasDir
 }
 
+const getExamenesUploadsDir = () => {
+  const examenesDir = path.join(UPLOADS_ROOT_DIR, EXAMENES_SUBDIR)
+  ensureDirectory(examenesDir)
+  return examenesDir
+}
+
 const generateUploadFilename = (originalName = '', mimeType = '') => {
-  const extension =
-    mimeType === 'image/png'
-      ? '.png'
-      : mimeType === 'image/webp'
-        ? '.webp'
-        : '.jpg'
+  const extension = MIME_EXTENSIONS[mimeType] || '.jpg'
 
   return `${Date.now()}-${crypto.randomUUID()}${extension}`
 }
@@ -56,8 +72,11 @@ module.exports = {
   UPLOADS_PUBLIC_PATH,
   UPLOADS_ROOT_DIR,
   MASCOTAS_SUBDIR,
+  EXAMENES_SUBDIR,
   ALLOWED_IMAGE_MIME_TYPES,
+  ALLOWED_EXAMEN_MIME_TYPES,
   getMascotasUploadsDir,
+  getExamenesUploadsDir,
   generateUploadFilename,
   buildPublicUploadUrl,
 }
