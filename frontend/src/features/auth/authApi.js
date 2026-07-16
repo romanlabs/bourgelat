@@ -32,4 +32,9 @@ export const authApi = {
     })
     return data
   },
+
+  completarRegistroOauth: async ({ token, nombreClinica }) => {
+    const { data } = await api.post('/auth/oauth/completar-registro', { token, nombreClinica })
+    return data
+  },
 }

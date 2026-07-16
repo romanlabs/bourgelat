@@ -6,6 +6,7 @@ import { hasRole } from '@/lib/permissions'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
+const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
+          { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
         ],
       },
       {
