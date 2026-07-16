@@ -9,6 +9,7 @@ const {
   logoutAll,
   me,
 } = require('../controllers/authController')
+const { iniciar: oauthIniciar, callback: oauthCallback } = require('../controllers/oauthController')
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
@@ -89,5 +90,8 @@ router.post('/logout', limitadorAuth, logout)
 
 router.post('/logout-all', verificarToken, logoutAll)
 router.get('/me', verificarToken, me)
+
+router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)
+router.get('/oauth/:proveedor/callback', limitadorAuth, oauthCallback)
 
 module.exports = router

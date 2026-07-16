@@ -16,27 +16,14 @@ const {
 } = require('../config/cookies')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
+const {
+  generarAccessToken,
+  generarRefreshToken,
+  guardarRefreshToken,
+} = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
-
-const generarAccessToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-  })
-
-const generarRefreshToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  })
-
-const calcularFechaExpiracionRefresh = () => {
-  const expiracion = new Date()
-  expiracion.setMilliseconds(
-    expiracion.getMilliseconds() + appConfig.cookies.refreshMaxAgeMs
-  )
-  return expiracion
-}
 
 const estaTemporalmenteBloqueado = (usuario) =>
   Boolean(
@@ -72,27 +59,6 @@ const limpiarEstadoAccesoUsuario = async (usuario) => {
     bloqueadoHasta: null,
     ultimoAcceso: new Date(),
   })
-}
-
-const guardarRefreshToken = async ({
-  token,
-  clinicaId,
-  usuarioId,
-  ip,
-  userAgent,
-  transaction,
-}) => {
-  await RefreshToken.create(
-    {
-      token,
-      expiracion: calcularFechaExpiracionRefresh(),
-      clinicaId: clinicaId || null,
-      usuarioId: usuarioId || null,
-      ip,
-      userAgent,
-    },
-    { transaction }
-  )
 }
 
 const serializarClinica = (clinica) => {
