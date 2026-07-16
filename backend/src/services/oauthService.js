@@ -9,24 +9,16 @@ const obtenerConfiguracion = async (proveedor) => {
   if (configuraciones.has(proveedor)) return configuraciones.get(proveedor)
   const { issuer, clientId, clientSecret } = oauthConfig.proveedores[proveedor]
 
-  let config
-  if (proveedor === 'microsoft') {
-    // El tenant 'common' de Microsoft devuelve un documento de discovery con
-    // issuer = 'https://login.microsoftonline.com/{tenantid}/v2.0' (placeholder
-    // literal), que no coincide con la URL solicitada y rompe la validacion
-    // estricta de discovery() de openid-client v6. Se obtiene el metadata
-    // manualmente y se corrige el issuer antes de construir la Configuration,
-    // evitando esa comparacion.
-    const respuesta = await fetch(`${issuer}/.well-known/openid-configuration`)
-    if (!respuesta.ok) {
-      throw new Error(`No se pudo obtener metadata OIDC de microsoft: ${respuesta.status}`)
-    }
-    const metadata = await respuesta.json()
-    metadata.issuer = issuer
-    config = new client.Configuration(metadata, clientId, clientSecret)
-  } else {
-    config = await client.discovery(new URL(issuer), clientId, clientSecret)
-  }
+  // El tenant 'common'/'organizations' de Microsoft devuelve un documento de
+  // discovery con issuer = 'https://login.microsoftonline.com/{tenantid}/v2.0'
+  // (placeholder literal), que no coincide con la URL solicitada. openid-client
+  // v6 ya reconoce este caso (host 'login.microsoftonline.com') de forma nativa:
+  // acepta ese documento y, al validar el id_token, calcula el issuer esperado
+  // reemplazando '{tenantid}' por el claim 'tid' real del token en lugar de
+  // comparar contra la URL de discovery. No hace falta ningun workaround manual
+  // aqui: usar discovery() para todos los proveedores preserva esa validacion
+  // estricta de issuer por tenant (en vez de solo mover el fallo a mas adelante).
+  const config = await client.discovery(new URL(issuer), clientId, clientSecret)
 
   configuraciones.set(proveedor, config)
   return config
