@@ -100,6 +100,15 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
     errors.push('COOKIE_DOMAIN no debe incluir rutas.')
   }
 
+  const oauthEnabled = String(env.OAUTH_ENABLED || '').toLowerCase() === 'true'
+  if (oauthEnabled) {
+    ;['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'MS_CLIENT_ID', 'MS_CLIENT_SECRET', 'OAUTH_BACKEND_BASE_URL'].forEach((key) => {
+      if (!env[key]) {
+        errors.push(`${key} es obligatorio cuando OAUTH_ENABLED=true.`)
+      }
+    })
+  }
+
   if (!config.isProduction) {
     if (!env.JWT_SECRET || !env.JWT_REFRESH_SECRET) {
       warnings.push('JWT_SECRET y JWT_REFRESH_SECRET deberian estar definidos tambien en desarrollo.')
