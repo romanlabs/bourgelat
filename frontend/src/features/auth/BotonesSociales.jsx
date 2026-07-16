@@ -57,7 +57,7 @@ export default function BotonesSociales({ contexto = 'registro' }) {
           key={id}
           type="button"
           onClick={() => window.location.assign(`${API_URL}/api/auth/oauth/${id}`)}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/15 bg-transparent px-4 text-sm font-medium text-[#2b2018] transition hover:border-[#2b2018]/30 hover:bg-[#2b2018]/[0.03]"
         >
           <ProviderIcon id={id} />
           {accion} con {label}
