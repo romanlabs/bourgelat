@@ -164,19 +164,9 @@ const registro = async (req, res) => {
       tributoId,
     } = req.body
 
-    if (
-      !nombre ||
-      !nombreAdministrador ||
-      !email ||
-      !emailClinica ||
-      !telefono ||
-      !ciudad ||
-      !departamento ||
-      !password
-    ) {
+    if (!nombre || !nombreAdministrador || !email || !password) {
       return res.status(400).json({
-        message:
-          'Nombre de la clinica, responsable, correos, telefono, ciudad, departamento y password son obligatorios',
+        message: 'Nombre de la clinica, responsable, email y password son obligatorios',
       })
     }
 
@@ -190,29 +180,20 @@ const registro = async (req, res) => {
     const nombreClinica = limpiarTexto(nombre)
     const nombreUsuarioAdmin = limpiarTexto(nombreAdministrador)
     const emailAdministrador = normalizarEmail(email)
-    const emailContactoClinica = normalizarEmail(emailClinica)
+    const emailContactoClinica = normalizarEmail(emailClinica) || emailAdministrador
     const telefonoNormalizado = normalizarTelefonoColombiano(telefono)
     const direccionNormalizada = limpiarTexto(direccion)
     const ciudadNormalizada = limpiarTexto(ciudad)
     const departamentoNormalizado = limpiarTexto(departamento)
     const nitNormalizado = limpiarTexto(nit)
 
-    if (
-      !nombreClinica ||
-      !nombreUsuarioAdmin ||
-      !emailAdministrador ||
-      !emailContactoClinica ||
-      !telefonoNormalizado ||
-      !ciudadNormalizada ||
-      !departamentoNormalizado
-    ) {
+    if (!nombreClinica || !nombreUsuarioAdmin || !emailAdministrador) {
       return res.status(400).json({
-        message:
-          'Nombre de la clinica, responsable, correos, telefono, ciudad y departamento son obligatorios',
+        message: 'Nombre de la clinica, responsable y email son obligatorios',
       })
     }
 
-    if (!esTelefonoColombianoValido(telefonoNormalizado)) {
+    if (telefonoNormalizado && !esTelefonoColombianoValido(telefonoNormalizado)) {
       return res.status(400).json({
         message: 'El telefono debe ser un celular colombiano valido de 10 digitos',
       })
@@ -255,7 +236,7 @@ const registro = async (req, res) => {
           // Se mantiene mientras Clinica siga exigiendo password en el modelo.
           // El acceso real al sistema se hace con Usuario.
           password: passwordHash,
-          telefono: telefonoNormalizado,
+          telefono: telefonoNormalizado || null,
           direccion: direccionNormalizada,
           ciudad: ciudadNormalizada,
           departamento: departamentoNormalizado,
