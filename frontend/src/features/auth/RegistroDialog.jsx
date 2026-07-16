@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import BotonesSociales from './BotonesSociales'
+import BotonesSociales, { oauthHabilitado } from './BotonesSociales'
 import { useRegistro } from './useAuth'
 
 const esquema = z.object({
@@ -77,17 +77,21 @@ export default function RegistroDialog({ open, onOpenChange }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
-          <BotonesSociales contexto="registro" />
-        </div>
+        {oauthHabilitado ? (
+          <>
+            <div className="mt-4">
+              <BotonesSociales contexto="registro" />
+            </div>
 
-        <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            o regístrate con tu correo
-          </span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                o regístrate con tu correo
+              </span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        ) : null}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
           <div>

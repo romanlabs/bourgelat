@@ -1,5 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL
 
+export const oauthHabilitado = import.meta.env.VITE_OAUTH_ENABLED === 'true'
+
 const PROVEEDORES = [
   { id: 'google', label: 'Google' },
   { id: 'microsoft', label: 'Microsoft' },
@@ -47,6 +49,7 @@ function ProviderIcon({ id }) {
 
 export default function BotonesSociales({ contexto = 'registro' }) {
   const accion = contexto === 'login' ? 'Continuar' : 'Registrarme'
+  if (!oauthHabilitado) return null
   return (
     <div className="flex flex-col gap-2">
       {PROVEEDORES.map(({ id, label }) => (

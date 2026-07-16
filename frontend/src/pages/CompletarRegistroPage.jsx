@@ -95,7 +95,7 @@ export default function CompletarRegistroPage() {
 
             {tokenExpirado ? (
               <p className="mt-6 text-sm text-red-600">
-                El enlace expiro, vuelve a intentarlo.{' '}
+                El enlace expiró, vuelve a intentarlo.{' '}
                 <Link to="/login" className="font-semibold underline" style={{ color: ACCENT }}>
                   Volver al inicio de sesión
                 </Link>

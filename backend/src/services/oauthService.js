@@ -53,7 +53,9 @@ const completarFlujo = async (proveedor, urlCallback, { state, codeVerifier }) =
   const claims = tokens.claims()
   const email = (claims.email || claims.preferred_username || '').toLowerCase()
   const emailVerificado =
-    proveedor === 'google' ? claims.email_verified === true : Boolean(claims.email)
+    proveedor === 'google'
+      ? claims.email_verified === true
+      : claims.email_verified === true || claims.xms_edov === true || claims.xms_edov === 'true'
   return {
     sub: claims.sub,
     email,

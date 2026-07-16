@@ -8,7 +8,7 @@ import { ArrowRight, Eye, EyeOff, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '@/features/auth/useAuth'
 import RegistroDialog from '@/features/auth/RegistroDialog'
-import BotonesSociales from '@/features/auth/BotonesSociales'
+import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
 
 // Assets servidos desde public/ (Vite). El poster evita el flash inicial y
 // actua como fallback estatico con movimiento reducido o si el video falla.
@@ -210,18 +210,20 @@ export default function LoginPage() {
 
             {searchParams.get('error') === 'oauth' ? (
               <p className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                No pudimos iniciar sesion con tu cuenta. Intenta de nuevo o usa tu correo y contrasena.
+                No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
               </p>
             ) : null}
 
-            <Motion.div {...fadeUp(0.16)} className="mt-6">
-              <BotonesSociales contexto="login" />
-              <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#2b2018]/12" />
-                <span className="text-xs font-medium uppercase tracking-wide text-[#2b2018]/45">o</span>
-                <div className="h-px flex-1 bg-[#2b2018]/12" />
-              </div>
-            </Motion.div>
+            {oauthHabilitado ? (
+              <Motion.div {...fadeUp(0.16)} className="mt-6">
+                <BotonesSociales contexto="login" />
+                <div className="my-5 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-[#2b2018]/12" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-[#2b2018]/45">o</span>
+                  <div className="h-px flex-1 bg-[#2b2018]/12" />
+                </div>
+              </Motion.div>
+            ) : null}
 
             <Motion.form
               {...fadeUp(0.2)}

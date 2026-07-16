@@ -16,7 +16,10 @@ const iniciar = async (req, res) => {
   try {
     const { proveedor } = req.params
     if (!oauthConfig.enabled || !proveedorSoportado(proveedor)) {
-      return res.status(404).json({ message: 'Proveedor no disponible' })
+      if (!oauthConfig.frontendUrl) {
+        return res.status(404).json({ message: 'Proveedor no disponible' })
+      }
+      return res.redirect(`${oauthConfig.frontendUrl}/login?error=oauth`)
     }
     const { url, state, codeVerifier } = await oauthService.iniciarFlujo(proveedor)
     // state y verifier viajan en cookie httpOnly firmada de corta vida
@@ -70,10 +73,6 @@ const callback = async (req, res) => {
         ip: req.ip,
         userAgent: req.headers['user-agent'],
       })
-      // Primer login social de un usuario local: vincular proveedor
-      if (usuario.proveedorAuth === 'local' && !usuario.proveedorId) {
-        await usuario.update({ proveedorAuth: proveedor, proveedorId: perfil.sub })
-      }
       setAuthCookies(res, { accessToken, refreshToken })
       await registrarAuditoria({
         accion: 'LOGIN',

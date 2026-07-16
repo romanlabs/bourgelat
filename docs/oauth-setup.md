@@ -72,6 +72,22 @@ Esta guía describe cómo obtener y configurar las credenciales OAuth para auten
 
 1. En la página principal de la aplicación, copia el **Application (client) ID**
 
+### 2.5 Configurar el optional claim `xms_edov`
+
+Bourgelat exige que el email venga verificado por el proveedor. Microsoft no
+expone `email_verified` de forma consistente, así que se requiere el optional
+claim `xms_edov` ("email domain owner verified"):
+
+1. En la página de la aplicación, ve a **Manage** → **Token configuration**
+2. Haz clic en **+ Add optional claim**
+3. Selecciona el tipo de token **ID**
+4. Marca el claim **`xms_edov`** y agrégalo
+5. Guarda
+
+⚠️ **Importante**: sin este optional claim configurado, el backend rechazará
+el login social con Microsoft (el email se considerará no verificado y el
+flujo terminará en `login?error=oauth`).
+
 ---
 
 ## 3. Variables de Entorno
