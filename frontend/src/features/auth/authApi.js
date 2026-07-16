@@ -6,29 +6,12 @@ export const authApi = {
     return data
   },
 
-  registro: async ({
-    nombre,
-    nombreAdministrador,
-    email,
-    emailClinica,
-    password,
-    telefono,
-    direccion,
-    ciudad,
-    departamento,
-    nit,
-  }) => {
+  registro: async ({ nombre, nombreAdministrador, email, password }) => {
     const { data } = await api.post('/auth/registro', {
       nombre,
       nombreAdministrador,
       email,
-      emailClinica,
       password,
-      telefono,
-      direccion,
-      ciudad,
-      departamento,
-      nit,
     })
     return data
   },

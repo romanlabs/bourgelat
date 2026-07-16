@@ -4,12 +4,14 @@ import { Link } from "react-router-dom"
 import { ArrowRight, Menu, X } from "lucide-react"
 import BrandMark from "./BrandMark"
 import { NAV_ITEMS } from "./data"
+import RegistroDialog from "@/features/auth/RegistroDialog"
 
 export default function LandingNav() {
   const [open, setOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [navTheme, setNavTheme] = useState('light')
   const [hiddenBySection, setHiddenBySection] = useState(false)
+  const [registroAbierto, setRegistroAbierto] = useState(false)
   const headerRef = useRef(null)
 
   useEffect(() => {
@@ -152,13 +154,14 @@ export default function LandingNav() {
           >
             Iniciar sesión
           </Link>
-          <Link
-            to="/registro"
-            className="group inline-flex items-center gap-2 rounded-md bg-[#2b2018] px-6 py-2.5 text-sm font-semibold text-white no-underline transition-colors duration-[300ms] ease-out hover:bg-[#b07645]"
+          <button
+            type="button"
+            onClick={() => setRegistroAbierto(true)}
+            className="group inline-flex items-center gap-2 rounded-md bg-[#2b2018] px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-[300ms] ease-out hover:bg-[#b07645]"
           >
             Crear cuenta
             <ArrowRight className="h-4 w-4 transition-transform duration-[250ms] ease-out group-hover:translate-x-[3px]" />
-          </Link>
+          </button>
         </div>
 
         <button
@@ -231,18 +234,23 @@ export default function LandingNav() {
               >
                 Iniciar sesión
               </Link>
-              <Link
-                to="/registro"
-                onClick={() => setOpen(false)}
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#2b2018] px-4 py-3.5 text-center text-[15px] font-semibold text-white no-underline transition-colors hover:bg-[#b07645]"
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  setRegistroAbierto(true)
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#2b2018] px-4 py-3.5 text-center text-[15px] font-semibold text-white transition-colors hover:bg-[#b07645]"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </Motion.div>
         )}
       </AnimatePresence>
+
+      <RegistroDialog open={registroAbierto} onOpenChange={setRegistroAbierto} />
     </header>
   )
 }

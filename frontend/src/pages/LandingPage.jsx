@@ -13,6 +13,7 @@ import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
 import WhatsAppFab from "@/components/landing/WhatsAppFab"
 import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
+import RegistroDialog from "@/features/auth/RegistroDialog"
 
 const FAQS = [
   {
@@ -60,6 +61,8 @@ function FAQItem({ pregunta, respuesta }) {
 }
 
 export default function LandingPage() {
+  const [registroAbierto, setRegistroAbierto] = useState(false)
+
   useEffect(() => {
     document.title = 'Bourgelat | Software para clínicas veterinarias'
     window.scrollTo(0, 0)
@@ -145,13 +148,14 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link
-                to="/registro"
-                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
+              <button
+                type="button"
+                onClick={() => setRegistroAbierto(true)}
+                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
-              </Link>
+              </button>
               <Link
                 to="/planes"
                 className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
@@ -273,12 +277,13 @@ export default function LandingPage() {
               Ver comparativa completa
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
             </Link>
-            <Link
-              to="/registro"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
+            <button
+              type="button"
+              onClick={() => setRegistroAbierto(true)}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
             >
               Crear cuenta
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -331,13 +336,14 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link
-                to="/registro"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
+              <button
+                type="button"
+                onClick={() => setRegistroAbierto(true)}
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#fdf6ee] px-7 py-3.5 text-sm font-semibold text-[#2b2018] transition-colors hover:bg-[#b07645] hover:text-white sm:w-auto"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
-              </Link>
+              </button>
               <a
                 href="mailto:hola@bourgelat.co"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
@@ -437,9 +443,13 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/registro" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                  <button
+                    type="button"
+                    onClick={() => setRegistroAbierto(true)}
+                    className="text-sm text-[#fdf6ee]/65 transition-colors hover:text-white"
+                  >
                     Crear cuenta
-                  </Link>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -501,6 +511,8 @@ export default function LandingPage() {
       </footer>
 
       <WhatsAppFab />
+
+      <RegistroDialog open={registroAbierto} onOpenChange={setRegistroAbierto} />
     </div>
   )
 }

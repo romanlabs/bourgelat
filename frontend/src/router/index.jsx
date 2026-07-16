@@ -6,7 +6,6 @@ import { hasRole } from '@/lib/permissions'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
-const RegistroPage  = lazy(() => import('@/pages/RegistroPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
@@ -73,7 +72,6 @@ const router = createBrowserRouter([
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
-          { path: '/registro', element: <Suspense fallback={<Loader />}><RegistroPage /></Suspense> },
         ],
       },
       {
@@ -94,6 +92,7 @@ const router = createBrowserRouter([
         ],
       },
       { path: '/',       element: <HostAwareHome /> },
+      { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },

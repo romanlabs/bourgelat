@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
+import RegistroDialog from '@/features/auth/RegistroDialog'
 
 const footerLinks = [
   { label: 'Nosotros', to: '/nosotros' },
@@ -16,6 +17,8 @@ export default function PublicPageShell({
   eyebrow = 'Bourgelat',
   children,
 }) {
+  const [registroAbierto, setRegistroAbierto] = useState(false)
+
   useEffect(() => {
     document.title = `${title} | Bourgelat`
   }, [title])
@@ -55,13 +58,14 @@ export default function PublicPageShell({
               >
                 Iniciar sesion
               </Link>
-              <Link
-                to="/registro"
-                className="inline-flex items-center gap-2 rounded-full bg-[#0f2436] px-4 py-2 text-sm font-semibold text-white no-underline transition hover:bg-[#17364f]"
+              <button
+                type="button"
+                onClick={() => setRegistroAbierto(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-[#0f2436] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#17364f]"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </header>
@@ -99,6 +103,8 @@ export default function PublicPageShell({
           </div>
         </footer>
       </div>
+
+      <RegistroDialog open={registroAbierto} onOpenChange={setRegistroAbierto} />
     </div>
   )
 }
