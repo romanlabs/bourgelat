@@ -2,9 +2,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export const oauthHabilitado = import.meta.env.VITE_OAUTH_ENABLED === 'true'
 
+const microsoftHabilitado = import.meta.env.VITE_OAUTH_MICROSOFT_ENABLED === 'true'
+
 const PROVEEDORES = [
   { id: 'google', label: 'Google' },
-  { id: 'microsoft', label: 'Microsoft' },
+  ...(microsoftHabilitado ? [{ id: 'microsoft', label: 'Microsoft' }] : []),
 ]
 
 function GoogleIcon() {
