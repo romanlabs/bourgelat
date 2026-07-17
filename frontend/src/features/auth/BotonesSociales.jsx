@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export const oauthHabilitado = import.meta.env.VITE_OAUTH_ENABLED === 'true'
 
@@ -56,7 +56,7 @@ export default function BotonesSociales({ contexto = 'registro' }) {
         <button
           key={id}
           type="button"
-          onClick={() => window.location.assign(`${API_URL}/api/auth/oauth/${id}`)}
+          onClick={() => window.location.assign(`${API_URL}/auth/oauth/${id}`)}
           className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/15 bg-transparent px-4 text-sm font-medium text-[#2b2018] transition hover:border-[#2b2018]/30 hover:bg-[#2b2018]/[0.03]"
         >
           <ProviderIcon id={id} />
