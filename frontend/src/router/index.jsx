@@ -7,6 +7,8 @@ import RouteErrorPage from '@/components/shared/RouteErrorPage'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
+const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
+const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
@@ -74,6 +76,8 @@ const router = createBrowserRouter([
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
           { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
+          { path: '/recuperar-password', element: <Suspense fallback={<Loader />}><RecuperarPasswordPage /></Suspense> },
+          { path: '/restablecer-password', element: <Suspense fallback={<Loader />}><RestablecerPasswordPage /></Suspense> },
         ],
       },
       {

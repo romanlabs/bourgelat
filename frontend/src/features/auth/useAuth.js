@@ -72,6 +72,19 @@ export const useCompletarRegistroOauth = () => {
   })
 }
 
+export const useForgotPassword = () =>
+  useMutation({
+    mutationFn: authApi.forgotPassword,
+    onError: (error) => {
+      toast.error(obtenerMensajeError(error, 'No pudimos procesar la solicitud'))
+    },
+  })
+
+export const useResetPassword = () =>
+  useMutation({
+    mutationFn: authApi.resetPassword,
+  })
+
 export const useLogout = () => {
   const navigate = useNavigate()
   const clearAuth = useAuthStore((s) => s.clearAuth)

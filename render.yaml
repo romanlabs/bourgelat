@@ -98,6 +98,18 @@ services:
         sync: false
       - key: MS_CLIENT_SECRET
         sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        value: Bourgelat <no-reply@bourgelat.co>
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
@@ -256,6 +268,18 @@ services:
         sync: false
       - key: MS_CLIENT_SECRET
         sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        value: Bourgelat <no-reply@bourgelat.co>
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
