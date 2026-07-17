@@ -78,9 +78,13 @@ const FacturaItem = sequelize.define('FacturaItem', {
   ],
 })
 
-registrarHooksCifrado(FacturaItem, {
+// Exportado para que modelos padre puedan descifrar instancias anidadas.
+// Sequelize v6 no dispara afterFind del modelo hijo cuando se carga vía include.
+const CIFRADO_FACTURA_ITEM = {
   campos: ['descripcion'],
-})
+}
+
+registrarHooksCifrado(FacturaItem, CIFRADO_FACTURA_ITEM)
 
 Factura.hasMany(FacturaItem, { foreignKey: 'facturaId', as: 'items' })
 FacturaItem.belongsTo(Factura, { foreignKey: 'facturaId', as: 'factura' })
@@ -90,3 +94,4 @@ ServicioClinico.hasMany(FacturaItem, { foreignKey: 'servicioClinicoId', as: 'ite
 FacturaItem.belongsTo(ServicioClinico, { foreignKey: 'servicioClinicoId', as: 'servicioClinico' })
 
 module.exports = FacturaItem
+module.exports.CIFRADO = CIFRADO_FACTURA_ITEM
