@@ -24,14 +24,14 @@ export const PAYMENT_FORM_OPTIONS = [
   { value: '2', label: 'Credito' },
 ]
 
-const ESTADO_LABELS = {
+export const ESTADO_LABELS = {
   borrador: 'Borrador',
   emitida: 'Emitida',
   pagada: 'Pagada',
   anulada: 'Anulada',
 }
 
-const ESTADO_ELECTRONICO_LABELS = {
+export const ESTADO_ELECTRONICO_LABELS = {
   no_aplica: 'No aplica',
   pendiente: 'Pendiente',
   enviada: 'Enviada',
@@ -40,10 +40,24 @@ const ESTADO_ELECTRONICO_LABELS = {
   error: 'Error',
 }
 
+export const getEstadoTone = (estado) => {
+  if (estado === 'pagada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (estado === 'anulada') return 'border-red-200 bg-red-50 text-red-700'
+  if (estado === 'borrador') return 'border-border bg-muted text-foreground'
+  return 'border-primary/30 bg-primary/10 text-primary'
+}
+
+export const getEstadoElectronicoTone = (estado) => {
+  if (estado === 'validada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  if (estado === 'rechazada' || estado === 'error') return 'border-red-200 bg-red-50 text-red-700'
+  if (estado === 'pendiente' || estado === 'enviada') return 'border-amber-200 bg-amber-50 text-amber-700'
+  return 'border-border bg-muted text-foreground'
+}
+
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
 
-const formatDateTime = (value) => {
+export const formatDateTime = (value) => {
   if (!value) return 'Sin fecha'
   try {
     return new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(
@@ -218,12 +232,15 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     resetSeleccion()
   }
 
+  // Sin fallback a la primera factura: el detalle vive en un modal y solo debe
+  // abrirse con una seleccion explicita. Si la factura sale del listado filtrado
+  // (p. ej. tras anularla), la seleccion cae a null y el modal se cierra solo.
   const currentFacturaId = useMemo(() => {
     const disponibles = facturasQuery.data?.facturas || []
     if (selectedFacturaId && disponibles.some((f) => f.id === selectedFacturaId)) {
       return selectedFacturaId
     }
-    return disponibles[0]?.id || null
+    return null
   }, [facturasQuery.data?.facturas, selectedFacturaId])
 
   const facturaDetalleQuery = useQuery({
