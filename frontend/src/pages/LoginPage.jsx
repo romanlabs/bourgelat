@@ -273,6 +273,15 @@ export default function LoginPage() {
                   </button>
                 </div>
                 {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
+                <div className="mt-2 text-right">
+                  <Link
+                    to="/recuperar-password"
+                    className="text-[13px] font-medium hover:underline"
+                    style={{ color: ACCENT }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
               </div>
 
               <Button

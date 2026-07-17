@@ -8,6 +8,8 @@ const {
   logout,
   logoutAll,
   me,
+  forgotPassword,
+  resetPassword,
 } = require('../controllers/authController')
 const {
   iniciar: oauthIniciar,
@@ -94,6 +96,31 @@ router.post('/logout', limitadorAuth, logout)
 
 router.post('/logout-all', verificarToken, logoutAll)
 router.get('/me', verificarToken, me)
+
+router.post(
+  '/forgot-password',
+  limitadorAuth,
+  [
+    body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    validar,
+  ],
+  forgotPassword
+)
+
+router.post(
+  '/reset-password',
+  limitadorAuth,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    body('password')
+      .matches(passwordFuerteRegex)
+      .withMessage(
+        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
+      ),
+    validar,
+  ],
+  resetPassword
+)
 
 router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)
 router.get('/oauth/:proveedor/callback', limitadorAuth, oauthCallback)
