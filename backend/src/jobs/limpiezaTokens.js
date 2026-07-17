@@ -1,5 +1,6 @@
 const { Op } = require('sequelize')
 const RefreshToken = require('../models/RefreshToken')
+const PasswordResetToken = require('../models/PasswordResetToken')
 const AuditoriaLog = require('../models/AuditoriaLog')
 const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
 const logger = require('../utils/logger')
@@ -18,6 +19,20 @@ const limpiarTokensVencidos = async () => {
 
     if (eliminados > 0) {
       logger.info({ contexto: 'limpieza', mensaje: `${eliminados} refresh tokens eliminados` })
+    }
+
+    const resetEliminados = await PasswordResetToken.destroy({
+      where: {
+        [Op.or]: [
+          { expiracion: { [Op.lt]: new Date() } },
+          { usado: true },
+        ],
+      },
+      sinTenant: true,
+    })
+
+    if (resetEliminados > 0) {
+      logger.info({ contexto: 'limpieza', mensaje: `${resetEliminados} tokens de reset eliminados` })
     }
   } catch (error) {
     logger.error({ contexto: 'limpieza-tokens', mensaje: error.message })

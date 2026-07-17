@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 
@@ -6,6 +7,7 @@ const sequelize = require('../config/database')
 const Clinica = require('../models/Clinica')
 const Usuario = require('../models/Usuario')
 const RefreshToken = require('../models/RefreshToken')
+const PasswordResetToken = require('../models/PasswordResetToken')
 const Suscripcion = require('../models/Suscripcion')
 const { appConfig } = require('../config/app')
 const { crearSuscripcionEsencial } = require('../config/planes')
@@ -22,6 +24,7 @@ const {
   guardarRefreshToken,
 } = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
+const { enviarEmailRecuperacionPassword } = require('../services/emailService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -652,6 +655,130 @@ const me = async (req, res) => {
   }
 }
 
+const RESET_TOKEN_MINUTOS = 30
+
+const hashResetToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex')
+
+const urlFrontend = () =>
+  (
+    process.env.OAUTH_FRONTEND_URL ||
+    process.env.FRONTEND_URLS?.split(',')[0] ||
+    process.env.FRONTEND_URL ||
+    ''
+  ).replace(/\/$/, '')
+
+// Siempre responde 200 con el mismo mensaje, exista o no la cuenta:
+// no revelar qué correos están registrados (user enumeration).
+const forgotPassword = async (req, res) => {
+  const mensajeGenerico =
+    'Si el correo esta registrado, recibiras un enlace para restablecer tu contrasena.'
+
+  try {
+    const email = normalizarEmail(req.body.email)
+    const usuario = await Usuario.findOne({ where: { email }, sinTenant: true })
+
+    // Cuentas OAuth (password null) no tienen contraseña que restablecer;
+    // se responde igual para no filtrar el método de autenticación.
+    if (!usuario || !usuario.activo || !usuario.password) {
+      return res.json({ message: mensajeGenerico })
+    }
+
+    // Invalida solicitudes anteriores pendientes del mismo usuario
+    await PasswordResetToken.update(
+      { usado: true },
+      { where: { usuarioId: usuario.id, usado: false }, sinTenant: true }
+    )
+
+    const token = crypto.randomBytes(32).toString('base64url')
+    const expiracion = new Date(Date.now() + RESET_TOKEN_MINUTOS * 60 * 1000)
+
+    await PasswordResetToken.create(
+      { tokenHash: hashResetToken(token), expiracion, usuarioId: usuario.id },
+      { sinTenant: true }
+    )
+
+    await enviarEmailRecuperacionPassword({
+      para: usuario.email,
+      nombre: usuario.nombre || usuario.email.split('@')[0],
+      urlReset: `${urlFrontend()}/restablecer-password#token=${token}`,
+    })
+
+    await registrarAuditoria({
+      accion: 'PASSWORD_RESET_SOLICITADO',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Solicitud de restablecimiento para ${usuario.email}`,
+      req,
+    })
+
+    return res.json({ message: mensajeGenerico })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body
+
+    const registro = await PasswordResetToken.findOne({
+      where: {
+        tokenHash: hashResetToken(token),
+        usado: false,
+        expiracion: { [Op.gt]: new Date() },
+      },
+      sinTenant: true,
+    })
+
+    if (!registro) {
+      return res.status(401).json({
+        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+      })
+    }
+
+    const usuario = await Usuario.findOne({
+      where: { id: registro.usuarioId },
+      sinTenant: true,
+    })
+
+    if (!usuario || !usuario.activo) {
+      return res.status(401).json({
+        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+      })
+    }
+
+    const salt = await bcrypt.genSalt(12)
+    const passwordHash = await bcrypt.hash(password, salt)
+
+    await sequelize.transaction(async (transaction) => {
+      await usuario.update(
+        { password: passwordHash, intentosFallidos: 0, bloqueadoHasta: null },
+        { transaction }
+      )
+      await registro.update({ usado: true }, { transaction, sinTenant: true })
+      // Cierra todas las sesiones abiertas: si alguien robó la cuenta,
+      // el cambio de contraseña lo expulsa.
+      await RefreshToken.update(
+        { revocado: true },
+        { where: { usuarioId: usuario.id, revocado: false }, transaction, sinTenant: true }
+      )
+    })
+
+    await registrarAuditoria({
+      accion: 'PASSWORD_RESET_COMPLETADO',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Contrasena restablecida para ${usuario.email}`,
+      req,
+    })
+
+    return res.json({ message: 'Contrasena actualizada. Ya puedes iniciar sesion.' })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
 module.exports = {
   registro,
   login,
@@ -659,4 +786,6 @@ module.exports = {
   logout,
   logoutAll,
   me,
+  forgotPassword,
+  resetPassword,
 }
