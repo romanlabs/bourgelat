@@ -6,29 +6,12 @@ export const authApi = {
     return data
   },
 
-  registro: async ({
-    nombre,
-    nombreAdministrador,
-    email,
-    emailClinica,
-    password,
-    telefono,
-    direccion,
-    ciudad,
-    departamento,
-    nit,
-  }) => {
+  registro: async ({ nombre, nombreAdministrador, email, password }) => {
     const { data } = await api.post('/auth/registro', {
       nombre,
       nombreAdministrador,
       email,
-      emailClinica,
       password,
-      telefono,
-      direccion,
-      ciudad,
-      departamento,
-      nit,
     })
     return data
   },
@@ -47,6 +30,11 @@ export const authApi = {
     const { data } = await api.get('/auth/me', {
       skipAuthRedirect: true,
     })
+    return data
+  },
+
+  completarRegistroOauth: async ({ token, nombreClinica }) => {
+    const { data } = await api.post('/auth/oauth/completar-registro', { token, nombreClinica })
     return data
   },
 }

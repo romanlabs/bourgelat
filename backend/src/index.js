@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const cookieParser = require('cookie-parser')
 const helmet = require('helmet')
 const hpp = require('hpp')
 const xss = require('xss-clean')
@@ -90,6 +91,9 @@ app.use(limitadorGeneral)
 // ── Body parsing ───────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+// Solo para cookies firmadas (ej: flujo OAuth). Las cookies de sesion
+// existentes se siguen leyendo manualmente via req.headers.cookie.
+app.use(cookieParser(process.env.JWT_SECRET))
 app.use(
   UPLOADS_PUBLIC_PATH,
   express.static(UPLOADS_ROOT_DIR, {

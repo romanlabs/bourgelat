@@ -9,6 +9,11 @@ const {
   logoutAll,
   me,
 } = require('../controllers/authController')
+const {
+  iniciar: oauthIniciar,
+  callback: oauthCallback,
+  completarRegistro: oauthCompletarRegistro,
+} = require('../controllers/oauthController')
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
@@ -27,34 +32,27 @@ router.post(
       .trim()
       .notEmpty()
       .withMessage('El nombre del administrador es obligatorio'),
-    body('departamento')
-      .trim()
-      .notEmpty()
-      .withMessage('El departamento es obligatorio'),
-    body('ciudad').trim().notEmpty().withMessage('La ciudad es obligatoria'),
     body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
-    body('emailClinica')
-      .trim()
-      .notEmpty()
-      .withMessage('El email de la clinica es obligatorio')
-      .bail()
-      .isEmail()
-      .withMessage('Email de la clinica invalido')
-      .normalizeEmail(),
     body('password')
       .matches(passwordFuerteRegex)
       .withMessage(
         'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
       ),
-    body('nit').optional({ values: 'falsy' }).trim(),
-    body('telefono')
+    body('emailClinica')
+      .optional({ values: 'falsy' })
       .trim()
-      .notEmpty()
-      .withMessage('El telefono de la clinica es obligatorio')
-      .bail()
+      .isEmail()
+      .withMessage('Email de la clinica invalido')
+      .normalizeEmail(),
+    body('telefono')
+      .optional({ values: 'falsy' })
+      .trim()
       .customSanitizer(normalizarTelefonoColombiano)
       .custom((valor) => /^3\d{9}$/.test(valor))
       .withMessage('El telefono debe ser un celular colombiano valido de 10 digitos'),
+    body('departamento').optional({ values: 'falsy' }).trim(),
+    body('ciudad').optional({ values: 'falsy' }).trim(),
+    body('nit').optional({ values: 'falsy' }).trim(),
     body('direccion').optional({ values: 'falsy' }).trim(),
     body('razonSocial').optional({ values: 'falsy' }).trim(),
     body('nombreComercial').optional({ values: 'falsy' }).trim(),
@@ -96,5 +94,19 @@ router.post('/logout', limitadorAuth, logout)
 
 router.post('/logout-all', verificarToken, logoutAll)
 router.get('/me', verificarToken, me)
+
+router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)
+router.get('/oauth/:proveedor/callback', limitadorAuth, oauthCallback)
+
+router.post(
+  '/oauth/completar-registro',
+  limitadorAuth,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    body('nombreClinica').trim().notEmpty().isLength({ max: 160 }).withMessage('El nombre de la clinica es obligatorio'),
+    validar,
+  ],
+  oauthCompletarRegistro
+)
 
 module.exports = router

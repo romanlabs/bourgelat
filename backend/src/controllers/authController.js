@@ -16,27 +16,14 @@ const {
 } = require('../config/cookies')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
+const {
+  generarAccessToken,
+  generarRefreshToken,
+  guardarRefreshToken,
+} = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
-
-const generarAccessToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-  })
-
-const generarRefreshToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  })
-
-const calcularFechaExpiracionRefresh = () => {
-  const expiracion = new Date()
-  expiracion.setMilliseconds(
-    expiracion.getMilliseconds() + appConfig.cookies.refreshMaxAgeMs
-  )
-  return expiracion
-}
 
 const estaTemporalmenteBloqueado = (usuario) =>
   Boolean(
@@ -72,27 +59,6 @@ const limpiarEstadoAccesoUsuario = async (usuario) => {
     bloqueadoHasta: null,
     ultimoAcceso: new Date(),
   })
-}
-
-const guardarRefreshToken = async ({
-  token,
-  clinicaId,
-  usuarioId,
-  ip,
-  userAgent,
-  transaction,
-}) => {
-  await RefreshToken.create(
-    {
-      token,
-      expiracion: calcularFechaExpiracionRefresh(),
-      clinicaId: clinicaId || null,
-      usuarioId: usuarioId || null,
-      ip,
-      userAgent,
-    },
-    { transaction }
-  )
 }
 
 const serializarClinica = (clinica) => {
@@ -164,19 +130,9 @@ const registro = async (req, res) => {
       tributoId,
     } = req.body
 
-    if (
-      !nombre ||
-      !nombreAdministrador ||
-      !email ||
-      !emailClinica ||
-      !telefono ||
-      !ciudad ||
-      !departamento ||
-      !password
-    ) {
+    if (!nombre || !nombreAdministrador || !email || !password) {
       return res.status(400).json({
-        message:
-          'Nombre de la clinica, responsable, correos, telefono, ciudad, departamento y password son obligatorios',
+        message: 'Nombre de la clinica, responsable, email y password son obligatorios',
       })
     }
 
@@ -190,29 +146,20 @@ const registro = async (req, res) => {
     const nombreClinica = limpiarTexto(nombre)
     const nombreUsuarioAdmin = limpiarTexto(nombreAdministrador)
     const emailAdministrador = normalizarEmail(email)
-    const emailContactoClinica = normalizarEmail(emailClinica)
+    const emailContactoClinica = normalizarEmail(emailClinica) || emailAdministrador
     const telefonoNormalizado = normalizarTelefonoColombiano(telefono)
     const direccionNormalizada = limpiarTexto(direccion)
     const ciudadNormalizada = limpiarTexto(ciudad)
     const departamentoNormalizado = limpiarTexto(departamento)
     const nitNormalizado = limpiarTexto(nit)
 
-    if (
-      !nombreClinica ||
-      !nombreUsuarioAdmin ||
-      !emailAdministrador ||
-      !emailContactoClinica ||
-      !telefonoNormalizado ||
-      !ciudadNormalizada ||
-      !departamentoNormalizado
-    ) {
+    if (!nombreClinica || !nombreUsuarioAdmin || !emailAdministrador) {
       return res.status(400).json({
-        message:
-          'Nombre de la clinica, responsable, correos, telefono, ciudad y departamento son obligatorios',
+        message: 'Nombre de la clinica, responsable y email son obligatorios',
       })
     }
 
-    if (!esTelefonoColombianoValido(telefonoNormalizado)) {
+    if (telefonoNormalizado && !esTelefonoColombianoValido(telefonoNormalizado)) {
       return res.status(400).json({
         message: 'El telefono debe ser un celular colombiano valido de 10 digitos',
       })
@@ -255,7 +202,7 @@ const registro = async (req, res) => {
           // Se mantiene mientras Clinica siga exigiendo password en el modelo.
           // El acceso real al sistema se hace con Usuario.
           password: passwordHash,
-          telefono: telefonoNormalizado,
+          telefono: telefonoNormalizado || null,
           direccion: direccionNormalizada,
           ciudad: ciudadNormalizada,
           departamento: departamentoNormalizado,
@@ -410,6 +357,13 @@ const login = async (req, res) => {
     if (estaTemporalmenteBloqueado(usuario)) {
       return res.status(423).json({
         message: `Usuario bloqueado temporalmente hasta ${new Date(usuario.bloqueadoHasta).toISOString()}`,
+      })
+    }
+
+    if (!usuario.password) {
+      const proveedorNombre = usuario.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'
+      return res.status(400).json({
+        message: `Esta cuenta usa inicio de sesion con ${proveedorNombre}. Usa el boton "Continuar con ${proveedorNombre}"`,
       })
     }
 

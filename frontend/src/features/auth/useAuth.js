@@ -54,6 +54,24 @@ export const useRegistro = () => {
   })
 }
 
+export const useCompletarRegistroOauth = () => {
+  const navigate = useNavigate()
+  const setAuth = useAuthStore((s) => s.setAuth)
+
+  return useMutation({
+    mutationFn: authApi.completarRegistroOauth,
+    onSuccess: (data) => {
+      setAuth({
+        usuario: data.usuario,
+        clinica: data.clinica,
+        suscripcion: data.suscripcion || null,
+      })
+      toast.success('Clinica registrada exitosamente')
+      navigate('/dashboard', { replace: true })
+    },
+  })
+}
+
 export const useLogout = () => {
   const navigate = useNavigate()
   const clearAuth = useAuthStore((s) => s.clearAuth)
