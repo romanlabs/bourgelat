@@ -63,7 +63,7 @@ const EXPERIENCES = {
 
 const MODE_LINKS = [
   { key: 'login', label: 'Iniciar sesion', to: '/login' },
-  { key: 'register', label: 'Registrar clinica', to: '/registro' },
+  { key: 'register', label: 'Registrar clinica', to: '/login?registro=1' },
 ]
 
 function ModeSwitcher({ variant }) {

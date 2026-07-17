@@ -82,6 +82,22 @@ services:
         sync: false
       - key: BLIND_INDEX_KEY
         sync: false
+      - key: OAUTH_ENABLED
+        value: "true"
+      - key: OAUTH_BACKEND_BASE_URL
+        value: https://api.bourgelat.co
+      - key: OAUTH_FRONTEND_URL
+        value: https://app.bourgelat.co
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MS_TENANT
+        value: common
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
@@ -145,6 +161,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://api.bourgelat.co/api
+      - key: VITE_OAUTH_ENABLED
+        value: "true"
 
   - type: web
     name: bourgelat-api-staging
@@ -222,6 +240,22 @@ services:
         sync: false
       - key: BLIND_INDEX_KEY
         sync: false
+      - key: OAUTH_ENABLED
+        value: "true"
+      - key: OAUTH_BACKEND_BASE_URL
+        value: https://api-staging.bourgelat.co
+      - key: OAUTH_FRONTEND_URL
+        value: https://staging.bourgelat.co
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MS_TENANT
+        value: common
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
@@ -280,6 +314,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://api-staging.bourgelat.co/api
+      - key: VITE_OAUTH_ENABLED
+        value: "true"
 
 databases:
   - name: bourgelat-postgres

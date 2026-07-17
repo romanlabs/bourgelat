@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion as Motion } from 'motion/react'
@@ -7,6 +7,8 @@ import { z } from 'zod'
 import { ArrowRight, Eye, EyeOff, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '@/features/auth/useAuth'
+import RegistroDialog from '@/features/auth/RegistroDialog'
+import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
 
 // Assets servidos desde public/ (Vite). El poster evita el flash inicial y
 // actua como fallback estatico con movimiento reducido o si el video falla.
@@ -48,6 +50,19 @@ export default function LoginPage() {
   const reducedMotion = usePrefersReducedMotion()
   const { mutate: login, isPending } = useLogin()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [registroAbierto, setRegistroAbierto] = useState(
+    () => searchParams.get('registro') === '1'
+  )
+
+  const handleRegistroOpenChange = (abierto) => {
+    setRegistroAbierto(abierto)
+    if (!abierto && searchParams.get('registro') === '1') {
+      const next = new URLSearchParams(searchParams)
+      next.delete('registro')
+      setSearchParams(next, { replace: true })
+    }
+  }
 
   const {
     register,
@@ -150,13 +165,14 @@ export default function LoginPage() {
             Volver al inicio
           </Link>
           <div className="hidden h-4 w-px bg-[#2b2018]/15 sm:block" />
-          <Link
-            to="/registro"
-            className="group inline-flex items-center gap-2 bg-[#2b2018] px-4 py-2.5 text-[13px] font-semibold tracking-[0.04em] text-white no-underline transition-colors duration-200 hover:bg-[#b07645]"
+          <button
+            type="button"
+            onClick={() => setRegistroAbierto(true)}
+            className="group inline-flex items-center gap-2 bg-[#2b2018] px-4 py-2.5 text-[13px] font-semibold tracking-[0.04em] text-white transition-colors duration-200 hover:bg-[#b07645]"
           >
             Crear cuenta
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </button>
         </nav>
       </Motion.header>
 
@@ -191,6 +207,23 @@ export default function LoginPage() {
             >
               Tu jornada clínica empieza aquí
             </Motion.h1>
+
+            {searchParams.get('error') === 'oauth' ? (
+              <p className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
+              </p>
+            ) : null}
+
+            {oauthHabilitado ? (
+              <Motion.div {...fadeUp(0.16)} className="mt-6">
+                <BotonesSociales contexto="login" />
+                <div className="my-5 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-[#2b2018]/12" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-[#2b2018]/45">o</span>
+                  <div className="h-px flex-1 bg-[#2b2018]/12" />
+                </div>
+              </Motion.div>
+            ) : null}
 
             <Motion.form
               {...fadeUp(0.2)}
@@ -254,13 +287,20 @@ export default function LoginPage() {
 
             <Motion.p {...fadeUp(0.28)} className="mt-6 text-sm text-[#2b2018]/60">
               ¿Primera vez en Bourgelat?{' '}
-              <Link to="/registro" className="font-semibold no-underline hover:underline" style={{ color: ACCENT }}>
+              <button
+                type="button"
+                onClick={() => setRegistroAbierto(true)}
+                className="font-semibold hover:underline"
+                style={{ color: ACCENT }}
+              >
                 Crear la cuenta de tu clínica
-              </Link>
+              </button>
             </Motion.p>
           </div>
         </div>
       </main>
+
+      <RegistroDialog open={registroAbierto} onOpenChange={handleRegistroOpenChange} />
     </div>
   )
 }
