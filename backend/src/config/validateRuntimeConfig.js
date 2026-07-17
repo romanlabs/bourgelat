@@ -102,11 +102,19 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
 
   const oauthEnabled = String(env.OAUTH_ENABLED || '').toLowerCase() === 'true'
   if (oauthEnabled) {
-    ;['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'MS_CLIENT_ID', 'MS_CLIENT_SECRET', 'OAUTH_BACKEND_BASE_URL'].forEach((key) => {
+    ;['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'OAUTH_BACKEND_BASE_URL'].forEach((key) => {
       if (!env[key]) {
         errors.push(`${key} es obligatorio cuando OAUTH_ENABLED=true.`)
       }
     })
+    // Microsoft es opcional (boton oculto en frontend hasta tener credenciales);
+    // solo es error dejarlo configurado a medias.
+    const msConfigurado = [env.MS_CLIENT_ID, env.MS_CLIENT_SECRET].filter(Boolean).length
+    if (msConfigurado === 1) {
+      errors.push('MS_CLIENT_ID y MS_CLIENT_SECRET deben definirse juntos o dejarse vacios.')
+    } else if (msConfigurado === 0) {
+      warnings.push('OAuth Microsoft sin credenciales: el proveedor microsoft respondera con error hasta configurarlas.')
+    }
   }
 
   if (!config.isProduction) {
