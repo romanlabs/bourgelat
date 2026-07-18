@@ -197,9 +197,16 @@ Factura.belongsTo(CajaTurno, { foreignKey: 'cajaTurnoId', as: 'cajaTurno' })
 
 Factura.addHook('afterFind', (resultado) => {
   if (!resultado) return
+  // Require perezoso: FacturaItem requiere Factura en su carga, un require
+  // al tope de este archivo crearía una dependencia circular.
+  const FacturaItem = require('./FacturaItem')
   const descifrar = (inst) => {
     const prop = inst?.dataValues?.propietario
     if (prop) aplicarDescifrado({ instance: prop, ...Propietario.CIFRADO })
+    const items = inst?.dataValues?.items
+    if (Array.isArray(items)) {
+      items.forEach((item) => aplicarDescifrado({ instance: item, ...FacturaItem.CIFRADO }))
+    }
   }
   Array.isArray(resultado) ? resultado.forEach(descifrar) : descifrar(resultado)
 })
