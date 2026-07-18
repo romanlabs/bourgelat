@@ -95,6 +95,10 @@ const serializarUsuario = (usuario) => {
     rolesAdicionales: usuario.rolesAdicionales || [],
     clinicaId: usuario.clinicaId,
     telefono: usuario.telefono,
+    foto: usuario.foto,
+    cargo: usuario.cargo,
+    tarjetaProfesional: usuario.tarjetaProfesional,
+    proveedorAuth: usuario.proveedorAuth,
     activo: usuario.activo,
   }
 }
@@ -779,6 +783,69 @@ const resetPassword = async (req, res) => {
   }
 }
 
+// Cambio de contraseña estando autenticado: exige la actual y revoca las
+// demás sesiones (si alguien robó la cuenta, el cambio lo expulsa).
+const cambiarPassword = async (req, res) => {
+  try {
+    const { passwordActual, passwordNueva } = req.body
+
+    const usuario = await Usuario.findOne({
+      where: { id: req.usuario.id },
+      sinTenant: true,
+    })
+
+    if (!usuario || !usuario.activo) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    if (!usuario.password) {
+      const proveedorNombre = usuario.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'
+      return res.status(400).json({
+        message: `Tu acceso es gestionado por ${proveedorNombre}; no tienes contrasena en Bourgelat`,
+      })
+    }
+
+    const passwordValido = await bcrypt.compare(passwordActual, usuario.password)
+    if (!passwordValido) {
+      return res.status(400).json({ message: 'La contrasena actual no es correcta' })
+    }
+
+    const salt = await bcrypt.genSalt(12)
+    const passwordHash = await bcrypt.hash(passwordNueva, salt)
+    const refreshTokenActual = obtenerRefreshTokenRequest(req)
+
+    await sequelize.transaction(async (transaction) => {
+      await usuario.update({ password: passwordHash }, { transaction })
+      // Revoca todas las sesiones excepto la actual
+      await RefreshToken.update(
+        { revocado: true },
+        {
+          where: {
+            usuarioId: usuario.id,
+            revocado: false,
+            ...(refreshTokenActual ? { token: { [Op.ne]: refreshTokenActual } } : {}),
+          },
+          transaction,
+          sinTenant: true,
+        }
+      )
+    })
+
+    await registrarAuditoria({
+      accion: 'PASSWORD_CAMBIADO',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Contrasena cambiada por ${usuario.email} desde el perfil`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    return res.json({ message: 'Contrasena actualizada' })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
 module.exports = {
   registro,
   login,
@@ -788,4 +855,5 @@ module.exports = {
   me,
   forgotPassword,
   resetPassword,
+  cambiarPassword,
 }

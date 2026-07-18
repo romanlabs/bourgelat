@@ -25,6 +25,15 @@ import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 
+const ROL_LABELS_SIDEBAR = {
+  admin: 'Administrador',
+  veterinario: 'Veterinario',
+  recepcionista: 'Recepcionista',
+  auxiliar: 'Auxiliar',
+  facturador: 'Facturador',
+  superadmin: 'Superadmin',
+}
+
 const SIDEBAR_STORAGE_KEY = 'bourgelat-admin-sidebar-collapsed'
 
 const NAV_ITEMS = [
@@ -260,12 +269,17 @@ export default function AdminShell({
               <div className="mt-auto shrink-0 border-t border-white/10 pt-3">
                 {isSidebarCollapsed ? (
                   <div className="flex flex-col items-center gap-2">
-                    <div
-                      title={`${usuario?.nombre || 'Usuario'} · Plan ${plan.nombre}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]"
+                    <Link
+                      to="/perfil"
+                      title={`${usuario?.nombre || 'Usuario'} · Mi perfil`}
+                      className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0] transition hover:ring-2 hover:ring-[#91e7e0]/40"
                     >
-                      {usuarioIniciales}
-                    </div>
+                      {usuario?.foto ? (
+                        <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        usuarioIniciales
+                      )}
+                    </Link>
                     <button
                       type="button"
                       onClick={logout}
@@ -277,17 +291,27 @@ export default function AdminShell({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]">
-                      {usuarioIniciales}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-white">
-                        {usuario?.nombre || 'Sin nombre'}
-                      </p>
-                      <p className="truncate text-[11px] text-[#91e7e0]/40">
-                        Plan {plan.nombre}
-                      </p>
-                    </div>
+                    <Link
+                      to="/perfil"
+                      title="Mi perfil"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg transition hover:bg-[#081827]"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#081827] text-xs font-semibold text-[#91e7e0]">
+                        {usuario?.foto ? (
+                          <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          usuarioIniciales
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">
+                          {usuario?.nombre || 'Sin nombre'}
+                        </p>
+                        <p className="truncate text-[11px] text-[#91e7e0]/40">
+                          {usuario?.cargo || ROL_LABELS_SIDEBAR[usuario?.rol] || `Plan ${plan.nombre}`}
+                        </p>
+                      </div>
+                    </Link>
                     <button
                       type="button"
                       onClick={logout}

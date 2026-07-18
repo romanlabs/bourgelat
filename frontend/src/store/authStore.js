@@ -18,6 +18,7 @@ export const useAuthStore = create(
 
       setSuscripcion: (suscripcion) => set({ suscripcion }),
       setClinica: (clinica) => set({ clinica }),
+      setUsuario: (usuario) => set({ usuario }),
 
       clearAuth: () => set({
         usuario: null,

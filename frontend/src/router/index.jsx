@@ -9,6 +9,7 @@ const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
+const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
@@ -95,6 +96,7 @@ const router = createBrowserRouter([
           { path: '/auditoria', element: <Suspense fallback={<Loader />}><AuditoriaPage /></Suspense> },
           { path: '/inventario', element: <Suspense fallback={<Loader />}><InventarioPage /></Suspense> },
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage /></Suspense> },
+          { path: '/perfil', element: <Suspense fallback={<Loader />}><PerfilPage /></Suspense> },
         ],
       },
       { path: '/',       element: <HostAwareHome /> },

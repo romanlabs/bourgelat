@@ -55,6 +55,21 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  foto: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'URL publica de la foto de perfil (uploads locales)',
+  },
+  cargo: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+    comment: 'Titulo visible al equipo, ej. "Medica veterinaria - cirugia"',
+  },
+  tarjetaProfesional: {
+    type: DataTypes.STRING(60),
+    allowNull: true,
+    comment: 'Numero de tarjeta profesional (solo aplica a veterinarios)',
+  },
   activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
