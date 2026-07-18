@@ -1298,9 +1298,9 @@ export default function DashboardPage() {
         </StatusPill>
       }
       actions={
-        typeof diasRestantes === 'number' ? (
-          <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
-            {diasRestantes} dias restantes
+        typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
+          <StatusPill tone="border-destructive/40 bg-destructive/10 text-destructive">
+            Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'}
           </StatusPill>
         ) : null
       }

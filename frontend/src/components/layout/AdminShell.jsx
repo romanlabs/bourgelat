@@ -10,19 +10,16 @@ import {
   History,
   LayoutDashboard,
   LogOut,
-  Moon,
   PawPrint,
   Receipt,
   ShieldCheck,
   Stethoscope,
-  Sun,
   Users,
 } from 'lucide-react'
 import { PLAN_META } from '@/features/dashboard/dashboardUtils'
 import { useLogout } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
-import { useThemeStore } from '@/store/themeStore'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 
 const ROL_LABELS_SIDEBAR = {
@@ -144,8 +141,6 @@ export default function AdminShell({
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const { logout } = useLogout()
-  const dark = useThemeStore((state) => state.dark)
-  const toggleDark = useThemeStore((state) => state.toggleDark)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
 
@@ -341,15 +336,6 @@ export default function AdminShell({
 
                 <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                   {actions}
-                  <button
-                    type="button"
-                    onClick={toggleDark}
-                    aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:border-border hover:bg-muted hover:text-foreground"
-                  >
-                    <Sun className={`absolute h-4 w-4 transition-all duration-200 ${dark ? 'scale-100 opacity-100' : 'scale-75 opacity-0'}`} />
-                    <Moon className={`absolute h-4 w-4 transition-all duration-200 ${dark ? 'scale-75 opacity-0' : 'scale-100 opacity-100'}`} />
-                  </button>
                 </div>
               </div>
 
