@@ -339,7 +339,7 @@ export default function AdminShell({
                   <Link
                     to="/perfil"
                     title={`${usuario?.nombre || 'Mi perfil'} · Ver perfil`}
-                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar text-xs font-semibold text-[#91e7e0] shadow-sm transition hover:ring-2 hover:ring-primary/40"
+                    className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar text-sm font-semibold text-[#91e7e0] shadow-sm transition hover:ring-2 hover:ring-primary/40"
                   >
                     {usuario?.foto ? (
                       <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
