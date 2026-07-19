@@ -336,6 +336,17 @@ export default function AdminShell({
 
                 <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                   {actions}
+                  <Link
+                    to="/perfil"
+                    title={`${usuario?.nombre || 'Mi perfil'} · Ver perfil`}
+                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar text-xs font-semibold text-[#91e7e0] shadow-sm transition hover:ring-2 hover:ring-primary/40"
+                  >
+                    {usuario?.foto ? (
+                      <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      usuarioIniciales
+                    )}
+                  </Link>
                 </div>
               </div>
 
