@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   CalendarClock,
   FileText,
-  FolderOpen,
   HeartPulse,
   LayoutDashboard,
   PawPrint,
@@ -27,7 +26,6 @@ import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
 import PacienteDrawer from '@/features/pacientes/PacienteDrawer'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
-import PacienteExpedienteDrawer from '@/features/pacientes/PacienteExpedienteDrawer'
 import { usePacientesResumen } from '@/features/pacientes/usePacientesResumen'
 import { usePacientesMascotas, SPECIES_OPTIONS } from '@/features/pacientes/usePacientesMascotas'
 import { useTutores } from '@/features/pacientes/useTutores'
@@ -281,14 +279,6 @@ export default function PacientesPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => mascotasHook.openExpediente(row)}
-                            className="inline-flex items-center gap-1.5 border border-border bg-foreground px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
-                          >
-                            <FolderOpen className="h-3.5 w-3.5" />
-                            Expediente
-                          </button>
                           {row.historiasTo && (
                             <Link to={row.historiasTo} className="inline-flex items-center border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
                               Historia
@@ -400,14 +390,6 @@ export default function PacientesPage() {
         onClose={tutoresHook.closeDrawer}
         onSubmit={tutoresHook.handleDrawerSubmit}
         isPending={tutoresHook.isPending}
-      />
-
-      {/* Drawer: Expediente del paciente */}
-      <PacienteExpedienteDrawer
-        open={mascotasHook.expedienteDrawerOpen}
-        mascota={mascotasHook.selectedMascota}
-        featureSet={featureSet}
-        onClose={mascotasHook.closeExpediente}
       />
     </AdminShell>
   )
