@@ -112,22 +112,20 @@ export function KpiCard({
 }) {
   return (
     <div
-      className={`flex h-full flex-col rounded-[24px] border bg-card px-4 py-4 shadow-card ${borderTone} ${className}`}
+      title={helper || undefined}
+      className={`flex h-full items-center gap-3 rounded-xl border bg-card px-3.5 py-2.5 shadow-card ${borderTone} ${className}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-4 text-3xl font-semibold leading-tight tabular-nums text-card-foreground [overflow-wrap:anywhere]">
-            {value}
-          </p>
-        </div>
-        <span className={`flex h-11 w-11 items-center justify-center border border-border bg-muted ${tone}`}>
-          {createElement(icon, { className: 'h-5 w-5' })}
-        </span>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted ${tone}`}>
+        {createElement(icon, { className: 'h-4 w-4' })}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="text-lg font-bold leading-tight tabular-nums text-card-foreground [overflow-wrap:anywhere]">
+          {value}
+        </p>
       </div>
-      {helper ? <p className="mt-4 text-sm leading-6 text-muted-foreground">{helper}</p> : null}
     </div>
   )
 }
@@ -152,20 +150,20 @@ export function DonutCard({
   emptyMessage,
   className = '',
   contentClassName = '',
-  chartSize = 220,
+  chartSize = 160,
 }) {
   const hasData = data.some((item) => item.value > 0)
 
   return (
     <div
-      className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-card ${className}`}
+      className={`overflow-hidden rounded-xl border border-border bg-card shadow-card ${className}`}
     >
-      <div className="border-b border-border px-5 py-4">
+      <div className="border-b border-border px-4 py-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-        {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{subtitle}</p> : null}
       </div>
-      <div className={`grid gap-5 p-5 2xl:grid-cols-[220px_minmax(0,1fr)] ${contentClassName}`.trim()}>
-        <div className="relative mx-auto w-full" style={{ maxWidth: `${chartSize}px`, height: `${chartSize}px` }}>
+      <div className={`grid items-center gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)] ${contentClassName}`.trim()}>
+        <div className="relative mx-auto" style={{ width: `${chartSize}px`, height: `${chartSize}px` }}>
           {hasData ? (
             <>
               <ResponsiveContainer width="100%" height="100%">
@@ -174,8 +172,8 @@ export function DonutCard({
                     data={data}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={62}
-                    outerRadius={90}
+                    innerRadius="68%"
+                    outerRadius="98%"
                     paddingAngle={3}
                     stroke="none"
                     startAngle={90}
@@ -192,7 +190,7 @@ export function DonutCard({
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   {centerLabel}
                 </span>
-                <span className="mt-1.5 text-2xl font-bold tabular-nums text-card-foreground">{centerValue}</span>
+                <span className="mt-1 text-xl font-bold tabular-nums text-card-foreground">{centerValue}</span>
               </div>
             </>
           ) : (

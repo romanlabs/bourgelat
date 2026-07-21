@@ -9,6 +9,8 @@ const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
+const VerificarEmailPage = lazy(() => import('@/pages/VerificarEmailPage'))
+const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
@@ -95,10 +97,12 @@ const router = createBrowserRouter([
           { path: '/auditoria', element: <Suspense fallback={<Loader />}><AuditoriaPage /></Suspense> },
           { path: '/inventario', element: <Suspense fallback={<Loader />}><InventarioPage /></Suspense> },
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage /></Suspense> },
+          { path: '/perfil', element: <Suspense fallback={<Loader />}><PerfilPage /></Suspense> },
         ],
       },
       { path: '/',       element: <HostAwareHome /> },
       { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
+      { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },

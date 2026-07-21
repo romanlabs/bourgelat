@@ -10,6 +10,9 @@ const {
   me,
   forgotPassword,
   resetPassword,
+  verificarEmail,
+  reenviarVerificacion,
+  cambiarPassword,
 } = require('../controllers/authController')
 const {
   iniciar: oauthIniciar,
@@ -120,6 +123,42 @@ router.post(
     validar,
   ],
   resetPassword
+)
+
+router.post(
+  '/verify-email',
+  limitadorAuth,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    validar,
+  ],
+  verificarEmail
+)
+
+router.post(
+  '/resend-verification',
+  limitadorAuth,
+  [
+    body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    validar,
+  ],
+  reenviarVerificacion
+)
+
+router.post(
+  '/cambiar-password',
+  limitadorAuth,
+  verificarToken,
+  [
+    body('passwordActual').notEmpty().withMessage('La contrasena actual es requerida'),
+    body('passwordNueva')
+      .matches(passwordFuerteRegex)
+      .withMessage(
+        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
+      ),
+    validar,
+  ],
+  cambiarPassword
 )
 
 router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)

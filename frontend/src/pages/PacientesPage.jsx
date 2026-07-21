@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   CalendarClock,
   FileText,
-  FolderOpen,
   HeartPulse,
   LayoutDashboard,
   PawPrint,
@@ -27,7 +26,6 @@ import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
 import PacienteDrawer from '@/features/pacientes/PacienteDrawer'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
-import PacienteExpedienteDrawer from '@/features/pacientes/PacienteExpedienteDrawer'
 import { usePacientesResumen } from '@/features/pacientes/usePacientesResumen'
 import { usePacientesMascotas, SPECIES_OPTIONS } from '@/features/pacientes/usePacientesMascotas'
 import { useTutores } from '@/features/pacientes/useTutores'
@@ -67,7 +65,15 @@ export default function PacientesPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
 
-  const [activeTab, setActiveTab] = useState('resumen')
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(() =>
+    TABS.some((tab) => tab.id === tabParam) ? tabParam : 'resumen'
+  )
+
+  useEffect(() => {
+    if (TABS.some((tab) => tab.id === tabParam)) setActiveTab(tabParam)
+  }, [tabParam])
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
   const featureSet = new Set(Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : [])
@@ -188,15 +194,61 @@ export default function PacientesPage() {
                 />
               </div>
 
-              <DonutCard
-                title="Especies registradas"
-                subtitle="Distribucion por especie de los pacientes cargados en el sistema."
-                data={resumenHook.speciesData}
-                centerLabel="Pacientes"
-                centerValue={formatNumber(resumenHook.mascotasResumen.length)}
-                formatter={formatNumber}
-                emptyMessage="Aun no hay pacientes para mostrar."
-              />
+              <div className="grid items-start gap-4 lg:grid-cols-12">
+                <DonutCard
+                  className="lg:col-span-3"
+                  title="Especies registradas"
+                  subtitle="Distribucion por especie de los pacientes."
+                  data={resumenHook.speciesData}
+                  centerLabel="Pacientes"
+                  centerValue={formatNumber(resumenHook.mascotasResumen.length)}
+                  formatter={formatNumber}
+                  emptyMessage="Aun no hay pacientes para mostrar."
+                  contentClassName="sm:grid-cols-1 justify-items-center text-center"
+                  chartSize={140}
+                />
+
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card lg:col-span-9">
+                  <div className="border-b border-border px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Ultimos pacientes registrados
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Acceso rapido a los pacientes agregados recientemente.
+                    </p>
+                  </div>
+                  {resumenHook.mascotasResumen.length > 0 ? (
+                    <div className="divide-y divide-border">
+                      {resumenHook.mascotasResumen.slice(0, 5).map((mascota) => (
+                        <button
+                          key={mascota.id}
+                          type="button"
+                          onClick={() => setActiveTab('pacientes')}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-muted/50"
+                        >
+                          <PetAvatar name={mascota.nombre} photo={mascota.fotoPerfil} size="h-9 w-9" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-foreground">
+                              {mascota.nombre}
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {[mascota.raza, mascota.Propietario?.nombre].filter(Boolean).join(' · ') ||
+                                'Sin tutor asignado'}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                            Ver lista
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-4 py-6 text-sm text-muted-foreground">
+                      Cuando registres pacientes apareceran aqui.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -281,14 +333,6 @@ export default function PacientesPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => mascotasHook.openExpediente(row)}
-                            className="inline-flex items-center gap-1.5 border border-border bg-foreground px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
-                          >
-                            <FolderOpen className="h-3.5 w-3.5" />
-                            Expediente
-                          </button>
                           {row.historiasTo && (
                             <Link to={row.historiasTo} className="inline-flex items-center border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
                               Historia
@@ -400,14 +444,6 @@ export default function PacientesPage() {
         onClose={tutoresHook.closeDrawer}
         onSubmit={tutoresHook.handleDrawerSubmit}
         isPending={tutoresHook.isPending}
-      />
-
-      {/* Drawer: Expediente del paciente */}
-      <PacienteExpedienteDrawer
-        open={mascotasHook.expedienteDrawerOpen}
-        mascota={mascotasHook.selectedMascota}
-        featureSet={featureSet}
-        onClose={mascotasHook.closeExpediente}
       />
     </AdminShell>
   )

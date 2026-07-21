@@ -85,6 +85,29 @@ export const useResetPassword = () =>
     mutationFn: authApi.resetPassword,
   })
 
+export const useVerificarEmail = () => {
+  const usuario = useAuthStore((s) => s.usuario)
+  const setUsuario = useAuthStore((s) => s.setUsuario)
+
+  return useMutation({
+    mutationFn: authApi.verificarEmail,
+    onSuccess: () => {
+      if (usuario) setUsuario({ ...usuario, emailVerificado: true })
+    },
+  })
+}
+
+export const useReenviarVerificacion = () =>
+  useMutation({
+    mutationFn: authApi.reenviarVerificacion,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Si el correo esta registrado, recibiras un nuevo enlace.')
+    },
+    onError: (error) => {
+      toast.error(obtenerMensajeError(error, 'No pudimos reenviar la verificacion'))
+    },
+  })
+
 export const useLogout = () => {
   const navigate = useNavigate()
   const clearAuth = useAuthStore((s) => s.clearAuth)

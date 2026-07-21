@@ -5,6 +5,23 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes admin-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes admin-drawer-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes admin-drawer-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes admin-drawer-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 /* Posición del video/imagen de login: centrado en desktop, animales visibles en móvil */
 .login-media { object-position: 70% 45%; }
 @media (min-width: 1024px) {

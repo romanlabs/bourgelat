@@ -138,6 +138,7 @@ const completarRegistro = async (req, res) => {
           rol: 'admin',
           clinicaId: clinica.id,
           activo: true,
+          emailVerificado: true,
         },
         { transaction }
       )
