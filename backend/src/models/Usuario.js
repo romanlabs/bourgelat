@@ -74,6 +74,12 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  emailVerificado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'true para cuentas OAuth (el proveedor ya lo garantiza) y usuarios verificados via email',
+  },
   intentosFallidos: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

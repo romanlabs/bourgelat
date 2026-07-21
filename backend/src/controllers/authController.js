@@ -8,6 +8,7 @@ const Clinica = require('../models/Clinica')
 const Usuario = require('../models/Usuario')
 const RefreshToken = require('../models/RefreshToken')
 const PasswordResetToken = require('../models/PasswordResetToken')
+const EmailVerificationToken = require('../models/EmailVerificationToken')
 const Suscripcion = require('../models/Suscripcion')
 const { appConfig } = require('../config/app')
 const { crearSuscripcionEsencial } = require('../config/planes')
@@ -24,7 +25,7 @@ const {
   guardarRefreshToken,
 } = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
-const { enviarEmailRecuperacionPassword } = require('../services/emailService')
+const { enviarEmailRecuperacionPassword, enviarEmailVerificacion } = require('../services/emailService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -99,6 +100,7 @@ const serializarUsuario = (usuario) => {
     cargo: usuario.cargo,
     tarjetaProfesional: usuario.tarjetaProfesional,
     proveedorAuth: usuario.proveedorAuth,
+    emailVerificado: usuario.emailVerificado,
     activo: usuario.activo,
   }
 }
@@ -236,6 +238,7 @@ const registro = async (req, res) => {
           clinicaId: clinica.id,
           telefono: telefonoNormalizado,
           activo: true,
+          emailVerificado: false,
         },
         { transaction }
       )
@@ -282,6 +285,29 @@ const registro = async (req, res) => {
     })
 
     delete resultado.clinica.dataValues.password
+
+    try {
+      const tokenVerificacion = crypto.randomBytes(32).toString('base64url')
+      const expiracionVerificacion = new Date(Date.now() + VERIFICATION_TOKEN_HORAS * 60 * 60 * 1000)
+
+      await EmailVerificationToken.create(
+        {
+          tokenHash: hashToken(tokenVerificacion),
+          expiracion: expiracionVerificacion,
+          usuarioId: resultado.usuarioAdmin.id,
+        },
+        { sinTenant: true }
+      )
+
+      await enviarEmailVerificacion({
+        para: resultado.usuarioAdmin.email,
+        nombre: resultado.usuarioAdmin.nombre || resultado.usuarioAdmin.email.split('@')[0],
+        urlVerificacion: `${urlFrontend()}/verificar-email#token=${tokenVerificacion}`,
+      })
+    } catch {
+      // No bloquea el registro si el envio de verificacion falla; el usuario
+      // puede reenviarla desde el banner una vez logueado.
+    }
 
     setAuthCookies(res, {
       accessToken: resultado.accessToken,
@@ -660,8 +686,9 @@ const me = async (req, res) => {
 }
 
 const RESET_TOKEN_MINUTOS = 30
+const VERIFICATION_TOKEN_HORAS = 24
 
-const hashResetToken = (token) =>
+const hashToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex')
 
 const urlFrontend = () =>
@@ -698,7 +725,7 @@ const forgotPassword = async (req, res) => {
     const expiracion = new Date(Date.now() + RESET_TOKEN_MINUTOS * 60 * 1000)
 
     await PasswordResetToken.create(
-      { tokenHash: hashResetToken(token), expiracion, usuarioId: usuario.id },
+      { tokenHash: hashToken(token), expiracion, usuarioId: usuario.id },
       { sinTenant: true }
     )
 
@@ -728,7 +755,7 @@ const resetPassword = async (req, res) => {
 
     const registro = await PasswordResetToken.findOne({
       where: {
-        tokenHash: hashResetToken(token),
+        tokenHash: hashToken(token),
         usado: false,
         expiracion: { [Op.gt]: new Date() },
       },
@@ -783,6 +810,104 @@ const resetPassword = async (req, res) => {
   }
 }
 
+const verificarEmail = async (req, res) => {
+  try {
+    const { token } = req.body
+
+    const registro = await EmailVerificationToken.findOne({
+      where: {
+        tokenHash: hashToken(token),
+        usado: false,
+        expiracion: { [Op.gt]: new Date() },
+      },
+      sinTenant: true,
+    })
+
+    if (!registro) {
+      return res.status(401).json({
+        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+      })
+    }
+
+    const usuario = await Usuario.findOne({
+      where: { id: registro.usuarioId },
+      sinTenant: true,
+    })
+
+    if (!usuario || !usuario.activo) {
+      return res.status(401).json({
+        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+      })
+    }
+
+    if (!usuario.emailVerificado) {
+      await sequelize.transaction(async (transaction) => {
+        await usuario.update({ emailVerificado: true }, { transaction })
+        await registro.update({ usado: true }, { transaction, sinTenant: true })
+      })
+
+      await registrarAuditoria({
+        accion: 'EMAIL_VERIFICADO',
+        entidad: 'Usuario',
+        entidadId: usuario.id,
+        descripcion: `Correo verificado para ${usuario.email}`,
+        req,
+        resultado: 'exitoso',
+      })
+    } else {
+      await registro.update({ usado: true }, { sinTenant: true })
+    }
+
+    return res.json({ message: 'Correo verificado correctamente.' })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
+// Mismo patron anti-enumeración de forgotPassword: siempre responde el mismo
+// mensaje genérico, exista o no la cuenta, ya esté verificada o sea OAuth.
+const reenviarVerificacion = async (req, res) => {
+  const mensajeGenerico =
+    'Si el correo esta registrado y aun no ha sido verificado, recibiras un nuevo enlace.'
+
+  try {
+    const email = normalizarEmail(req.body.email)
+    const usuario = await Usuario.findOne({ where: { email }, sinTenant: true })
+
+    if (
+      !usuario ||
+      !usuario.activo ||
+      usuario.emailVerificado ||
+      usuario.proveedorAuth !== 'local'
+    ) {
+      return res.json({ message: mensajeGenerico })
+    }
+
+    await EmailVerificationToken.update(
+      { usado: true },
+      { where: { usuarioId: usuario.id, usado: false }, sinTenant: true }
+    )
+
+    const token = crypto.randomBytes(32).toString('base64url')
+    const expiracion = new Date(Date.now() + VERIFICATION_TOKEN_HORAS * 60 * 60 * 1000)
+
+    await EmailVerificationToken.create(
+      { tokenHash: hashToken(token), expiracion, usuarioId: usuario.id },
+      { sinTenant: true }
+    )
+
+    await enviarEmailVerificacion({
+      para: usuario.email,
+      nombre: usuario.nombre || usuario.email.split('@')[0],
+      urlVerificacion: `${urlFrontend()}/verificar-email#token=${token}`,
+    })
+
+    return res.json({ message: mensajeGenerico })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
 // Cambio de contraseña estando autenticado: exige la actual y revoca las
 // demás sesiones (si alguien robó la cuenta, el cambio lo expulsa).
 const cambiarPassword = async (req, res) => {
@@ -802,6 +927,13 @@ const cambiarPassword = async (req, res) => {
       const proveedorNombre = usuario.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'
       return res.status(400).json({
         message: `Tu acceso es gestionado por ${proveedorNombre}; no tienes contrasena en Bourgelat`,
+      })
+    }
+
+    if (usuario.proveedorAuth === 'local' && !usuario.emailVerificado) {
+      return res.status(403).json({
+        message: 'Verifica tu correo antes de cambiar la contrasena',
+        code: 'EMAIL_NOT_VERIFIED',
       })
     }
 
@@ -855,5 +987,7 @@ module.exports = {
   me,
   forgotPassword,
   resetPassword,
+  verificarEmail,
+  reenviarVerificacion,
   cambiarPassword,
 }

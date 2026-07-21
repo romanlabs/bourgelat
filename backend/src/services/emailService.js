@@ -57,4 +57,30 @@ const enviarEmailRecuperacionPassword = async ({ para, nombre, urlReset }) => {
   return enviarEmail({ para, asunto, html, texto })
 }
 
-module.exports = { enviarEmail, enviarEmailRecuperacionPassword, smtpConfigurado }
+const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion }) => {
+  const asunto = 'Verifica tu correo en Bourgelat'
+  const texto = `Hola ${nombre},\n\nConfirma que este correo es tuyo abriendo este enlace (valido por 24 horas):\n\n${urlVerificacion}\n\nSi no creaste una cuenta en Bourgelat, ignora este correo.`
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">Verifica tu correo</h2>
+      <p>Hola ${nombre},</p>
+      <p>Confirma que este correo es tuyo para terminar de asegurar tu cuenta en Bourgelat.</p>
+      <p style="margin: 24px 0;">
+        <a href="${urlVerificacion}"
+           style="background: #10b981; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          Verificar mi correo
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #51697d;">El enlace es valido por 24 horas y solo puede usarse una vez.</p>
+      <p style="font-size: 13px; color: #51697d;">Si no creaste una cuenta en Bourgelat, ignora este correo.</p>
+    </div>
+  `
+  return enviarEmail({ para, asunto, html, texto })
+}
+
+module.exports = {
+  enviarEmail,
+  enviarEmailRecuperacionPassword,
+  enviarEmailVerificacion,
+  smtpConfigurado,
+}

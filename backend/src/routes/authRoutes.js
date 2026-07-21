@@ -10,6 +10,8 @@ const {
   me,
   forgotPassword,
   resetPassword,
+  verificarEmail,
+  reenviarVerificacion,
   cambiarPassword,
 } = require('../controllers/authController')
 const {
@@ -121,6 +123,26 @@ router.post(
     validar,
   ],
   resetPassword
+)
+
+router.post(
+  '/verify-email',
+  limitadorAuth,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    validar,
+  ],
+  verificarEmail
+)
+
+router.post(
+  '/resend-verification',
+  limitadorAuth,
+  [
+    body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    validar,
+  ],
+  reenviarVerificacion
 )
 
 router.post(
