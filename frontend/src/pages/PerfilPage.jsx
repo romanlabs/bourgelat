@@ -4,13 +4,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Camera, Eye, EyeOff, LogOut, Moon, ShieldCheck, Sun, Trash2 } from 'lucide-react'
+import { Camera, Eye, EyeOff, LogOut, ShieldCheck, Trash2 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { PLAN_META } from '@/features/dashboard/dashboardUtils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
-import { useThemeStore } from '@/store/themeStore'
 import { hasRole } from '@/lib/permissions'
 import {
   useActualizarPerfil,
@@ -348,28 +347,6 @@ function CardSeguridad({ usuario }) {
   )
 }
 
-function CardPreferencias() {
-  const dark = useThemeStore((s) => s.dark)
-  const toggleDark = useThemeStore((s) => s.toggleDark)
-
-  return (
-    <DashboardPanel title="Preferencias" subtitle="Cómo se ve la plataforma para ti.">
-      <div className="flex items-center justify-between rounded-lg border border-border p-4">
-        <div>
-          <p className="text-sm font-medium text-foreground">Tema de la interfaz</p>
-          <p className="text-xs text-muted-foreground">
-            {dark ? 'Modo oscuro activo' : 'Modo claro activo'} — solo aplica a tu sesión.
-          </p>
-        </div>
-        <Button type="button" variant="outline" onClick={toggleDark}>
-          {dark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-          {dark ? 'Cambiar a claro' : 'Cambiar a oscuro'}
-        </Button>
-      </div>
-    </DashboardPanel>
-  )
-}
-
 function CardSuscripcion({ suscripcion }) {
   const plan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
   const dias = diasHasta(suscripcion?.fechaFin)
@@ -420,7 +397,6 @@ export default function PerfilPage() {
       <div className="grid gap-6">
         <CardIdentidad usuario={usuario} />
         <CardSeguridad usuario={usuario} />
-        <CardPreferencias />
         {esAdmin && suscripcion ? <CardSuscripcion suscripcion={suscripcion} /> : null}
       </div>
     </AdminShell>
