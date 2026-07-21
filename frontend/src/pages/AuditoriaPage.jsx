@@ -226,7 +226,7 @@ export default function AuditoriaPage() {
           />
         </div>
 
-        <div className="grid gap-5 2xl:grid-cols-[420px_420px_minmax(0,1fr)]">
+        <div className="grid gap-4 lg:grid-cols-2">
           <DonutCard
             title="Resultado del evento"
             subtitle="Lectura rapida entre acciones exitosas y fallidas."
@@ -235,6 +235,7 @@ export default function AuditoriaPage() {
             centerValue={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
             formatter={formatNumber}
             emptyMessage="Aun no hay datos para mostrar."
+            chartSize={140}
           />
           <DonutCard
             title="Distribucion por entidad"
@@ -244,24 +245,26 @@ export default function AuditoriaPage() {
             centerValue={formatNumber(entityData.length)}
             formatter={formatNumber}
             emptyMessage="Aun no hay entidades para mostrar."
+            chartSize={140}
           />
-          <DashboardPanel
-            title="Criterio de seguimiento"
-            subtitle="La auditoria sirve para reconstruir que paso, quien lo hizo y si el sistema acepto o rechazo la accion."
-          >
-            <div className="grid gap-4">
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticacion, cambios de usuarios, anulaciones y bloqueos clinicos.
-              </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Cuando una accion afecte caja, historias o permisos, esta vista te da responsable, momento y descripcion en un solo lugar.
-              </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operacion sin depender de capturas o recuerdos.
-              </div>
-            </div>
-          </DashboardPanel>
         </div>
+
+        <DashboardPanel
+          title="Criterio de seguimiento"
+          subtitle="La auditoria sirve para reconstruir que paso, quien lo hizo y si el sistema acepto o rechazo la accion."
+        >
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticacion, cambios de usuarios, anulaciones y bloqueos clinicos.
+            </div>
+            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              Cuando una accion afecte caja, historias o permisos, esta vista te da responsable, momento y descripcion en un solo lugar.
+            </div>
+            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operacion sin depender de capturas o recuerdos.
+            </div>
+          </div>
+        </DashboardPanel>
 
         <DashboardPanel
           title="Actividad registrada"

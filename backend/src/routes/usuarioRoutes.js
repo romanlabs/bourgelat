@@ -8,9 +8,12 @@ const {
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,
+  actualizarMiPerfil,
+  subirFotoMiPerfil,
 } = require('../controllers/usuarioController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
+const { uploadUsuarioFotoSingle } = require('../middlewares/uploadUsuarioFotoMiddleware')
 
 const router = express.Router()
 const passwordFuerteRegex =
@@ -49,6 +52,33 @@ router.post(
   ],
   crearUsuario
 )
+
+// Auto-servicio del usuario autenticado (cualquier rol). Registradas antes de
+// las rutas /:id para que "me" no se interprete como un id.
+router.patch(
+  '/me',
+  verificarToken,
+  [
+    body('nombre')
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage('El nombre no puede estar vacio')
+      .isLength({ min: 3, max: 120 })
+      .withMessage('El nombre debe tener entre 3 y 120 caracteres'),
+    body('telefono')
+      .optional({ nullable: true })
+      .custom((value) => !value || telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
+      .withMessage('El celular laboral debe tener 10 digitos colombianos y comenzar por 3'),
+    body('cargo').optional({ nullable: true }).trim().isLength({ max: 120 }),
+    body('foto').optional({ nullable: true }).trim().isLength({ max: 500 }),
+    body('tarjetaProfesional').optional({ nullable: true }).trim().isLength({ max: 60 }),
+    validar,
+  ],
+  actualizarMiPerfil
+)
+
+router.post('/me/foto', verificarToken, uploadUsuarioFotoSingle, subirFotoMiPerfil)
 
 router.get('/', verificarToken, verificarRol('admin', 'superadmin'), obtenerUsuarios)
 router.get(

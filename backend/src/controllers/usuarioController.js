@@ -421,6 +421,112 @@ const toggleUsuario = async (req, res) => {
   }
 }
 
+const esVeterinario = ({ rol, rolesAdicionales = [] }) =>
+  rol === 'veterinario' || rolesAdicionales.includes('veterinario')
+
+const serializarPerfil = (usuario) => ({
+  id: usuario.id,
+  nombre: usuario.nombre,
+  email: usuario.email,
+  rol: usuario.rol,
+  rolesAdicionales: usuario.rolesAdicionales || [],
+  clinicaId: usuario.clinicaId,
+  telefono: usuario.telefono,
+  foto: usuario.foto,
+  cargo: usuario.cargo,
+  tarjetaProfesional: usuario.tarjetaProfesional,
+  proveedorAuth: usuario.proveedorAuth,
+  activo: usuario.activo,
+})
+
+// Auto-edición del usuario autenticado: nunca toca rol, email ni activo.
+const actualizarMiPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuario.findOne({
+      where: { id: req.usuario.id },
+      sinTenant: true,
+    })
+
+    if (!usuario || !usuario.activo) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    const cambios = {}
+
+    if (req.body.nombre !== undefined) {
+      const nombre = normalizarTexto(req.body.nombre)
+      if (!nombre) return res.status(400).json({ message: 'El nombre no puede estar vacio' })
+      cambios.nombre = nombre
+    }
+
+    if (req.body.telefono !== undefined) {
+      const telefono = normalizarTelefono(req.body.telefono)
+      if (telefono && !validarTelefonoLaboral(telefono)) {
+        return res.status(400).json({
+          message: 'El celular laboral debe tener 10 digitos colombianos y comenzar por 3',
+        })
+      }
+      cambios.telefono = telefono || null
+    }
+
+    if (req.body.cargo !== undefined) {
+      cambios.cargo = normalizarTexto(req.body.cargo).slice(0, 120) || null
+    }
+
+    if (req.body.foto !== undefined) {
+      cambios.foto = req.body.foto ? String(req.body.foto).slice(0, 500) : null
+    }
+
+    if (req.body.tarjetaProfesional !== undefined) {
+      // Solo aplica a quien atiende (rol principal o adicional veterinario)
+      if (!esVeterinario(usuario)) {
+        return res.status(403).json({
+          message: 'La tarjeta profesional solo aplica a usuarios con rol veterinario',
+        })
+      }
+      cambios.tarjetaProfesional =
+        normalizarTexto(req.body.tarjetaProfesional).slice(0, 60) || null
+    }
+
+    if (Object.keys(cambios).length === 0) {
+      return res.status(400).json({ message: 'No hay cambios para aplicar' })
+    }
+
+    const datosAnteriores = serializarPerfil(usuario)
+    await usuario.update(cambios)
+
+    await registrarAuditoria({
+      accion: 'ACTUALIZAR_PERFIL',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Perfil actualizado por ${usuario.email}`,
+      datosAnteriores,
+      datosNuevos: serializarPerfil(usuario),
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({ message: 'Perfil actualizado', usuario: serializarPerfil(usuario) })
+  } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
+const subirFotoMiPerfil = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se recibio ninguna foto' })
+    }
+
+    const { buildPublicUploadUrl, USUARIOS_SUBDIR } = require('../config/uploads')
+    const foto = buildPublicUploadUrl(req, `${USUARIOS_SUBDIR}/${req.file.filename}`)
+
+    res.json({ foto })
+  } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
 module.exports = {
   crearUsuario,
   obtenerUsuarios,
@@ -428,4 +534,6 @@ module.exports = {
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,
+  actualizarMiPerfil,
+  subirFotoMiPerfil,
 }

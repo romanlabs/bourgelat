@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { formatearEdad } from '@/lib/utils'
@@ -29,10 +30,19 @@ const SPECIES_LABELS = {
 
 export function usePacientesMascotas({ enabled, featureSet }) {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const buscarParam = searchParams.get('tab') === 'pacientes' ? searchParams.get('buscar') : null
 
-  const [buscar, setBuscar] = useState('')
+  const [buscar, setBuscar] = useState(() => buscarParam || '')
   const [especie, setEspecie] = useState('todas')
   const [pagina, setPagina] = useState(1)
+
+  useEffect(() => {
+    if (buscarParam !== null) {
+      setBuscar(buscarParam)
+      setPagina(1)
+    }
+  }, [buscarParam])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [ownerSearch, setOwnerSearch] = useState('')
 

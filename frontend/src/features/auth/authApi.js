@@ -47,4 +47,14 @@ export const authApi = {
     const { data } = await api.post('/auth/reset-password', { token, password })
     return data
   },
+
+  verificarEmail: async ({ token }) => {
+    const { data } = await api.post('/auth/verify-email', { token })
+    return data
+  },
+
+  reenviarVerificacion: async ({ email }) => {
+    const { data } = await api.post('/auth/resend-verification', { email })
+    return data
+  },
 }

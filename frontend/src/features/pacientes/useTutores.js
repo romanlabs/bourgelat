@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
@@ -16,9 +17,18 @@ export const DOCUMENT_OPTIONS = [
 
 export function useTutores({ enabled }) {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const buscarParam = searchParams.get('tab') === 'tutores' ? searchParams.get('buscar') : null
 
-  const [buscar, setBuscar] = useState('')
+  const [buscar, setBuscar] = useState(() => buscarParam || '')
   const [pagina, setPagina] = useState(1)
+
+  useEffect(() => {
+    if (buscarParam !== null) {
+      setBuscar(buscarParam)
+      setPagina(1)
+    }
+  }, [buscarParam])
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const buscarDiferido = useDebouncedValue(buscar.trim())
