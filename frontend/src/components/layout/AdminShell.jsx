@@ -29,6 +29,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
+import QuickCreateMenu from './QuickCreateMenu'
 
 const ROL_LABELS_SIDEBAR = {
   admin: 'Administrador',
@@ -96,30 +97,6 @@ function NavDrawerLink({ item, active, onNavigate }) {
         )}
       />
       <span className="truncate">{item.label}</span>
-    </Link>
-  )
-}
-
-function QuickActionLink({ item }) {
-  const Icon = item.icon
-
-  return (
-    <Link
-      to={item.to}
-      className={cn(
-        'group flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 transition',
-        item.cardHover || 'hover:border-primary/30 hover:bg-primary/5'
-      )}
-    >
-      <span
-        className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
-          item.accent || 'bg-muted text-foreground'
-        )}
-      >
-        <Icon className="h-[18px] w-[18px]" />
-      </span>
-      <p className="truncate text-sm font-semibold text-card-foreground">{item.label}</p>
     </Link>
   )
 }
@@ -574,25 +551,14 @@ export default function AdminShell({
               ) : null}
             </div>
 
-            {actions ? (
-              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">{actions}</div>
+            {actions || visibleQuickActions.length > 0 ? (
+              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                {actions}
+                <QuickCreateMenu actions={visibleQuickActions} />
+              </div>
             ) : null}
           </div>
         </div>
-
-        {visibleQuickActions.length > 0 ? (
-          <section className="border-b border-border bg-card pb-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Acciones rapidas
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {visibleQuickActions.map((item) => (
-                <QuickActionLink key={item.key} item={item} />
-              ))}
-            </div>
-          </section>
-        ) : null}
 
         {children}
       </main>

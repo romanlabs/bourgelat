@@ -1250,7 +1250,6 @@ export default function DashboardPage() {
       }
       showQuickActions
       quickActions={quickActions}
-      asideNote="Usa las acciones rapidas para entrar directo al modulo si necesitas mas contexto primero."
     >
       <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
 
