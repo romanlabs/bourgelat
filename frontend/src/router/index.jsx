@@ -10,6 +10,7 @@ const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage')
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
 const VerificarEmailPage = lazy(() => import('@/pages/VerificarEmailPage'))
+const OAuthPopupCallbackPage = lazy(() => import('@/pages/OAuthPopupCallbackPage'))
 const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
@@ -78,6 +79,7 @@ const router = createBrowserRouter([
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
           { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
+          { path: '/oauth/popup-callback', element: <Suspense fallback={<Loader />}><OAuthPopupCallbackPage /></Suspense> },
           { path: '/recuperar-password', element: <Suspense fallback={<Loader />}><RecuperarPasswordPage /></Suspense> },
           { path: '/restablecer-password', element: <Suspense fallback={<Loader />}><RestablecerPasswordPage /></Suspense> },
         ],
