@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
-import { useLogin } from '@/features/auth/useAuth'
+import { useLogin, useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
 
@@ -24,10 +24,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { mutate: login, isPending } = useLogin()
   const location = useLocation()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [registroAbierto, setRegistroAbierto] = useState(
     () => searchParams.get('registro') === '1'
   )
+  const [tokenOnboardingOauth, setTokenOnboardingOauth] = useState(null)
+  const { mutate: completarRegistroOauth, isPending: completandoOauth } = useCompletarRegistroOauth()
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.tipo === 'oauth-exito') {
+        navigate('/dashboard', { replace: true })
+      } else if (event.data?.tipo === 'oauth-nuevo' && event.data.token) {
+        setTokenOnboardingOauth(event.data.token)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [navigate])
 
   const handleRegistroOpenChange = (abierto) => {
     setRegistroAbierto(abierto)
@@ -158,6 +174,36 @@ export default function LoginPage() {
       </div>
 
       <RegistroDialog open={registroAbierto} onOpenChange={handleRegistroOpenChange} />
+
+      {tokenOnboardingOauth ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-[380px] rounded-2xl border border-border bg-card p-6 shadow-lg">
+            <h2 className="text-lg font-semibold text-foreground">Un último paso</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ¿Cómo se llama tu clínica?
+            </p>
+            <form
+              className="mt-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const nombreClinica = new FormData(e.currentTarget).get('nombreClinica')
+                completarRegistroOauth({ token: tokenOnboardingOauth, nombreClinica })
+              }}
+            >
+              <input
+                name="nombreClinica"
+                type="text"
+                required
+                placeholder="Clínica Veterinaria Bourgelat"
+                className={inputClass}
+              />
+              <Button type="submit" disabled={completandoOauth} className="h-11 w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+                {completandoOauth ? 'Creando cuenta...' : 'Continuar'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
