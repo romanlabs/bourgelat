@@ -27,6 +27,7 @@ import {
   DonutCard,
   EmptyModuleState,
   KpiCard,
+  KpiGrid,
   LinePanel,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -665,34 +666,40 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={CalendarClock}
-            label="Citas del mes"
-            value={formatNumber(citasQuery.data?.totalCitas || 0)}
-            helper="Todas las citas registradas dentro del periodo actual."
-          />
-          <KpiCard
-            icon={ShieldCheck}
-            label="Asistencia"
-            value={citasQuery.data?.tasaAsistencia || '0%'}
-            helper="Relacion de citas completadas sobre el total del periodo."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={Stethoscope}
-            label="Citas de hoy"
-            value={formatNumber(citasHoy)}
-            helper="Corte diario directamente desde el dashboard general."
-          />
-          <KpiCard
-            icon={CircleAlert}
-            label="Pendientes hoy"
-            value={formatNumber(citasPendientesHoy)}
-            helper="Atenciones aun marcadas como programadas."
-            tone="text-amber-700"
-          />
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'citas-mes',
+              icon: CalendarClock,
+              label: 'Citas del mes',
+              value: formatNumber(citasQuery.data?.totalCitas || 0),
+              helper: 'Todas las citas registradas dentro del periodo actual.',
+            },
+            {
+              id: 'asistencia',
+              icon: ShieldCheck,
+              label: 'Asistencia',
+              value: citasQuery.data?.tasaAsistencia || '0%',
+              helper: 'Relacion de citas completadas sobre el total del periodo.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'citas-hoy',
+              icon: Stethoscope,
+              label: 'Citas de hoy',
+              value: formatNumber(citasHoy),
+              helper: 'Corte diario directamente desde el dashboard general.',
+            },
+            {
+              id: 'pendientes-hoy',
+              icon: CircleAlert,
+              label: 'Pendientes hoy',
+              value: formatNumber(citasPendientesHoy),
+              helper: 'Atenciones aun marcadas como programadas.',
+              tone: 'text-amber-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-2">
           <DonutCard
@@ -737,44 +744,49 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Wallet}
-            label="Ingresos del periodo"
-            value={formatCurrency(ingresosQuery.data?.totalIngresos || 0)}
-            helper="Suma total entre facturas emitidas y pagadas dentro del mes."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={Receipt}
-            label="Facturas"
-            value={formatNumber(totalFacturas)}
-            helper="Numero de facturas emitidas o pagadas en el periodo."
-          />
-          <KpiCard
-            icon={BarChart3}
-            label="Promedio por factura"
-            value={formatCurrency(promedioFactura)}
-            helper="Ticket promedio del mes actual."
-            tone="text-primary"
-          />
-          <KpiCard
-            icon={Wallet}
-            label="Ingresos de hoy"
-            value={formatCurrency(ingresosHoy)}
-            helper="Facturado hoy en el modulo de caja."
-            tone="text-primary"
-          />
-          {mostrarDian ? (
-            <KpiCard
-              icon={ShieldAlert}
-              label="Control DIAN"
-              value={formatNumber(dianErrores)}
-              helper={`Facturas rechazadas o con error tecnico. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`}
-              tone="text-violet-700"
-            />
-          ) : null}
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'ingresos-periodo',
+              icon: Wallet,
+              label: 'Ingresos del periodo',
+              value: formatCurrency(ingresosQuery.data?.totalIngresos || 0),
+              helper: 'Suma total entre facturas emitidas y pagadas dentro del mes.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'facturas',
+              icon: Receipt,
+              label: 'Facturas',
+              value: formatNumber(totalFacturas),
+              helper: 'Numero de facturas emitidas o pagadas en el periodo.',
+            },
+            {
+              id: 'promedio-factura',
+              icon: BarChart3,
+              label: 'Promedio por factura',
+              value: formatCurrency(promedioFactura),
+              helper: 'Ticket promedio del mes actual.',
+              tone: 'text-primary',
+            },
+            {
+              id: 'ingresos-hoy',
+              icon: Wallet,
+              label: 'Ingresos de hoy',
+              value: formatCurrency(ingresosHoy),
+              helper: 'Facturado hoy en el modulo de caja.',
+              tone: 'text-primary',
+            },
+            mostrarDian && {
+              id: 'control-dian',
+              icon: ShieldAlert,
+              label: 'Control DIAN',
+              value: formatNumber(dianErrores),
+              helper: `Facturas rechazadas o con error tecnico. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
+              tone: 'text-violet-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_420px]">
           <LinePanel
@@ -839,35 +851,41 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Boxes}
-            label="Productos activos"
-            value={formatNumber(resumenInventario.totalProductos || 0)}
-            helper="Productos actualmente activos dentro del inventario."
-          />
-          <KpiCard
-            icon={Wallet}
-            label="Valor inventariado"
-            value={formatCurrency(resumenInventario.valorTotalInventario || 0)}
-            helper="Valor de venta estimado del inventario registrado."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={CircleAlert}
-            label="Bajo stock"
-            value={formatNumber(resumenInventario.bajoStock || 0)}
-            helper="Productos con stock por debajo del minimo definido."
-            tone="text-amber-700"
-          />
-          <KpiCard
-            icon={Receipt}
-            label="Vencimientos"
-            value={formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0))}
-            helper="Suma entre productos vencidos y proximos a vencer."
-            tone="text-rose-700"
-          />
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'productos-activos',
+              icon: Boxes,
+              label: 'Productos activos',
+              value: formatNumber(resumenInventario.totalProductos || 0),
+              helper: 'Productos actualmente activos dentro del inventario.',
+            },
+            {
+              id: 'valor-inventariado',
+              icon: Wallet,
+              label: 'Valor inventariado',
+              value: formatCurrency(resumenInventario.valorTotalInventario || 0),
+              helper: 'Valor de venta estimado del inventario registrado.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'bajo-stock',
+              icon: CircleAlert,
+              label: 'Bajo stock',
+              value: formatNumber(resumenInventario.bajoStock || 0),
+              helper: 'Productos con stock por debajo del minimo definido.',
+              tone: 'text-amber-700',
+            },
+            {
+              id: 'vencimientos',
+              icon: Receipt,
+              label: 'Vencimientos',
+              value: formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)),
+              helper: 'Suma entre productos vencidos y proximos a vencer.',
+              tone: 'text-rose-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1.45fr)]">
           <DonutCard

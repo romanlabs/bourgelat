@@ -130,6 +130,34 @@ export function KpiCard({
   )
 }
 
+/**
+ * Grilla responsiva de indicadores: 4 columnas en escritorio (>=1024px),
+ * 2 en tablet (>=640px) y 1 en movil.
+ *
+ * Los items falsy se descartan, de modo que quien la usa puede condicionar un KPI
+ * segun el plan de la clinica (`mostrarDian && {...}`) sin armar el arreglo aparte.
+ */
+export function KpiGrid({ items, className = '' }) {
+  const visibles = (items || []).filter(Boolean)
+  if (visibles.length === 0) return null
+
+  return (
+    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 ${className}`.trim()}>
+      {visibles.map((item) => (
+        <KpiCard
+          key={item.id || item.label}
+          icon={item.icon}
+          label={item.label}
+          value={item.value}
+          helper={item.helper}
+          tone={item.tone}
+          borderTone={item.borderTone}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function StatusPill({ children, tone = 'border-border bg-muted text-foreground' }) {
   return (
     <span
