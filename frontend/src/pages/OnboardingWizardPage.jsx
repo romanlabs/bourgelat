@@ -144,6 +144,7 @@ export default function OnboardingWizardPage() {
                   placeholder="Número de contacto"
                   className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
+                <p className="mt-1 text-xs text-muted-foreground">Formato: 3001234567 (sin +57)</p>
               </div>
             </div>
           </div>

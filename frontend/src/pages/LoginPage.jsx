@@ -36,7 +36,12 @@ export default function LoginPage() {
     const handler = (event) => {
       if (event.origin !== window.location.origin) return
       if (event.data?.tipo === 'oauth-exito') {
-        navigate('/dashboard', { replace: true })
+        // Hard redirect (no navigate()): la sesión OAuth solo dejó cookies
+        // httpOnly, y el authStore (Zustand) sigue vacío en esta pestaña. Un
+        // navigate() de react-router no remonta App ni vuelve a correr el
+        // AuthBootstrap de App.jsx que llama a authApi.me(). Necesitamos una
+        // carga completa para poblar el store, igual que useLogout/useLogin.
+        window.location.assign('/dashboard')
       } else if (event.data?.tipo === 'oauth-nuevo' && event.data.token) {
         setTokenOnboardingOauth(event.data.token)
       }
