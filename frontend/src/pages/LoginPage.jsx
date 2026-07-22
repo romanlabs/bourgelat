@@ -78,13 +78,18 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-10">
-      <Logo className="mb-8" />
+      <div className="w-full max-w-[420px] text-center">
+        <Logo className="justify-center" />
 
-      <div className="w-full max-w-[420px] rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Inicia sesión en tu clínica
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
+          Ingresa a tu cuenta
         </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Gestiona tu clínica en un solo lugar
+        </p>
+      </div>
 
+      <div className="mt-8 w-full max-w-[420px] text-left">
         {searchParams.get('error') === 'oauth' ? (
           <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
             No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
@@ -113,9 +118,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Contraseña
-            </label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-sm font-medium text-foreground">Contraseña</label>
+              <Link to="/recuperar-password" className="text-sm font-medium text-primary hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <div className="relative">
               <input
                 {...passwordField}
@@ -134,11 +142,6 @@ export default function LoginPage() {
               </button>
             </div>
             {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
-            <div className="mt-2 text-right">
-              <Link to="/recuperar-password" className="text-sm font-medium text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
           </div>
 
           <Button
@@ -146,7 +149,7 @@ export default function LoginPage() {
             disabled={isPending}
             className="h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
-            {isPending ? 'Ingresando...' : 'Entrar'}
+            {isPending ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>
 
