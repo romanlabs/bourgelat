@@ -6,13 +6,16 @@ import {
   BarChart3,
   Boxes,
   CalendarClock,
+  CalendarX,
   CircleAlert,
+  FileText,
   LayoutDashboard,
   PawPrint,
   Receipt,
   ShieldAlert,
   ShieldCheck,
   Stethoscope,
+  UserX,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -146,47 +149,101 @@ function CommandPanel({ title, subtitle, action, className = '', children }) {
   )
 }
 
-function TacticalAlertStrip({ alerts }) {
-  if (alerts.length === 0) return null
+/**
+ * Bloque unico del dia: primero lo que puede romper la operacion (alertas
+ * urgentes) y debajo el pulso compacto de hoy. A diferencia de la tira tactica
+ * anterior, se renderiza siempre, porque aunque no haya alertas el resumen del
+ * dia sigue siendo la razon de ser del Command Center.
+ */
+function TodayAlerts({ alerts, summary }) {
+  const hayAlertas = alerts.length > 0
+  const chips = summary.filter(Boolean)
 
   return (
-    <section className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-          <ShieldAlert className="h-3.5 w-3.5" />
-        </span>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
-          Tira tactica 8:00 AM
-          <span className="ml-2 font-normal normal-case tracking-normal text-destructive/70">
-            solo aparece cuando hay algo que puede romper la operacion de hoy
-          </span>
-        </p>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2.5">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className="flex min-w-[260px] flex-1 items-center gap-3 rounded-lg border border-destructive/20 bg-card/80 px-3.5 py-2.5"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-destructive">{alert.title}</p>
-                <span className="shrink-0 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                  Urgente
-                </span>
-              </div>
-              <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
-            </div>
-            <Link
-              to={alert.to}
-              className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive hover:underline"
-            >
-              {alert.actionLabel}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+    <section
+      className={cn(
+        'overflow-hidden rounded-xl border',
+        hayAlertas ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card shadow-card'
+      )}
+    >
+      {hayAlertas ? (
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <ShieldAlert className="h-3.5 w-3.5" />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
+              Requiere accion hoy
+            </p>
           </div>
-        ))}
+
+          <div className="mt-3 flex flex-wrap gap-2.5">
+            {alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="flex min-w-[260px] flex-1 items-center gap-3 rounded-lg border border-destructive/20 bg-card/80 px-3.5 py-2.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-destructive">{alert.title}</p>
+                    <span className="shrink-0 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                      Urgente
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
+                </div>
+                <Link
+                  to={alert.to}
+                  className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive hover:underline"
+                >
+                  {alert.actionLabel}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3',
+          hayAlertas ? 'border-t border-destructive/20 bg-card/60' : ''
+        )}
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Hoy
+        </p>
+
+        {chips.map((chip) => {
+          const Icon = chip.icon
+          const Wrapper = chip.to ? Link : 'div'
+          const wrapperProps = chip.to ? { to: chip.to } : {}
+
+          return (
+            <Wrapper
+              key={chip.id}
+              {...wrapperProps}
+              title={chip.helper}
+              className={cn(
+                'flex items-center gap-2.5 rounded-lg',
+                chip.to ? 'transition hover:opacity-70' : ''
+              )}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {chip.label}
+                </span>
+                <span className="text-base font-bold tabular-nums text-card-foreground">
+                  {chip.value}
+                </span>
+              </span>
+            </Wrapper>
+          )
+        })}
       </div>
     </section>
   )
@@ -603,9 +660,11 @@ export default function DashboardPage() {
   }, [alertasInventario, dianErrores, diasRestantes])
 
   const todayBridgeRows = useMemo(() => {
+    // Tope de 5 para que el Command Center entre sin scroll en 1366x768.
+    // "Ver agenda completa" es la salida cuando el dia trae mas pacientes.
     const filtered = [...citasHoyRows]
       .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
-      .slice(0, 12)
+      .slice(0, 5)
 
     if (usuario?.rol === 'veterinario' && usuario?.id) {
       return [
@@ -616,10 +675,76 @@ export default function DashboardPage() {
     return filtered
   }, [citasHoyRows, usuario])
 
+  const sinDocumentar = useMemo(
+    () =>
+      citasHoyRows.filter(
+        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
+      ).length,
+    [citasHoyRows]
+  )
+
   const ingresosHoy = useMemo(() => {
     const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
     return entry?.total ?? 0
   }, [ingresosPorDia, hoy])
+
+  // Pulso del dia: el Command Center es el unico dueno de estas cifras.
+  const todaySummary = useMemo(
+    () => [
+      {
+        id: 'citas-hoy',
+        icon: CalendarClock,
+        label: 'Citas de hoy',
+        value: formatNumber(citasHoy),
+        helper: 'Citas agendadas para la fecha de hoy.',
+        to: puedeAbrirAgenda ? '/agenda' : null,
+      },
+      {
+        id: 'pendientes',
+        icon: CircleAlert,
+        label: 'Pendientes',
+        value: formatNumber(citasPendientesHoy),
+        helper: 'Atenciones de hoy aun marcadas como programadas.',
+        to: puedeAbrirAgenda ? '/agenda' : null,
+      },
+      puedeAbrirHistorias && {
+        id: 'sin-documentar',
+        icon: FileText,
+        label: 'Sin documentar',
+        value: formatNumber(sinDocumentar),
+        helper: 'Consultas de hoy sin historia clinica registrada.',
+        to: '/historias',
+      },
+      {
+        id: 'stock-critico',
+        icon: Boxes,
+        label: 'Stock critico',
+        value: formatNumber(alertasInventario),
+        helper: 'Productos bajo el minimo definido.',
+        to: puedeVerInventario ? '/inventario' : null,
+      },
+      puedeVerIngresos && {
+        id: 'ingresos-hoy',
+        icon: Wallet,
+        label: 'Ingresos de hoy',
+        value: formatCurrency(ingresosHoy),
+        helper: 'Facturado hoy en el modulo de caja.',
+        to: puedeAbrirCaja ? '/finanzas' : null,
+      },
+    ],
+    [
+      alertasInventario,
+      citasHoy,
+      citasPendientesHoy,
+      ingresosHoy,
+      puedeAbrirAgenda,
+      puedeAbrirCaja,
+      puedeAbrirHistorias,
+      puedeVerIngresos,
+      puedeVerInventario,
+      sinDocumentar,
+    ]
+  )
 
   if (!esAdministrador) {
     return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
@@ -628,7 +753,7 @@ export default function DashboardPage() {
   const renderSummaryOverview = () => {
     return (
       <div className="space-y-5">
-        {tacticalAlerts.length > 0 ? <TacticalAlertStrip alerts={tacticalAlerts} /> : null}
+        <TodayAlerts alerts={tacticalAlerts} summary={todaySummary} />
 
         <CommandPanel
           className="ring-1 ring-primary/15 shadow-lg"
@@ -684,18 +809,19 @@ export default function DashboardPage() {
               tone: 'text-emerald-700',
             },
             {
-              id: 'citas-hoy',
-              icon: Stethoscope,
-              label: 'Citas de hoy',
-              value: formatNumber(citasHoy),
-              helper: 'Corte diario directamente desde el dashboard general.',
+              id: 'canceladas',
+              icon: CalendarX,
+              label: 'Canceladas',
+              value: formatNumber(citasQuery.data?.citasPorEstado?.cancelada || 0),
+              helper: 'Citas anuladas dentro del periodo actual.',
+              tone: 'text-rose-700',
             },
             {
-              id: 'pendientes-hoy',
-              icon: CircleAlert,
-              label: 'Pendientes hoy',
-              value: formatNumber(citasPendientesHoy),
-              helper: 'Atenciones aun marcadas como programadas.',
+              id: 'no-asistio',
+              icon: UserX,
+              label: 'No asistio',
+              value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
+              helper: 'Pacientes que no se presentaron a su cita en el periodo.',
               tone: 'text-amber-700',
             },
           ]}
@@ -767,14 +893,6 @@ export default function DashboardPage() {
               label: 'Promedio por factura',
               value: formatCurrency(promedioFactura),
               helper: 'Ticket promedio del mes actual.',
-              tone: 'text-primary',
-            },
-            {
-              id: 'ingresos-hoy',
-              icon: Wallet,
-              label: 'Ingresos de hoy',
-              value: formatCurrency(ingresosHoy),
-              helper: 'Facturado hoy en el modulo de caja.',
               tone: 'text-primary',
             },
             mostrarDian && {
