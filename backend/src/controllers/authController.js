@@ -101,6 +101,7 @@ const serializarUsuario = (usuario) => {
     tarjetaProfesional: usuario.tarjetaProfesional,
     proveedorAuth: usuario.proveedorAuth,
     emailVerificado: usuario.emailVerificado,
+    onboarding: usuario.onboarding ?? null,
     activo: usuario.activo,
   }
 }
