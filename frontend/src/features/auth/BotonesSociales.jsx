@@ -49,6 +49,22 @@ function ProviderIcon({ id }) {
   return null
 }
 
+const abrirPopupOauth = (url) => {
+  const ancho = 500
+  const alto = 650
+  const left = window.screenX + (window.outerWidth - ancho) / 2
+  const top = window.screenY + (window.outerHeight - alto) / 2
+  const popup = window.open(
+    url,
+    'bourgelat-oauth',
+    `width=${ancho},height=${alto},left=${left},top=${top}`
+  )
+  if (!popup) {
+    // Popup bloqueado por el navegador: fallback al redirect completo de siempre
+    window.location.assign(url)
+  }
+}
+
 export default function BotonesSociales({ contexto = 'registro' }) {
   const accion = contexto === 'login' ? 'Continuar' : 'Registrarme'
   if (!oauthHabilitado) return null
@@ -58,7 +74,7 @@ export default function BotonesSociales({ contexto = 'registro' }) {
         <button
           key={id}
           type="button"
-          onClick={() => window.location.assign(`${API_URL}/auth/oauth/${id}`)}
+          onClick={() => abrirPopupOauth(`${API_URL}/auth/oauth/${id}`)}
           className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/15 bg-transparent px-4 text-sm font-medium text-[#2b2018] transition hover:border-[#2b2018]/30 hover:bg-[#2b2018]/[0.03]"
         >
           <ProviderIcon id={id} />
