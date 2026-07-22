@@ -761,7 +761,7 @@ export default function DashboardPage() {
   )
 
   const ingresosHoy = useMemo(() => {
-    const entry = ingresosPorDia.find((d) => d.fecha === hoy)
+    const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
     return entry?.total ?? 0
   }, [ingresosPorDia, hoy])
 

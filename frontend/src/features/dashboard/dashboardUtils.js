@@ -137,8 +137,11 @@ export const objectToChartData = (record, labels = {}) =>
     color: CHART_COLORS[index % CHART_COLORS.length],
   }))
 
+// `fecha` es la etiqueta visible del eje X; `fechaISO` conserva la clave original
+// (YYYY-MM-DD) para poder buscar un dia puntual sin depender del formato mostrado.
 export const mapIngresosPorDia = (record) =>
   Object.entries(record || {}).map(([date, value]) => ({
+    fechaISO: date,
     fecha: formatShortDate(date),
     total: Number(value || 0),
   }))
