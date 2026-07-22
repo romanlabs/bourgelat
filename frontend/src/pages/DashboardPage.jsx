@@ -1,12 +1,12 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   ArrowRight,
   BarChart3,
   Boxes,
   CalendarClock,
+  CalendarX,
   CircleAlert,
   FileText,
   LayoutDashboard,
@@ -14,8 +14,8 @@ import {
   Receipt,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
+  UserX,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -30,6 +30,7 @@ import {
   DonutCard,
   EmptyModuleState,
   KpiCard,
+  KpiGrid,
   LinePanel,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -133,19 +134,6 @@ const buildHistoryHref = (appointment) =>
 const buildBillingHref = (appointment) =>
   `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`
 
-function SparklineTooltip({ active, payload, label, formatter }) {
-  if (!active || !payload?.length) return null
-
-  return (
-    <div className="rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-dropdown">
-      {label ? <p className="font-semibold text-card-foreground">{label}</p> : null}
-      <p className="mt-1 text-muted-foreground">
-        {formatter ? formatter(payload[0]?.value) : payload[0]?.value}
-      </p>
-    </div>
-  )
-}
-
 function CommandPanel({ title, subtitle, action, className = '', children }) {
   return (
     <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
@@ -161,148 +149,136 @@ function CommandPanel({ title, subtitle, action, className = '', children }) {
   )
 }
 
-function CommandKpiCard({
-  label,
-  value,
-  helper,
-  icon,
-  data,
-  color = '#0d9488',
-  formatter,
-  className = '',
-  primary = false,
-  to = null,
-}) {
-  const rawId = useId().replaceAll(':', '')
-  const chartData = data?.length ? data : [{ label: '0', value: 0 }]
-  const Icon = icon
-  const Wrapper = to ? Link : 'div'
-  const wrapperProps = to ? { to } : {}
-
-  if (primary) {
-    return (
-      <Wrapper
-        {...wrapperProps}
-        className={cn(
-          'flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition',
-          to ? 'hover:border-primary/30 hover:shadow-lg' : '',
-          className
-        )}
-      >
-        <div className="flex flex-1 flex-col justify-between p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-              <p className="mt-1.5 text-3xl font-bold tabular-nums text-card-foreground">{value}</p>
-            </div>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-primary">
-              <Icon className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">{helper}</p>
-        </div>
-        <div className="h-16 border-t border-border px-2 pb-1.5 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.22} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={color}
-                fill={`url(#${rawId})`}
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 3 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Wrapper>
-    )
-  }
+/**
+ * Bloque unico del dia: primero lo que puede romper la operacion (alertas
+ * urgentes) y debajo el pulso compacto de hoy. A diferencia de la tira tactica
+ * anterior, se renderiza siempre, porque aunque no haya alertas el resumen del
+ * dia sigue siendo la razon de ser del Command Center.
+ */
+function TodayAlerts({ alerts, summary }) {
+  const hayAlertas = alerts.length > 0
+  const chips = summary.filter(Boolean)
 
   return (
-    <Wrapper
-      {...wrapperProps}
+    <section
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5 shadow-card transition',
-        to ? 'hover:border-primary/30 hover:shadow-lg' : '',
-        className
+        'overflow-hidden rounded-xl border',
+        hayAlertas ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card shadow-card'
       )}
     >
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `${color}1a`, color }}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[10px] font-semibold uppercase leading-4 tracking-[0.1em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-lg font-bold tabular-nums text-card-foreground">{value}</p>
-        <p className="truncate text-xs leading-5 text-muted-foreground">{helper}</p>
-      </div>
-    </Wrapper>
-  )
-}
-
-function TacticalAlertStrip({ alerts }) {
-  if (alerts.length === 0) return null
-
-  return (
-    <section className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-          <ShieldAlert className="h-3.5 w-3.5" />
-        </span>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
-          Tira tactica 8:00 AM
-          <span className="ml-2 font-normal normal-case tracking-normal text-destructive/70">
-            solo aparece cuando hay algo que puede romper la operacion de hoy
-          </span>
-        </p>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2.5">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className="flex min-w-[260px] flex-1 items-center gap-3 rounded-lg border border-destructive/20 bg-card/80 px-3.5 py-2.5"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-destructive">{alert.title}</p>
-                <span className="shrink-0 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                  Urgente
-                </span>
-              </div>
-              <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
-            </div>
-            <Link
-              to={alert.to}
-              className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive hover:underline"
-            >
-              {alert.actionLabel}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+      {hayAlertas ? (
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <ShieldAlert className="h-3.5 w-3.5" />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
+              Requiere accion hoy
+            </p>
           </div>
-        ))}
+
+          <div className="mt-3 flex flex-wrap gap-2.5">
+            {alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="flex min-w-[260px] flex-1 items-center gap-3 rounded-lg border border-destructive/20 bg-card/80 px-3.5 py-2.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-destructive">{alert.title}</p>
+                    <span className="shrink-0 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                      Urgente
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
+                </div>
+                <Link
+                  to={alert.to}
+                  className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive hover:underline"
+                >
+                  {alert.actionLabel}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3',
+          hayAlertas ? 'border-t border-destructive/20 bg-card/60' : ''
+        )}
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Hoy
+        </p>
+
+        {chips.map((chip) => {
+          const Icon = chip.icon
+          const Wrapper = chip.to ? Link : 'div'
+          const wrapperProps = chip.to ? { to: chip.to } : {}
+
+          return (
+            <Wrapper
+              key={chip.id}
+              {...wrapperProps}
+              title={chip.helper}
+              className={cn(
+                'flex items-center gap-2.5 rounded-lg',
+                chip.to ? 'transition hover:opacity-70' : ''
+              )}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {chip.label}
+                </span>
+                <span className="text-base font-bold tabular-nums text-card-foreground">
+                  {chip.value}
+                </span>
+              </span>
+            </Wrapper>
+          )
+        })}
       </div>
     </section>
   )
 }
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
+  const tabRefs = useRef({})
+
+  // Patron de tabs de WAI-ARIA: una sola parada de tabulacion en el grupo y
+  // movimiento entre pestanas con flechas, Inicio y Fin.
+  const handleKeyDown = (event) => {
+    const offsets = { ArrowRight: 1, ArrowLeft: -1 }
+    let destino = null
+
+    if (event.key === 'Home') destino = TABS[0]
+    else if (event.key === 'End') destino = TABS[TABS.length - 1]
+    else if (offsets[event.key]) {
+      const actual = TABS.findIndex((tab) => tab.id === activeTab)
+      destino = TABS[(actual + offsets[event.key] + TABS.length) % TABS.length]
+    }
+
+    if (!destino) return
+    event.preventDefault()
+    setActiveTab(destino.id)
+    tabRefs.current[destino.id]?.focus()
+  }
+
   return (
     <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
-      <div className="flex flex-wrap items-center gap-1">
+      <div
+        role="tablist"
+        aria-label="Secciones del dashboard"
+        onKeyDown={handleKeyDown}
+        className="flex flex-wrap items-center gap-1"
+      >
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = tab.id === activeTab
@@ -310,10 +286,19 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
           return (
             <button
               key={tab.id}
+              ref={(node) => {
+                tabRefs.current[tab.id] = node
+              }}
               type="button"
+              role="tab"
+              id={`dashboard-tab-${tab.id}`}
+              aria-selected={active}
+              aria-controls={`dashboard-panel-${tab.id}`}
+              tabIndex={active ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                 active
                   ? 'bg-foreground text-background shadow-sm'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -586,12 +571,9 @@ export default function DashboardPage() {
   const mascotasActivas = resumen?.totales?.mascotas ?? 0
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
   const citasPendientesHoy = resumen?.hoy?.citasPendientes ?? 0
-  const ingresosMesActual = resumen?.mes?.ingresos ?? 0
   const alertasInventario = resumen?.alertas?.productosbajoStock ?? 0
   const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
-  const cupoUsuarios = limiteUsuarios === null ? null : Math.max(limiteUsuarios - usuariosActivos, 0)
-  const cupoMascotas = limiteMascotas === null ? null : Math.max(limiteMascotas - mascotasActivas, 0)
   const diasRestantes = suscripcionQuery.data?.diasRestantes
   const advertenciaPlan = suscripcionQuery.data?.advertencia
 
@@ -671,23 +653,6 @@ export default function DashboardPage() {
   const dianPendientes =
     Number(resumenElectronico.pendiente || 0) + Number(resumenElectronico.enviada || 0)
 
-  const capacityRows = [
-    {
-      id: 'usuarios',
-      area: 'Usuarios',
-      uso: formatNumber(usuariosActivos),
-      limite: limiteUsuarios === null ? 'Sin limite' : formatNumber(limiteUsuarios),
-      estado: limiteUsuarios === null ? 'Abierto' : `${cupoUsuarios} disponibles`,
-    },
-    {
-      id: 'pacientes',
-      area: 'Pacientes',
-      uso: formatNumber(mascotasActivas),
-      limite: limiteMascotas === null ? 'Sin limite' : formatNumber(limiteMascotas),
-      estado: limiteMascotas === null ? 'Abierto' : `${cupoMascotas} disponibles`,
-    },
-  ]
-
   const featureRows = getFeatureStateRows(funcionalidades)
 
   const tacticalAlerts = useMemo(() => {
@@ -729,19 +694,12 @@ export default function DashboardPage() {
     return rows
   }, [alertasInventario, dianErrores, diasRestantes])
 
-  const sparklineIngresos = useMemo(
-    () =>
-      ingresosPorDia.slice(-10).map((item) => ({
-        label: item.fecha,
-        value: Number(item.total || 0),
-      })),
-    [ingresosPorDia]
-  )
-
   const todayBridgeRows = useMemo(() => {
+    // Tope de 5 para que el Command Center entre sin scroll en 1366x768.
+    // "Ver agenda completa" es la salida cuando el dia trae mas pacientes.
     const filtered = [...citasHoyRows]
       .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
-      .slice(0, 12)
+      .slice(0, 5)
 
     if (usuario?.rol === 'veterinario' && usuario?.id) {
       return [
@@ -761,9 +719,67 @@ export default function DashboardPage() {
   )
 
   const ingresosHoy = useMemo(() => {
-    const entry = ingresosPorDia.find((d) => d.fecha === hoy)
+    const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
     return entry?.total ?? 0
   }, [ingresosPorDia, hoy])
+
+  // Pulso del dia: el Command Center es el unico dueno de estas cifras.
+  const todaySummary = useMemo(
+    () => [
+      {
+        id: 'citas-hoy',
+        icon: CalendarClock,
+        label: 'Citas de hoy',
+        value: formatNumber(citasHoy),
+        helper: 'Citas agendadas para la fecha de hoy.',
+        to: puedeAbrirAgenda ? '/agenda' : null,
+      },
+      {
+        id: 'pendientes',
+        icon: CircleAlert,
+        label: 'Pendientes',
+        value: formatNumber(citasPendientesHoy),
+        helper: 'Atenciones de hoy aun marcadas como programadas.',
+        to: puedeAbrirAgenda ? '/agenda' : null,
+      },
+      puedeAbrirHistorias && {
+        id: 'sin-documentar',
+        icon: FileText,
+        label: 'Sin documentar',
+        value: formatNumber(sinDocumentar),
+        helper: 'Consultas de hoy sin historia clinica registrada.',
+        to: '/historias',
+      },
+      {
+        id: 'stock-critico',
+        icon: Boxes,
+        label: 'Stock critico',
+        value: formatNumber(alertasInventario),
+        helper: 'Productos bajo el minimo definido.',
+        to: puedeVerInventario ? '/inventario' : null,
+      },
+      puedeVerIngresos && {
+        id: 'ingresos-hoy',
+        icon: Wallet,
+        label: 'Ingresos de hoy',
+        value: formatCurrency(ingresosHoy),
+        helper: 'Facturado hoy en el modulo de caja.',
+        to: puedeAbrirCaja ? '/finanzas' : null,
+      },
+    ],
+    [
+      alertasInventario,
+      citasHoy,
+      citasPendientesHoy,
+      ingresosHoy,
+      puedeAbrirAgenda,
+      puedeAbrirCaja,
+      puedeAbrirHistorias,
+      puedeVerIngresos,
+      puedeVerInventario,
+      sinDocumentar,
+    ]
+  )
 
   if (!esAdministrador) {
     return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
@@ -771,75 +787,11 @@ export default function DashboardPage() {
 
   const renderSummaryOverview = () => {
     return (
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {tacticalAlerts.length > 0 ? (
-          <div className="lg:col-span-12">
-            <TacticalAlertStrip alerts={tacticalAlerts} />
-          </div>
-        ) : null}
-
-        <CommandKpiCard
-          primary
-          className="lg:col-span-5"
-          label="Ingresos del periodo"
-          value={formatCurrency(ingresosMesActual)}
-          helper="Tendencia diaria del mes actual."
-          icon={Wallet}
-          data={sparklineIngresos}
-          color="#0d9488"
-          formatter={formatCurrency}
-          to={puedeAbrirCaja ? '/finanzas' : undefined}
-        />
-
-        <div
-          className={cn(
-            'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-7',
-            (() => {
-              const count = 2 + (mostrarDian ? 1 : 0) + (puedeAbrirHistorias ? 1 : 0)
-              return { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[count]
-            })()
-          )}
-        >
-          <CommandKpiCard
-            label="Citas de hoy"
-            value={formatNumber(citasHoy)}
-            helper={`${formatNumber(citasPendientesHoy)} pendientes`}
-            icon={CalendarClock}
-            color="#0f4c81"
-            to="/agenda"
-          />
-          <CommandKpiCard
-            label="Stock crítico"
-            value={formatNumber(alertasInventario)}
-            helper="Bajo mínimo o en vigilancia"
-            icon={Boxes}
-            color="#ea580c"
-            to="/inventario"
-          />
-          {mostrarDian ? (
-            <CommandKpiCard
-              label="Control DIAN"
-              value={formatNumber(dianErrores)}
-              helper={`${formatNumber(dianPendientes)} pendientes`}
-              icon={ShieldAlert}
-              color="#7c3aed"
-              to="/finanzas"
-            />
-          ) : null}
-          {puedeAbrirHistorias ? (
-            <CommandKpiCard
-              label="Sin documentar"
-              value={formatNumber(sinDocumentar)}
-              helper="Consultas de hoy sin historia clínica"
-              icon={FileText}
-              color="#0891b2"
-              to="/historias"
-            />
-          ) : null}
-        </div>
+      <div className="space-y-5">
+        <TodayAlerts alerts={tacticalAlerts} summary={todaySummary} />
 
         <CommandPanel
-          className="lg:col-span-12 ring-1 ring-primary/15 shadow-lg"
+          className="ring-1 ring-primary/15 shadow-lg"
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
@@ -855,7 +807,6 @@ export default function DashboardPage() {
             canUseBilling={puedeAbrirCaja}
           />
         </CommandPanel>
-
       </div>
     )
   }
@@ -875,34 +826,41 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={CalendarClock}
-            label="Citas del mes"
-            value={formatNumber(citasQuery.data?.totalCitas || 0)}
-            helper="Todas las citas registradas dentro del periodo actual."
-          />
-          <KpiCard
-            icon={ShieldCheck}
-            label="Asistencia"
-            value={citasQuery.data?.tasaAsistencia || '0%'}
-            helper="Relacion de citas completadas sobre el total del periodo."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={Stethoscope}
-            label="Citas de hoy"
-            value={formatNumber(citasHoy)}
-            helper="Corte diario directamente desde el dashboard general."
-          />
-          <KpiCard
-            icon={CircleAlert}
-            label="Pendientes hoy"
-            value={formatNumber(citasPendientesHoy)}
-            helper="Atenciones aun marcadas como programadas."
-            tone="text-amber-700"
-          />
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'citas-mes',
+              icon: CalendarClock,
+              label: 'Citas del mes',
+              value: formatNumber(citasQuery.data?.totalCitas || 0),
+              helper: 'Todas las citas registradas dentro del periodo actual.',
+            },
+            {
+              id: 'asistencia',
+              icon: ShieldCheck,
+              label: 'Asistencia',
+              value: citasQuery.data?.tasaAsistencia || '0%',
+              helper: 'Relacion de citas completadas sobre el total del periodo.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'canceladas',
+              icon: CalendarX,
+              label: 'Canceladas',
+              value: formatNumber(citasQuery.data?.citasPorEstado?.cancelada || 0),
+              helper: 'Citas anuladas dentro del periodo actual.',
+              tone: 'text-rose-700',
+            },
+            {
+              id: 'no-asistio',
+              icon: UserX,
+              label: 'No asistio',
+              value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
+              helper: 'Pacientes que no se presentaron a su cita en el periodo.',
+              tone: 'text-amber-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-2">
           <DonutCard
@@ -947,35 +905,41 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Wallet}
-            label="Ingresos del periodo"
-            value={formatCurrency(ingresosQuery.data?.totalIngresos || 0)}
-            helper="Suma total entre facturas emitidas y pagadas dentro del mes."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={Receipt}
-            label="Facturas"
-            value={formatNumber(totalFacturas)}
-            helper="Numero de facturas emitidas o pagadas en el periodo."
-          />
-          <KpiCard
-            icon={BarChart3}
-            label="Promedio por factura"
-            value={formatCurrency(promedioFactura)}
-            helper="Ticket promedio del mes actual."
-            tone="text-primary"
-          />
-          <KpiCard
-            icon={Wallet}
-            label="Ingresos de hoy"
-            value={formatCurrency(ingresosHoy)}
-            helper="Facturado hoy en el modulo de caja."
-            tone="text-primary"
-          />
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'ingresos-periodo',
+              icon: Wallet,
+              label: 'Ingresos del periodo',
+              value: formatCurrency(ingresosQuery.data?.totalIngresos || 0),
+              helper: 'Suma total entre facturas emitidas y pagadas dentro del mes.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'facturas',
+              icon: Receipt,
+              label: 'Facturas',
+              value: formatNumber(totalFacturas),
+              helper: 'Numero de facturas emitidas o pagadas en el periodo.',
+            },
+            {
+              id: 'promedio-factura',
+              icon: BarChart3,
+              label: 'Promedio por factura',
+              value: formatCurrency(promedioFactura),
+              helper: 'Ticket promedio del mes actual.',
+              tone: 'text-primary',
+            },
+            mostrarDian && {
+              id: 'control-dian',
+              icon: ShieldAlert,
+              label: 'Control DIAN',
+              value: formatNumber(dianErrores),
+              helper: `Facturas rechazadas o con error tecnico. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
+              tone: 'text-violet-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_420px]">
           <LinePanel
@@ -1040,35 +1004,41 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
 
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Boxes}
-            label="Productos activos"
-            value={formatNumber(resumenInventario.totalProductos || 0)}
-            helper="Productos actualmente activos dentro del inventario."
-          />
-          <KpiCard
-            icon={Wallet}
-            label="Valor inventariado"
-            value={formatCurrency(resumenInventario.valorTotalInventario || 0)}
-            helper="Valor de venta estimado del inventario registrado."
-            tone="text-emerald-700"
-          />
-          <KpiCard
-            icon={CircleAlert}
-            label="Bajo stock"
-            value={formatNumber(resumenInventario.bajoStock || 0)}
-            helper="Productos con stock por debajo del minimo definido."
-            tone="text-amber-700"
-          />
-          <KpiCard
-            icon={Receipt}
-            label="Vencimientos"
-            value={formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0))}
-            helper="Suma entre productos vencidos y proximos a vencer."
-            tone="text-rose-700"
-          />
-        </div>
+        <KpiGrid
+          items={[
+            {
+              id: 'productos-activos',
+              icon: Boxes,
+              label: 'Productos activos',
+              value: formatNumber(resumenInventario.totalProductos || 0),
+              helper: 'Productos actualmente activos dentro del inventario.',
+            },
+            {
+              id: 'valor-inventariado',
+              icon: Wallet,
+              label: 'Valor inventariado',
+              value: formatCurrency(resumenInventario.valorTotalInventario || 0),
+              helper: 'Valor de venta estimado del inventario registrado.',
+              tone: 'text-emerald-700',
+            },
+            {
+              id: 'bajo-stock',
+              icon: CircleAlert,
+              label: 'Bajo stock',
+              value: formatNumber(resumenInventario.bajoStock || 0),
+              helper: 'Productos con stock por debajo del minimo definido.',
+              tone: 'text-amber-700',
+            },
+            {
+              id: 'vencimientos',
+              icon: Receipt,
+              label: 'Vencimientos',
+              value: formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)),
+              helper: 'Suma entre productos vencidos y proximos a vencer.',
+              tone: 'text-rose-700',
+            },
+          ]}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1.45fr)]">
           <DonutCard
@@ -1121,39 +1091,33 @@ export default function DashboardPage() {
     <div className="space-y-5">
       <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <KpiCard
-          icon={PawPrint}
-          label="Pacientes activos"
-          value={formatNumber(mascotasActivas)}
-          helper="Base clinica operativa lista para consulta y seguimiento."
-        />
-        <KpiCard
-          icon={Users}
-          label="Propietarios"
-          value={formatNumber(propietariosActivos)}
-          helper="Responsables activos asociados a la base de pacientes."
-          tone="text-primary"
-        />
-        <KpiCard
-          icon={ShieldCheck}
-          label="Usuarios activos"
-          value={formatNumber(usuariosActivos)}
-          helper="Equipo actualmente activo en la clinica."
-          tone="text-violet-700"
-        />
-        <KpiCard
-          icon={Sparkles}
-          label="Cupo restante"
-          value={limiteMascotas === null ? 'Sin limite' : formatNumber(cupoMascotas)}
-          helper={
-            limiteMascotas === null
-              ? 'La suscripcion actual no limita pacientes activos.'
-              : 'Pacientes disponibles antes de exigir cambio de plan.'
-          }
-          tone="text-emerald-700"
-        />
-      </div>
+      <KpiGrid
+        items={[
+          {
+            id: 'pacientes-activos',
+            icon: PawPrint,
+            label: 'Pacientes activos',
+            value: formatNumber(mascotasActivas),
+            helper: 'Base clinica operativa lista para consulta y seguimiento.',
+          },
+          {
+            id: 'propietarios',
+            icon: Users,
+            label: 'Propietarios',
+            value: formatNumber(propietariosActivos),
+            helper: 'Responsables activos asociados a la base de pacientes.',
+            tone: 'text-primary',
+          },
+          {
+            id: 'usuarios-activos',
+            icon: ShieldCheck,
+            label: 'Usuarios activos',
+            value: formatNumber(usuariosActivos),
+            helper: 'Equipo actualmente activo en la clinica.',
+            tone: 'text-violet-700',
+          },
+        ]}
+      />
 
       <div className="grid gap-5 xl:grid-cols-2">
         <DonutCard
@@ -1175,20 +1139,6 @@ export default function DashboardPage() {
           emptyMessage="No hay datos de capacidad disponibles."
         />
       </div>
-
-      <DataTable
-        title="Capacidad y estado"
-        subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
-        rows={capacityRows}
-        columns={[
-          { key: 'area', label: 'Area' },
-          { key: 'uso', label: 'Uso actual' },
-          { key: 'limite', label: 'Limite' },
-          { key: 'estado', label: 'Estado' },
-        ]}
-        emptyTitle="Sin datos"
-        emptyBody="No hay informacion de capacidad disponible."
-      />
     </div>
   )
 
@@ -1274,21 +1224,33 @@ export default function DashboardPage() {
     </div>
   )
 
-  const activeView = {
-    resumen: renderSummaryOverview(),
-    agenda: renderAgendaTab(),
-    ingresos: renderIngresosTab(),
-    inventario: renderInventarioTab(),
-    pacientes: renderPacientesTab(),
-    plan: renderPlanTab(),
-  }[activeTab]
+  // Se resuelve solo la pestana visible: el objeto anterior construia los seis
+  // arboles en cada render para descartar cinco.
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case 'agenda':
+        return renderAgendaTab()
+      case 'ingresos':
+        return renderIngresosTab()
+      case 'inventario':
+        return renderInventarioTab()
+      case 'pacientes':
+        return renderPacientesTab()
+      case 'plan':
+        return renderPlanTab()
+      default:
+        return renderSummaryOverview()
+    }
+  }
 
   const tabBadges = {
     resumen: tacticalAlerts.length > 0 ? `${tacticalAlerts.length}` : null,
     agenda: citasHoy > 0 ? `${citasHoy}` : null,
     ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
     inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
-    pacientes: limiteMascotas !== null ? `${Math.max(cupoMascotas, 0)}` : null,
+    // Sin badge: el cupo lo comunican los medidores "Uso de pacientes/usuarios"
+    // dentro de la pestana, que son su unica fuente de verdad.
+    pacientes: null,
     plan: typeof diasRestantes === 'number' && diasRestantes <= 60 ? `${diasRestantes}d` : null,
   }
 
@@ -1338,7 +1300,6 @@ export default function DashboardPage() {
       }
       showQuickActions
       quickActions={quickActions}
-      asideNote="Usa las acciones rapidas para entrar directo al modulo si necesitas mas contexto primero."
     >
       <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
 
@@ -1355,20 +1316,25 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-12">
-          {[0, 1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="h-44 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-3"
-            />
-          ))}
-          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-8" />
-          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-4" />
-        </div>
-      ) : (
-        activeView
-      )}
+      <div
+        role="tabpanel"
+        id={`dashboard-panel-${activeTab}`}
+        aria-labelledby={`dashboard-tab-${activeTab}`}
+      >
+        {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-card"
+              />
+            ))}
+            <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-card sm:col-span-2 lg:col-span-4" />
+          </div>
+        ) : (
+          renderActiveView()
+        )}
+      </div>
     </AdminShell>
   )
 }
