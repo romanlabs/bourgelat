@@ -101,6 +101,11 @@ const Usuario = sequelize.define('Usuario', {
     },
     comment: 'Null solo para superadmin',
   },
+  onboarding: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    comment: 'Respuestas del wizard de onboarding post-registro; null si no lo ha completado',
+  },
 }, {
   tableName: 'usuarios',
   timestamps: true,
