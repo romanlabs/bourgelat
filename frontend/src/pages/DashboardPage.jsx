@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
@@ -250,9 +250,35 @@ function TodayAlerts({ alerts, summary }) {
 }
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
+  const tabRefs = useRef({})
+
+  // Patron de tabs de WAI-ARIA: una sola parada de tabulacion en el grupo y
+  // movimiento entre pestanas con flechas, Inicio y Fin.
+  const handleKeyDown = (event) => {
+    const offsets = { ArrowRight: 1, ArrowLeft: -1 }
+    let destino = null
+
+    if (event.key === 'Home') destino = TABS[0]
+    else if (event.key === 'End') destino = TABS[TABS.length - 1]
+    else if (offsets[event.key]) {
+      const actual = TABS.findIndex((tab) => tab.id === activeTab)
+      destino = TABS[(actual + offsets[event.key] + TABS.length) % TABS.length]
+    }
+
+    if (!destino) return
+    event.preventDefault()
+    setActiveTab(destino.id)
+    tabRefs.current[destino.id]?.focus()
+  }
+
   return (
     <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
-      <div className="flex flex-wrap items-center gap-1">
+      <div
+        role="tablist"
+        aria-label="Secciones del dashboard"
+        onKeyDown={handleKeyDown}
+        className="flex flex-wrap items-center gap-1"
+      >
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = tab.id === activeTab
@@ -260,10 +286,19 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
           return (
             <button
               key={tab.id}
+              ref={(node) => {
+                tabRefs.current[tab.id] = node
+              }}
               type="button"
+              role="tab"
+              id={`dashboard-tab-${tab.id}`}
+              aria-selected={active}
+              aria-controls={`dashboard-panel-${tab.id}`}
+              tabIndex={active ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                 active
                   ? 'bg-foreground text-background shadow-sm'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -1056,28 +1091,33 @@ export default function DashboardPage() {
     <div className="space-y-5">
       <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <KpiCard
-          icon={PawPrint}
-          label="Pacientes activos"
-          value={formatNumber(mascotasActivas)}
-          helper="Base clinica operativa lista para consulta y seguimiento."
-        />
-        <KpiCard
-          icon={Users}
-          label="Propietarios"
-          value={formatNumber(propietariosActivos)}
-          helper="Responsables activos asociados a la base de pacientes."
-          tone="text-primary"
-        />
-        <KpiCard
-          icon={ShieldCheck}
-          label="Usuarios activos"
-          value={formatNumber(usuariosActivos)}
-          helper="Equipo actualmente activo en la clinica."
-          tone="text-violet-700"
-        />
-      </div>
+      <KpiGrid
+        items={[
+          {
+            id: 'pacientes-activos',
+            icon: PawPrint,
+            label: 'Pacientes activos',
+            value: formatNumber(mascotasActivas),
+            helper: 'Base clinica operativa lista para consulta y seguimiento.',
+          },
+          {
+            id: 'propietarios',
+            icon: Users,
+            label: 'Propietarios',
+            value: formatNumber(propietariosActivos),
+            helper: 'Responsables activos asociados a la base de pacientes.',
+            tone: 'text-primary',
+          },
+          {
+            id: 'usuarios-activos',
+            icon: ShieldCheck,
+            label: 'Usuarios activos',
+            value: formatNumber(usuariosActivos),
+            helper: 'Equipo actualmente activo en la clinica.',
+            tone: 'text-violet-700',
+          },
+        ]}
+      />
 
       <div className="grid gap-5 xl:grid-cols-2">
         <DonutCard
@@ -1184,14 +1224,24 @@ export default function DashboardPage() {
     </div>
   )
 
-  const activeView = {
-    resumen: renderSummaryOverview(),
-    agenda: renderAgendaTab(),
-    ingresos: renderIngresosTab(),
-    inventario: renderInventarioTab(),
-    pacientes: renderPacientesTab(),
-    plan: renderPlanTab(),
-  }[activeTab]
+  // Se resuelve solo la pestana visible: el objeto anterior construia los seis
+  // arboles en cada render para descartar cinco.
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case 'agenda':
+        return renderAgendaTab()
+      case 'ingresos':
+        return renderIngresosTab()
+      case 'inventario':
+        return renderInventarioTab()
+      case 'pacientes':
+        return renderPacientesTab()
+      case 'plan':
+        return renderPlanTab()
+      default:
+        return renderSummaryOverview()
+    }
+  }
 
   const tabBadges = {
     resumen: tacticalAlerts.length > 0 ? `${tacticalAlerts.length}` : null,
@@ -1266,20 +1316,25 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-12">
-          {[0, 1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="h-44 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-3"
-            />
-          ))}
-          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-8" />
-          <div className="h-72 animate-pulse rounded-2xl border border-border/60 bg-white shadow-sm lg:col-span-4" />
-        </div>
-      ) : (
-        activeView
-      )}
+      <div
+        role="tabpanel"
+        id={`dashboard-panel-${activeTab}`}
+        aria-labelledby={`dashboard-tab-${activeTab}`}
+      >
+        {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-card"
+              />
+            ))}
+            <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-card sm:col-span-2 lg:col-span-4" />
+          </div>
+        ) : (
+          renderActiveView()
+        )}
+      </div>
     </AdminShell>
   )
 }
