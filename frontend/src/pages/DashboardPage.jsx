@@ -1,20 +1,17 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   ArrowRight,
   BarChart3,
   Boxes,
   CalendarClock,
   CircleAlert,
-  FileText,
   LayoutDashboard,
   PawPrint,
   Receipt,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
   Users,
   Wallet,
@@ -133,19 +130,6 @@ const buildHistoryHref = (appointment) =>
 const buildBillingHref = (appointment) =>
   `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`
 
-function SparklineTooltip({ active, payload, label, formatter }) {
-  if (!active || !payload?.length) return null
-
-  return (
-    <div className="rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-dropdown">
-      {label ? <p className="font-semibold text-card-foreground">{label}</p> : null}
-      <p className="mt-1 text-muted-foreground">
-        {formatter ? formatter(payload[0]?.value) : payload[0]?.value}
-      </p>
-    </div>
-  )
-}
-
 function CommandPanel({ title, subtitle, action, className = '', children }) {
   return (
     <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
@@ -158,98 +142,6 @@ function CommandPanel({ title, subtitle, action, className = '', children }) {
       </div>
       <div className="p-5">{children}</div>
     </section>
-  )
-}
-
-function CommandKpiCard({
-  label,
-  value,
-  helper,
-  icon,
-  data,
-  color = '#0d9488',
-  formatter,
-  className = '',
-  primary = false,
-  to = null,
-}) {
-  const rawId = useId().replaceAll(':', '')
-  const chartData = data?.length ? data : [{ label: '0', value: 0 }]
-  const Icon = icon
-  const Wrapper = to ? Link : 'div'
-  const wrapperProps = to ? { to } : {}
-
-  if (primary) {
-    return (
-      <Wrapper
-        {...wrapperProps}
-        className={cn(
-          'flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition',
-          to ? 'hover:border-primary/30 hover:shadow-lg' : '',
-          className
-        )}
-      >
-        <div className="flex flex-1 flex-col justify-between p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-              <p className="mt-1.5 text-3xl font-bold tabular-nums text-card-foreground">{value}</p>
-            </div>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-primary">
-              <Icon className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">{helper}</p>
-        </div>
-        <div className="h-16 border-t border-border px-2 pb-1.5 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id={rawId} x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.22} />
-                  <stop offset="95%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Tooltip content={<SparklineTooltip formatter={formatter} />} cursor={false} />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={color}
-                fill={`url(#${rawId})`}
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 3 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </Wrapper>
-    )
-  }
-
-  return (
-    <Wrapper
-      {...wrapperProps}
-      className={cn(
-        'flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5 shadow-card transition',
-        to ? 'hover:border-primary/30 hover:shadow-lg' : '',
-        className
-      )}
-    >
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `${color}1a`, color }}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[10px] font-semibold uppercase leading-4 tracking-[0.1em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-lg font-bold tabular-nums text-card-foreground">{value}</p>
-        <p className="truncate text-xs leading-5 text-muted-foreground">{helper}</p>
-      </div>
-    </Wrapper>
   )
 }
 
@@ -586,12 +478,9 @@ export default function DashboardPage() {
   const mascotasActivas = resumen?.totales?.mascotas ?? 0
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
   const citasPendientesHoy = resumen?.hoy?.citasPendientes ?? 0
-  const ingresosMesActual = resumen?.mes?.ingresos ?? 0
   const alertasInventario = resumen?.alertas?.productosbajoStock ?? 0
   const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
-  const cupoUsuarios = limiteUsuarios === null ? null : Math.max(limiteUsuarios - usuariosActivos, 0)
-  const cupoMascotas = limiteMascotas === null ? null : Math.max(limiteMascotas - mascotasActivas, 0)
   const diasRestantes = suscripcionQuery.data?.diasRestantes
   const advertenciaPlan = suscripcionQuery.data?.advertencia
 
@@ -671,23 +560,6 @@ export default function DashboardPage() {
   const dianPendientes =
     Number(resumenElectronico.pendiente || 0) + Number(resumenElectronico.enviada || 0)
 
-  const capacityRows = [
-    {
-      id: 'usuarios',
-      area: 'Usuarios',
-      uso: formatNumber(usuariosActivos),
-      limite: limiteUsuarios === null ? 'Sin limite' : formatNumber(limiteUsuarios),
-      estado: limiteUsuarios === null ? 'Abierto' : `${cupoUsuarios} disponibles`,
-    },
-    {
-      id: 'pacientes',
-      area: 'Pacientes',
-      uso: formatNumber(mascotasActivas),
-      limite: limiteMascotas === null ? 'Sin limite' : formatNumber(limiteMascotas),
-      estado: limiteMascotas === null ? 'Abierto' : `${cupoMascotas} disponibles`,
-    },
-  ]
-
   const featureRows = getFeatureStateRows(funcionalidades)
 
   const tacticalAlerts = useMemo(() => {
@@ -729,15 +601,6 @@ export default function DashboardPage() {
     return rows
   }, [alertasInventario, dianErrores, diasRestantes])
 
-  const sparklineIngresos = useMemo(
-    () =>
-      ingresosPorDia.slice(-10).map((item) => ({
-        label: item.fecha,
-        value: Number(item.total || 0),
-      })),
-    [ingresosPorDia]
-  )
-
   const todayBridgeRows = useMemo(() => {
     const filtered = [...citasHoyRows]
       .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
@@ -752,14 +615,6 @@ export default function DashboardPage() {
     return filtered
   }, [citasHoyRows, usuario])
 
-  const sinDocumentar = useMemo(
-    () =>
-      citasHoyRows.filter(
-        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
-      ).length,
-    [citasHoyRows]
-  )
-
   const ingresosHoy = useMemo(() => {
     const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
     return entry?.total ?? 0
@@ -771,75 +626,11 @@ export default function DashboardPage() {
 
   const renderSummaryOverview = () => {
     return (
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        {tacticalAlerts.length > 0 ? (
-          <div className="lg:col-span-12">
-            <TacticalAlertStrip alerts={tacticalAlerts} />
-          </div>
-        ) : null}
-
-        <CommandKpiCard
-          primary
-          className="lg:col-span-5"
-          label="Ingresos del periodo"
-          value={formatCurrency(ingresosMesActual)}
-          helper="Tendencia diaria del mes actual."
-          icon={Wallet}
-          data={sparklineIngresos}
-          color="#0d9488"
-          formatter={formatCurrency}
-          to={puedeAbrirCaja ? '/finanzas' : undefined}
-        />
-
-        <div
-          className={cn(
-            'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-7',
-            (() => {
-              const count = 2 + (mostrarDian ? 1 : 0) + (puedeAbrirHistorias ? 1 : 0)
-              return { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[count]
-            })()
-          )}
-        >
-          <CommandKpiCard
-            label="Citas de hoy"
-            value={formatNumber(citasHoy)}
-            helper={`${formatNumber(citasPendientesHoy)} pendientes`}
-            icon={CalendarClock}
-            color="#0f4c81"
-            to="/agenda"
-          />
-          <CommandKpiCard
-            label="Stock crítico"
-            value={formatNumber(alertasInventario)}
-            helper="Bajo mínimo o en vigilancia"
-            icon={Boxes}
-            color="#ea580c"
-            to="/inventario"
-          />
-          {mostrarDian ? (
-            <CommandKpiCard
-              label="Control DIAN"
-              value={formatNumber(dianErrores)}
-              helper={`${formatNumber(dianPendientes)} pendientes`}
-              icon={ShieldAlert}
-              color="#7c3aed"
-              to="/finanzas"
-            />
-          ) : null}
-          {puedeAbrirHistorias ? (
-            <CommandKpiCard
-              label="Sin documentar"
-              value={formatNumber(sinDocumentar)}
-              helper="Consultas de hoy sin historia clínica"
-              icon={FileText}
-              color="#0891b2"
-              to="/historias"
-            />
-          ) : null}
-        </div>
+      <div className="space-y-5">
+        {tacticalAlerts.length > 0 ? <TacticalAlertStrip alerts={tacticalAlerts} /> : null}
 
         <CommandPanel
-          className="lg:col-span-12 ring-1 ring-primary/15 shadow-lg"
+          className="ring-1 ring-primary/15 shadow-lg"
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
@@ -855,7 +646,6 @@ export default function DashboardPage() {
             canUseBilling={puedeAbrirCaja}
           />
         </CommandPanel>
-
       </div>
     )
   }
@@ -975,6 +765,15 @@ export default function DashboardPage() {
             helper="Facturado hoy en el modulo de caja."
             tone="text-primary"
           />
+          {mostrarDian ? (
+            <KpiCard
+              icon={ShieldAlert}
+              label="Control DIAN"
+              value={formatNumber(dianErrores)}
+              helper={`Facturas rechazadas o con error tecnico. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`}
+              tone="text-violet-700"
+            />
+          ) : null}
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_420px]">
@@ -1142,17 +941,6 @@ export default function DashboardPage() {
           helper="Equipo actualmente activo en la clinica."
           tone="text-violet-700"
         />
-        <KpiCard
-          icon={Sparkles}
-          label="Cupo restante"
-          value={limiteMascotas === null ? 'Sin limite' : formatNumber(cupoMascotas)}
-          helper={
-            limiteMascotas === null
-              ? 'La suscripcion actual no limita pacientes activos.'
-              : 'Pacientes disponibles antes de exigir cambio de plan.'
-          }
-          tone="text-emerald-700"
-        />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -1175,20 +963,6 @@ export default function DashboardPage() {
           emptyMessage="No hay datos de capacidad disponibles."
         />
       </div>
-
-      <DataTable
-        title="Capacidad y estado"
-        subtitle="Lectura ejecutiva para saber si la clinica esta llegando al limite."
-        rows={capacityRows}
-        columns={[
-          { key: 'area', label: 'Area' },
-          { key: 'uso', label: 'Uso actual' },
-          { key: 'limite', label: 'Limite' },
-          { key: 'estado', label: 'Estado' },
-        ]}
-        emptyTitle="Sin datos"
-        emptyBody="No hay informacion de capacidad disponible."
-      />
     </div>
   )
 
@@ -1288,7 +1062,9 @@ export default function DashboardPage() {
     agenda: citasHoy > 0 ? `${citasHoy}` : null,
     ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
     inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
-    pacientes: limiteMascotas !== null ? `${Math.max(cupoMascotas, 0)}` : null,
+    // Sin badge: el cupo lo comunican los medidores "Uso de pacientes/usuarios"
+    // dentro de la pestana, que son su unica fuente de verdad.
+    pacientes: null,
     plan: typeof diasRestantes === 'number' && diasRestantes <= 60 ? `${diasRestantes}d` : null,
   }
 
