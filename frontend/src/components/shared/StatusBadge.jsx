@@ -28,17 +28,17 @@ const STATUS_MAP = {
   enviado:     { label: 'Enviado',     colors: 'bg-blue-50     border-blue-200    text-blue-700',    dot: 'bg-blue-400'     },
   aceptado:    { label: 'Aceptado',    colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
   rechazado:   { label: 'Rechazado',   colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  error_dian:  { label: 'Error DIAN',  colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
+  error_dian:  { label: 'Rechazada por la DIAN', colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
 
   // ── Suscripciones ─────────────────────────────────────────────
   activa:      { label: 'Activa',      colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
   vencida:     { label: 'Vencida',     colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  trial:       { label: 'Trial',       colors: 'bg-purple-50   border-purple-200  text-purple-700',  dot: 'bg-purple-400'   },
+  trial:       { label: 'Prueba gratis', colors: 'bg-purple-50   border-purple-200  text-purple-700',  dot: 'bg-purple-400'   },
   inactiva:    { label: 'Inactiva',    colors: 'bg-warm-100    border-warm-200    text-warm-500',    dot: 'bg-warm-300'     },
 
   // ── Inventario ────────────────────────────────────────────────
   disponible:  { label: 'Disponible',  colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
-  bajo_stock:  { label: 'Bajo stock',  colors: 'bg-amber-50    border-amber-200   text-amber-700',   dot: 'bg-amber-400'    },
+  bajo_stock:  { label: 'Cantidad baja', colors: 'bg-amber-50    border-amber-200   text-amber-700',   dot: 'bg-amber-400'    },
   agotado:     { label: 'Agotado',     colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
   vencido:     { label: 'Vencido',     colors: 'bg-orange-50   border-orange-200  text-orange-600',  dot: 'bg-orange-400'   },
 }

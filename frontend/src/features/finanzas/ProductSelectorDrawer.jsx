@@ -144,7 +144,7 @@ export default function ProductSelectorDrawer({
                             {producto.nombre}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Stock {formatNumber(producto.stock)} ·{' '}
+                            Cantidad {formatNumber(producto.stock)} ·{' '}
                             {formatCurrency(producto.precioVenta)}
                           </p>
                         </div>
@@ -175,8 +175,8 @@ export default function ProductSelectorDrawer({
           ) : (
             <div className="flex flex-col gap-4 p-5">
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                La pistola lectora escribe el codigo y cierra con Enter. Si el producto existe en
-                inventario y tiene stock, se agrega directo al borrador.
+                La pistola lectora escribe el código y cierra con Enter. Si el producto existe en
+                inventario y tiene unidades disponibles, se agrega directo al borrador.
               </div>
 
               <label className="grid gap-2">

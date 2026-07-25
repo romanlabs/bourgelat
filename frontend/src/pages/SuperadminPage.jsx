@@ -47,7 +47,7 @@ const ESTADO_SUSCRIPCION_LABELS = {
   prueba: 'Temporal',
   vencida: 'Vencidas',
   cancelada: 'Canceladas',
-  sin_suscripcion: 'Sin suscripcion',
+  sin_suscripcion: 'Sin suscripción',
 }
 
 const ESTADO_ELECTRONICO_LABELS = {
@@ -55,7 +55,7 @@ const ESTADO_ELECTRONICO_LABELS = {
   enviada: 'Enviadas',
   validada: 'Validadas',
   rechazada: 'Rechazadas',
-  error: 'Con error',
+  error: 'Con problema',
 }
 
 const ESTADO_CHECK_LABELS = {
@@ -311,13 +311,13 @@ function GestionPlanesSection({ catalogoPlanes }) {
     <section id="planes">
       <DataTable
         title="Gestion de planes"
-        subtitle="Busca una clinica y asignale el plan que corresponde segun el acuerdo comercial. La asignacion es inmediata y cancela cualquier suscripcion anterior."
+        subtitle="Busca una clínica y asígnale el plan que corresponde según el acuerdo comercial. La asignación es inmediata y cancela cualquier suscripción anterior."
         action={
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar por nombre, email o ciudad..."
+              placeholder="Buscar por nombre, correo o ciudad..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="w-72 border border-border bg-background py-2 pl-9 pr-4 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
@@ -325,7 +325,7 @@ function GestionPlanesSection({ catalogoPlanes }) {
           </div>
         }
         columns={[
-          { key: 'nombre', label: 'Clinica' },
+          { key: 'nombre', label: 'Clínica' },
           { key: 'email', label: 'Contacto' },
           {
             key: 'ciudad',
@@ -378,12 +378,12 @@ function GestionPlanesSection({ catalogoPlanes }) {
         ]}
         rows={clinicasFiltradas}
         emptyTitle={
-          busqueda ? `Sin resultados para "${busqueda}".` : 'No hay clinicas registradas.'
+          busqueda ? `Sin resultados para "${busqueda}".` : 'No hay clínicas registradas.'
         }
         emptyBody={
           busqueda
-            ? 'Intenta con otro nombre, email o ciudad.'
-            : 'Cuando se creen cuentas en la plataforma apareceran aqui.'
+            ? 'Intenta con otro nombre, correo o ciudad.'
+            : 'Cuando se creen cuentas en la plataforma aparecerán aquí.'
         }
       />
 
@@ -475,19 +475,18 @@ export default function SuperadminPage() {
   return (
     <SuperadminShell
       title="Control global de Bourgelat"
-      description="Esta consola es tuya como operador del software. Aqui ves adopcion, facturacion, activaciones temporales por vencer y los puntos sensibles de DIAN o integraciones antes de que afecten a una clinica."
+      description="Este panel es tuyo como responsable de la plataforma. Aquí ves adopción, facturación, activaciones temporales por vencer y los puntos delicados de DIAN o integraciones antes de que afecten a una clínica."
       currentKey="resumen"
-      asideNote="Si solo tu cuenta tiene el rol `superadmin`, solo tu veras esta consola. Los administradores de clinica siguen entrando a su propio backoffice."
+      asideNote="Si solo tu cuenta es administradora de la plataforma, solo tú verás este panel. Los administradores de cada clínica siguen entrando al panel de su clínica."
       headerBadge={
         <span className="inline-flex items-center border border-border bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
-          Plataforma multi-tenant
+          Todas las clínicas
         </span>
       }
     >
       {resumenQuery.isError ? (
         <div className="border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700 shadow-sm">
-          No fue posible cargar la consola global. Revisa el backend o vuelve a intentar en un
-          momento.
+          No pudimos cargar la información. Intenta de nuevo en unos segundos.
         </div>
       ) : null}
 
@@ -523,7 +522,7 @@ export default function SuperadminPage() {
           />
           <KpiCard
             icon={ShieldAlert}
-            label="Integraciones con fallo"
+            label="Integraciones con problema"
             value={formatNumber(resumenQuery.data?.resumen?.integracionesConFallo || 0)}
             helper={`${formatNumber(resumenQuery.data?.resumen?.integracionesActivas || 0)} integraciones activas en total.`}
             tone="text-rose-700"
@@ -540,21 +539,21 @@ export default function SuperadminPage() {
         <div className="grid gap-5 xl:grid-cols-3">
           <DonutCard
             title="Base comercial"
-            subtitle="Distribucion actual de clinicas por plan vigente."
+            subtitle="Distribución actual de clínicas por plan vigente."
             data={planData}
             centerLabel="Clinicas"
             centerValue={formatNumber(resumenQuery.data?.resumen?.totalClinicas || 0)}
-            emptyMessage="Aun no hay datos de suscripcion para mostrar."
+            emptyMessage="Aún no hay datos de suscripción para mostrar."
           />
           <DonutCard
             title="Estado de suscripciones"
-            subtitle="Te muestra cuantas clinicas estan activas y cuantas siguen en activacion temporal."
+            subtitle="Te muestra cuántas clínicas están activas y cuántas siguen en activación temporal."
             data={estadoSuscripcionData}
             centerLabel="Estados"
             centerValue={formatNumber(
               estadoSuscripcionData.reduce((acc, item) => acc + Number(item.value || 0), 0)
             )}
-            emptyMessage="No hay estados de suscripcion disponibles."
+            emptyMessage="No hay estados de suscripción disponibles."
           />
           <DonutCard
             title="Factura electronica"
@@ -572,9 +571,9 @@ export default function SuperadminPage() {
       <section id="suscripciones" className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <DataTable
           title="Altas recientes"
-          subtitle="Las ultimas clinicas creadas y su estado comercial para que sepas que revisar primero."
+          subtitle="Las últimas clínicas creadas y su estado comercial, para que sepas qué revisar primero."
           columns={[
-            { key: 'nombre', label: 'Clinica' },
+            { key: 'nombre', label: 'Clínica' },
             { key: 'email', label: 'Contacto' },
             {
               key: 'ubicacion',
@@ -613,17 +612,17 @@ export default function SuperadminPage() {
             },
           ]}
           rows={resumenQuery.data?.listas?.clinicasRecientes || []}
-          emptyTitle="Todavia no hay clinicas registradas."
-          emptyBody="Cuando empiecen a llegar altas nuevas, aqui veras el ritmo de crecimiento y el estado comercial de cada cuenta."
+          emptyTitle="Todavía no hay clínicas registradas."
+          emptyBody="Cuando empiecen a llegar cuentas nuevas, aquí verás el ritmo de crecimiento y el estado comercial de cada una."
         />
 
         <DashboardPanel
           title="Gobierno comercial"
-          subtitle="El objetivo de esta consola no es ver todo: es ver primero lo que exige una decision tuya."
+          subtitle="El objetivo de este panel no es ver todo: es ver primero lo que exige una decisión tuya."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="border border-border bg-muted p-4">
-              <p className="text-sm font-semibold text-slate-950">Nuevas clinicas del mes</p>
+              <p className="text-sm font-semibold text-slate-950">Nuevas clínicas del mes</p>
               <p className="mt-3 text-3xl font-semibold text-slate-950">
                 {formatNumber(resumenQuery.data?.resumen?.nuevasClinicasMes || 0)}
               </p>
@@ -651,9 +650,9 @@ export default function SuperadminPage() {
       <section id="gobierno" className="grid gap-5 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <DataTable
           title="Activaciones temporales por vencer"
-          subtitle="Las cuentas que requieren accion comercial tuya antes de pasar a Esencial."
+          subtitle="Las cuentas que requieren una acción comercial tuya antes de pasar a Esencial."
           columns={[
-            { key: 'clinicaNombre', label: 'Clinica' },
+            { key: 'clinicaNombre', label: 'Clínica' },
             { key: 'contacto', label: 'Contacto' },
             {
               key: 'ubicacion',
@@ -681,10 +680,10 @@ export default function SuperadminPage() {
         />
 
         <DataTable
-          title="Facturacion electronica por intervenir"
-          subtitle="Clinicas con plan profesional o superior que aun necesitan configuracion, datos fiscales o revision tecnica."
+          title="Facturación electrónica por revisar"
+          subtitle="Clínicas con plan profesional o superior que aún necesitan configuración, datos fiscales o apoyo de soporte."
           columns={[
-            { key: 'clinicaNombre', label: 'Clinica' },
+            { key: 'clinicaNombre', label: 'Clínica' },
             {
               key: 'plan',
               label: 'Plan',
@@ -700,7 +699,7 @@ export default function SuperadminPage() {
             },
             {
               key: 'integracionActiva',
-              label: 'Integracion',
+              label: 'Integración',
               render: (row) => boolPill(row.integracionActiva, 'Activa', 'Sin activar'),
             },
             {
@@ -722,15 +721,15 @@ export default function SuperadminPage() {
             },
           ]}
           rows={resumenQuery.data?.listas?.facturacionPendiente || []}
-          emptyTitle="No hay clinicas bloqueadas en facturacion electronica."
-          emptyBody="Cuando este bloque quede vacio, la operacion fiscal estara respirando mejor."
+          emptyTitle="No hay clínicas bloqueadas en facturación electrónica."
+          emptyBody="Cuando este bloque quede vacío, la operación fiscal estará al día."
         />
       </section>
 
       <section id="operacion" className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <BarPanel
           title="Actividad sensible de la semana"
-          subtitle="Acciones mas frecuentes de la plataforma para ayudarte a detectar donde se esta moviendo la operacion."
+          subtitle="Acciones más frecuentes de la plataforma, para ayudarte a detectar dónde se está moviendo la operación."
           data={actividadPorAccionData}
           dataKey="total"
           color="#0f4c81"
@@ -764,8 +763,8 @@ export default function SuperadminPage() {
                 <div>
                   <p className="text-sm font-semibold text-slate-950">Gobierno de acceso</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Esta consola queda aislada del backoffice clinico. Sirve para ti o para un
-                    grupo muy corto de operadores globales, no para clientes finales.
+                    Este panel queda separado del panel de las clínicas. Sirve para ti o para un
+                    grupo muy corto de responsables de la plataforma, no para clientes finales.
                   </p>
                 </div>
                 <UserRoundCog className="h-5 w-5 text-foreground" />

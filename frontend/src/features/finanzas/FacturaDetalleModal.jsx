@@ -142,7 +142,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <thead className="bg-muted">
                     <tr>
                       <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Item
+                        Concepto
                       </th>
                       <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Cantidad
@@ -283,7 +283,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                       }
                       className="h-4 w-4 border-border text-primary focus:ring-primary"
                     />
-                    Enviar email al tutor al emitir electronicamente
+                    Enviar el correo al tutor al emitir electrónicamente
                   </label>
                   <button
                     type="button"

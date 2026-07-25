@@ -23,36 +23,36 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 
 const PERSON_TYPE_OPTIONS = [
-  { value: 'persona_juridica', label: 'Persona juridica' },
+  { value: 'persona_juridica', label: 'Persona jurídica' },
   { value: 'persona_natural', label: 'Persona natural' },
 ]
 
 const FISCAL_DOCUMENT_OPTIONS = [
-  { value: '3', label: 'Cedula de ciudadania' },
-  { value: '5', label: 'Cedula de extranjeria' },
+  { value: '3', label: 'Cédula de ciudadanía' },
+  { value: '5', label: 'Cédula de extranjería' },
   { value: '6', label: 'NIT' },
   { value: '7', label: 'Pasaporte' },
 ]
 
 const LEGAL_ORGANIZATION_OPTIONS = [
-  { value: '1', label: 'Persona juridica' },
+  { value: '1', label: 'Persona jurídica' },
   { value: '2', label: 'Persona natural' },
 ]
 
 const FACTUS_ENV_OPTIONS = [
-  { value: 'sandbox', label: 'Sandbox' },
-  { value: 'production', label: 'Produccion' },
+  { value: 'sandbox', label: 'Sandbox (pruebas)' },
+  { value: 'production', label: 'Producción' },
 ]
 
 const FISCAL_FIELD_LABELS = {
   nit: 'NIT',
-  razonSocial: 'Razon social',
-  direccion: 'Direccion principal',
+  razonSocial: 'Razón social',
+  direccion: 'Dirección principal',
   telefono: 'Celular principal',
-  email: 'Email institucional',
+  email: 'Correo institucional',
   municipioId: 'Municipio DIAN',
   tipoDocumentoFacturacionId: 'Documento fiscal',
-  organizacionJuridicaId: 'Organizacion juridica',
+  organizacionJuridicaId: 'Organización jurídica',
   tributoId: 'Tributo',
 }
 
@@ -105,7 +105,7 @@ const buildFactusForm = (data) => ({
 })
 
 const formatDateTime = (value) => {
-  if (!value) return 'Sin chequeo reciente'
+  if (!value) return 'Sin revisión reciente'
 
   try {
     return new Intl.DateTimeFormat('es-CO', {
@@ -113,16 +113,16 @@ const formatDateTime = (value) => {
       timeStyle: 'short',
     }).format(new Date(value))
   } catch {
-    return 'Sin chequeo reciente'
+    return 'Sin revisión reciente'
   }
 }
 
 const formatCredentialSource = (value) => {
   const sourceMap = {
-    integracion: 'Credenciales propias',
-    env: 'Variables del entorno',
+    integracion: 'Claves propias',
+    env: 'Claves generales de Bourgelat',
     mixta: 'Mixta',
-    ninguna: 'Sin credenciales',
+    ninguna: 'Sin claves configuradas',
   }
 
   return sourceMap[value] || 'Sin definir'
@@ -150,12 +150,12 @@ function RestrictedConfigPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
-          title="Configuracion de clinica"
-          subtitle="Este modulo se reserva para administracion principal."
+          title="Configuración de clínica"
+          subtitle="Esta sección se reserva para la administración principal."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene permisos para editar la configuracion institucional o fiscal
-            de la clinica.
+            Tu acceso actual no tiene permisos para editar la configuración institucional o fiscal
+            de la clínica.
           </div>
         </DashboardPanel>
       </div>
@@ -224,7 +224,7 @@ function ConfiguracionContent({
   const actualizarClinicaMutation = useMutation({
     mutationFn: configuracionApi.actualizarClinica,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Configuracion actualizada exitosamente')
+      toast.success(data?.message || 'Configuración actualizada correctamente')
       if (data?.clinica) {
         setClinica(data.clinica)
         setClinicForm(buildClinicForm(data.clinica))
@@ -233,18 +233,18 @@ function ConfiguracionContent({
       queryClient.invalidateQueries({ queryKey: ['suscripcion-activa'] })
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible actualizar la configuracion de la clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible actualizar la configuración de la clínica.'))
     },
   })
 
   const guardarFactusMutation = useMutation({
     mutationFn: configuracionApi.guardarConfiguracionFactus,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Configuracion de Factus guardada exitosamente')
+      toast.success(data?.message || 'Configuración de Factus guardada correctamente')
       queryClient.invalidateQueries({ queryKey: ['configuracion-factus'] })
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible guardar la configuracion de Factus.'))
+      toast.error(getErrorMessage(error, 'No fue posible guardar la configuración de Factus.'))
     },
   })
 
@@ -262,7 +262,7 @@ function ConfiguracionContent({
   const sincronizarFactusMutation = useMutation({
     mutationFn: configuracionApi.sincronizarFactus,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Sincronizacion con Factus exitosa')
+      toast.success(data?.message || 'Sincronización con Factus exitosa')
       queryClient.invalidateQueries({ queryKey: ['configuracion-factus'] })
       queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
     },
@@ -300,12 +300,12 @@ function ConfiguracionContent({
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
-      toast.error('Ingresa un email institucional valido.')
+      toast.error('Ingresa un correo institucional válido.')
       return
     }
 
     if (payload.telefono && !/^3\d{9}$/.test(payload.telefono)) {
-      toast.error('El telefono debe ser un celular colombiano valido de 10 digitos.')
+      toast.error('El teléfono debe ser un celular colombiano válido de 10 dígitos.')
       return
     }
 
@@ -344,7 +344,7 @@ function ConfiguracionContent({
     }
 
     if (factusForm.rangoNumeracionId && !/^\d+$/.test(factusForm.rangoNumeracionId)) {
-      toast.error('El rango de numeracion debe ser numerico.')
+      toast.error('El rango de numeración debe ser numérico.')
       return
     }
 
@@ -370,15 +370,15 @@ function ConfiguracionContent({
     { id: 'resumen', label: 'Resumen', helper: 'Panorama institucional' },
     { id: 'ficha', label: 'Ficha editable', helper: 'Identidad, contacto y fiscal' },
     ...(puedeVerFacturacionElectronica
-      ? [{ id: 'facturacion', label: 'Facturacion electronica', helper: 'Estado e integracion' }]
+      ? [{ id: 'facturacion', label: 'Facturación electrónica', helper: 'Estado e integración' }]
       : []),
   ]
 
   return (
     <div className="space-y-5">
       <DashboardPanel
-        title="Organiza esta configuracion por bloques"
-        subtitle="Primero revisa el resumen, luego edita la ficha institucional y deja la integracion electronica en una vista separada."
+        title="Organiza esta configuración por bloques"
+        subtitle="Primero revisa el resumen, luego edita la ficha institucional y deja la facturación electrónica en una vista separada."
         action={
           <StatusPill tone="border-border bg-muted text-foreground">
             Configuracion guiada
@@ -411,7 +411,7 @@ function ConfiguracionContent({
           icon={Building2}
           label="Ficha institucional"
           value={`${formatNumber(datosBaseCubiertos)}/6`}
-          helper="Nombre, correo, celular, direccion, departamento y ciudad listos para operacion."
+          helper="Nombre, correo, celular, dirección, departamento y ciudad listos para operar."
           tone="text-primary"
         />
         <KpiCard
@@ -426,7 +426,7 @@ function ConfiguracionContent({
           icon={Phone}
           label="Linea administrativa"
           value={clinicForm.telefono ? 'Activa' : 'Pendiente'}
-          helper={clinicForm.telefono || 'Agrega un celular colombiano valido para contacto principal.'}
+          helper={clinicForm.telefono || 'Agrega un celular colombiano válido para el contacto principal.'}
           tone={clinicForm.telefono ? 'text-emerald-700' : 'text-amber-700'}
           borderTone={clinicForm.telefono ? 'border-border' : 'border-amber-300'}
         />
@@ -436,8 +436,8 @@ function ConfiguracionContent({
           value={perfilFiscal?.listoParaFacturacion ? 'Listo' : `${formatNumber(camposPendientes.length)} pendientes`}
           helper={
             perfilFiscal?.listoParaFacturacion
-              ? 'La clinica ya tiene base institucional y fiscal para una operacion mas formal.'
-              : 'Completa la ficha para habilitar una salida tributaria mas ordenada.'
+              ? 'La clínica ya tiene base institucional y fiscal para una operación más formal.'
+              : 'Completa la ficha para habilitar una salida tributaria más ordenada.'
           }
           tone={perfilFiscal?.listoParaFacturacion ? 'text-emerald-700' : 'text-amber-700'}
           borderTone={perfilFiscal?.listoParaFacturacion ? 'border-border' : 'border-amber-300'}
@@ -458,9 +458,9 @@ function ConfiguracionContent({
                 <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
                 <p>
                   {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
-                    'Ubicacion pendiente'}
+                    'Ubicación pendiente'}
                 </p>
-                <p>{clinicForm.email || 'Email pendiente'}</p>
+                <p>{clinicForm.email || 'Correo pendiente'}</p>
                 <p>{clinicForm.telefono || 'Celular pendiente'}</p>
               </div>
 
@@ -539,13 +539,13 @@ function ConfiguracionContent({
             </DashboardPanel>
 
             <DashboardPanel
-              title="Criterio de administracion"
-              subtitle="La clinica mantiene sus datos base; la configuracion sensible con DIAN y Factus se controla aparte."
+              title="Criterio de administración"
+              subtitle="La clínica mantiene sus datos base; la configuración delicada con DIAN y Factus se controla aparte."
             >
               <div className="space-y-3">
                 <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                   Esta separacion reduce errores y evita que el cliente mezcle configuracion visible
-                  con credenciales tecnicas o cambios delicados de integracion.
+                  con claves de acceso o cambios delicados de integración.
                 </div>
                 <Link
                   to="/finanzas"
@@ -564,7 +564,7 @@ function ConfiguracionContent({
       <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
         <DashboardPanel
           title="Ficha institucional editable"
-          subtitle="Aqui conviene editar nombre visible, contacto, direccion y datos fiscales base sin mezclarlo con la integracion electronica."
+          subtitle="Aquí conviene editar nombre visible, contacto, dirección y datos fiscales, sin mezclarlo con la facturación electrónica."
           action={
             <StatusPill
               tone={
@@ -639,7 +639,7 @@ function ConfiguracionContent({
                   type="email"
                   value={clinicForm.email}
                   onChange={(event) => setClinicForm((current) => ({ ...current, email: event.target.value }))}
-                  placeholder="administracion@bourgelat.co"
+                  placeholder="administracion@tuclinica.co"
                   className={INPUT_CLASS}
                 />
               </FormField>
@@ -660,7 +660,7 @@ function ConfiguracionContent({
               </FormField>
             </div>
 
-            <FormField label="Direccion principal">
+            <FormField label="Dirección principal">
               <input
                 type="text"
                 value={clinicForm.direccion}
@@ -719,7 +719,7 @@ function ConfiguracionContent({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <FormField label="URL del logo" helper="Usa una URL publica valida para el logo institucional.">
+              <FormField label="URL del logo" helper="Debe ser un enlace público a la imagen del logo.">
                 <input
                   type="text"
                   value={clinicForm.logo}
@@ -742,7 +742,7 @@ function ConfiguracionContent({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <FormField label="Digito de verificacion">
+              <FormField label="Dígito de verificación">
                 <input
                   type="text"
                   inputMode="numeric"
@@ -757,7 +757,7 @@ function ConfiguracionContent({
                   className={INPUT_CLASS}
                 />
               </FormField>
-              <FormField label="Municipio ID DIAN">
+              <FormField label="Código DIAN del municipio">
                 <input
                   type="text"
                   inputMode="numeric"
@@ -791,7 +791,7 @@ function ConfiguracionContent({
                   ))}
                 </select>
               </FormField>
-              <FormField label="Organizacion juridica">
+              <FormField label="Organización jurídica">
                 <select
                   value={clinicForm.organizacionJuridicaId}
                   onChange={(event) =>
@@ -802,7 +802,7 @@ function ConfiguracionContent({
                   }
                   className={INPUT_CLASS}
                 >
-                  <option value="">Selecciona organizacion</option>
+                  <option value="">Selecciona organización</option>
                   {LEGAL_ORGANIZATION_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -829,7 +829,7 @@ function ConfiguracionContent({
                 disabled={actualizarClinicaMutation.isPending}
                 className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuracion'}
+                {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
               <button
                 type="button"
@@ -845,7 +845,7 @@ function ConfiguracionContent({
         <div className="space-y-5">
           <DashboardPanel
             title="Resumen institucional"
-            subtitle="Lectura corta para validar si lo visible al cliente y al equipo ya esta listo."
+            subtitle="Lectura corta para revisar si lo que ven el cliente y el equipo ya está listo."
           >
             <div className="space-y-4">
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
@@ -855,9 +855,9 @@ function ConfiguracionContent({
                 <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
                 <p>
                   {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
-                    'Ubicacion pendiente'}
+                    'Ubicación pendiente'}
                 </p>
-                <p>{clinicForm.email || 'Email pendiente'}</p>
+                <p>{clinicForm.email || 'Correo pendiente'}</p>
                 <p>{clinicForm.telefono || 'Celular pendiente'}</p>
               </div>
 
@@ -912,16 +912,16 @@ function ConfiguracionContent({
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (
         <EmptyModuleState
-          title="Facturacion electronica no incluida en el plan actual"
-          body="La integracion con Factus se habilita cuando la clinica sube a un plan con facturacion electronica. Mientras tanto, puedes dejar lista la ficha institucional y fiscal."
+          title="Facturación electrónica no incluida en el plan actual"
+          body="La conexión con Factus se habilita cuando la clínica sube a un plan con facturación electrónica. Mientras tanto, puedes dejar lista la ficha institucional y fiscal."
           ctaLabel="Revisar planes"
         />
       ) : (
         <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
           {puedeEditarFacturacionElectronica ? (
             <DashboardPanel
-              title="Facturacion electronica"
-              subtitle="Configura la integracion de Factus, guarda credenciales propias y valida el estado tecnico sin salir del backoffice."
+              title="Facturación electrónica"
+              subtitle="Configura la conexión con Factus, guarda tus claves de acceso y revisa que todo esté funcionando sin salir de esta pantalla."
               action={
                 <div className="flex flex-wrap gap-2">
                   <StatusPill
@@ -931,7 +931,7 @@ function ConfiguracionContent({
                         : 'border-border bg-muted text-foreground'
                     }
                   >
-                    {factusForm.activa ? 'Integracion activa' : 'Integracion inactiva'}
+                    {factusForm.activa ? 'Integración activa' : 'Integración inactiva'}
                   </StatusPill>
                   <StatusPill
                     tone={
@@ -971,11 +971,11 @@ function ConfiguracionContent({
                       }
                       className="h-4 w-4 border-border text-primary focus:ring-primary"
                     />
-                    Activar integracion para la clinica
+                    Activar la conexión para la clínica
                   </label>
                 </div>
 
-                <FormField label="URL base">
+                <FormField label="URL base" helper="Dirección del servicio de Factus. Si no estás seguro, déjala como viene.">
                   <input
                     type="text"
                     value={factusForm.baseUrl}
@@ -988,7 +988,7 @@ function ConfiguracionContent({
                 </FormField>
 
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <FormField label="Client ID">
+                  <FormField label="Client ID" helper="Lo encuentras en tu cuenta de Factus, en la sección de integraciones.">
                     <input
                       type="text"
                       value={factusForm.clientId}
@@ -999,7 +999,7 @@ function ConfiguracionContent({
                       className={INPUT_CLASS}
                     />
                   </FormField>
-                  <FormField label="Client secret">
+                  <FormField label="Client secret" helper="Clave privada que entrega Factus. No la compartas con nadie.">
                     <input
                       type="password"
                       value={factusForm.clientSecret}
@@ -1013,7 +1013,7 @@ function ConfiguracionContent({
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <FormField label="Usuario o email">
+                  <FormField label="Usuario o correo" helper="El mismo con el que ingresas al portal de Factus.">
                     <input
                       type="text"
                       value={factusForm.username}
@@ -1024,21 +1024,21 @@ function ConfiguracionContent({
                       className={INPUT_CLASS}
                     />
                   </FormField>
-                  <FormField label="Password">
+                  <FormField label="Contraseña" helper="La contraseña de tu cuenta de Factus, no la de Bourgelat.">
                     <input
                       type="password"
                       value={factusForm.password}
                       onChange={(event) =>
                         setFactusForm((current) => ({ ...current, password: event.target.value }))
                       }
-                      placeholder="Ingresa la password"
+                      placeholder="Ingresa la contraseña"
                       className={INPUT_CLASS}
                     />
                   </FormField>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-4">
-                  <FormField label="Rango de numeracion">
+                  <FormField label="Rango de numeración">
                     <input
                       type="text"
                       inputMode="numeric"
@@ -1053,7 +1053,7 @@ function ConfiguracionContent({
                       className={INPUT_CLASS}
                     />
                   </FormField>
-                  <FormField label="Documento codigo">
+                  <FormField label="Código de documento">
                     <input
                       type="text"
                       value={factusForm.documentoCodigo}
@@ -1097,7 +1097,7 @@ function ConfiguracionContent({
                     }
                     className="h-4 w-4 border-border text-primary focus:ring-primary"
                   />
-                  Enviar email al emitir documentos desde la integracion
+                  Enviar correo al emitir documentos desde la integración
                 </label>
 
                 <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
@@ -1122,26 +1122,26 @@ function ConfiguracionContent({
                     disabled={sincronizarFactusMutation.isPending}
                     className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {sincronizarFactusMutation.isPending ? 'Sincronizando...' : 'Sincronizar catalogos'}
+                    {sincronizarFactusMutation.isPending ? 'Sincronizando...' : 'Sincronizar catálogos'}
                   </button>
                 </div>
               </form>
             </DashboardPanel>
           ) : (
             <DashboardPanel
-              title="Facturacion electronica"
-              subtitle="La configuracion de DIAN y Factus se administra desde Bourgelat para evitar cambios sensibles por parte de la clinica."
+              title="Facturación electrónica"
+              subtitle="La conexión con la DIAN y Factus se administra desde Bourgelat para evitar cambios delicados por parte de la clínica."
               action={
                 <StatusPill tone="border-border bg-muted text-foreground">
-                  Solo lectura para la clinica
+                  Solo lectura para la clínica
                 </StatusPill>
               }
             >
               <div className="grid gap-4">
                 <div className="border border-primary/30 bg-primary/10 px-4 py-4 text-sm leading-7 text-primary">
-                  Tu equipo puede usar la facturacion electronica dentro del modulo financiero, pero
-                  la configuracion tecnica con DIAN y Factus solo la modifica soporte central o un
-                  perfil `superadmin`.
+                  Tu equipo puede usar la facturación electrónica desde la sección de caja, pero
+                  la conexión con la DIAN y Factus solo la puede cambiar el equipo de soporte o un
+                  administrador de la plataforma.
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
@@ -1152,27 +1152,27 @@ function ConfiguracionContent({
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
-                    <p className={LABEL_CLASS}>Estado de la integracion</p>
+                    <p className={LABEL_CLASS}>Estado de la conexión</p>
                     <p className="mt-3 font-semibold text-slate-950">
-                      {factusForm.activa ? 'Activa para emitir' : 'Pendiente de activacion'}
+                      {factusForm.activa ? 'Activa para emitir' : 'Pendiente de activación'}
                     </p>
                   </div>
                 </div>
                 <div className="grid gap-4 2xl:grid-cols-3">
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
-                    <p className={LABEL_CLASS}>Fuente de credenciales</p>
+                    <p className={LABEL_CLASS}>Origen de las claves</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {formatCredentialSource(configuracionEfectiva?.fuenteCredenciales)}
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
-                    <p className={LABEL_CLASS}>Rango de numeracion</p>
+                    <p className={LABEL_CLASS}>Rango de numeración</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {integracionFactus?.rangoNumeracionId || 'Pendiente'}
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
-                    <p className={LABEL_CLASS}>Ultimo chequeo</p>
+                    <p className={LABEL_CLASS}>Última revisión</p>
                     <p className="mt-3 font-semibold text-slate-950">
                       {formatDateTime(integracionFactus?.ultimoChequeo)}
                     </p>
@@ -1184,8 +1184,8 @@ function ConfiguracionContent({
 
           <div className="space-y-5">
             <DashboardPanel
-              title="Estado de integracion"
-              subtitle="Lectura tecnica corta para soporte, gerencia o cierre operativo."
+              title="Estado de la conexión"
+              subtitle="Resumen corto para soporte, gerencia o cierre operativo."
             >
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
@@ -1224,7 +1224,7 @@ function ConfiguracionContent({
                     </span>
                   </div>
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
-                    Base URL:{' '}
+                    URL base:{' '}
                     <span className="font-semibold text-slate-950">
                       {configuracionEfectiva?.baseUrl || 'Pendiente'}
                     </span>
@@ -1292,7 +1292,7 @@ export default function ConfiguracionPage() {
   const puedeEditarFacturacionElectronica = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   useEffect(() => {
-    document.title = 'Configuracion | Bourgelat'
+    document.title = 'Configuración | Bourgelat'
   }, [])
 
   const clinicaQuery = useQuery({
@@ -1327,8 +1327,8 @@ export default function ConfiguracionPage() {
   return (
     <AdminShell
       currentKey="configuracion"
-      title="Configuracion de clinica"
-      description="Centro institucional para mantener al dia la identidad de la clinica, su ficha fiscal y la salida de facturacion electronica."
+      title="Configuración de clínica"
+      description="Aquí mantienes al día la identidad de la clínica, su ficha fiscal y la salida de facturación electrónica."
       headerBadge={
         <StatusPill
           tone={
@@ -1348,7 +1348,7 @@ export default function ConfiguracionPage() {
           Abrir usuarios
         </Link>
       }
-      asideNote="Usa esta vista para ajustar nombre visible, datos institucionales, salida fiscal e integracion de facturacion sin mezclarlo con operacion diaria."
+      asideNote="Usa esta vista para ajustar nombre visible, datos institucionales, salida fiscal y facturación, sin mezclarlo con la operación diaria."
     >
       {clinicaQuery.isError || factusQuery.isError ? (
         <div className="grid gap-4">
@@ -1356,7 +1356,7 @@ export default function ConfiguracionPage() {
             <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
               {getErrorMessage(
                 clinicaQuery.error,
-                'No fue posible cargar la ficha institucional de la clinica.'
+                'No fue posible cargar la ficha institucional de la clínica.'
               )}
             </div>
           ) : null}
@@ -1364,7 +1364,7 @@ export default function ConfiguracionPage() {
             <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
               {getErrorMessage(
                 factusQuery.error,
-                'No fue posible cargar el estado de la facturacion electronica.'
+                'No fue posible cargar el estado de la facturación electrónica.'
               )}
             </div>
           ) : null}
@@ -1373,8 +1373,8 @@ export default function ConfiguracionPage() {
 
       {clinicaQuery.isLoading || !clinicaActual ? (
         <DashboardPanel
-          title="Cargando configuracion"
-          subtitle="Estamos reuniendo la ficha institucional y el estado fiscal de la clinica."
+          title="Cargando configuración"
+          subtitle="Estamos reuniendo la ficha institucional y el estado fiscal de la clínica."
         >
           <div className="grid gap-4 xl:grid-cols-4">
             {[0, 1, 2, 3].map((item) => (

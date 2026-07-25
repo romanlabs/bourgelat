@@ -133,7 +133,7 @@ function RestrictedAgendaPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Agenda"
-          subtitle="Este modulo se muestra a recepcion, veterinarios o perfiles administrativos."
+          subtitle="Esta sección se muestra a recepción, veterinarios o perfiles administrativos."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la agenda clinica. Solicita permisos al
@@ -516,7 +516,7 @@ export default function AgendaPage() {
     <AdminShell
       currentKey="agenda"
       title="Agenda y coordinacion de citas"
-      description="Organiza el dia por profesional, programa nuevas citas y resuelve confirmaciones o reprogramaciones sin salir del modulo administrativo."
+      description="Organiza el día por profesional, programa nuevas citas y resuelve confirmaciones o reprogramaciones sin salir de esta pantalla."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Operacion diaria
@@ -629,7 +629,7 @@ export default function AgendaPage() {
                 title={vistaAgenda === 'calendario' ? 'Calendario semanal' : 'Agenda del dia'}
                 subtitle={
                   vistaAgenda === 'calendario'
-                    ? 'Vista semanal de citas. Haz clic en un slot para ir al formulario de nueva cita.'
+                    ? 'Vista semanal de citas. Haz clic en un espacio libre para ir al formulario de nueva cita.'
                     : 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
                 }
                 action={
@@ -824,7 +824,7 @@ export default function AgendaPage() {
             <div className="grid gap-5 pt-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
             <DashboardPanel
               title="Nueva cita"
-              subtitle="Programa una cita nueva. Tambien puedes llegar aqui haciendo clic en cualquier slot del calendario."
+              subtitle="Programa una cita nueva. También puedes llegar aquí haciendo clic en cualquier espacio del calendario."
               action={<Plus className="h-4 w-4 text-primary" />}
             >
               {!puedeProgramar ? (
@@ -898,7 +898,7 @@ export default function AgendaPage() {
 
                       {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
                         <div className="border border-dashed border-border bg-white px-3 py-3 text-sm leading-7 text-muted-foreground">
-                          No encontramos un tutor con esa busqueda. Puedes crearlo desde el modulo de pacientes.
+                          No encontramos un tutor con esa búsqueda. Puedes crearlo desde la sección de pacientes.
                           <Link to="/pacientes" className="ml-2 font-semibold text-primary hover:text-primary">
                             Abrir pacientes
                           </Link>
@@ -1010,7 +1010,7 @@ export default function AgendaPage() {
 
                   {selectedOwner && mascotasDelTutor.length === 0 ? (
                     <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800">
-                      Este tutor aun no tiene pacientes activos. Primero registra la mascota en el modulo de pacientes.
+                      Este tutor aún no tiene pacientes activos. Primero registra la mascota en la sección de pacientes.
                     </div>
                   ) : null}
 

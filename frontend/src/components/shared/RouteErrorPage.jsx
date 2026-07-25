@@ -61,7 +61,7 @@ export default function RouteErrorPage() {
           <div>
             <p className="text-lg font-semibold tracking-[-0.02em]">Bourgelat</p>
             <p className="mt-1 hidden text-xs uppercase tracking-[0.22em] text-white/48 sm:block">
-              continuidad operativa para clinicas veterinarias
+              continuidad operativa para clínicas veterinarias
             </p>
           </div>
         </Link>
@@ -77,19 +77,19 @@ export default function RouteErrorPage() {
             className="mt-5 text-[2.7rem] leading-[0.92] tracking-[-0.05em] sm:text-5xl"
             style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
           >
-            No pudimos abrir esta vista todavia.
+            No pudimos abrir esta pantalla todavía.
           </h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
             {isImportError
-              ? 'Detectamos una diferencia entre la version que tenia el navegador y la version publicada. La plataforma intentara recargarse una vez y, si no alcanza, puedes hacerlo manualmente con el boton de abajo.'
-              : 'La ruta respondio con un error inesperado. Puedes volver al inicio o intentar recargar esta pantalla.'}
+              ? 'Tu navegador tiene una versión distinta a la que está publicada. Bourgelat intentará cargarse de nuevo una vez y, si no alcanza, puedes hacerlo con el botón de abajo.'
+              : 'Esta pantalla no se pudo abrir. Puedes volver al inicio o intentar cargarla de nuevo.'}
           </p>
         </div>
 
         <div className="px-6 py-8 sm:px-8">
           <div className="rounded-[28px] border border-[#d7e4ee] bg-[#f7fafc] p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#608093]">
-              Detalle tecnico
+              Información para soporte
             </p>
             <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-sm leading-7 text-[#28445a]">
               {message}
@@ -103,7 +103,7 @@ export default function RouteErrorPage() {
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#173b58_0%,#315c7e_62%,#6c9a8f_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_22px_48px_rgba(23,59,88,0.22)] transition hover:opacity-95"
             >
               <RefreshCw className="h-4 w-4" />
-              Recargar plataforma
+              Volver a cargar
             </button>
 
             <Link

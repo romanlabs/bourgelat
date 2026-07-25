@@ -83,7 +83,7 @@ const buildThermalReceiptHtml = ({ factura, clinica }) => {
       const subtotal = formatCurrency(item.subtotal || 0)
       return `
         <div class="item">
-          <div class="item-name">${item.descripcion || 'Item'}</div>
+          <div class="item-name">${item.descripcion || 'Concepto'}</div>
           <div class="row"><span class="muted">${cantidad} x ${unitario}</span><span class="num">${subtotal}</span></div>
         </div>
       `

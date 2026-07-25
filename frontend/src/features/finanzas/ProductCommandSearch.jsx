@@ -245,7 +245,7 @@ export default function ProductCommandSearch({
                       </p>
                       {product.stock !== null && product.stock !== undefined && (
                         <p className={`text-xs ${sinStock ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {sinStock ? 'Sin stock' : `Stock: ${product.stock}`}
+                          {sinStock ? 'Agotado' : `Cantidad: ${product.stock}`}
                         </p>
                       )}
                       {!sinStock && (
