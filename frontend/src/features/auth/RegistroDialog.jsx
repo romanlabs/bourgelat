@@ -21,7 +21,7 @@ const ACCENT = '#b07645'
 const esquema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la clinica es requerido').max(160),
   nombreAdministrador: z.string().trim().min(1, 'Tu nombre es requerido').max(120),
-  email: z.string().trim().email('Email invalido'),
+  email: z.string().trim().email('Correo inválido'),
   password: z
     .string()
     .regex(
@@ -144,7 +144,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
               autoCapitalize="none"
               inputMode="email"
               spellCheck={false}
-              placeholder="tu@email.com"
+              placeholder="tucorreo@ejemplo.com"
               className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
             />
             {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}

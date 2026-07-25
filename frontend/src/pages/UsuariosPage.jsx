@@ -198,7 +198,7 @@ function RestrictedUsersPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Usuarios y roles"
-          subtitle="Este modulo se reserva para administracion de la clinica."
+          subtitle="Esta sección se reserva para la administración de la clínica."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene permisos para administrar usuarios, roles ni estados del equipo.
@@ -888,7 +888,7 @@ export default function UsuariosPage() {
                       onChange={(event) =>
                         setEditForm((current) => ({ ...current, email: event.target.value }))
                       }
-                      placeholder="Email del colaborador"
+                      placeholder="Correo del colaborador"
                       className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>

@@ -55,23 +55,23 @@ export default class AppErrorBoundary extends Component {
           <div className="border-b border-[#d7e4ee] bg-[linear-gradient(135deg,#0d2335,#14344c)] px-6 py-8 text-white sm:px-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9debe4]">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Estado de la interfaz
+              Estado de la pantalla
             </div>
             <h1
               className="mt-5 text-[2.7rem] leading-[0.92] tracking-[-0.05em] sm:text-5xl"
               style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
             >
-              La vista encontro un error inesperado.
+              Esta pantalla no se pudo mostrar.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
-              La plataforma detecto un problema de render en esta pantalla. Puedes recargar para intentar recuperar el flujo o volver a una ruta segura.
+              Ocurrió un problema al mostrar esta pantalla. Puedes cargarla de nuevo o volver a una pantalla conocida.
             </p>
           </div>
 
           <div className="px-6 py-8 sm:px-8">
             <div className="rounded-[28px] border border-[#d7e4ee] bg-[#f7fafc] p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#608093]">
-                Detalle tecnico
+                Información para soporte
               </p>
               <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-sm leading-7 text-[#28445a]">
                 {getErrorMessage(error)}
@@ -85,7 +85,7 @@ export default class AppErrorBoundary extends Component {
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#173b58_0%,#315c7e_62%,#6c9a8f_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_22px_48px_rgba(23,59,88,0.22)] transition hover:opacity-95"
               >
                 <RefreshCw className="h-4 w-4" />
-                Recargar plataforma
+                Volver a cargar
               </button>
 
               <Link
@@ -99,7 +99,7 @@ export default class AppErrorBoundary extends Component {
                 to="/dashboard"
                 className="inline-flex items-center justify-center rounded-full border border-[#c9d8e3] bg-white px-6 py-3 text-sm font-semibold text-[#163149] no-underline transition hover:border-[#9cb5c6] hover:bg-[#f8fbfd]"
               >
-                Ir al dashboard
+                Ir al panel de control
               </Link>
             </div>
           </div>

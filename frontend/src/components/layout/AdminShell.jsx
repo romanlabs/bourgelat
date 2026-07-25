@@ -37,36 +37,36 @@ const ROL_LABELS_SIDEBAR = {
   recepcionista: 'Recepcionista',
   auxiliar: 'Auxiliar',
   facturador: 'Facturador',
-  superadmin: 'Superadmin',
+  superadmin: 'Administrador de la plataforma',
 }
 
 const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { key: 'dashboard', label: 'Panel de control', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
   { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: Users },
-  { key: 'configuracion', label: 'Clinica', to: '/configuracion', icon: Building2 },
-  { key: 'auditoria', label: 'Auditoria', to: '/auditoria', icon: History },
+  { key: 'configuracion', label: 'Clínica', to: '/configuracion', icon: Building2 },
+  { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: History },
   { key: 'planes', label: 'Planes', to: '/planes', icon: ShieldCheck },
 ]
 
 const NAV_SECTIONS = [
   {
     key: 'operacion',
-    label: 'Operacion diaria',
+    label: 'Operación diaria',
     items: ['dashboard', 'agenda', 'pacientes', 'antecedentes'],
   },
   {
     key: 'gestion',
-    label: 'Gestion administrativa',
+    label: 'Gestión administrativa',
     items: ['finanzas', 'inventario', 'usuarios'],
   },
   {
     key: 'control',
-    label: 'Configuracion y control',
+    label: 'Configuración y control',
     items: ['configuracion', 'auditoria', 'planes'],
   },
 ]
@@ -307,7 +307,7 @@ export default function AdminShell({
                   className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-destructive outline-none transition hover:bg-destructive/10 focus:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4" />
-                  Cerrar sesion
+                  Cerrar sesión
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -319,7 +319,7 @@ export default function AdminShell({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
           <span>
             Verifica tu correo (<span className="font-semibold">{usuario?.email}</span>) para poder cambiar tu
-            contrasena mas adelante.
+            contraseña más adelante.
           </span>
           <div className="flex shrink-0 items-center gap-3">
             <button
@@ -328,7 +328,7 @@ export default function AdminShell({
               onClick={() => reenviarVerificacion({ email: usuario.email })}
               className="font-semibold underline decoration-amber-400 underline-offset-2 hover:text-amber-950 disabled:opacity-60"
             >
-              {reenviandoVerificacion ? 'Enviando...' : 'Reenviar verificacion'}
+              {reenviandoVerificacion ? 'Enviando...' : 'Reenviar verificación'}
             </button>
             <button
               type="button"
@@ -506,7 +506,7 @@ export default function AdminShell({
 
               {modulosFiltrados.length > 0 ? (
                 <section>
-                  <p className="mb-1 px-2 text-xs font-semibold text-[#91e7e0]/40">Ir al modulo</p>
+                  <p className="mb-1 px-2 text-xs font-semibold text-[#91e7e0]/40">Ir a la sección</p>
                   <div className="space-y-0.5">
                     {modulosFiltrados.map((item) => {
                       const Icon = item.icon
@@ -532,7 +532,7 @@ export default function AdminShell({
 
             <div className="flex items-center justify-between border-t border-white/10 px-4 py-2.5 text-xs text-[#91e7e0]/30">
               <span>Escribe el nombre de un paciente o tutor</span>
-              <span>Presiona / para abrir la busqueda</span>
+              <span>Presiona / para abrir la búsqueda</span>
             </div>
           </Dialog.Content>
         </Dialog.Portal>

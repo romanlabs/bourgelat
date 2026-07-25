@@ -185,8 +185,8 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {editingProduct
-                ? 'Ajusta los datos. El stock se modifica desde movimientos.'
-                : 'Alta rapida para dejar el inventario listo.'}
+                ? 'Ajusta los datos. La cantidad se modifica desde movimientos.'
+                : 'Registro rápido para dejar el inventario listo.'}
             </p>
           </div>
           <button
@@ -205,7 +205,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Informacion basica
+                Información básica
               </p>
 
               <div className="grid gap-1.5">
@@ -215,7 +215,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 <input
                   id="d-nombre"
                   type="text"
-                  placeholder="Ej. Meloxicam suspension oral"
+                  placeholder="Ej. Meloxicam suspensión oral"
                   className={fieldClass(errors.nombre)}
                   {...register('nombre')}
                 />
@@ -225,7 +225,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-categoria" className={labelClass}>
-                    Categoria *
+                    Categoría *
                   </label>
                   <select
                     id="d-categoria"
@@ -253,7 +253,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 </div>
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">
-                Elige como cuentas una unidad en la estanteria. El stock baja de a una cada venta.
+                Elige cómo cuentas una unidad en la estantería. La cantidad baja de a una cada venta.
               </p>
             </div>
 
@@ -266,7 +266,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               <div className="grid items-start gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-stock" className={labelClass}>
-                    {editingProduct ? 'Stock actual' : 'Stock inicial'}
+                    {editingProduct ? 'Cantidad actual' : 'Cantidad inicial'}
                   </label>
                   {editingProduct ? (
                     <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
@@ -290,7 +290,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="d-stock-min" className={labelClass}>
-                    Alerta de stock bajo
+                    Avisar cuando quede
                   </label>
                   <Controller
                     name="stockMinimo"
@@ -308,7 +308,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 </div>
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">
-                El sistema avisa cuando el stock quede en el numero de alerta o menos.
+                Bourgelat te avisa cuando la cantidad llegue a ese número o menos.
               </p>
             </div>
 
@@ -363,7 +363,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               {ventaBajoCosto ? (
                 <div className="flex items-center gap-2 border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  El precio de venta esta por debajo del costo.
+                  El precio de venta está por debajo del costo.
                 </div>
               ) : margen !== null && Number(precioCompra) > 0 ? (
                 <div className="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs">
@@ -432,7 +432,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       type="checkbox"
                       {...register('requiereFormula')}
                     />
-                    Requiere formula medica
+                    Requiere fórmula médica
                   </label>
                 </div>
               )}

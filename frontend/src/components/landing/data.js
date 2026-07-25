@@ -24,7 +24,7 @@ export const FLOW_STEPS = [
   },
   {
     step: '03',
-    title: 'Caja, stock y proximo paso',
+    title: 'Caja, inventario y próximo paso',
     body:
       'El cierre queda amarrado al caso: cobro, consumo, alerta de reposicion y siguiente contacto con el tutor.',
     image: '/images/flujo/slide-3.webp',
