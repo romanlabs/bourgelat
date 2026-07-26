@@ -108,10 +108,10 @@ function RestrictedInventoryPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Inventario"
-          subtitle="Este modulo se reserva para administracion o auxiliares autorizados."
+          subtitle="Esta sección se reserva para administración o auxiliares autorizados."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad completa de inventario. Si necesitas revisar stock,
+            Tu acceso actual no tiene visibilidad completa de inventario. Si necesitas revisar cantidades,
             alertas o movimientos, solicita permisos al administrador principal o al auxiliar responsable.
           </div>
         </DashboardPanel>
@@ -222,8 +222,8 @@ export default function InventarioPage() {
   return (
     <AdminShell
       currentKey="inventario"
-      title="Inventario y control de stock"
-      description="Modulo administrativo para revisar categorias, alertas, productos activos y movimientos de stock con un lenguaje claro de oficina clinica."
+      title="Inventario y control de cantidades"
+      description="Revisa categorías, alertas, productos activos y movimientos de inventario con un lenguaje claro de oficina clínica."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">Control operativo</StatusPill>
       }
@@ -235,12 +235,12 @@ export default function InventarioPage() {
           Abrir caja
         </Link>
       }
-      asideNote="Aqui se concentran alertas, productos y movimientos. Lo importante es cuidar el stock antes de afectar caja o consulta."
+      asideNote="Aquí se concentran alertas, productos y movimientos. Lo importante es cuidar el inventario antes de afectar la caja o la consulta."
     >
       {!puedeVerInventario ? (
         <EmptyModuleState
           title="Inventario no disponible en el plan actual"
-          body="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripcion."
+          body="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripción."
           ctaLabel="Revisar planes"
         />
       ) : (
@@ -287,7 +287,7 @@ export default function InventarioPage() {
                   icon={Boxes}
                   label="Productos activos"
                   value={formatNumber(resumen.totalProductos || 0)}
-                  helper="Productos actualmente activos dentro del modulo."
+                  helper="Productos actualmente activos en el inventario."
                 />
                 <KpiCard
                   icon={ShieldCheck}
@@ -298,16 +298,16 @@ export default function InventarioPage() {
                 />
                 <KpiCard
                   icon={CircleAlert}
-                  label="Bajo stock"
+                  label="Cantidad baja"
                   value={formatNumber(resumen.bajoStock || 0)}
-                  helper="Productos por debajo del minimo definido."
+                  helper="Productos por debajo del mínimo definido."
                   tone="text-amber-700"
                 />
                 <KpiCard
                   icon={Sparkles}
                   label="Alertas totales"
                   value={formatNumber(alertsRows.length)}
-                  helper="Suma de bajo stock, proximos a vencer y vencidos."
+                  helper="Suma de cantidad baja, próximos a vencer y vencidos."
                   tone="text-rose-700"
                 />
               </div>
@@ -315,8 +315,8 @@ export default function InventarioPage() {
               {/* Fase 2b: breakpoint corregido de 2xl → xl */}
               <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
                 <DonutCard
-                  title="Categorias activas"
-                  subtitle="Distribucion de productos por categoria."
+                  title="Categorías activas"
+                  subtitle="Distribución de productos por categoría."
                   data={categoriasData}
                   centerLabel="Productos"
                   centerValue={formatNumber(resumen.totalProductos || 0)}
@@ -346,11 +346,11 @@ export default function InventarioPage() {
                       ),
                     },
                     { key: 'nombre', label: 'Producto' },
-                    { key: 'categoria', label: 'Categoria' },
+                    { key: 'categoria', label: 'Categoría' },
                     { key: 'detalle', label: 'Detalle' },
                   ]}
                   emptyTitle="No hay alertas activas"
-                  emptyBody="Cuando el stock o los vencimientos requieran atencion, apareceran aqui."
+                  emptyBody="Cuando las cantidades o los vencimientos requieran atención, aparecerán aquí."
                 />
               </div>
             </div>
@@ -360,7 +360,7 @@ export default function InventarioPage() {
           {activeTab === 'productos' && inventarioSeleccionado === null && (
             <DashboardPanel
               title="Elige el inventario a gestionar"
-              subtitle="Selecciona Ventas o Clinica para trabajar con los datos correctos."
+              subtitle="Selecciona Ventas o Clínica para trabajar con los datos correctos."
             >
               <div className="flex flex-col items-start gap-4 border border-dashed border-border bg-muted/40 px-5 py-6">
                 <p className="text-sm leading-6 text-muted-foreground">
@@ -421,7 +421,7 @@ export default function InventarioPage() {
                           : 'border-border bg-card text-muted-foreground hover:bg-muted'
                       }`}
                     >
-                      Solo bajo stock
+                      Solo cantidad baja
                     </button>
                   </div>
                 </div>
@@ -456,10 +456,10 @@ export default function InventarioPage() {
                   rows={productosRows}
                   columns={[
                     { key: 'nombre', label: 'Producto' },
-                    { key: 'categoria', label: 'Categoria' },
+                    { key: 'categoria', label: 'Categoría' },
                     {
                       key: 'stock',
-                      label: 'Stock / Min',
+                      label: 'Cantidad / Mín.',
                       render: (row) => <StockBadge stock={row.stock} stockMinimo={row.stockMinimo} />,
                     },
                     { key: 'valor', label: 'Valor' },
@@ -520,7 +520,7 @@ export default function InventarioPage() {
                     },
                   ]}
                   emptyTitle="No hay productos para este filtro"
-                  emptyBody="Ajusta la busqueda o crea el primer producto con el boton Nuevo producto."
+                  emptyBody="Ajusta la búsqueda o crea el primer producto con el botón Nuevo producto."
                 />
               )}
 
@@ -547,7 +547,7 @@ export default function InventarioPage() {
                       value={insumosClinicosHook.buscar}
                       onChange={(e) => { insumosClinicosHook.setBuscar(e.target.value); insumosClinicosHook.setPagina(1) }}
                       placeholder="Buscar por nombre, lote o laboratorio"
-                      aria-label="Buscar insumos clinicos"
+                      aria-label="Buscar insumos clínicos"
                       className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
@@ -575,7 +575,7 @@ export default function InventarioPage() {
                           : 'border-border bg-card text-muted-foreground hover:bg-muted'
                       }`}
                     >
-                      Solo bajo stock
+                      Solo cantidad baja
                     </button>
                   </div>
                 </div>
@@ -585,25 +585,25 @@ export default function InventarioPage() {
                   className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   <FlaskConical className="h-4 w-4" />
-                  Nuevo insumo clinico
+                  Nuevo insumo clínico
                 </button>
               </div>
 
               {insumosClinicosHook.insumosQuery.isLoading ? (
-                <DashboardPanel title="Insumos clinicos" subtitle="Existencias de consumo interno para servicios y procedimientos.">
+                <DashboardPanel title="Insumos clínicos" subtitle="Existencias de consumo interno para servicios y procedimientos.">
                   <TableSkeleton rows={6} />
                 </DashboardPanel>
               ) : (
                 <DataTable
-                  title="Insumos clinicos"
+                  title="Insumos clínicos"
                   subtitle="Existencias de consumo interno para servicios y procedimientos. No se venden directamente."
                   rows={insumosClinicosHook.insumosRows}
                   columns={[
                     { key: 'nombre', label: 'Insumo' },
-                    { key: 'categoria', label: 'Categoria' },
+                    { key: 'categoria', label: 'Categoría' },
                     {
                       key: 'stock',
-                      label: 'Stock / Min',
+                      label: 'Cantidad / Mín.',
                       render: (row) => (
                         <span className="text-sm text-foreground">
                           {formatNumber(row.stock)} / {formatNumber(row.stockMinimo)} {row.unidadBase}
@@ -619,7 +619,7 @@ export default function InventarioPage() {
                         </span>
                       ),
                     },
-                    { key: 'valor', label: 'Valor en stock' },
+                    { key: 'valor', label: 'Valor del inventario' },
                     {
                       key: 'alertas',
                       label: 'Alertas',
@@ -668,8 +668,8 @@ export default function InventarioPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay insumos clinicos para este filtro"
-                  emptyBody="Ajusta la busqueda o crea el primer insumo clinico con el boton Nuevo insumo clinico."
+                  emptyTitle="No hay insumos clínicos para este filtro"
+                  emptyBody="Ajusta la búsqueda o crea el primer insumo clínico con el botón Nuevo insumo clínico."
                 />
               )}
 
@@ -680,18 +680,18 @@ export default function InventarioPage() {
               />
 
               <DataTable
-                title="Ultimos movimientos de inventario clinico"
-                subtitle="Traza de compras y consumos por servicios facturados."
+                title="Últimos movimientos de inventario clínico"
+                subtitle="Historial de compras y consumos por servicios facturados."
                 rows={movimientosClinicosHook.movimientosRows}
                 columns={[
                   { key: 'fecha', label: 'Fecha' },
                   { key: 'insumo', label: 'Insumo' },
                   { key: 'tipo', label: 'Tipo' },
                   { key: 'motivo', label: 'Motivo' },
-                  { key: 'cambio', label: 'Stock total' },
+                  { key: 'cambio', label: 'Cantidad final' },
                 ]}
-                emptyTitle="Aun no hay movimientos registrados"
-                emptyBody="Cuando registres compras o se facturen servicios que consuman insumos, veras la traza aqui."
+                emptyTitle="Aún no hay movimientos registrados"
+                emptyBody="Cuando registres compras o se facturen servicios que consuman insumos, verás el historial aquí."
               />
             </div>
           )}
@@ -722,12 +722,12 @@ export default function InventarioPage() {
               </div>
 
               <DataTable
-                title="Catalogo de servicios"
-                subtitle="Servicios predeterminados que, al facturarse, descuentan automaticamente el inventario clinico."
+                title="Catálogo de servicios"
+                subtitle="Servicios predeterminados que, al facturarse, descuentan automáticamente el inventario clínico."
                 rows={serviciosHook.serviciosRows}
                 columns={[
                   { key: 'nombre', label: 'Servicio' },
-                  { key: 'categoria', label: 'Categoria' },
+                  { key: 'categoria', label: 'Categoría' },
                   { key: 'precioVenta', label: 'Precio de venta' },
                   { key: 'costoEstimado', label: 'Costo estimado' },
                   { key: 'insumos', label: 'Insumos en receta' },
@@ -754,8 +754,8 @@ export default function InventarioPage() {
                     ),
                   },
                 ]}
-                emptyTitle="No hay servicios en el catalogo"
-                emptyBody="Crea el primer servicio y define que insumos clinicos consume."
+                emptyTitle="No hay servicios en el catálogo"
+                emptyBody="Crea el primer servicio y define qué insumos clínicos consume."
               />
 
               <Paginacion
@@ -772,7 +772,7 @@ export default function InventarioPage() {
               <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
                 <DashboardPanel
                   title="Registrar movimiento"
-                  subtitle="Entrada, salida o ajuste sobre el stock de un producto."
+                  subtitle="Entrada, salida o ajuste sobre la cantidad de un producto."
                 >
                   <form className="grid gap-4" onSubmit={submitMovementForm}>
                     <div className="grid gap-1.5">
@@ -791,7 +791,7 @@ export default function InventarioPage() {
                         <option value="">Selecciona un producto</option>
                         {(productosSelectorQuery.data?.productos || []).map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.nombre} — Stock: {p.stock}
+                            {p.nombre} — Cantidad: {p.stock}
                           </option>
                         ))}
                       </select>
@@ -840,7 +840,7 @@ export default function InventarioPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-1.5">
                         <label htmlFor="mov-cantidad" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          {movementForm.tipo === 'ajuste' ? 'Nuevo stock final' : 'Cantidad'}
+                          {movementForm.tipo === 'ajuste' ? 'Cantidad final' : 'Cantidad'}
                         </label>
                         <input
                           id="mov-cantidad"
@@ -895,7 +895,7 @@ export default function InventarioPage() {
 
                 <DashboardPanel
                   title="Detalle del producto"
-                  subtitle="Resumen rapido y ultimos movimientos del producto seleccionado."
+                  subtitle="Resumen rápido y últimos movimientos del producto seleccionado."
                 >
                   {selectedProduct ? (
                     <div className="grid gap-4">
@@ -905,11 +905,11 @@ export default function InventarioPage() {
                           <p className="mt-1 font-semibold">{detalleProducto?.nombre || selectedProduct.nombre}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stock actual</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cantidad actual</p>
                           <p className="mt-1 font-semibold">{formatNumber(detalleProducto?.stock ?? selectedProduct.stock ?? 0)}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stock minimo</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cantidad mínima</p>
                           <p className="mt-1">{formatNumber(detalleProducto?.stockMinimo ?? selectedProduct.stockMinimo ?? 0)}</p>
                         </div>
                         <div>
@@ -919,18 +919,18 @@ export default function InventarioPage() {
                       </div>
 
                       <DataTable
-                        title="Ultimos movimientos del producto"
-                        subtitle="Trazabilidad rapida de entradas, salidas y ajustes recientes."
+                        title="Últimos movimientos del producto"
+                        subtitle="Vista rápida de entradas, salidas y ajustes recientes."
                         rows={detalleMovimientosRows}
                         columns={[
                           { key: 'fecha', label: 'Fecha' },
                           { key: 'tipo', label: 'Tipo' },
                           { key: 'motivo', label: 'Motivo' },
                           { key: 'cantidad', label: 'Cantidad' },
-                          { key: 'cambio', label: 'Stock total' },
+                          { key: 'cambio', label: 'Cantidad final' },
                         ]}
                         emptyTitle="Sin movimientos recientes"
-                        emptyBody="Este producto aun no tiene trazabilidad registrada."
+                        emptyBody="Este producto aún no tiene movimientos registrados."
                       />
                     </div>
                   ) : (
@@ -942,23 +942,23 @@ export default function InventarioPage() {
               </div>
 
               {movimientosQuery.isLoading ? (
-                <DashboardPanel title="Ultimos movimientos" subtitle="Traza administrativa del cambio de stock.">
+                <DashboardPanel title="Últimos movimientos" subtitle="Historial de cambios en las cantidades.">
                   <TableSkeleton rows={4} />
                 </DashboardPanel>
               ) : (
                 <DataTable
-                  title="Ultimos movimientos"
-                  subtitle="Traza administrativa del cambio de stock."
+                  title="Últimos movimientos"
+                  subtitle="Historial de cambios en las cantidades."
                   rows={movimientosRows}
                   columns={[
                     { key: 'fecha', label: 'Fecha' },
                     { key: 'producto', label: 'Producto' },
                     { key: 'tipo', label: 'Tipo' },
                     { key: 'motivo', label: 'Motivo' },
-                    { key: 'cambio', label: 'Stock total' },
+                    { key: 'cambio', label: 'Cantidad final' },
                   ]}
-                  emptyTitle="Aun no hay movimientos registrados"
-                  emptyBody="Cuando se creen entradas, salidas o ajustes, esta tabla mostrara la traza reciente."
+                  emptyTitle="Aún no hay movimientos registrados"
+                  emptyBody="Cuando se creen entradas, salidas o ajustes, esta tabla mostrará lo más reciente."
                   action={
                     <StatusPill tone="border-border bg-muted text-foreground">
                       Pagina {movimientosQuery.data?.paginaActual || 1}
@@ -1035,13 +1035,13 @@ export default function InventarioPage() {
               </div>
 
               {facturaCompraHook.isLoading ? (
-                <DashboardPanel title="Facturas de compra" subtitle="Registro de compras a proveedores.">
+                <DashboardPanel title="Facturas de compra" subtitle="Historial de compras a proveedores.">
                   <TableSkeleton rows={5} />
                 </DashboardPanel>
               ) : (
                 <DataTable
                   title="Facturas de compra"
-                  subtitle="Registro de compras a proveedores. Confirma una factura para actualizar el stock."
+                  subtitle="Historial de compras a proveedores. Confirma una factura para actualizar las cantidades."
                   rows={facturaCompraHook.facturas.map((f) => {
                     const hoy = new Date()
                     const plazo = f.fechaPagoFinal ? new Date(f.fechaPagoFinal) : null
@@ -1206,7 +1206,7 @@ export default function InventarioPage() {
               Desactivar &ldquo;{serviciosHook.confirmDialog.servicio?.nombre}&rdquo;
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Esta accion retirara el servicio del catalogo activo. Las facturas ya emitidas no se ven afectadas.
+              Esta acción retirará el servicio del catálogo activo. Las facturas ya emitidas no se ven afectadas.
             </p>
             <div className="mt-5 flex gap-3">
               <button
@@ -1264,10 +1264,10 @@ export default function InventarioPage() {
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {facturaCompraHook.confirmDialog.tipo === 'confirmar'
-                ? 'Al confirmar, el stock de cada producto se actualizará con las cantidades de esta factura. Esta acción no se puede deshacer directamente.'
+                ? 'Al confirmar, la cantidad de cada producto se actualizará con lo que trae esta factura. Esta acción no se puede deshacer directamente.'
                 : facturaCompraHook.confirmDialog.tipo === 'pagar'
                   ? 'Esta acción quedará registrada con la fecha de hoy como constancia del pago. No se puede revertir.'
-                  : 'Al anular una factura confirmada, los movimientos de entrada serán revertidos con ajustes de stock.'}
+                  : 'Al anular una factura confirmada, las entradas registradas se devolverán con ajustes de cantidad.'}
             </p>
             <div className="mt-5 flex gap-3">
               <button
@@ -1313,7 +1313,7 @@ export default function InventarioPage() {
               Desactivar &ldquo;{insumosClinicosHook.confirmDialog.insumo?.nombre}&rdquo;
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Esta accion retirara el insumo del inventario clinico activo. Los movimientos historicos se conservan.
+              Esta acción retirará el insumo del inventario clínico activo. Los movimientos anteriores se conservan.
             </p>
             <div className="mt-5 flex gap-3">
               <button
@@ -1350,7 +1350,7 @@ export default function InventarioPage() {
               Desactivar &ldquo;{confirmDialog.producto?.nombre}&rdquo;
             </p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Esta accion retirara el producto del inventario activo. Los movimientos historicos se conservan.
+              Esta acción retirará el producto del inventario activo. Los movimientos anteriores se conservan.
             </p>
             <div className="mt-5 flex gap-3">
               <button

@@ -157,7 +157,7 @@ function RestrictedAntecedentesPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Antecedentes"
-          subtitle="Este modulo se muestra a veterinarios, auxiliares o administracion autorizada."
+          subtitle="Esta sección se muestra a veterinarios, auxiliares o administración autorizada."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre los antecedentes clinicos del paciente.
@@ -537,7 +537,7 @@ export default function AntecedentesPage() {
       {!puedeVerAntecedentes ? (
         <EmptyModuleState
           title="Antecedentes no disponibles en el plan actual"
-          body="El resumen de antecedentes hace parte del frente clinico del sistema. Si este modulo no aparece activo, revisa el plan de la clinica."
+          body="El resumen de antecedentes hace parte del trabajo clínico diario. Si esta sección no aparece activa, revisa el plan de la clínica."
           ctaLabel="Revisar planes"
         />
       ) : (

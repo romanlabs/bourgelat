@@ -132,7 +132,7 @@ const PLAN_MATCH = [
   },
   {
     momento: 'Operación diaria',
-    title: 'Si ya cobras, compras y controlas stock',
+    title: 'Si ya cobras, compras y controlas inventario',
     body:
       'Clínica empieza a tener sentido: la operación ya necesita inventario, caja y reportes en el mismo entorno.',
   },

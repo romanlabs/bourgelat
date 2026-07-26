@@ -15,7 +15,7 @@ const tutorSchema = z.object({
     .min(1, 'El telefono es requerido')
     .transform((v) => v.replace(/\D/g, ''))
     .refine((v) => v.length >= 7 && v.length <= 10, 'Usa un telefono valido entre 7 y 10 digitos'),
-  email: z.string().email('Email invalido').optional().or(z.literal('')),
+  email: z.string().email('Correo inválido').optional().or(z.literal('')),
   ciudad: z.string().optional(),
 })
 
@@ -118,7 +118,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
               </div>
               <div className="grid gap-1.5">
                 <label htmlFor="t-email" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Email <span className="font-normal normal-case tracking-normal text-muted-foreground/70">(opcional)</span>
+                  Correo <span className="font-normal normal-case tracking-normal text-muted-foreground/70">(opcional)</span>
                 </label>
                 <input id="t-email" type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-red-400' : ''}`} {...register('email')} />
                 {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}

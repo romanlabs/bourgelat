@@ -23,26 +23,26 @@ export const PLAN_META = {
 
 export const FEATURE_LABELS = {
   citas: 'Agenda y citas',
-  historias: 'Historias clinicas',
+  historias: 'Historias clínicas',
   antecedentes: 'Antecedentes',
   propietarios: 'Tutores y propietarios',
   mascotas: 'Pacientes y fichas',
   roles_base: 'Roles base del equipo',
-  inventario: 'Inventario clinico',
-  facturacion_interna: 'Caja y facturacion',
-  facturacion_electronica: 'Facturacion electronica',
+  inventario: 'Inventario clínico',
+  facturacion_interna: 'Caja y facturación',
+  facturacion_electronica: 'Facturación electrónica',
   reportes_operativos: 'Reportes operativos',
   reportes_completos: 'Reportes completos',
   exportables: 'Exportables',
-  acompanamiento_migracion: 'Acompanamiento de migracion',
+  acompanamiento_migracion: 'Acompañamiento de migración',
   soporte_prioritario_comercial: 'Soporte prioritario comercial',
 }
 
 export const PAYMENT_METHOD_LABELS = {
   efectivo: 'Efectivo',
   tarjeta: 'Tarjeta',
-  tarjeta_debito: 'Tarjeta debito',
-  tarjeta_credito: 'Tarjeta credito',
+  tarjeta_debito: 'Tarjeta débito',
+  tarjeta_credito: 'Tarjeta crédito',
   transferencia: 'Transferencia',
   nequi: 'Nequi',
   daviplata: 'Daviplata',
@@ -55,19 +55,19 @@ export const CITA_ESTADO_LABELS = {
   en_curso: 'En curso',
   completada: 'Completadas',
   cancelada: 'Canceladas',
-  no_asistio: 'No asistio',
+  no_asistio: 'No asistió',
 }
 
 export const CITA_TIPO_LABELS = {
   consulta_general: 'Consulta general',
-  vacunacion: 'Vacunacion',
-  cirugia: 'Cirugia',
-  desparasitacion: 'Desparasitacion',
+  vacunacion: 'Vacunación',
+  cirugia: 'Cirugía',
+  desparasitacion: 'Desparasitación',
   control: 'Control',
   urgencia: 'Urgencia',
-  peluqueria: 'Peluqueria',
+  peluqueria: 'Peluquería',
   laboratorio: 'Laboratorio',
-  radiografia: 'Radiografia',
+  radiografia: 'Radiografía',
   otro: 'Otro',
 }
 
@@ -137,8 +137,11 @@ export const objectToChartData = (record, labels = {}) =>
     color: CHART_COLORS[index % CHART_COLORS.length],
   }))
 
+// `fecha` es la etiqueta visible del eje X; `fechaISO` conserva la clave original
+// (YYYY-MM-DD) para poder buscar un dia puntual sin depender del formato mostrado.
 export const mapIngresosPorDia = (record) =>
   Object.entries(record || {}).map(([date, value]) => ({
+    fechaISO: date,
     fecha: formatShortDate(date),
     total: Number(value || 0),
   }))

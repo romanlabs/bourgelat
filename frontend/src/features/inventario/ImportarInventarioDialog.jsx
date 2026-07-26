@@ -162,7 +162,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Fila</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Nombre</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Categoria</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Stock</th>
+                        <th className="px-3 py-2 font-semibold text-muted-foreground">Cantidad</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Precio venta</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Estado</th>
                       </tr>

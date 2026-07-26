@@ -43,7 +43,7 @@ function RestrictedHistoriasPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Historias clinicas"
-          subtitle="Este modulo se muestra a veterinarios, auxiliares o administracion autorizada."
+          subtitle="Esta sección se muestra a veterinarios, auxiliares o administración autorizada."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la historia clinica. Solicita permisos al

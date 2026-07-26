@@ -165,7 +165,7 @@ export default function InsumoClinicoDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={editingInsumo ? `Editar ${editingInsumo.nombre}` : 'Nuevo insumo clinico'}
+        aria-label={editingInsumo ? `Editar ${editingInsumo.nombre}` : 'Nuevo insumo clínico'}
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] sm:border-l sm:border-border ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -173,12 +173,12 @@ export default function InsumoClinicoDrawer({
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
             <p className="text-sm font-semibold text-foreground">
-              {editingInsumo ? 'Editar insumo clinico' : 'Nuevo insumo clinico'}
+              {editingInsumo ? 'Editar insumo clínico' : 'Nuevo insumo clínico'}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {editingInsumo
-                ? 'El stock cambia registrando compras, mermas o ajustes.'
-                : 'Declara la presentacion comprada; el sistema calcula el costo por unidad.'}
+                ? 'La cantidad cambia registrando compras, mermas o ajustes.'
+                : 'Indica la presentación comprada y Bourgelat calcula el costo por unidad.'}
             </p>
           </div>
           <button
@@ -195,7 +195,7 @@ export default function InsumoClinicoDrawer({
           <form id="insumo-clinico-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Informacion basica
+                Información básica
               </p>
 
               <div className="grid gap-1.5">
@@ -212,7 +212,7 @@ export default function InsumoClinicoDrawer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="ic-categoria" className={labelClass}>Categoria *</label>
+                  <label htmlFor="ic-categoria" className={labelClass}>Categoría *</label>
                   <select id="ic-categoria" className={fieldClass(errors.categoria)} {...register('categoria')}>
                     {CATEGORY_OPTIONS.filter((o) => o.value !== 'todas').map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -234,14 +234,14 @@ export default function InsumoClinicoDrawer({
                 </div>
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">
-                El stock y el costo se llevan en esta unidad (ej. mililitros restantes), sin importar la presentacion en la que se compre.
+                La cantidad y el costo se llevan en esta unidad (ej. mililitros restantes), sin importar la presentación en la que se compre.
               </p>
             </div>
 
             {!editingInsumo && (
               <div className="grid gap-4 border-t border-border pt-5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Presentacion de compra
+                  Presentación de compra
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -264,7 +264,7 @@ export default function InsumoClinicoDrawer({
                   </div>
                   <div className="grid gap-1.5">
                     <label htmlFor="ic-unidad-presentacion" className={labelClass}>
-                      Presentacion (opcional)
+                      Presentación (opcional)
                     </label>
                     <input
                       id="ic-unidad-presentacion"
@@ -278,7 +278,7 @@ export default function InsumoClinicoDrawer({
 
                 <div className="grid gap-1.5">
                   <label htmlFor="ic-precio-presentacion" className={labelClass}>
-                    Precio pagado por esta presentacion *
+                    Precio pagado por esta presentación *
                   </label>
                   <div className="relative">
                     <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
@@ -312,7 +312,7 @@ export default function InsumoClinicoDrawer({
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="grid gap-1.5">
-                    <span className={labelClass}>Stock actual</span>
+                    <span className={labelClass}>Cantidad actual</span>
                     <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
                       {formatNumber(editingInsumo.stock || 0)} {unidadLabel}
                     </div>
@@ -350,7 +350,7 @@ export default function InsumoClinicoDrawer({
                         />
                       </div>
                       <div className="grid gap-1.5">
-                        <label className={labelClass}>Presentacion (opcional)</label>
+                        <label className={labelClass}>Presentación (opcional)</label>
                         <input
                           type="text"
                           placeholder="Ej. frasco"
@@ -361,7 +361,7 @@ export default function InsumoClinicoDrawer({
                       </div>
                     </div>
                     <div className="grid gap-1.5">
-                      <label className={labelClass}>Precio pagado por esta presentacion</label>
+                      <label className={labelClass}>Precio pagado por esta presentación</label>
                       <input
                         type="number"
                         step="0.01"
@@ -434,7 +434,7 @@ export default function InsumoClinicoDrawer({
                     </div>
                     {Number(mermaForm.cantidad) > stockActual ? (
                       <p className="text-xs text-red-600">
-                        No puedes descontar mas del stock actual ({formatNumber(stockActual)} {unidadLabel}).
+                        No puedes descontar más de la cantidad actual ({formatNumber(stockActual)} {unidadLabel}).
                       </p>
                     ) : null}
                     <button
@@ -452,11 +452,11 @@ export default function InsumoClinicoDrawer({
 
             <div className="grid gap-4 border-t border-border pt-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Alerta y trazabilidad
+                Alertas y datos del lote
               </p>
               <div className="grid gap-1.5">
                 <label htmlFor="ic-stock-min" className={labelClass}>
-                  Alerta de stock bajo (en {unidadLabel})
+                  Avisar cuando quede (en {unidadLabel})
                 </label>
                 <input
                   id="ic-stock-min"

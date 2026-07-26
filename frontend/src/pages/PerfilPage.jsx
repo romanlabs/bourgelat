@@ -28,7 +28,7 @@ const ROLE_LABELS = {
   recepcionista: 'Recepcionista',
   auxiliar: 'Auxiliar',
   facturador: 'Facturador',
-  superadmin: 'Superadmin',
+  superadmin: 'Administrador de la plataforma',
 }
 
 const telefonoRegex = /^3\d{9}$/

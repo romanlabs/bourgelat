@@ -60,7 +60,7 @@ function RestrictedFinancePage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Caja y facturacion"
-          subtitle="Este modulo se muestra a perfiles operativos y administrativos autorizados."
+          subtitle="Esta sección se muestra a perfiles operativos y administrativos autorizados."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad financiera completa. Si necesitas revisar ingresos
@@ -154,12 +154,12 @@ export default function FinanzasPage() {
           Abrir inventario
         </Link>
       }
-      asideNote="Usa este modulo para buscar facturas, revisar estados, emitir electronicamente y controlar anulaciones con trazabilidad."
+      asideNote="Usa esta sección para buscar facturas, revisar estados, emitir electrónicamente y controlar anulaciones dejando historial."
     >
       {!puedeVerFinanzas ? (
         <EmptyModuleState
           title="Finanzas no disponibles en el plan actual"
-          body="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta area como modulo fijo de gerencia, conviene subir de plan."
+          body="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta sección de forma permanente para gerencia, conviene subir de plan."
           ctaLabel="Revisar planes"
         />
       ) : (

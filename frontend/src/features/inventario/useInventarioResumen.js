@@ -44,7 +44,7 @@ export function useInventarioResumen({ enabled }) {
       rows.push({ id: `proximo-${p.id}`, tipo: 'Proximo a vencer', nombre: p.nombre, categoria: p.categoria, detalle: formatLongDate(p.fechaVencimiento) })
     })
     ;(alertasQuery.data?.bajoStock?.productos || []).forEach((p) => {
-      rows.push({ id: `stock-${p.id}`, tipo: 'Bajo stock', nombre: p.nombre, categoria: p.categoria, detalle: `${p.stock}/${p.stockMinimo}` })
+      rows.push({ id: `stock-${p.id}`, tipo: 'Cantidad baja', nombre: p.nombre, categoria: p.categoria, detalle: `${p.stock}/${p.stockMinimo}` })
     })
     return rows
   }, [alertasQuery.data])
