@@ -253,7 +253,7 @@ export function useFinanzasFacturacion({
       .filter((item) => item.descripcion && item.cantidad > 0)
 
     if (!itemsValidos.length) {
-      toast.error('Agrega al menos un item valido para facturar.')
+      toast.error('Agrega al menos un concepto válido para facturar.')
       return
     }
 
@@ -284,7 +284,7 @@ export function useFinanzasFacturacion({
     )
     if (itemSinStock) {
       toast.error(
-        `"${itemSinStock.descripcion}" solo tiene ${itemSinStock.stock} unidades en stock. Ajusta la cantidad.`
+        `"${itemSinStock.descripcion}" solo tiene ${itemSinStock.stock} unidades disponibles. Ajusta la cantidad.`
       )
       return
     }

@@ -13,7 +13,7 @@ const OPCIONES = [
     value: 'ventas',
     label: 'Ventas',
     icon: PackagePlus,
-    descripcion: 'Productos para venta al público. Stock, precios y alertas de vencimiento.',
+    descripcion: 'Productos para venta al público. Cantidades, precios y alertas de vencimiento.',
   },
   {
     value: 'clinica',

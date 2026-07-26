@@ -56,7 +56,7 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
-  { id: 'resumen', label: 'Command Center', icon: LayoutDashboard },
+  { id: 'resumen', label: 'Resumen del día', icon: LayoutDashboard },
   { id: 'agenda', label: 'Agenda', icon: CalendarClock },
   { id: 'ingresos', label: 'Caja', icon: Wallet },
   { id: 'inventario', label: 'Inventario', icon: Boxes },
@@ -173,7 +173,7 @@ function TodayAlerts({ alerts, summary }) {
               <ShieldAlert className="h-3.5 w-3.5" />
             </span>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
-              Requiere accion hoy
+              Requiere acción hoy
             </p>
           </div>
 
@@ -275,7 +275,7 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
     <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
       <div
         role="tablist"
-        aria-label="Secciones del dashboard"
+        aria-label="Secciones del panel de control"
         onKeyDown={handleKeyDown}
         className="flex flex-wrap items-center gap-1"
       >
@@ -343,8 +343,8 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
       <div className="rounded-2xl border border-dashed border-border bg-muted p-6">
         <p className="text-sm font-semibold text-card-foreground">Sin citas pendientes para hoy</p>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Cuando entren pacientes a la agenda, este puente mostrara acciones directas para atender y
-          cobrar sin navegar de mas.
+          Cuando entren pacientes a la agenda, aquí verás acciones directas para atenderlos y
+          cobrar sin dar vueltas.
         </p>
       </div>
     )
@@ -421,13 +421,13 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
         <section className="border border-border bg-card shadow-sm">
           <div className="border-b border-border px-6 py-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Dashboard administrativo
+              Panel de control
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-slate-950">{nombreClinica}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Este panel de control esta reservado para administracion. Tu perfil puede seguir
-              operando dentro de los modulos permitidos, pero el seguimiento financiero, reportes y
-              decisiones de plan se concentran aqui.
+              Este panel de control está reservado para administración. Tu perfil puede seguir
+              trabajando en las secciones permitidas, pero el seguimiento financiero, los reportes y
+              las decisiones de plan se concentran aquí.
             </p>
           </div>
 
@@ -436,7 +436,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Acceso actual
               </p>
-              <p className="mt-3 text-base font-semibold text-slate-950">{usuarioEmail || 'Sin email principal'}</p>
+              <p className="mt-3 text-base font-semibold text-slate-950">{usuarioEmail || 'Sin correo principal'}</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Si necesitas ver reportes o controles de plan, solicita acceso al administrador.
               </p>
@@ -448,7 +448,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               </p>
               <p className="mt-3 text-base font-semibold text-slate-950">Pacientes y tutores</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                La base clinica publicada ya puede usarse desde el equipo operativo.
+                La base clínica publicada ya puede usarse desde el equipo operativo.
               </p>
               <Link
                 to="/pacientes"
@@ -477,7 +477,7 @@ export default function DashboardPage() {
   const hoy = useMemo(() => serializeDate(new Date()), [])
 
   useEffect(() => {
-    document.title = 'Dashboard | Bourgelat'
+    document.title = 'Panel de control | Bourgelat'
   }, [])
 
   const suscripcionQuery = useQuery({
@@ -561,7 +561,7 @@ export default function DashboardPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
+  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clínica'
   const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
 
   const metaPlan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
@@ -662,7 +662,7 @@ export default function DashboardPage() {
       rows.push({
         id: 'vigencia',
         title: 'Plan por vencer',
-        detail: `Quedan ${diasRestantes} dias para el cierre de la vigencia actual. Conviene resolver esto antes de afectar continuidad.`,
+        detail: `Quedan ${diasRestantes} días para el cierre de la vigencia actual. Conviene resolverlo antes de que afecte la continuidad.`,
         to: '/planes',
         actionLabel: 'Revisar plan',
       })
@@ -671,11 +671,11 @@ export default function DashboardPage() {
     if (alertasInventario > 0) {
       rows.push({
         id: 'inventario',
-        title: 'Inventario critico',
+        title: 'Inventario crítico',
         detail:
           alertasInventario === 1
-            ? '1 producto esta por debajo del minimo y puede trabar ventas o tratamientos hoy.'
-            : `${formatNumber(alertasInventario)} productos estan por debajo del minimo y pueden trabar ventas o tratamientos hoy.`,
+            ? '1 producto está por debajo del mínimo y puede trabar ventas o tratamientos hoy.'
+            : `${formatNumber(alertasInventario)} productos están por debajo del mínimo y pueden trabar ventas o tratamientos hoy.`,
         to: '/inventario',
         actionLabel: 'Ver inventario',
       })
@@ -684,8 +684,8 @@ export default function DashboardPage() {
     if (dianErrores > 0) {
       rows.push({
         id: 'dian',
-        title: 'Errores DIAN / Factus',
-        detail: `${formatNumber(dianErrores)} facturas quedaron rechazadas o con error tecnico. Requieren revision antes del siguiente corte.`,
+        title: 'Facturas con problema',
+        detail: `${formatNumber(dianErrores)} facturas fueron rechazadas o no se pudieron enviar a la DIAN. Requieren revisión antes del siguiente corte.`,
         to: '/finanzas',
         actionLabel: 'Abrir caja',
       })
@@ -739,7 +739,7 @@ export default function DashboardPage() {
         icon: CircleAlert,
         label: 'Pendientes',
         value: formatNumber(citasPendientesHoy),
-        helper: 'Atenciones de hoy aun marcadas como programadas.',
+        helper: 'Atenciones de hoy aún marcadas como programadas.',
         to: puedeAbrirAgenda ? '/agenda' : null,
       },
       puedeAbrirHistorias && {
@@ -747,15 +747,15 @@ export default function DashboardPage() {
         icon: FileText,
         label: 'Sin documentar',
         value: formatNumber(sinDocumentar),
-        helper: 'Consultas de hoy sin historia clinica registrada.',
+        helper: 'Consultas de hoy sin historia clínica registrada.',
         to: '/historias',
       },
       {
         id: 'stock-critico',
         icon: Boxes,
-        label: 'Stock critico',
+        label: 'Cantidad crítica',
         value: formatNumber(alertasInventario),
-        helper: 'Productos bajo el minimo definido.',
+        helper: 'Productos por debajo del mínimo definido.',
         to: puedeVerInventario ? '/inventario' : null,
       },
       puedeVerIngresos && {
@@ -763,7 +763,7 @@ export default function DashboardPage() {
         icon: Wallet,
         label: 'Ingresos de hoy',
         value: formatCurrency(ingresosHoy),
-        helper: 'Facturado hoy en el modulo de caja.',
+        helper: 'Facturado hoy en la sección de caja.',
         to: puedeAbrirCaja ? '/finanzas' : null,
       },
     ],
@@ -816,7 +816,7 @@ export default function DashboardPage() {
       return (
         <EmptyModuleState
           title="Agenda y reportes de citas no disponibles"
-          body="Este tablero agenda requiere reportes operativos activos para mostrar estados, tipos y tasa de asistencia."
+          body="Esta vista de agenda requiere reportes operativos activos para mostrar estados, tipos y tasa de asistencia."
           ctaLabel="Revisar planes"
         />
       )
@@ -833,14 +833,14 @@ export default function DashboardPage() {
               icon: CalendarClock,
               label: 'Citas del mes',
               value: formatNumber(citasQuery.data?.totalCitas || 0),
-              helper: 'Todas las citas registradas dentro del periodo actual.',
+              helper: 'Todas las citas registradas dentro del período actual.',
             },
             {
               id: 'asistencia',
               icon: ShieldCheck,
               label: 'Asistencia',
               value: citasQuery.data?.tasaAsistencia || '0%',
-              helper: 'Relacion de citas completadas sobre el total del periodo.',
+              helper: 'Relación de citas completadas sobre el total del período.',
               tone: 'text-emerald-700',
             },
             {
@@ -848,7 +848,7 @@ export default function DashboardPage() {
               icon: CalendarX,
               label: 'Canceladas',
               value: formatNumber(citasQuery.data?.citasPorEstado?.cancelada || 0),
-              helper: 'Citas anuladas dentro del periodo actual.',
+              helper: 'Citas anuladas dentro del período actual.',
               tone: 'text-rose-700',
             },
             {
@@ -856,7 +856,7 @@ export default function DashboardPage() {
               icon: UserX,
               label: 'No asistio',
               value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
-              helper: 'Pacientes que no se presentaron a su cita en el periodo.',
+              helper: 'Pacientes que no se presentaron a su cita en el período.',
               tone: 'text-amber-700',
             },
           ]}
@@ -865,21 +865,21 @@ export default function DashboardPage() {
         <div className="grid gap-5 xl:grid-cols-2">
           <DonutCard
             title="Estado de citas"
-            subtitle="Distribucion del periodo por estado operativo."
+            subtitle="Distribución del período por estado operativo."
             data={estadosCita}
             centerLabel="Total"
             centerValue={formatNumber(citasQuery.data?.totalCitas || 0)}
             formatter={formatNumber}
-            emptyMessage="Aun no hay citas registradas en este periodo."
+            emptyMessage="Aún no hay citas registradas en este período."
           />
           <BarPanel
             title="Tipos de cita"
-            subtitle="Que tipo de atencion se esta moviendo mas durante el mes."
+            subtitle="Qué tipo de atención se está moviendo más durante el mes."
             data={tiposCita}
             dataKey="value"
             color="#0f766e"
             formatter={formatNumber}
-            emptyMessage="Todavia no hay datos por tipo de cita."
+            emptyMessage="Todavía no hay datos por tipo de cita."
           />
         </div>
 
@@ -892,7 +892,7 @@ export default function DashboardPage() {
       return (
         <EmptyModuleState
           title="Caja y reportes financieros no disponibles"
-          body="Activa facturacion interna y reportes operativos para ver comportamiento diario, metodos de pago y tabla de facturas."
+          body="Activa facturación interna y reportes operativos para ver el comportamiento diario, los métodos de pago y la tabla de facturas."
           ctaLabel="Revisar planes"
         />
       )
@@ -910,7 +910,7 @@ export default function DashboardPage() {
             {
               id: 'ingresos-periodo',
               icon: Wallet,
-              label: 'Ingresos del periodo',
+              label: 'Ingresos del período',
               value: formatCurrency(ingresosQuery.data?.totalIngresos || 0),
               helper: 'Suma total entre facturas emitidas y pagadas dentro del mes.',
               tone: 'text-emerald-700',
@@ -920,14 +920,14 @@ export default function DashboardPage() {
               icon: Receipt,
               label: 'Facturas',
               value: formatNumber(totalFacturas),
-              helper: 'Numero de facturas emitidas o pagadas en el periodo.',
+              helper: 'Número de facturas emitidas o pagadas en el período.',
             },
             {
               id: 'promedio-factura',
               icon: BarChart3,
               label: 'Promedio por factura',
               value: formatCurrency(promedioFactura),
-              helper: 'Ticket promedio del mes actual.',
+              helper: 'Valor promedio de cada factura del mes actual.',
               tone: 'text-primary',
             },
             mostrarDian && {
@@ -935,7 +935,7 @@ export default function DashboardPage() {
               icon: ShieldAlert,
               label: 'Control DIAN',
               value: formatNumber(dianErrores),
-              helper: `Facturas rechazadas o con error tecnico. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
+              helper: `Facturas rechazadas o que no se pudieron enviar. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
               tone: 'text-violet-700',
             },
           ]}
@@ -943,28 +943,28 @@ export default function DashboardPage() {
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_420px]">
           <LinePanel
-            title="Evolucion diaria de ingresos"
-            subtitle="Movimiento dia a dia del periodo seleccionado."
+            title="Evolución diaria de ingresos"
+            subtitle="Movimiento día a día del período seleccionado."
             data={ingresosPorDia}
             dataKey="total"
             color="#0f4c81"
             formatter={formatCurrency}
-            emptyMessage="Todavia no hay movimiento financiero en este periodo."
+            emptyMessage="Todavía no hay movimiento financiero en este período."
           />
           <DonutCard
             title="Metodos de pago"
-            subtitle="Distribucion de ingresos segun el metodo usado por la clinica."
+            subtitle="Distribución de ingresos según el método usado por la clínica."
             data={metodosPago}
             centerLabel="Total"
             centerValue={formatCurrency(ingresosQuery.data?.totalIngresos || 0)}
             formatter={formatCurrency}
-            emptyMessage="No hay datos por metodo de pago disponibles."
+            emptyMessage="No hay datos por método de pago disponibles."
           />
         </div>
 
         <DataTable
           title="Detalle de facturas"
-          subtitle="Las mas recientes del periodo actual con su metodo de pago."
+          subtitle="Las más recientes del período actual con su método de pago."
           rows={invoiceRows}
           columns={[
             { key: 'numero', label: 'Factura' },
@@ -973,7 +973,7 @@ export default function DashboardPage() {
             { key: 'total', label: 'Total' },
           ]}
           emptyTitle="No hay facturas registradas"
-          emptyBody="A medida que la clinica facture, aqui se llenara la tabla administrativa del periodo."
+          emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
           action={
             <Link
               to="/finanzas"
@@ -992,7 +992,7 @@ export default function DashboardPage() {
       return (
         <EmptyModuleState
           title="Inventario no disponible en el plan actual"
-          body="Para revisar categorias, valor inventariado y alertas de stock necesitas inventario y reportes operativos activos."
+          body="Para revisar categorías, valor inventariado y alertas de cantidad necesitas inventario y reportes operativos activos."
           ctaLabel="Revisar planes"
         />
       )
@@ -1024,9 +1024,9 @@ export default function DashboardPage() {
             {
               id: 'bajo-stock',
               icon: CircleAlert,
-              label: 'Bajo stock',
+              label: 'Cantidad baja',
               value: formatNumber(resumenInventario.bajoStock || 0),
-              helper: 'Productos con stock por debajo del minimo definido.',
+              helper: 'Productos con cantidad por debajo del mínimo definido.',
               tone: 'text-amber-700',
             },
             {
@@ -1034,7 +1034,7 @@ export default function DashboardPage() {
               icon: Receipt,
               label: 'Vencimientos',
               value: formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)),
-              helper: 'Suma entre productos vencidos y proximos a vencer.',
+              helper: 'Suma entre productos vencidos y próximos a vencer.',
               tone: 'text-rose-700',
             },
           ]}
@@ -1042,38 +1042,38 @@ export default function DashboardPage() {
 
         <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1.45fr)]">
           <DonutCard
-            title="Categorias activas"
-            subtitle="Distribucion actual del inventario por categoria."
+            title="Categorías activas"
+            subtitle="Distribución actual del inventario por categoría."
             data={categoriasInventario}
             centerLabel="Productos"
             centerValue={formatNumber(resumenInventario.totalProductos || 0)}
             formatter={formatNumber}
-            emptyMessage="Aun no hay categorias para mostrar."
+            emptyMessage="Aún no hay categorías para mostrar."
           />
           <BarPanel
-            title="Valor por categoria"
-            subtitle="Lectura financiera del inventario segun su categoria."
+            title="Valor por categoría"
+            subtitle="Lectura financiera del inventario según su categoría."
             data={categoriasInventario}
             dataKey="valor"
             color="#0f4c81"
             formatter={formatCurrency}
-            emptyMessage="No hay valor inventariado por categoria disponible."
+            emptyMessage="No hay valor inventariado por categoría disponible."
           />
         </div>
 
         <DataTable
-          title="Productos que requieren revision"
-          subtitle="Stock bajo o fechas de vencimiento presentes en el inventario."
+          title="Productos que requieren revisión"
+          subtitle="Cantidad baja o fechas de vencimiento presentes en el inventario."
           rows={inventoryRows}
           columns={[
             { key: 'nombre', label: 'Producto' },
-            { key: 'categoria', label: 'Categoria' },
-            { key: 'stock', label: 'Stock' },
+            { key: 'categoria', label: 'Categoría' },
+            { key: 'stock', label: 'Cantidad / Mín.' },
             { key: 'vencimiento', label: 'Vencimiento' },
             { key: 'valor', label: 'Valor' },
           ]}
           emptyTitle="No hay alertas de inventario"
-          emptyBody="Cuando un producto quede bajo stock o tenga fecha sensible, aparecerá aqui."
+          emptyBody="Cuando un producto quede con cantidad baja o tenga fecha próxima a vencer, aparecerá aquí."
           action={
             <Link
               to="/inventario"
@@ -1098,7 +1098,7 @@ export default function DashboardPage() {
             icon: PawPrint,
             label: 'Pacientes activos',
             value: formatNumber(mascotasActivas),
-            helper: 'Base clinica operativa lista para consulta y seguimiento.',
+            helper: 'Base clínica lista para consulta y seguimiento.',
           },
           {
             id: 'propietarios',
@@ -1113,7 +1113,7 @@ export default function DashboardPage() {
             icon: ShieldCheck,
             label: 'Usuarios activos',
             value: formatNumber(usuariosActivos),
-            helper: 'Equipo actualmente activo en la clinica.',
+            helper: 'Equipo actualmente activo en la clínica.',
             tone: 'text-violet-700',
           },
         ]}
@@ -1131,7 +1131,7 @@ export default function DashboardPage() {
         />
         <DonutCard
           title="Uso de usuarios"
-          subtitle="Control simple del equipo activo frente al limite del plan."
+          subtitle="Control simple del equipo activo frente al límite del plan."
           data={userCapacity.rows}
           centerLabel="Equipo"
           centerValue={userCapacity.centerValue}
@@ -1164,7 +1164,7 @@ export default function DashboardPage() {
               Clinica
             </p>
             <p className="mt-3 text-base font-semibold text-slate-950">{nombreClinica}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicacion pendiente'}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicación pendiente'}</p>
           </div>
           <div className="border border-border bg-muted px-4 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -1174,16 +1174,16 @@ export default function DashboardPage() {
               {suscripcion?.fechaFin ? formatLongDate(suscripcion.fechaFin) : 'Sin fecha de cierre'}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              {advertenciaPlan || 'El plan se encuentra sin alertas comerciales criticas.'}
+              {advertenciaPlan || 'El plan no tiene alertas comerciales por ahora.'}
             </p>
           </div>
           <div className="border border-border bg-muted px-4 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Accion recomendada
+              Acción recomendada
             </p>
             <p className="mt-3 text-base font-semibold text-slate-950">Gestion comercial</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Usa esta vista para decidir upgrades antes de bloquear operacion por cupos o modulos.
+              Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>
             <Link
               to="/planes"
@@ -1198,10 +1198,10 @@ export default function DashboardPage() {
 
       <DataTable
         title="Funcionalidades habilitadas"
-        subtitle="Cada modulo del producto segun la suscripcion activa de la clinica."
+        subtitle="Cada sección de Bourgelat según la suscripción activa de la clínica."
         rows={featureRows}
         columns={[
-          { key: 'label', label: 'Modulo' },
+          { key: 'label', label: 'Sección' },
           {
             key: 'enabled',
             label: 'Estado',
@@ -1258,13 +1258,13 @@ export default function DashboardPage() {
     suscripcionQuery.isError
       ? getErrorMessage(
           suscripcionQuery.error,
-          'No fue posible cargar la suscripcion activa de la clinica.'
+          'No fue posible cargar la suscripción activa de la clínica.'
         )
       : null,
     dashboardQuery.isError
       ? getErrorMessage(
           dashboardQuery.error,
-          'No fue posible cargar el resumen administrativo del dashboard.'
+          'No fue posible cargar el resumen del panel de control.'
         )
       : null,
     agendaHoyQuery.isError
@@ -1276,7 +1276,7 @@ export default function DashboardPage() {
     facturacionEstadoQuery.isError
       ? getErrorMessage(
           facturacionEstadoQuery.error,
-          'No fue posible leer el estado de facturacion electronica.'
+          'No fue posible leer el estado de la facturación electrónica.'
         )
       : null,
   ].filter(Boolean)
@@ -1284,8 +1284,8 @@ export default function DashboardPage() {
   return (
     <AdminShell
       currentKey="dashboard"
-      title="Dashboard administrativo"
-      description="Un command center para priorizar operacion, caja, inventario y continuidad sin perder tiempo en pantallas saturadas."
+      title="Panel de control"
+      description="Todo lo importante del día en un solo lugar: operación, caja, inventario y continuidad, sin perder tiempo en pantallas saturadas."
       headerBadge={
         <StatusPill tone="border-border bg-slate-100 text-foreground">
           Corte {formatShortDate(rangoMes.fechaFin)}
@@ -1294,7 +1294,7 @@ export default function DashboardPage() {
       actions={
         typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
           <StatusPill tone="border-destructive/40 bg-destructive/10 text-destructive">
-            Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'}
+            Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}
           </StatusPill>
         ) : null
       }

@@ -129,7 +129,7 @@ export default function PacientesPage() {
       {!puedeVerModulo ? (
         <EmptyModuleState
           title="Pacientes no disponibles en el plan actual"
-          body="La base de tutores y pacientes hace parte del flujo esencial del producto. Si este modulo no aparece activo, revisa la configuracion comercial de la clinica."
+          body="La base de tutores y pacientes hace parte del trabajo diario. Si esta sección no aparece activa, revisa el plan contratado por la clínica."
           ctaLabel="Revisar planes"
         />
       ) : (
@@ -408,7 +408,7 @@ export default function PacientesPage() {
                     },
                     { key: 'documento', label: 'Documento' },
                     { key: 'telefono', label: 'Telefono' },
-                    { key: 'email', label: 'Email' },
+                    { key: 'email', label: 'Correo' },
                     { key: 'ciudad', label: 'Ciudad' },
                   ]}
                   emptyTitle="No hay tutores para este filtro"

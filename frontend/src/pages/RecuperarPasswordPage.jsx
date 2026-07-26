@@ -10,7 +10,7 @@ import { useForgotPassword } from '@/features/auth/useAuth'
 const ACCENT = '#b07645'
 
 const esquema = z.object({
-  email: z.string().trim().email('Email inválido'),
+  email: z.string().trim().email('Correo inválido'),
 })
 
 export default function RecuperarPasswordPage() {

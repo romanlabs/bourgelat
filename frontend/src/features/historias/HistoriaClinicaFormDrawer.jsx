@@ -731,7 +731,7 @@ export default function HistoriaClinicaFormDrawer({
                         <div key={p.id} className="flex items-center justify-between gap-2 border border-border bg-card px-3 py-2">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-foreground">{p.nombre}</p>
-                            <p className="text-xs text-muted-foreground">Stock {formatNumber(p.stock)}</p>
+                            <p className="text-xs text-muted-foreground">Cantidad {formatNumber(p.stock)}</p>
                           </div>
                           <button type="button" onClick={() => addMedicationFromInventory(p)} className="shrink-0 border border-border bg-muted px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted/70">
                             <Plus className="h-3.5 w-3.5" />

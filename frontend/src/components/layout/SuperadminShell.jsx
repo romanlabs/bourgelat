@@ -15,9 +15,9 @@ import { useLogout } from '@/features/auth/useAuth'
 const NAV_ITEMS = [
   { key: 'resumen', label: 'Resumen global', href: '#resumen', icon: LayoutDashboard },
   { key: 'suscripciones', label: 'Suscripciones', href: '#suscripciones', icon: Crown },
-  { key: 'planes', label: 'Gestion de planes', href: '#planes', icon: CreditCard },
+  { key: 'planes', label: 'Gestión de planes', href: '#planes', icon: CreditCard },
   { key: 'gobierno', label: 'Gobierno DIAN', href: '#gobierno', icon: ShieldAlert },
-  { key: 'operacion', label: 'Operacion', href: '#operacion', icon: ReceiptText },
+  { key: 'operacion', label: 'Operación', href: '#operacion', icon: ReceiptText },
 ]
 
 function NavAnchor({ item, active }) {
@@ -71,12 +71,12 @@ export default function SuperadminShell({
                 <Stethoscope className="h-5 w-5" />
               </div>
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Control del software
+                Control de la plataforma
               </p>
               <h1 className="mt-3 text-2xl font-semibold text-white">Bourgelat</h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Consola exclusiva de superadmin para operar el SaaS, revisar crecimiento y
-                controlar configuraciones sensibles.
+                Panel exclusivo para administrar todas las clínicas de Bourgelat, revisar
+                el crecimiento y controlar ajustes delicados.
               </p>
             </div>
 
@@ -91,14 +91,14 @@ export default function SuperadminShell({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Rol activo
                 </p>
-                <p className="mt-2 text-sm font-semibold text-white">Superadmin</p>
+                <p className="mt-2 text-sm font-semibold text-white">Administrador de la plataforma</p>
               </div>
               <div className="border border-slate-800 bg-slate-900 px-3 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Sesion
+                  Sesión
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">{usuario?.nombre || 'Sin nombre'}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{usuario?.email || 'Sin email principal'}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{usuario?.email || 'Sin correo principal'}</p>
               </div>
               {asideNote ? (
                 <div className="border border-slate-800 bg-slate-900 px-3 py-3 text-sm leading-6 text-slate-300">
@@ -109,7 +109,7 @@ export default function SuperadminShell({
                 to="/"
                 className="inline-flex w-full items-center justify-center gap-2 border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-800"
               >
-                Ver sitio publico
+                Ver sitio público
               </Link>
               <button
                 type="button"
@@ -117,7 +117,7 @@ export default function SuperadminShell({
                 className="inline-flex w-full items-center justify-center gap-2 border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-600 hover:bg-slate-900"
               >
                 <LogOut className="h-4 w-4" />
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </div>
           </aside>

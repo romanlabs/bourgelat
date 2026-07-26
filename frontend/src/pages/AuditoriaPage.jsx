@@ -31,9 +31,9 @@ const ENTITY_LABELS = {
   Cita: 'Agenda',
   HistoriaClinica: 'Historias',
   Antecedente: 'Antecedentes',
-  Clinica: 'Clinica',
-  IntegracionFacturacion: 'Integracion fiscal',
-  Auth: 'Autenticacion',
+  Clinica: 'Clínica',
+  IntegracionFacturacion: 'Facturación electrónica',
+  Auth: 'Ingreso al sistema',
 }
 
 const getErrorMessage = (error, fallback) =>
@@ -57,18 +57,18 @@ const formatActionLabel = (value) =>
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 
-const formatEntityLabel = (value) => ENTITY_LABELS[value] || value || 'Sin entidad'
+const formatEntityLabel = (value) => ENTITY_LABELS[value] || value || 'Sin sección'
 
 function RestrictedAuditPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
-          title="Auditoria y actividad"
-          subtitle="Este modulo se reserva para administracion principal."
+          title="Auditoría y actividad"
+          subtitle="Esta sección se reserva para la administración principal."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene permisos para consultar trazabilidad, cambios sensibles ni eventos del sistema.
+            Tu acceso actual no tiene permisos para consultar el historial de cambios delicados ni la actividad del sistema.
           </div>
         </DashboardPanel>
       </div>
@@ -121,7 +121,7 @@ export default function AuditoriaPage() {
         responsable: log.responsable?.nombre || 'Sistema',
         responsableEmail: log.responsable?.email || '',
         resultado: log.resultado,
-        descripcion: log.descripcion || 'Sin descripcion adicional',
+        descripcion: log.descripcion || 'Sin descripción adicional',
       })),
     [auditoriaQuery.data?.logs]
   )
@@ -171,11 +171,11 @@ export default function AuditoriaPage() {
   return (
     <AdminShell
       currentKey="auditoria"
-      title="Auditoria y actividad"
-      description="Vista administrativa para seguir cambios sensibles del sistema, responsables, eventos fallidos y trazabilidad operativa por clinica."
+      title="Auditoría y actividad"
+      description="Vista para seguir cambios delicados del sistema, responsables, intentos fallidos y el historial de la operación de la clínica."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Trazabilidad activa
+          Historial activo
         </StatusPill>
       }
       actions={
@@ -190,7 +190,7 @@ export default function AuditoriaPage() {
     >
       {auditoriaQuery.isError ? (
         <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
-          {getErrorMessage(auditoriaQuery.error, 'No fue posible cargar la auditoria de la clinica.')}
+          {getErrorMessage(auditoriaQuery.error, 'No fue posible cargar la auditoría de la clínica.')}
         </div>
       ) : null}
 
@@ -200,7 +200,7 @@ export default function AuditoriaPage() {
             icon={Activity}
             label="Eventos del filtro"
             value={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
-            helper="Total de registros segun el rango y filtros activos."
+            helper="Total de movimientos según el rango y los filtros activos."
             tone="text-primary"
           />
           <KpiCard
@@ -229,7 +229,7 @@ export default function AuditoriaPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <DonutCard
             title="Resultado del evento"
-            subtitle="Lectura rapida entre acciones exitosas y fallidas."
+            subtitle="Lectura rápida entre acciones exitosas y fallidas."
             data={resultData}
             centerLabel="Eventos"
             centerValue={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
@@ -238,20 +238,20 @@ export default function AuditoriaPage() {
             chartSize={140}
           />
           <DonutCard
-            title="Distribucion por entidad"
-            subtitle="Que modulo o entidad genero mas trazabilidad en el corte."
+            title="Distribución por sección"
+            subtitle="Qué sección generó más movimientos en el corte."
             data={entityData}
-            centerLabel="Entidades"
+            centerLabel="Secciones"
             centerValue={formatNumber(entityData.length)}
             formatter={formatNumber}
-            emptyMessage="Aun no hay entidades para mostrar."
+            emptyMessage="Aún no hay secciones para mostrar."
             chartSize={140}
           />
         </div>
 
         <DashboardPanel
           title="Criterio de seguimiento"
-          subtitle="La auditoria sirve para reconstruir que paso, quien lo hizo y si el sistema acepto o rechazo la accion."
+          subtitle="La auditoría sirve para reconstruir qué pasó, quién lo hizo y si el sistema aceptó o rechazó la acción."
         >
           <div className="grid gap-3 lg:grid-cols-3">
             <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
@@ -268,7 +268,7 @@ export default function AuditoriaPage() {
 
         <DashboardPanel
           title="Actividad registrada"
-          subtitle="Filtro administrativo para revisar eventos recientes por modulo, resultado o responsable."
+          subtitle="Filtra los eventos recientes por sección, resultado o responsable."
           action={
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center border border-border bg-card px-3">
@@ -280,7 +280,7 @@ export default function AuditoriaPage() {
                     setBuscar(event.target.value)
                     setPagina(1)
                   }}
-                  placeholder="Buscar por accion o descripcion"
+                  placeholder="Buscar por acción o descripción"
                   className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                 />
               </div>
@@ -306,7 +306,7 @@ export default function AuditoriaPage() {
                 }}
                 className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               >
-                <option value="todas">Todas las entidades</option>
+                <option value="todas">Todas las secciones</option>
                 {entidadesDisponibles.map((item) => (
                   <option key={item} value={item}>
                     {formatEntityLabel(item)}
@@ -355,8 +355,8 @@ export default function AuditoriaPage() {
             rows={logsRows}
             columns={[
               { key: 'fecha', label: 'Fecha' },
-              { key: 'accion', label: 'Accion' },
-              { key: 'entidad', label: 'Entidad' },
+              { key: 'accion', label: 'Acción' },
+              { key: 'entidad', label: 'Sección' },
               {
                 key: 'responsable',
                 label: 'Responsable',
@@ -384,15 +384,15 @@ export default function AuditoriaPage() {
               },
               {
                 key: 'descripcion',
-                label: 'Descripcion',
+                label: 'Descripción',
                 render: (row) => <span className="text-sm text-muted-foreground">{row.descripcion}</span>,
               },
             ]}
             emptyTitle="No hay eventos para este filtro"
-            emptyBody="Ajusta fechas o filtros para revisar otra parte de la trazabilidad."
+            emptyBody="Ajusta fechas o filtros para revisar otra parte del historial."
             action={
               <StatusPill tone="border-border bg-slate-100 text-foreground">
-                Pagina {auditoriaQuery.data?.paginaActual || 1}
+                Página {auditoriaQuery.data?.paginaActual || 1}
               </StatusPill>
             }
           />
@@ -400,7 +400,7 @@ export default function AuditoriaPage() {
           {(auditoriaQuery.data?.paginas || 1) > 1 ? (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">
-                Pagina {auditoriaQuery.data?.paginaActual || 1} de {auditoriaQuery.data?.paginas || 1}
+                Página {auditoriaQuery.data?.paginaActual || 1} de {auditoriaQuery.data?.paginas || 1}
               </p>
               <div className="flex gap-3">
                 <button
@@ -429,19 +429,19 @@ export default function AuditoriaPage() {
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <DataTable
             title="Acciones mas frecuentes"
-            subtitle="Las acciones que mas movimiento registraron en el corte."
+            subtitle="Las acciones que más movimiento registraron en el corte."
             rows={topActionRows}
             columns={[
               { key: 'accion', label: 'Accion' },
               { key: 'total', label: 'Eventos' },
             ]}
             emptyTitle="Sin acciones agrupadas"
-            emptyBody="Todavia no hay suficientes registros para construir este resumen."
+            emptyBody="Todavía no hay suficientes movimientos para construir este resumen."
           />
 
           <DashboardPanel
             title="Uso recomendado"
-            subtitle="Donde aporta mas valor esta pantalla dentro de la operacion diaria."
+            subtitle="Dónde aporta más valor esta pantalla dentro de la operación diaria."
           >
             <div className="grid gap-4 xl:grid-cols-3">
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
@@ -451,7 +451,7 @@ export default function AuditoriaPage() {
                 Auditar anulaciones, errores de caja o validaciones fallidas cuando el cierre administrativo no cuadre.
               </div>
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Seguir bloqueos, historias o integraciones para soporte interno sin depender de revisar la base manualmente.
+                Seguir bloqueos, historias o integraciones para soporte interno sin tener que revisar los datos uno por uno.
               </div>
             </div>
           </DashboardPanel>
