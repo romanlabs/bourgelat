@@ -101,8 +101,7 @@ const formatTime = (value) => {
 
 const getAppointmentTone = (estado) => {
   if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'en_curso') return 'border-sky-200 bg-sky-50 text-sky-700'
-  if (estado === 'confirmada') return 'border-primary/30 bg-primary/10 text-primary'
+  if (estado === 'en_espera') return 'border-sky-200 bg-sky-50 text-sky-700'
   if (estado === 'cancelada' || estado === 'no_asistio') {
     return 'border-red-200 bg-red-50 text-red-700'
   }
@@ -655,8 +654,29 @@ export default function DashboardPage() {
 
   const featureRows = getFeatureStateRows(funcionalidades)
 
+  const urgenciasSinHistoria = useMemo(
+    () =>
+      citasHoyRows.filter(
+        (c) => c.tipoCita === 'urgencia' && c.estado === 'completada' && !c.historia?.id
+      ).length,
+    [citasHoyRows]
+  )
+
   const tacticalAlerts = useMemo(() => {
     const rows = []
+
+    if (urgenciasSinHistoria > 0) {
+      rows.push({
+        id: 'urgencias-sin-historia',
+        title: 'Urgencias sin historia clínica',
+        detail:
+          urgenciasSinHistoria === 1
+            ? '1 urgencia atendida hoy aún no tiene historia clínica registrada. Ciérrala antes de que se pierda el detalle clínico.'
+            : `${formatNumber(urgenciasSinHistoria)} urgencias atendidas hoy aún no tienen historia clínica registrada. Ciérralas antes de que se pierda el detalle clínico.`,
+        to: '/historias',
+        actionLabel: 'Documentar urgencias',
+      })
+    }
 
     if (typeof diasRestantes === 'number' && diasRestantes <= 7) {
       rows.push({
@@ -692,13 +712,13 @@ export default function DashboardPage() {
     }
 
     return rows
-  }, [alertasInventario, dianErrores, diasRestantes])
+  }, [alertasInventario, dianErrores, diasRestantes, urgenciasSinHistoria])
 
   const todayBridgeRows = useMemo(() => {
     // Tope de 5 para que el Command Center entre sin scroll en 1366x768.
     // "Ver agenda completa" es la salida cuando el dia trae mas pacientes.
     const filtered = [...citasHoyRows]
-      .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
+      .filter((appointment) => ['programada', 'en_espera'].includes(appointment.estado))
       .slice(0, 5)
 
     if (usuario?.rol === 'veterinario' && usuario?.id) {
@@ -713,7 +733,7 @@ export default function DashboardPage() {
   const sinDocumentar = useMemo(
     () =>
       citasHoyRows.filter(
-        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
+        (c) => ['en_espera', 'completada'].includes(c.estado) && !c.historia?.id
       ).length,
     [citasHoyRows]
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
@@ -29,9 +30,7 @@ function buildStateTone(estado) {
   switch (estado) {
     case 'programada':
       return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
-    case 'confirmada':
-      return 'border-primary/60 bg-primary/25 text-primary dark:bg-primary/25 dark:border-primary/50'
-    case 'en_curso':
+    case 'en_espera':
       return 'border-violet-400 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-600'
     case 'completada':
       return 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-600'
@@ -47,8 +46,7 @@ function buildStateTone(estado) {
 function getAccentColor(estado) {
   switch (estado) {
     case 'programada':  return '#93c5fd'
-    case 'confirmada':  return 'hsl(160 84% 39%)'
-    case 'en_curso':    return '#a78bfa'
+    case 'en_espera':   return '#a78bfa'
     case 'completada':  return '#34d399'
     case 'cancelada':   return '#f87171'
     case 'no_asistio':  return '#fbbf24'
@@ -90,8 +88,7 @@ function especieToEmoji(especie) {
 
 const STATUS_OPTIONS = [
   { value: 'programada', label: 'Programada' },
-  { value: 'confirmada', label: 'Confirmada' },
-  { value: 'en_curso', label: 'En curso' },
+  { value: 'en_espera', label: 'En espera' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
   { value: 'no_asistio', label: 'No asistió' },
@@ -128,12 +125,14 @@ function NowLine() {
 
 // ─── Chip de cita ────────────────────────────────────────────────────────────
 
-function CitaChip({ cita, onClick }) {
+function CitaChip({ cita, onClick, esProxima }) {
   const top = timeToTop(cita.horaInicio)
   const height = calcCitaHeight(cita.horaInicio, cita.horaFin)
   const horaLabel = cita.horaInicio?.slice(0, 5) || ''
   const emoji = especieToEmoji(cita.mascota?.especie)
   const tipoCorto = TIPO_SHORT[cita.tipoCita] || cita.tipoCita
+  const esUrgencia = cita.tipoCita === 'urgencia'
+  const sinHistoria = esUrgencia && cita.estado === 'completada' && !cita.historia?.id
 
   return (
     <button
@@ -142,21 +141,29 @@ function CitaChip({ cita, onClick }) {
         e.stopPropagation()
         onClick(cita)
       }}
-      title={`${cita.mascota?.nombre || 'Cita'} — ${horaLabel}`}
+      title={`${cita.mascota?.nombre || 'Cita'} — ${horaLabel}${sinHistoria ? ' — Pendiente de historia' : ''}`}
       className={cn(
         'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-sm border-y border-r px-1.5 py-1 text-left shadow-sm transition-all hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
-        buildStateTone(cita.estado)
+        buildStateTone(cita.estado),
+        esUrgencia && 'border-dashed !border-red-500',
+        esProxima && 'ring-2 ring-primary ring-offset-1'
       )}
       style={{
         top: `${top}px`,
         height: `${height}px`,
         minHeight: '24px',
         borderLeftWidth: '3px',
-        borderLeftColor: getAccentColor(cita.estado),
+        borderLeftColor: esUrgencia ? '#ef4444' : getAccentColor(cita.estado),
       }}
     >
+      {sinHistoria && (
+        <span
+          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-600 ring-1 ring-white dark:ring-slate-900"
+          title="Pendiente de historia clínica"
+        />
+      )}
       <p className="truncate text-[11px] font-bold leading-tight">
-        <span className="mr-0.5 not-italic">{emoji}</span>
+        <span className="mr-0.5 not-italic">{esUrgencia ? '⚡' : emoji}</span>
         {cita.mascota?.nombre || 'Paciente'}
       </p>
       {height >= 44 && (
@@ -269,7 +276,7 @@ function CitaDetailDialog({
                   Motivo: <span className="font-medium text-foreground">{cita.motivo}</span>
                 </p>
               )}
-              <div className="pt-1">
+              <div className="flex items-center gap-2 pt-1">
                 <span
                   className={cn(
                     'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
@@ -278,10 +285,34 @@ function CitaDetailDialog({
                 >
                   {CITA_ESTADO_LABELS[cita.estado] || cita.estado}
                 </span>
+                {puedeGestionarEstado && cita.estado === 'programada' && (
+                  <button
+                    type="button"
+                    disabled={isUpdating}
+                    onClick={() => onUpdateStatus(cita.id, { estado: 'en_espera' }, cita)}
+                    className="text-xs font-semibold text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Marcar en espera
+                  </button>
+                )}
               </div>
             </div>
           </DialogDescription>
         </DialogHeader>
+
+        {cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id && (
+          <div className="mb-4 flex items-center justify-between gap-3 border border-red-300 bg-red-50 px-3 py-2.5 text-sm dark:border-red-700 dark:bg-red-900/30">
+            <p className="leading-tight text-red-800 dark:text-red-200">
+              Esta urgencia aún no tiene historia clínica. El proceso no queda cerrado hasta documentarla.
+            </p>
+            <Link
+              to={`/pacientes/${cita.mascota?.id}/historial?citaId=${cita.id}`}
+              className="shrink-0 whitespace-nowrap border border-red-600 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
+            >
+              Completar historia
+            </Link>
+          </div>
+        )}
 
         {/* Tabs de sección */}
         {(puedeGestionarEstado || puedeReprogramar) && (
@@ -435,6 +466,7 @@ export default function AgendaCalendar({
     irSemanaSiguiente,
     irHoy,
     getCitasDelDia,
+    proximaCitaId,
     isLoading,
     isFetching,
     slots,
@@ -660,6 +692,7 @@ export default function AgendaCalendar({
                         key={cita.id}
                         cita={cita}
                         onClick={setSelectedCita}
+                        esProxima={esHoy && cita.id === proximaCitaId}
                       />
                     ))}
                 </div>
@@ -673,8 +706,7 @@ export default function AgendaCalendar({
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 px-1">
         {[
           { estado: 'programada',  label: 'Programada' },
-          { estado: 'confirmada',  label: 'Confirmada' },
-          { estado: 'en_curso',    label: 'En curso' },
+          { estado: 'en_espera',   label: 'En espera' },
           { estado: 'completada',  label: 'Completada' },
           { estado: 'cancelada',   label: 'Cancelada' },
           { estado: 'no_asistio',  label: 'No asistió' },
@@ -687,6 +719,10 @@ export default function AgendaCalendar({
             <span className="text-[11px] text-muted-foreground">{label}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5">
+          <div className="h-3 w-3 rounded-sm border-y border-r border-dashed border-red-500 bg-red-50 dark:bg-red-900/20" />
+          <span className="text-[11px] text-muted-foreground">Urgencia</span>
+        </div>
       </div>
 
       {/* Dialog de detalle */}

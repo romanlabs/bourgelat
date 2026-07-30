@@ -17,6 +17,13 @@ import {
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import AdminShell from '@/components/layout/AdminShell'
 import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import {
   BarPanel,
   DashboardPanel,
   DataTable,
@@ -43,8 +50,7 @@ import { hasAnyRole } from '@/lib/permissions'
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
   { value: 'programada', label: 'Programada' },
-  { value: 'confirmada', label: 'Confirmada' },
-  { value: 'en_curso', label: 'En curso' },
+  { value: 'en_espera', label: 'En espera' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
   { value: 'no_asistio', label: 'No asistio' },
@@ -84,8 +90,18 @@ const DEFAULT_APPOINTMENT_FORM = {
 }
 
 const DEFAULT_STATUS_FORM = {
-  estado: 'confirmada',
+  estado: 'en_espera',
   motivoCancelacion: '',
+}
+
+const nowHHMM = () => new Date().toTimeString().slice(0, 5)
+
+const DEFAULT_URGENCIA_FORM = {
+  modo: 'ahora',
+  horaInicio: nowHHMM(),
+  motivo: '',
+  observaciones: '',
+  veterinarioId: '',
 }
 
 const DEFAULT_RESCHEDULE_FORM = {
@@ -101,9 +117,7 @@ const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - $
 
 const buildStateTone = (estado) => {
   switch (estado) {
-    case 'confirmada':
-      return 'border-primary/30 bg-primary/10 text-primary'
-    case 'en_curso':
+    case 'en_espera':
       return 'border-violet-200 bg-violet-50 text-violet-700'
     case 'completada':
       return 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -163,6 +177,8 @@ export default function AgendaPage() {
   const [appointmentForm, setAppointmentForm] = useState(DEFAULT_APPOINTMENT_FORM)
   const [statusForm, setStatusForm] = useState(DEFAULT_STATUS_FORM)
   const [rescheduleForm, setRescheduleForm] = useState(DEFAULT_RESCHEDULE_FORM)
+  const [urgenciaOpen, setUrgenciaOpen] = useState(false)
+  const [urgenciaForm, setUrgenciaForm] = useState(DEFAULT_URGENCIA_FORM)
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
@@ -281,6 +297,28 @@ export default function AgendaPage() {
     },
   })
 
+  const crearCitaUrgenciaMutation = useMutation({
+    mutationFn: agendaApi.crearCitaUrgencia,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Urgencia registrada exitosamente')
+      setUrgenciaForm(DEFAULT_URGENCIA_FORM)
+      setUrgenciaOpen(false)
+      setSelectedOwner(null)
+      queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+
+      const mascotaId = data?.cita?.mascota?.id
+      if (mascotaId) {
+        navigate(`/pacientes/${mascotaId}/historial?citaId=${data.cita.id}`)
+      }
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible registrar la urgencia.'))
+    },
+  })
+
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
     onSuccess: (data, { payload, cita }) => {
@@ -343,9 +381,9 @@ export default function AgendaPage() {
   }, [appointmentForm.mascotaId, mascotasDelTutor])
 
   const citasDelDia = citas.length
-  const confirmadas = citas.filter((item) => item.estado === 'confirmada').length
+  const enEspera = citas.filter((item) => item.estado === 'en_espera').length
   const pendientes = citas.filter((item) =>
-    ['programada', 'confirmada', 'en_curso'].includes(item.estado)
+    ['programada', 'en_espera'].includes(item.estado)
   ).length
 
   const estadoLocalData = useMemo(() => {
@@ -396,6 +434,8 @@ export default function AgendaPage() {
         motivo: cita.motivo,
         profesional: cita.veterinario?.nombre || 'Sin profesional',
         estado: cita.estado,
+        esUrgencia: cita.tipoCita === 'urgencia',
+        sinHistoria: cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id,
         raw: cita,
       })),
     [citas]
@@ -453,6 +493,36 @@ export default function AgendaPage() {
       propietarioId: appointmentForm.propietarioId,
       mascotaId: mascotaSeleccionadaId,
       veterinarioId: appointmentForm.veterinarioId || preferredVeterinarioId,
+    })
+  }
+
+  const handleCreateUrgencia = (event) => {
+    event.preventDefault()
+
+    if (
+      !urgenciaForm.motivo.trim() ||
+      !selectedOwner ||
+      !mascotaSeleccionadaId ||
+      !(urgenciaForm.veterinarioId || preferredVeterinarioId)
+    ) {
+      toast.error('Completa tutor, paciente, profesional y motivo de la urgencia.')
+      return
+    }
+
+    const horaInicio = urgenciaForm.modo === 'ahora' ? nowHHMM() : urgenciaForm.horaInicio
+    if (urgenciaForm.modo === 'pasado' && !horaInicio) {
+      toast.error('Indica la hora en la que se atendió la urgencia.')
+      return
+    }
+
+    crearCitaUrgenciaMutation.mutate({
+      fecha: getToday(),
+      horaInicio,
+      motivo: urgenciaForm.motivo.trim(),
+      observaciones: urgenciaForm.observaciones.trim() || undefined,
+      propietarioId: selectedOwner.id,
+      mascotaId: mascotaSeleccionadaId,
+      veterinarioId: urgenciaForm.veterinarioId || preferredVeterinarioId,
     })
   }
 
@@ -524,6 +594,18 @@ export default function AgendaPage() {
       }
       actions={
         <div className="flex flex-wrap gap-2">
+          {puedeProgramar && (
+            <button
+              type="button"
+              onClick={() => {
+                setUrgenciaForm(DEFAULT_URGENCIA_FORM)
+                setUrgenciaOpen(true)
+              }}
+              className="inline-flex items-center gap-2 border border-red-500 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              ⚡ Atender urgencia
+            </button>
+          )}
           <Link
             to="/pacientes"
             className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
@@ -603,16 +685,16 @@ export default function AgendaPage() {
                 />
                 <KpiCard
                   icon={ShieldCheck}
-                  label="Confirmadas"
-                  value={formatNumber(confirmadas)}
-                  helper="Citas ya confirmadas dentro del dia seleccionado."
+                  label="En espera"
+                  value={formatNumber(enEspera)}
+                  helper="Pacientes que ya llegaron y esperan ser atendidos."
                   tone="text-emerald-700"
                 />
                 <KpiCard
                   icon={Clock3}
                   label="Pendientes"
                   value={formatNumber(pendientes)}
-                  helper="Programadas, confirmadas o en curso aun sin cierre definitivo."
+                  helper="Programadas o en espera, aun sin cierre definitivo."
                   tone="text-amber-700"
                 />
                 <KpiCard
@@ -734,7 +816,16 @@ export default function AgendaPage() {
                       rows={citasRows}
                       columns={[
                         { key: 'horario', label: 'Horario' },
-                        { key: 'paciente', label: 'Paciente' },
+                        {
+                          key: 'paciente',
+                          label: 'Paciente',
+                          render: (row) => (
+                            <span className="inline-flex items-center gap-1.5">
+                              {row.esUrgencia && <span title="Urgencia">⚡</span>}
+                              {row.paciente}
+                            </span>
+                          ),
+                        },
                         { key: 'tutor', label: 'Tutor' },
                         { key: 'motivo', label: 'Motivo' },
                         { key: 'profesional', label: 'Profesional' },
@@ -742,7 +833,14 @@ export default function AgendaPage() {
                           key: 'estado',
                           label: 'Estado',
                           render: (row) => (
-                            <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
+                            <div className="flex items-center gap-2">
+                              <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
+                              {row.sinHistoria && (
+                                <StatusPill tone="border-red-300 bg-red-50 text-red-700">
+                                  Sin historia
+                                </StatusPill>
+                              )}
+                            </div>
                           ),
                         },
                         {
@@ -1204,6 +1302,157 @@ export default function AgendaPage() {
           )}
         </div>
       )}
+
+      <DialogRoot open={urgenciaOpen} onOpenChange={(v) => !v && setUrgenciaOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="mb-2">
+            <DialogTitle>⚡ Atender urgencia</DialogTitle>
+            <DialogDescription>
+              Registra una atención de urgencia que no fue agendada previamente. Queda directamente
+              como completada, sin bloquear por choques de horario.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="grid gap-3" onSubmit={handleCreateUrgencia}>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setUrgenciaForm((current) => ({ ...current, modo: 'ahora' }))}
+                className={`flex-1 border px-3 py-2 text-sm font-semibold transition ${
+                  urgenciaForm.modo === 'ahora'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted text-muted-foreground'
+                }`}
+              >
+                Ahora mismo
+              </button>
+              <button
+                type="button"
+                onClick={() => setUrgenciaForm((current) => ({ ...current, modo: 'pasado' }))}
+                className={`flex-1 border px-3 py-2 text-sm font-semibold transition ${
+                  urgenciaForm.modo === 'pasado'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted text-muted-foreground'
+                }`}
+              >
+                Ya fue atendida
+              </button>
+            </div>
+
+            {urgenciaForm.modo === 'pasado' && (
+              <input
+                type="time"
+                value={urgenciaForm.horaInicio}
+                max={nowHHMM()}
+                onChange={(event) =>
+                  setUrgenciaForm((current) => ({ ...current, horaInicio: event.target.value }))
+                }
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+              />
+            )}
+
+            <div className="border border-border bg-muted px-3 py-3">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <Search className="h-3.5 w-3.5" />
+                Buscar tutor
+              </div>
+              <input
+                type="text"
+                value={ownerSearch}
+                onChange={(event) => setOwnerSearch(event.target.value)}
+                placeholder="Nombre, documento o telefono"
+                className="mt-2 h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+              />
+              {selectedOwner ? (
+                <div className="mt-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm">
+                  <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOwner(null)}
+                    className="mt-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                  >
+                    Cambiar tutor
+                  </button>
+                </div>
+              ) : (
+                propietarios.map((owner) => (
+                  <button
+                    key={owner.id}
+                    type="button"
+                    onClick={() => setSelectedOwner(owner)}
+                    className="mt-2 flex w-full items-center justify-between border border-border bg-card px-3 py-2 text-left text-sm transition hover:bg-muted"
+                  >
+                    <span className="font-semibold text-slate-950">{owner.nombre}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Seleccionar
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <select
+              value={mascotaSeleccionadaId}
+              onChange={(event) =>
+                setAppointmentForm((current) => ({ ...current, mascotaId: event.target.value }))
+              }
+              disabled={!selectedOwner}
+              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
+            >
+              <option value="">
+                {selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
+              </option>
+              {mascotasDelTutor.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.nombre}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={urgenciaForm.veterinarioId || preferredVeterinarioId}
+              onChange={(event) =>
+                setUrgenciaForm((current) => ({ ...current, veterinarioId: event.target.value }))
+              }
+              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+            >
+              <option value="">Selecciona el profesional</option>
+              {veterinarios.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nombre}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              value={urgenciaForm.motivo}
+              onChange={(event) =>
+                setUrgenciaForm((current) => ({ ...current, motivo: event.target.value }))
+              }
+              placeholder="Motivo de la urgencia"
+              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+            />
+
+            <textarea
+              value={urgenciaForm.observaciones}
+              onChange={(event) =>
+                setUrgenciaForm((current) => ({ ...current, observaciones: event.target.value }))
+              }
+              placeholder="Observaciones de la atencion (opcional)"
+              className="min-h-[80px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
+            />
+
+            <button
+              type="submit"
+              disabled={crearCitaUrgenciaMutation.isPending}
+              className="flex h-10 items-center justify-center gap-2 border border-red-600 bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {crearCitaUrgenciaMutation.isPending ? 'Guardando...' : 'Registrar urgencia atendida'}
+            </button>
+          </form>
+        </DialogContent>
+      </DialogRoot>
     </AdminShell>
   )
 }
