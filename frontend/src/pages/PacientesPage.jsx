@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   CalendarClock,
   FileText,
@@ -9,14 +9,16 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Sparkles,
   UserRound,
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -113,24 +115,19 @@ export default function PacientesPage() {
       headerBadge={<StatusPill tone="border-primary/30 bg-primary/10 text-primary">Base activa</StatusPill>}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Link to="/agenda" className="inline-flex h-9 items-center gap-1.5 border border-slate-900 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-            <CalendarClock className="h-4 w-4" />Agenda
-          </Link>
-          <Link to="/antecedentes" className="inline-flex h-9 items-center gap-1.5 border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted">
-            <HeartPulse className="h-4 w-4" />Antecedentes
-          </Link>
-          <Link to="/dashboard" className="inline-flex h-9 items-center gap-1.5 border border-border bg-card px-3 text-sm font-semibold text-foreground transition hover:bg-muted">
-            <LayoutDashboard className="h-4 w-4" />Dashboard
-          </Link>
+          <NavCta to="/agenda" icon={CalendarClock} size="sm">Agenda</NavCta>
+          <NavCta to="/antecedentes" icon={HeartPulse} variant="outline" size="sm">Antecedentes</NavCta>
+          <NavCta to="/dashboard" icon={LayoutDashboard} variant="outline" size="sm">Dashboard</NavCta>
         </div>
       }
       asideNote="La recepcion crea tutores y pacientes desde esta pantalla. El equipo medico usa esta misma base para agenda e historias clinicas."
     >
       {!puedeVerModulo ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Pacientes no disponibles en el plan actual"
-          body="La base de tutores y pacientes hace parte del trabajo diario. Si esta sección no aparece activa, revisa el plan contratado por la clínica."
-          ctaLabel="Revisar planes"
+          description="La base de tutores y pacientes hace parte del trabajo diario. Si esta sección no aparece activa, revisa el plan contratado por la clínica."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">
@@ -334,14 +331,10 @@ export default function PacientesPage() {
                       render: (row) => (
                         <div className="flex flex-wrap gap-2">
                           {row.historiasTo && (
-                            <Link to={row.historiasTo} className="inline-flex items-center border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
-                              Historia
-                            </Link>
+                            <NavCtaLink to={row.historiasTo} size="sm">Historia</NavCtaLink>
                           )}
                           {row.antecedentesTo && (
-                            <Link to={row.antecedentesTo} className="inline-flex items-center border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">
-                              Antecedentes
-                            </Link>
+                            <NavCtaLink to={row.antecedentesTo} size="sm">Antecedentes</NavCtaLink>
                           )}
                         </div>
                       ),

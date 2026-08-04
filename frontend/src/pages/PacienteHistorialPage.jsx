@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeft, PawPrint, Phone, User, Weight, FileText,
+  ChevronLeft, PawPrint, Phone, User, Weight, FileText,
   HeartPulse, Lock, Pencil, CalendarDays, Stethoscope, Plus,
 } from 'lucide-react'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
@@ -245,14 +245,13 @@ export default function PacienteHistorialPage() {
     <div className="min-h-screen bg-background">
       {/* Barra de navegación contextual */}
       <div className="border-b border-border bg-card px-6 py-3">
-        <button
-          type="button"
-          onClick={() => navigate('/pacientes')}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+        <Link
+          to="/pacientes"
+          className="inline-flex items-center gap-1 text-small text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ChevronLeft className="h-3.5 w-3.5" />
           Volver a Pacientes
-        </button>
+        </Link>
       </div>
 
       {/* Header del paciente */}

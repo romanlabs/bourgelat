@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  ArrowRight,
   Building2,
   Mail,
   Phone,
   ShieldCheck,
+  Sparkles,
+  Users,
+  Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DashboardPanel,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -547,13 +549,9 @@ function ConfiguracionContent({
                   Esta separacion reduce errores y evita que el cliente mezcle configuracion visible
                   con claves de acceso o cambios delicados de integración.
                 </div>
-                <Link
-                  to="/finanzas"
-                  className="inline-flex w-full items-center justify-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
-                >
+                <NavCta to="/finanzas" icon={Wallet} variant="outline" className="w-full justify-center">
                   Ir a finanzas
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                </NavCta>
               </div>
             </DashboardPanel>
           </div>
@@ -911,10 +909,11 @@ function ConfiguracionContent({
 
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Facturación electrónica no incluida en el plan actual"
-          body="La conexión con Factus se habilita cuando la clínica sube a un plan con facturación electrónica. Mientras tanto, puedes dejar lista la ficha institucional y fiscal."
-          ctaLabel="Revisar planes"
+          description="La conexión con Factus se habilita cuando la clínica sube a un plan con facturación electrónica. Mientras tanto, puedes dejar lista la ficha institucional y fiscal."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
@@ -1341,12 +1340,9 @@ export default function ConfiguracionPage() {
         </StatusPill>
       }
       actions={
-        <Link
-          to="/usuarios"
-          className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
+        <NavCta to="/usuarios" icon={Users}>
           Abrir usuarios
-        </Link>
+        </NavCta>
       }
       asideNote="Usa esta vista para ajustar nombre visible, datos institucionales, salida fiscal y facturación, sin mezclarlo con la operación diaria."
     >

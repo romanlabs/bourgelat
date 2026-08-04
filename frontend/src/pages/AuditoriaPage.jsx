@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { Activity, CircleAlert, ScanSearch, ShieldCheck, UserRoundCog } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
 import {
   DashboardPanel,
   DataTable,
@@ -179,12 +179,9 @@ export default function AuditoriaPage() {
         </StatusPill>
       }
       actions={
-        <Link
-          to="/usuarios"
-          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
+        <NavCta to="/usuarios" icon={UserRoundCog}>
           Abrir usuarios
-        </Link>
+        </NavCta>
       }
       asideNote="Usa esta vista para seguir cambios de acceso, caja, historias e inventario sin depender de memoria o revisiones manuales."
     >

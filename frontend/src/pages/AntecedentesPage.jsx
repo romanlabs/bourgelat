@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertCircle, ChevronDown, ClipboardList, HeartPulse, Plus, Search, ShieldCheck, Stethoscope, X } from 'lucide-react'
+import { AlertCircle, ChevronDown, ClipboardList, HeartPulse, PawPrint, Plus, Search, ShieldCheck, Sparkles, Stethoscope, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DashboardPanel,
   DataTable,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -524,21 +525,19 @@ export default function AntecedentesPage() {
       }
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link
-            to="/pacientes"
-            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
+          <NavCta to="/pacientes" icon={PawPrint}>
             Abrir pacientes
-          </Link>
+          </NavCta>
         </div>
       }
       asideNote="La idea aqui no es repetir toda la consulta, sino dejar a mano lo que el medico necesita saber antes de atender al paciente."
     >
       {!puedeVerAntecedentes ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Antecedentes no disponibles en el plan actual"
-          body="El resumen de antecedentes hace parte del trabajo clínico diario. Si esta sección no aparece activa, revisa el plan de la clínica."
-          ctaLabel="Revisar planes"
+          description="El resumen de antecedentes hace parte del trabajo clínico diario. Si esta sección no aparece activa, revisa el plan de la clínica."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-0">

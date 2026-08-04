@@ -1,5 +1,4 @@
 import { createElement, useId } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Area,
   AreaChart,
@@ -467,23 +466,6 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-export function EmptyModuleState({ title, body, ctaLabel, ctaTo = '/planes' }) {
-  return (
-    <div className="rounded-[28px] border border-border bg-card px-5 py-8 shadow-card">
-      <p className="text-sm font-semibold text-card-foreground">{title}</p>
-      <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">{body}</p>
-      {ctaLabel ? (
-        <Link
-          to={ctaTo}
-          className="mt-5 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90"
-        >
-          {ctaLabel}
-        </Link>
-      ) : null}
     </div>
   )
 }

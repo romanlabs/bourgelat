@@ -1,6 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CircleAlert,
@@ -9,16 +8,18 @@ import {
   Phone,
   Search,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   UserPlus,
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -476,20 +477,18 @@ export default function UsuariosPage() {
         </StatusPill>
       }
       actions={
-        <Link
-          to="/planes"
-          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
+        <NavCta to="/planes" icon={Sparkles}>
           Revisar plan
-        </Link>
+        </NavCta>
       }
       asideNote="Aqui se administra el equipo real de la clinica: altas, roles, estado activo y cupo disponible frente a la suscripcion."
     >
       {!roleFeatureEnabled ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Usuarios y roles no disponibles en el plan actual"
-          body="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuracion comercial de la clinica."
-          ctaLabel="Revisar planes"
+          description="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuracion comercial de la clinica."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">

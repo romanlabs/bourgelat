@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CalendarClock,
@@ -8,14 +8,18 @@ import {
   CircleAlert,
   Clock3,
   List,
+  PawPrint,
   Plus,
   RefreshCcw,
   Search,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DialogRoot,
   DialogContent,
@@ -28,7 +32,6 @@ import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -606,21 +609,19 @@ export default function AgendaPage() {
               ⚡ Atender urgencia
             </button>
           )}
-          <Link
-            to="/pacientes"
-            className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
+          <NavCta to="/pacientes" icon={PawPrint}>
             Abrir pacientes
-          </Link>
+          </NavCta>
         </div>
       }
       asideNote="Recepcion y consulta pueden operar desde aqui con filtros simples, una agenda diaria clara y acciones directas sobre cada cita."
     >
       {!puedeVerAgenda ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Agenda no disponible en el plan actual"
-          body="La agenda de citas hace parte del producto base. Si esta clinica no la tiene activa, revisa la configuracion comercial antes de continuar."
-          ctaLabel="Revisar planes"
+          description="La agenda de citas hace parte del producto base. Si esta clinica no la tiene activa, revisa la configuracion comercial antes de continuar."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-0">
@@ -997,9 +998,9 @@ export default function AgendaPage() {
                       {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
                         <div className="border border-dashed border-border bg-white px-3 py-3 text-sm leading-7 text-muted-foreground">
                           No encontramos un tutor con esa búsqueda. Puedes crearlo desde la sección de pacientes.
-                          <Link to="/pacientes" className="ml-2 font-semibold text-primary hover:text-primary">
+                          <NavCtaLink to="/pacientes" size="sm" className="ml-2">
                             Abrir pacientes
-                          </Link>
+                          </NavCtaLink>
                         </div>
                       ) : null}
                     </div>

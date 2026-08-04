@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeftRight, CircleAlert, FileSpreadsheet, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, CircleAlert, FileSpreadsheet, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical, Wallet } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -228,20 +228,18 @@ export default function InventarioPage() {
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">Control operativo</StatusPill>
       }
       actions={
-        <Link
-          to="/finanzas"
-          className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
+        <NavCta to="/finanzas" icon={Wallet}>
           Abrir caja
-        </Link>
+        </NavCta>
       }
       asideNote="Aquí se concentran alertas, productos y movimientos. Lo importante es cuidar el inventario antes de afectar la caja o la consulta."
     >
       {!puedeVerInventario ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Inventario no disponible en el plan actual"
-          body="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripción."
-          ctaLabel="Revisar planes"
+          description="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripción."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">
