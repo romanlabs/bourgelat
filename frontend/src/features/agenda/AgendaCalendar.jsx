@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileWarning, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NavCta } from '@/components/shared/NavCta'
 import {
   CITA_ESTADO_LABELS,
   CITA_TIPO_LABELS,
@@ -305,12 +305,15 @@ function CitaDetailDialog({
             <p className="leading-tight text-red-800 dark:text-red-200">
               Esta urgencia aún no tiene historia clínica. El proceso no queda cerrado hasta documentarla.
             </p>
-            <Link
+            <NavCta
               to={`/pacientes/${cita.mascota?.id}/historial?citaId=${cita.id}`}
-              className="shrink-0 whitespace-nowrap border border-red-600 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
+              icon={FileWarning}
+              tone="destructive"
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
             >
               Completar historia
-            </Link>
+            </NavCta>
           </div>
         )}
 

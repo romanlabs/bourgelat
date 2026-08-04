@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
+import { NavCtaLink } from '@/components/shared/NavCta'
 
 const mapMedicamentosToText = (medicamentos) => {
   if (!Array.isArray(medicamentos) || medicamentos.length === 0) return ''
@@ -26,12 +27,9 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
     return (
       <div className="py-1 text-sm text-muted-foreground">
         Sin antecedentes registrados para este paciente.{' '}
-        <Link
-          to={`/antecedentes?mascotaId=${mascotaId}`}
-          className="font-semibold text-cyan-700 hover:text-cyan-800"
-        >
+        <NavCtaLink to={`/antecedentes?mascotaId=${mascotaId}`}>
           Registrar antecedentes
-        </Link>
+        </NavCtaLink>
       </div>
     )
   }
@@ -121,12 +119,14 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
         </p>
       ) : null}
 
-      <Link
+      <NavCtaLink
         to={`/antecedentes?mascotaId=${mascotaId}`}
-        className="block pt-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800"
+        icon={ArrowRight}
+        size="sm"
+        className="pt-1"
       >
-        Editar antecedentes →
-      </Link>
+        Editar antecedentes
+      </NavCtaLink>
     </div>
   )
 }
