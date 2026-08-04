@@ -86,6 +86,30 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true }) {
     return citas.filter((cita) => cita.fecha === dateStr)
   }
 
+  /**
+   * Id de la cita de hoy (programada o en_espera) más cercana a la hora actual —
+   * la "siguiente a atender" — para resaltarla en el calendario.
+   */
+  const proximaCitaId = useMemo(() => {
+    const hoyStr = format(new Date(), 'yyyy-MM-dd')
+    const candidatas = citas.filter(
+      (cita) => cita.fecha === hoyStr && ['programada', 'en_espera'].includes(cita.estado)
+    )
+    if (!candidatas.length) return null
+
+    const ahoraMins = parseMinutes(format(new Date(), 'HH:mm'))
+    let mejor = null
+    let mejorDelta = Infinity
+    for (const cita of candidatas) {
+      const delta = Math.abs(parseMinutes(cita.horaInicio) - ahoraMins)
+      if (delta < mejorDelta) {
+        mejor = cita
+        mejorDelta = delta
+      }
+    }
+    return mejor?.id ?? null
+  }, [citas])
+
   const irSemanaAnterior = () => setSemanaBase((prev) => addDays(prev, -7))
   const irSemanaSiguiente = () => setSemanaBase((prev) => addDays(prev, 7))
   const irHoy = () => setSemanaBase(startOfWeek(new Date(), { weekStartsOn: 1 }))
@@ -99,6 +123,7 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true }) {
     irHoy,
     citas,
     getCitasDelDia,
+    proximaCitaId,
     isLoading: citasQuery.isLoading,
     isFetching: citasQuery.isFetching,
     slots,

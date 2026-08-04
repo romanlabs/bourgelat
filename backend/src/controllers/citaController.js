@@ -3,14 +3,62 @@ const Cita = require('../models/Cita');
 const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
-const { isPastDateOnly, isValidDateOnly } = require('../utils/dateOnly');
+const HistoriaClinica = require('../models/HistoriaClinica');
+const { isPastDateOnly, isValidDateOnly, formatDateOnlyLocal } = require('../utils/dateOnly');
 const { parsePaginacion } = require('../utils/paginacion');
+
+const sumarMinutos = (horaHHMM, minutos) => {
+  const [h, m] = horaHHMM.split(':').map(Number);
+  const total = Math.min(h * 60 + m + minutos, 23 * 60 + 59);
+  const horaFin = Math.floor(total / 60);
+  const minFin = total % 60;
+  return `${String(horaFin).padStart(2, '0')}:${String(minFin).padStart(2, '0')}`;
+};
 
 const esProfesionalVeterinario = (usuario) =>
   usuario &&
   usuario.activo &&
   (usuario.rol === 'veterinario' ||
     (Array.isArray(usuario.rolesAdicionales) && usuario.rolesAdicionales.includes('veterinario')));
+
+/**
+ * Valida veterinario/propietario/mascota compartidos por crearCita y crearCitaUrgencia.
+ * Retorna { error, status } o { veterinario, propietario, mascota }.
+ */
+const validarParticipantesCita = async ({ clinicaId, veterinarioId, propietarioId, mascotaId }) => {
+  const veterinario = await Usuario.findOne({
+    where: { id: veterinarioId, clinicaId, activo: true }
+  });
+  if (!esProfesionalVeterinario(veterinario)) {
+    return { error: 'Veterinario no encontrado', status: 404 };
+  }
+
+  const propietario = await Propietario.findOne({ where: { id: propietarioId, clinicaId } });
+  if (!propietario) {
+    return { error: 'Propietario no encontrado', status: 404 };
+  }
+
+  const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
+  if (!mascota) {
+    return { error: 'Mascota no encontrada', status: 404 };
+  }
+
+  if (mascota.propietarioId !== propietario.id) {
+    return { error: 'La mascota seleccionada no pertenece al tutor indicado', status: 400 };
+  }
+
+  return { veterinario, propietario, mascota };
+};
+
+const incluirRelacionesCita = (cita, clinicaId) =>
+  Cita.findOne({
+    where: { id: cita.id, clinicaId },
+    include: [
+      { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie'] },
+      { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
+      { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+    ],
+  });
 
 const crearCita = async (req, res) => {
   try {
@@ -38,12 +86,11 @@ const crearCita = async (req, res) => {
       return res.status(400).json({ message: 'No se puede agendar una cita en una fecha pasada' });
     }
 
-    // Verificar que el veterinario pertenece a la clinica
-    const veterinario = await Usuario.findOne({
-      where: { id: veterinarioId, clinicaId, activo: true }
+    const { error, status, veterinario } = await validarParticipantesCita({
+      clinicaId, veterinarioId, propietarioId, mascotaId,
     });
-    if (!esProfesionalVeterinario(veterinario)) {
-      return res.status(404).json({ message: 'Veterinario no encontrado' });
+    if (error) {
+      return res.status(status).json({ message: error });
     }
 
     // Verificar solapamiento de citas del veterinario
@@ -68,40 +115,73 @@ const crearCita = async (req, res) => {
       });
     }
 
-    // Verificar que la mascota y propietario pertenecen a la clinica
-    const propietario = await Propietario.findOne({ where: { id: propietarioId, clinicaId } });
-    if (!propietario) {
-      return res.status(404).json({ message: 'Propietario no encontrado' });
-    }
-
-    const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
-    if (!mascota) {
-      return res.status(404).json({ message: 'Mascota no encontrada' });
-    }
-
-    if (mascota.propietarioId !== propietario.id) {
-      return res.status(400).json({
-        message: 'La mascota seleccionada no pertenece al tutor indicado'
-      });
-    }
-
     const cita = await Cita.create({
       fecha, horaInicio, horaFin, motivo, tipoCita,
       observaciones, mascotaId, propietarioId,
       veterinarioId, clinicaId,
     });
 
-    const citaCompleta = await Cita.findOne({
-      where: { id: cita.id, clinicaId },
-      include: [
-        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie'] },
-        { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
-      ],
-    });
+    const citaCompleta = await incluirRelacionesCita(cita, clinicaId);
 
     res.status(201).json({
       message: 'Cita agendada exitosamente',
+      cita: citaCompleta,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+const crearCitaUrgencia = async (req, res) => {
+  try {
+    const {
+      fecha, horaInicio, horaFin, motivo,
+      observaciones, mascotaId, propietarioId, veterinarioId
+    } = req.body;
+    const { clinicaId } = req.usuario;
+
+    if (!fecha || !horaInicio || !motivo || !mascotaId || !propietarioId || !veterinarioId) {
+      return res.status(400).json({ message: 'Todos los campos obligatorios deben completarse' });
+    }
+
+    if (!isValidDateOnly(fecha)) {
+      return res.status(400).json({ message: 'Fecha no valida' });
+    }
+
+    // La urgencia ya fue atendida: puede ser de hoy (incluso horas atras), pero no un dia anterior ni futuro.
+    const hoy = formatDateOnlyLocal();
+    if (fecha !== hoy) {
+      return res.status(400).json({ message: 'La fecha de una urgencia atendida debe ser la de hoy' });
+    }
+
+    const ahoraHHMM = new Date().toTimeString().slice(0, 5);
+    if (horaInicio > ahoraHHMM) {
+      return res.status(400).json({ message: 'La hora de atencion no puede ser futura' });
+    }
+
+    const horaFinCalculada = horaFin && horaFin > horaInicio
+      ? horaFin
+      : sumarMinutos(horaInicio, 30);
+
+    const { error, status } = await validarParticipantesCita({
+      clinicaId, veterinarioId, propietarioId, mascotaId,
+    });
+    if (error) {
+      return res.status(status).json({ message: error });
+    }
+
+    // No se verifica solapamiento: la atencion ya ocurrio y puede coincidir con otras citas agendadas.
+    const cita = await Cita.create({
+      fecha, horaInicio, horaFin: horaFinCalculada, motivo,
+      tipoCita: 'urgencia', estado: 'completada',
+      observaciones, mascotaId, propietarioId,
+      veterinarioId, clinicaId,
+    });
+
+    const citaCompleta = await incluirRelacionesCita(cita, clinicaId);
+
+    res.status(201).json({
+      message: 'Urgencia registrada exitosamente',
       cita: citaCompleta,
     });
   } catch (error) {
@@ -144,6 +224,7 @@ const obtenerCitas = async (req, res) => {
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
         { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: HistoriaClinica, as: 'historia', attributes: ['id'], required: false },
       ],
     });
 
@@ -169,6 +250,7 @@ const obtenerCita = async (req, res) => {
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email'] },
         { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: HistoriaClinica, as: 'historia', attributes: ['id'], required: false },
       ],
     });
 
@@ -188,7 +270,7 @@ const actualizarEstadoCita = async (req, res) => {
     const { clinicaId } = req.usuario;
     const { estado, motivoCancelacion } = req.body;
 
-    const estadosValidos = ['programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio'];
+    const estadosValidos = ['programada', 'en_espera', 'completada', 'cancelada', 'no_asistio'];
     if (!estadosValidos.includes(estado)) {
       return res.status(400).json({ message: 'Estado no valido' });
     }
@@ -278,4 +360,7 @@ const reprogramarCita = async (req, res) => {
   }
 };
 
-module.exports = { crearCita, obtenerCitas, obtenerCita, actualizarEstadoCita, reprogramarCita };
+module.exports = {
+  crearCita, crearCitaUrgencia, obtenerCitas, obtenerCita,
+  actualizarEstadoCita, reprogramarCita,
+};
