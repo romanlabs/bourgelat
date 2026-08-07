@@ -770,10 +770,11 @@ export default function AgendaPage() {
                   </div>
                 )
 
-                /* Vista calendario: un unico renglon de toolbar, sin header de tarjeta duplicado */
+                /* Vista calendario: sin tarjeta envolvente — Google tampoco mete el
+                   calendario dentro de una caja blanca grande, va directo sobre el fondo */
                 if (vistaAgenda === 'calendario') {
                   return (
-                    <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_8px_32px_rgba(8,25,39,0.07)]">
+                    <>
                       <AgendaCalendar
                         veterinarioId={veterinarioId}
                         estado={estado}
@@ -805,7 +806,7 @@ export default function AgendaPage() {
                             : undefined
                         }
                       />
-                    </div>
+                    </>
                   )
                 }
 
