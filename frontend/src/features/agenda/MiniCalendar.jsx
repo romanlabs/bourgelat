@@ -15,8 +15,8 @@ import { es } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const WEEK_OPTS = { weekStartsOn: 1 }
-const DIAS_HEADER = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+const WEEK_OPTS = { weekStartsOn: 0 } // domingo primero, como Google Calendar
+const DIAS_HEADER = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
 /**
  * Mini calendario de navegacion rapida (estilo Google Calendar lateral):

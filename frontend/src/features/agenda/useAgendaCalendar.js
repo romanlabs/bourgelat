@@ -25,7 +25,7 @@ export {
   calcCitaHeight,
 } from './calendarConstants'
 
-const WEEK_OPTS = { weekStartsOn: 1 }
+const WEEK_OPTS = { weekStartsOn: 0 } // domingo primero, como Google Calendar
 
 function calcularRango(fechaBase, view) {
   if (view === 'dia') {
