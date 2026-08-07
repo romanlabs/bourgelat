@@ -152,20 +152,19 @@ export default function AgendaCalendar({
   )
 
   return (
-    <div className="flex">
-      {/* Columna lateral: boton "Crear" siempre visible (se reduce a icono cuando el
-          panel esta colapsado) + mini calendario de navegacion, oculto por defecto */}
-      <div className="mr-4 flex shrink-0 flex-col">
-        {crearMenu && <div className="mb-4">{crearMenu}</div>}
+    <div className="relative flex">
+      {/* Boton "Crear" flotando sobre la grilla cuando el panel esta cerrado
+          (como Google: no reserva una columna vacia permanente) */}
+      {!sidebarOpen && crearMenu && (
+        <div className="absolute left-0 top-0 z-40">{crearMenu}</div>
+      )}
 
-        <aside
-          aria-hidden={!sidebarOpen}
-          className={cn(
-            'overflow-hidden transition-[width,opacity] duration-200 ease-out',
-            sidebarOpen ? 'w-[190px] opacity-100' : 'w-0 opacity-0'
-          )}
-        >
-        <div className="w-[190px] border-r border-border pr-4">
+      {/* Columna lateral: solo ocupa espacio en el flujo cuando esta abierta */}
+      {sidebarOpen && (
+        <div className="mr-4 flex w-[190px] shrink-0 flex-col">
+          {crearMenu && <div className="mb-4">{crearMenu}</div>}
+
+          <aside className="border-r border-border pr-4">
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
 
           {(onEstadoChange || onVeterinarioChange) && (
@@ -203,9 +202,9 @@ export default function AgendaCalendar({
               )}
             </div>
           )}
+          </aside>
         </div>
-        </aside>
-      </div>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-0">
         {isMobile && toolbarNode}
