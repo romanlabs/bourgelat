@@ -109,7 +109,9 @@ export function TimeGridView({
         className="sticky top-0 z-20 grid border-b border-border bg-card"
         style={{ gridTemplateColumns: gridCols }}
       >
-        <div className="border-r border-border" />
+        <div className="flex items-end justify-start border-r border-border pb-1 pl-1.5">
+          <span className="text-[9px] font-medium text-muted-foreground/70">GMT-05</span>
+        </div>
         {days.map((day) => {
           const esHoy = isToday(day)
           const count = getCitasDelDia(day).length
@@ -156,7 +158,7 @@ export function TimeGridView({
           {slots.map((slot, idx) => (
             <div
               key={slot}
-              className="border-b border-border/60"
+              className="border-b border-border/40"
               style={{ height: `${slotHeight}px` }}
             >
               {slot.endsWith(':00') && idx > 0 && (
@@ -197,8 +199,8 @@ export function TimeGridView({
                       : undefined
                   }
                   className={cn(
-                    'absolute w-full border-b border-border/60',
-                    slot.endsWith(':00') && 'border-border',
+                    'absolute w-full border-b border-border/40',
+                    slot.endsWith(':00') && 'border-border/70',
                     puedeProgramar && 'hover:bg-accent/30 cursor-pointer transition-colors'
                   )}
                   style={{
