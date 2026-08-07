@@ -1,7 +1,7 @@
 // Constantes visuales y de geometría compartidas por las vistas del calendario
 
-export const HORA_INICIO = 7   // 07:00
-export const HORA_FIN = 20     // 20:00 (exclusive — último slot es 19:30)
+export const HORA_INICIO = 0   // 00:00 — dia completo, como Google Calendar
+export const HORA_FIN = 24     // 24:00 (exclusive — ultimo slot es 23:30)
 export const SLOT_MINUTOS = 30
 export const TOTAL_SLOTS = (HORA_FIN - HORA_INICIO) * 2
 export const SLOT_HEIGHT_MAX = 52 // px por slot de 30 min

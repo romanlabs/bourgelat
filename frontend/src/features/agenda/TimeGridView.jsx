@@ -10,6 +10,13 @@ import {
 } from './calendarConstants'
 import { CitaChip } from './CitaChip'
 
+/** "07:00" -> "7 AM", "13:00" -> "1 PM" — formato compacto tipo Google Calendar */
+function formatHourLabel(slot) {
+  const hour = parseInt(slot.slice(0, 2), 10)
+  const h12 = hour % 12 === 0 ? 12 : hour % 12
+  return `${h12} ${hour < 12 ? 'AM' : 'PM'}`
+}
+
 /** Alto de slot fluido: intenta que el día completo quepa en el contenedor. */
 function useSlotHeight(containerRef) {
   const [slotHeight, setSlotHeight] = useState(SLOT_HEIGHT_MAX)
@@ -144,17 +151,20 @@ export function TimeGridView({
 
       {/* Cuerpo: columna de horas + columnas de días */}
       <div className="grid" style={{ gridTemplateColumns: gridCols }}>
-        {/* Columna de horas */}
-        <div className="border-r border-border">
-          {slots.map((slot) => (
+        {/* Columna de horas: la etiqueta flota centrada sobre su linea, como en Google */}
+        <div className="relative border-r border-border">
+          {slots.map((slot, idx) => (
             <div
               key={slot}
-              className="flex items-start justify-end border-b border-border pr-1.5 pt-0.5"
+              className="border-b border-border/60"
               style={{ height: `${slotHeight}px` }}
             >
-              {slot.endsWith(':00') && (
-                <span className="text-[10px] tabular-nums text-muted-foreground">
-                  {slot}
+              {slot.endsWith(':00') && idx > 0 && (
+                <span
+                  className="absolute right-1.5 -translate-y-1/2 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground"
+                  style={{ top: `${idx * slotHeight}px` }}
+                >
+                  {formatHourLabel(slot)}
                 </span>
               )}
             </div>
