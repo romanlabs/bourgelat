@@ -760,36 +760,40 @@ export default function AgendaPage() {
                       />
                     )}
 
-                    {/* Filtros compartidos */}
-                    <select
-                      value={estado}
-                      onChange={(event) => {
-                        setEstado(event.target.value)
-                        setPagina(1)
-                      }}
-                      className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={veterinarioId}
-                      onChange={(event) => {
-                        setVeterinarioId(event.target.value)
-                        setPagina(1)
-                      }}
-                      className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      <option value="todos">Todos los profesionales</option>
-                      {veterinarios.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.nombre}
-                        </option>
-                      ))}
-                    </select>
+                    {/* Filtros compartidos: en vista calendario viven en el panel lateral */}
+                    {vistaAgenda === 'lista' && (
+                      <>
+                        <select
+                          value={estado}
+                          onChange={(event) => {
+                            setEstado(event.target.value)
+                            setPagina(1)
+                          }}
+                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={veterinarioId}
+                          onChange={(event) => {
+                            setVeterinarioId(event.target.value)
+                            setPagina(1)
+                          }}
+                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        >
+                          <option value="todos">Todos los profesionales</option>
+                          {veterinarios.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </>
+                    )}
                   </div>
                 }
               >
@@ -798,6 +802,15 @@ export default function AgendaPage() {
                   <AgendaCalendar
                     veterinarioId={veterinarioId}
                     estado={estado}
+                    onEstadoChange={(v) => {
+                      setEstado(v)
+                      setPagina(1)
+                    }}
+                    onVeterinarioChange={(v) => {
+                      setVeterinarioId(v)
+                      setPagina(1)
+                    }}
+                    veterinarios={veterinarios}
                     enabled={rolPermitido && puedeVerAgenda}
                     puedeProgramar={puedeProgramar}
                     puedeGestionarEstado={puedeGestionarEstado}

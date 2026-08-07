@@ -1,10 +1,10 @@
-import { ChevronLeft, ChevronRight, Loader2, PanelLeft } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const VIEW_OPTIONS = [
-  { value: 'dia', label: 'Día' },
-  { value: 'semana', label: 'Semana' },
-  { value: 'mes', label: 'Mes' },
+  { value: 'dia', label: 'Día', shortcut: 'D' },
+  { value: 'semana', label: 'Semana', shortcut: 'W' },
+  { value: 'mes', label: 'Mes', shortcut: 'M' },
 ]
 
 export function CalendarToolbar({
@@ -67,29 +67,21 @@ export function CalendarToolbar({
         {titulo}
       </p>
 
-      {/* Switch de vista */}
-      <div className="flex" role="group" aria-label="Vista del calendario">
-        {VIEW_OPTIONS.map((opt) => {
-          const oculta = isMobile && opt.value === 'semana'
-          if (oculta) return null
-          const activa = view === opt.value
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onViewChange(opt.value)}
-              aria-pressed={activa}
-              className={cn(
-                'h-8 border border-border px-3 text-xs font-semibold transition -ml-px first:ml-0',
-                activa
-                  ? 'z-10 border-primary bg-primary text-white'
-                  : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
-              )}
-            >
+      {/* Selector de vista (dropdown, atajos D/W/M activos globalmente) */}
+      <div className="relative">
+        <select
+          value={view}
+          onChange={(e) => onViewChange(e.target.value)}
+          aria-label="Vista del calendario"
+          className="h-8 appearance-none border border-border bg-card pl-3 pr-7 text-xs font-semibold text-foreground outline-none transition hover:bg-muted focus:border-primary"
+        >
+          {VIEW_OPTIONS.filter((opt) => !(isMobile && opt.value === 'semana')).map((opt) => (
+            <option key={opt.value} value={opt.value}>
               {opt.label}
-            </button>
-          )
-        })}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
       </div>
     </div>
   )
