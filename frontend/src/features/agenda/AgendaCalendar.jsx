@@ -6,6 +6,7 @@ import { TimeGridView } from './TimeGridView'
 import { MonthView } from './MonthView'
 import { CalendarLegend } from './CalendarLegend'
 import { CitaDetailDialog } from './CitaDetailDialog'
+import { MiniCalendar } from './MiniCalendar'
 
 export default function AgendaCalendar({
   veterinarioId,
@@ -45,44 +46,51 @@ export default function AgendaCalendar({
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      <CalendarToolbar
-        titulo={tituloRango}
-        view={effectiveView}
-        onViewChange={setView}
-        onPrev={irAnterior}
-        onNext={irSiguiente}
-        onToday={irHoy}
-        isMobile={isMobile}
-        isFetching={isFetching && !isLoading}
-      />
+    <div className="flex gap-4">
+      {/* Lateral: mini calendario de navegacion rapida (estilo Google Calendar) */}
+      <aside className="hidden w-[190px] shrink-0 border-r border-border pr-4 lg:block">
+        <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
+      </aside>
 
-      {effectiveView === 'mes' ? (
-        <MonthView
-          days={diasVisibles}
-          fechaBase={fechaBase}
-          getCitasDelDia={getCitasDelDia}
-          proximaCitaId={proximaCitaId}
-          puedeProgramar={puedeProgramar}
-          onSlotClick={onSlotClick}
-          onCitaClick={setSelectedCita}
-          onVerDia={verDia}
-          isLoading={isLoading}
+      <div className="flex min-w-0 flex-1 flex-col gap-0">
+        <CalendarToolbar
+          titulo={tituloRango}
+          view={effectiveView}
+          onViewChange={setView}
+          onPrev={irAnterior}
+          onNext={irSiguiente}
+          onToday={irHoy}
+          isMobile={isMobile}
+          isFetching={isFetching && !isLoading}
         />
-      ) : (
-        <TimeGridView
-          days={diasVisibles}
-          slots={slots}
-          getCitasDelDia={getCitasDelDia}
-          proximaCitaId={proximaCitaId}
-          puedeProgramar={puedeProgramar}
-          onSlotClick={onSlotClick}
-          onCitaClick={setSelectedCita}
-          isLoading={isLoading}
-        />
-      )}
 
-      <CalendarLegend />
+        {effectiveView === 'mes' ? (
+          <MonthView
+            days={diasVisibles}
+            fechaBase={fechaBase}
+            getCitasDelDia={getCitasDelDia}
+            proximaCitaId={proximaCitaId}
+            puedeProgramar={puedeProgramar}
+            onSlotClick={onSlotClick}
+            onCitaClick={setSelectedCita}
+            onVerDia={verDia}
+            isLoading={isLoading}
+          />
+        ) : (
+          <TimeGridView
+            days={diasVisibles}
+            slots={slots}
+            getCitasDelDia={getCitasDelDia}
+            proximaCitaId={proximaCitaId}
+            puedeProgramar={puedeProgramar}
+            onSlotClick={onSlotClick}
+            onCitaClick={setSelectedCita}
+            isLoading={isLoading}
+          />
+        )}
+
+        <CalendarLegend />
+      </div>
 
       <CitaDetailDialog
         cita={selectedCita}
