@@ -796,6 +796,14 @@ export default function AgendaPage() {
                         isUpdating={actualizarEstadoMutation.isPending}
                         isRescheduling={reprogramarMutation.isPending}
                         toolbarExtra={vistaToggleCompacto}
+                        onCreateUrgencia={
+                          puedeProgramar
+                            ? () => {
+                                setUrgenciaForm(DEFAULT_URGENCIA_FORM)
+                                setUrgenciaOpen(true)
+                              }
+                            : undefined
+                        }
                       />
                     </div>
                   )

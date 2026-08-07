@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { DropdownMenu } from 'radix-ui'
+import { CalendarClock, Plus, Zap } from 'lucide-react'
+import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { STATUS_OPTIONS } from './calendarConstants'
@@ -26,6 +29,7 @@ export default function AgendaCalendar({
   onSlotClick,
   onUpdateStatus,
   onReschedule,
+  onCreateUrgencia,
   isUpdating = false,
   isRescheduling = false,
   toolbarExtra,
@@ -107,6 +111,48 @@ export default function AgendaCalendar({
         )}
       >
         <div className="w-[190px] border-r border-border pr-4">
+          {(puedeProgramar || onCreateUrgencia) && (
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className="mb-4 flex h-11 w-full items-center gap-3 rounded-full border border-border bg-card pl-3 pr-4 text-sm font-semibold text-foreground shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                  Crear
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="start"
+                  sideOffset={4}
+                  className="z-50 w-56 rounded-lg border border-border bg-card p-1.5 shadow-lg"
+                >
+                  {puedeProgramar && (
+                    <DropdownMenu.Item
+                      onSelect={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+                    >
+                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                      Nueva cita
+                    </DropdownMenu.Item>
+                  )}
+                  {onCreateUrgencia && (
+                    <DropdownMenu.Item
+                      onSelect={onCreateUrgencia}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-700 outline-none transition hover:bg-red-50 focus:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Atender urgencia
+                    </DropdownMenu.Item>
+                  )}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          )}
+
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
 
           {(onEstadoChange || onVeterinarioChange) && (
