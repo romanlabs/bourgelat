@@ -709,60 +709,85 @@ export default function AgendaPage() {
                 </div>
               )}
 
-              {/* Calendario / lista con toggle */}
-              <DashboardPanel
-                title={vistaAgenda === 'calendario' ? 'Calendario' : 'Agenda del dia'}
-                subtitle={
-                  vistaAgenda === 'lista'
-                    ? 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
-                    : null
-                }
-                action={
-                  <div className="flex flex-wrap items-center gap-3">
-                    {/* Toggle de vista */}
-                    <div className="flex border border-border bg-muted">
-                      <button
-                        type="button"
-                        onClick={() => setVistaAgenda('calendario')}
-                        title="Vista calendario"
-                        className={`flex h-9 w-9 items-center justify-center transition ${
-                          vistaAgenda === 'calendario'
-                            ? 'bg-foreground text-white'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <CalendarDays className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVistaAgenda('lista')}
-                        title="Vista lista"
-                        className={`flex h-9 w-9 items-center justify-center transition ${
-                          vistaAgenda === 'lista'
-                            ? 'bg-foreground text-white'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <List className="h-4 w-4" />
-                      </button>
-                    </div>
+              {/* Toggle de vista: calendario / lista, se reutiliza como "extra" del toolbar del calendario */}
+              {(() => {
+                const vistaToggle = (
+                  <div className="flex overflow-hidden rounded-full border border-border bg-muted">
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('calendario')}
+                      title="Vista calendario"
+                      className={`flex h-9 w-9 items-center justify-center transition ${
+                        vistaAgenda === 'calendario'
+                          ? 'bg-foreground text-white'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('lista')}
+                      title="Vista lista"
+                      className={`flex h-9 w-9 items-center justify-center transition ${
+                        vistaAgenda === 'lista'
+                          ? 'bg-foreground text-white'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
 
-                    {/* Filtro de fecha: solo en lista */}
-                    {vistaAgenda === 'lista' && (
-                      <input
-                        type="date"
-                        value={fecha}
-                        onChange={(event) => {
-                          setFecha(event.target.value)
+                /* Vista calendario: un unico renglon de toolbar, sin header de tarjeta duplicado */
+                if (vistaAgenda === 'calendario') {
+                  return (
+                    <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_8px_32px_rgba(8,25,39,0.07)]">
+                      <AgendaCalendar
+                        veterinarioId={veterinarioId}
+                        estado={estado}
+                        onEstadoChange={(v) => {
+                          setEstado(v)
                           setPagina(1)
                         }}
-                        className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        onVeterinarioChange={(v) => {
+                          setVeterinarioId(v)
+                          setPagina(1)
+                        }}
+                        veterinarios={veterinarios}
+                        enabled={rolPermitido && puedeVerAgenda}
+                        puedeProgramar={puedeProgramar}
+                        puedeGestionarEstado={puedeGestionarEstado}
+                        puedeReprogramar={puedeReprogramar}
+                        onSlotClick={handleCalendarSlotClick}
+                        onUpdateStatus={handleCalendarUpdateStatus}
+                        onReschedule={handleCalendarReschedule}
+                        isUpdating={actualizarEstadoMutation.isPending}
+                        isRescheduling={reprogramarMutation.isPending}
+                        toolbarExtra={vistaToggle}
                       />
-                    )}
+                    </div>
+                  )
+                }
 
-                    {/* Filtros compartidos: en vista calendario viven en el panel lateral */}
-                    {vistaAgenda === 'lista' && (
-                      <>
+                /* Vista lista: mantiene el header de tarjeta con filtros propios de la tabla */
+                return (
+                  <DashboardPanel
+                    title="Agenda del dia"
+                    subtitle="Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional."
+                    action={
+                      <div className="flex flex-wrap items-center gap-3">
+                        {vistaToggle}
+                        <input
+                          type="date"
+                          value={fecha}
+                          onChange={(event) => {
+                            setFecha(event.target.value)
+                            setPagina(1)
+                          }}
+                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        />
                         <select
                           value={estado}
                           onChange={(event) => {
@@ -792,40 +817,9 @@ export default function AgendaPage() {
                             </option>
                           ))}
                         </select>
-                      </>
-                    )}
-                  </div>
-                }
-              >
-                {/* Vista calendario */}
-                {vistaAgenda === 'calendario' && (
-                  <AgendaCalendar
-                    veterinarioId={veterinarioId}
-                    estado={estado}
-                    onEstadoChange={(v) => {
-                      setEstado(v)
-                      setPagina(1)
-                    }}
-                    onVeterinarioChange={(v) => {
-                      setVeterinarioId(v)
-                      setPagina(1)
-                    }}
-                    veterinarios={veterinarios}
-                    enabled={rolPermitido && puedeVerAgenda}
-                    puedeProgramar={puedeProgramar}
-                    puedeGestionarEstado={puedeGestionarEstado}
-                    puedeReprogramar={puedeReprogramar}
-                    onSlotClick={handleCalendarSlotClick}
-                    onUpdateStatus={handleCalendarUpdateStatus}
-                    onReschedule={handleCalendarReschedule}
-                    isUpdating={actualizarEstadoMutation.isPending}
-                    isRescheduling={reprogramarMutation.isPending}
-                  />
-                )}
-
-                {/* Vista lista */}
-                {vistaAgenda === 'lista' && (
-                  <>
+                      </div>
+                    }
+                  >
                     <DataTable
                       title="Citas programadas"
                       subtitle="Lectura diaria con accion rapida sobre cada caso."
@@ -925,9 +919,9 @@ export default function AgendaPage() {
                         </div>
                       </div>
                     )}
-                  </>
-                )}
-              </DashboardPanel>
+                  </DashboardPanel>
+                )
+              })()}
             </div>
           )}
 

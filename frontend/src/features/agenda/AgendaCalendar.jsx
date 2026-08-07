@@ -27,6 +27,7 @@ export default function AgendaCalendar({
   onReschedule,
   isUpdating = false,
   isRescheduling = false,
+  toolbarExtra,
 }) {
   const { view, effectiveView, setView, isMobile, sidebarOpen, toggleSidebar } = useCalendarView()
 
@@ -130,6 +131,7 @@ export default function AgendaCalendar({
           isFetching={isFetching && !isLoading}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={toggleSidebar}
+          extra={toolbarExtra}
         />
 
         {effectiveView === 'mes' ? (

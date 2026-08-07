@@ -21,6 +21,7 @@ export function CalendarToolbar({
   isFetching,
   sidebarOpen,
   onToggleSidebar,
+  extra,
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
@@ -60,21 +61,25 @@ export function CalendarToolbar({
         {titulo}
       </p>
 
-      {/* Selector de vista (dropdown, atajos D/W/M activos globalmente) */}
-      <div className="relative">
-        <select
-          value={view}
-          onChange={(e) => onViewChange(e.target.value)}
-          aria-label="Vista del calendario"
-          className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card pl-4 pr-8 text-xs font-semibold text-foreground shadow-sm outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/40"
-        >
-          {VIEW_OPTIONS.filter((opt) => !(isMobile && opt.value === 'semana')).map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex items-center gap-3">
+        {/* Selector de vista (dropdown, atajos D/W/M activos globalmente) */}
+        <div className="relative">
+          <select
+            value={view}
+            onChange={(e) => onViewChange(e.target.value)}
+            aria-label="Vista del calendario"
+            className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card pl-4 pr-8 text-xs font-semibold text-foreground shadow-sm outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            {VIEW_OPTIONS.filter((opt) => !(isMobile && opt.value === 'semana')).map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        </div>
+
+        {extra}
       </div>
     </div>
   )
