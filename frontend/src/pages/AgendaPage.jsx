@@ -675,45 +675,47 @@ export default function AgendaPage() {
           ══════════════════════════════ */}
           {activeTab === 'agenda' && (
             <div className="space-y-5 pt-5">
-              {/* KPI cards */}
-              <div className="grid gap-4 xl:grid-cols-4">
-                <KpiCard
-                  icon={CalendarClock}
-                  label="Citas del dia"
-                  value={formatNumber(citasDelDia)}
-                  helper={`Agenda visible para ${formatLongDate(fecha)}.`}
-                  tone="text-primary"
-                />
-                <KpiCard
-                  icon={ShieldCheck}
-                  label="En espera"
-                  value={formatNumber(enEspera)}
-                  helper="Pacientes que ya llegaron y esperan ser atendidos."
-                  tone="text-emerald-700"
-                />
-                <KpiCard
-                  icon={Clock3}
-                  label="Pendientes"
-                  value={formatNumber(pendientes)}
-                  helper="Programadas o en espera, aun sin cierre definitivo."
-                  tone="text-amber-700"
-                />
-                <KpiCard
-                  icon={Stethoscope}
-                  label="Profesionales"
-                  value={formatNumber(veterinarios.length)}
-                  helper="Equipo veterinario disponible para asignacion."
-                  tone="text-violet-700"
-                />
-              </div>
+              {/* KPI cards — solo en vista lista; el calendario aprovecha ese espacio para la grilla */}
+              {vistaAgenda === 'lista' && (
+                <div className="grid gap-4 xl:grid-cols-4">
+                  <KpiCard
+                    icon={CalendarClock}
+                    label="Citas del dia"
+                    value={formatNumber(citasDelDia)}
+                    helper={`Agenda visible para ${formatLongDate(fecha)}.`}
+                    tone="text-primary"
+                  />
+                  <KpiCard
+                    icon={ShieldCheck}
+                    label="En espera"
+                    value={formatNumber(enEspera)}
+                    helper="Pacientes que ya llegaron y esperan ser atendidos."
+                    tone="text-emerald-700"
+                  />
+                  <KpiCard
+                    icon={Clock3}
+                    label="Pendientes"
+                    value={formatNumber(pendientes)}
+                    helper="Programadas o en espera, aun sin cierre definitivo."
+                    tone="text-amber-700"
+                  />
+                  <KpiCard
+                    icon={Stethoscope}
+                    label="Profesionales"
+                    value={formatNumber(veterinarios.length)}
+                    helper="Equipo veterinario disponible para asignacion."
+                    tone="text-violet-700"
+                  />
+                </div>
+              )}
 
               {/* Calendario / lista con toggle */}
               <DashboardPanel
-                title={vistaAgenda === 'calendario' ? 'Calendario semanal' : 'Agenda del dia'}
+                title={vistaAgenda === 'calendario' ? 'Calendario' : 'Agenda del dia'}
                 subtitle={
-                  vistaAgenda === 'calendario'
-                    ? 'Vista semanal de citas. Haz clic en un espacio libre para ir al formulario de nueva cita.'
-                    : 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
+                  vistaAgenda === 'lista'
+                    ? 'Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional.'
+                    : null
                 }
                 action={
                   <div className="flex flex-wrap items-center gap-3">
