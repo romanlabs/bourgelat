@@ -102,7 +102,7 @@ export function TimeGridView({
     <div
       ref={scrollRef}
       className="overflow-y-auto overflow-x-hidden rounded-sm border border-border"
-      style={{ maxHeight: 'max(480px, calc(100vh - 300px))' }}
+      style={{ height: 'max(480px, calc(100vh - 300px))' }}
     >
       {/* Cabecera: nombres de día */}
       <div
