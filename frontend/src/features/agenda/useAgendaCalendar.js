@@ -1,67 +1,76 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { startOfWeek, addDays, format } from 'date-fns'
+import {
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  addDays,
+  addMonths,
+  eachDayOfInterval,
+  format,
+} from 'date-fns'
+import { es } from 'date-fns/locale'
 import { agendaApi } from './agendaApi'
+import { generarSlots, parseMinutes } from './calendarConstants'
 
-export const HORA_INICIO = 7   // 07:00
-export const HORA_FIN = 20     // 20:00 (exclusive — último slot es 19:30)
-export const SLOT_MINUTOS = 30
-export const SLOT_HEIGHT = 52  // px por slot de 30 min
+// Re-exports para compatibilidad con imports existentes
+export {
+  HORA_INICIO,
+  HORA_FIN,
+  SLOT_MINUTOS,
+  generarSlots,
+  parseMinutes,
+  timeToTop,
+  calcCitaHeight,
+} from './calendarConstants'
 
-/** Genera los slots de horario del día: ["07:00", "07:30", ..., "19:30"] */
-export function generarSlots() {
-  const slots = []
-  for (let h = HORA_INICIO; h < HORA_FIN; h++) {
-    slots.push(`${String(h).padStart(2, '0')}:00`)
-    slots.push(`${String(h).padStart(2, '0')}:30`)
+const WEEK_OPTS = { weekStartsOn: 1 }
+
+function calcularRango(fechaBase, view) {
+  if (view === 'dia') {
+    return { desde: fechaBase, hasta: fechaBase }
   }
-  return slots
+  if (view === 'mes') {
+    return {
+      desde: startOfWeek(startOfMonth(fechaBase), WEEK_OPTS),
+      hasta: endOfWeek(endOfMonth(fechaBase), WEEK_OPTS),
+    }
+  }
+  const inicio = startOfWeek(fechaBase, WEEK_OPTS)
+  return { desde: inicio, hasta: addDays(inicio, 6) }
 }
 
-/**
- * Convierte "HH:MM" o "HH:MM:SS" a minutos totales desde medianoche.
- */
-export function parseMinutes(timeStr) {
-  if (!timeStr) return 0
-  const parts = timeStr.split(':').map(Number)
-  return parts[0] * 60 + (parts[1] || 0)
+function calcularTitulo(fechaBase, view, desde, hasta) {
+  if (view === 'dia') {
+    return format(fechaBase, "EEEE, d 'de' MMMM yyyy", { locale: es })
+  }
+  if (view === 'mes') {
+    return format(fechaBase, 'MMMM yyyy', { locale: es })
+  }
+  const mismoMes = desde.getMonth() === hasta.getMonth()
+  const mismoAnio = desde.getFullYear() === hasta.getFullYear()
+  if (mismoMes) {
+    return `${format(desde, 'd')} – ${format(hasta, 'd')} de ${format(desde, 'MMMM yyyy', { locale: es })}`
+  }
+  if (mismoAnio) {
+    return `${format(desde, "d 'de' MMMM", { locale: es })} – ${format(hasta, "d 'de' MMMM yyyy", { locale: es })}`
+  }
+  return `${format(desde, 'd MMM yyyy', { locale: es })} – ${format(hasta, 'd MMM yyyy', { locale: es })}`
 }
 
-/**
- * Calcula posición top (px) dentro de la grilla para una hora dada.
- */
-export function timeToTop(timeStr) {
-  const mins = parseMinutes(timeStr)
-  const minutesFromStart = mins - HORA_INICIO * 60
-  return Math.max(0, (minutesFromStart / SLOT_MINUTOS) * SLOT_HEIGHT)
-}
+export function useAgendaCalendar({ veterinarioId, estado, enabled = true, view = 'semana' }) {
+  const [fechaBase, setFechaBase] = useState(() => new Date())
 
-/**
- * Calcula la altura (px) de un chip dados horaInicio y horaFin.
- */
-export function calcCitaHeight(horaInicio, horaFin) {
-  const startMins = parseMinutes(horaInicio)
-  const endMins = parseMinutes(horaFin)
-  const duration = Math.max(endMins - startMins, SLOT_MINUTOS / 2)
-  const clampedEnd = Math.min(endMins, HORA_FIN * 60)
-  const clampedStart = Math.max(startMins, HORA_INICIO * 60)
-  const effectiveDuration = Math.max(clampedEnd - clampedStart, 15)
-  return Math.max((effectiveDuration / SLOT_MINUTOS) * SLOT_HEIGHT, 24)
-}
+  const { desde, hasta } = useMemo(() => calcularRango(fechaBase, view), [fechaBase, view])
 
-export function useAgendaCalendar({ veterinarioId, estado, enabled = true }) {
-  const [semanaBase, setSemanaBase] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+  const diasVisibles = useMemo(
+    () => eachDayOfInterval({ start: desde, end: hasta }),
+    [desde, hasta]
   )
 
-  // Array de 7 fechas: lunes → domingo de la semana seleccionada
-  const semanaActual = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(semanaBase, i)),
-    [semanaBase]
-  )
-
-  const fechaDesde = format(semanaActual[0], 'yyyy-MM-dd')
-  const fechaHasta = format(semanaActual[6], 'yyyy-MM-dd')
+  const fechaDesde = format(desde, 'yyyy-MM-dd')
+  const fechaHasta = format(hasta, 'yyyy-MM-dd')
 
   const citasQuery = useQuery({
     queryKey: ['agenda-calendario', fechaDesde, fechaHasta, veterinarioId, estado],
@@ -80,11 +89,21 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true }) {
   const slots = useMemo(() => generarSlots(), [])
   const citas = useMemo(() => citasQuery.data?.citas || [], [citasQuery.data?.citas])
 
+  // Mapa fecha ('yyyy-MM-dd') → citas ordenadas por hora; en mes se consulta 42 veces por render
+  const citasPorDia = useMemo(() => {
+    const map = new Map()
+    for (const cita of citas) {
+      if (!map.has(cita.fecha)) map.set(cita.fecha, [])
+      map.get(cita.fecha).push(cita)
+    }
+    for (const lista of map.values()) {
+      lista.sort((a, b) => parseMinutes(a.horaInicio) - parseMinutes(b.horaInicio))
+    }
+    return map
+  }, [citas])
+
   /** Retorna las citas de un día específico (objeto Date). */
-  const getCitasDelDia = (date) => {
-    const dateStr = format(date, 'yyyy-MM-dd')
-    return citas.filter((cita) => cita.fecha === dateStr)
-  }
+  const getCitasDelDia = (date) => citasPorDia.get(format(date, 'yyyy-MM-dd')) || []
 
   /**
    * Id de la cita de hoy (programada o en_espera) más cercana a la hora actual —
@@ -110,17 +129,32 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true }) {
     return mejor?.id ?? null
   }, [citas])
 
-  const irSemanaAnterior = () => setSemanaBase((prev) => addDays(prev, -7))
-  const irSemanaSiguiente = () => setSemanaBase((prev) => addDays(prev, 7))
-  const irHoy = () => setSemanaBase(startOfWeek(new Date(), { weekStartsOn: 1 }))
+  const irAnterior = () =>
+    setFechaBase((prev) =>
+      view === 'mes' ? addMonths(prev, -1) : addDays(prev, view === 'dia' ? -1 : -7)
+    )
+  const irSiguiente = () =>
+    setFechaBase((prev) =>
+      view === 'mes' ? addMonths(prev, 1) : addDays(prev, view === 'dia' ? 1 : 7)
+    )
+  const irHoy = () => setFechaBase(new Date())
+  const irADia = (date) => setFechaBase(date)
+
+  const tituloRango = useMemo(
+    () => calcularTitulo(fechaBase, view, desde, hasta),
+    [fechaBase, view, desde, hasta]
+  )
 
   return {
-    semanaActual,
+    fechaBase,
+    diasVisibles,
+    tituloRango,
     fechaDesde,
     fechaHasta,
-    irSemanaAnterior,
-    irSemanaSiguiente,
+    irAnterior,
+    irSiguiente,
     irHoy,
+    irADia,
     citas,
     getCitasDelDia,
     proximaCitaId,
