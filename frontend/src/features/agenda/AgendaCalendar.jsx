@@ -106,13 +106,19 @@ export default function AgendaCalendar({
           type="button"
           aria-label="Crear"
           className={cn(
-            'flex h-11 shrink-0 items-center rounded-full border border-border bg-card font-semibold text-foreground shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-            sidebarOpen ? 'w-full gap-3 pl-3 pr-4 text-sm' : 'w-11 justify-center'
+            'flex shrink-0 items-center border border-border bg-card font-semibold text-foreground shadow-[0_1px_3px_rgba(8,25,39,0.15)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            sidebarOpen
+              ? 'h-11 w-full gap-3 rounded-full pl-3 pr-4 text-sm'
+              : 'h-14 w-14 justify-center rounded-2xl'
           )}
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-            <Plus className="h-4 w-4" />
-          </span>
+          {sidebarOpen ? (
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+              <Plus className="h-4 w-4" />
+            </span>
+          ) : (
+            <Plus className="h-6 w-6 text-foreground" />
+          )}
           {sidebarOpen && 'Crear'}
         </button>
       </DropdownMenu.Trigger>
