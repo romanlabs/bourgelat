@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
 import { CalendarToolbar } from './CalendarToolbar'
@@ -21,7 +22,7 @@ export default function AgendaCalendar({
   isUpdating = false,
   isRescheduling = false,
 }) {
-  const { view, effectiveView, setView, isMobile } = useCalendarView()
+  const { view, effectiveView, setView, isMobile, sidebarOpen, toggleSidebar } = useCalendarView()
 
   const {
     fechaBase,
@@ -46,10 +47,19 @@ export default function AgendaCalendar({
   }
 
   return (
-    <div className="flex gap-4">
-      {/* Lateral: mini calendario de navegacion rapida (estilo Google Calendar) */}
-      <aside className="hidden w-[190px] shrink-0 border-r border-border pr-4 lg:block">
-        <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
+    <div className="flex">
+      {/* Lateral: mini calendario de navegacion rapida (estilo Google Calendar) —
+          oculto por defecto, se abre/cierra con el boton de la toolbar */}
+      <aside
+        aria-hidden={!sidebarOpen}
+        className={cn(
+          'shrink-0 overflow-hidden transition-[width,opacity,margin] duration-200 ease-out',
+          sidebarOpen ? 'w-[190px] opacity-100 mr-4' : 'w-0 opacity-0 mr-0'
+        )}
+      >
+        <div className="w-[190px] border-r border-border pr-4">
+          <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0">
@@ -62,6 +72,8 @@ export default function AgendaCalendar({
           onToday={irHoy}
           isMobile={isMobile}
           isFetching={isFetching && !isLoading}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={toggleSidebar}
         />
 
         {effectiveView === 'mes' ? (

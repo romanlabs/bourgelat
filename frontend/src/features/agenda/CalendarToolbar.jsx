@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const VIEW_OPTIONS = [
@@ -16,10 +16,25 @@ export function CalendarToolbar({
   onToday,
   isMobile,
   isFetching,
+  sidebarOpen,
+  onToggleSidebar,
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
       <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-pressed={sidebarOpen}
+          aria-label={sidebarOpen ? 'Ocultar mini calendario' : 'Mostrar mini calendario'}
+          title={sidebarOpen ? 'Ocultar mini calendario' : 'Mostrar mini calendario'}
+          className={cn(
+            'mr-1 hidden h-8 w-8 items-center justify-center border border-border transition hover:bg-muted hover:text-foreground lg:flex',
+            sidebarOpen ? 'bg-muted text-foreground' : 'bg-card text-muted-foreground'
+          )}
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={onPrev}
