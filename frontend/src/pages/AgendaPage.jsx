@@ -740,6 +740,36 @@ export default function AgendaPage() {
                   </div>
                 )
 
+                // En la barra oscura de AdminShell (calendario) el toggle usa la paleta navy/cyan
+                const vistaToggleCompacto = (
+                  <div className="flex h-8 overflow-hidden rounded-full border border-white/10 bg-[#081827]">
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('calendario')}
+                      title="Vista calendario"
+                      className={`flex h-8 w-8 items-center justify-center transition ${
+                        vistaAgenda === 'calendario'
+                          ? 'bg-[#91e7e0]/15 text-[#91e7e0]'
+                          : 'text-[#91e7e0]/50 hover:text-[#91e7e0]/80'
+                      }`}
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVistaAgenda('lista')}
+                      title="Vista lista"
+                      className={`flex h-8 w-8 items-center justify-center transition ${
+                        vistaAgenda === 'lista'
+                          ? 'bg-[#91e7e0]/15 text-[#91e7e0]'
+                          : 'text-[#91e7e0]/50 hover:text-[#91e7e0]/80'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+
                 /* Vista calendario: un unico renglon de toolbar, sin header de tarjeta duplicado */
                 if (vistaAgenda === 'calendario') {
                   return (
@@ -765,7 +795,7 @@ export default function AgendaPage() {
                         onReschedule={handleCalendarReschedule}
                         isUpdating={actualizarEstadoMutation.isPending}
                         isRescheduling={reprogramarMutation.isPending}
-                        toolbarExtra={vistaToggle}
+                        toolbarExtra={vistaToggleCompacto}
                       />
                     </div>
                   )

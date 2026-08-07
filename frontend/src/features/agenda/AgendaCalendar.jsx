@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { STATUS_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
@@ -67,6 +68,33 @@ export default function AgendaCalendar({
     setView('dia')
   }
 
+  const toolbarNode = (
+    <CalendarToolbar
+      titulo={tituloRango}
+      view={effectiveView}
+      onViewChange={setView}
+      onPrev={irAnterior}
+      onNext={irSiguiente}
+      onToday={irHoy}
+      isMobile={isMobile}
+      isFetching={isFetching && !isLoading}
+      sidebarOpen={sidebarOpen}
+      onToggleSidebar={toggleSidebar}
+      extra={toolbarExtra}
+      compact={!isMobile}
+    />
+  )
+
+  // En pantallas >= 640px el toolbar vive en la barra superior de AdminShell
+  // (el mismo espacio que aprovecha Google Calendar); en movil se queda inline.
+  const setHeaderCenter = useAdminHeaderSlot()
+  useEffect(() => {
+    if (!setHeaderCenter) return
+    setHeaderCenter(isMobile ? null : toolbarNode)
+    return () => setHeaderCenter(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  })
+
   return (
     <div className="flex">
       {/* Lateral: mini calendario de navegacion rapida (estilo Google Calendar) —
@@ -120,19 +148,7 @@ export default function AgendaCalendar({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0">
-        <CalendarToolbar
-          titulo={tituloRango}
-          view={effectiveView}
-          onViewChange={setView}
-          onPrev={irAnterior}
-          onNext={irSiguiente}
-          onToday={irHoy}
-          isMobile={isMobile}
-          isFetching={isFetching && !isLoading}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={toggleSidebar}
-          extra={toolbarExtra}
-        />
+        {isMobile && toolbarNode}
 
         {effectiveView === 'mes' ? (
           <MonthView
