@@ -153,18 +153,19 @@ export function TimeGridView({
 
       {/* Cuerpo: columna de horas + columnas de días */}
       <div className="grid" style={{ gridTemplateColumns: gridCols }}>
-        {/* Columna de horas: la etiqueta flota centrada sobre su linea, como en Google */}
+        {/* Columna de horas: una sola linea por hora (sin la subdivision de :30),
+            etiqueta justo debajo de su linea, como en Google */}
         <div className="relative border-r border-border">
           {slots.map((slot, idx) => (
             <div
               key={slot}
-              className="border-b border-border/40"
+              className={cn('border-b', slot.endsWith(':00') ? 'border-border/50' : 'border-transparent')}
               style={{ height: `${slotHeight}px` }}
             >
               {slot.endsWith(':00') && idx > 0 && (
                 <span
-                  className="absolute right-1.5 -translate-y-1/2 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground"
-                  style={{ top: `${idx * slotHeight}px` }}
+                  className="absolute right-1.5 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground"
+                  style={{ top: `${idx * slotHeight + 4}px` }}
                 >
                   {formatHourLabel(slot)}
                 </span>
