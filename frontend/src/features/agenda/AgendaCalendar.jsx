@@ -99,60 +99,67 @@ export default function AgendaCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   })
 
+  const crearMenu = (puedeProgramar || onCreateUrgencia) && (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Crear"
+          className={cn(
+            'flex h-11 shrink-0 items-center rounded-full border border-border bg-card font-semibold text-foreground shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            sidebarOpen ? 'w-full gap-3 pl-3 pr-4 text-sm' : 'w-11 justify-center'
+          )}
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+            <Plus className="h-4 w-4" />
+          </span>
+          {sidebarOpen && 'Crear'}
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={4}
+          className="z-50 w-56 rounded-lg border border-border bg-card p-1.5 shadow-lg"
+        >
+          {puedeProgramar && (
+            <DropdownMenu.Item
+              onSelect={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
+              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+            >
+              <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              Nueva cita
+            </DropdownMenu.Item>
+          )}
+          {onCreateUrgencia && (
+            <DropdownMenu.Item
+              onSelect={onCreateUrgencia}
+              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-700 outline-none transition hover:bg-red-50 focus:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
+            >
+              <Zap className="h-4 w-4" />
+              Atender urgencia
+            </DropdownMenu.Item>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+
   return (
     <div className="flex">
-      {/* Lateral: mini calendario de navegacion rapida (estilo Google Calendar) —
-          oculto por defecto, se abre/cierra con el boton de la toolbar */}
-      <aside
-        aria-hidden={!sidebarOpen}
-        className={cn(
-          'shrink-0 overflow-hidden transition-[width,opacity,margin] duration-200 ease-out',
-          sidebarOpen ? 'w-[190px] opacity-100 mr-4' : 'w-0 opacity-0 mr-0'
-        )}
-      >
-        <div className="w-[190px] border-r border-border pr-4">
-          {(puedeProgramar || onCreateUrgencia) && (
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  type="button"
-                  className="mb-4 flex h-11 w-full items-center gap-3 rounded-full border border-border bg-card pl-3 pr-4 text-sm font-semibold text-foreground shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
-                    <Plus className="h-4 w-4" />
-                  </span>
-                  Crear
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  align="start"
-                  sideOffset={4}
-                  className="z-50 w-56 rounded-lg border border-border bg-card p-1.5 shadow-lg"
-                >
-                  {puedeProgramar && (
-                    <DropdownMenu.Item
-                      onSelect={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
-                    >
-                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                      Nueva cita
-                    </DropdownMenu.Item>
-                  )}
-                  {onCreateUrgencia && (
-                    <DropdownMenu.Item
-                      onSelect={onCreateUrgencia}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-700 outline-none transition hover:bg-red-50 focus:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
-                    >
-                      <Zap className="h-4 w-4" />
-                      Atender urgencia
-                    </DropdownMenu.Item>
-                  )}
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-          )}
+      {/* Columna lateral: boton "Crear" siempre visible (se reduce a icono cuando el
+          panel esta colapsado) + mini calendario de navegacion, oculto por defecto */}
+      <div className="mr-4 flex shrink-0 flex-col">
+        {crearMenu && <div className="mb-4">{crearMenu}</div>}
 
+        <aside
+          aria-hidden={!sidebarOpen}
+          className={cn(
+            'overflow-hidden transition-[width,opacity] duration-200 ease-out',
+            sidebarOpen ? 'w-[190px] opacity-100' : 'w-0 opacity-0'
+          )}
+        >
+        <div className="w-[190px] border-r border-border pr-4">
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
 
           {(onEstadoChange || onVeterinarioChange) && (
@@ -191,7 +198,8 @@ export default function AgendaCalendar({
             </div>
           )}
         </div>
-      </aside>
+        </aside>
+      </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0">
         {isMobile && toolbarNode}
