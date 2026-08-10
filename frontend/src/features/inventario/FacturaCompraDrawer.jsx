@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Plus, Trash2 } from 'lucide-react'
+import MoneyInput from '@/components/shared/MoneyInput'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
@@ -248,12 +249,10 @@ export default function FacturaCompraDrawer({
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="text-xs text-muted-foreground">Precio unitario (COP)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        className={fieldClass(false)}
+                      <MoneyInput
                         value={item.precioUnitario}
-                        onChange={(e) => actualizarItem(idx, 'precioUnitario', e.target.value)}
+                        onChange={(value) => actualizarItem(idx, 'precioUnitario', value)}
+                        className={fieldClass(false)}
                       />
                     </div>
                   </div>

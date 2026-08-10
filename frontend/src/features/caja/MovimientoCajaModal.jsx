@@ -7,11 +7,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import MoneyInput from '@/components/shared/MoneyInput'
 import { MOVIMIENTO_CAJA_MOTIVOS } from './cajaConstants'
 
 const buildInitialForm = () => ({ tipo: 'egreso', monto: '', motivo: 'gasto_menor', observaciones: '' })
-
-const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
 
 export default function MovimientoCajaModal({ open, onClose, registrarMovimientoMutation }) {
   const [form, setForm] = useState(buildInitialForm)
@@ -79,14 +78,9 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
 
           <label className="grid gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monto</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatMiles(form.monto)}
-              onChange={(event) => {
-                const digitos = event.target.value.replace(/\D/g, '')
-                setForm((curr) => ({ ...curr, monto: digitos }))
-              }}
+            <MoneyInput
+              value={form.monto}
+              onChange={(value) => setForm((curr) => ({ ...curr, monto: value === 0 ? '' : String(value) }))}
               placeholder="$ 0"
               autoFocus
               className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
