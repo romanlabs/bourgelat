@@ -92,7 +92,7 @@ function GastoForm() {
   }
 
   return (
-    <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-2 lg:grid-cols-[10rem_1fr_9rem_9rem_auto]">
+    <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
         <select value={form.categoria} onChange={set('categoria')} className={inputClass}>

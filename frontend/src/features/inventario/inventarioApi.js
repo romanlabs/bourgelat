@@ -47,6 +47,19 @@ export const inventarioApi = {
     return data
   },
 
+  async subirImagenProducto(file) {
+    const formData = new FormData()
+    formData.append('foto', file)
+
+    const { data } = await api.post('/inventario/subir-foto', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    return data
+  },
+
   async importarProductos(productos) {
     const { data } = await api.post('/inventario/importar', { productos })
     return data

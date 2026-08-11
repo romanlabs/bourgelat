@@ -3,6 +3,7 @@ const { body, param, query } = require('express-validator')
 
 const {
   crearProducto,
+  subirFotoProducto,
   importarProductos,
   obtenerProductos,
   obtenerProducto,
@@ -17,6 +18,7 @@ const {
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { uploadProductoFotoSingle } = require('../middlewares/uploadProductoFotoMiddleware')
 
 const router = express.Router()
 const requiereInventario = requerirFuncionalidades('inventario')
@@ -30,6 +32,16 @@ const categoriasValidas = [
   'suplemento',
   'otro',
 ]
+const imagenUrlValidator = body('imagenUrl')
+  .optional({ nullable: true, checkFalsy: true })
+  .trim()
+  .isURL({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
+  .withMessage('La imagen debe ser una URL valida')
+
 const tiposMovimientoValidos = ['entrada', 'salida', 'ajuste']
 const motivosMovimientoValidos = [
   'inventario_inicial',
@@ -136,6 +148,7 @@ const validarCreacionProducto = [
     .optional()
     .isBoolean()
     .withMessage('requiereFormula debe ser booleano'),
+  imagenUrlValidator,
   validar,
 ]
 
@@ -272,6 +285,7 @@ const validarEdicionProducto = [
     .optional()
     .isBoolean()
     .withMessage('requiereFormula debe ser booleano'),
+  imagenUrlValidator,
   validar,
 ]
 
@@ -348,6 +362,15 @@ router.post(
   requiereInventario,
   validarCreacionProducto,
   crearProducto
+)
+
+router.post(
+  '/subir-foto',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requiereInventario,
+  uploadProductoFotoSingle,
+  subirFotoProducto
 )
 
 router.post(

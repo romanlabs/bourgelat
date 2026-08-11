@@ -51,6 +51,11 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
     placeholderData: (prev) => prev,
   })
 
+  const subirImagenProductoMutation = useMutation({
+    mutationFn: inventarioApi.subirImagenProducto,
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cargar la foto del producto.')),
+  })
+
   const crearProductoMutation = useMutation({
     mutationFn: inventarioApi.crearProducto,
     onSuccess: (data) => {
@@ -122,7 +127,17 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
     eliminarProductoMutation.mutate(confirmDialog.producto.id)
   }
 
-  function handleDrawerSubmit(formData) {
+  async function handleDrawerSubmit({ photoFile, imagenUrlActual, ...formData }) {
+    let imagenUrl = imagenUrlActual || undefined
+    if (photoFile) {
+      try {
+        const uploaded = await subirImagenProductoMutation.mutateAsync(photoFile)
+        imagenUrl = uploaded?.imagenUrl
+      } catch {
+        return
+      }
+    }
+
     const payload = {
       nombre: formData.nombre,
       categoria: formData.categoria,
@@ -134,6 +149,7 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
       lote: formData.lote?.trim() || undefined,
       laboratorio: formData.laboratorio?.trim() || undefined,
       requiereFormula: formData.requiereFormula,
+      imagenUrl,
     }
     if (editingProduct) {
       editarProductoMutation.mutate({ productoId: editingProduct.id, payload })
@@ -146,7 +162,10 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
     productosQuery,
     productosSelectorQuery,
     productosRows,
-    isPendingProduct: crearProductoMutation.isPending || editarProductoMutation.isPending,
+    isPendingProduct:
+      crearProductoMutation.isPending ||
+      editarProductoMutation.isPending ||
+      subirImagenProductoMutation.isPending,
     isPendingDelete: eliminarProductoMutation.isPending,
     buscar, setBuscar,
     categoria, setCategoria,
