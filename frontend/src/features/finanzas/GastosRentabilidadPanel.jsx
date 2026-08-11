@@ -7,6 +7,7 @@ import {
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import {
   useAnularGasto,
   useCrearGasto,
@@ -110,13 +111,9 @@ function GastoForm() {
       </label>
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Valor</span>
-        <input
+        <MoneyInput
           value={form.monto}
-          onChange={set('monto')}
-          type="number"
-          min="1"
-          step="1"
-          required
+          onChange={(value) => setForm((f) => ({ ...f, monto: value === 0 ? '' : String(value) }))}
           placeholder="0"
           className={`${inputClass} text-right tabular-nums`}
         />
@@ -287,13 +284,10 @@ function FilaDeudor({ cliente }) {
               <span className="font-semibold tabular-nums text-red-700">{formatCurrency(f.saldoPendiente)}</span>
               {facturaAbono === f.id ? (
                 <span className="flex flex-wrap items-center gap-2">
-                  <input
+                  <MoneyInput
                     autoFocus
-                    type="number"
-                    min="1"
-                    max={f.saldoPendiente}
                     value={monto}
-                    onChange={(e) => setMonto(e.target.value)}
+                    onChange={(value) => setMonto(value === 0 ? '' : String(value))}
                     placeholder="valor"
                     className={`${inputClass} h-9 w-28 text-right tabular-nums`}
                   />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, X } from 'lucide-react'
+import MoneyInput from '@/components/shared/MoneyInput'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
@@ -156,14 +157,12 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
 
             <div className="flex flex-col gap-1">
               <label className={labelClass}>Precio de venta *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className={fieldClass(!(Number(form.precioVenta) >= 0))}
-                placeholder="0"
+              <MoneyInput
                 value={form.precioVenta}
-                onChange={(e) => setForm((f) => ({ ...f, precioVenta: e.target.value }))}
+                onChange={(value) => setForm((f) => ({ ...f, precioVenta: value }))}
+                prefix="$"
+                placeholder="0"
+                className={`${fieldClass(!(Number(form.precioVenta) >= 0))} pl-7`}
               />
             </div>
 

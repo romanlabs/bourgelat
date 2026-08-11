@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertTriangle, X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS } from './useInventarioProductos'
 
 // Unidades pensadas para como una clinica veterinaria cuenta su inventario:
@@ -49,49 +50,8 @@ const DEFAULT_VALUES = {
   requiereFormula: false,
 }
 
-const milesFormatter = new Intl.NumberFormat('es-CO')
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
-
-const displayMiles = (value) => {
-  if (value === '' || value === null || value === undefined) return ''
-  const num = Number(value)
-  return Number.isFinite(num) ? milesFormatter.format(num) : ''
-}
-
-// Campo numerico con separador de miles en vivo (guarda el numero crudo)
-function NumberField({ id, value, onChange, hasError, prefix, suffix, placeholder }) {
-  const handleChange = (e) => {
-    const raw = e.target.value.replace(/[^\d]/g, '')
-    onChange(raw === '' ? 0 : Number(raw))
-  }
-
-  return (
-    <div className="relative">
-      {prefix ? (
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-          {prefix}
-        </span>
-      ) : null}
-      <input
-        id={id}
-        type="text"
-        inputMode="numeric"
-        value={displayMiles(value)}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={`h-11 w-full border bg-card text-sm tabular-nums text-foreground outline-none transition focus:border-primary ${
-          prefix ? 'pl-7' : 'pl-3'
-        } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-red-400' : 'border-border'}`}
-      />
-      {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-          {suffix}
-        </span>
-      ) : null}
-    </div>
-  )
-}
 
 export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit, isPending }) {
   const [additionalOpen, setAdditionalOpen] = useState(false)
@@ -277,7 +237,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       name="stock"
                       control={control}
                       render={({ field }) => (
-                        <NumberField
+                        <MoneyInput
                           id="d-stock"
                           value={field.value}
                           onChange={field.onChange}
@@ -296,7 +256,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="stockMinimo"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-stock-min"
                         value={field.value}
                         onChange={field.onChange}
@@ -327,7 +287,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="precioCompra"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-precio-compra"
                         value={field.value}
                         onChange={field.onChange}
@@ -346,7 +306,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="precioVenta"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-precio-venta"
                         value={field.value}
                         onChange={field.onChange}

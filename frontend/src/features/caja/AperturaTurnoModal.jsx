@@ -7,8 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-
-const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
+import MoneyInput from '@/components/shared/MoneyInput'
 
 export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }) {
   const [montoInicial, setMontoInicial] = useState('')
@@ -49,14 +48,9 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Monto inicial
             </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatMiles(montoInicial)}
-              onChange={(event) => {
-                const digitos = event.target.value.replace(/\D/g, '')
-                setMontoInicial(digitos)
-              }}
+            <MoneyInput
+              value={montoInicial}
+              onChange={(value) => setMontoInicial(value === 0 ? '' : String(value))}
               placeholder="$ 0"
               autoFocus
               className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
