@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Plus, ScanLine, Search, X } from 'lucide-react'
+import { ImageOff, Plus, ScanLine, Search, X } from 'lucide-react'
 import {
   formatCurrency,
   formatNumber,
@@ -139,14 +139,29 @@ export default function ProductSelectorDrawer({
                         key={producto.id}
                         className="flex items-center justify-between gap-3 border border-border bg-muted px-4 py-3"
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">
-                            {producto.nombre}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Cantidad {formatNumber(producto.stock)} ·{' '}
-                            {formatCurrency(producto.precioVenta)}
-                          </p>
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden border border-border bg-card">
+                            {producto.imagenUrl
+                              ? (
+                                <img
+                                  src={producto.imagenUrl}
+                                  alt=""
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                              )
+                              : <ImageOff className="h-4 w-4 text-muted-foreground/50" />
+                            }
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-foreground">
+                              {producto.nombre}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Cantidad {formatNumber(producto.stock)} ·{' '}
+                              {formatCurrency(producto.precioVenta)}
+                            </p>
+                          </div>
                         </div>
                         <button
                           type="button"

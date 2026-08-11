@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Barcode, ClipboardList, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
+import { Barcode, ClipboardList, ImageOff, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
 import { PRODUCT_CATEGORIES } from './finanzasConstants'
 
 const formatCOP = (value) =>
@@ -237,9 +237,24 @@ export default function ProductCommandSearch({
                           : 'border-border bg-card hover:border-primary hover:bg-primary/5'
                       }`}
                     >
-                      <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground">
-                        {product.nombre}
-                      </p>
+                      <div className="flex w-full items-center gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
+                          {product.imagenUrl
+                            ? (
+                              <img
+                                src={product.imagenUrl}
+                                alt=""
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                            )
+                            : <ImageOff className="h-3.5 w-3.5 text-muted-foreground/50" />
+                          }
+                        </div>
+                        <p className="line-clamp-2 min-w-0 text-xs font-semibold leading-tight text-foreground">
+                          {product.nombre}
+                        </p>
+                      </div>
                       <p className="text-sm font-bold text-primary">
                         {formatCOP(product.precioVenta || 0)}
                       </p>
