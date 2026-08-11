@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertCircle, ChevronDown, ClipboardList, HeartPulse, PawPrint, Plus, Search, ShieldCheck, Sparkles, Stethoscope, X } from 'lucide-react'
+import { AlertCircle, Bug, CalendarClock, ChevronDown, ClipboardList, HeartPulse, PawPrint, Plus, Search, ShieldCheck, Sparkles, Stethoscope, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -54,6 +54,19 @@ const DEFAULT_VACUNA_FORM = {
   proximaDosis: '',
   lote: '',
   laboratorio: '',
+}
+
+const DEFAULT_DESPARASITACION_FORM = {
+  tipo: '',
+  producto: '',
+  fecha: '',
+  proximaFecha: '',
+}
+
+const DEFAULT_PLANIFICACION_FORM = {
+  nombre: '',
+  fecha: '',
+  proximaFecha: '',
 }
 
 const DEFAULT_CONDICION_FORM = {
@@ -179,13 +192,15 @@ export default function AntecedentesPage() {
 
   const [activeTab, setActiveTab] = useState('resumen')
   const [antDrawerOpen, setAntDrawerOpen] = useState(false)
-  const [antDrawerType, setAntDrawerType] = useState(null) // 'alergia'|'vacuna'|'cirugia'|'condicion'|'generales'
+  const [antDrawerType, setAntDrawerType] = useState(null) // 'alergia'|'vacuna'|'desparasitacion'|'planificacion'|'cirugia'|'condicion'|'generales'
   const [petSearch, setPetSearch] = useState('')
   const [selectedPet, setSelectedPet] = useState(null)
   const [generalDraft, setGeneralDraft] = useState(null)
   const [alergiaForm, setAlergiaForm] = useState(DEFAULT_ALERGIA_FORM)
   const [cirugiaForm, setCirugiaForm] = useState(DEFAULT_CIRUGIA_FORM)
   const [vacunaForm, setVacunaForm] = useState(DEFAULT_VACUNA_FORM)
+  const [desparasitacionForm, setDesparasitacionForm] = useState(DEFAULT_DESPARASITACION_FORM)
+  const [planificacionForm, setPlanificacionForm] = useState(DEFAULT_PLANIFICACION_FORM)
   const [condicionForm, setCondicionForm] = useState(DEFAULT_CONDICION_FORM)
   const [openSections, setOpenSections] = useState(new Set())
 
@@ -341,6 +356,32 @@ export default function AntecedentesPage() {
     },
   })
 
+  const agregarDesparasitacionMutation = useMutation({
+    mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarDesparasitacion(mascotaId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Desparasitacion agregada exitosamente')
+      setDesparasitacionForm(DEFAULT_DESPARASITACION_FORM)
+      setAntDrawerOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible agregar la desparasitacion.'))
+    },
+  })
+
+  const agregarPlanificacionMutation = useMutation({
+    mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarPlanificacion(mascotaId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Planificacion agregada exitosamente')
+      setPlanificacionForm(DEFAULT_PLANIFICACION_FORM)
+      setAntDrawerOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible agregar la planificacion.'))
+    },
+  })
+
   const agregarCondicionMutation = useMutation({
     mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarCondicion(mascotaId, payload),
     onSuccess: (data) => {
@@ -373,6 +414,17 @@ export default function AntecedentesPage() {
     proximaDosis: item.proximaDosis ? formatLongDate(item.proximaDosis) : 'Sin dosis programada',
     lote: item.lote || 'Sin lote',
   }))
+  const desparasitacionesRows = buildRows(selectedAntecedentes?.desparasitaciones, (item) => ({
+    tipo: item.tipo || 'Sin tipo',
+    producto: item.producto || 'Sin producto',
+    fecha: item.fecha ? formatLongDate(item.fecha) : 'Sin fecha',
+    proximaFecha: item.proximaFecha ? formatLongDate(item.proximaFecha) : 'Sin fecha programada',
+  }))
+  const planificacionesRows = buildRows(selectedAntecedentes?.planificaciones, (item) => ({
+    nombre: item.nombre || 'Sin nombre',
+    fecha: item.fecha ? formatLongDate(item.fecha) : 'Sin fecha',
+    proximaFecha: item.proximaFecha ? formatLongDate(item.proximaFecha) : 'Sin fecha programada',
+  }))
   const condicionesRows = buildRows(selectedAntecedentes?.condicionesCronicas, (item) => ({
     nombre: item.nombre || 'Sin nombre',
     fechaDiagnostico: item.fechaDiagnostico ? formatLongDate(item.fechaDiagnostico) : 'Sin fecha',
@@ -385,6 +437,8 @@ export default function AntecedentesPage() {
     setAlergiaForm(DEFAULT_ALERGIA_FORM)
     setCirugiaForm(DEFAULT_CIRUGIA_FORM)
     setVacunaForm(DEFAULT_VACUNA_FORM)
+    setDesparasitacionForm(DEFAULT_DESPARASITACION_FORM)
+    setPlanificacionForm(DEFAULT_PLANIFICACION_FORM)
     setCondicionForm(DEFAULT_CONDICION_FORM)
     if (searchParams.get('mascotaId')) {
       setSearchParams({})
@@ -486,6 +540,45 @@ export default function AntecedentesPage() {
         proximaDosis: vacunaForm.proximaDosis || undefined,
         lote: vacunaForm.lote.trim() || undefined,
         laboratorio: vacunaForm.laboratorio.trim() || undefined,
+      },
+    })
+  }
+
+  const handleAgregarDesparasitacion = (event) => {
+    event.preventDefault()
+
+    if (!requireSelectedPet()) return
+    if (!desparasitacionForm.tipo || !desparasitacionForm.fecha) {
+      toast.error('Completa el tipo y la fecha de la desparasitacion.')
+      return
+    }
+
+    agregarDesparasitacionMutation.mutate({
+      mascotaId: selectedPet.id,
+      payload: {
+        tipo: desparasitacionForm.tipo,
+        producto: desparasitacionForm.producto.trim() || undefined,
+        fecha: desparasitacionForm.fecha,
+        proximaFecha: desparasitacionForm.proximaFecha || undefined,
+      },
+    })
+  }
+
+  const handleAgregarPlanificacion = (event) => {
+    event.preventDefault()
+
+    if (!requireSelectedPet()) return
+    if (!planificacionForm.nombre.trim() || !planificacionForm.fecha) {
+      toast.error('Completa nombre y fecha de la planificacion.')
+      return
+    }
+
+    agregarPlanificacionMutation.mutate({
+      mascotaId: selectedPet.id,
+      payload: {
+        nombre: planificacionForm.nombre.trim(),
+        fecha: planificacionForm.fecha,
+        proximaFecha: planificacionForm.proximaFecha || undefined,
       },
     })
   }
@@ -602,6 +695,20 @@ export default function AntecedentesPage() {
               value={formatNumber(condicionesRows.length)}
               helper="Problemas permanentes o de seguimiento."
               tone="text-amber-700"
+            />
+            <KpiCard
+              icon={Bug}
+              label="Desparasitaciones"
+              value={formatNumber(desparasitacionesRows.length)}
+              helper="Control antiparasitario interno y externo."
+              tone="text-orange-700"
+            />
+            <KpiCard
+              icon={CalendarClock}
+              label="Planificacion"
+              value={formatNumber(planificacionesRows.length)}
+              helper="Metodos de planificacion aplicados."
+              tone="text-sky-700"
             />
           </div>
           </>
@@ -777,6 +884,73 @@ export default function AntecedentesPage() {
                 )}
               </AccordionSection>
 
+              {/* Desparasitación */}
+              <AccordionSection
+                icon={<Bug className="h-4 w-4" />}
+                title="Desparasitación"
+                accentColor="#ea580c"
+                badgeCount={desparasitacionesRows.length}
+                addLabel="+ Agregar"
+                onAdd={puedeEditar ? () => openAntDrawer('desparasitacion') : null}
+                disabled={!selectedPet}
+                open={openSections.has('desparasitaciones')}
+                onToggle={() => toggleSection('desparasitaciones')}
+              >
+                {desparasitacionesRows.length === 0 ? (
+                  <p className="text-sm italic text-muted-foreground">Aún no hay desparasitaciones registradas.</p>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {desparasitacionesRows.slice(0, 5).map((row) => (
+                      <div key={row.id} className="py-2 text-sm">
+                        <span className="font-semibold text-foreground capitalize">{row.tipo}</span>
+                        {row.producto !== 'Sin producto' && (
+                          <span className="text-muted-foreground"> · {row.producto}</span>
+                        )}
+                        <span className="text-muted-foreground"> · {row.fecha}</span>
+                        {row.proximaFecha !== 'Sin fecha programada' && (
+                          <span className="text-muted-foreground"> → {row.proximaFecha}</span>
+                        )}
+                      </div>
+                    ))}
+                    {desparasitacionesRows.length > 5 && (
+                      <p className="pt-2 text-xs text-muted-foreground">+{desparasitacionesRows.length - 5} más</p>
+                    )}
+                  </div>
+                )}
+              </AccordionSection>
+
+              {/* Planificación */}
+              <AccordionSection
+                icon={<CalendarClock className="h-4 w-4" />}
+                title="Planificación"
+                accentColor="#0284c7"
+                badgeCount={planificacionesRows.length}
+                addLabel="+ Agregar"
+                onAdd={puedeEditar ? () => openAntDrawer('planificacion') : null}
+                disabled={!selectedPet}
+                open={openSections.has('planificaciones')}
+                onToggle={() => toggleSection('planificaciones')}
+              >
+                {planificacionesRows.length === 0 ? (
+                  <p className="text-sm italic text-muted-foreground">Aún no hay planificaciones registradas.</p>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {planificacionesRows.slice(0, 5).map((row) => (
+                      <div key={row.id} className="py-2 text-sm">
+                        <span className="font-semibold text-foreground">{row.nombre}</span>
+                        <span className="text-muted-foreground"> · {row.fecha}</span>
+                        {row.proximaFecha !== 'Sin fecha programada' && (
+                          <span className="text-muted-foreground"> → {row.proximaFecha}</span>
+                        )}
+                      </div>
+                    ))}
+                    {planificacionesRows.length > 5 && (
+                      <p className="pt-2 text-xs text-muted-foreground">+{planificacionesRows.length - 5} más</p>
+                    )}
+                  </div>
+                )}
+              </AccordionSection>
+
               {/* Cirugías */}
               <AccordionSection
                 icon={<Stethoscope className="h-4 w-4" />}
@@ -868,6 +1042,8 @@ export default function AntecedentesPage() {
             <p className="text-sm font-semibold text-foreground">
               {antDrawerType === 'alergia' && 'Agregar alergia'}
               {antDrawerType === 'vacuna' && 'Agregar vacuna'}
+              {antDrawerType === 'desparasitacion' && 'Agregar desparasitación'}
+              {antDrawerType === 'planificacion' && 'Agregar planificación'}
               {antDrawerType === 'cirugia' && 'Agregar cirugia'}
               {antDrawerType === 'condicion' && 'Agregar condicion cronica'}
               {antDrawerType === 'generales' && 'Datos generales'}
@@ -920,6 +1096,52 @@ export default function AntecedentesPage() {
             </form>
           )}
 
+          {/* Desparasitación */}
+          {antDrawerType === 'desparasitacion' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarDesparasitacion}>
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">Tipo de desparasitación</p>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'interna', label: 'Interna' },
+                    { value: 'externa', label: 'Externa' },
+                    { value: 'ambas', label: 'Ambas' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDesparasitacionForm((c) => ({ ...c, tipo: option.value }))}
+                      className={cn(
+                        'h-11 flex-1 border text-sm font-semibold transition',
+                        desparasitacionForm.tipo === option.value
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input type="text" value={desparasitacionForm.producto} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, producto: e.target.value }))} placeholder="Producto (opcional)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={desparasitacionForm.fecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Proxima fecha</p><input type="date" value={desparasitacionForm.proximaFecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+              </div>
+            </form>
+          )}
+
+          {/* Planificación */}
+          {antDrawerType === 'planificacion' && (
+            <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarPlanificacion}>
+              <input type="text" value={planificacionForm.nombre} onChange={(e) => setPlanificacionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Metodo de planificacion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={planificacionForm.fecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Proxima fecha</p><input type="date" value={planificacionForm.proximaFecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+              </div>
+            </form>
+          )}
+
           {/* Cirugia */}
           {antDrawerType === 'cirugia' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarCirugia}>
@@ -948,6 +1170,8 @@ export default function AntecedentesPage() {
               actualizarGeneralesMutation.isPending ||
               agregarAlergiaMutation.isPending ||
               agregarVacunaMutation.isPending ||
+              agregarDesparasitacionMutation.isPending ||
+              agregarPlanificacionMutation.isPending ||
               agregarCirugiaMutation.isPending ||
               agregarCondicionMutation.isPending
             }

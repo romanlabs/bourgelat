@@ -20,6 +20,8 @@ const obtenerOMaterializarAntecedentes = async ({ mascotaId, clinicaId }) => {
       enfermedadesPrevias: [],
       cirugias: [],
       vacunas: [],
+      desparasitaciones: [],
+      planificaciones: [],
       condicionesCronicas: [],
       medicamentosActuales: [],
     });
@@ -150,6 +152,75 @@ const agregarVacuna = async (req, res) => {
   }
 };
 
+const agregarDesparasitacion = async (req, res) => {
+  try {
+    const { mascotaId } = req.params;
+    const { clinicaId } = req.usuario;
+    const { tipo, producto, fecha, proximaFecha } = req.body;
+
+    if (!tipo || !fecha) {
+      return res.status(400).json({ message: 'Tipo y fecha son obligatorios' });
+    }
+
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
+    if (!antecedentes) {
+      return res.status(404).json({ message: 'Antecedentes no encontrados' });
+    }
+
+    const nuevaDesparasitacion = {
+      id: crypto.randomUUID(),
+      tipo,
+      producto,
+      fecha,
+      proximaFecha,
+    };
+
+    const desparasitaciones = [...antecedentes.desparasitaciones, nuevaDesparasitacion];
+    await antecedentes.update({ desparasitaciones });
+
+    res.json({ message: 'Desparasitacion agregada exitosamente', desparasitacion: nuevaDesparasitacion });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+const agregarPlanificacion = async (req, res) => {
+  try {
+    const { mascotaId } = req.params;
+    const { clinicaId } = req.usuario;
+    const { nombre, fecha, proximaFecha } = req.body;
+
+    if (!nombre || !fecha) {
+      return res.status(400).json({ message: 'Nombre y fecha son obligatorios' });
+    }
+
+    const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
+    if (!antecedentes) {
+      return res.status(404).json({ message: 'Antecedentes no encontrados' });
+    }
+
+    const nuevaPlanificacion = {
+      id: crypto.randomUUID(),
+      nombre,
+      fecha,
+      proximaFecha,
+    };
+
+    const planificaciones = [...antecedentes.planificaciones, nuevaPlanificacion];
+    await antecedentes.update({ planificaciones });
+
+    res.json({ message: 'Planificacion agregada exitosamente', planificacion: nuevaPlanificacion });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const agregarCondicionCronica = async (req, res) => {
   try {
     const { mascotaId } = req.params;
@@ -216,6 +287,8 @@ module.exports = {
   agregarAlergia,
   agregarCirugia,
   agregarVacuna,
+  agregarDesparasitacion,
+  agregarPlanificacion,
   agregarCondicionCronica,
   actualizarGenerales,
 };

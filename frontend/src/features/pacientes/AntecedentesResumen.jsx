@@ -19,9 +19,16 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
   const alergias = antecedentes?.alergias || []
   const condiciones = antecedentes?.condicionesCronicas || []
   const vacunas = antecedentes?.vacunas || []
+  const desparasitaciones = antecedentes?.desparasitaciones || []
+  const planificaciones = antecedentes?.planificaciones || []
   const medicamentosTexto = mapMedicamentosToText(antecedentes?.medicamentosActuales)
   const ninguno =
-    alergias.length === 0 && condiciones.length === 0 && !medicamentosTexto && vacunas.length === 0
+    alergias.length === 0 &&
+    condiciones.length === 0 &&
+    !medicamentosTexto &&
+    vacunas.length === 0 &&
+    desparasitaciones.length === 0 &&
+    planificaciones.length === 0
 
   if (ninguno) {
     return (
@@ -107,6 +114,54 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
             ))}
             {vacunas.length > 3 ? (
               <p className="text-xs text-muted-foreground">+{vacunas.length - 3} más</p>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {desparasitaciones.length > 0 && (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+            Desparasitación
+          </p>
+          <div className="space-y-1">
+            {desparasitaciones.slice(0, 3).map((item, index) => (
+              <div key={index} className="text-sm text-foreground">
+                <span className="font-semibold capitalize">{item.tipo}</span>
+                {item.fecha ? (
+                  <span className="text-muted-foreground"> · {item.fecha}</span>
+                ) : null}
+                {item.proximaFecha ? (
+                  <span className="text-orange-700"> · Próxima: {item.proximaFecha}</span>
+                ) : null}
+              </div>
+            ))}
+            {desparasitaciones.length > 3 ? (
+              <p className="text-xs text-muted-foreground">+{desparasitaciones.length - 3} más</p>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {planificaciones.length > 0 && (
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">
+            Planificación
+          </p>
+          <div className="space-y-1">
+            {planificaciones.slice(0, 3).map((item, index) => (
+              <div key={index} className="text-sm text-foreground">
+                <span className="font-semibold">{item.nombre}</span>
+                {item.fecha ? (
+                  <span className="text-muted-foreground"> · {item.fecha}</span>
+                ) : null}
+                {item.proximaFecha ? (
+                  <span className="text-sky-700"> · Próxima: {item.proximaFecha}</span>
+                ) : null}
+              </div>
+            ))}
+            {planificaciones.length > 3 ? (
+              <p className="text-xs text-muted-foreground">+{planificaciones.length - 3} más</p>
             ) : null}
           </div>
         </div>
