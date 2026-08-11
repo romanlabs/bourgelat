@@ -849,9 +849,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/agenda" label="Abrir agenda completa" />}
           items={[
             {
               id: 'citas-mes',
@@ -929,9 +928,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/finanzas" label="Abrir caja completa" />}
           items={[
             {
               id: 'ingresos-periodo',
@@ -1024,9 +1022,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/inventario" label="Abrir inventario completo" />}
           items={[
             {
               id: 'productos-activos',
@@ -1106,9 +1103,8 @@ export default function DashboardPage() {
 
   const renderPacientesTab = () => (
     <div className="space-y-5">
-      <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
-
       <KpiGrid
+        action={<OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />}
         items={[
           {
             id: 'pacientes-activos',

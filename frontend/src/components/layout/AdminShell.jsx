@@ -30,6 +30,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
+import { HeaderSlotContext } from './HeaderSlotContext'
 
 const ROL_LABELS_SIDEBAR = {
   admin: 'Administrador',
@@ -122,6 +123,9 @@ export default function AdminShell({
   const [bannerVerificacionOculto, setBannerVerificacionOculto] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  // Slot central de la barra superior: paginas como Agenda ponen ahi su propio
+  // toolbar (Hoy/prev/next/vista) en vez de duplicar una segunda barra debajo.
+  const [headerCenter, setHeaderCenter] = useState(null)
   const searchInputRef = useRef(null)
 
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
@@ -199,6 +203,7 @@ export default function AdminShell({
   }, [usuario?.email, usuario?.nombre])
 
   return (
+    <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-[#0c2235] bg-[#06111c] px-3 text-white sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -220,17 +225,19 @@ export default function AdminShell({
         </div>
 
         <div className="hidden flex-1 justify-center sm:flex">
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="flex w-full max-w-xs items-center gap-2 rounded-lg border border-white/10 bg-[#081827] px-3 py-1.5 text-sm text-[#91e7e0]/50 transition hover:border-white/20 hover:text-[#91e7e0]/80"
-          >
-            <Search className="h-4 w-4 shrink-0" />
-            <span className="flex-1 truncate text-left">Buscar</span>
-            <kbd className="rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-[11px] font-semibold text-[#91e7e0]/50">
-              /
-            </kbd>
-          </button>
+          {headerCenter || (
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="flex w-full max-w-xs items-center gap-2 rounded-lg border border-white/10 bg-[#081827] px-3 py-1.5 text-sm text-[#91e7e0]/50 transition hover:border-white/20 hover:text-[#91e7e0]/80"
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="flex-1 truncate text-left">Buscar</span>
+              <kbd className="rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-[11px] font-semibold text-[#91e7e0]/50">
+                /
+              </kbd>
+            </button>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -563,5 +570,6 @@ export default function AdminShell({
         {children}
       </main>
     </div>
+    </HeaderSlotContext.Provider>
   )
 }
