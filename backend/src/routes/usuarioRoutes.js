@@ -10,6 +10,7 @@ const {
   toggleUsuario,
   actualizarMiPerfil,
   subirFotoMiPerfil,
+  guardarOnboarding,
 } = require('../controllers/usuarioController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -79,6 +80,26 @@ router.patch(
 )
 
 router.post('/me/foto', verificarToken, uploadUsuarioFotoSingle, subirFotoMiPerfil)
+
+router.patch(
+  '/onboarding',
+  verificarToken,
+  [
+    body('usoPlanificado').trim().notEmpty().withMessage('Selecciona una opción').isLength({ max: 60 }),
+    body('cargo').optional({ checkFalsy: true }).trim().isLength({ max: 120 }),
+    body('whatsapp')
+      .optional({ checkFalsy: true })
+      .custom((value) => telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
+      .withMessage('El WhatsApp debe tener 10 dígitos colombianos y comenzar por 3'),
+    body('tipoClinica').trim().notEmpty().withMessage('Selecciona el tipo de clínica').isLength({ max: 60 }),
+    body('tamanoEquipo').trim().notEmpty().withMessage('Selecciona el tamaño del equipo').isLength({ max: 30 }),
+    body('mascotasPorMes').trim().notEmpty().withMessage('Selecciona un rango').isLength({ max: 30 }),
+    body('objetivoInicial').trim().notEmpty().withMessage('Selecciona tu objetivo inicial').isLength({ max: 60 }),
+    body('gestionActual').optional({ checkFalsy: true }).trim().isLength({ max: 60 }),
+    validar,
+  ],
+  guardarOnboarding
+)
 
 router.get('/', verificarToken, verificarRol('admin', 'superadmin'), obtenerUsuarios)
 router.get(

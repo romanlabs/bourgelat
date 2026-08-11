@@ -82,7 +82,7 @@ const callback = async (req, res) => {
         req,
         resultado: 'exitoso',
       })
-      return res.redirect(`${oauthConfig.frontendUrl}/dashboard`)
+      return res.redirect(`${oauthConfig.frontendUrl}/oauth/popup-callback?estado=exito`)
     }
 
     // Usuario nuevo: token de onboarding en el fragment (no llega a logs de servidor)
@@ -92,7 +92,7 @@ const callback = async (req, res) => {
       proveedor,
       proveedorId: perfil.sub,
     })
-    return res.redirect(`${oauthConfig.frontendUrl}/completar-registro#token=${token}`)
+    return res.redirect(`${oauthConfig.frontendUrl}/oauth/popup-callback?estado=nuevo#token=${token}`)
   } catch (error) {
     logger.error({ contexto: 'oauth-callback', mensaje: error.message })
     return irALoginConError()

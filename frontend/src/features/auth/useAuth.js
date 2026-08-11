@@ -46,7 +46,7 @@ export const useRegistro = () => {
         suscripcion: data.suscripcion || null,
       })
       toast.success('Clinica registrada exitosamente')
-      navigate('/dashboard', { replace: true })
+      navigate(data.usuario?.onboarding ? '/dashboard' : '/onboarding', { replace: true })
     },
     onError: (error) => {
       toast.error(obtenerMensajeError(error, 'Error al registrar la clinica'))
@@ -67,7 +67,7 @@ export const useCompletarRegistroOauth = () => {
         suscripcion: data.suscripcion || null,
       })
       toast.success('Clinica registrada exitosamente')
-      navigate('/dashboard', { replace: true })
+      navigate(data.usuario?.onboarding ? '/dashboard' : '/onboarding', { replace: true })
     },
   })
 }
