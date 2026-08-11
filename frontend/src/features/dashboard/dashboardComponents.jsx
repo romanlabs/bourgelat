@@ -136,12 +136,17 @@ export function KpiCard({
  * Los items falsy se descartan, de modo que quien la usa puede condicionar un KPI
  * segun el plan de la clinica (`mostrarDian && {...}`) sin armar el arreglo aparte.
  */
-export function KpiGrid({ items, className = '' }) {
+export function KpiGrid({ items, className = '', action }) {
   const visibles = (items || []).filter(Boolean)
   if (visibles.length === 0) return null
 
   return (
-    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 ${className}`.trim()}>
+    <div
+      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${action ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} ${className}`.trim()}
+    >
+      {action ? (
+        <div className="flex items-center justify-end sm:col-span-2 lg:col-span-1 lg:order-last">{action}</div>
+      ) : null}
       {visibles.map((item) => (
         <KpiCard
           key={item.id || item.label}
