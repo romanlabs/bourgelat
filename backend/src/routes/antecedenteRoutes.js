@@ -10,6 +10,8 @@ const {
   agregarAlergia,
   agregarCirugia,
   agregarVacuna,
+  agregarDesparasitacion,
+  agregarPlanificacion,
   agregarCondicionCronica,
   actualizarGenerales,
 } = require('../controllers/antecedenteController');
@@ -95,6 +97,37 @@ const validarVacuna = [
   validar,
 ];
 
+const validarDesparasitacion = [
+  param('mascotaId').isUUID().withMessage('Mascota no valida'),
+  body('tipo')
+    .trim()
+    .notEmpty()
+    .withMessage('El tipo de desparasitacion es obligatorio')
+    .isIn(['interna', 'externa', 'ambas'])
+    .withMessage('El tipo debe ser interna, externa o ambas'),
+  body('producto')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 180 })
+    .withMessage('El producto no puede exceder 180 caracteres'),
+  body('fecha').notEmpty().withMessage('La fecha es obligatoria').custom(validateDateOnly),
+  body('proximaFecha').optional({ values: 'falsy' }).custom(validateDateOnly),
+  validar,
+];
+
+const validarPlanificacion = [
+  param('mascotaId').isUUID().withMessage('Mascota no valida'),
+  body('nombre')
+    .trim()
+    .notEmpty()
+    .withMessage('El nombre de la planificacion es obligatorio')
+    .isLength({ max: 180 })
+    .withMessage('El nombre no puede exceder 180 caracteres'),
+  body('fecha').notEmpty().withMessage('La fecha es obligatoria').custom(validateDateOnly),
+  body('proximaFecha').optional({ values: 'falsy' }).custom(validateDateOnly),
+  validar,
+];
+
 const validarCondicion = [
   param('mascotaId').isUUID().withMessage('Mascota no valida'),
   body('nombre')
@@ -157,6 +190,8 @@ router.get('/:mascotaId', verificarToken, verificarRol('veterinario', 'admin', '
 router.post('/:mascotaId/alergia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarAlergia, agregarAlergia);
 router.post('/:mascotaId/cirugia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarCirugia, agregarCirugia);
 router.post('/:mascotaId/vacuna', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarVacuna, agregarVacuna);
+router.post('/:mascotaId/desparasitacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarDesparasitacion, agregarDesparasitacion);
+router.post('/:mascotaId/planificacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarPlanificacion, agregarPlanificacion);
 router.post('/:mascotaId/condicion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarCondicion, agregarCondicionCronica);
 router.put('/:mascotaId/generales', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarGenerales, actualizarGenerales);
 
