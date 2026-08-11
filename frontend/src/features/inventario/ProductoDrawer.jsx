@@ -3,9 +3,13 @@ import { createPortal } from 'react-dom'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, ImageOff, Upload, X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS } from './useInventarioProductos'
+
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 // Unidades pensadas para como una clinica veterinaria cuenta su inventario:
 // presentaciones que se cuentan enteras en la estanteria, no volumen/peso fraccional.
@@ -49,52 +53,14 @@ const DEFAULT_VALUES = {
   requiereFormula: false,
 }
 
-const milesFormatter = new Intl.NumberFormat('es-CO')
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
 
-const displayMiles = (value) => {
-  if (value === '' || value === null || value === undefined) return ''
-  const num = Number(value)
-  return Number.isFinite(num) ? milesFormatter.format(num) : ''
-}
-
-// Campo numerico con separador de miles en vivo (guarda el numero crudo)
-function NumberField({ id, value, onChange, hasError, prefix, suffix, placeholder }) {
-  const handleChange = (e) => {
-    const raw = e.target.value.replace(/[^\d]/g, '')
-    onChange(raw === '' ? 0 : Number(raw))
-  }
-
-  return (
-    <div className="relative">
-      {prefix ? (
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-          {prefix}
-        </span>
-      ) : null}
-      <input
-        id={id}
-        type="text"
-        inputMode="numeric"
-        value={displayMiles(value)}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={`h-11 w-full border bg-card text-sm tabular-nums text-foreground outline-none transition focus:border-primary ${
-          prefix ? 'pl-7' : 'pl-3'
-        } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-red-400' : 'border-border'}`}
-      />
-      {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-          {suffix}
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
 export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit, isPending }) {
   const [additionalOpen, setAdditionalOpen] = useState(false)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoInputKey, setPhotoInputKey] = useState(0)
 
   const {
     register,
@@ -134,11 +100,36 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
       setAdditionalOpen(
         Boolean(editingProduct.laboratorio || editingProduct.lote || editingProduct.fechaVencimiento || editingProduct.requiereFormula)
       )
+      setPhotoPreview(editingProduct.imagenUrl || '')
     } else {
       reset(DEFAULT_VALUES)
       setAdditionalOpen(false)
+      setPhotoPreview('')
     }
+    setPhotoFile(null)
+    setPhotoInputKey((k) => k + 1)
   }, [open, editingProduct, reset])
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      alert('La foto debe estar en formato JPG, PNG o WEBP.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      alert('La foto supera el maximo permitido de 4 MB.')
+      e.target.value = ''
+      return
+    }
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  function handleFormSubmit(formData) {
+    onSubmit({ ...formData, photoFile, imagenUrlActual: editingProduct?.imagenUrl || '' })
+  }
 
   useEffect(() => {
     if (!open) return
@@ -201,12 +192,39 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
+          <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Información básica
               </p>
+
+              <div className="grid gap-1.5">
+                <span className={labelClass}>Foto del producto</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
+                    {photoPreview
+                      ? <img src={photoPreview} alt="Vista previa" className="h-full w-full object-cover" />
+                      : <ImageOff className="h-5 w-5 text-muted-foreground/50" />
+                    }
+                  </div>
+                  <div className="grid gap-1">
+                    <label htmlFor={`producto-foto-${photoInputKey}`} className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 border border-border bg-card px-2.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                      <Upload className="h-3.5 w-3.5" />
+                      {photoPreview ? 'Cambiar foto' : 'Seleccionar foto'}
+                    </label>
+                    <input
+                      id={`producto-foto-${photoInputKey}`}
+                      key={photoInputKey}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handlePhotoChange}
+                      className="sr-only"
+                    />
+                    <p className="text-[11px] text-muted-foreground">JPG, PNG o WEBP · máx 4 MB</p>
+                  </div>
+                </div>
+              </div>
 
               <div className="grid gap-1.5">
                 <label htmlFor="d-nombre" className={labelClass}>
@@ -277,7 +295,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       name="stock"
                       control={control}
                       render={({ field }) => (
-                        <NumberField
+                        <MoneyInput
                           id="d-stock"
                           value={field.value}
                           onChange={field.onChange}
@@ -296,7 +314,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="stockMinimo"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-stock-min"
                         value={field.value}
                         onChange={field.onChange}
@@ -327,7 +345,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="precioCompra"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-precio-compra"
                         value={field.value}
                         onChange={field.onChange}
@@ -346,7 +364,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     name="precioVenta"
                     control={control}
                     render={({ field }) => (
-                      <NumberField
+                      <MoneyInput
                         id="d-precio-venta"
                         value={field.value}
                         onChange={field.onChange}

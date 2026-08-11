@@ -7,6 +7,7 @@ import {
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import {
   useAnularGasto,
   useCrearGasto,
@@ -91,7 +92,7 @@ function GastoForm() {
   }
 
   return (
-    <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-2 lg:grid-cols-[10rem_1fr_9rem_9rem_auto]">
+    <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
         <select value={form.categoria} onChange={set('categoria')} className={inputClass}>
@@ -110,13 +111,9 @@ function GastoForm() {
       </label>
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Valor</span>
-        <input
+        <MoneyInput
           value={form.monto}
-          onChange={set('monto')}
-          type="number"
-          min="1"
-          step="1"
-          required
+          onChange={(value) => setForm((f) => ({ ...f, monto: value === 0 ? '' : String(value) }))}
           placeholder="0"
           className={`${inputClass} text-right tabular-nums`}
         />
@@ -287,13 +284,10 @@ function FilaDeudor({ cliente }) {
               <span className="font-semibold tabular-nums text-red-700">{formatCurrency(f.saldoPendiente)}</span>
               {facturaAbono === f.id ? (
                 <span className="flex flex-wrap items-center gap-2">
-                  <input
+                  <MoneyInput
                     autoFocus
-                    type="number"
-                    min="1"
-                    max={f.saldoPendiente}
                     value={monto}
-                    onChange={(e) => setMonto(e.target.value)}
+                    onChange={(value) => setMonto(value === 0 ? '' : String(value))}
                     placeholder="valor"
                     className={`${inputClass} h-9 w-28 text-right tabular-nums`}
                   />

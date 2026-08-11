@@ -437,6 +437,7 @@ const serializarPerfil = (usuario) => ({
   tarjetaProfesional: usuario.tarjetaProfesional,
   proveedorAuth: usuario.proveedorAuth,
   activo: usuario.activo,
+  onboarding: usuario.onboarding || null,
 })
 
 // Auto-edición del usuario autenticado: nunca toca rol, email ni activo.
@@ -512,6 +513,49 @@ const actualizarMiPerfil = async (req, res) => {
   }
 }
 
+// Guarda las respuestas del wizard de onboarding post-registro (una sola vez,
+// pero se permite sobreescribir si el usuario decide volver a completarlo).
+const guardarOnboarding = async (req, res) => {
+  try {
+    const usuario = await Usuario.findOne({
+      where: { id: req.usuario.id },
+      sinTenant: true,
+    })
+
+    if (!usuario || !usuario.activo) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    const respuestas = {
+      usoPlanificado: normalizarTexto(req.body.usoPlanificado || ''),
+      cargo: normalizarTexto(req.body.cargo || ''),
+      whatsapp: req.body.whatsapp ? normalizarTelefono(req.body.whatsapp) : null,
+      tipoClinica: normalizarTexto(req.body.tipoClinica || ''),
+      tamanoEquipo: normalizarTexto(req.body.tamanoEquipo || ''),
+      mascotasPorMes: normalizarTexto(req.body.mascotasPorMes || ''),
+      objetivoInicial: normalizarTexto(req.body.objetivoInicial || ''),
+      gestionActual: req.body.gestionActual ? normalizarTexto(req.body.gestionActual) : null,
+      completadoEn: new Date().toISOString(),
+    }
+
+    await usuario.update({ onboarding: respuestas })
+
+    await registrarAuditoria({
+      accion: 'COMPLETAR_ONBOARDING',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Onboarding completado por ${usuario.email}`,
+      datosNuevos: respuestas,
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({ message: 'Onboarding guardado', usuario: serializarPerfil(usuario) })
+  } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
 const subirFotoMiPerfil = async (req, res) => {
   try {
     if (!req.file) {
@@ -536,4 +580,5 @@ module.exports = {
   toggleUsuario,
   actualizarMiPerfil,
   subirFotoMiPerfil,
+  guardarOnboarding,
 }

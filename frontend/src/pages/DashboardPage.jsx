@@ -14,12 +14,15 @@ import {
   Receipt,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   UserX,
   Users,
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { ALL_QUICK_ACTIONS } from '@/components/layout/quickActions'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
@@ -28,7 +31,6 @@ import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   KpiGrid,
   LinePanel,
@@ -72,13 +74,19 @@ const PRIMARY_BUTTON =
 const SECONDARY_BUTTON =
   'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted'
 
+const MODULE_ICONS = {
+  '/agenda': CalendarClock,
+  '/finanzas': Wallet,
+  '/inventario': Boxes,
+  '/pacientes': PawPrint,
+}
+
 function OpenModuleButton({ to, label }) {
   return (
     <div className="flex justify-end">
-      <Link to={to} className={SECONDARY_BUTTON}>
+      <NavCta to={to} icon={MODULE_ICONS[to]}>
         {label}
-        <ArrowRight className="h-4 w-4" />
-      </Link>
+      </NavCta>
     </div>
   )
 }
@@ -101,8 +109,7 @@ const formatTime = (value) => {
 
 const getAppointmentTone = (estado) => {
   if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'en_curso') return 'border-sky-200 bg-sky-50 text-sky-700'
-  if (estado === 'confirmada') return 'border-primary/30 bg-primary/10 text-primary'
+  if (estado === 'en_espera') return 'border-sky-200 bg-sky-50 text-sky-700'
   if (estado === 'cancelada' || estado === 'no_asistio') {
     return 'border-red-200 bg-red-50 text-red-700'
   }
@@ -192,13 +199,15 @@ function TodayAlerts({ alerts, summary }) {
                   </div>
                   <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
                 </div>
-                <Link
+                <NavCtaLink
                   to={alert.to}
-                  className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive hover:underline"
+                  tone="destructive"
+                  size="sm"
+                  icon={ArrowRight}
+                  className="shrink-0"
                 >
                   {alert.actionLabel}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                </NavCtaLink>
               </div>
             ))}
           </div>
@@ -450,13 +459,9 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 La base clínica publicada ya puede usarse desde el equipo operativo.
               </p>
-              <Link
-                to="/pacientes"
-                className="mt-4 inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
+              <NavCta to="/pacientes" icon={PawPrint} className="mt-4">
                 Abrir modulo
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              </NavCta>
             </div>
           </div>
         </section>
@@ -655,8 +660,29 @@ export default function DashboardPage() {
 
   const featureRows = getFeatureStateRows(funcionalidades)
 
+  const urgenciasSinHistoria = useMemo(
+    () =>
+      citasHoyRows.filter(
+        (c) => c.tipoCita === 'urgencia' && c.estado === 'completada' && !c.historia?.id
+      ).length,
+    [citasHoyRows]
+  )
+
   const tacticalAlerts = useMemo(() => {
     const rows = []
+
+    if (urgenciasSinHistoria > 0) {
+      rows.push({
+        id: 'urgencias-sin-historia',
+        title: 'Urgencias sin historia clínica',
+        detail:
+          urgenciasSinHistoria === 1
+            ? '1 urgencia atendida hoy aún no tiene historia clínica registrada. Ciérrala antes de que se pierda el detalle clínico.'
+            : `${formatNumber(urgenciasSinHistoria)} urgencias atendidas hoy aún no tienen historia clínica registrada. Ciérralas antes de que se pierda el detalle clínico.`,
+        to: '/historias',
+        actionLabel: 'Documentar urgencias',
+      })
+    }
 
     if (typeof diasRestantes === 'number' && diasRestantes <= 7) {
       rows.push({
@@ -692,13 +718,13 @@ export default function DashboardPage() {
     }
 
     return rows
-  }, [alertasInventario, dianErrores, diasRestantes])
+  }, [alertasInventario, dianErrores, diasRestantes, urgenciasSinHistoria])
 
   const todayBridgeRows = useMemo(() => {
     // Tope de 5 para que el Command Center entre sin scroll en 1366x768.
     // "Ver agenda completa" es la salida cuando el dia trae mas pacientes.
     const filtered = [...citasHoyRows]
-      .filter((appointment) => ['programada', 'confirmada', 'en_curso'].includes(appointment.estado))
+      .filter((appointment) => ['programada', 'en_espera'].includes(appointment.estado))
       .slice(0, 5)
 
     if (usuario?.rol === 'veterinario' && usuario?.id) {
@@ -713,7 +739,7 @@ export default function DashboardPage() {
   const sinDocumentar = useMemo(
     () =>
       citasHoyRows.filter(
-        (c) => ['en_curso', 'completada'].includes(c.estado) && !c.historiaClinicaId
+        (c) => ['en_espera', 'completada'].includes(c.estado) && !c.historia?.id
       ).length,
     [citasHoyRows]
   )
@@ -795,9 +821,7 @@ export default function DashboardPage() {
           title="Puente operativo"
           subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
           action={
-            <Link to="/agenda" className="text-sm font-semibold text-primary transition hover:text-primary/80">
-              Ver agenda completa
-            </Link>
+            <NavCtaLink to="/agenda">Ver agenda completa</NavCtaLink>
           }
         >
           <OperationalBridge
@@ -814,19 +838,19 @@ export default function DashboardPage() {
   const renderAgendaTab = () => {
     if (!puedeVerAgenda) {
       return (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Agenda y reportes de citas no disponibles"
-          body="Esta vista de agenda requiere reportes operativos activos para mostrar estados, tipos y tasa de asistencia."
-          ctaLabel="Revisar planes"
+          description="Esta vista de agenda requiere reportes operativos activos para mostrar estados, tipos y tasa de asistencia."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       )
     }
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/agenda" label="Abrir agenda completa" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/agenda" label="Abrir agenda completa" />}
           items={[
             {
               id: 'citas-mes',
@@ -890,10 +914,11 @@ export default function DashboardPage() {
   const renderIngresosTab = () => {
     if (!puedeVerIngresos) {
       return (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Caja y reportes financieros no disponibles"
-          body="Activa facturación interna y reportes operativos para ver el comportamiento diario, los métodos de pago y la tabla de facturas."
-          ctaLabel="Revisar planes"
+          description="Activa facturación interna y reportes operativos para ver el comportamiento diario, los métodos de pago y la tabla de facturas."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       )
     }
@@ -903,9 +928,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/finanzas" label="Abrir caja completa" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/finanzas" label="Abrir caja completa" />}
           items={[
             {
               id: 'ingresos-periodo',
@@ -975,12 +999,7 @@ export default function DashboardPage() {
           emptyTitle="No hay facturas registradas"
           emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
           action={
-            <Link
-              to="/finanzas"
-              className="text-sm font-semibold text-primary hover:text-primary"
-            >
-              Abrir modulo
-            </Link>
+            <NavCtaLink to="/finanzas">Abrir modulo</NavCtaLink>
           }
         />
       </div>
@@ -990,10 +1009,11 @@ export default function DashboardPage() {
   const renderInventarioTab = () => {
     if (!puedeVerInventario) {
       return (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Inventario no disponible en el plan actual"
-          body="Para revisar categorías, valor inventariado y alertas de cantidad necesitas inventario y reportes operativos activos."
-          ctaLabel="Revisar planes"
+          description="Para revisar categorías, valor inventariado y alertas de cantidad necesitas inventario y reportes operativos activos."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       )
     }
@@ -1002,9 +1022,8 @@ export default function DashboardPage() {
 
     return (
       <div className="space-y-5">
-        <OpenModuleButton to="/inventario" label="Abrir inventario completo" />
-
         <KpiGrid
+          action={<OpenModuleButton to="/inventario" label="Abrir inventario completo" />}
           items={[
             {
               id: 'productos-activos',
@@ -1075,12 +1094,7 @@ export default function DashboardPage() {
           emptyTitle="No hay alertas de inventario"
           emptyBody="Cuando un producto quede con cantidad baja o tenga fecha próxima a vencer, aparecerá aquí."
           action={
-            <Link
-              to="/inventario"
-              className="text-sm font-semibold text-primary hover:text-primary"
-            >
-              Abrir modulo
-            </Link>
+            <NavCtaLink to="/inventario">Abrir modulo</NavCtaLink>
           }
         />
       </div>
@@ -1089,9 +1103,8 @@ export default function DashboardPage() {
 
   const renderPacientesTab = () => (
     <div className="space-y-5">
-      <OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />
-
       <KpiGrid
+        action={<OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />}
         items={[
           {
             id: 'pacientes-activos',
@@ -1185,13 +1198,9 @@ export default function DashboardPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>
-            <Link
-              to="/planes"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary"
-            >
+            <NavCtaLink to="/planes" icon={ArrowRight} className="mt-4">
               Revisar planes
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            </NavCtaLink>
           </div>
         </div>
       </DashboardPanel>

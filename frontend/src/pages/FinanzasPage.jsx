@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
+  Boxes,
   CircleAlert,
   Download,
   FileText,
@@ -8,15 +8,16 @@ import {
   Receipt,
   Search,
   ShieldCheck,
+  Sparkles,
   Wallet,
   X,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta } from '@/components/shared/NavCta'
 import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   LinePanel,
   StatusPill,
@@ -147,20 +148,18 @@ export default function FinanzasPage() {
         </StatusPill>
       }
       actions={
-        <Link
-          to="/inventario"
-          className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
+        <NavCta to="/inventario" icon={Boxes}>
           Abrir inventario
-        </Link>
+        </NavCta>
       }
       asideNote="Usa esta sección para buscar facturas, revisar estados, emitir electrónicamente y controlar anulaciones dejando historial."
     >
       {!puedeVerFinanzas ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Finanzas no disponibles en el plan actual"
-          body="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta sección de forma permanente para gerencia, conviene subir de plan."
-          ctaLabel="Revisar planes"
+          description="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta sección de forma permanente para gerencia, conviene subir de plan."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">
@@ -275,14 +274,9 @@ export default function FinanzasPage() {
                   title="Necesitas abrir un turno de caja para facturar"
                   description="Abre tu turno registrando el fondo inicial en efectivo desde la pestana Turnos de caja."
                   action={
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('turnos')}
-                      className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      <Wallet className="h-4 w-4" />
+                    <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
                       Ir a turnos de caja
-                    </button>
+                    </NavCta>
                   }
                 />
               </div>

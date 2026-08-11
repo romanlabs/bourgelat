@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import AdminShell from '@/components/layout/AdminShell'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { PLAN_META } from '@/features/dashboard/dashboardUtils'
 import { Button } from '@/components/ui/button'
+import { NavCtaLink } from '@/components/shared/NavCta'
 import { useAuthStore } from '@/store/authStore'
 import { hasRole } from '@/lib/permissions'
 import {
@@ -379,9 +380,7 @@ function CardSuscripcion({ suscripcion }) {
             </span>
           ) : null}
         </p>
-        <Link to="/planes" className="text-sm font-medium text-primary hover:underline">
-          Ver planes y renovación
-        </Link>
+        <NavCtaLink to="/planes">Ver planes y renovación</NavCtaLink>
       </div>
     </DashboardPanel>
   )

@@ -84,6 +84,11 @@ subcategoria: {
     defaultValue: false,
     comment: 'Si requiere formula medica para dispensar',
   },
+  imagenUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'URL de la foto del producto, usada para reconocerlo en el punto de venta',
+  },
   activo: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

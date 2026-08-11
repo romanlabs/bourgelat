@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
+import MoneyInput from '@/components/shared/MoneyInput'
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -104,15 +105,13 @@ export default function PaymentConfirmModal({
                   </span>
                 )}
               </div>
-              <input
+              <MoneyInput
                 id="monto-recibido"
-                type="number"
-                inputMode="numeric"
                 value={montoRecibido}
-                onChange={(e) => setMontoRecibido(e.target.value)}
+                onChange={(value) => setMontoRecibido(value === 0 ? '' : String(value))}
                 placeholder="$ 0"
                 autoFocus
-                className={`w-full rounded-xl border-2 bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                className={`w-full rounded-xl border-2 bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none ${
                   montoRecibido && !vueltoPositivo
                     ? 'border-red-300 focus:border-red-400'
                     : 'border-border focus:border-primary'

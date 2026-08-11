@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
 const { parsePaginacion } = require('../utils/paginacion');
+const { PRODUCTOS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads');
 
 const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento'];
 const MOVEMENT_REASON_ALIASES = {
@@ -34,12 +35,27 @@ const normalizarMotivoMovimiento = (motivo) => {
   return MOVEMENT_REASON_ALIASES[motivoNormalizado] || motivoNormalizado;
 };
 
+const subirFotoProducto = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      message: 'Selecciona una imagen para continuar.',
+    });
+  }
+
+  const relativePath = `${PRODUCTOS_SUBDIR}/${req.file.filename}`;
+
+  return res.status(201).json({
+    message: 'Foto cargada exitosamente',
+    imagenUrl: buildPublicUploadUrl(req, relativePath),
+  });
+};
+
 const crearProducto = async (req, res) => {
   try {
     const {
       nombre, descripcion, categoria, subcategoria, unidadMedida,
       precioCompra, precioVenta, stock, stockMinimo,
-      fechaVencimiento, lote, laboratorio, requiereFormula,
+      fechaVencimiento, lote, laboratorio, requiereFormula, imagenUrl,
     } = req.body;
 
     const { clinicaId } = req.usuario;
@@ -80,6 +96,7 @@ const crearProducto = async (req, res) => {
         lote,
         laboratorio,
         requiereFormula: Boolean(requiereFormula),
+        imagenUrl,
         clinicaId,
       }, { transaction });
 
@@ -365,7 +382,7 @@ const editarProducto = async (req, res) => {
     const {
       nombre, descripcion, categoria, subcategoria, unidadMedida,
       precioCompra, precioVenta, stockMinimo,
-      fechaVencimiento, lote, laboratorio, requiereFormula,
+      fechaVencimiento, lote, laboratorio, requiereFormula, imagenUrl,
     } = req.body;
 
     const producto = await Producto.findOne({ where: { id, clinicaId } });
@@ -392,7 +409,7 @@ const editarProducto = async (req, res) => {
       precioCompra: precioCompraNormalizado,
       precioVenta: precioVentaNormalizado,
       stockMinimo: stockMinimoNormalizado,
-      fechaVencimiento, lote, laboratorio, requiereFormula,
+      fechaVencimiento, lote, laboratorio, requiereFormula, imagenUrl,
     });
 
     res.json({
@@ -711,6 +728,7 @@ const obtenerMovimientos = async (req, res) => {
 
 module.exports = {
   crearProducto,
+  subirFotoProducto,
   importarProductos,
   obtenerProductos,
   obtenerProducto,

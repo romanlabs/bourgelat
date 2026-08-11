@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowRight } from 'lucide-react'
 import {
   DialogRoot,
   DialogContent,
@@ -13,10 +12,9 @@ import {
 import BotonesSociales, { oauthHabilitado } from './BotonesSociales'
 import { useRegistro } from './useAuth'
 
-// Misma paleta e identidad tipografica que LoginPage.jsx (tinta/caramelo,
-// Spectral, esquinas rectas): el modal de registro se abre desde ahi y desde
-// la landing, y debe leerse como la misma superficie, no como un dialogo generico.
-const ACCENT = '#b07645'
+// Misma paleta e identidad tipografica que LoginPage.jsx: los tokens de diseño
+// (primary, foreground, border) reemplazan los colores hardcoded. El modal se abre
+// desde LoginPage y desde la landing, y debe leerse como la misma superficie.
 
 const esquema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la clinica es requerido').max(160),
@@ -33,9 +31,9 @@ const esquema = z.object({
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 
 const inputClass =
-  'h-10 w-full rounded-none border-0 border-b border-[#2b2018]/20 bg-transparent px-1 text-sm text-[#2b2018] outline-none transition placeholder:text-[#2b2018]/35 focus:border-[#b07645]'
+  'h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary'
 
-const labelClass = 'mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2b2018]/55'
+const labelClass = 'mb-1.5 block text-sm font-medium text-foreground'
 
 const obtenerMensajeError = (error) =>
   error?.response?.data?.errores?.[0]?.mensaje ||
@@ -76,21 +74,12 @@ export default function RegistroDialog({ open, onOpenChange }) {
 
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[380px] rounded-none border-[#2b2018]/10 bg-white p-6 shadow-[0_24px_56px_rgba(43,32,24,0.16)]">
+      <DialogContent className="max-w-[380px] rounded-2xl border-border shadow-lg">
         <DialogHeader>
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.24em]"
-            style={{ color: ACCENT }}
-          >
-            Nueva clínica
-          </p>
-          <DialogTitle
-            className="mt-1 text-xl leading-[1.05] tracking-[-0.02em] text-[#2b2018]"
-            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
-          >
+          <DialogTitle className="text-xl font-semibold text-foreground">
             Crea tu cuenta
           </DialogTitle>
-          <DialogDescription className="mt-1.5 text-[13px] text-[#2b2018]/60">
+          <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
             Registra tu clínica y entra directo a la plataforma.
           </DialogDescription>
         </DialogHeader>
@@ -99,11 +88,11 @@ export default function RegistroDialog({ open, onOpenChange }) {
           <div className="mt-4">
             <BotonesSociales contexto="registro" />
             <div className="my-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-[#2b2018]/12" />
-              <span className="text-[11px] font-medium uppercase tracking-wide text-[#2b2018]/45">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium text-muted-foreground">
                 o regístrate con tu correo
               </span>
-              <div className="h-px flex-1 bg-[#2b2018]/12" />
+              <div className="h-px flex-1 bg-border" />
             </div>
           </div>
         ) : null}
@@ -167,12 +156,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
           <button
             type="submit"
             disabled={isPending}
-            className="group mt-1 flex h-11 w-full items-center justify-center rounded-none bg-[#2b2018] px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#b07645] disabled:pointer-events-none disabled:opacity-50"
+            className="mt-4 h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
           >
             {isPending ? 'Creando cuenta...' : 'Crear cuenta'}
-            {!isPending ? (
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            ) : null}
           </button>
         </form>
       </DialogContent>

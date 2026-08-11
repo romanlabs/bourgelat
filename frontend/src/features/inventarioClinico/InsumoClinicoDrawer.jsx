@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS } from './useInsumosClinicos'
 
 // Unidades base para consumo clinico: fraccionables, no presentaciones enteras.
@@ -43,7 +44,7 @@ const DEFAULT_VALUES = {
 }
 
 const formatCOP = (value) =>
-  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 }).format(value)
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
 
 // Motivos de salida manual: perdidas que no pasan por una factura.
 const MERMA_MOTIVO_OPTIONS = [
@@ -280,18 +281,20 @@ export default function InsumoClinicoDrawer({
                   <label htmlFor="ic-precio-presentacion" className={labelClass}>
                     Precio pagado por esta presentación *
                   </label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                    <input
-                      id="ic-precio-presentacion"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Ej. 50000"
-                      className={`${fieldClass(errors.precioPresentacion)} pl-7 w-full`}
-                      {...register('precioPresentacion')}
-                    />
-                  </div>
+                  <Controller
+                    name="precioPresentacion"
+                    control={control}
+                    render={({ field }) => (
+                      <MoneyInput
+                        id="ic-precio-presentacion"
+                        value={field.value}
+                        onChange={field.onChange}
+                        hasError={errors.precioPresentacion}
+                        prefix="$"
+                        placeholder="Ej. 50.000"
+                      />
+                    )}
+                  />
                 </div>
 
                 {precioUnitarioCalculado !== null && (
@@ -362,14 +365,12 @@ export default function InsumoClinicoDrawer({
                     </div>
                     <div className="grid gap-1.5">
                       <label className={labelClass}>Precio pagado por esta presentación</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="Ej. 50000"
+                      <MoneyInput
                         value={compraForm.precioPresentacion}
-                        onChange={(e) => setCompraForm((f) => ({ ...f, precioPresentacion: e.target.value }))}
-                        className={fieldClass(false)}
+                        onChange={(value) => setCompraForm((f) => ({ ...f, precioPresentacion: value }))}
+                        prefix="$"
+                        placeholder="Ej. 50.000"
+                        className={`${fieldClass(false)} pl-7 w-full`}
                       />
                     </div>
                     <button

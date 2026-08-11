@@ -28,6 +28,11 @@ export const agendaApi = {
     return data
   },
 
+  async crearCitaUrgencia(payload) {
+    const { data } = await api.post('/citas/urgencia', payload)
+    return data
+  },
+
   async actualizarEstadoCita(citaId, payload) {
     const { data } = await api.patch(`/citas/${citaId}/estado`, payload)
     return data

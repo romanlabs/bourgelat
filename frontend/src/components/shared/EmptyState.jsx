@@ -37,8 +37,6 @@ const iconWrapperVariants = cva(
 /**
  * Estado vacío reutilizable para tablas, módulos y secciones.
  *
- * Reemplaza el patrón manual de EmptyModuleState en dashboardComponents.
- *
  * Props:
  *   icon        — componente de ícono Lucide (se pasa como elemento, ej: <Boxes />)
  *   title       — texto principal

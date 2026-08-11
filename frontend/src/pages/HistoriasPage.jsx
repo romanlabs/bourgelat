@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { FileText, Lock, ShieldCheck, Stethoscope } from 'lucide-react'
+import { FileText, Lock, ShieldCheck, Sparkles, Stethoscope } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
+import { EmptyState } from '@/components/shared/EmptyState'
 import {
   DashboardPanel,
   DataTable,
   DonutCard,
-  EmptyModuleState,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
@@ -58,7 +58,6 @@ function RestrictedHistoriasPage() {
 export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
-  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('resumen')
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
@@ -146,10 +145,11 @@ export default function HistoriasPage() {
       asideNote="Para crear o editar una historia clínica ve al historial del paciente desde la sección Pacientes o desde la Agenda al completar una cita."
     >
       {!puedeVerHistorias ? (
-        <EmptyModuleState
+        <EmptyState
+          icon={<Sparkles />}
           title="Historias clinicas no disponibles en el plan actual"
-          body="La consulta medica y su trazabilidad dependen de la funcionalidad de historias clinicas. Si no aparece activa, conviene revisar el plan de la clinica."
-          ctaLabel="Revisar planes"
+          description="La consulta medica y su trazabilidad dependen de la funcionalidad de historias clinicas. Si no aparece activa, conviene revisar el plan de la clinica."
+          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-0">
@@ -299,14 +299,12 @@ export default function HistoriasPage() {
                       key: 'accion',
                       label: 'Historial',
                       render: (row) => (
-                        <button
-                          type="button"
-                          onClick={() => row.mascotaId && navigate(`/pacientes/${row.mascotaId}/historial`)}
+                        <NavCtaLink
+                          to={row.mascotaId ? `/pacientes/${row.mascotaId}/historial` : undefined}
                           disabled={!row.mascotaId}
-                          className="text-sm font-semibold text-cyan-700 hover:text-cyan-800 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Ver
-                        </button>
+                        </NavCtaLink>
                       ),
                     },
                   ]}

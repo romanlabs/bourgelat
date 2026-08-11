@@ -7,6 +7,7 @@ const UPLOADS_ROOT_DIR = path.resolve(__dirname, '..', '..', 'uploads')
 const MASCOTAS_SUBDIR = 'mascotas'
 const EXAMENES_SUBDIR = 'examenes'
 const USUARIOS_SUBDIR = 'usuarios'
+const PRODUCTOS_SUBDIR = 'productos'
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
@@ -52,6 +53,12 @@ const getUsuariosUploadsDir = () => {
   return usuariosDir
 }
 
+const getProductosUploadsDir = () => {
+  const productosDir = path.join(UPLOADS_ROOT_DIR, PRODUCTOS_SUBDIR)
+  ensureDirectory(productosDir)
+  return productosDir
+}
+
 const generateUploadFilename = (originalName = '', mimeType = '') => {
   const extension = MIME_EXTENSIONS[mimeType] || '.jpg'
 
@@ -81,11 +88,13 @@ module.exports = {
   MASCOTAS_SUBDIR,
   EXAMENES_SUBDIR,
   USUARIOS_SUBDIR,
+  PRODUCTOS_SUBDIR,
   ALLOWED_IMAGE_MIME_TYPES,
   ALLOWED_EXAMEN_MIME_TYPES,
   getMascotasUploadsDir,
   getExamenesUploadsDir,
   getUsuariosUploadsDir,
+  getProductosUploadsDir,
   generateUploadFilename,
   buildPublicUploadUrl,
 }

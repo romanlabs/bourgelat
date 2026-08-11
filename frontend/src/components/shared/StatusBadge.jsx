@@ -11,8 +11,7 @@ import { cn } from '@/lib/utils'
 const STATUS_MAP = {
   // ── Citas ─────────────────────────────────────────────────────
   programada:  { label: 'Programada',  colors: 'bg-warm-100    border-warm-300    text-warm-700',    dot: 'bg-warm-400'     },
-  confirmada:  { label: 'Confirmada',  colors: 'bg-clinical-100 border-clinical-300 text-clinical-700', dot: 'bg-clinical-500' },
-  en_curso:    { label: 'En curso',    colors: 'bg-blue-100    border-blue-300    text-blue-700',    dot: 'bg-blue-500'     },
+  en_espera:   { label: 'En espera',   colors: 'bg-blue-100    border-blue-300    text-blue-700',    dot: 'bg-blue-500'     },
   completada:  { label: 'Completada',  colors: 'bg-warm-100    border-warm-200    text-warm-600',    dot: 'bg-warm-400'     },
   cancelada:   { label: 'Cancelada',   colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
   no_asistio:  { label: 'No asistió',  colors: 'bg-orange-50   border-orange-200  text-orange-600',  dot: 'bg-orange-400'   },
@@ -60,10 +59,10 @@ const badgeVariants = cva(
  * Badge semántico de estado para toda la aplicación.
  *
  * Reemplaza el patrón de strings manual en StatusPill:
- *   <StatusPill tone="border-primary/30 bg-primary/10 text-primary">Confirmada</StatusPill>
+ *   <StatusPill tone="border-primary/30 bg-primary/10 text-primary">En espera</StatusPill>
  *
  * Por:
- *   <StatusBadge variant="confirmada" />
+ *   <StatusBadge variant="en_espera" />
  *
  * Props:
  *   variant  — clave del STATUS_MAP (requerido)

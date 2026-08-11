@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import SuperadminShell from '@/components/layout/SuperadminShell'
+import MoneyInput from '@/components/shared/MoneyInput'
 import { superadminApi } from '@/features/superadmin/superadminApi'
 import {
   BarPanel,
@@ -205,13 +206,10 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Precio cobrado (COP)</label>
-              <input
-                type="number"
-                min="0"
-                step="1000"
-                placeholder="Ej: 189000"
+              <MoneyInput
+                placeholder="Ej: 189.000"
                 value={form.precio}
-                onChange={set('precio')}
+                onChange={(value) => setForm((f) => ({ ...f, precio: value === 0 ? '' : String(value) }))}
                 className={inputCls}
               />
             </div>

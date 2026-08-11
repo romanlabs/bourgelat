@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
+import MoneyInput from '@/components/shared/MoneyInput'
 import {
   CATEGORIA_DIFERENCIA_OPCIONES,
   MIN_CARACTERES_JUSTIFICACION,
@@ -17,8 +18,6 @@ import {
 } from './cajaConstants'
 
 const buildInitialForm = () => ({ montoFinalContado: '', observacionesCierre: '', categoriaDiferencia: '' })
-
-const formatMiles = (digitos) => (digitos ? Number(digitos).toLocaleString('es-CO') : '')
 
 export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTurnoMutation }) {
   const [form, setForm] = useState(buildInitialForm)
@@ -87,14 +86,9 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Efectivo contado
             </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatMiles(form.montoFinalContado)}
-              onChange={(event) => {
-                const digitos = event.target.value.replace(/\D/g, '')
-                setForm((curr) => ({ ...curr, montoFinalContado: digitos }))
-              }}
+            <MoneyInput
+              value={form.montoFinalContado}
+              onChange={(value) => setForm((curr) => ({ ...curr, montoFinalContado: value === 0 ? '' : String(value) }))}
               placeholder="$ 0"
               autoFocus
               className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
