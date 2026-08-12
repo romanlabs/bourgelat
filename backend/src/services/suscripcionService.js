@@ -2,13 +2,14 @@ const { Op } = require('sequelize')
 
 const Suscripcion = require('../models/Suscripcion')
 const {
-  DEFAULT_INITIAL_PLAN,
   PLANES_PUBLICOS,
   crearSuscripcionPrueba,
   formatDateOnly,
 } = require('../config/planes')
 
-const ESTADOS_VIGENTES = ['activa', 'prueba']
+// 'solo_lectura' es vigente a efectos de resolucion: la suscripcion se sigue
+// encontrando para que el frontend sepa en que estado esta la clinica.
+const ESTADOS_VIGENTES = ['activa', 'prueba', 'solo_lectura']
 
 const obtenerNombrePlan = (plan) => PLANES_PUBLICOS[plan]?.nombre || plan
 
@@ -24,22 +25,42 @@ const obtenerSuscripcionVigenteRegistrada = async (clinicaId, transaction) =>
     transaction,
   })
 
-const asegurarPlanEsencial = async (clinicaId, transaction) => {
-  const existente = await Suscripcion.findOne({
-    where: {
-      clinicaId,
-      plan: DEFAULT_INITIAL_PLAN,
-      estado: 'activa',
-    },
-    order: [['createdAt', 'DESC']],
-    transaction,
-  })
+const asegurarSuscripcionPrueba = async (clinicaId, transaction) =>
+  Suscripcion.create(crearSuscripcionPrueba(clinicaId), { transaction })
 
-  if (existente) {
-    return existente
+const esSoloLectura = (suscripcion) => suscripcion?.estado === 'solo_lectura'
+
+// Decision pura de vigencia, separada del acceso a datos para poder probarla
+// sin base de datos.
+const resolverEstadoSuscripcion = ({ suscripcion, hoy }) => {
+  if (!suscripcion) {
+    return {
+      accion: 'crear',
+      advertencia: 'No existia una suscripcion vigente y se activo una prueba de 30 dias.',
+    }
   }
 
-  return Suscripcion.create(crearSuscripcionPrueba(clinicaId), { transaction })
+  if (esSoloLectura(suscripcion)) {
+    return {
+      accion: 'vigente',
+      advertencia: 'La suscripcion vencio. La clinica puede consultar y exportar, pero no editar.',
+    }
+  }
+
+  if (suscripcion.fechaFin < hoy) {
+    return {
+      accion: 'a_solo_lectura',
+      advertencia: 'La suscripcion vencio y la clinica quedo en modo solo lectura.',
+    }
+  }
+
+  return {
+    accion: 'vigente',
+    advertencia:
+      suscripcion.estado === 'prueba'
+        ? `La prueba termina el ${suscripcion.fechaFin}`
+        : null,
+  }
 }
 
 const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) => {
@@ -47,38 +68,27 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
     throw new Error('Clinica no asociada a la sesion')
   }
 
-  const suscripcionVigente = await obtenerSuscripcionVigenteRegistrada(clinicaId, transaction)
+  const suscripcion = await obtenerSuscripcionVigenteRegistrada(clinicaId, transaction)
+  const { accion, advertencia } = resolverEstadoSuscripcion({
+    suscripcion,
+    hoy: formatDateOnly(),
+  })
 
-  if (!suscripcionVigente) {
-    const planEsencial = await asegurarPlanEsencial(clinicaId, transaction)
+  if (accion === 'crear') {
     return {
-      suscripcion: planEsencial,
+      suscripcion: await asegurarSuscripcionPrueba(clinicaId, transaction),
       downgraded: false,
-      advertencia: 'No existia una suscripcion vigente y se activo Esencial.',
+      advertencia,
     }
   }
 
-  const hoy = formatDateOnly()
-
-  if (suscripcionVigente.fechaFin < hoy) {
-    await suscripcionVigente.update({ estado: 'vencida' }, { transaction })
-    const planEsencial = await asegurarPlanEsencial(clinicaId, transaction)
-
-    return {
-      suscripcion: planEsencial,
-      downgraded: true,
-      advertencia: 'La suscripcion anterior vencio y la clinica continuo en Esencial.',
-    }
+  if (accion === 'a_solo_lectura') {
+    // La clinica conserva su plan y sus datos; solo pierde la escritura.
+    await suscripcion.update({ estado: 'solo_lectura' }, { transaction })
+    return { suscripcion, downgraded: true, advertencia }
   }
 
-  return {
-    suscripcion: suscripcionVigente,
-    downgraded: false,
-    advertencia:
-      suscripcionVigente.estado === 'prueba'
-        ? `La activacion temporal termina el ${suscripcionVigente.fechaFin}`
-        : null,
-  }
+  return { suscripcion, downgraded: false, advertencia }
 }
 
 const suscripcionTieneFuncionalidad = (suscripcion, funcionalidad) =>
@@ -133,7 +143,9 @@ module.exports = {
   obtenerNombrePlan,
   obtenerSuscripcionActivaClinica,
   obtenerSuscripcionVigenteRegistrada,
-  asegurarPlanEsencial,
+  asegurarSuscripcionPrueba,
+  resolverEstadoSuscripcion,
+  esSoloLectura,
   suscripcionTieneFuncionalidad,
   obtenerLimiteNumerico,
   validarCupoSuscripcion,
