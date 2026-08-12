@@ -101,7 +101,8 @@ Se reduce a cuatro entradas:
 
 Cambios respecto al archivo actual:
 
-- Desaparecen las keys `inicio`, `clinica` y `profesional`.
+- `inicio`, `clinica` y `profesional` desaparecen como planes **ofrecidos**, pero no del
+  esquema. Ver "ENUM de plan" más abajo.
 - `limiteMascotas` deja de existir como concepto enforzado. El campo permanece en la tabla
   por compatibilidad, pero ningún código lo lee. Las mascotas, historias, citas y facturas
   internas son filas de texto: limitarlas genera fricción sin ahorrar costo.
@@ -109,6 +110,27 @@ Cambios respecto al archivo actual:
   al arreglo `funcionalidades` de la fila de suscripción al comprar el add-on.
 - `crearSuscripcionEsencial` se reemplaza por `crearSuscripcionPrueba`, que fija
   `fechaFin` a 30 días y `estado: 'prueba'`.
+
+### ENUM de plan: se agrega, no se quita
+
+`Suscripcion.plan` es un `DataTypes.ENUM(...PLAN_KEYS)` — un tipo ENUM real de Postgres —
+con `defaultValue: 'inicio'`. En Postgres se pueden **agregar** valores a un ENUM, pero
+quitarlos exige recrear el tipo y reescribir la columna. Hay filas de pilotos apuntando a
+`inicio`, y el histórico de suscripciones vencidas debe seguir siendo legible.
+
+Por lo tanto:
+
+- `PLAN_KEYS` (la fuente del ENUM) queda como
+  `['inicio', 'clinica', 'profesional', 'personalizado', 'prueba', 'activo', 'cortesia']`.
+  Los tres primeros son **legado**: ninguna suscripción nueva los usa.
+- `PLANES` (la fuente de la oferta comercial) contiene solo las cuatro entradas activas.
+  Es lo que consume `PLANES_PUBLICOS`, y por lo tanto lo que ve el frontend.
+- El `defaultValue` de la columna pasa de `'inicio'` a `'prueba'`.
+
+Esta separación entre "valores que el esquema acepta" y "planes que se venden" es el punto
+importante: mezclarlas es lo que obligaría a una migración destructiva.
+
+El enum de `estado` recibe `solo_lectura` por el mismo mecanismo aditivo.
 
 ### Usuarios adicionales
 
@@ -180,7 +202,10 @@ que no pueda desincronizarse del hecho real.
 
 Una migración Sequelize que:
 
-1. Agrega `solo_lectura` al enum de `estado` y `documentosDianIncluidos` a `Suscripcion`.
+1. Agrega los valores `prueba`, `activo` y `cortesia` al enum de `plan`; `solo_lectura` al
+   enum de `estado`; cambia el default de `plan` a `prueba`; y agrega
+   `documentosDianIncluidos` a `Suscripcion`. Todo aditivo: no se elimina ningún valor de
+   enum ni columna.
 2. Agrega `almacenamientoUsadoMB` a `Clinica`, inicializado en 0.
 3. Mueve las suscripciones existentes:
    - `inicio` → `cortesia`, `fechaFin: 2099-12-31`, funcionalidades completas menos DIAN,
