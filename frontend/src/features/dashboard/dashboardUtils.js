@@ -21,19 +21,12 @@ export const PLAN_META = {
   },
 }
 
+// Bajo el modelo de plan único todos los planes traen agenda, historias,
+// antecedentes, pacientes, roles, inventario, caja y reportes. Listarlos sería
+// una tabla de doce filas siempre en verde. Aquí solo va lo que se compra
+// aparte y por lo tanto puede variar entre clínicas.
 export const FEATURE_LABELS = {
-  citas: 'Agenda y citas',
-  historias: 'Historias clínicas',
-  antecedentes: 'Antecedentes',
-  propietarios: 'Tutores y propietarios',
-  mascotas: 'Pacientes y fichas',
-  roles_base: 'Roles base del equipo',
-  inventario: 'Inventario clínico',
-  facturacion_interna: 'Caja y facturación',
   facturacion_electronica: 'Facturación electrónica',
-  reportes_operativos: 'Reportes operativos',
-  reportes_completos: 'Reportes completos',
-  exportables: 'Exportables',
   acompanamiento_migracion: 'Acompañamiento de migración',
   soporte_prioritario_comercial: 'Soporte prioritario comercial',
 }

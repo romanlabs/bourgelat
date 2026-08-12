@@ -78,15 +78,15 @@ export default function PacientesPage() {
   }, [tabParam])
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
-  const featureSet = new Set(Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : [])
-  const puedeVerModulo = featureSet.has('mascotas') && featureSet.has('propietarios')
+  // Todos los planes incluyen pacientes, propietarios e historias.
+  const puedeVerModulo = true
   const puedeCrearTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
   const puedeCrearPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
 
   const enabled = rolPermitido && puedeVerModulo
 
   const resumenHook = usePacientesResumen({ enabled })
-  const mascotasHook = usePacientesMascotas({ enabled, featureSet })
+  const mascotasHook = usePacientesMascotas({ enabled })
   const tutoresHook = useTutores({ enabled })
 
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
@@ -185,9 +185,9 @@ export default function PacientesPage() {
                 <KpiCard
                   icon={HeartPulse}
                   label="Historia clinica"
-                  value={featureSet.has('historias') ? 'Activa' : 'No incluida'}
+                  value="Activa"
                   helper="Define si esta base ya puede pasar directo a evolucion clinica."
-                  tone={featureSet.has('historias') ? 'text-rose-700' : 'text-amber-700'}
+                  tone="text-rose-700"
                 />
               </div>
 

@@ -167,12 +167,10 @@ export default function PacienteHistorialPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const suscripcion = useAuthStore((s) => s.suscripcion)
   const usuario = useAuthStore((s) => s.usuario)
-  const featureSet = new Set(Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : [])
-
-  const tieneHistorias = featureSet.has('historias')
-  const tieneAntecedentes = featureSet.has('antecedentes')
+  // Todos los planes incluyen historias y antecedentes.
+  const tieneHistorias = true
+  const tieneAntecedentes = true
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
 
   const citaIdParam = searchParams.get('citaId') || ''

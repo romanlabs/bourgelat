@@ -57,7 +57,6 @@ function RestrictedHistoriasPage() {
 
 export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const suscripcion = useAuthStore((state) => state.suscripcion)
 
   const [activeTab, setActiveTab] = useState('resumen')
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
@@ -68,10 +67,8 @@ export default function HistoriasPage() {
   const [fechaFin, setFechaFin] = useState(rangoMes.fechaFin)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
-  const featureSet = new Set(
-    Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  )
-  const puedeVerHistorias = featureSet.has('historias')
+  // Todos los planes incluyen historias clínicas.
+  const puedeVerHistorias = true
 
   useEffect(() => {
     document.title = 'Historias clinicas | Bourgelat'

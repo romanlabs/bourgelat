@@ -171,7 +171,6 @@ function RestrictedAntecedentesPage() {
 
 export default function AntecedentesPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const prefillAppliedRef = useRef(false)
@@ -198,10 +197,8 @@ export default function AntecedentesPage() {
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
   const puedeEditar = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
-  const featureSet = new Set(
-    Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  )
-  const puedeVerAntecedentes = featureSet.has('antecedentes')
+  // Todos los planes incluyen antecedentes.
+  const puedeVerAntecedentes = true
 
   useEffect(() => {
     document.title = 'Antecedentes | Bourgelat'

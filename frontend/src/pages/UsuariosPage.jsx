@@ -230,10 +230,9 @@ export default function UsuariosPage() {
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
 
   const busquedaDiferida = useDeferredValue(buscar.trim().toLowerCase())
-  const roleFeatureEnabled =
-    Array.isArray(suscripcion?.funcionalidades) && suscripcion.funcionalidades.includes('roles_base')
+  // Todos los planes incluyen roles del equipo.
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
-  const puedeVerModulo = rolPermitido && roleFeatureEnabled
+  const puedeVerModulo = rolPermitido
 
   useEffect(() => {
     document.title = 'Usuarios | Bourgelat'
