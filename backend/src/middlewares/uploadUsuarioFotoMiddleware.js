@@ -1,14 +1,10 @@
 const multer = require('multer')
-const fs = require('fs')
 const {
   ALLOWED_IMAGE_MIME_TYPES,
   getUsuariosUploadsDir,
   generateUploadFilename,
 } = require('../config/uploads')
-const {
-  verificarCupoAlmacenamiento,
-  registrarUsoAlmacenamiento,
-} = require('../services/almacenamientoService')
+const { aplicarCupoDeArchivoEnDisco } = require('./cupoArchivoDiscoHelper')
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -63,24 +59,12 @@ const uploadUsuarioFotoSingle = (req, res, next) => {
       return
     }
 
-    // Este middleware usa diskStorage, asi que el archivo ya esta escrito
-    // cuando llegamos aqui: si no hay cupo hay que borrarlo.
     try {
-      const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
-      const cupo = await verificarCupoAlmacenamiento(clinicaId, req.file.size)
-
-      if (!cupo.permitido) {
-        fs.unlink(req.file.path, () => {})
-        res.status(413).json({
-          message: `Tu plan incluye ${cupo.limiteMB} MB de almacenamiento y ya estan ocupados. Borra archivos que no uses para subir mas.`,
-          code: 'STORAGE_LIMIT_REACHED',
-          limiteMB: cupo.limiteMB,
-          usadoMB: cupo.usadoMB,
-        })
+      const puedeContinuar = await aplicarCupoDeArchivoEnDisco(req, res)
+      if (!puedeContinuar) {
         return
       }
 
-      await registrarUsoAlmacenamiento(clinicaId, req.file.size)
       next()
     } catch (cupoError) {
       res.status(500).json({
