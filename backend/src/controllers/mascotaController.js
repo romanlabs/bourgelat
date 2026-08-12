@@ -1,6 +1,5 @@
 const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
-const { validarCupoSuscripcion } = require('../services/suscripcionService')
 const { MASCOTAS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads')
 const { parsePaginacion } = require('../utils/paginacion')
 const { iLikeSinTildes } = require('../utils/busqueda')
@@ -20,24 +19,6 @@ const crearMascota = async (req, res) => {
     const propietario = await Propietario.findOne({ where: { id: propietarioId, clinicaId } });
     if (!propietario) {
       return res.status(404).json({ message: 'Propietario no encontrado' });
-    }
-
-    const cupoMascotas = await validarCupoSuscripcion({
-      clinicaId,
-      campoLimite: 'limiteMascotas',
-      modelo: Mascota,
-      where: { clinicaId, activo: true },
-    })
-
-    if (!cupoMascotas.permitido) {
-      return res.status(403).json({
-        message: `Tu plan ${cupoMascotas.nombrePlan} permite hasta ${cupoMascotas.limite} mascotas activas. Desactiva una o cambia de plan para continuar.`,
-        code: 'PLAN_LIMIT_REACHED',
-        plan: cupoMascotas.suscripcion.plan,
-        recurso: 'mascotas',
-        limite: cupoMascotas.limite,
-        usoActual: cupoMascotas.usoActual,
-      })
     }
 
     const mascota = await Mascota.create({
