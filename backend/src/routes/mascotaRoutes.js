@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { body } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadMascotaPhotoSingle } = require('../middlewares/uploadMascotaPhotoMiddleware')
 const {
@@ -27,6 +28,7 @@ router.post(
   '/subir-foto',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'),
+  requerirEscritura,
   uploadMascotaPhotoSingle,
   subirFotoMascota
 )
@@ -35,6 +37,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'),
+  requerirEscritura,
   [
     body('nombre').notEmpty().withMessage('El nombre es obligatorio').trim(),
     body('especie')
@@ -69,6 +72,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'),
+  requerirEscritura,
   [
     body('peso').optional().isFloat({ min: 0 }).withMessage('El peso debe ser un numero positivo'),
     body('sexo')
@@ -81,6 +85,12 @@ router.put(
   editarMascota
 )
 
-router.patch('/:id/desactivar', verificarToken, verificarRol('admin', 'superadmin'), desactivarMascota)
+router.patch(
+  '/:id/desactivar',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  desactivarMascota
+)
 
 module.exports = router

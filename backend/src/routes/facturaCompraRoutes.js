@@ -13,10 +13,9 @@ const {
 } = require('../controllers/facturaCompraController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 
 const router = express.Router()
-const requiereInventario = requerirFuncionalidades('inventario')
 
 const validarItem = [
   body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un ítem'),
@@ -117,7 +116,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
   validarConsulta,
   obtenerFacturasCompra
 )
@@ -126,7 +124,6 @@ router.get(
   '/alertas',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
   obtenerAlertasCompra
 )
 
@@ -134,7 +131,6 @@ router.get(
   '/:id',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
   [param('id').isUUID().withMessage('ID no válido'), validar],
   obtenerFacturaCompra
 )
@@ -143,7 +139,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
+  requerirEscritura,
   validarCreacion,
   crearFacturaCompra
 )
@@ -152,7 +148,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
+  requerirEscritura,
   validarEdicion,
   editarFacturaCompra
 )
@@ -161,7 +157,7 @@ router.post(
   '/:id/confirmar',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
+  requerirEscritura,
   [param('id').isUUID().withMessage('ID no válido'), validar],
   confirmarFacturaCompra
 )
@@ -170,7 +166,7 @@ router.post(
   '/:id/anular',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
+  requerirEscritura,
   [param('id').isUUID().withMessage('ID no válido'), validar],
   anularFacturaCompra
 )
@@ -179,7 +175,7 @@ router.post(
   '/:id/pagar',
   verificarToken,
   verificarRol(...rolesGestion),
-  requiereInventario,
+  requerirEscritura,
   [
     param('id').isUUID().withMessage('ID no válido'),
     body('fechaPago').optional({ values: 'falsy' }).isISO8601().withMessage('La fecha de pago no es válida'),

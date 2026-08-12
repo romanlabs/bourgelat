@@ -6,6 +6,7 @@ const {
   actualizarClinicaActual,
 } = require('../controllers/clinicaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
@@ -16,6 +17,7 @@ router.put(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   [
     body('nombre')
       .optional()

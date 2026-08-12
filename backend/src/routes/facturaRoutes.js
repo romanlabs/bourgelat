@@ -13,21 +13,17 @@ const {
   listarCuentasPorCobrar,
 } = require('../controllers/facturaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura, requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
-const requiereFacturacionInterna = requerirFuncionalidades('facturacion_interna')
-const requiereFacturacionElectronica = requerirFuncionalidades(
-  'facturacion_interna',
-  'facturacion_electronica'
-)
+const requiereFacturacionElectronica = requerirFuncionalidades('facturacion_electronica')
 
 router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
-  requiereFacturacionInterna,
+  requerirEscritura,
   [
     body('propietarioId')
       .optional({ values: 'falsy' })
@@ -62,7 +58,6 @@ router.get(
   '/cuentas-por-cobrar',
   verificarToken,
   verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
-  requiereFacturacionInterna,
   listarCuentasPorCobrar
 )
 
@@ -70,7 +65,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
-  requiereFacturacionInterna,
   obtenerFacturas
 )
 
@@ -78,7 +72,6 @@ router.get(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
-  requiereFacturacionInterna,
   obtenerFactura
 )
 
@@ -86,6 +79,7 @@ router.post(
   '/:id/emitir-electronica',
   verificarToken,
   verificarRol('admin', 'superadmin', 'facturador'),
+  requerirEscritura,
   requiereFacturacionElectronica,
   [
     body('rangoNumeracionId')
@@ -120,7 +114,7 @@ router.patch(
   '/:id/pagar',
   verificarToken,
   verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
-  requiereFacturacionInterna,
+  requerirEscritura,
   [
     body('metodoPago')
       .optional()
@@ -136,7 +130,7 @@ router.post(
   '/:id/abonos',
   verificarToken,
   verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
-  requiereFacturacionInterna,
+  requerirEscritura,
   [
     body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
     body('metodoPago')
@@ -153,7 +147,7 @@ router.patch(
   '/:id/anular',
   verificarToken,
   verificarRol('admin', 'superadmin'),
-  requiereFacturacionInterna,
+  requerirEscritura,
   [
     body('motivoAnulacion')
       .notEmpty()
