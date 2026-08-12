@@ -33,6 +33,18 @@ const AntecedentesMascota = sequelize.define('AntecedentesMascota', {
     defaultValue: [],
     comment: 'Lista de vacunas: [{nombre, fecha, proximaDosis, lote, laboratorio}]',
   },
+  // Desparasitaciones
+  desparasitaciones: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+    comment: 'Lista de desparasitaciones: [{tipo, producto, fecha, proximaFecha}]',
+  },
+  // Planificaciones
+  planificaciones: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+    comment: 'Lista de planificaciones: [{nombre, fecha, proximaFecha}]',
+  },
   // Condiciones cronicas
   condicionesCronicas: {
     type: DataTypes.JSONB,
