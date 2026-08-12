@@ -12,29 +12,37 @@ const FEATURE_LABELS = {
 
 const obtenerNombrePlan = (plan) => PLANES_PUBLICOS[plan]?.nombre || plan
 
+// Helper compartido para cargar la suscripcion si falta en req.
+// Devuelve true si la suscripcion quedo cargada; false si ya respondio 403.
+const asegurarSuscripcionEnRequest = async (req, res) => {
+  if (req.suscripcion) {
+    return true
+  }
+
+  const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
+
+  if (!clinicaId) {
+    res.status(403).json({
+      message: 'No hay una clinica asociada a la sesion actual',
+    })
+    return false
+  }
+
+  const resultado = await obtenerSuscripcionActivaClinica(clinicaId)
+  req.suscripcion = resultado.suscripcion
+  req.suscripcionInfo = {
+    advertencia: resultado.advertencia,
+    downgraded: resultado.downgraded,
+    nombrePlan: obtenerNombrePlan(resultado.suscripcion.plan),
+  }
+  return true
+}
+
 const cargarSuscripcionActiva = async (req, res, next) => {
   try {
-    if (req.suscripcion) {
-      return next()
-    }
-
-    const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
-
-    if (!clinicaId) {
-      return res.status(403).json({
-        message: 'No hay una clinica asociada a la sesion actual',
-      })
-    }
-
-    const { suscripcion, advertencia, downgraded } = await obtenerSuscripcionActivaClinica(
-      clinicaId
-    )
-
-    req.suscripcion = suscripcion
-    req.suscripcionInfo = {
-      advertencia,
-      downgraded,
-      nombrePlan: obtenerNombrePlan(suscripcion.plan),
+    const cargada = await asegurarSuscripcionEnRequest(req, res)
+    if (!cargada) {
+      return
     }
 
     next()
@@ -49,22 +57,9 @@ const cargarSuscripcionActiva = async (req, res, next) => {
 const requerirFuncionalidades = (...funcionalidades) => {
   return async (req, res, next) => {
     try {
-      if (!req.suscripcion) {
-        const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
-
-        if (!clinicaId) {
-          return res.status(403).json({
-            message: 'No hay una clinica asociada a la sesion actual',
-          })
-        }
-
-        const resultado = await obtenerSuscripcionActivaClinica(clinicaId)
-        req.suscripcion = resultado.suscripcion
-        req.suscripcionInfo = {
-          advertencia: resultado.advertencia,
-          downgraded: resultado.downgraded,
-          nombrePlan: obtenerNombrePlan(resultado.suscripcion.plan),
-        }
+      const cargada = await asegurarSuscripcionEnRequest(req, res)
+      if (!cargada) {
+        return
       }
 
       const faltantes = funcionalidades.filter(
@@ -100,22 +95,9 @@ const requerirFuncionalidades = (...funcionalidades) => {
 // de los archivos de rutas.
 const requerirEscritura = async (req, res, next) => {
   try {
-    if (!req.suscripcion) {
-      const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
-
-      if (!clinicaId) {
-        return res.status(403).json({
-          message: 'No hay una clinica asociada a la sesion actual',
-        })
-      }
-
-      const resultado = await obtenerSuscripcionActivaClinica(clinicaId)
-      req.suscripcion = resultado.suscripcion
-      req.suscripcionInfo = {
-        advertencia: resultado.advertencia,
-        downgraded: resultado.downgraded,
-        nombrePlan: obtenerNombrePlan(resultado.suscripcion.plan),
-      }
+    const cargada = await asegurarSuscripcionEnRequest(req, res)
+    if (!cargada) {
+      return
     }
 
     if (!esSoloLectura(req.suscripcion)) {
