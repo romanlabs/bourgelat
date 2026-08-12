@@ -230,7 +230,11 @@ export default function UsuariosPage() {
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
 
   const busquedaDiferida = useDeferredValue(buscar.trim().toLowerCase())
-  // Todos los planes incluyen roles del equipo.
+  // Todos los planes incluyen roles del equipo, asi que este gate siempre pasa.
+  // Se conserva la constante porque el ternario que la consume abarca 570
+  // lineas de JSX y desanidarlo solo para borrar una rama muerta no compensa
+  // el riesgo. Limpieza pendiente.
+  const roleFeatureEnabled = true
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
   const puedeVerModulo = rolPermitido
 

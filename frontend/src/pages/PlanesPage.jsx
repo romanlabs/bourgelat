@@ -32,58 +32,43 @@ const GRAD_SOON = 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)'
 const DIM_FILTER = 'blur(1.4px) brightness(0.97) saturate(0.92)'
 const GLOW_ACTIVE = '0 18px 50px -18px rgba(176,118,69,0.45)'
 
+// Refleja backend/src/config/planes.js. Un solo plan pago; la DIAN es el único
+// complemento que se compra aparte y todavía no está disponible.
 const PLANES = [
   {
-    key: 'inicio',
-    nombre: 'Esencial',
-    subtitulo: 'Para empezar con orden',
-    resumen:
-      'Para consultorios que quieren ordenar agenda, pacientes e historia clínica sin una configuración pesada.',
-    precioMensual: 0,
-    precioAnual: 0,
-    cta: 'Empezar gratis',
-    nota: 'Gratis para siempre · sin tarjeta',
-    registro: true,
-    limites: ['2 usuarios', '250 mascotas', '1 GB'],
-    incluye: [
-      'Agenda de citas',
-      'Propietarios y mascotas',
-      'Historia clínica básica',
-      'Antecedentes del paciente',
-    ],
-  },
-  {
-    key: 'clinica',
-    nombre: 'Clínica',
-    subtitulo: 'Para operar el día completo',
+    key: 'activo',
+    nombre: 'Bourgelat',
+    subtitulo: 'Toda la clínica en un sistema',
     popular: true,
     resumen:
-      'Para equipos que ya necesitan unir agenda, consulta, inventario y caja en un mismo sistema.',
-    precioMensual: 99000,
-    precioAnual: 79000,
-    cta: 'Elegir Clínica',
-    nota: 'Cancela cuando quieras',
+      'Agenda, historia clínica, inventario, caja y reportes sin límites de pacientes, historias ni facturas.',
+    precioMensual: 89000,
+    precioAnual: 75000,
+    cta: 'Probar 30 días gratis',
+    nota: 'Sin tarjeta · 30 días de prueba',
     registro: true,
-    limites: ['5 usuarios', '2.500 mascotas', '5 GB'],
+    limites: ['3 usuarios incluidos', 'Pacientes ilimitados', '20 GB'],
     incluye: [
-      'Todo lo de Esencial',
-      'Inventario operativo',
+      'Agenda con contexto del paciente',
+      'Historia clínica y antecedentes',
+      'Inventario y control de insumos',
       'Caja y facturación interna',
-      'Reportes operativos',
+      'Reportes completos y exportables',
+      'Roles y auditoría del equipo',
     ],
   },
   {
-    key: 'profesional',
-    nombre: 'Profesional',
-    subtitulo: 'Facturación electrónica DIAN',
+    key: 'dian',
+    nombre: 'Facturación electrónica',
+    subtitulo: 'Complemento DIAN',
     comingSoon: true,
     resumen:
-      'La emisión validada ante la DIAN —con CUFE y conexión a Factus— llega en la próxima versión de Bourgelat.',
+      'La emisión validada ante la DIAN —con CUFE, notas crédito y conexión a Factus— llega en la próxima versión de Bourgelat.',
     proximamente: [
-      'Facturación electrónica DIAN',
-      'Validación y CUFE automáticos',
-      'Conexión con Factus',
-      'Todo lo del plan Clínica',
+      'Emisión validada ante la DIAN',
+      'Notas crédito y débito',
+      'XML firmado y representación gráfica',
+      'Envío automático al correo del propietario',
     ],
   },
 ]
@@ -94,53 +79,53 @@ const COMPARISON_GROUPS = [
   {
     grupo: 'Operación clínica',
     filas: [
-      { label: 'Agenda con contexto del paciente', values: { inicio: true, clinica: true, profesional: true } },
-      { label: 'Historia clínica y antecedentes', values: { inicio: true, clinica: true, profesional: true } },
-      { label: 'Mascotas activas', values: { inicio: '250', clinica: '2.500', profesional: '10.000' } },
-      { label: 'Usuarios del equipo', values: { inicio: '2', clinica: '5', profesional: '12' } },
+      { label: 'Agenda con contexto del paciente', values: { activo: true, dian: false } },
+      { label: 'Historia clínica y antecedentes', values: { activo: true, dian: false } },
+      { label: 'Pacientes activos', values: { activo: 'Ilimitados', dian: false } },
+      { label: 'Usuarios del equipo', values: { activo: '3 incluidos', dian: false } },
     ],
   },
   {
     grupo: 'Caja y facturación',
     filas: [
-      { label: 'Inventario operativo', values: { inicio: false, clinica: true, profesional: true } },
-      { label: 'Caja y facturación interna', values: { inicio: false, clinica: true, profesional: true } },
+      { label: 'Inventario operativo', values: { activo: true, dian: false } },
+      { label: 'Caja y facturación interna', values: { activo: true, dian: false } },
       {
         label: 'Facturación electrónica DIAN',
         hint: 'Emisión validada ante la DIAN a través de Factus. Disponible en la próxima versión.',
-        soon: { profesional: true },
-        values: { inicio: false, clinica: false, profesional: 'soon' },
+        soon: { dian: true },
+        values: { activo: false, dian: 'soon' },
       },
     ],
   },
   {
     grupo: 'Reportes y datos',
     filas: [
-      { label: 'Reportes operativos', values: { inicio: false, clinica: true, profesional: true } },
-      { label: 'Reportes completos y exportables', values: { inicio: false, clinica: false, profesional: true } },
-      { label: 'Almacenamiento de archivos', values: { inicio: '1 GB', clinica: '5 GB', profesional: '20 GB' } },
+      { label: 'Reportes operativos', values: { activo: true, dian: false } },
+      { label: 'Reportes completos y exportables', values: { activo: true, dian: false } },
+      { label: 'Almacenamiento de archivos', values: { activo: '20 GB', dian: false } },
     ],
   },
 ]
 
 const PLAN_MATCH = [
   {
-    momento: 'Estás empezando',
-    title: 'Si digitalizas por primera vez',
+    momento: '30 días de prueba',
+    title: 'Pruébalo con tus propios datos',
     body:
-      'Esencial te deja ordenar agenda, pacientes e historia clínica sin meterte de una en un despliegue grande.',
+      'Treinta días con todo abierto y sin tarjeta. Alcanzan para vivir un cierre de mes completo: caja cuadrada, inventario al día y el reporte del mes.',
   },
   {
-    momento: 'Operación diaria',
-    title: 'Si ya cobras, compras y controlas inventario',
+    momento: 'Un solo plan',
+    title: 'Sin escoger entre versiones',
     body:
-      'Clínica empieza a tener sentido: la operación ya necesita inventario, caja y reportes en el mismo entorno.',
+      'Todas las clínicas tienen todos los módulos. Lo único que crece con tu equipo son los usuarios: tres vienen incluidos y cada uno adicional cuesta $25.000 al mes.',
   },
   {
-    momento: 'Círculo completo',
-    title: 'Si quieres cerrar el círculo',
+    momento: 'Tus datos, siempre tuyos',
+    title: 'Si dejas de pagar, no pierdes nada',
     body:
-      'Profesional es lo natural cuando la clínica quiere agenda, consulta, administración e inventario avanzado en un solo recorrido.',
+      'La cuenta pasa a solo lectura: puedes consultar y exportar todas tus historias clínicas cuando quieras. Nunca borramos la información de un paciente.',
   },
 ]
 
