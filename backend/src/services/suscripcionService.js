@@ -3,6 +3,7 @@ const { Op } = require('sequelize')
 const Suscripcion = require('../models/Suscripcion')
 const {
   PLANES_PUBLICOS,
+  CORTESIA_END_DATE,
   crearSuscripcionPrueba,
   formatDateOnly,
 } = require('../config/planes')
@@ -91,6 +92,21 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
   return { suscripcion, downgraded: false, advertencia }
 }
 
+// Decision pura sobre cuantos dias le quedan a una suscripcion, para mostrar
+// en el endpoint de estado. No aplica cuando la clinica ya quedo en solo
+// lectura (no hay cuenta regresiva que mostrar) ni cuando la fecha de fin es
+// la fecha centinela de cortesia (suscripcion sin vencimiento real).
+const calcularDiasRestantes = ({ suscripcion, hoy }) => {
+  if (!suscripcion) return null
+  if (esSoloLectura(suscripcion)) return null
+  if (suscripcion.fechaFin === CORTESIA_END_DATE) return null
+
+  return Math.max(
+    0,
+    Math.ceil((new Date(suscripcion.fechaFin) - new Date(hoy)) / (1000 * 60 * 60 * 24))
+  )
+}
+
 const suscripcionTieneFuncionalidad = (suscripcion, funcionalidad) =>
   Array.isArray(suscripcion?.funcionalidades) &&
   suscripcion.funcionalidades.includes(funcionalidad)
@@ -146,6 +162,7 @@ module.exports = {
   asegurarSuscripcionPrueba,
   resolverEstadoSuscripcion,
   esSoloLectura,
+  calcularDiasRestantes,
   suscripcionTieneFuncionalidad,
   obtenerLimiteNumerico,
   validarCupoSuscripcion,

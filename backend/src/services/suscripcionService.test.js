@@ -3,7 +3,12 @@
 // No requieren base de datos: la decision esta extraida a una funcion pura.
 
 const assert = require('assert')
-const { resolverEstadoSuscripcion, esSoloLectura, ESTADOS_VIGENTES } = require('./suscripcionService')
+const {
+  resolverEstadoSuscripcion,
+  esSoloLectura,
+  calcularDiasRestantes,
+  ESTADOS_VIGENTES,
+} = require('./suscripcionService')
 
 const HOY = '2026-08-12'
 
@@ -63,5 +68,34 @@ assert.ok(ESTADOS_VIGENTES.includes('prueba'))
 assert.strictEqual(esSoloLectura({ estado: 'solo_lectura' }), true)
 assert.strictEqual(esSoloLectura({ estado: 'activa' }), false)
 assert.strictEqual(esSoloLectura(null), false)
+
+// ── calcularDiasRestantes: no hay cuenta regresiva en solo lectura ────────
+assert.strictEqual(
+  calcularDiasRestantes({
+    suscripcion: { estado: 'solo_lectura', fechaFin: '2026-01-01' },
+    hoy: HOY,
+  }),
+  null,
+  'solo_lectura no tiene dias restantes que mostrar'
+)
+
+// ── calcularDiasRestantes: la fecha centinela de cortesia tampoco cuenta ──
+assert.strictEqual(
+  calcularDiasRestantes({
+    suscripcion: { estado: 'activa', fechaFin: '2099-12-31' },
+    hoy: HOY,
+  }),
+  null,
+  'la fecha centinela de cortesia no vence, no hay cuenta regresiva'
+)
+
+// ── calcularDiasRestantes: suscripcion normal cuenta los dias ─────────────
+assert.strictEqual(
+  calcularDiasRestantes({
+    suscripcion: { estado: 'prueba', fechaFin: '2026-08-15' },
+    hoy: HOY,
+  }),
+  3
+)
 
 console.log('suscripcionService.test.js: todos los tests pasaron ✔')
