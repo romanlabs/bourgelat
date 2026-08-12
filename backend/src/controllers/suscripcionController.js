@@ -6,7 +6,7 @@ const {
   DEFAULT_INITIAL_PLAN,
   formatDateOnly,
   construirSuscripcion,
-  crearSuscripcionEsencial,
+  crearSuscripcionPrueba,
 } = require('../config/planes')
 const Suscripcion = require('../models/Suscripcion')
 const Clinica = require('../models/Clinica')
@@ -50,7 +50,7 @@ const asegurarPlanEsencial = async (clinicaId, transaction) => {
     return existente
   }
 
-  return Suscripcion.create(crearSuscripcionEsencial(clinicaId), { transaction })
+  return Suscripcion.create(crearSuscripcionPrueba(clinicaId), { transaction })
 }
 
 const expirarYNormalizarSuscripcion = async (suscripcion, transaction) => {

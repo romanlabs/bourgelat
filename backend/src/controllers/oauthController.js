@@ -8,7 +8,7 @@ const logger = require('../utils/logger')
 const sequelize = require('../config/database')
 const Clinica = require('../models/Clinica')
 const Suscripcion = require('../models/Suscripcion')
-const { crearSuscripcionEsencial } = require('../config/planes')
+const { crearSuscripcionPrueba } = require('../config/planes')
 
 const COOKIE_FLUJO = 'bourgelat_oauth_flujo'
 
@@ -142,7 +142,7 @@ const completarRegistro = async (req, res) => {
         },
         { transaction }
       )
-      const suscripcion = await Suscripcion.create(crearSuscripcionEsencial(clinica.id), { transaction })
+      const suscripcion = await Suscripcion.create(crearSuscripcionPrueba(clinica.id), { transaction })
 
       const payload = {
         id: usuario.id,
