@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
+import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
 import { HeaderSlotContext } from './HeaderSlotContext'
@@ -546,6 +547,8 @@ export default function AdminShell({
       </Dialog.Root>
 
       <main className="mx-auto max-w-[1720px] space-y-4 px-4 py-4 sm:px-6 lg:px-8">
+        <SuscripcionBanner />
+
         <div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 flex-1">

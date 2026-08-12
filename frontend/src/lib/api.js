@@ -68,6 +68,20 @@ api.interceptors.response.use(
       }
     }
 
+    // La suscripción venció mientras la sesión estaba abierta: se sincroniza el
+    // store para que el banner aparezca sin esperar a recargar. El componente
+    // sigue recibiendo su propio error.
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.code === 'SUBSCRIPTION_READ_ONLY'
+    ) {
+      const { setSuscripcion, suscripcion } = useAuthStore.getState()
+
+      if (suscripcion && suscripcion.estado !== 'solo_lectura') {
+        setSuscripcion({ ...suscripcion, estado: 'solo_lectura' })
+      }
+    }
+
     return Promise.reject(error)
   }
 )
