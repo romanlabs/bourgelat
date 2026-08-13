@@ -57,6 +57,17 @@ assert.deepStrictEqual(analizarArchivoRutas(multilineaProtegida, 'multi-ok.js'),
 assert.ok(ARCHIVOS_EXENTOS.includes('authRoutes.js'), 'auth debe seguir operando vencido')
 assert.ok(ARCHIVOS_EXENTOS.includes('suscripcionRoutes.js'), 'debe poder pagar para reactivarse')
 
+// La lista de exentos se congela a proposito. Cuando este test falle porque una
+// ruta nueva no esta protegida, la salida correcta es agregarle el guard, NO
+// exentar el archivo entero: eso desprotegeria todas sus rutas de una sola vez.
+// Si de verdad hace falta una exencion nueva, tocar esta lista obliga a
+// pensarlo y deja rastro en el diff.
+assert.deepStrictEqual(
+  [...ARCHIVOS_EXENTOS].sort(),
+  ['authRoutes.js', 'superadminRoutes.js', 'suscripcionRoutes.js'],
+  'ARCHIVOS_EXENTOS cambio: agregar exenciones desprotege rutas en bloque'
+)
+
 // ── El repositorio real esta limpio ───────────────────────────────────────
 // Esta es la comprobacion que importa: si alguien agrega una ruta de mutacion
 // sin marcarla, este test falla.

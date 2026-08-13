@@ -1,11 +1,9 @@
-import { render } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect } from 'vitest'
-import LandingPage from '../pages/LandingPage'
+import { renderLanding } from './renderLanding'
 
 describe('Hero video', () => {
   it('tiene autoPlay, muted, loop, playsInline y poster', () => {
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    renderLanding()
     const video = document.querySelector('video')
     expect(video).toBeInTheDocument()
     expect(video.hasAttribute('autoplay')).toBe(true)
@@ -20,7 +18,7 @@ describe('Hero video', () => {
   })
 
   it('tiene source WebM y MP4', () => {
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    renderLanding()
     const video = document.querySelector('video')
     const sources = [...video.querySelectorAll('source')]
     const types = sources.map(s => s.type)
@@ -31,7 +29,7 @@ describe('Hero video', () => {
   it('MP4 (H.264) aparece antes que WebM (decodificación por hardware)', () => {
     // H.264 se decodifica por hardware en casi todos los equipos; el VP9 del
     // WebM caía a software → thermal throttling → stutter tras un rato.
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    renderLanding()
     const sources = [...document.querySelector('video').querySelectorAll('source')]
     const idx = (type) => sources.findIndex(s => s.type === type)
     expect(idx('video/mp4')).toBeLessThan(idx('video/webm'))
