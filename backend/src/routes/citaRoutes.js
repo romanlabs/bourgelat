@@ -2,13 +2,14 @@ const express = require('express')
 const router = express.Router()
 const { body, query } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const {
   crearCita, crearCitaUrgencia, obtenerCitas, obtenerCita,
   actualizarEstadoCita, reprogramarCita,
 } = require('../controllers/citaController')
 
-router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), [
+router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
   body('fecha').isDate().withMessage('Fecha no válida'),
   body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
   body('horaFin').notEmpty().withMessage('La hora de fin es obligatoria'),
@@ -23,7 +24,7 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
   validar,
 ], crearCita)
 
-router.post('/urgencia', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), [
+router.post('/urgencia', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
   body('fecha').isDate().withMessage('Fecha no válida'),
   body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
   body('horaFin').optional().notEmpty().withMessage('La hora de fin no puede estar vacía'),
@@ -41,7 +42,7 @@ router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionis
 ], obtenerCitas)
 router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'), obtenerCita)
 
-router.patch('/:id/estado', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), [
+router.patch('/:id/estado', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
   body('estado').isIn(['programada', 'en_espera', 'completada', 'cancelada', 'no_asistio'])
     .withMessage('Estado no válido'),
   body('motivoCancelacion').if(body('estado').equals('cancelada'))
@@ -49,7 +50,7 @@ router.patch('/:id/estado', verificarToken, verificarRol('admin', 'superadmin', 
   validar,
 ], actualizarEstadoCita)
 
-router.patch('/:id/reprogramar', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista'), [
+router.patch('/:id/reprogramar', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista'), requerirEscritura, [
   body('fecha').isDate().withMessage('Fecha no válida'),
   body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
   body('horaFin').notEmpty().withMessage('La hora de fin es obligatoria'),

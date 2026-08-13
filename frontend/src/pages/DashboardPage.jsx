@@ -54,6 +54,7 @@ import {
 } from '@/features/dashboard/dashboardUtils'
 import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { hasAnyRole } from '@/lib/permissions'
+import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 
@@ -507,17 +508,16 @@ export default function DashboardPage() {
   const funcionalidades = Array.isArray(suscripcion?.funcionalidades)
     ? suscripcion.funcionalidades
     : EMPTY_LIST
-  const featureSet = useMemo(() => new Set(funcionalidades), [funcionalidades])
-  const puedeVerAgenda = esAdministrador && featureSet.has('reportes_operativos')
-  const puedeVerIngresos =
-    esAdministrador && featureSet.has('facturacion_interna') && featureSet.has('reportes_operativos')
-  const puedeVerInventario =
-    esAdministrador && featureSet.has('inventario') && featureSet.has('reportes_operativos')
-  const puedeAbrirAgenda = esAdministrador && featureSet.has('citas')
-  const puedeAbrirHistorias = esAdministrador && featureSet.has('historias')
-  const puedeAbrirCaja = esAdministrador && featureSet.has('facturacion_interna')
+  // Todos los planes traen agenda, historias, inventario, caja y reportes: lo
+  // unico que decide aqui es el rol.
+  const puedeVerAgenda = esAdministrador
+  const puedeVerIngresos = esAdministrador
+  const puedeVerInventario = esAdministrador
+  const puedeAbrirAgenda = esAdministrador
+  const puedeAbrirHistorias = esAdministrador
+  const puedeAbrirCaja = esAdministrador
   // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
-  const mostrarDian = puedeVerIngresos && featureSet.has('facturacion_electronica')
+  const mostrarDian = puedeVerIngresos && tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
 
   const quickActions = useMemo(() => {
     const keys = ['agenda', 'paciente', 'historia', 'facturar']

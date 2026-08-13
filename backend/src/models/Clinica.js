@@ -106,6 +106,12 @@ const Clinica = sequelize.define('Clinica', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  almacenamientoUsadoMB: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+    defaultValue: 0,
+    comment: 'Megabytes ocupados por archivos subidos por la clinica',
+  },
 }, {
   tableName: 'clinicas',
   timestamps: true,

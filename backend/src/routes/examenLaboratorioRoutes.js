@@ -3,7 +3,7 @@ const { body, param } = require('express-validator');
 const router = express.Router();
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
 const { validar } = require('../middlewares/validacionMiddleware');
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware');
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware');
 const { uploadExamenArchivoSingle } = require('../middlewares/uploadExamenArchivoMiddleware');
 const { isValidDateOnly } = require('../utils/dateOnly');
 const {
@@ -78,7 +78,6 @@ router.get(
   '/:mascotaId',
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'recepcionista'),
-  requerirFuncionalidades('historias'),
   [param('mascotaId').isUUID().withMessage('Mascota no valida'), validar],
   listarExamenes
 );
@@ -87,7 +86,7 @@ router.post(
   '/:mascotaId',
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'recepcionista'),
-  requerirFuncionalidades('historias'),
+  requerirEscritura,
   uploadExamenArchivoSingle,
   validarCrearExamen,
   crearExamen
@@ -97,7 +96,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'recepcionista'),
-  requerirFuncionalidades('historias'),
+  requerirEscritura,
   uploadExamenArchivoSingle,
   validarEditarExamen,
   editarExamen
@@ -107,7 +106,7 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol('veterinario', 'admin', 'superadmin'),
-  requerirFuncionalidades('historias'),
+  requerirEscritura,
   [param('id').isUUID().withMessage('Examen no valido'), validar],
   eliminarExamen
 );

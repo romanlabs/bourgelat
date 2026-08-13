@@ -13,6 +13,7 @@ const {
   guardarOnboarding,
 } = require('../controllers/usuarioController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadUsuarioFotoSingle } = require('../middlewares/uploadUsuarioFotoMiddleware')
 
@@ -26,6 +27,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   [
     body('nombre')
       .trim()
@@ -59,6 +61,7 @@ router.post(
 router.patch(
   '/me',
   verificarToken,
+  requerirEscritura,
   [
     body('nombre')
       .optional()
@@ -79,11 +82,12 @@ router.patch(
   actualizarMiPerfil
 )
 
-router.post('/me/foto', verificarToken, uploadUsuarioFotoSingle, subirFotoMiPerfil)
+router.post('/me/foto', verificarToken, requerirEscritura, uploadUsuarioFotoSingle, subirFotoMiPerfil)
 
 router.patch(
   '/onboarding',
   verificarToken,
+  requerirEscritura,
   [
     body('usoPlanificado').trim().notEmpty().withMessage('Selecciona una opción').isLength({ max: 60 }),
     body('cargo').optional({ checkFalsy: true }).trim().isLength({ max: 120 }),
@@ -114,6 +118,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   [
     body('nombre')
       .optional()
@@ -138,6 +143,12 @@ router.put(
   editarUsuario
 )
 
-router.patch('/:id/toggle', verificarToken, verificarRol('admin', 'superadmin'), toggleUsuario)
+router.patch(
+  '/:id/toggle',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  toggleUsuario
+)
 
 module.exports = router

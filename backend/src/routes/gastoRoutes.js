@@ -5,7 +5,7 @@ const { body, query } = require('express-validator')
 
 const { crearGasto, listarGastos, anularGasto } = require('../controllers/gastoController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
@@ -13,7 +13,6 @@ const router = express.Router()
 // Registrar gastos: mismos roles que operan la caja. Ver y anular: solo admin
 // (el gasto afecta la rentabilidad reportada al dueño).
 const rolesRegistro = ['admin', 'superadmin', 'recepcionista', 'facturador']
-const requiereFacturacion = requerirFuncionalidades('facturacion_interna')
 
 const CATEGORIAS_GASTO = [
   'nomina',
@@ -33,7 +32,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol(...rolesRegistro),
-  requiereFacturacion,
+  requerirEscritura,
   [
     body('categoria').isIn(CATEGORIAS_GASTO).withMessage('Categoria no valida'),
     body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
@@ -49,7 +48,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin'),
-  requiereFacturacion,
   [
     query('fechaInicio').optional({ values: 'falsy' }).isISO8601().withMessage('Fecha inicio no valida'),
     query('fechaFin').optional({ values: 'falsy' }).isISO8601().withMessage('Fecha fin no valida'),
@@ -64,7 +62,7 @@ router.patch(
   '/:id/anular',
   verificarToken,
   verificarRol('admin', 'superadmin'),
-  requiereFacturacion,
+  requerirEscritura,
   [
     body('motivoAnulacion').trim().notEmpty().withMessage('El motivo de anulacion es obligatorio'),
     validar,

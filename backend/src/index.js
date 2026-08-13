@@ -9,6 +9,7 @@ const sequelize = require('./config/database')
 const { appConfig } = require('./config/app')
 const { runPendingMigrations } = require('./config/migrations')
 const { validateRuntimeConfig } = require('./config/validateRuntimeConfig')
+const { verificarRutasProtegidas } = require('./config/escrituraGuard')
 const { limitadorGeneral } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
@@ -170,6 +171,13 @@ app.use('/api/examenes-laboratorio', examenLaboratorioRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
 app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
 app.use('/api/superadmin', superadminRoutes)
+
+// Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin
+// el guard de escritura. En produccion no se ejecuta: el despliegue no es el
+// lugar para descubrirlo.
+if (!appConfig.isProduction) {
+  verificarRutasProtegidas()
+}
 
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {

@@ -164,7 +164,6 @@ function RestrictedAgendaPage() {
 
 export default function AgendaPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const suscripcion = useAuthStore((state) => state.suscripcion)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
@@ -185,16 +184,12 @@ export default function AgendaPage() {
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
-  const featureSet = new Set(
-    Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  )
-  const puedeVerAgenda = featureSet.has('citas')
+  // Todos los planes incluyen citas y reportes operativos.
+  const puedeVerAgenda = true
   const puedeProgramar = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario'])
   const puedeGestionarEstado = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario'])
   const puedeReprogramar = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista'])
-  const puedeVerAnalitica =
-    hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario']) &&
-    featureSet.has('reportes_operativos')
+  const puedeVerAnalitica = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
 
   useEffect(() => {
     document.title = 'Agenda | Bourgelat'

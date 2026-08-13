@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Clinica = require('./Clinica');
-const { PLAN_KEYS } = require('../config/planes')
+const { PLAN_KEYS, DEFAULT_INITIAL_PLAN } = require('../config/planes')
 
 const Suscripcion = sequelize.define('Suscripcion', {
   id: {
@@ -12,10 +12,12 @@ const Suscripcion = sequelize.define('Suscripcion', {
   plan: {
     type: DataTypes.ENUM(...PLAN_KEYS),
     allowNull: false,
-    defaultValue: 'inicio',
+    defaultValue: DEFAULT_INITIAL_PLAN,
   },
   estado: {
-    type: DataTypes.ENUM('activa', 'vencida', 'cancelada', 'prueba'),
+    // 'solo_lectura' es el destino al vencerse: la clinica conserva plan y
+    // datos, y solo pierde la escritura.
+    type: DataTypes.ENUM('activa', 'vencida', 'cancelada', 'prueba', 'solo_lectura'),
     allowNull: false,
     defaultValue: 'activa',
   },
@@ -60,6 +62,12 @@ const Suscripcion = sequelize.define('Suscripcion', {
     type: DataTypes.JSONB,
     defaultValue: [],
     comment: 'Lista de funcionalidades habilitadas segun el plan',
+  },
+  documentosDianIncluidos: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    comment: 'Documentos DIAN incluidos al mes por el add-on; 0 si no se compro',
   },
   clinicaId: {
     type: DataTypes.UUID,

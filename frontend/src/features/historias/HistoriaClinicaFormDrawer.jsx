@@ -195,11 +195,9 @@ export default function HistoriaClinicaFormDrawer({
   onSuccess,
 }) {
   const usuario = useAuthStore((s) => s.usuario)
-  const suscripcion = useAuthStore((s) => s.suscripcion)
-  const featureSet = new Set(Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : [])
-
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
-  const puedeConsultarInventarioClinico = featureSet.has('inventario')
+  // Todos los planes incluyen inventario.
+  const puedeConsultarInventarioClinico = true
 
   // ── Estado interno ──────────────────────────────────────────────────────────
   const [form, setForm] = useState(() => createDefaultForm(citaIdInicial))
