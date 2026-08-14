@@ -3,6 +3,10 @@ const sharp = require('sharp')
 const path = require('path')
 const crypto = require('crypto')
 const { ALLOWED_IMAGE_MIME_TYPES, getProductosUploadsDir } = require('../config/uploads')
+const {
+  verificarCupoAlmacenamiento,
+  registrarUsoAlmacenamiento,
+} = require('../services/almacenamientoService')
 
 const MAX_DIMENSION = 300
 
@@ -51,9 +55,24 @@ const uploadProductoFotoSingle = (req, res, next) => {
     }
 
     try {
+      const clinicaId = req.auth?.clinicaId || req.usuario?.clinicaId
+      const cupo = await verificarCupoAlmacenamiento(clinicaId, req.file.buffer.length)
+
+      if (!cupo.permitido) {
+        res.status(413).json({
+          message: `Tu plan incluye ${cupo.limiteMB} MB de almacenamiento y ya estan ocupados. Borra archivos que no uses para subir mas.`,
+          code: 'STORAGE_LIMIT_REACHED',
+          limiteMB: cupo.limiteMB,
+          usadoMB: cupo.usadoMB,
+        })
+        return
+      }
+
       const filename = `${Date.now()}-${crypto.randomUUID()}.webp`
 
-      await sharp(req.file.buffer)
+      // Se contabiliza el peso del archivo ya convertido, no el del original:
+      // es lo que realmente ocupa en disco.
+      const { size } = await sharp(req.file.buffer)
         .resize({
           width: MAX_DIMENSION,
           height: MAX_DIMENSION,
@@ -62,6 +81,8 @@ const uploadProductoFotoSingle = (req, res, next) => {
         })
         .webp({ quality: 75 })
         .toFile(path.join(getProductosUploadsDir(), filename))
+
+      await registrarUsoAlmacenamiento(clinicaId, size)
 
       req.file.filename = filename
       next()

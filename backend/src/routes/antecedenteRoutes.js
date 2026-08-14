@@ -3,7 +3,7 @@ const { body, param } = require('express-validator');
 const router = express.Router();
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
 const { validar } = require('../middlewares/validacionMiddleware');
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware');
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware');
 const { isValidDateOnly } = require('../utils/dateOnly');
 const {
   obtenerOCrearAntecedentes,
@@ -186,13 +186,13 @@ const validarGenerales = [
   validar,
 ];
 
-router.get('/:mascotaId', verificarToken, verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'), requerirFuncionalidades('antecedentes'), validarMascotaId, obtenerOCrearAntecedentes);
-router.post('/:mascotaId/alergia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarAlergia, agregarAlergia);
-router.post('/:mascotaId/cirugia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarCirugia, agregarCirugia);
-router.post('/:mascotaId/vacuna', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarVacuna, agregarVacuna);
-router.post('/:mascotaId/desparasitacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarDesparasitacion, agregarDesparasitacion);
-router.post('/:mascotaId/planificacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarPlanificacion, agregarPlanificacion);
-router.post('/:mascotaId/condicion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarCondicion, agregarCondicionCronica);
-router.put('/:mascotaId/generales', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirFuncionalidades('antecedentes'), validarGenerales, actualizarGenerales);
+router.get('/:mascotaId', verificarToken, verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'), validarMascotaId, obtenerOCrearAntecedentes);
+router.post('/:mascotaId/alergia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarAlergia, agregarAlergia);
+router.post('/:mascotaId/cirugia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarCirugia, agregarCirugia);
+router.post('/:mascotaId/vacuna', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarVacuna, agregarVacuna);
+router.post('/:mascotaId/desparasitacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarDesparasitacion, agregarDesparasitacion);
+router.post('/:mascotaId/planificacion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarPlanificacion, agregarPlanificacion);
+router.post('/:mascotaId/condicion', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarCondicion, agregarCondicionCronica);
+router.put('/:mascotaId/generales', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarGenerales, actualizarGenerales);
 
 module.exports = router;

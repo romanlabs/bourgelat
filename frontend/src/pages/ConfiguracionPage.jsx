@@ -24,6 +24,7 @@ import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 
 const PERSON_TYPE_OPTIONS = [
   { value: 'persona_juridica', label: 'Persona jurídica' },
@@ -1418,8 +1419,7 @@ export default function ConfiguracionPage() {
   const setClinica = useAuthStore((state) => state.setClinica)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
-  const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  const puedeVerFacturacionElectronica = funcionalidades.includes('facturacion_electronica')
+  const puedeVerFacturacionElectronica = tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
   const puedeEditarFacturacionElectronica = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   useEffect(() => {

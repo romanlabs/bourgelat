@@ -10,10 +10,9 @@ const {
 } = require('../controllers/servicioClinicoController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 
 const router = express.Router()
-const requiereInventario = requerirFuncionalidades('inventario')
 
 const validarIdServicio = [
   param('id').isUUID().withMessage('Servicio no valido'),
@@ -59,7 +58,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarCreacionServicio,
   crearServicio
 )
@@ -68,7 +67,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario', 'facturador', 'recepcionista'),
-  requiereInventario,
   validarConsultaServicios,
   obtenerServicios
 )
@@ -77,7 +75,6 @@ router.get(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario', 'facturador', 'recepcionista'),
-  requiereInventario,
   validarIdServicio,
   obtenerServicio
 )
@@ -86,7 +83,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarEdicionServicio,
   editarServicio
 )
@@ -95,7 +92,7 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarIdServicio,
   eliminarServicio
 )

@@ -13,10 +13,9 @@ const {
 } = require('../controllers/insumoClinicoController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 
 const router = express.Router()
-const requiereInventario = requerirFuncionalidades('inventario')
 const categoriasValidas = ['medicamento', 'vacuna', 'insumo', 'antiparasitario', 'suplemento', 'otro']
 const tiposMovimientoValidos = ['entrada', 'salida', 'ajuste']
 const motivosMovimientoValidos = [
@@ -95,7 +94,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarCreacionInsumo,
   crearInsumo
 )
@@ -104,7 +103,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario', 'recepcionista', 'facturador'),
-  requiereInventario,
   validarConsultaInsumos,
   obtenerInsumos
 )
@@ -113,7 +111,6 @@ router.get(
   '/movimientos',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
   validarConsultaMovimientos,
   obtenerMovimientosClinicos
 )
@@ -122,7 +119,6 @@ router.get(
   '/alertas',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
   obtenerAlertas
 )
 
@@ -130,7 +126,6 @@ router.get(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
   validarIdInsumo,
   obtenerInsumo
 )
@@ -139,7 +134,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarEdicionInsumo,
   editarInsumo
 )
@@ -148,7 +143,7 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarIdInsumo,
   eliminarInsumo
 )
@@ -157,7 +152,7 @@ router.post(
   '/:id/movimiento',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
+  requerirEscritura,
   validarMovimiento,
   registrarMovimientoClinico
 )

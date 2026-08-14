@@ -123,18 +123,14 @@ function RestrictedInventoryPage() {
 
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const suscripcion = useAuthStore((state) => state.suscripcion)
 
   const [activeTab, setActiveTab] = useState('resumen')
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(null) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
-  const puedeVerInventario =
-    rolPermitido &&
-    Array.isArray(suscripcion?.funcionalidades) &&
-    suscripcion.funcionalidades.includes('inventario') &&
-    suscripcion.funcionalidades.includes('reportes_operativos')
+  // Todos los planes incluyen inventario y reportes operativos.
+  const puedeVerInventario = rolPermitido
 
   const resumenHook = useInventarioResumen({ enabled: puedeVerInventario })
 

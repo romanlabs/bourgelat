@@ -6,12 +6,14 @@ const {
   DEFAULT_INITIAL_PLAN,
   formatDateOnly,
   construirSuscripcion,
-  crearSuscripcionEsencial,
 } = require('../config/planes')
 const Suscripcion = require('../models/Suscripcion')
 const Clinica = require('../models/Clinica')
-
-const ESTADOS_VIGENTES = ['activa', 'prueba']
+const {
+  obtenerSuscripcionActivaClinica,
+  calcularDiasRestantes,
+  ESTADOS_VIGENTES,
+} = require('../services/suscripcionService')
 
 const asegurarClinicaExiste = async (clinicaId, transaction) => {
   const clinica = await Clinica.findOne({ where: { id: clinicaId }, transaction })
@@ -21,64 +23,6 @@ const asegurarClinicaExiste = async (clinicaId, transaction) => {
   }
 
   return clinica
-}
-
-const obtenerSuscripcionVigente = async (clinicaId, transaction) =>
-  Suscripcion.findOne({
-    where: {
-      clinicaId,
-      estado: {
-        [Op.in]: ESTADOS_VIGENTES,
-      },
-    },
-    order: [['createdAt', 'DESC']],
-    transaction,
-  })
-
-const asegurarPlanEsencial = async (clinicaId, transaction) => {
-  const existente = await Suscripcion.findOne({
-    where: {
-      clinicaId,
-      plan: DEFAULT_INITIAL_PLAN,
-      estado: 'activa',
-    },
-    order: [['createdAt', 'DESC']],
-    transaction,
-  })
-
-  if (existente) {
-    return existente
-  }
-
-  return Suscripcion.create(crearSuscripcionEsencial(clinicaId), { transaction })
-}
-
-const expirarYNormalizarSuscripcion = async (suscripcion, transaction) => {
-  if (!suscripcion) {
-    return null
-  }
-
-  const hoy = formatDateOnly()
-
-  if (suscripcion.fechaFin >= hoy) {
-    return {
-      suscripcion,
-      downgraded: false,
-      advertencia:
-        suscripcion.estado === 'prueba'
-          ? `La activacion temporal termina el ${suscripcion.fechaFin}`
-          : null,
-    }
-  }
-
-  await suscripcion.update({ estado: 'vencida' }, { transaction })
-  const planEsencial = await asegurarPlanEsencial(suscripcion.clinicaId, transaction)
-
-  return {
-    suscripcion: planEsencial,
-    downgraded: true,
-    advertencia: 'La suscripcion anterior vencio y la clinica continuo en Esencial.',
-  }
 }
 
 const crearSuscripcion = async (req, res) => {
@@ -167,41 +111,18 @@ const obtenerSuscripcionActiva = async (req, res) => {
     const { clinicaId } = req.usuario
 
     const resultado = await sequelize.transaction(async (transaction) => {
-      const suscripcionVigente = await obtenerSuscripcionVigente(clinicaId, transaction)
+      const { suscripcion, advertencia } = await obtenerSuscripcionActivaClinica(clinicaId, {
+        transaction,
+      })
 
-      if (!suscripcionVigente) {
-        const planEsencial = await asegurarPlanEsencial(clinicaId, transaction)
-        return {
-          suscripcion: planEsencial,
-          diasRestantes: null,
-          advertencia: 'No existia una suscripcion vigente y se activo Esencial.',
-        }
-      }
-
-      const normalizada = await expirarYNormalizarSuscripcion(
-        suscripcionVigente,
-        transaction
-      )
-
-      const diasRestantes =
-        normalizada.suscripcion.plan === 'inicio'
-          ? null
-          : Math.max(
-              0,
-              Math.ceil(
-                (new Date(normalizada.suscripcion.fechaFin) - new Date()) /
-                  (1000 * 60 * 60 * 24)
-              )
-            )
+      const diasRestantes = calcularDiasRestantes({ suscripcion, hoy: formatDateOnly() })
 
       return {
-        suscripcion: normalizada.suscripcion,
+        suscripcion,
         diasRestantes,
         advertencia:
-          normalizada.advertencia ||
-          (diasRestantes !== null && diasRestantes <= 7
-            ? 'Tu suscripcion vence pronto'
-            : null),
+          advertencia ||
+          (diasRestantes !== null && diasRestantes <= 7 ? 'Tu suscripcion vence pronto' : null),
       }
     })
 
@@ -240,22 +161,12 @@ const cancelarSuscripcion = async (req, res) => {
 
       await suscripcion.update({ estado: 'cancelada' }, { transaction })
 
-      let suscripcionReemplazo = null
-
-      if (suscripcion.plan !== 'inicio') {
-        suscripcionReemplazo = await asegurarPlanEsencial(
-          suscripcion.clinicaId,
-          transaction
-        )
-      }
-
-      return { suscripcion, suscripcionReemplazo }
+      return { suscripcion }
     })
 
     res.json({
       message: 'Suscripcion cancelada exitosamente',
       suscripcion: resultado.suscripcion,
-      reemplazo: resultado.suscripcionReemplazo,
     })
   } catch (error) {
     if (error.message === 'Suscripcion no encontrada') {

@@ -7,6 +7,7 @@ const {
   actualizarConsultorio,
 } = require('../controllers/consultorioController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
@@ -26,6 +27,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol(...rolesEscritura),
+  requerirEscritura,
   [
     body('nombre').trim().notEmpty().withMessage('El nombre es obligatorio').isLength({ max: 120 }),
     body('descripcion').optional({ values: 'falsy' }).trim().isLength({ max: 300 }),
@@ -38,6 +40,7 @@ router.patch(
   '/:id',
   verificarToken,
   verificarRol(...rolesEscritura),
+  requerirEscritura,
   [
     param('id').isUUID().withMessage('Consultorio no valido'),
     body('nombre').optional().trim().notEmpty().withMessage('El nombre no puede estar vacio').isLength({ max: 120 }),

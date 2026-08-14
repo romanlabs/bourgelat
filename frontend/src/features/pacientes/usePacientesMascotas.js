@@ -28,7 +28,7 @@ const SPECIES_LABELS = {
   otro: 'Otros',
 }
 
-export function usePacientesMascotas({ enabled, featureSet }) {
+export function usePacientesMascotas({ enabled }) {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const buscarParam = searchParams.get('tab') === 'pacientes' ? searchParams.get('buscar') : null
@@ -90,8 +90,9 @@ export function usePacientesMascotas({ enabled, featureSet }) {
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el paciente.')),
   })
 
-  const historiasDisponibles = featureSet.has('historias')
-  const antecedentesDisponibles = featureSet.has('antecedentes')
+  // Todos los planes incluyen historias y antecedentes.
+  const historiasDisponibles = true
+  const antecedentesDisponibles = true
 
   const mascotasRows = useMemo(
     () =>

@@ -44,6 +44,7 @@ import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
 import ReporteDescuadresPanel from '@/features/caja/ReporteDescuadresPanel'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { hasAnyRole } from '@/lib/permissions'
+import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
 
 const TABS = [
@@ -106,15 +107,13 @@ export default function FinanzasPage() {
     'auxiliar',
     'veterinario',
   ])
-  const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  const puedeVerFinanzas =
-    rolPermitido &&
-    funcionalidades.includes('facturacion_interna') &&
-    funcionalidades.includes('reportes_operativos')
-  const puedeConsultarInventario = puedeVerFinanzas && funcionalidades.includes('inventario')
+  // Todos los planes traen caja, facturación interna, inventario y reportes.
+  // La única funcionalidad que se compra aparte es la DIAN.
+  const puedeVerFinanzas = rolPermitido
+  const puedeConsultarInventario = puedeVerFinanzas
   const puedeEmitirElectronica =
     puedeVerFinanzas &&
-    funcionalidades.includes('facturacion_electronica') &&
+    tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN) &&
     hasAnyRole(usuario, ['admin', 'superadmin', 'facturador'])
   const puedeAnular = hasAnyRole(usuario, ['admin', 'superadmin'])
   const esAdminCaja = hasAnyRole(usuario, ['admin', 'superadmin'])

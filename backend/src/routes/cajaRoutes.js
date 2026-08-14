@@ -12,12 +12,11 @@ const {
   obtenerReporteDescuadres,
 } = require('../controllers/cajaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
 const rolesCaja = ['admin', 'superadmin', 'recepcionista', 'facturador']
-const requiereCaja = requerirFuncionalidades('facturacion_interna')
 
 const MOTIVOS_MOVIMIENTO_CAJA = [
   'fondo_adicional',
@@ -41,7 +40,7 @@ router.post(
   '/turnos/abrir',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
+  requerirEscritura,
   [
     body('montoInicial').isFloat({ min: 0 }).withMessage('Monto inicial invalido'),
     validar,
@@ -53,7 +52,6 @@ router.get(
   '/turnos/activo',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
   obtenerTurnoActivo
 )
 
@@ -61,7 +59,6 @@ router.get(
   '/turnos/historial',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
   [
     query('usuarioId').optional({ values: 'falsy' }).isUUID().withMessage('Usuario no valido'),
     query('fechaInicio').optional({ values: 'falsy' }).isISO8601().withMessage('Fecha inicio no valida'),
@@ -75,7 +72,6 @@ router.get(
   '/turnos/reporte-descuadres',
   verificarToken,
   verificarRol('admin', 'superadmin'),
-  requiereCaja,
   [
     query('usuarioId').optional({ values: 'falsy' }).isUUID().withMessage('Usuario no valido'),
     query('fechaInicio').optional({ values: 'falsy' }).isISO8601().withMessage('Fecha inicio no valida'),
@@ -89,7 +85,7 @@ router.post(
   '/turnos/movimientos',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
+  requerirEscritura,
   [
     body('tipo').isIn(['ingreso', 'egreso']).withMessage('Tipo de movimiento no valido'),
     body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
@@ -104,7 +100,7 @@ router.patch(
   '/turnos/cerrar',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
+  requerirEscritura,
   [
     body('montoFinalContado').isFloat({ min: 0 }).withMessage('Monto final invalido'),
     body('observacionesCierre').optional({ values: 'falsy' }).trim(),
@@ -121,7 +117,6 @@ router.get(
   '/turnos/:turnoId/movimientos',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
   listarMovimientosTurno
 )
 
@@ -129,7 +124,6 @@ router.get(
   '/turnos/:turnoId',
   verificarToken,
   verificarRol(...rolesCaja),
-  requiereCaja,
   obtenerDetalleTurno
 )
 

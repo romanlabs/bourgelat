@@ -4,6 +4,7 @@ const {
   getExamenesUploadsDir,
   generateUploadFilename,
 } = require('../config/uploads')
+const { aplicarCupoDeArchivoEnDisco } = require('./cupoArchivoDiscoHelper')
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -31,29 +32,45 @@ const uploadExamenArchivo = multer({
 })
 
 const uploadExamenArchivoSingle = (req, res, next) => {
-  uploadExamenArchivo.single('archivo')(req, res, (error) => {
-    if (!error) {
-      next()
-      return
-    }
+  uploadExamenArchivo.single('archivo')(req, res, async (error) => {
+    if (error) {
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          res.status(400).json({
+            message: 'El archivo supera el tamano maximo permitido de 8 MB.',
+          })
+          return
+        }
 
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
         res.status(400).json({
-          message: 'El archivo supera el tamano maximo permitido de 8 MB.',
+          message: 'Solo se permiten archivos PDF, JPG, PNG o WEBP para el examen.',
         })
         return
       }
 
       res.status(400).json({
-        message: 'Solo se permiten archivos PDF, JPG, PNG o WEBP para el examen.',
+        message: error.message || 'No fue posible cargar el archivo del examen.',
       })
       return
     }
 
-    res.status(400).json({
-      message: error.message || 'No fue posible cargar el archivo del examen.',
-    })
+    if (!req.file) {
+      next()
+      return
+    }
+
+    try {
+      const puedeContinuar = await aplicarCupoDeArchivoEnDisco(req, res)
+      if (!puedeContinuar) {
+        return
+      }
+
+      next()
+    } catch (cupoError) {
+      res.status(500).json({
+        message: 'No fue posible validar el espacio disponible.',
+      })
+    }
   })
 }
 
