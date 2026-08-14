@@ -47,6 +47,8 @@ export function buildStateTone(estado) {
       return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
     case 'en_espera':
       return 'border-violet-400 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-600'
+    case 'en_atencion':
+      return 'border-fuchsia-400 bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-200 dark:border-fuchsia-600'
     case 'completada':
       return 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-600'
     case 'cancelada':
@@ -62,6 +64,7 @@ export function getAccentColor(estado) {
   switch (estado) {
     case 'programada':  return '#93c5fd'
     case 'en_espera':   return '#a78bfa'
+    case 'en_atencion': return '#e879f9'
     case 'completada':  return '#34d399'
     case 'cancelada':   return '#f87171'
     case 'no_asistio':  return '#fbbf24'
@@ -104,6 +107,7 @@ export function especieToEmoji(especie) {
 export const STATUS_OPTIONS = [
   { value: 'programada', label: 'Programada' },
   { value: 'en_espera', label: 'En espera' },
+  { value: 'en_atencion', label: 'En atención' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
   { value: 'no_asistio', label: 'No asistió' },

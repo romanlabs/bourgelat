@@ -9,6 +9,7 @@ const sequelize = require('./config/database')
 const { appConfig } = require('./config/app')
 const { runPendingMigrations } = require('./config/migrations')
 const { validateRuntimeConfig } = require('./config/validateRuntimeConfig')
+const { verificarRutasProtegidas } = require('./config/escrituraGuard')
 const { limitadorGeneral } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
@@ -133,6 +134,7 @@ const clinicaRoutes = require('./routes/clinicaRoutes')
 const propietarioRoutes = require('./routes/propietarioRoutes')
 const mascotaRoutes = require('./routes/mascotaRoutes')
 const citaRoutes = require('./routes/citaRoutes')
+const consultorioRoutes = require('./routes/consultorioRoutes')
 const historiaClinicaRoutes = require('./routes/historiaClinicaRoutes')
 const inventarioRoutes = require('./routes/inventarioRoutes')
 const insumoClinicoRoutes = require('./routes/insumoClinicoRoutes')
@@ -155,6 +157,7 @@ app.use('/api/clinica', clinicaRoutes)
 app.use('/api/propietarios', propietarioRoutes)
 app.use('/api/mascotas', mascotaRoutes)
 app.use('/api/citas', citaRoutes)
+app.use('/api/consultorios', consultorioRoutes)
 app.use('/api/historias', historiaClinicaRoutes)
 app.use('/api/inventario', inventarioRoutes)
 app.use('/api/inventario-clinico', insumoClinicoRoutes)
@@ -170,6 +173,13 @@ app.use('/api/examenes-laboratorio', examenLaboratorioRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
 app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
 app.use('/api/superadmin', superadminRoutes)
+
+// Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin
+// el guard de escritura. En produccion no se ejecuta: el despliegue no es el
+// lugar para descubrirlo.
+if (!appConfig.isProduction) {
+  verificarRutasProtegidas()
+}
 
 // ── Ruta base ──────────────────────────────────────────────
 app.get('/', (req, res) => {

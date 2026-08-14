@@ -1,39 +1,50 @@
+// Las cuatro primeras son la oferta vigente. Las tres ultimas son legado: no se
+// ofrecen, pero el historial de suscripciones todavia las contiene y sin su
+// etiqueta las filas viejas se verian con la llave cruda.
 export const PLAN_META = {
-  inicio: {
-    nombre: 'Esencial',
-    tone: 'bg-slate-100 text-slate-700 border-slate-200',
-    accent: '#0f172a',
+  prueba: {
+    nombre: 'Prueba',
+    tone: 'bg-sky-50 text-sky-700 border-sky-200',
+    accent: '#0369a1',
   },
-  clinica: {
-    nombre: 'Clinica',
+  activo: {
+    nombre: 'Bourgelat',
     tone: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     accent: '#0f766e',
   },
-  profesional: {
-    nombre: 'Profesional',
-    tone: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    accent: '#0f4c81',
+  cortesia: {
+    nombre: 'Cortesía',
+    tone: 'bg-violet-50 text-violet-700 border-violet-200',
+    accent: '#6d28d9',
   },
   personalizado: {
     nombre: 'Personalizado',
     tone: 'bg-amber-50 text-amber-700 border-amber-200',
     accent: '#92400e',
   },
+  inicio: {
+    nombre: 'Esencial (legado)',
+    tone: 'bg-slate-100 text-slate-700 border-slate-200',
+    accent: '#0f172a',
+  },
+  clinica: {
+    nombre: 'Clinica (legado)',
+    tone: 'bg-slate-100 text-slate-700 border-slate-200',
+    accent: '#0f172a',
+  },
+  profesional: {
+    nombre: 'Profesional (legado)',
+    tone: 'bg-slate-100 text-slate-700 border-slate-200',
+    accent: '#0f172a',
+  },
 }
 
+// Bajo el modelo de plan único todos los planes traen agenda, historias,
+// antecedentes, pacientes, roles, inventario, caja y reportes. Listarlos sería
+// una tabla de doce filas siempre en verde. Aquí solo va lo que se compra
+// aparte y por lo tanto puede variar entre clínicas.
 export const FEATURE_LABELS = {
-  citas: 'Agenda y citas',
-  historias: 'Historias clínicas',
-  antecedentes: 'Antecedentes',
-  propietarios: 'Tutores y propietarios',
-  mascotas: 'Pacientes y fichas',
-  roles_base: 'Roles base del equipo',
-  inventario: 'Inventario clínico',
-  facturacion_interna: 'Caja y facturación',
   facturacion_electronica: 'Facturación electrónica',
-  reportes_operativos: 'Reportes operativos',
-  reportes_completos: 'Reportes completos',
-  exportables: 'Exportables',
   acompanamiento_migracion: 'Acompañamiento de migración',
   soporte_prioritario_comercial: 'Soporte prioritario comercial',
 }
@@ -52,6 +63,7 @@ export const PAYMENT_METHOD_LABELS = {
 export const CITA_ESTADO_LABELS = {
   programada: 'Programadas',
   en_espera: 'En espera',
+  en_atencion: 'En atención',
   completada: 'Completadas',
   cancelada: 'Canceladas',
   no_asistio: 'No asistió',

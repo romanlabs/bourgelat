@@ -26,6 +26,16 @@ export const antecedentesApi = {
     return data
   },
 
+  async agregarDesparasitacion(mascotaId, payload) {
+    const { data } = await api.post(`/antecedentes/${mascotaId}/desparasitacion`, payload)
+    return data
+  },
+
+  async agregarPlanificacion(mascotaId, payload) {
+    const { data } = await api.post(`/antecedentes/${mascotaId}/planificacion`, payload)
+    return data
+  },
+
   async agregarCondicion(mascotaId, payload) {
     const { data } = await api.post(`/antecedentes/${mascotaId}/condicion`, payload)
     return data

@@ -105,7 +105,7 @@ const labelCls = 'block text-xs font-semibold uppercase tracking-[0.14em] text-m
 
 function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubmit, isLoading, error }) {
   const [form, setForm] = useState({
-    plan: 'clinica',
+    plan: 'activo',
     estado: 'activa',
     fechaInicio: todayISO(),
     fechaFin: nextYearISO(),
@@ -116,7 +116,10 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
 
   useEffect(() => {
     if (!clinica) return
-    const planActual = clinica.plan && clinica.plan !== 'inicio' ? clinica.plan : 'clinica'
+    // Si la clinica esta en prueba o cortesia, el plan a asignar es el pago.
+    const PLANES_NO_ASIGNABLES = ['prueba', 'cortesia', 'inicio']
+    const planActual =
+      clinica.plan && !PLANES_NO_ASIGNABLES.includes(clinica.plan) ? clinica.plan : 'activo'
     const precioSugerido = catalogoPlanes?.[planActual]?.precioMensual ?? ''
     setForm({
       plan: planActual,

@@ -12,9 +12,11 @@ const STATUS_MAP = {
   // ── Citas ─────────────────────────────────────────────────────
   programada:  { label: 'Programada',  colors: 'bg-warm-100    border-warm-300    text-warm-700',    dot: 'bg-warm-400'     },
   en_espera:   { label: 'En espera',   colors: 'bg-blue-100    border-blue-300    text-blue-700',    dot: 'bg-blue-500'     },
+  en_atencion: { label: 'En atención', colors: 'bg-violet-100  border-violet-300  text-violet-700',  dot: 'bg-violet-500'   },
   completada:  { label: 'Completada',  colors: 'bg-warm-100    border-warm-200    text-warm-600',    dot: 'bg-warm-400'     },
   cancelada:   { label: 'Cancelada',   colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
   no_asistio:  { label: 'No asistió',  colors: 'bg-orange-50   border-orange-200  text-orange-600',  dot: 'bg-orange-400'   },
+  atrasada:    { label: 'Atrasada',    colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
 
   // ── Facturas ──────────────────────────────────────────────────
   pendiente:   { label: 'Pendiente',   colors: 'bg-amber-50    border-amber-200   text-amber-700',   dot: 'bg-amber-400'    },

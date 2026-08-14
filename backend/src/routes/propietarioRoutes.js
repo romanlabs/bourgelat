@@ -2,13 +2,14 @@ const express = require('express')
 const router = express.Router()
 const { body } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const {
   crearPropietario, obtenerPropietarios,
   obtenerPropietario, editarPropietario,
 } = require('../controllers/propietarioController')
 
-router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), [
+router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), requerirEscritura, [
   body('nombre').notEmpty().withMessage('El nombre es obligatorio').trim(),
   body('numeroDocumento').notEmpty().withMessage('El número de documento es obligatorio').trim(),
   body('telefono').notEmpty().withMessage('El teléfono es obligatorio').trim(),
@@ -20,7 +21,7 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
 router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario', 'facturador'), obtenerPropietarios)
 router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario', 'facturador'), obtenerPropietario)
 
-router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), [
+router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), requerirEscritura, [
   body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
   body('telefono').optional().notEmpty().withMessage('El teléfono no puede estar vacío').trim(),
   validar,

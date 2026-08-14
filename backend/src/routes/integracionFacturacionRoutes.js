@@ -8,7 +8,7 @@ const {
   probarConexionFactus,
 } = require('../controllers/integracionFacturacionController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura, requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
@@ -26,6 +26,7 @@ router.put(
   '/factus',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   requiereFacturacionElectronica,
   [
     body('ambiente')
@@ -49,6 +50,7 @@ router.post(
   '/factus/sincronizar',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   requiereFacturacionElectronica,
   sincronizarFactus
 )
@@ -57,6 +59,7 @@ router.post(
   '/factus/probar',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requerirEscritura,
   requiereFacturacionElectronica,
   probarConexionFactus
 )

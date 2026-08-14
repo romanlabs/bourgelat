@@ -14,6 +14,7 @@ import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtil
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
+import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
@@ -122,18 +123,14 @@ function RestrictedInventoryPage() {
 
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const suscripcion = useAuthStore((state) => state.suscripcion)
 
   const [activeTab, setActiveTab] = useState('resumen')
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(null) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
-  const puedeVerInventario =
-    rolPermitido &&
-    Array.isArray(suscripcion?.funcionalidades) &&
-    suscripcion.funcionalidades.includes('inventario') &&
-    suscripcion.funcionalidades.includes('reportes_operativos')
+  // Todos los planes incluyen inventario y reportes operativos.
+  const puedeVerInventario = rolPermitido
 
   const resumenHook = useInventarioResumen({ enabled: puedeVerInventario })
 
@@ -184,7 +181,6 @@ export default function InventarioPage() {
   const { resumen, categoriasData, alertsRows, reporteQuery, alertasQuery } = resumenHook
   const {
     productosQuery,
-    productosSelectorQuery,
     productosRows,
     buscar, setBuscar,
     categoria, setCategoria,
@@ -777,22 +773,13 @@ export default function InventarioPage() {
                       <label htmlFor="mov-producto" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Producto *
                       </label>
-                      <select
+                      <ProductoComboBox
                         id="mov-producto"
                         value={movementForm.productoId}
-                        onChange={(e) => {
-                          const prod = (productosSelectorQuery.data?.productos || []).find((p) => p.id === e.target.value)
-                          selectProduct(prod || { id: e.target.value })
-                        }}
-                        className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                      >
-                        <option value="">Selecciona un producto</option>
-                        {(productosSelectorQuery.data?.productos || []).map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.nombre} — Cantidad: {p.stock}
-                          </option>
-                        ))}
-                      </select>
+                        productoSeleccionado={selectedProduct}
+                        onChange={(id, producto) => selectProduct(producto || { id })}
+                        placeholder="Selecciona un producto"
+                      />
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -1241,7 +1228,8 @@ export default function InventarioPage() {
         actualizarItem={facturaCompraHook.actualizarItem}
         eliminarItem={facturaCompraHook.eliminarItem}
         totalCalculado={facturaCompraHook.totalCalculado}
-        productosSelector={productosSelectorQuery.data?.productos || []}
+        toggleItemEsNuevo={facturaCompraHook.toggleItemEsNuevo}
+        actualizarItemProductoNuevo={facturaCompraHook.actualizarItemProductoNuevo}
         errorMsg={facturaCompraHook.errorMsg}
       />
 

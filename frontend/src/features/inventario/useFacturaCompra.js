@@ -9,6 +9,7 @@ import {
   marcarComoPagada,
   obtenerAlertasCompra,
 } from './facturaCompraApi'
+import { inventarioApi } from './inventarioApi'
 import { getErrorMessage, invalidateInventarioQueries } from './inventarioUtils'
 
 export const ESTADO_FACTURA_COMPRA = [
@@ -24,7 +25,15 @@ export const ESTADO_COLORS = {
   anulada: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 }
 
-const ITEMS_VACIO = () => [{ productoId: '', cantidad: 1, precioUnitario: 0 }]
+const ITEM_VACIO = () => ({
+  esNuevo: false,
+  productoId: '',
+  productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
+  cantidad: 1,
+  precioUnitario: 0,
+})
+
+const ITEMS_VACIO = () => [ITEM_VACIO()]
 
 const FORM_INICIAL = {
   proveedor: '',
@@ -89,6 +98,10 @@ export function useFacturaCompra() {
     },
   })
 
+  const crearProductoInlineMutation = useMutation({
+    mutationFn: inventarioApi.crearProducto,
+  })
+
   const abrirNueva = useCallback(() => {
     setEditingFactura(null)
     setForm(FORM_INICIAL)
@@ -105,7 +118,10 @@ export function useFacturaCompra() {
       tipoPago: factura.fechaPagoFinal ? 'credito' : 'contado',
       fechaPagoFinal: factura.fechaPagoFinal || '',
       items: factura.items.map((i) => ({
+        esNuevo: false,
         productoId: i.productoId,
+        producto: i.producto,
+        productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
         cantidad: i.cantidad,
         precioUnitario: Number(i.precioUnitario),
       })),
@@ -120,13 +136,36 @@ export function useFacturaCompra() {
   }, [])
 
   const submitForm = useCallback(async () => {
+    // Resuelve productoId real para los ítems marcados como "nuevo", creando
+    // el producto en el catálogo antes de guardar la factura. Se hace en
+    // secuencia (no Promise.all) para poder ir actualizando form.items y no
+    // volver a crear productos ya creados si algo falla a mitad de camino.
+    let itemsResueltos = form.items
+    for (let idx = 0; idx < itemsResueltos.length; idx += 1) {
+      const item = itemsResueltos[idx]
+      if (!item.esNuevo) continue
+
+      const producto = await crearProductoInlineMutation.mutateAsync({
+        nombre: item.productoNuevo.nombre.trim(),
+        categoria: item.productoNuevo.categoria,
+        unidadMedida: item.productoNuevo.unidadMedida,
+        precioCompra: Number(item.precioUnitario) || 0,
+        stock: 0,
+      })
+
+      itemsResueltos = itemsResueltos.map((it, i) =>
+        i === idx ? { ...it, esNuevo: false, productoId: producto.producto?.id ?? producto.id } : it
+      )
+      setForm((f) => ({ ...f, items: itemsResueltos }))
+    }
+
     const payload = {
       ...form,
       numero: form.numero || undefined,
       observaciones: form.observaciones || undefined,
       fechaPagoFinal: form.tipoPago === 'credito' ? form.fechaPagoFinal || undefined : undefined,
       tipoPago: undefined,
-      items: form.items.map((i) => ({
+      items: itemsResueltos.map((i) => ({
         productoId: i.productoId,
         cantidad: Number(i.cantidad),
         precioUnitario: Number(i.precioUnitario),
@@ -139,7 +178,7 @@ export function useFacturaCompra() {
       await mutCrear.mutateAsync(payload)
     }
     cerrarDrawer()
-  }, [form, editingFactura, mutCrear, mutEditar, cerrarDrawer])
+  }, [form, editingFactura, mutCrear, mutEditar, cerrarDrawer, crearProductoInlineMutation])
 
   const pedirConfirmar = useCallback((facturaId) => {
     setConfirmDialog({ open: true, tipo: 'confirmar', facturaId })
@@ -167,7 +206,7 @@ export function useFacturaCompra() {
 
   // Helpers para gestionar ítems en el form
   const agregarItem = useCallback(() => {
-    setForm((f) => ({ ...f, items: [...f.items, { productoId: '', cantidad: 1, precioUnitario: 0 }] }))
+    setForm((f) => ({ ...f, items: [...f.items, ITEM_VACIO()] }))
   }, [])
 
   const actualizarItem = useCallback((idx, campo, valor) => {
@@ -180,6 +219,31 @@ export function useFacturaCompra() {
       })
       return { ...f, items }
     })
+  }, [])
+
+  const actualizarItemProductoNuevo = useCallback((idx, campo, valor) => {
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((item, i) =>
+        i === idx ? { ...item, productoNuevo: { ...item.productoNuevo, [campo]: valor } } : item
+      ),
+    }))
+  }, [])
+
+  const toggleItemEsNuevo = useCallback((idx) => {
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              esNuevo: !item.esNuevo,
+              productoId: '',
+              productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
+            }
+          : item
+      ),
+    }))
   }, [])
 
   const eliminarItem = useCallback((idx) => {
@@ -196,9 +260,10 @@ export function useFacturaCompra() {
     getErrorMessage(mutEditar.error, null) ||
     getErrorMessage(mutConfirmar.error, null) ||
     getErrorMessage(mutAnular.error, null) ||
-    getErrorMessage(mutPagar.error, null)
+    getErrorMessage(mutPagar.error, null) ||
+    getErrorMessage(crearProductoInlineMutation.error, null)
 
-  const isSaving = mutCrear.isPending || mutEditar.isPending
+  const isSaving = mutCrear.isPending || mutEditar.isPending || crearProductoInlineMutation.isPending
 
   const alertasCompra = {
     vencidas: alertasData?.vencidas?.facturas ?? [],
@@ -234,6 +299,8 @@ export function useFacturaCompra() {
     // Items
     agregarItem,
     actualizarItem,
+    actualizarItemProductoNuevo,
+    toggleItemEsNuevo,
     eliminarItem,
     totalCalculado,
     // Confirmar / Anular / Pagar

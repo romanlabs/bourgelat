@@ -20,9 +20,11 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { configuracionApi } from '@/features/configuracion/configuracionApi'
+import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 
 const PERSON_TYPE_OPTIONS = [
   { value: 'persona_juridica', label: 'Persona jurídica' },
@@ -371,6 +373,7 @@ function ConfiguracionContent({
   const sectionOptions = [
     { id: 'resumen', label: 'Resumen', helper: 'Panorama institucional' },
     { id: 'ficha', label: 'Ficha editable', helper: 'Identidad, contacto y fiscal' },
+    { id: 'consultorios', label: 'Consultorios', helper: 'Salas usadas por recepción y agenda' },
     ...(puedeVerFacturacionElectronica
       ? [{ id: 'facturacion', label: 'Facturación electrónica', helper: 'Estado e integración' }]
       : []),
@@ -907,6 +910,8 @@ function ConfiguracionContent({
       </div>
       ) : null}
 
+      {activeSection === 'consultorios' ? <ConsultoriosSection /> : null}
+
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (
         <EmptyState
@@ -1279,6 +1284,134 @@ function ConfiguracionContent({
   )
 }
 
+function ConsultoriosSection() {
+  const queryClient = useQueryClient()
+  const [nombre, setNombre] = useState('')
+  const [descripcion, setDescripcion] = useState('')
+
+  const consultoriosQuery = useQuery({
+    queryKey: ['recepcion-consultorios'],
+    queryFn: () => recepcionApi.obtenerConsultorios({}),
+  })
+
+  const crearMutation = useMutation({
+    mutationFn: recepcionApi.crearConsultorio,
+    onSuccess: () => {
+      toast.success('Consultorio creado')
+      setNombre('')
+      setDescripcion('')
+      queryClient.invalidateQueries({ queryKey: ['recepcion-consultorios'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible crear el consultorio.'))
+    },
+  })
+
+  const actualizarMutation = useMutation({
+    mutationFn: ({ id, payload }) => recepcionApi.actualizarConsultorio(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recepcion-consultorios'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible actualizar el consultorio.'))
+    },
+  })
+
+  const consultorios = consultoriosQuery.data?.consultorios || []
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    if (!nombre.trim()) {
+      toast.error('El nombre del consultorio es obligatorio.')
+      return
+    }
+    crearMutation.mutate({ nombre: nombre.trim(), descripcion: descripcion.trim() || undefined })
+  }
+
+  return (
+    <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_360px]">
+      <DashboardPanel
+        title="Consultorios registrados"
+        subtitle="Salas usadas para validar choques de horario y en la disponibilidad de la sala de espera."
+        action={<Building2 className="h-4 w-4 text-primary" />}
+      >
+        {consultoriosQuery.isLoading ? (
+          <div className="grid gap-3">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="h-14 animate-pulse border border-border bg-muted" />
+            ))}
+          </div>
+        ) : consultorios.length === 0 ? (
+          <EmptyState
+            icon={<Building2 />}
+            title="Sin consultorios"
+            description="Crea el primer consultorio para poder asignarlo a las citas y a la sala de espera."
+            bordered
+          />
+        ) : (
+          <div className="divide-y divide-border border border-border">
+            {consultorios.map((consultorio) => (
+              <div key={consultorio.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{consultorio.nombre}</p>
+                  {consultorio.descripcion ? (
+                    <p className="mt-0.5 text-sm text-muted-foreground">{consultorio.descripcion}</p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  disabled={actualizarMutation.isPending}
+                  onClick={() =>
+                    actualizarMutation.mutate({
+                      id: consultorio.id,
+                      payload: { activo: !consultorio.activo },
+                    })
+                  }
+                  className={`shrink-0 border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    consultorio.activo
+                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
+                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  {consultorio.activo ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </DashboardPanel>
+
+      <DashboardPanel
+        title="Nuevo consultorio"
+        subtitle="Agrega una sala para asignarla en la programación de citas."
+      >
+        <form className="grid gap-4" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={nombre}
+            onChange={(event) => setNombre(event.target.value)}
+            placeholder="Nombre, ej. Consultorio 1"
+            className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+          />
+          <textarea
+            value={descripcion}
+            onChange={(event) => setDescripcion(event.target.value)}
+            placeholder="Descripción (opcional)"
+            className="min-h-[90px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
+          />
+          <button
+            type="submit"
+            disabled={crearMutation.isPending}
+            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {crearMutation.isPending ? 'Guardando...' : 'Crear consultorio'}
+          </button>
+        </form>
+      </DashboardPanel>
+    </div>
+  )
+}
+
 export default function ConfiguracionPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const clinicaPersistida = useAuthStore((state) => state.clinica)
@@ -1286,8 +1419,7 @@ export default function ConfiguracionPage() {
   const setClinica = useAuthStore((state) => state.setClinica)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
-  const funcionalidades = Array.isArray(suscripcion?.funcionalidades) ? suscripcion.funcionalidades : []
-  const puedeVerFacturacionElectronica = funcionalidades.includes('facturacion_electronica')
+  const puedeVerFacturacionElectronica = tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
   const puedeEditarFacturacionElectronica = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   useEffect(() => {

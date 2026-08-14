@@ -17,11 +17,10 @@ const {
 } = require('../controllers/inventarioController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { uploadProductoFotoSingle } = require('../middlewares/uploadProductoFotoMiddleware')
 
 const router = express.Router()
-const requiereInventario = requerirFuncionalidades('inventario')
 const categoriasValidas = [
   'medicamento',
   'vacuna',
@@ -359,7 +358,7 @@ router.post(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarCreacionProducto,
   crearProducto
 )
@@ -368,7 +367,7 @@ router.post(
   '/subir-foto',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   uploadProductoFotoSingle,
   subirFotoProducto
 )
@@ -377,7 +376,7 @@ router.post(
   '/importar',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarImportacionProductos,
   importarProductos
 )
@@ -386,7 +385,6 @@ router.get(
   '/',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario', 'recepcionista', 'facturador'),
-  requiereInventario,
   validarConsultaProductos,
   obtenerProductos
 )
@@ -395,7 +393,6 @@ router.get(
   '/catalogo-medicamentos',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario', 'facturador'),
-  requiereInventario,
   validarConsultaCatalogo,
   obtenerCatalogoMedicamentos
 )
@@ -404,7 +401,6 @@ router.get(
   '/movimientos',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
   validarConsultaMovimientos,
   obtenerMovimientos
 )
@@ -413,7 +409,6 @@ router.get(
   '/alertas',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
   obtenerAlertas
 )
 
@@ -421,7 +416,6 @@ router.get(
   '/barcode/:codigo',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'recepcionista', 'facturador'),
-  requiereInventario,
   [
     param('codigo')
       .trim()
@@ -438,7 +432,6 @@ router.get(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
   validarIdProducto,
   obtenerProducto
 )
@@ -447,7 +440,7 @@ router.put(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarEdicionProducto,
   editarProducto
 )
@@ -456,7 +449,7 @@ router.delete(
   '/:id',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
-  requiereInventario,
+  requerirEscritura,
   validarIdProducto,
   eliminarProducto
 )
@@ -465,7 +458,7 @@ router.post(
   '/:id/movimiento',
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
-  requiereInventario,
+  requerirEscritura,
   validarMovimiento,
   registrarMovimiento
 )

@@ -4,6 +4,7 @@ const {
   getMascotasUploadsDir,
   generateUploadFilename,
 } = require('../config/uploads')
+const { aplicarCupoDeArchivoEnDisco } = require('./cupoArchivoDiscoHelper')
 
 const storage = multer.diskStorage({
   destination: (req, file, callback) => {
@@ -31,29 +32,45 @@ const uploadMascotaPhoto = multer({
 })
 
 const uploadMascotaPhotoSingle = (req, res, next) => {
-  uploadMascotaPhoto.single('foto')(req, res, (error) => {
-    if (!error) {
-      next()
-      return
-    }
+  uploadMascotaPhoto.single('foto')(req, res, async (error) => {
+    if (error) {
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          res.status(400).json({
+            message: 'La foto supera el tamano maximo permitido de 4 MB.',
+          })
+          return
+        }
 
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
         res.status(400).json({
-          message: 'La foto supera el tamano maximo permitido de 4 MB.',
+          message: 'Solo se permiten imagenes JPG, PNG o WEBP para la foto del paciente.',
         })
         return
       }
 
       res.status(400).json({
-        message: 'Solo se permiten imagenes JPG, PNG o WEBP para la foto del paciente.',
+        message: error.message || 'No fue posible cargar la foto del paciente.',
       })
       return
     }
 
-    res.status(400).json({
-      message: error.message || 'No fue posible cargar la foto del paciente.',
-    })
+    if (!req.file) {
+      next()
+      return
+    }
+
+    try {
+      const puedeContinuar = await aplicarCupoDeArchivoEnDisco(req, res)
+      if (!puedeContinuar) {
+        return
+      }
+
+      next()
+    } catch (cupoError) {
+      res.status(500).json({
+        message: 'No fue posible validar el espacio disponible.',
+      })
+    }
   })
 }
 

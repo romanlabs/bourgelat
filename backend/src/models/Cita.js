@@ -4,6 +4,7 @@ const Clinica = require('./Clinica');
 const Mascota = require('./Mascota');
 const Propietario = require('./Propietario');
 const Usuario = require('./Usuario');
+const Consultorio = require('./Consultorio');
 const { aplicarDescifrado } = require('../config/modelEncryption');
 
 const Cita = sequelize.define('Cita', {
@@ -48,12 +49,26 @@ const Cita = sequelize.define('Cita', {
     type: DataTypes.ENUM(
       'programada',
       'en_espera',
+      'en_atencion',
       'completada',
       'cancelada',
       'no_asistio'
     ),
     allowNull: false,
     defaultValue: 'programada',
+  },
+  origen: {
+    type: DataTypes.ENUM('programada', 'walk_in'),
+    allowNull: false,
+    defaultValue: 'programada',
+  },
+  horaLlegada: {
+    type: DataTypes.TIME,
+    allowNull: true,
+  },
+  horaInicioAtencion: {
+    type: DataTypes.TIME,
+    allowNull: true,
   },
   motivoCancelacion: {
     type: DataTypes.STRING,
@@ -99,6 +114,14 @@ const Cita = sequelize.define('Cita', {
       key: 'id',
     },
   },
+  consultorioId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: Consultorio,
+      key: 'id',
+    },
+  },
 }, {
   tableName: 'citas',
   timestamps: true,
@@ -106,6 +129,8 @@ const Cita = sequelize.define('Cita', {
   { fields: ['fecha', 'veterinarioId', 'clinicaId'] },
   { fields: ['clinicaId', 'estado'] },
   { fields: ['clinicaId', 'fecha'] },
+  { fields: ['clinicaId', 'fecha', 'estado'] },
+  { fields: ['clinicaId', 'consultorioId', 'fecha'] },
   { fields: ['propietarioId'] },
   { fields: ['mascotaId'] },
 ]
@@ -119,6 +144,8 @@ Usuario.hasMany(Cita, { foreignKey: 'veterinarioId' });
 Cita.belongsTo(Usuario, { foreignKey: 'veterinarioId', as: 'veterinario' });
 Clinica.hasMany(Cita, { foreignKey: 'clinicaId' });
 Cita.belongsTo(Clinica, { foreignKey: 'clinicaId' });
+Consultorio.hasMany(Cita, { foreignKey: 'consultorioId' });
+Cita.belongsTo(Consultorio, { foreignKey: 'consultorioId', as: 'consultorio' });
 
 Cita.addHook('afterFind', (resultado) => {
   if (!resultado) return
