@@ -6,24 +6,10 @@ import { z } from 'zod'
 import { AlertTriangle, ImageOff, Upload, X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
-import { CATEGORY_OPTIONS } from './useInventarioProductos'
+import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-
-// Unidades pensadas para como una clinica veterinaria cuenta su inventario:
-// presentaciones que se cuentan enteras en la estanteria, no volumen/peso fraccional.
-const UNIT_OPTIONS = [
-  { value: 'unidad', label: 'Unidad' },
-  { value: 'frasco', label: 'Frasco' },
-  { value: 'caja', label: 'Caja' },
-  { value: 'sobre', label: 'Sobre' },
-  { value: 'tableta', label: 'Tableta' },
-  { value: 'ampolla', label: 'Ampolla / Vial' },
-  { value: 'dosis', label: 'Dosis' },
-  { value: 'pipeta', label: 'Pipeta' },
-  { value: 'bolsa', label: 'Bolsa' },
-]
 
 const productoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
