@@ -63,6 +63,7 @@ export const PAYMENT_METHOD_LABELS = {
 export const CITA_ESTADO_LABELS = {
   programada: 'Programadas',
   en_espera: 'En espera',
+  en_atencion: 'En atención',
   completada: 'Completadas',
   cancelada: 'Canceladas',
   no_asistio: 'No asistió',

@@ -2,6 +2,10 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Plus, Trash2 } from 'lucide-react'
 import MoneyInput from '@/components/shared/MoneyInput'
+import ProductoComboBox from '@/components/shared/ProductoComboBox'
+import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
+
+const PRODUCT_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
@@ -18,9 +22,10 @@ export default function FacturaCompraDrawer({
   isSaving,
   agregarItem,
   actualizarItem,
+  actualizarItemProductoNuevo,
+  toggleItemEsNuevo,
   eliminarItem,
   totalCalculado,
-  productosSelector = [],
   errorMsg,
 }) {
   useEffect(() => {
@@ -35,9 +40,12 @@ export default function FacturaCompraDrawer({
   const formatCOP = (n) =>
     Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
-  const itemsValidos = form.items.every(
-    (i) => i.productoId && Number(i.cantidad) > 0
-  )
+  const itemsValidos = form.items.every((i) => {
+    const productoValido = i.esNuevo
+      ? Boolean(i.productoNuevo.nombre.trim() && i.productoNuevo.categoria && i.productoNuevo.unidadMedida)
+      : Boolean(i.productoId)
+    return productoValido && Number(i.cantidad) > 0
+  })
   const plazoValido = form.tipoPago !== 'credito' || !!form.fechaPagoFinal
   const formularioValido = form.proveedor.trim() && form.fecha && itemsValidos && plazoValido
 
@@ -220,21 +228,86 @@ export default function FacturaCompraDrawer({
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground">Producto *</label>
-                    <select
-                      className={`${fieldClass(!item.productoId)} cursor-pointer`}
-                      value={item.productoId}
-                      onChange={(e) => actualizarItem(idx, 'productoId', e.target.value)}
-                    >
-                      <option value="">— Selecciona un producto —</option>
-                      {productosSelector.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} ({p.unidadMedida})
-                        </option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: false, label: 'Producto existente' },
+                      { value: true, label: 'Producto nuevo' },
+                    ].map((op) => (
+                      <button
+                        key={String(op.value)}
+                        type="button"
+                        onClick={() => {
+                          if (Boolean(item.esNuevo) !== op.value) toggleItemEsNuevo(idx)
+                        }}
+                        className={`rounded border px-3 py-1.5 text-xs font-semibold transition ${
+                          Boolean(item.esNuevo) === op.value
+                            ? 'border-primary bg-primary/8 text-primary'
+                            : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        {op.label}
+                      </button>
+                    ))}
                   </div>
+
+                  {item.esNuevo ? (
+                    <div className="space-y-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-muted-foreground">Nombre del producto *</label>
+                        <input
+                          className={fieldClass(!item.productoNuevo.nombre.trim())}
+                          placeholder="Nombre del producto nuevo"
+                          value={item.productoNuevo.nombre}
+                          onChange={(e) => actualizarItemProductoNuevo(idx, 'nombre', e.target.value)}
+                          maxLength={200}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-muted-foreground">Categoría *</label>
+                          <select
+                            className={`${fieldClass(!item.productoNuevo.categoria)} cursor-pointer`}
+                            value={item.productoNuevo.categoria}
+                            onChange={(e) => actualizarItemProductoNuevo(idx, 'categoria', e.target.value)}
+                          >
+                            <option value="">— Selecciona —</option>
+                            {PRODUCT_CATEGORY_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-muted-foreground">Unidad de medida *</label>
+                          <select
+                            className={`${fieldClass(!item.productoNuevo.unidadMedida)} cursor-pointer`}
+                            value={item.productoNuevo.unidadMedida}
+                            onChange={(e) => actualizarItemProductoNuevo(idx, 'unidadMedida', e.target.value)}
+                          >
+                            <option value="">— Selecciona —</option>
+                            {UNIT_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Se creará en el inventario con el precio unitario de este ítem como precio de compra
+                        y cantidad inicial 0. Completa precio de venta, stock mínimo, laboratorio, etc. luego
+                        desde Inventario &gt; Productos.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-muted-foreground">Producto *</label>
+                      <ProductoComboBox
+                        value={item.productoId}
+                        productoSeleccionado={item.producto}
+                        hasError={!item.productoId}
+                        onChange={(id) => actualizarItem(idx, 'productoId', id)}
+                        placeholder="Buscar producto..."
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">

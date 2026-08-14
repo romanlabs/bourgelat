@@ -17,6 +17,20 @@ export const CATEGORY_OPTIONS = [
   { value: 'otro', label: 'Otros' },
 ]
 
+// Unidades pensadas para como una clinica veterinaria cuenta su inventario:
+// presentaciones que se cuentan enteras en la estanteria, no volumen/peso fraccional.
+export const UNIT_OPTIONS = [
+  { value: 'unidad', label: 'Unidad' },
+  { value: 'frasco', label: 'Frasco' },
+  { value: 'caja', label: 'Caja' },
+  { value: 'sobre', label: 'Sobre' },
+  { value: 'tableta', label: 'Tableta' },
+  { value: 'ampolla', label: 'Ampolla / Vial' },
+  { value: 'dosis', label: 'Dosis' },
+  { value: 'pipeta', label: 'Pipeta' },
+  { value: 'bolsa', label: 'Bolsa' },
+]
+
 export function useInventarioProductos({ enabled, onProductDeleted }) {
   const queryClient = useQueryClient()
 
@@ -40,13 +54,6 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
         pagina,
         limite: 12,
       }),
-    enabled,
-    placeholderData: (prev) => prev,
-  })
-
-  const productosSelectorQuery = useQuery({
-    queryKey: ['inventario-productos-selector'],
-    queryFn: () => inventarioApi.obtenerProductos({ limite: 50 }),
     enabled,
     placeholderData: (prev) => prev,
   })
@@ -160,7 +167,6 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
 
   return {
     productosQuery,
-    productosSelectorQuery,
     productosRows,
     isPendingProduct:
       crearProductoMutation.isPending ||

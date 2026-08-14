@@ -5,28 +5,19 @@ import { toast } from 'sonner'
 import {
   CalendarClock,
   CalendarDays,
-  CircleAlert,
   Clock3,
   List,
   PawPrint,
-  Plus,
-  RefreshCcw,
-  Search,
   ShieldCheck,
   Sparkles,
   Stethoscope,
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
+import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
 import AdminShell from '@/components/layout/AdminShell'
-import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
+import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
-import {
-  DialogRoot,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import {
   BarPanel,
   DashboardPanel,
@@ -46,7 +37,8 @@ import {
 } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
-import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
+import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
+import { UrgenciaRetroactivaDialog } from '@/features/recepcion/UrgenciaRetroactivaDialog'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 
@@ -54,6 +46,7 @@ const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
   { value: 'programada', label: 'Programada' },
   { value: 'en_espera', label: 'En espera' },
+  { value: 'en_atencion', label: 'En atencion' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
   { value: 'no_asistio', label: 'No asistio' },
@@ -61,88 +54,16 @@ const STATUS_OPTIONS = [
 
 const TABS = [
   { id: 'agenda', label: 'Agenda' },
-  { id: 'gestion', label: 'Gestión de citas' },
+  { id: 'recepcion', label: 'Recepción' },
   { id: 'analitica', label: 'Analítica' },
 ]
 
-const TYPE_OPTIONS = [
-  { value: 'consulta_general', label: 'Consulta general' },
-  { value: 'vacunacion', label: 'Vacunacion' },
-  { value: 'cirugia', label: 'Cirugia' },
-  { value: 'desparasitacion', label: 'Desparasitacion' },
-  { value: 'control', label: 'Control' },
-  { value: 'urgencia', label: 'Urgencia' },
-  { value: 'peluqueria', label: 'Peluqueria' },
-  { value: 'laboratorio', label: 'Laboratorio' },
-  { value: 'radiografia', label: 'Radiografia' },
-  { value: 'otro', label: 'Otro' },
-]
-
 const getToday = () => new Date().toISOString().slice(0, 10)
-
-const DEFAULT_APPOINTMENT_FORM = {
-  fecha: getToday(),
-  horaInicio: '09:00',
-  horaFin: '09:30',
-  motivo: '',
-  tipoCita: 'consulta_general',
-  observaciones: '',
-  propietarioId: '',
-  mascotaId: '',
-  veterinarioId: '',
-}
-
-const DEFAULT_STATUS_FORM = {
-  estado: 'en_espera',
-  motivoCancelacion: '',
-}
-
-const nowHHMM = () => new Date().toTimeString().slice(0, 5)
-
-const DEFAULT_URGENCIA_FORM = {
-  modo: 'ahora',
-  horaInicio: nowHHMM(),
-  motivo: '',
-  observaciones: '',
-  veterinarioId: '',
-}
-
-const DEFAULT_RESCHEDULE_FORM = {
-  fecha: '',
-  horaInicio: '',
-  horaFin: '',
-}
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - ${horaFin?.slice(0, 5)}`
-
-const buildStateTone = (estado) => {
-  switch (estado) {
-    case 'en_espera':
-      return 'border-violet-200 bg-violet-50 text-violet-700'
-    case 'completada':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    case 'cancelada':
-      return 'border-red-200 bg-red-50 text-red-700'
-    case 'no_asistio':
-      return 'border-amber-200 bg-amber-50 text-amber-700'
-    default:
-      return 'border-border bg-muted text-foreground'
-  }
-}
-
-const getOwnerPets = (owner, fallbackPets) => {
-  if (!owner) return []
-
-  const directPets = owner.Mascotas || owner.Mascota || owner.mascotas || []
-  if (Array.isArray(directPets) && directPets.length > 0) {
-    return directPets
-  }
-
-  return (fallbackPets || []).filter((pet) => pet.Propietario?.id === owner.id)
-}
 
 function RestrictedAgendaPage() {
   return (
@@ -173,14 +94,9 @@ export default function AgendaPage() {
   const [estado, setEstado] = useState('todos')
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)
-  const [ownerSearch, setOwnerSearch] = useState('')
-  const [selectedOwner, setSelectedOwner] = useState(null)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
-  const [appointmentForm, setAppointmentForm] = useState(DEFAULT_APPOINTMENT_FORM)
-  const [statusForm, setStatusForm] = useState(DEFAULT_STATUS_FORM)
-  const [rescheduleForm, setRescheduleForm] = useState(DEFAULT_RESCHEDULE_FORM)
   const [urgenciaOpen, setUrgenciaOpen] = useState(false)
-  const [urgenciaForm, setUrgenciaForm] = useState(DEFAULT_URGENCIA_FORM)
+  const [recepcionPrefill, setRecepcionPrefill] = useState(null)
 
   const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
@@ -223,18 +139,6 @@ export default function AgendaPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const propietariosQuery = useQuery({
-    queryKey: ['agenda-propietarios', ownerSearch.trim()],
-    queryFn: () =>
-      pacientesApi.obtenerPropietarios({
-        buscar: ownerSearch.trim() || undefined,
-        pagina: 1,
-        limite: 8,
-      }),
-    enabled: rolPermitido && puedeVerAgenda && puedeProgramar,
-    placeholderData: (previousData) => previousData,
-  })
-
   const mascotasQuery = useQuery({
     queryKey: ['agenda-mascotas-base'],
     queryFn: () =>
@@ -246,66 +150,16 @@ export default function AgendaPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const crearCitaMutation = useMutation({
-    mutationFn: agendaApi.crearCita,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Cita creada exitosamente')
-      setAppointmentForm((current) => ({
-        ...DEFAULT_APPOINTMENT_FORM,
-        fecha: current.fecha,
-        veterinarioId: current.veterinarioId,
-      }))
-      setSelectedOwner(null)
-      queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
-
-      const mascotaId = data?.cita?.mascota?.id
-      if (mascotaId) {
-        antecedentesApi.obtenerAntecedentes(mascotaId)
-          .then((res) => {
-            const ant = res?.antecedentes
-            const sinAntecedentes =
-              !ant ||
-              (
-                (!ant.alergias || ant.alergias.length === 0) &&
-                (!ant.condicionesCronicas || ant.condicionesCronicas.length === 0) &&
-                (!ant.vacunas || ant.vacunas.length === 0) &&
-                (!ant.medicamentosActuales || ant.medicamentosActuales.length === 0)
-              )
-            if (sinAntecedentes) {
-              toast.warning(
-                'Este paciente no tiene antecedentes registrados. Regístralos antes de la consulta.',
-                {
-                  duration: 8000,
-                  action: {
-                    label: 'Registrar antecedentes →',
-                    onClick: () => navigate(`/antecedentes?mascotaId=${mascotaId}`),
-                  },
-                }
-              )
-            }
-          })
-          .catch(() => {})
-      }
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible crear la cita.'))
-    },
-  })
-
   const crearCitaUrgenciaMutation = useMutation({
     mutationFn: agendaApi.crearCitaUrgencia,
     onSuccess: (data) => {
       toast.success(data?.message || 'Urgencia registrada exitosamente')
-      setUrgenciaForm(DEFAULT_URGENCIA_FORM)
-      setUrgenciaOpen(false)
-      setSelectedOwner(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
+      queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
 
       const mascotaId = data?.cita?.mascota?.id
       if (mascotaId) {
@@ -325,6 +179,8 @@ export default function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
+      queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
       if (payload.estado === 'completada' && cita?.mascota?.id) {
         toast.info('Cita completada. Registra la historia clínica de la consulta.')
         navigate(`/pacientes/${cita.mascota.id}/historial?citaId=${cita.id}`)
@@ -356,27 +212,8 @@ export default function AgendaPage() {
     () => veterinariosQuery.data?.usuarios || [],
     [veterinariosQuery.data?.usuarios]
   )
-  const propietarios = useMemo(
-    () => propietariosQuery.data?.propietarios || [],
-    [propietariosQuery.data?.propietarios]
-  )
   const mascotas = useMemo(() => mascotasQuery.data?.mascotas || [], [mascotasQuery.data?.mascotas])
   const citas = useMemo(() => citasQuery.data?.citas || [], [citasQuery.data?.citas])
-  const preferredVeterinarioId =
-    veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
-
-  const mascotasDelTutor = useMemo(
-    () => getOwnerPets(selectedOwner, mascotas),
-    [mascotas, selectedOwner]
-  )
-  const mascotaSeleccionadaId = useMemo(() => {
-    const mascotaExiste = mascotasDelTutor.some((pet) => pet.id === appointmentForm.mascotaId)
-    if (mascotaExiste) {
-      return appointmentForm.mascotaId
-    }
-
-    return mascotasDelTutor[0]?.id || ''
-  }, [appointmentForm.mascotaId, mascotasDelTutor])
 
   const citasDelDia = citas.length
   const enEspera = citas.filter((item) => item.estado === 'en_espera').length
@@ -439,13 +276,13 @@ export default function AgendaPage() {
     [citas]
   )
 
-  /** Pre-rellena el formulario y cambia al tab de gestión al hacer clic en un slot del calendario. */
+  /** Pre-rellena el panel de programar y cambia al tab de Recepción al hacer clic en un slot del calendario. */
   const handleCalendarSlotClick = useCallback((fechaSlot, horaInicio) => {
     const [h, m] = horaInicio.split(':').map(Number)
     const finMins = h * 60 + m + 30
     const horaFin = `${String(Math.floor(finMins / 60)).padStart(2, '0')}:${String(finMins % 60).padStart(2, '0')}`
-    setAppointmentForm((current) => ({ ...current, fecha: fechaSlot, horaInicio, horaFin }))
-    setActiveTab('gestion')
+    setRecepcionPrefill({ fecha: fechaSlot, horaInicio, horaFin })
+    setActiveTab('recepcion')
   }, [])
 
   const handleCalendarUpdateStatus = useCallback(
@@ -459,122 +296,6 @@ export default function AgendaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
-
-  const handleCreateAppointment = (event) => {
-    event.preventDefault()
-
-    if (
-      !appointmentForm.fecha ||
-      !appointmentForm.horaInicio ||
-      !appointmentForm.horaFin ||
-      !appointmentForm.motivo.trim() ||
-      !appointmentForm.propietarioId ||
-      !mascotaSeleccionadaId ||
-      !(appointmentForm.veterinarioId || preferredVeterinarioId)
-    ) {
-      toast.error('Completa fecha, horario, motivo, tutor, paciente y profesional.')
-      return
-    }
-
-    if (appointmentForm.horaFin <= appointmentForm.horaInicio) {
-      toast.error('La hora de fin debe ser mayor a la hora de inicio.')
-      return
-    }
-
-    crearCitaMutation.mutate({
-      fecha: appointmentForm.fecha,
-      horaInicio: appointmentForm.horaInicio,
-      horaFin: appointmentForm.horaFin,
-      motivo: appointmentForm.motivo.trim(),
-      tipoCita: appointmentForm.tipoCita,
-      observaciones: appointmentForm.observaciones.trim() || undefined,
-      propietarioId: appointmentForm.propietarioId,
-      mascotaId: mascotaSeleccionadaId,
-      veterinarioId: appointmentForm.veterinarioId || preferredVeterinarioId,
-    })
-  }
-
-  const handleCreateUrgencia = (event) => {
-    event.preventDefault()
-
-    if (
-      !urgenciaForm.motivo.trim() ||
-      !selectedOwner ||
-      !mascotaSeleccionadaId ||
-      !(urgenciaForm.veterinarioId || preferredVeterinarioId)
-    ) {
-      toast.error('Completa tutor, paciente, profesional y motivo de la urgencia.')
-      return
-    }
-
-    const horaInicio = urgenciaForm.modo === 'ahora' ? nowHHMM() : urgenciaForm.horaInicio
-    if (urgenciaForm.modo === 'pasado' && !horaInicio) {
-      toast.error('Indica la hora en la que se atendió la urgencia.')
-      return
-    }
-
-    crearCitaUrgenciaMutation.mutate({
-      fecha: getToday(),
-      horaInicio,
-      motivo: urgenciaForm.motivo.trim(),
-      observaciones: urgenciaForm.observaciones.trim() || undefined,
-      propietarioId: selectedOwner.id,
-      mascotaId: mascotaSeleccionadaId,
-      veterinarioId: urgenciaForm.veterinarioId || preferredVeterinarioId,
-    })
-  }
-
-  const handleUpdateStatus = (event) => {
-    event.preventDefault()
-
-    if (!selectedAppointment) {
-      toast.error('Selecciona primero una cita desde la tabla.')
-      return
-    }
-
-    if (statusForm.estado === 'cancelada' && !statusForm.motivoCancelacion.trim()) {
-      toast.error('Indica el motivo de cancelacion antes de guardar.')
-      return
-    }
-
-    actualizarEstadoMutation.mutate({
-      citaId: selectedAppointment.id,
-      payload: {
-        estado: statusForm.estado,
-        motivoCancelacion:
-          statusForm.estado === 'cancelada' ? statusForm.motivoCancelacion.trim() : undefined,
-      },
-      cita: selectedAppointment,
-    })
-  }
-
-  const handleReschedule = (event) => {
-    event.preventDefault()
-
-    if (!selectedAppointment) {
-      toast.error('Selecciona una cita antes de reprogramar.')
-      return
-    }
-
-    if (!rescheduleForm.fecha || !rescheduleForm.horaInicio || !rescheduleForm.horaFin) {
-      toast.error('Completa fecha y horario para reprogramar.')
-      return
-    }
-
-    if (rescheduleForm.horaFin <= rescheduleForm.horaInicio) {
-      toast.error('La hora de fin debe ser mayor a la hora de inicio.')
-      return
-    }
-
-    reprogramarMutation.mutate({
-      citaId: selectedAppointment.id,
-      payload: {
-        fecha: rescheduleForm.fecha,
-        horaInicio: rescheduleForm.horaInicio,
-        horaFin: rescheduleForm.horaFin,
-      },
-    })
-  }
 
   if (!rolPermitido) {
     return <RestrictedAgendaPage />
@@ -595,10 +316,7 @@ export default function AgendaPage() {
           {puedeProgramar && (
             <button
               type="button"
-              onClick={() => {
-                setUrgenciaForm(DEFAULT_URGENCIA_FORM)
-                setUrgenciaOpen(true)
-              }}
+              onClick={() => setUrgenciaOpen(true)}
               className="inline-flex items-center gap-2 border border-red-500 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
             >
               ⚡ Atender urgencia
@@ -792,14 +510,7 @@ export default function AgendaPage() {
                         isUpdating={actualizarEstadoMutation.isPending}
                         isRescheduling={reprogramarMutation.isPending}
                         toolbarExtra={vistaToggleCompacto}
-                        onCreateUrgencia={
-                          puedeProgramar
-                            ? () => {
-                                setUrgenciaForm(DEFAULT_URGENCIA_FORM)
-                                setUrgenciaOpen(true)
-                              }
-                            : undefined
-                        }
+                        onCreateUrgencia={puedeProgramar ? () => setUrgenciaOpen(true) : undefined}
                       />
                     </>
                   )
@@ -878,7 +589,7 @@ export default function AgendaPage() {
                           label: 'Estado',
                           render: (row) => (
                             <div className="flex items-center gap-2">
-                              <StatusPill tone={buildStateTone(row.estado)}>{row.estado}</StatusPill>
+                              <StatusBadge variant={row.estado} showDot size="sm" />
                               {row.sinHistoria && (
                                 <StatusPill tone="border-red-300 bg-red-50 text-red-700">
                                   Sin historia
@@ -893,19 +604,7 @@ export default function AgendaPage() {
                           render: (row) => (
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedAppointment(row.raw)
-                                setStatusForm({
-                                  estado: row.raw.estado,
-                                  motivoCancelacion: row.raw.motivoCancelacion || '',
-                                })
-                                setRescheduleForm({
-                                  fecha: row.raw.fecha,
-                                  horaInicio: row.raw.horaInicio?.slice(0, 5) || '',
-                                  horaFin: row.raw.horaFin?.slice(0, 5) || '',
-                                })
-                                setActiveTab('gestion')
-                              }}
+                              onClick={() => setSelectedAppointment(row.raw)}
                               className="text-sm font-semibold text-primary hover:text-primary"
                             >
                               Gestionar
@@ -914,7 +613,7 @@ export default function AgendaPage() {
                         },
                       ]}
                       emptyTitle="No hay citas para este filtro"
-                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestana Gestion."
+                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestana Recepcion."
                       action={
                         <StatusPill tone="border-border bg-muted text-foreground">
                           {formatLongDate(fecha)}
@@ -960,333 +659,16 @@ export default function AgendaPage() {
           )}
 
           {/* ══════════════════════════════
-              Tab: Gestión de citas
+              Tab: Recepción
           ══════════════════════════════ */}
-          {activeTab === 'gestion' && (
-            <div className="grid gap-5 pt-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
-            <DashboardPanel
-              title="Nueva cita"
-              subtitle="Programa una cita nueva. También puedes llegar aquí haciendo clic en cualquier espacio del calendario."
-              action={<Plus className="h-4 w-4 text-primary" />}
-            >
-              {!puedeProgramar ? (
-                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                  Tu rol actual puede consultar la agenda, pero no crear nuevas citas.
-                </div>
-              ) : (
-                <form className="grid gap-4" onSubmit={handleCreateAppointment}>
-                  <div className="border border-border bg-muted px-4 py-4">
-                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      <Search className="h-3.5 w-3.5" />
-                      Buscar tutor
-                    </div>
-                    <input
-                      type="text"
-                      value={ownerSearch}
-                      onChange={(event) => setOwnerSearch(event.target.value)}
-                      placeholder="Nombre, documento o telefono"
-                      className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-
-                    <div className="mt-4 space-y-2">
-                      {selectedOwner ? (
-                        <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
-                          <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
-                          <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedOwner(null)
-                              setAppointmentForm((current) => ({
-                                ...current,
-                                propietarioId: '',
-                                mascotaId: '',
-                              }))
-                            }}
-                            className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-                          >
-                            Cambiar tutor
-                          </button>
-                        </div>
-                      ) : null}
-
-                      {!selectedOwner && propietarios.length > 0
-                        ? propietarios.map((owner) => (
-                            <button
-                              key={owner.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedOwner(owner)
-                                setAppointmentForm((current) => ({
-                                  ...current,
-                                  propietarioId: owner.id,
-                                  mascotaId: '',
-                                }))
-                              }}
-                              className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
-                            >
-                              <div>
-                                <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                  {owner.telefono || 'Sin telefono principal'}
-                                </p>
-                              </div>
-                              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Seleccionar
-                              </span>
-                            </button>
-                          ))
-                        : null}
-
-                      {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
-                        <div className="border border-dashed border-border bg-white px-3 py-3 text-sm leading-7 text-muted-foreground">
-                          No encontramos un tutor con esa búsqueda. Puedes crearlo desde la sección de pacientes.
-                          <NavCtaLink to="/pacientes" size="sm" className="ml-2">
-                            Abrir pacientes
-                          </NavCtaLink>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="date"
-                      value={appointmentForm.fecha}
-                      onChange={(event) =>
-                        setAppointmentForm((current) => ({ ...current, fecha: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                    <select
-                      value={appointmentForm.tipoCita}
-                      onChange={(event) =>
-                        setAppointmentForm((current) => ({ ...current, tipoCita: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      {TYPE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="time"
-                      value={appointmentForm.horaInicio}
-                      onChange={(event) =>
-                        setAppointmentForm((current) => ({ ...current, horaInicio: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                    <input
-                      type="time"
-                      value={appointmentForm.horaFin}
-                      onChange={(event) =>
-                        setAppointmentForm((current) => ({ ...current, horaFin: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                  </div>
-
-                  <select
-                    value={mascotaSeleccionadaId}
-                    onChange={(event) =>
-                      setAppointmentForm((current) => ({ ...current, mascotaId: event.target.value }))
-                    }
-                    disabled={!selectedOwner}
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
-                  >
-                    <option value="">
-                      {selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
-                    </option>
-                    {mascotasDelTutor.map((pet) => (
-                      <option key={pet.id} value={pet.id}>
-                        {pet.nombre}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={appointmentForm.veterinarioId || preferredVeterinarioId}
-                    onChange={(event) =>
-                      setAppointmentForm((current) => ({
-                        ...current,
-                        veterinarioId: event.target.value,
-                      }))
-                    }
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    <option value="">Selecciona el profesional</option>
-                    {veterinarios.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nombre}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="text"
-                    value={appointmentForm.motivo}
-                    onChange={(event) =>
-                      setAppointmentForm((current) => ({ ...current, motivo: event.target.value }))
-                    }
-                    placeholder="Motivo principal de la cita"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-
-                  <textarea
-                    value={appointmentForm.observaciones}
-                    onChange={(event) =>
-                      setAppointmentForm((current) => ({
-                        ...current,
-                        observaciones: event.target.value,
-                      }))
-                    }
-                    placeholder="Observaciones operativas para recepcion o consulta"
-                    className="min-h-[120px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-
-                  {selectedOwner && mascotasDelTutor.length === 0 ? (
-                    <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800">
-                      Este tutor aún no tiene pacientes activos. Primero registra la mascota en la sección de pacientes.
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="submit"
-                    disabled={crearCitaMutation.isPending || veterinarios.length === 0}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
-                  </button>
-                </form>
-              )}
-            </DashboardPanel>
-
-            <div className="space-y-5">
-              <DashboardPanel
-                title="Gestionar cita"
-                subtitle="Actualiza estado y confirma la evolucion de la cita seleccionada."
-                action={<CircleAlert className="h-4 w-4 text-primary" />}
-              >
-                {!selectedAppointment ? (
-                  <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Haz clic en una cita desde el calendario o la vista lista para gestionar su estado aqui.
-                  </div>
-                ) : !puedeGestionarEstado ? (
-                  <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Tu rol actual puede ver el detalle, pero no cambiar el estado de la cita.
-                  </div>
-                ) : (
-                  <form className="grid gap-4" onSubmit={handleUpdateStatus}>
-                    <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
-                      <p className="font-semibold text-slate-950">
-                        {selectedAppointment.mascota?.nombre || 'Paciente'}
-                      </p>
-                      <p>{selectedAppointment.propietario?.nombre || 'Sin tutor'}</p>
-                      <p>{formatTimeRange(selectedAppointment.horaInicio, selectedAppointment.horaFin)}</p>
-                    </div>
-
-                    <select
-                      value={statusForm.estado}
-                      onChange={(event) =>
-                        setStatusForm((current) => ({ ...current, estado: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      {STATUS_OPTIONS.filter((item) => item.value !== 'todos').map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    {statusForm.estado === 'cancelada' ? (
-                      <textarea
-                        value={statusForm.motivoCancelacion}
-                        onChange={(event) =>
-                          setStatusForm((current) => ({
-                            ...current,
-                            motivoCancelacion: event.target.value,
-                          }))
-                        }
-                        placeholder="Motivo de cancelacion"
-                        className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
-                      />
-                    ) : null}
-
-                    <button
-                      type="submit"
-                      disabled={actualizarEstadoMutation.isPending}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {actualizarEstadoMutation.isPending ? 'Guardando...' : 'Actualizar estado'}
-                    </button>
-                  </form>
-                )}
-              </DashboardPanel>
-
-              <DashboardPanel
-                title="Reprogramar"
-                subtitle="Mueve la cita si recepcion necesita reorganizar el horario del dia."
-                action={<RefreshCcw className="h-4 w-4 text-primary" />}
-              >
-                {!selectedAppointment ? (
-                  <div className="border border-dashed border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Haz clic en una cita desde el calendario o la vista lista para reprogramarla aqui.
-                  </div>
-                ) : !puedeReprogramar ? (
-                  <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                    Solo administracion y recepcion pueden reprogramar una cita desde este panel.
-                  </div>
-                ) : (
-                  <form className="grid gap-4" onSubmit={handleReschedule}>
-                    <input
-                      type="date"
-                      value={rescheduleForm.fecha}
-                      onChange={(event) =>
-                        setRescheduleForm((current) => ({ ...current, fecha: event.target.value }))
-                      }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <input
-                        type="time"
-                        value={rescheduleForm.horaInicio}
-                        onChange={(event) =>
-                          setRescheduleForm((current) => ({
-                            ...current,
-                            horaInicio: event.target.value,
-                          }))
-                        }
-                        className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                      />
-                      <input
-                        type="time"
-                        value={rescheduleForm.horaFin}
-                        onChange={(event) =>
-                          setRescheduleForm((current) => ({ ...current, horaFin: event.target.value }))
-                        }
-                        className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={reprogramarMutation.isPending}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {reprogramarMutation.isPending ? 'Guardando...' : 'Reprogramar cita'}
-                    </button>
-                  </form>
-                )}
-              </DashboardPanel>
-            </div>
-          </div>
+          {activeTab === 'recepcion' && (
+            <RecepcionTab
+              fecha={fecha}
+              prefill={recepcionPrefill}
+              usuario={usuario}
+              puedeProgramar={puedeProgramar}
+              puedeGestionarEstado={puedeGestionarEstado}
+            />
           )}
 
           {/* ══════════════════════════════
@@ -1347,156 +729,26 @@ export default function AgendaPage() {
         </div>
       )}
 
-      <DialogRoot open={urgenciaOpen} onOpenChange={(v) => !v && setUrgenciaOpen(false)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="mb-2">
-            <DialogTitle>⚡ Atender urgencia</DialogTitle>
-            <DialogDescription>
-              Registra una atención de urgencia que no fue agendada previamente. Queda directamente
-              como completada, sin bloquear por choques de horario.
-            </DialogDescription>
-          </DialogHeader>
+      <CitaDetailDialog
+        cita={selectedAppointment}
+        open={Boolean(selectedAppointment)}
+        onClose={() => setSelectedAppointment(null)}
+        puedeGestionarEstado={puedeGestionarEstado}
+        puedeReprogramar={puedeReprogramar}
+        onUpdateStatus={handleCalendarUpdateStatus}
+        onReschedule={handleCalendarReschedule}
+        isUpdating={actualizarEstadoMutation.isPending}
+        isRescheduling={reprogramarMutation.isPending}
+      />
 
-          <form className="grid gap-3" onSubmit={handleCreateUrgencia}>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setUrgenciaForm((current) => ({ ...current, modo: 'ahora' }))}
-                className={`flex-1 border px-3 py-2 text-sm font-semibold transition ${
-                  urgenciaForm.modo === 'ahora'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-muted text-muted-foreground'
-                }`}
-              >
-                Ahora mismo
-              </button>
-              <button
-                type="button"
-                onClick={() => setUrgenciaForm((current) => ({ ...current, modo: 'pasado' }))}
-                className={`flex-1 border px-3 py-2 text-sm font-semibold transition ${
-                  urgenciaForm.modo === 'pasado'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-muted text-muted-foreground'
-                }`}
-              >
-                Ya fue atendida
-              </button>
-            </div>
-
-            {urgenciaForm.modo === 'pasado' && (
-              <input
-                type="time"
-                value={urgenciaForm.horaInicio}
-                max={nowHHMM()}
-                onChange={(event) =>
-                  setUrgenciaForm((current) => ({ ...current, horaInicio: event.target.value }))
-                }
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              />
-            )}
-
-            <div className="border border-border bg-muted px-3 py-3">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                <Search className="h-3.5 w-3.5" />
-                Buscar tutor
-              </div>
-              <input
-                type="text"
-                value={ownerSearch}
-                onChange={(event) => setOwnerSearch(event.target.value)}
-                placeholder="Nombre, documento o telefono"
-                className="mt-2 h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              />
-              {selectedOwner ? (
-                <div className="mt-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm">
-                  <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedOwner(null)}
-                    className="mt-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
-                  >
-                    Cambiar tutor
-                  </button>
-                </div>
-              ) : (
-                propietarios.map((owner) => (
-                  <button
-                    key={owner.id}
-                    type="button"
-                    onClick={() => setSelectedOwner(owner)}
-                    className="mt-2 flex w-full items-center justify-between border border-border bg-card px-3 py-2 text-left text-sm transition hover:bg-muted"
-                  >
-                    <span className="font-semibold text-slate-950">{owner.nombre}</span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Seleccionar
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-
-            <select
-              value={mascotaSeleccionadaId}
-              onChange={(event) =>
-                setAppointmentForm((current) => ({ ...current, mascotaId: event.target.value }))
-              }
-              disabled={!selectedOwner}
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
-            >
-              <option value="">
-                {selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
-              </option>
-              {mascotasDelTutor.map((pet) => (
-                <option key={pet.id} value={pet.id}>
-                  {pet.nombre}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={urgenciaForm.veterinarioId || preferredVeterinarioId}
-              onChange={(event) =>
-                setUrgenciaForm((current) => ({ ...current, veterinarioId: event.target.value }))
-              }
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-            >
-              <option value="">Selecciona el profesional</option>
-              {veterinarios.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.nombre}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="text"
-              value={urgenciaForm.motivo}
-              onChange={(event) =>
-                setUrgenciaForm((current) => ({ ...current, motivo: event.target.value }))
-              }
-              placeholder="Motivo de la urgencia"
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-            />
-
-            <textarea
-              value={urgenciaForm.observaciones}
-              onChange={(event) =>
-                setUrgenciaForm((current) => ({ ...current, observaciones: event.target.value }))
-              }
-              placeholder="Observaciones de la atencion (opcional)"
-              className="min-h-[80px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
-            />
-
-            <button
-              type="submit"
-              disabled={crearCitaUrgenciaMutation.isPending}
-              className="flex h-10 items-center justify-center gap-2 border border-red-600 bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {crearCitaUrgenciaMutation.isPending ? 'Guardando...' : 'Registrar urgencia atendida'}
-            </button>
-          </form>
-        </DialogContent>
-      </DialogRoot>
+      <UrgenciaRetroactivaDialog
+        open={urgenciaOpen}
+        onOpenChange={setUrgenciaOpen}
+        veterinarios={veterinarios}
+        mascotas={mascotas}
+        usuario={usuario}
+        crearCitaUrgenciaMutation={crearCitaUrgenciaMutation}
+      />
     </AdminShell>
   )
 }

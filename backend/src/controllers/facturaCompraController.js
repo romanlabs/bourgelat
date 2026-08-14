@@ -111,6 +111,15 @@ const crearFacturaCompra = async (req, res) => {
       return res.status(400).json({ message: 'Cada ítem debe tener un producto válido y cantidad mayor a 0' });
     }
 
+    const idsUnicos = [...new Set(itemsCalculados.map((i) => i.productoId))];
+    const productosExistentes = await Producto.findAll({
+      where: { id: { [Op.in]: idsUnicos }, clinicaId, activo: true },
+      attributes: ['id'],
+    });
+    if (productosExistentes.length !== idsUnicos.length) {
+      return res.status(400).json({ message: 'Uno o más productos del detalle no existen o no pertenecen a la clínica' });
+    }
+
     const factura = await sequelize.transaction(async (transaction) => {
       const nuevaFactura = await FacturaCompra.create({
         proveedor: String(proveedor).trim(),
@@ -175,6 +184,17 @@ const editarFacturaCompra = async (req, res) => {
         if (itemInvalido) {
           throw new Error('Cada ítem debe tener un producto válido y cantidad mayor a 0');
         }
+
+        const idsUnicos = [...new Set(itemsCalculados.map((i) => i.productoId))];
+        const productosExistentes = await Producto.findAll({
+          where: { id: { [Op.in]: idsUnicos }, clinicaId, activo: true },
+          attributes: ['id'],
+          transaction,
+        });
+        if (productosExistentes.length !== idsUnicos.length) {
+          throw new Error('Uno o más productos del detalle no existen o no pertenecen a la clínica');
+        }
+
         await FacturaCompraItem.destroy({ where: { facturaCompraId: id }, transaction });
         await FacturaCompraItem.bulkCreate(
           itemsCalculados.map((i) => ({ ...i, facturaCompraId: id })),
@@ -190,7 +210,7 @@ const editarFacturaCompra = async (req, res) => {
 
     res.json({ message: 'Factura de compra actualizada', factura: facturaActualizada });
   } catch (error) {
-    if (error.message.includes('ítem') || error.message.includes('borrador')) {
+    if (error.message.includes('ítem') || error.message.includes('borrador') || error.message.includes('producto')) {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: 'Error en el servidor' });
