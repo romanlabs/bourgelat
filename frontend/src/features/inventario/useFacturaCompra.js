@@ -221,6 +221,15 @@ export function useFacturaCompra() {
     })
   }, [])
 
+  const seleccionarProductoItem = useCallback((idx, producto) => {
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((item, i) =>
+        i === idx ? { ...item, productoId: producto?.id ?? '', producto: producto ?? null } : item
+      ),
+    }))
+  }, [])
+
   const actualizarItemProductoNuevo = useCallback((idx, campo, valor) => {
     setForm((f) => ({
       ...f,
@@ -299,6 +308,7 @@ export function useFacturaCompra() {
     // Items
     agregarItem,
     actualizarItem,
+    seleccionarProductoItem,
     actualizarItemProductoNuevo,
     toggleItemEsNuevo,
     eliminarItem,
