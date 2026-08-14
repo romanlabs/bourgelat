@@ -1,7 +1,5 @@
-import { render } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import LandingPage from '../pages/LandingPage'
+import { renderLanding } from './renderLanding'
 
 describe('prefers-reduced-motion', () => {
   beforeEach(() => {
@@ -19,12 +17,12 @@ describe('prefers-reduced-motion', () => {
 
   it('la página se renderiza sin errores con reduced-motion activo', () => {
     expect(() =>
-      render(<MemoryRouter><LandingPage /></MemoryRouter>)
+      renderLanding()
     ).not.toThrow()
   })
 
   it('el perro de despedida se monta con reduced-motion', () => {
-    render(<MemoryRouter><LandingPage /></MemoryRouter>)
+    renderLanding()
     const dog = document.getElementById('contacto')?.querySelector('.contact-dog')
     expect(dog).toBeInTheDocument()
   })
