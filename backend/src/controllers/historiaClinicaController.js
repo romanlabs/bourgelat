@@ -4,6 +4,10 @@ const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const Cita = require('../models/Cita')
 const Producto = require('../models/Producto')
+const InsumoClinico = require('../models/InsumoClinico')
+const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
+const sequelize = require('../config/database')
+const logger = require('../utils/logger')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { Op } = require('sequelize')
 const { isValidDateOnly } = require('../utils/dateOnly')
@@ -30,7 +34,12 @@ const MEDICATION_ROUTES = [
   'otra',
 ]
 
+// Categorias del inventario de ventas que pueden formularse al tutor.
 const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento']
+
+// Redondeo a 2 decimales: es la precision de stock y cantidad en la BD
+// (DECIMAL(10,2)). Sin esto, 0.333 ml aplicados no cuadran con lo descontado.
+const redondearCantidad = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100
 
 const esProfesionalVeterinario = (usuario) =>
   usuario &&
@@ -51,7 +60,11 @@ const normalizeMedicationQuantity = (value) => {
   if (value === undefined || value === null || value === '') return undefined
 
   const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
+  if (!Number.isFinite(parsed) || parsed < 0) return undefined
+
+  // Decimal a proposito: la cantidad va en la unidadBase del insumo (2.5 ml),
+  // no en presentaciones enteras.
+  return redondearCantidad(parsed)
 }
 
 const normalizeMedications = (value) => {
@@ -96,6 +109,8 @@ const normalizeMedications = (value) => {
 
       return {
         nombre,
+        // El plan farmacologico sale del inventario de ventas: es lo que el
+        // tutor se lleva. No descuenta aqui — el stock se mueve al facturar.
         productoId:
           item.productoId && /^[0-9a-fA-F-]{36}$/.test(String(item.productoId))
             ? String(item.productoId)
@@ -117,6 +132,8 @@ const buildMedicationPresentation = (producto) =>
     .filter((value) => String(value || '').trim().length > 0)
     .join(' | ')
 
+// Plan farmacologico: vincula contra el inventario de VENTAS. Solo completa
+// datos de presentacion; el stock se mueve cuando la formula se factura.
 const attachMedicationInventoryData = async (medicamentos, clinicaId) => {
   const productIds = [...new Set(medicamentos.map((item) => item.productoId).filter(Boolean))]
 
@@ -163,6 +180,105 @@ const attachMedicationInventoryData = async (medicamentos, clinicaId) => {
       fuente: 'inventario',
     }
   })
+}
+
+const buildInsumoPresentation = (insumo) =>
+  [insumo.unidadBase, insumo.laboratorio, insumo.lote]
+    .filter((value) => String(value || '').trim().length > 0)
+    .join(' | ')
+
+// Tratamiento intrahospitalario: vincula contra el inventario CLINICO. Estas
+// lineas si descuentan stock, al bloquear la historia.
+const attachTratamientoInventoryData = async (tratamiento, clinicaId) => {
+  const insumoIds = [...new Set(tratamiento.map((item) => item.insumoClinicoId).filter(Boolean))]
+
+  if (!insumoIds.length) {
+    return tratamiento
+  }
+
+  const insumos = await InsumoClinico.findAll({
+    where: {
+      id: { [Op.in]: insumoIds },
+      clinicaId,
+      activo: true,
+      modoConsumo: 'por_dosis',
+    },
+    attributes: ['id', 'nombre', 'unidadBase', 'laboratorio', 'lote'],
+  })
+
+  const insumosMap = new Map(insumos.map((insumo) => [insumo.id, insumo]))
+
+  if (insumos.length !== insumoIds.length) {
+    const idsValidos = new Set(insumos.map((insumo) => insumo.id))
+    const faltantes = insumoIds.filter((id) => !idsValidos.has(id))
+    const error = new Error(
+      `No fue posible vincular algunos insumos del tratamiento: ${faltantes.join(', ')}`
+    )
+    error.statusCode = 400
+    throw error
+  }
+
+  return tratamiento.map((item) => {
+    const insumo = insumosMap.get(item.insumoClinicoId)
+    if (!insumo) {
+      return item
+    }
+
+    return {
+      ...item,
+      nombre: item.nombre || insumo.nombre,
+      unidadBase: insumo.unidadBase,
+      presentacion: buildInsumoPresentation(insumo) || undefined,
+    }
+  })
+}
+
+const normalizeAppliedAt = (value) => {
+  if (!value) return new Date().toISOString()
+
+  const fecha = new Date(value)
+  return Number.isNaN(fecha.getTime()) ? new Date().toISOString() : fecha.toISOString()
+}
+
+/**
+ * Lineas del tratamiento intrahospitalario. A diferencia del plan farmacologico,
+ * aqui el insumo y la cantidad son obligatorios: cada linea descuenta inventario
+ * clinico real al cerrar la historia, asi que no admite texto suelto.
+ */
+const normalizeTratamientoIntrahospitalario = (value) => {
+  if (!Array.isArray(value) || value.length === 0) return []
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return null
+      }
+
+      const insumoClinicoId =
+        item.insumoClinicoId && /^[0-9a-fA-F-]{36}$/.test(String(item.insumoClinicoId))
+          ? String(item.insumoClinicoId)
+          : undefined
+
+      const cantidad = normalizeMedicationQuantity(item.cantidad)
+
+      if (!insumoClinicoId || cantidad === undefined || cantidad <= 0) {
+        return null
+      }
+
+      return {
+        insumoClinicoId,
+        nombre: cleanText(item.nombre, 240),
+        cantidad,
+        unidadBase: cleanText(item.unidadBase, 40),
+        via: MEDICATION_ROUTES.includes(item.via) ? item.via : undefined,
+        responsableId:
+          item.responsableId && /^[0-9a-fA-F-]{36}$/.test(String(item.responsableId))
+            ? String(item.responsableId)
+            : undefined,
+        aplicadoEn: normalizeAppliedAt(item.aplicadoEn),
+      }
+    })
+    .filter(Boolean)
 }
 
 const normalizeFollowUpDate = (value) => {
@@ -245,7 +361,7 @@ const crearHistoria = async (req, res) => {
       frecuenciaCardiaca, frecuenciaRespiratoria, condicionCorporal,
       mucosas, estadoHidratacion, examenFisicoDetalle,
       diagnostico, diagnosticoPresuntivo, tratamiento,
-      medicamentos, indicaciones, proximaConsulta,
+      medicamentos, tratamientoIntrahospitalario, indicaciones, proximaConsulta,
       mascotaId, propietarioId, citaId, veterinarioId,
     } = req.body
 
@@ -262,6 +378,10 @@ const crearHistoria = async (req, res) => {
     const tratamientoNormalizado = cleanText(tratamiento, 4000)
     const medicamentosNormalizados = await attachMedicationInventoryData(
       normalizeMedications(medicamentos),
+      clinicaId
+    )
+    const tratamientoIntrahospitalarioNormalizado = await attachTratamientoInventoryData(
+      normalizeTratamientoIntrahospitalario(tratamientoIntrahospitalario),
       clinicaId
     )
     const indicacionesNormalizadas = cleanText(indicaciones, 4000)
@@ -347,6 +467,7 @@ const crearHistoria = async (req, res) => {
       diagnosticoPresuntivo: diagnosticoPresuntivoNormalizado,
       tratamiento: tratamientoNormalizado,
       medicamentos: medicamentosNormalizados,
+      tratamientoIntrahospitalario: tratamientoIntrahospitalarioNormalizado,
       indicaciones: indicacionesNormalizadas,
       proximaConsulta: proximaConsultaNormalizada,
       mascotaId,
@@ -381,6 +502,15 @@ const crearHistoria = async (req, res) => {
       historia: historiaCompleta,
     })
   } catch (error) {
+    // Sin esto un 500 aqui queda mudo: el cliente recibe "Error en el servidor"
+    // y en los logs solo aparece la linea de acceso del request.
+    if (!error.statusCode || error.statusCode >= 500) {
+      logger.error({
+        contexto: 'crearHistoria',
+        mensaje: error.message,
+        stack: error.stack,
+      })
+    }
     res
       .status(error.statusCode || 500)
       .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
@@ -471,7 +601,7 @@ const editarHistoria = async (req, res) => {
       frecuenciaCardiaca, frecuenciaRespiratoria, condicionCorporal,
       mucosas, estadoHidratacion, examenFisicoDetalle,
       diagnostico, diagnosticoPresuntivo, tratamiento,
-      medicamentos, indicaciones, proximaConsulta,
+      medicamentos, tratamientoIntrahospitalario, indicaciones, proximaConsulta,
     } = req.body
 
     const datosAnteriores = {
@@ -516,6 +646,13 @@ const editarHistoria = async (req, res) => {
         medicamentos !== undefined
           ? await attachMedicationInventoryData(normalizeMedications(medicamentos), clinicaId)
           : historia.medicamentos,
+      tratamientoIntrahospitalario:
+        tratamientoIntrahospitalario !== undefined
+          ? await attachTratamientoInventoryData(
+              normalizeTratamientoIntrahospitalario(tratamientoIntrahospitalario),
+              clinicaId
+            )
+          : historia.tratamientoIntrahospitalario,
       indicaciones:
         indicaciones !== undefined ? cleanText(indicaciones, 4000) : historia.indicaciones,
       proximaConsulta:
@@ -554,38 +691,310 @@ const editarHistoria = async (req, res) => {
   }
 }
 
-const bloquearHistoria = async (req, res) => {
+// Suma lo aplicado en el tratamiento intrahospitalario, agrupado por insumo. Un
+// mismo insumo puede aparecer en varias lineas (dos dosis en horas distintas).
+const agruparCantidadesPorInsumo = (lineas) => {
+  const porInsumo = new Map()
+
+  for (const item of Array.isArray(lineas) ? lineas : []) {
+    if (!item?.insumoClinicoId) continue
+
+    const cantidad = Number(item.cantidad)
+    if (!Number.isFinite(cantidad) || cantidad <= 0) continue
+
+    const acumulado = porInsumo.get(item.insumoClinicoId) || 0
+    porInsumo.set(item.insumoClinicoId, redondearCantidad(acumulado + cantidad))
+  }
+
+  return porInsumo
+}
+
+// Neto ya descontado por esta historia: salidas menos entradas de correccion.
+const obtenerConsumoRegistrado = async (historiaId, clinicaId, transaction) => {
+  const movimientos = await MovimientoInventarioClinico.findAll({
+    where: {
+      historiaClinicaId: historiaId,
+      clinicaId,
+      motivo: 'uso_procedimiento',
+    },
+    attributes: ['insumoClinicoId', 'tipo', 'cantidad'],
+    transaction,
+  })
+
+  const porInsumo = new Map()
+
+  for (const movimiento of movimientos) {
+    const signo = movimiento.tipo === 'salida' ? 1 : -1
+    const acumulado = porInsumo.get(movimiento.insumoClinicoId) || 0
+    porInsumo.set(
+      movimiento.insumoClinicoId,
+      redondearCantidad(acumulado + signo * Number(movimiento.cantidad))
+    )
+  }
+
+  return porInsumo
+}
+
+/**
+ * Aplica sobre el stock la diferencia entre lo que la historia dice haber usado
+ * y lo que ya se descontó por ella. Idempotente: correr esto dos veces con la
+ * misma historia no descuenta dos veces, y corregir una historia ya bloqueada
+ * ajusta el delta en lugar de duplicar el consumo.
+ */
+const sincronizarConsumoInsumos = async ({ historia, usuarioId, clinicaId, transaction }) => {
+  // Solo el tratamiento intrahospitalario mueve inventario clinico. El plan
+  // farmacologico sale del inventario de ventas, y lo hace al facturarse.
+  const deseado = agruparCantidadesPorInsumo(historia.tratamientoIntrahospitalario)
+  const registrado = await obtenerConsumoRegistrado(historia.id, clinicaId, transaction)
+
+  const insumoIds = [...new Set([...deseado.keys(), ...registrado.keys()])]
+  const aplicados = []
+
+  for (const insumoClinicoId of insumoIds) {
+    const delta = redondearCantidad((deseado.get(insumoClinicoId) || 0) - (registrado.get(insumoClinicoId) || 0))
+
+    if (delta === 0) continue
+
+    const insumo = await InsumoClinico.findOne({
+      where: { id: insumoClinicoId, clinicaId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
+
+    if (!insumo) {
+      const error = new Error('Uno de los medicamentos aplicados ya no existe en el inventario')
+      error.statusCode = 400
+      throw error
+    }
+
+    const stockAnterior = Number(insumo.stock)
+
+    if (delta > 0 && stockAnterior < delta) {
+      const error = new Error(
+        `Stock insuficiente de "${insumo.nombre}": se requieren ${delta} ${insumo.unidadBase} y hay ${stockAnterior}`
+      )
+      error.statusCode = 400
+      throw error
+    }
+
+    const stockNuevo = redondearCantidad(stockAnterior - delta)
+
+    await insumo.update({ stock: stockNuevo }, { transaction })
+
+    // Un delta negativo es una correccion a la baja de la historia: devuelve
+    // stock, pero conserva el motivo para que el neto por historia siga cuadrando.
+    await MovimientoInventarioClinico.create({
+      tipo: delta > 0 ? 'salida' : 'entrada',
+      cantidad: Math.abs(delta),
+      stockAnterior,
+      stockNuevo,
+      motivo: 'uso_procedimiento',
+      observaciones: `Aplicado en historia clinica ${historia.id}`,
+      precioUnitario: insumo.precioUnitarioBase,
+      insumoClinicoId: insumo.id,
+      usuarioId,
+      clinicaId,
+      historiaClinicaId: historia.id,
+    }, { transaction })
+
+    aplicados.push({ insumoClinicoId, nombre: insumo.nombre, delta, unidadBase: insumo.unidadBase })
+  }
+
+  return aplicados
+}
+
+/**
+ * Borrador de cobro de una consulta ya cerrada. No persiste nada: arma las
+ * lineas de factura de las dos secciones para precargar el carrito.
+ *
+ *   tratamiento intrahospitalario -> tipo 'insumo'   (ya descontado al cerrar)
+ *   plan farmacologico            -> tipo 'producto' (descuenta al facturar)
+ *
+ * El servicio de consulta se agrega aparte desde el catalogo de servicios.
+ */
+const obtenerPreliquidacion = async (req, res) => {
   try {
     const { id } = req.params
     const { clinicaId } = req.usuario
 
-    const historia = await HistoriaClinica.findOne({ where: { id, clinicaId } })
+    const historia = await HistoriaClinica.findOne({
+      where: { id, clinicaId },
+      include: [
+        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie'] },
+        { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
+      ],
+    })
 
     if (!historia) {
       return res.status(404).json({ message: 'Historia clinica no encontrada' })
     }
 
-    if (historia.bloqueada) {
-      return res.status(400).json({ message: 'La historia clinica ya esta bloqueada' })
+    if (historia.facturaId) {
+      return res.status(409).json({
+        message: 'Esta consulta ya fue facturada',
+        facturaId: historia.facturaId,
+      })
     }
 
-    await historia.update({ bloqueada: true })
+    // Antes de bloquear no hay consumo registrado: facturar ahi cobraria algo
+    // que todavia no salio de inventario.
+    if (!historia.bloqueada) {
+      return res.status(400).json({
+        message: 'Cierra la historia clinica antes de facturarla',
+      })
+    }
+
+    const items = []
+
+    // ── Tratamiento intrahospitalario: ya salio de stock, aqui solo se cobra ──
+    const cantidadesPorInsumo = agruparCantidadesPorInsumo(historia.tratamientoIntrahospitalario)
+
+    if (cantidadesPorInsumo.size > 0) {
+      const insumos = await InsumoClinico.findAll({
+        where: { id: { [Op.in]: [...cantidadesPorInsumo.keys()] }, clinicaId },
+        attributes: ['id', 'nombre', 'unidadBase', 'precioVenta', 'precioUnitarioBase'],
+      })
+
+      for (const insumo of insumos) {
+        const cantidad = cantidadesPorInsumo.get(insumo.id)
+        const precioUnitario = Number(insumo.precioVenta)
+
+        items.push({
+          tipo: 'insumo',
+          insumoClinicoId: insumo.id,
+          descripcion: `${insumo.nombre} (${cantidad} ${insumo.unidadBase})`,
+          cantidad,
+          unidadBase: insumo.unidadBase,
+          precioUnitario,
+          precioMinimo: Number(insumo.precioUnitarioBase),
+          // null: el stock ya se descontó, no hay existencia que validar aquí.
+          stock: null,
+          subtotal: redondearCantidad(cantidad * precioUnitario),
+        })
+      }
+    }
+
+    // ── Plan farmacologico: se dispensa y descuenta al facturar ──────────────
+    const cantidadesPorProducto = new Map()
+    for (const item of Array.isArray(historia.medicamentos) ? historia.medicamentos : []) {
+      if (!item?.productoId) continue
+
+      const cantidad = Number(item.cantidad)
+      if (!Number.isFinite(cantidad) || cantidad <= 0) continue
+
+      cantidadesPorProducto.set(
+        item.productoId,
+        (cantidadesPorProducto.get(item.productoId) || 0) + cantidad
+      )
+    }
+
+    if (cantidadesPorProducto.size > 0) {
+      const productos = await Producto.findAll({
+        where: { id: { [Op.in]: [...cantidadesPorProducto.keys()] }, clinicaId },
+        attributes: ['id', 'nombre', 'unidadMedida', 'precioVenta', 'precioCompra', 'stock'],
+      })
+
+      for (const producto of productos) {
+        // El inventario de ventas solo maneja enteros.
+        const cantidad = Math.max(Math.round(cantidadesPorProducto.get(producto.id)), 1)
+        const precioUnitario = Number(producto.precioVenta)
+
+        items.push({
+          tipo: 'producto',
+          productoId: producto.id,
+          descripcion: producto.nombre,
+          cantidad,
+          precioUnitario,
+          precioMinimo: Number(producto.precioCompra),
+          stock: Number(producto.stock),
+          subtotal: redondearCantidad(cantidad * precioUnitario),
+        })
+      }
+    }
+
+    res.json({
+      historiaClinicaId: historia.id,
+      mascota: historia.mascota,
+      propietario: historia.propietario,
+      items,
+      // Avisos para la UI: sin precio se cobraria en $0, y sin stock la factura
+      // sera rechazada al intentar descontar el producto.
+      insumosSinPrecio: items
+        .filter((item) => item.precioUnitario <= 0)
+        .map((item) => item.descripcion),
+      productosSinStock: items
+        .filter((item) => item.tipo === 'producto' && item.stock !== null && item.cantidad > item.stock)
+        .map((item) => item.descripcion),
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+const bloquearHistoria = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+
+    // El descuento de stock y el bloqueo van juntos: si falta stock, la historia
+    // no se bloquea, y si el bloqueo falla, no queda inventario descontado.
+    const consumos = await sequelize.transaction(async (transaction) => {
+      const historia = await HistoriaClinica.findOne({
+        where: { id, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (!historia) {
+        const error = new Error('Historia clinica no encontrada')
+        error.statusCode = 404
+        throw error
+      }
+
+      if (historia.bloqueada) {
+        const error = new Error('La historia clinica ya esta bloqueada')
+        error.statusCode = 400
+        throw error
+      }
+
+      const aplicados = await sincronizarConsumoInsumos({
+        historia,
+        usuarioId: req.usuario.id,
+        clinicaId,
+        transaction,
+      })
+
+      await historia.update({ bloqueada: true }, { transaction })
+
+      return aplicados
+    })
 
     // ── Auditoría bloquear historia ────────────────────────
     await registrarAuditoria({
       accion: 'BLOQUEAR_HISTORIA_CLINICA',
       entidad: 'HistoriaClinica',
-      entidadId: historia.id,
-      descripcion: `Historia clínica bloqueada — ya no puede ser modificada`,
+      entidadId: id,
+      descripcion: consumos.length
+        ? `Historia clínica bloqueada — se descontaron ${consumos.length} insumo(s) del inventario clínico`
+        : `Historia clínica bloqueada — ya no puede ser modificada`,
       datosAnteriores: { bloqueada: false },
-      datosNuevos: { bloqueada: true },
+      datosNuevos: { bloqueada: true, consumos },
       req,
       resultado: 'exitoso',
     })
 
-    res.json({ message: 'Historia clinica bloqueada exitosamente' })
+    res.json({
+      message: 'Historia clinica bloqueada exitosamente',
+      consumos,
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+    res
+      .status(error.statusCode || 500)
+      .json({
+        message: error.statusCode && error.statusCode < 500
+          ? error.message
+          : 'Error en el servidor',
+      })
   }
 }
 
@@ -596,4 +1005,5 @@ module.exports = {
   obtenerHistoria,
   editarHistoria,
   bloquearHistoria,
+  obtenerPreliquidacion,
 }

@@ -12,6 +12,7 @@ const {
   obtenerHistoria,
   editarHistoria,
   bloquearHistoria,
+  obtenerPreliquidacion,
 } = require('../controllers/historiaClinicaController')
 
 const HYDRATION_STATES = [
@@ -38,6 +39,57 @@ const MEDICATION_ROUTES = [
 const hasMedicationValue = (item = {}) =>
   ['nombre', 'productoId', 'concentracion', 'dosis', 'via', 'frecuencia', 'duracion', 'cantidad', 'indicacion']
     .some((field) => String(item[field] || '').trim().length > 0)
+
+/**
+ * Tratamiento intrahospitalario: cada linea descuenta inventario clinico real,
+ * asi que el insumo y la cantidad son obligatorios. No admite texto suelto,
+ * a diferencia del plan farmacologico.
+ */
+const validateTratamientoIntrahospitalario = (value) => {
+  if (value === undefined || value === null) return true
+
+  if (!Array.isArray(value)) {
+    throw new Error('El tratamiento intrahospitalario debe enviarse como una lista')
+  }
+
+  if (value.length > 30) {
+    throw new Error('No se admiten mas de 30 aplicaciones por historia')
+  }
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw new Error('Cada aplicacion debe ser un objeto valido')
+    }
+
+    if (!item.insumoClinicoId || !/^[0-9a-fA-F-]{36}$/.test(String(item.insumoClinicoId))) {
+      throw new Error('Cada aplicacion debe indicar un insumo clinico valido')
+    }
+
+    if (
+      item.cantidad === undefined ||
+      item.cantidad === null ||
+      item.cantidad === '' ||
+      !Number.isFinite(Number(item.cantidad)) ||
+      Number(item.cantidad) <= 0
+    ) {
+      throw new Error('Cada aplicacion debe indicar la cantidad aplicada')
+    }
+
+    if (item.via && !MEDICATION_ROUTES.includes(item.via)) {
+      throw new Error('La via de administracion de una aplicacion no es valida')
+    }
+
+    if (item.responsableId && !/^[0-9a-fA-F-]{36}$/.test(String(item.responsableId))) {
+      throw new Error('El responsable de una aplicacion no es valido')
+    }
+
+    if (item.aplicadoEn && Number.isNaN(new Date(item.aplicadoEn).getTime())) {
+      throw new Error('La fecha de aplicacion no es valida')
+    }
+  }
+
+  return true
+}
 
 const validateFollowUpDate = (value) => {
   if (!value) return true
@@ -170,6 +222,7 @@ router.post(
       .withMessage('Estado de hidratacion no valido'),
     body('proximaConsulta').optional().custom(validateFollowUpDate),
     body('medicamentos').optional().custom(validateMedications),
+    body('tratamientoIntrahospitalario').optional().custom(validateTratamientoIntrahospitalario),
     validar,
   ],
   crearHistoria
@@ -195,6 +248,17 @@ router.get(
     validar,
   ],
   obtenerHistoria
+)
+
+router.get(
+  '/:id/preliquidacion',
+  verificarToken,
+  verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'facturador'),
+  [
+    param('id').isUUID().withMessage('Historia clinica no valida'),
+    validar,
+  ],
+  obtenerPreliquidacion
 )
 
 router.put(
@@ -234,6 +298,7 @@ router.put(
       .withMessage('Estado de hidratacion no valido'),
     body('proximaConsulta').optional().custom(validateFollowUpDate),
     body('medicamentos').optional().custom(validateMedications),
+    body('tratamientoIntrahospitalario').optional().custom(validateTratamientoIntrahospitalario),
     validar,
   ],
   editarHistoria
