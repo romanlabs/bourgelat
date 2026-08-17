@@ -15,6 +15,7 @@ const createBlankInvoiceItem = () => ({
   precioUnitario: '',
   productoId: '',
   servicioClinicoId: '',
+  insumoClinicoId: '',
   stock: null,
   precioMinimo: 0,
 })
@@ -33,6 +34,8 @@ const buildInitialForm = () => ({
   metodoPago: 'efectivo',
   observaciones: '',
   items: [],
+  // Cuando la factura cobra una consulta: marca la historia como facturada.
+  historiaClinicaId: '',
 })
 
 export const PAYMENT_METHOD_OPTIONS = [
@@ -231,6 +234,48 @@ export function useFinanzasFacturacion({
     }))
   }
 
+  /**
+   * Carga en el carrito lo cobrable de una consulta cerrada. El backend marca
+   * el tipo de cada linea y aqui se respeta, porque determina si la factura
+   * mueve stock:
+   *   'insumo'   -> tratamiento intrahospitalario, ya descontado al cerrar
+   *   'producto' -> plan farmacologico, se descuenta al emitir la factura
+   */
+  const loadPreliquidacionHistoria = (preliquidacion) => {
+    const items = (preliquidacion?.items || []).map((item) => ({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      tipo: item.tipo,
+      descripcion: item.descripcion,
+      cantidad: String(item.cantidad),
+      precioUnitario: String(item.precioUnitario || 0),
+      productoId: item.productoId || '',
+      servicioClinicoId: '',
+      insumoClinicoId: item.insumoClinicoId || '',
+      // Solo los productos validan existencias: el insumo ya salio de stock.
+      stock: item.tipo === 'producto' ? item.stock ?? null : null,
+      precioMinimo: toAmount(item.precioMinimo),
+    }))
+
+    setInvoiceForm((curr) => ({
+      ...curr,
+      propietarioId: preliquidacion?.propietario?.id || curr.propietarioId,
+      historiaClinicaId: preliquidacion?.historiaClinicaId || '',
+      items: [...curr.items, ...items],
+    }))
+
+    if (preliquidacion?.insumosSinPrecio?.length) {
+      toast.warning(
+        `Sin precio de venta configurado: ${preliquidacion.insumosSinPrecio.join(', ')}. Ajusta el precio antes de facturar.`
+      )
+    }
+
+    if (preliquidacion?.productosSinStock?.length) {
+      toast.warning(
+        `Sin stock suficiente: ${preliquidacion.productosSinStock.join(', ')}. Ajusta la cantidad antes de facturar.`
+      )
+    }
+  }
+
   const handleBarcodeScan = () => {
     const codigo = barcodeInput.trim()
     if (!codigo) {
@@ -249,6 +294,7 @@ export function useFinanzasFacturacion({
         tipo: item.tipo,
         productoId: item.productoId || undefined,
         servicioClinicoId: item.servicioClinicoId || undefined,
+        insumoClinicoId: item.insumoClinicoId || undefined,
       }))
       .filter((item) => item.descripcion && item.cantidad > 0)
 
@@ -262,10 +308,10 @@ export function useFinanzasFacturacion({
       return
     }
 
-    // Piso de precio: un producto no se puede vender por debajo de su costo.
+    // Piso de precio: ni un producto ni un insumo se venden bajo su costo.
     const itemBajoCosto = invoiceForm.items.find(
       (item) =>
-        item.tipo === 'producto' &&
+        (item.tipo === 'producto' || item.tipo === 'insumo') &&
         toAmount(item.precioMinimo) > 0 &&
         toAmount(item.precioUnitario) < toAmount(item.precioMinimo)
     )
@@ -296,6 +342,7 @@ export function useFinanzasFacturacion({
       metodoPago: invoiceForm.metodoPago,
       observaciones: invoiceForm.observaciones.trim() || undefined,
       emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
+      historiaClinicaId: invoiceForm.historiaClinicaId || undefined,
       items: itemsValidos,
     })
   }
@@ -331,6 +378,7 @@ export function useFinanzasFacturacion({
     addServiceItem,
     addServiceFromCatalog,
     addProductToInvoice,
+    loadPreliquidacionHistoria,
     removeInvoiceItem,
     updateInvoiceItem,
   }
