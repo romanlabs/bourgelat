@@ -85,6 +85,8 @@ export default function FinanzasPage() {
   const [activeTab, setActiveTab] = useState('facturacion')
   const [posOpen, setPosOpen] = useState(false)
   const [ventaExitosa, setVentaExitosa] = useState(false)
+  // Factura recién emitida: el POS la muestra sin salir del flujo de venta.
+  const [facturaCreadaId, setFacturaCreadaId] = useState(null)
 
   const abrirPos = () => {
     // Sin turno de caja no se puede facturar: llevamos al guard de la pestana.
@@ -93,11 +95,13 @@ export default function FinanzasPage() {
       return
     }
     setVentaExitosa(false)
+    setFacturaCreadaId(null)
     setPosOpen(true)
   }
   const cerrarPos = () => {
     setPosOpen(false)
     setVentaExitosa(false)
+    setFacturaCreadaId(null)
   }
 
   useEffect(() => {
@@ -132,7 +136,8 @@ export default function FinanzasPage() {
     puedeConsultarInventario,
     emisionAutomaticaActiva,
     // La venta se cierra dentro del modal (paso de vuelto), no saltamos de tab.
-    onFacturaCreada: () => {
+    onFacturaCreada: (facturaId) => {
+      setFacturaCreadaId(facturaId)
       setVentaExitosa(true)
     },
   })
@@ -527,7 +532,11 @@ export default function FinanzasPage() {
           facturacionHook={facturacionHook}
           puedeConsultarInventario={puedeConsultarInventario}
           ventaExitosa={ventaExitosa}
-          onNuevaVenta={() => setVentaExitosa(false)}
+          facturaCreadaId={facturaCreadaId}
+          onNuevaVenta={() => {
+            setVentaExitosa(false)
+            setFacturaCreadaId(null)
+          }}
         />
       ) : null}
     </AdminShell>

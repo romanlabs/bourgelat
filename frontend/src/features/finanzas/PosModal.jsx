@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PackageSearch, ShoppingCart } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Loader2, PackageSearch, Printer, ShoppingCart } from 'lucide-react'
 import { DialogRoot, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ProductCommandSearch from './ProductCommandSearch'
 import CartSidebar from './CartSidebar'
 import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
+import { finanzasApi } from './finanzasApi'
+import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import MoneyInput from '@/components/shared/MoneyInput'
+import { useAuthStore } from '@/store/authStore'
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -25,7 +29,9 @@ const buildCashSuggestions = (total) => {
 
 /**
  * Punto de venta en una sola ventana. Un modal centrado con el flujo completo:
- *   carrito  →  cobro (recibido / vuelto)  →  éxito (cuánto devolver)
+ *   carrito  →  cobro (recibido / vuelto)  →  éxito (cuánto devolver)  →  factura
+ * El último paso muestra la factura recién emitida sin salir del POS, para no
+ * mandar al cajero al historial a buscar lo que acaba de vender.
  * Solo venta interna: no menciona facturación electrónica en ningún paso.
  */
 export default function PosModal({
@@ -34,13 +40,15 @@ export default function PosModal({
   facturacionHook,
   puedeConsultarInventario,
   ventaExitosa,
+  facturaCreadaId,
   onNuevaVenta,
 }) {
-  const [view, setView] = useState('cart')          // cart | pago | exito
+  const [view, setView] = useState('cart')          // cart | pago | exito | factura
   const [mobilePane, setMobilePane] = useState('productos')
   const [montoRecibido, setMontoRecibido] = useState('')
   const [snapshot, setSnapshot] = useState(null)     // { total, recibido, vuelto, metodo }
   const searchInputRef = useRef(null)
+  const clinica = useAuthStore((state) => state.clinica)
 
   const {
     ownerSearch, setOwnerSearch,
@@ -111,6 +119,15 @@ export default function PosModal({
     crearFacturaMutation?.reset?.()
   }
 
+  // Se carga solo al pedir "Ver factura": el paso de vuelto no necesita el detalle.
+  const facturaQuery = useQuery({
+    queryKey: ['pos-factura-emitida', facturaCreadaId],
+    queryFn: () => finanzasApi.obtenerFactura(facturaCreadaId),
+    enabled: Boolean(facturaCreadaId) && view === 'factura',
+  })
+
+  const facturaEmitida = facturaQuery.data?.factura || null
+
   const puedeConfirmar = itemCount > 0 && (!esEfectivo || (montoRecibido !== '' && vueltoOk))
 
   return (
@@ -125,10 +142,16 @@ export default function PosModal({
             <div className="min-w-0">
               <DialogTitle className="text-sm font-semibold text-foreground">Punto de venta</DialogTitle>
               <p className="text-[11px] text-muted-foreground">
-                {view === 'exito' ? 'Venta registrada' : view === 'pago' ? 'Cobro' : 'Arma la compra y cobra'}
+                {view === 'factura'
+                  ? 'Factura emitida'
+                  : view === 'exito'
+                    ? 'Venta registrada'
+                    : view === 'pago'
+                      ? 'Cobro'
+                      : 'Arma la compra y cobra'}
               </p>
             </div>
-            {view !== 'exito' && itemCount > 0 ? (
+            {view !== 'exito' && view !== 'factura' && itemCount > 0 ? (
               <span className="ml-auto hidden items-baseline gap-1.5 sm:flex">
                 <span className="text-[11px] text-muted-foreground">Total</span>
                 <span className="text-base font-bold tabular-nums text-foreground">{formatCOP(total)}</span>
@@ -371,7 +394,18 @@ export default function PosModal({
                   </div>
                 </dl>
 
-                <div className="mt-6 flex w-full gap-2">
+                {facturaCreadaId ? (
+                  <button
+                    type="button"
+                    onClick={() => setView('factura')}
+                    className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Ver factura
+                  </button>
+                ) : null}
+
+                <div className={`flex w-full gap-2 ${facturaCreadaId ? 'mt-2' : 'mt-6'}`}>
                   <button
                     type="button"
                     onClick={onClose}
@@ -386,6 +420,108 @@ export default function PosModal({
                   >
                     Nueva venta
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Paso 4: la factura recién emitida, dentro del mismo POS */}
+            {view === 'factura' && (
+              <div className="h-full overflow-y-auto px-5 py-5">
+                <div className="mx-auto max-w-lg">
+                  {facturaQuery.isError ? (
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                      No fue posible cargar la factura. Quedó registrada y puedes verla en el
+                      historial.
+                    </div>
+                  ) : facturaQuery.isLoading ? (
+                    <div className="space-y-3">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="h-16 animate-pulse rounded-xl border border-border bg-muted" />
+                      ))}
+                    </div>
+                  ) : facturaEmitida ? (
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-lg font-bold text-foreground">{facturaEmitida.numero}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {formatDateTime(facturaEmitida.createdAt || facturaEmitida.fecha)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
+                          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Imprimir tirilla
+                        </button>
+                      </div>
+
+                      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border text-sm">
+                        <div className="bg-card px-4 py-2.5">
+                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Cliente</dt>
+                          <dd className="mt-0.5 truncate font-semibold text-foreground">
+                            {facturaEmitida.propietario?.nombre || 'Consumidor final'}
+                          </dd>
+                        </div>
+                        <div className="bg-card px-4 py-2.5">
+                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Pago</dt>
+                          <dd className="mt-0.5 truncate font-semibold text-foreground">
+                            {snapshot?.metodo || facturaEmitida.metodoPago}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <div className="overflow-hidden rounded-xl border border-border">
+                        <table className="min-w-full divide-y divide-border text-sm">
+                          <tbody className="divide-y divide-border">
+                            {(facturaEmitida.items || []).map((item) => (
+                              <tr key={item.id}>
+                                <td className="px-3 py-2.5">
+                                  <p className="font-medium text-foreground">{item.descripcion}</p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {item.cantidad} x {formatCOP(Number(item.precioUnitario))}
+                                  </p>
+                                </td>
+                                <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-foreground">
+                                  {formatCOP(Number(item.subtotal))}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t border-border bg-muted">
+                              <td className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Total
+                              </td>
+                              <td className="px-3 py-3 text-right text-base font-bold tabular-nums text-foreground">
+                                {formatCOP(Number(facturaEmitida.total))}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setView('exito')}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Volver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={nuevaVenta}
+                          className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
+                        >
+                          Nueva venta
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}
