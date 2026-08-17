@@ -6,6 +6,8 @@ const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo');
 const { parsePaginacion } = require('../utils/paginacion');
 const { tenantWhere } = require('../utils/tenant');
 
+const MODOS_CONSUMO = ['por_dosis', 'por_receta'];
+
 const redondear = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 
 const normalizarNumero = (valor, valorPorDefecto = 0) => {
@@ -23,6 +25,7 @@ const crearInsumo = async (req, res) => {
       nombre, descripcion, categoria, unidadBase,
       cantidadPresentacion, unidadPresentacion, precioPresentacion,
       stockMinimo, fechaVencimiento, lote, laboratorio,
+      precioVenta, modoConsumo,
     } = req.body;
 
     const { clinicaId } = req.usuario;
@@ -55,6 +58,20 @@ const crearInsumo = async (req, res) => {
       });
     }
 
+    const precioVentaNormalizado = normalizarNumero(precioVenta, 0);
+
+    if (Number.isNaN(precioVentaNormalizado) || precioVentaNormalizado < 0) {
+      return res.status(400).json({
+        message: 'El precio de venta debe ser un numero valido mayor o igual a 0'
+      });
+    }
+
+    if (modoConsumo !== undefined && !MODOS_CONSUMO.includes(modoConsumo)) {
+      return res.status(400).json({
+        message: `El modo de consumo debe ser uno de: ${MODOS_CONSUMO.join(', ')}`
+      });
+    }
+
     const precioUnitarioBase = redondear(precioPresentacionNormalizado / cantidadPresentacionNormalizada);
 
     const insumo = await sequelize.transaction(async (transaction) => {
@@ -67,6 +84,8 @@ const crearInsumo = async (req, res) => {
         unidadPresentacion,
         precioPresentacion: precioPresentacionNormalizado,
         precioUnitarioBase,
+        precioVenta: precioVentaNormalizado,
+        modoConsumo: modoConsumo || 'por_receta',
         stock: cantidadPresentacionNormalizada,
         stockMinimo: stockMinimoNormalizado,
         fechaVencimiento,
@@ -186,12 +205,66 @@ const obtenerInsumo = async (req, res) => {
   }
 };
 
+// Catalogo que alimenta el selector de medicamentos de la historia clinica.
+// Solo insumos de dosis exacta: los `por_receta` se descuentan al facturar el
+// servicio que los contiene, no desde la historia.
+const obtenerCatalogoDosis = async (req, res) => {
+  try {
+    const { buscar } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 8 });
+
+    const where = tenantWhere(req, {
+      activo: true,
+      modoConsumo: 'por_dosis',
+      stock: { [Op.gt]: 0 },
+    });
+
+    if (buscar) {
+      where[Op.or] = [
+        { nombre: { [Op.iLike]: `%${buscar}%` } },
+        { laboratorio: { [Op.iLike]: `%${buscar}%` } },
+        { lote: { [Op.iLike]: `%${buscar}%` } },
+        { descripcion: { [Op.iLike]: `%${buscar}%` } },
+      ];
+    }
+
+    const { count, rows } = await InsumoClinico.findAndCountAll({
+      where,
+      attributes: [
+        'id',
+        'nombre',
+        'categoria',
+        'descripcion',
+        'unidadBase',
+        'laboratorio',
+        'lote',
+        'stock',
+        'precioVenta',
+        'precioUnitarioBase',
+      ],
+      limit: limite,
+      offset,
+      order: [['nombre', 'ASC']],
+    });
+
+    res.json({
+      total: count,
+      paginas: Math.ceil(count / limite),
+      paginaActual: parseInt(pagina),
+      insumos: rows,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const editarInsumo = async (req, res) => {
   try {
     const { id } = req.params;
     const {
       nombre, descripcion, categoria, unidadBase,
       stockMinimo, fechaVencimiento, lote, laboratorio,
+      precioVenta, modoConsumo,
     } = req.body;
 
     const insumo = await InsumoClinico.findOne({ where: tenantWhere(req, { id }) });
@@ -207,10 +280,26 @@ const editarInsumo = async (req, res) => {
       });
     }
 
+    const precioVentaNormalizado = normalizarNumero(precioVenta, insumo.precioVenta);
+
+    if (Number.isNaN(precioVentaNormalizado) || precioVentaNormalizado < 0) {
+      return res.status(400).json({
+        message: 'El precio de venta debe ser un numero valido mayor o igual a 0'
+      });
+    }
+
+    if (modoConsumo !== undefined && !MODOS_CONSUMO.includes(modoConsumo)) {
+      return res.status(400).json({
+        message: `El modo de consumo debe ser uno de: ${MODOS_CONSUMO.join(', ')}`
+      });
+    }
+
     await insumo.update({
       nombre, descripcion, categoria, unidadBase,
       stockMinimo: stockMinimoNormalizado,
       fechaVencimiento, lote, laboratorio,
+      precioVenta: precioVentaNormalizado,
+      modoConsumo: modoConsumo || insumo.modoConsumo,
     });
 
     res.json({
@@ -460,6 +549,7 @@ module.exports = {
   crearInsumo,
   obtenerInsumos,
   obtenerInsumo,
+  obtenerCatalogoDosis,
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,

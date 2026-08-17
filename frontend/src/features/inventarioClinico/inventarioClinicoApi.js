@@ -20,6 +20,14 @@ export const inventarioClinicoApi = {
     return data
   },
 
+  // Solo insumos de dosis exacta: son los que se aplican desde la historia clinica.
+  async obtenerCatalogoDosis({ buscar, pagina = 1, limite = 6 } = {}) {
+    const { data } = await api.get('/inventario-clinico/catalogo-dosis', {
+      params: cleanParams({ buscar, pagina, limite }),
+    })
+    return data
+  },
+
   async obtenerAlertas() {
     const { data } = await api.get('/inventario-clinico/alertas')
     return data
