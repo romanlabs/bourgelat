@@ -8,6 +8,7 @@ const ServicioClinico = require('../models/ServicioClinico')
 const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo')
 const InsumoClinico = require('../models/InsumoClinico')
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
+const HistoriaClinica = require('../models/HistoriaClinica')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
@@ -422,6 +423,7 @@ const crearFactura = async (req, res) => {
       emitirElectronica = false,
       documentoElectronico = '01',
       rangoNumeracionId = null,
+      historiaClinicaId = null,
     } = req.body
     const { clinicaId } = req.usuario
 
@@ -461,6 +463,39 @@ const crearFactura = async (req, res) => {
       if (!propietario) {
         await transaction.rollback()
         return res.status(404).json({ message: 'Propietario no encontrado' })
+      }
+    }
+
+    // Cobro de una consulta: el lock evita que dos cajeros facturen la misma
+    // historia al tiempo y la cobren dos veces.
+    let historiaAFacturar = null
+    if (historiaClinicaId) {
+      historiaAFacturar = await HistoriaClinica.findOne({
+        where: { id: historiaClinicaId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (!historiaAFacturar) {
+        await transaction.rollback()
+        return res.status(404).json({ message: 'Historia clinica no encontrada' })
+      }
+
+      if (historiaAFacturar.facturaId) {
+        await transaction.rollback()
+        return res.status(409).json({
+          message: 'Esta consulta ya fue facturada',
+          code: 'HISTORIA_YA_FACTURADA',
+          facturaId: historiaAFacturar.facturaId,
+        })
+      }
+
+      if (!historiaAFacturar.bloqueada) {
+        await transaction.rollback()
+        return res.status(400).json({
+          message: 'Cierra la historia clinica antes de facturarla',
+          code: 'HISTORIA_NO_CERRADA',
+        })
       }
     }
 
@@ -575,6 +610,36 @@ const crearFactura = async (req, res) => {
         }
       }
 
+      // Insumo ya consumido al cerrar la historia clinica. Se cobra, pero NO
+      // descuenta stock: el descuento ocurrio en bloquearHistoria. Aqui solo se
+      // valida que exista y que no se venda por debajo del costo.
+      if (item.tipo === 'insumo') {
+        if (!item.insumoClinicoId) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `El item "${item.descripcion}" debe indicar el insumo clinico facturado`,
+          })
+        }
+
+        const insumoFacturado = await InsumoClinico.findOne({
+          where: { id: item.insumoClinicoId, clinicaId },
+          transaction,
+        })
+
+        if (!insumoFacturado) {
+          await transaction.rollback()
+          return res.status(404).json({ message: `Insumo clinico no encontrado: ${item.descripcion}` })
+        }
+
+        const costoBase = convertirANumero(insumoFacturado.precioUnitarioBase, 0)
+        if (costoBase > 0 && precioUnitario < costoBase) {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `"${insumoFacturado.nombre}" no se puede vender por debajo de su costo ($${costoBase})`,
+          })
+        }
+      }
+
       const itemSubtotal = Math.max((precioUnitario * cantidad) - descuentoItem, 0)
       subtotal += itemSubtotal
       itemsCalculados.push({
@@ -637,6 +702,7 @@ const crearFactura = async (req, res) => {
         subtotal: item.subtotal,
         productoId: item.productoId || null,
         servicioClinicoId: item.servicioClinicoId || null,
+        insumoClinicoId: item.insumoClinicoId || null,
         facturaId: factura.id,
       }, { transaction })
 
@@ -689,6 +755,13 @@ const crearFactura = async (req, res) => {
           }, { transaction })
         }
       }
+
+      // Los items tipo 'insumo' no tocan stock a proposito: ya se descontaron
+      // al bloquear la historia clinica que los aplico.
+    }
+
+    if (historiaAFacturar) {
+      await historiaAFacturar.update({ facturaId: factura.id }, { transaction })
     }
 
     if (metodoPago === 'efectivo') {
@@ -1346,8 +1419,12 @@ const anularFactura = async (req, res) => {
       }
     }
 
+    // Solo 'uso_servicio' se revierte. Los consumos con motivo 'uso_procedimiento'
+    // se descontaron al cerrar la historia clinica, no aqui: el medicamento ya
+    // entro al paciente y anular la factura devuelve el dinero, no el insumo.
+    // Reponer ese stock exige corregir la historia o un ajuste manual.
     const movimientosClinicosFactura = await MovimientoInventarioClinico.findAll({
-      where: { facturaId: factura.id, motivo: 'uso_servicio' },
+      where: { facturaId: factura.id, clinicaId, motivo: 'uso_servicio' },
       transaction,
     })
 
@@ -1406,6 +1483,13 @@ const anularFactura = async (req, res) => {
         cajaAjustada = true
       }
     }
+
+    // Soltar la consulta para que pueda volver a cobrarse. El stock consumido
+    // no se repone: el insumo ya se aplico al paciente.
+    await HistoriaClinica.update(
+      { facturaId: null },
+      { where: { facturaId: factura.id, clinicaId }, transaction }
+    )
 
     await factura.update({ estado: 'anulada', motivoAnulacion }, { transaction })
     await transaction.commit()

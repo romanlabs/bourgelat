@@ -32,6 +32,7 @@ const MovimientoInventarioClinico = sequelize.define('MovimientoInventarioClinic
       'inventario_inicial',
       'compra',
       'uso_servicio',
+      'uso_procedimiento',
       'ajuste_inventario',
       'vencimiento',
       'devolucion',
@@ -96,6 +97,11 @@ const MovimientoInventarioClinico = sequelize.define('MovimientoInventarioClinic
     allowNull: true,
     comment: 'Servicio del catalogo que genero el consumo',
   },
+  historiaClinicaId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: 'Historia clinica que consumio el insumo (motivo=uso_procedimiento)',
+  },
 }, {
   tableName: 'movimientos_inventario_clinico',
   timestamps: true,
@@ -105,6 +111,7 @@ const MovimientoInventarioClinico = sequelize.define('MovimientoInventarioClinic
     { fields: ['clinicaId', 'createdAt'] },
     { fields: ['motivo'] },
     { fields: ['facturaId'] },
+    { fields: ['historiaClinicaId'] },
   ]
 });
 

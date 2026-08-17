@@ -5,6 +5,7 @@ const {
   crearInsumo,
   obtenerInsumos,
   obtenerInsumo,
+  obtenerCatalogoDosis,
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,
@@ -18,6 +19,7 @@ const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const router = express.Router()
 const categoriasValidas = ['medicamento', 'vacuna', 'insumo', 'antiparasitario', 'suplemento', 'otro']
 const tiposMovimientoValidos = ['entrada', 'salida', 'ajuste']
+const modosConsumoValidos = ['por_dosis', 'por_receta']
 const motivosMovimientoValidos = [
   'inventario_inicial',
   'compra',
@@ -54,6 +56,15 @@ const validarCreacionInsumo = [
   body('fechaVencimiento').optional({ values: 'falsy' }).isISO8601().withMessage('La fecha de vencimiento no es valida'),
   body('lote').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
   body('laboratorio').optional({ values: 'falsy' }).trim().isLength({ max: 120 }),
+  body('precioVenta').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('El precio de venta debe ser mayor o igual a 0'),
+  body('modoConsumo').optional({ values: 'falsy' }).isIn(modosConsumoValidos).withMessage('Modo de consumo no valido'),
+  validar,
+]
+
+const validarCatalogoDosis = [
+  query('buscar').optional().trim().isLength({ max: 120 }).withMessage('La busqueda no puede exceder 120 caracteres'),
+  query('pagina').optional().isInt({ min: 1 }).withMessage('La pagina debe ser un entero mayor a 0'),
+  query('limite').optional().isInt({ min: 1, max: 50 }).withMessage('El limite debe ser un entero entre 1 y 50'),
   validar,
 ]
 
@@ -67,6 +78,8 @@ const validarEdicionInsumo = [
   body('fechaVencimiento').optional({ values: 'falsy' }).isISO8601().withMessage('La fecha de vencimiento no es valida'),
   body('lote').optional({ nullable: true }).trim().isLength({ max: 80 }),
   body('laboratorio').optional({ nullable: true }).trim().isLength({ max: 120 }),
+  body('precioVenta').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('El precio de venta debe ser mayor o igual a 0'),
+  body('modoConsumo').optional({ values: 'falsy' }).isIn(modosConsumoValidos).withMessage('Modo de consumo no valido'),
   validar,
 ]
 
@@ -120,6 +133,15 @@ router.get(
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
   obtenerAlertas
+)
+
+// Antes de '/:id' para que el path literal no lo capture como UUID.
+router.get(
+  '/catalogo-dosis',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
+  validarCatalogoDosis,
+  obtenerCatalogoDosis
 )
 
 router.get(

@@ -5,6 +5,7 @@ const sequelize = require('../config/database')
 const Factura = require('./Factura')
 const Producto = require('./Producto')
 const ServicioClinico = require('./ServicioClinico')
+const InsumoClinico = require('./InsumoClinico')
 const { registrarHooksCifrado } = require('../config/modelEncryption')
 
 const FacturaItem = sequelize.define('FacturaItem', {
@@ -19,7 +20,9 @@ const FacturaItem = sequelize.define('FacturaItem', {
     allowNull: false,
   },
   tipo: {
-    type: DataTypes.ENUM('producto', 'servicio'),
+    // 'insumo': insumo clinico ya consumido en la historia. Se cobra, pero no
+    // vuelve a descontar stock — el descuento ocurrio al bloquear la historia.
+    type: DataTypes.ENUM('producto', 'servicio', 'insumo'),
     allowNull: false,
     defaultValue: 'servicio',
   },
@@ -59,6 +62,15 @@ const FacturaItem = sequelize.define('FacturaItem', {
       key: 'id',
     },
   },
+  insumoClinicoId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: 'Insumo clinico facturado como linea propia, cuando tipo=insumo',
+    references: {
+      model: InsumoClinico,
+      key: 'id',
+    },
+  },
   facturaId: {
     type: DataTypes.UUID,
     allowNull: false,
@@ -75,6 +87,7 @@ const FacturaItem = sequelize.define('FacturaItem', {
     { fields: ['facturaId'] },
     { fields: ['productoId'] },
     { fields: ['servicioClinicoId'] },
+    { fields: ['insumoClinicoId'] },
   ],
 })
 
@@ -92,6 +105,8 @@ Producto.hasMany(FacturaItem, { foreignKey: 'productoId', as: 'itemsFactura' })
 FacturaItem.belongsTo(Producto, { foreignKey: 'productoId', as: 'producto' })
 ServicioClinico.hasMany(FacturaItem, { foreignKey: 'servicioClinicoId', as: 'itemsFactura' })
 FacturaItem.belongsTo(ServicioClinico, { foreignKey: 'servicioClinicoId', as: 'servicioClinico' })
+InsumoClinico.hasMany(FacturaItem, { foreignKey: 'insumoClinicoId', as: 'itemsFactura' })
+FacturaItem.belongsTo(InsumoClinico, { foreignKey: 'insumoClinicoId', as: 'insumoClinico' })
 
 module.exports = FacturaItem
 module.exports.CIFRADO = CIFRADO_FACTURA_ITEM
