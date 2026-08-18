@@ -78,6 +78,7 @@ function Select({
   className,
   contentClassName,
   disabled,
+  required,
   name,
   id,
   'aria-label': ariaLabel,
@@ -88,6 +89,7 @@ function Select({
       value={toRadix(value)}
       onValueChange={(next) => onValueChange?.(fromRadix(next))}
       disabled={disabled}
+      required={required}
       name={name}
     >
       <SelectPrimitive.Trigger
