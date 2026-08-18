@@ -6,6 +6,7 @@ import { NavCtaLink } from '@/components/shared/NavCta'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useBuscarPropietarios } from './useRecepcion'
+import { Select } from '@/components/ui/select'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -146,21 +147,16 @@ export function TutorPetSelector({
         </div>
       </div>
 
-      <select
+      <Select
+        variant="field"
+        aria-label="Paciente"
+        className="h-11 disabled:bg-muted"
+        placeholder={selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
         value={mascotaId}
-        onChange={(event) => onSelectMascota(event.target.value)}
+        onValueChange={onSelectMascota}
         disabled={!selectedOwner}
-        className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
-      >
-        <option value="">
-          {selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
-        </option>
-        {mascotasDelTutor.map((pet) => (
-          <option key={pet.id} value={pet.id}>
-            {pet.nombre}
-          </option>
-        ))}
-      </select>
+        options={mascotasDelTutor.map((pet) => ({ value: pet.id, label: pet.nombre }))}
+      />
 
       {selectedOwner && mascotasDelTutor.length === 0 ? (
         <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800">

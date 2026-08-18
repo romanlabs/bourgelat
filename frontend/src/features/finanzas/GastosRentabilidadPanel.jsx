@@ -8,6 +8,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
+import { Select } from '@/components/ui/select'
 import {
   useAnularGasto,
   useCrearGasto,
@@ -71,6 +72,7 @@ function GastoForm() {
   const [mensaje, setMensaje] = useState(null)
 
   const set = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }))
+  const setValor = (campo) => (valor) => setForm((f) => ({ ...f, [campo]: valor }))
 
   const asentar = async (e) => {
     e.preventDefault()
@@ -95,9 +97,13 @@ function GastoForm() {
     <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
-        <select value={form.categoria} onChange={set('categoria')} className={inputClass}>
-          {CATEGORIAS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-        </select>
+        <Select
+          variant="field"
+          aria-label="Categoria del gasto"
+          value={form.categoria}
+          onValueChange={setValor('categoria')}
+          options={CATEGORIAS}
+        />
       </label>
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Concepto</span>
@@ -120,9 +126,13 @@ function GastoForm() {
       </label>
       <label className="grid gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pago</span>
-        <select value={form.metodoPago} onChange={set('metodoPago')} className={inputClass}>
-          {METODOS_GASTO.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </select>
+        <Select
+          variant="field"
+          aria-label="Metodo de pago"
+          value={form.metodoPago}
+          onValueChange={setValor('metodoPago')}
+          options={METODOS_GASTO}
+        />
       </label>
       <div className="flex items-end">
         <button
@@ -291,13 +301,14 @@ function FilaDeudor({ cliente }) {
                     placeholder="valor"
                     className={`${inputClass} h-9 w-28 text-right tabular-nums`}
                   />
-                  <select
+                  <Select
+                    variant="field"
+                    aria-label="Metodo del abono"
+                    className="h-9"
                     value={metodoPago}
-                    onChange={(e) => setMetodoPago(e.target.value)}
-                    className={`${inputClass} h-9`}
-                  >
-                    {METODOS_ABONO.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                  </select>
+                    onValueChange={setMetodoPago}
+                    options={METODOS_ABONO}
+                  />
                   <button
                     type="button"
                     onClick={() => cobrar(f)}
