@@ -27,6 +27,7 @@ import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { Select } from '@/components/ui/select'
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Administrador' },
@@ -574,29 +575,18 @@ export default function UsuariosPage() {
                       className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
-                  <select
+                  <Select
+                    aria-label="Filtrar por estado"
                     value={estado}
-                    onChange={(event) => setEstado(event.target.value)}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <select
+                    onValueChange={setEstado}
+                    options={STATUS_OPTIONS}
+                  />
+                  <Select
+                    aria-label="Filtrar por rol"
                     value={rolFiltro}
-                    onChange={(event) => setRolFiltro(event.target.value)}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    <option value="todos">Todos los roles</option>
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={setRolFiltro}
+                    options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
+                  />
                 </div>
               }
             >
@@ -745,23 +735,20 @@ export default function UsuariosPage() {
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <select
+                  <Select
+                    variant="field"
+                    aria-label="Rol principal"
+                    className="h-11"
                     value={createForm.rol}
-                    onChange={(event) =>
+                    onValueChange={(value) =>
                       setCreateForm((current) => ({
                         ...current,
-                        rol: event.target.value,
-                        rolesAdicionales: normalizeRoles(current.rolesAdicionales, event.target.value),
+                        rol: value,
+                        rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
                       }))
                     }
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={ROLE_OPTIONS}
+                  />
                   <input
                     type="password"
                     value={createForm.password}
@@ -895,24 +882,21 @@ export default function UsuariosPage() {
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <select
+                    <Select
+                      variant="field"
+                      aria-label="Rol principal"
+                      className="h-11 disabled:bg-muted"
                       value={editForm.rol}
                       disabled={esUsuarioActualSeleccionado}
-                      onChange={(event) =>
+                      onValueChange={(value) =>
                         setEditForm((current) => ({
                           ...current,
-                          rol: event.target.value,
-                          rolesAdicionales: normalizeRoles(current.rolesAdicionales, event.target.value),
+                          rol: value,
+                          rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
                         }))
                       }
-                      className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted"
-                    >
-                      {ROLE_OPTIONS.map((role) => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={ROLE_OPTIONS}
+                    />
                     <div className="flex items-center border border-border bg-card px-3">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <input

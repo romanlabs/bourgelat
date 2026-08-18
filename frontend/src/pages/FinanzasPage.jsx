@@ -46,6 +46,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
+import { Select } from '@/components/ui/select'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -393,21 +394,16 @@ export default function FinanzasPage() {
                         className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                       />
                     </div>
-                    <select
+                    <Select
+                      aria-label="Filtrar por estado"
                       value={historialHook.estado}
-                      onChange={(event) => {
-                        historialHook.setEstado(event.target.value)
+                      onValueChange={(value) => {
+                        historialHook.setEstado(value)
                         historialHook.setPagina(1)
                         historialHook.resetSeleccion()
                       }}
-                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={STATUS_OPTIONS}
+                    />
                     <button
                       type="submit"
                       className="border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
