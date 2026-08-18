@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { VIEW_OPTIONS, VIEW_PREFS } from './calendarConstants'
 
 const STORAGE_KEY = 'agenda-view'
 const SIDEBAR_STORAGE_KEY = 'agenda-sidebar-open'
-const VIEWS = ['dia', 'semana', 'mes']
+const PREFS_STORAGE_KEY = 'agenda-view-prefs'
+const VIEWS = VIEW_OPTIONS.map((opt) => opt.value)
+
+const DEFAULT_PREFS = VIEW_PREFS.reduce((acc, pref) => ({ ...acc, [pref.key]: true }), {})
 
 /**
- * Vista activa del calendario ('dia' | 'semana' | 'mes'), persistida en localStorage.
- * En móvil la vista semanal no es usable: effectiveView cae a 'dia' sin
- * sobrescribir la preferencia guardada.
+ * Vista activa del calendario, persistida en localStorage.
+ * En móvil las vistas multi-columna no son usables: effectiveView cae a 'dia'
+ * sin sobrescribir la preferencia guardada.
  *
- * También controla el panel lateral (mini calendario): oculto por defecto,
- * se abre/cierra con un botón en la toolbar — igual que el "☰" de Google
- * Calendar — y la preferencia se recuerda entre sesiones.
+ * También controla el panel lateral (mini calendario) y las preferencias de
+ * visualización (fines de semana, canceladas, completadas) — igual que el
+ * selector de vista de Google Calendar.
  */
 export function useCalendarView() {
   const [view, setViewState] = useState(() => {
@@ -33,6 +37,15 @@ export function useCalendarView() {
     }
   })
 
+  const [prefs, setPrefsState] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(PREFS_STORAGE_KEY) || '{}')
+      return { ...DEFAULT_PREFS, ...stored }
+    } catch {
+      return DEFAULT_PREFS
+    }
+  })
+
   const isMobile = useMediaQuery('(max-width: 640px)')
 
   const setView = (next) => {
@@ -43,6 +56,18 @@ export function useCalendarView() {
     } catch {
       // localStorage no disponible — la vista solo dura la sesión
     }
+  }
+
+  const togglePref = (key) => {
+    setPrefsState((prev) => {
+      const next = { ...prev, [key]: !prev[key] }
+      try {
+        localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(next))
+      } catch {
+        // localStorage no disponible — la preferencia solo dura la sesión
+      }
+      return next
+    })
   }
 
   const toggleSidebar = () => {
@@ -57,7 +82,16 @@ export function useCalendarView() {
     })
   }
 
-  const effectiveView = isMobile && view === 'semana' ? 'dia' : view
+  const effectiveView = isMobile && (view === 'semana' || view === '4dias') ? 'dia' : view
 
-  return { view, effectiveView, setView, isMobile, sidebarOpen: sidebarOpen && !isMobile, toggleSidebar }
+  return {
+    view,
+    effectiveView,
+    setView,
+    isMobile,
+    sidebarOpen: sidebarOpen && !isMobile,
+    toggleSidebar,
+    prefs,
+    togglePref,
+  }
 }

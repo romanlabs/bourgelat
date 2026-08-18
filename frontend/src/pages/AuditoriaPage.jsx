@@ -15,6 +15,7 @@ import {
   getCurrentMonthRange,
   objectToChartData,
 } from '@/features/dashboard/dashboardUtils'
+import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
@@ -281,50 +282,45 @@ export default function AuditoriaPage() {
                   className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                 />
               </div>
-              <select
+              <Select
+                aria-label="Filtrar por resultado"
                 value={resultado}
-                onChange={(event) => {
-                  setResultado(event.target.value)
+                onValueChange={(value) => {
+                  setResultado(value)
                   setPagina(1)
                 }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              >
-                {RESULT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <select
+                options={RESULT_OPTIONS}
+              />
+              <Select
+                aria-label="Filtrar por sección"
                 value={entidad}
-                onChange={(event) => {
-                  setEntidad(event.target.value)
+                onValueChange={(value) => {
+                  setEntidad(value)
                   setPagina(1)
                 }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              >
-                <option value="todas">Todas las secciones</option>
-                {entidadesDisponibles.map((item) => (
-                  <option key={item} value={item}>
-                    {formatEntityLabel(item)}
-                  </option>
-                ))}
-              </select>
-              <select
+                options={[
+                  { value: 'todas', label: 'Todas las secciones' },
+                  ...entidadesDisponibles.map((item) => ({
+                    value: item,
+                    label: formatEntityLabel(item),
+                  })),
+                ]}
+              />
+              <Select
+                aria-label="Filtrar por acción"
                 value={accion}
-                onChange={(event) => {
-                  setAccion(event.target.value)
+                onValueChange={(value) => {
+                  setAccion(value)
                   setPagina(1)
                 }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              >
-                <option value="todas">Todas las acciones</option>
-                {accionesDisponibles.map((item) => (
-                  <option key={item} value={item}>
-                    {formatActionLabel(item)}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: 'todas', label: 'Todas las acciones' },
+                  ...accionesDisponibles.map((item) => ({
+                    value: item,
+                    label: formatActionLabel(item),
+                  })),
+                ]}
+              />
               <input
                 type="date"
                 value={desde}

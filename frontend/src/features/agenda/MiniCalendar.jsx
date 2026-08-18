@@ -14,6 +14,7 @@ import {
 import { es } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 
 const WEEK_OPTS = { weekStartsOn: 0 } // domingo primero, como Google Calendar
 const DIAS_HEADER = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
@@ -38,32 +39,36 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
   return (
     <div className="w-full select-none">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-semibold capitalize text-foreground">
+        <p className="text-lg font-normal capitalize text-foreground">
           {format(mesVisible, 'MMMM yyyy', { locale: es })}
         </p>
         <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => setMesVisible((prev) => addMonths(prev, -1))}
-            className="flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label="Mes anterior"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setMesVisible((prev) => addMonths(prev, 1))}
-            className="flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label="Mes siguiente"
-          >
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+          <SimpleTooltip label="Mes anterior">
+            <button
+              type="button"
+              onClick={() => setMesVisible((prev) => addMonths(prev, -1))}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label="Mes anterior"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+          </SimpleTooltip>
+          <SimpleTooltip label="Mes siguiente">
+            <button
+              type="button"
+              onClick={() => setMesVisible((prev) => addMonths(prev, 1))}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </SimpleTooltip>
         </div>
       </div>
 
       <div className="grid grid-cols-7 gap-y-0.5">
         {DIAS_HEADER.map((d) => (
-          <div key={d} className="text-center text-[9px] font-semibold text-muted-foreground">
+          <div key={d} className="text-center text-[11px] font-medium text-muted-foreground">
             {d}
           </div>
         ))}
@@ -79,7 +84,7 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
               type="button"
               onClick={() => onSelectDay(day)}
               className={cn(
-                'mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[11px] transition',
+                'mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium transition',
                 !delMes && 'text-muted-foreground/40',
                 delMes && !esSeleccionado && 'text-foreground hover:bg-muted',
                 esHoy && !esSeleccionado && 'font-bold text-primary',
