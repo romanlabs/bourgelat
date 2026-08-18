@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '@/components/shared/Logo'
 import { useGuardarOnboarding } from '@/features/onboarding/useOnboarding'
+import { Select } from '@/components/ui/select'
 
 const TOTAL_PASOS = 5
 
@@ -157,16 +158,15 @@ export default function OnboardingWizardPage() {
             <div className="mt-6 space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Tipo de clínica</label>
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Tipo de clínica"
+                  className="h-11 rounded-lg"
+                  placeholder="Selecciona una opción"
                   value={respuestas.tipoClinica}
-                  onChange={(e) => actualizar('tipoClinica', e.target.value)}
-                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Selecciona una opción</option>
-                  {OPCIONES_TIPO_CLINICA.map((o) => (
-                    <option key={o.valor} value={o.valor}>{o.label}</option>
-                  ))}
-                </select>
+                  onValueChange={(value) => actualizar('tipoClinica', value)}
+                  options={OPCIONES_TIPO_CLINICA.map((o) => ({ value: o.valor, label: o.label }))}
+                />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">¿Cuántas personas trabajan en tu clínica?</label>
@@ -189,16 +189,15 @@ export default function OnboardingWizardPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Mascotas atendidas al mes</label>
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Mascotas por mes"
+                  className="h-11 rounded-lg"
+                  placeholder="Selecciona un rango"
                   value={respuestas.mascotasPorMes}
-                  onChange={(e) => actualizar('mascotasPorMes', e.target.value)}
-                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Selecciona un rango</option>
-                  {OPCIONES_MASCOTAS_MES.map((o) => (
-                    <option key={o.valor} value={o.valor}>{o.label}</option>
-                  ))}
-                </select>
+                  onValueChange={(value) => actualizar('mascotasPorMes', value)}
+                  options={OPCIONES_MASCOTAS_MES.map((o) => ({ value: o.valor, label: o.label }))}
+                />
               </div>
             </div>
           </div>
@@ -233,16 +232,15 @@ export default function OnboardingWizardPage() {
             <p className="mt-1 text-sm text-muted-foreground">Con esta información definimos tus primeros pasos.</p>
             <div className="mt-6">
               <label className="mb-1.5 block text-sm font-medium text-foreground">¿Cómo gestionas tu clínica hoy? (opcional)</label>
-              <select
+              <Select
+                variant="field"
+                aria-label="Gestión actual"
+                className="h-11 rounded-lg"
+                placeholder="Selecciona una opción"
                 value={respuestas.gestionActual}
-                onChange={(e) => actualizar('gestionActual', e.target.value)}
-                className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Selecciona una opción</option>
-                {OPCIONES_GESTION_ACTUAL.map((o) => (
-                  <option key={o.valor} value={o.valor}>{o.label}</option>
-                ))}
-              </select>
+                onValueChange={(value) => actualizar('gestionActual', value)}
+                options={OPCIONES_GESTION_ACTUAL.map((o) => ({ value: o.valor, label: o.label }))}
+              />
             </div>
           </div>
         ) : null}

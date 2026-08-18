@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
+import { Select } from '@/components/ui/select'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -733,16 +734,15 @@ export default function HistoriaClinicaFormDrawer({
                 open={formSections.has('contexto')}
                 onToggle={() => toggleFormSection('contexto')}
               >
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Profesional"
+                  className="h-11"
+                  placeholder="Selecciona el profesional ⭐"
                   value={form.veterinarioId || preferredVetId}
-                  onChange={(e) => setForm((c) => ({ ...c, veterinarioId: e.target.value }))}
-                  className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                >
-                  <option value="">Selecciona el profesional ⭐</option>
-                  {veterinarios.map((v) => (
-                    <option key={v.id} value={v.id}>{v.nombre}</option>
-                  ))}
-                </select>
+                  onValueChange={(value) => setForm((c) => ({ ...c, veterinarioId: value }))}
+                  options={veterinarios.map((v) => ({ value: v.id, label: v.nombre }))}
+                />
 
                 {citaVinculada ? (
                   <div className="flex items-start justify-between gap-3 border border-primary/30 bg-primary/8 px-3 py-3">
@@ -769,18 +769,18 @@ export default function HistoriaClinicaFormDrawer({
                     </button>
                   </div>
                 ) : (
-                  <select
+                  <Select
+                    variant="field"
+                    aria-label="Cita relacionada"
+                    className="h-11"
+                    placeholder="Sin cita relacionada"
                     value={form.citaId}
-                    onChange={(e) => setForm((c) => ({ ...c, citaId: e.target.value }))}
-                    className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                  >
-                    <option value="">Sin cita relacionada</option>
-                    {citasRelacionadas.map((cita) => (
-                      <option key={cita.id} value={cita.id}>
-                        {`${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={(value) => setForm((c) => ({ ...c, citaId: value }))}
+                    options={citasRelacionadas.map((cita) => ({
+                      value: cita.id,
+                      label: `${cita.fecha} · ${cita.horaInicio?.slice(0, 5)} · ${cita.motivo}`,
+                    }))}
+                  />
                 )}
               </FormSection>
 
@@ -824,9 +824,13 @@ export default function HistoriaClinicaFormDrawer({
                   <input type="number" min="1" max="5" value={form.condicionCorporal} onChange={(e) => setForm((c) => ({ ...c, condicionCorporal: e.target.value }))} placeholder="Condición (1-5)" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                   <input type="text" value={form.mucosas} onChange={(e) => setForm((c) => ({ ...c, mucosas: e.target.value }))} placeholder="Mucosas" className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                 </div>
-                <select value={form.estadoHidratacion} onChange={(e) => setForm((c) => ({ ...c, estadoHidratacion: e.target.value }))} className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                  {HYDRATION_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                </select>
+                <Select
+                  variant="field"
+                  aria-label="Estado de hidratación"
+                  value={form.estadoHidratacion}
+                  onValueChange={(value) => setForm((c) => ({ ...c, estadoHidratacion: value }))}
+                  options={HYDRATION_OPTIONS}
+                />
                 <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Hallazgos y notas del examen físico" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
               </FormSection>
 
@@ -926,26 +930,28 @@ export default function HistoriaClinicaFormDrawer({
                               </p>
                             )}
                           </div>
-                          <select
+                          <Select
+                            variant="field"
+                            aria-label="Vía de administración"
+                            className="h-9"
                             value={item.via}
-                            onChange={(e) => updateTratamientoDraft(item.id, 'via', e.target.value)}
-                            className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
-                          >
-                            {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                          </select>
+                            onValueChange={(value) => updateTratamientoDraft(item.id, 'via', value)}
+                            options={MEDICATION_ROUTE_OPTIONS}
+                          />
                         </div>
 
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div className="grid gap-1">
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aplicado por</span>
-                            <select
+                            <Select
+                              variant="field"
+                              aria-label="Aplicado por"
+                              className="h-9"
+                              placeholder="Sin especificar"
                               value={item.responsableId}
-                              onChange={(e) => updateTratamientoDraft(item.id, 'responsableId', e.target.value)}
-                              className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
-                            >
-                              <option value="">Sin especificar</option>
-                              {veterinarios.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
-                            </select>
+                              onValueChange={(value) => updateTratamientoDraft(item.id, 'responsableId', value)}
+                              options={veterinarios.map((v) => ({ value: v.id, label: v.nombre }))}
+                            />
                           </div>
                           <div className="grid gap-1">
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Fecha y hora</span>
@@ -1026,9 +1032,14 @@ export default function HistoriaClinicaFormDrawer({
                         <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                         <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentración / presentación" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                         <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
-                        <select value={item.via} onChange={(e) => updateMedicationDraft(item.id, 'via', e.target.value)} className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500">
-                          {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
-                        </select>
+                        <Select
+                          variant="field"
+                          aria-label="Vía de administración"
+                          className="h-9"
+                          value={item.via}
+                          onValueChange={(value) => updateMedicationDraft(item.id, 'via', value)}
+                          options={MEDICATION_ROUTE_OPTIONS}
+                        />
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div className="grid gap-1">

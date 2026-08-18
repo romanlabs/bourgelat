@@ -25,6 +25,7 @@ import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
+import { Select } from '@/components/ui/select'
 
 const PERSON_TYPE_OPTIONS = [
   { value: 'persona_juridica', label: 'Persona jurídica' },
@@ -618,19 +619,15 @@ function ConfiguracionContent({
                 />
               </FormField>
               <FormField label="Tipo de persona">
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Tipo de persona"
                   value={clinicForm.tipoPersona}
-                  onChange={(event) =>
-                    setClinicForm((current) => ({ ...current, tipoPersona: event.target.value }))
+                  onValueChange={(value) =>
+                    setClinicForm((current) => ({ ...current, tipoPersona: value }))
                   }
-                  className={INPUT_CLASS}
-                >
-                  {PERSON_TYPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={PERSON_TYPE_OPTIONS}
+                />
               </FormField>
             </div>
 
@@ -673,38 +670,33 @@ function ConfiguracionContent({
 
             <div className="grid gap-4 2xl:grid-cols-3">
               <FormField label="Departamento">
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Departamento"
+                  placeholder="Selecciona departamento"
                   value={clinicForm.departamento}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setClinicForm((current) => ({
                       ...current,
-                      departamento: event.target.value,
+                      departamento: value,
                       ciudad: '',
                     }))
                   }
-                  className={INPUT_CLASS}
-                >
-                  <option value="">Selecciona departamento</option>
-                  {colombia.map((item) => (
-                    <option key={item.id} value={item.departamento}>
-                      {item.departamento}
-                    </option>
-                  ))}
-                </select>
+                  options={colombia.map((item) => ({
+                    value: item.departamento,
+                    label: item.departamento,
+                  }))}
+                />
               </FormField>
               <FormField label="Ciudad o municipio">
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Ciudad o municipio"
+                  placeholder="Selecciona ciudad"
                   value={clinicForm.ciudad}
-                  onChange={(event) => setClinicForm((current) => ({ ...current, ciudad: event.target.value }))}
-                  className={INPUT_CLASS}
-                >
-                  <option value="">Selecciona ciudad</option>
-                  {ciudadesDisponibles.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(value) => setClinicForm((current) => ({ ...current, ciudad: value }))}
+                  options={ciudadesDisponibles.map((city) => ({ value: city, label: city }))}
+                />
               </FormField>
               <FormField label="Codigo postal">
                 <input
@@ -774,42 +766,34 @@ function ConfiguracionContent({
 
             <div className="grid gap-4 2xl:grid-cols-3">
               <FormField label="Documento fiscal">
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Tipo de documento de facturación"
+                  placeholder="Selecciona documento"
                   value={clinicForm.tipoDocumentoFacturacionId}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setClinicForm((current) => ({
                       ...current,
-                      tipoDocumentoFacturacionId: event.target.value,
+                      tipoDocumentoFacturacionId: value,
                     }))
                   }
-                  className={INPUT_CLASS}
-                >
-                  <option value="">Selecciona documento</option>
-                  {FISCAL_DOCUMENT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={FISCAL_DOCUMENT_OPTIONS}
+                />
               </FormField>
               <FormField label="Organización jurídica">
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Organización jurídica"
+                  placeholder="Selecciona organización"
                   value={clinicForm.organizacionJuridicaId}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setClinicForm((current) => ({
                       ...current,
-                      organizacionJuridicaId: event.target.value,
+                      organizacionJuridicaId: value,
                     }))
                   }
-                  className={INPUT_CLASS}
-                >
-                  <option value="">Selecciona organización</option>
-                  {LEGAL_ORGANIZATION_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={LEGAL_ORGANIZATION_OPTIONS}
+                />
               </FormField>
               <FormField label="Tributo">
                 <input
@@ -952,19 +936,15 @@ function ConfiguracionContent({
               <form className="grid gap-4" onSubmit={handleSaveFactus}>
                 <div className="grid gap-4 xl:grid-cols-2">
                   <FormField label="Ambiente">
-                    <select
+                    <Select
+                      variant="field"
+                      aria-label="Ambiente"
                       value={factusForm.ambiente}
-                      onChange={(event) =>
-                        setFactusForm((current) => ({ ...current, ambiente: event.target.value }))
+                      onValueChange={(value) =>
+                        setFactusForm((current) => ({ ...current, ambiente: value }))
                       }
-                      className={INPUT_CLASS}
-                    >
-                      {FACTUS_ENV_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={FACTUS_ENV_OPTIONS}
+                    />
                   </FormField>
                   <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
                     <input

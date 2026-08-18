@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Trash2, X } from 'lucide-react'
 import MoneyInput from '@/components/shared/MoneyInput'
+import { Select } from '@/components/ui/select'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
@@ -197,18 +198,18 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
                 const insumo = insumoPorId(row.insumoClinicoId)
                 return (
                   <div key={row.rowId} className="flex items-start gap-2 border border-border bg-muted/40 p-3">
-                    <select
-                      className={`${fieldClass(false)} flex-1`}
+                    <Select
+                      variant="field"
+                      aria-label="Insumo"
+                      className="flex-1"
+                      placeholder="Selecciona un insumo"
                       value={row.insumoClinicoId}
-                      onChange={(e) => actualizarFila(row.rowId, 'insumoClinicoId', e.target.value)}
-                    >
-                      <option value="">Selecciona un insumo</option>
-                      {insumosDisponibles.map((i) => (
-                        <option key={i.id} value={i.id}>
-                          {i.nombre} ({i.unidadBase})
-                        </option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => actualizarFila(row.rowId, 'insumoClinicoId', value)}
+                      options={insumosDisponibles.map((i) => ({
+                        value: i.id,
+                        label: `${i.nombre} (${i.unidadBase})`,
+                      }))}
+                    />
                     <div className="flex w-32 flex-col gap-1">
                       <input
                         type="number"
