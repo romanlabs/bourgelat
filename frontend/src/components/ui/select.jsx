@@ -15,8 +15,21 @@ import { cn } from '@/lib/utils'
 // cadena vacia como "sin elegir" se traducen a este centinela solo de ida y
 // vuelta, para que el estado del formulario (y su validacion Zod) no cambie.
 const EMPTY = '__vacio__'
-const toRadix = (value) => (value === '' || value == null ? EMPTY : value)
+const esVacio = (value) => value === '' || value == null
+const toRadix = (value) => (esVacio(value) ? EMPTY : value)
 const fromRadix = (value) => (value === EMPTY ? '' : value)
+
+/**
+ * Valor que recibe Radix. Con "" hay dos casos distintos:
+ *  - la lista trae una opcion vacia ("Sin especificar") → se usa el centinela
+ *    para que quede marcada como elegida
+ *  - no la trae, el "" solo significa "sin elegir" → se pasa undefined, que es
+ *    lo unico con lo que Radix pinta el placeholder
+ */
+const valorRaiz = (value, hayOpcionVacia) => {
+  if (!esVacio(value)) return value
+  return hayOpcionVacia ? EMPTY : undefined
+}
 
 const triggerVariants = {
   pill: 'h-10 rounded-full border border-border bg-card pl-5 pr-4 shadow-sm hover:bg-muted data-[state=open]:bg-muted',
@@ -84,9 +97,13 @@ function Select({
   'aria-label': ariaLabel,
   children,
 }) {
+  const hayOpcionVacia = options.some((opt) =>
+    esVacio(typeof opt === 'string' ? opt : opt?.value)
+  )
+
   return (
     <SelectPrimitive.Root
-      value={toRadix(value)}
+      value={valorRaiz(value, hayOpcionVacia)}
       onValueChange={(next) => onValueChange?.(fromRadix(next))}
       disabled={disabled}
       required={required}
