@@ -111,9 +111,7 @@ export default function CartSidebar({
                 const precio = toAmount(item.precioUnitario)
                 const precioMinimo = toAmount(item.precioMinimo)
                 const bajoCosto =
-                  (item.tipo === 'producto' || item.tipo === 'insumo') &&
-                  precioMinimo > 0 &&
-                  precio < precioMinimo
+                  item.tipo === 'producto' && precioMinimo > 0 && precio < precioMinimo
                 const subtotalItem = Math.max(qty * precio, 0)
 
                 return (

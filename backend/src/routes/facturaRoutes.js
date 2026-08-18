@@ -37,12 +37,8 @@ router.post(
       .withMessage('Precio debe ser mayor o igual a 0'),
     body('items.*.tipo')
       .optional({ values: 'falsy' })
-      .isIn(['producto', 'servicio', 'insumo'])
+      .isIn(['producto', 'servicio'])
       .withMessage('Tipo de item no valido'),
-    body('items.*.insumoClinicoId')
-      .optional({ values: 'falsy' })
-      .isUUID()
-      .withMessage('Insumo clinico no valido'),
     body('historiaClinicaId')
       .optional({ values: 'falsy' })
       .isUUID()
