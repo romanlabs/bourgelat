@@ -204,6 +204,10 @@ function GastosTable({ periodo, mes, onMesChange }) {
               <span>
                 <span className="font-semibold">{etiquetaCategoria(row.gasto.categoria)}</span>
                 {row.gasto.descripcion ? <span className="text-muted-foreground"> — {row.gasto.descripcion}</span> : null}
+                {/* Lo generó el sistema al cerrar una historia, no un usuario. */}
+                {row.gasto.origen === 'consumo_insumos' ? (
+                  <span className="ml-2"><StatusPill tone="border-sky-200 bg-sky-50 text-sky-700">Automático</StatusPill></span>
+                ) : null}
                 {row.gasto.anulado ? (
                   <span className="ml-2"><StatusPill tone="border-red-200 bg-red-50 text-red-700">Anulado</StatusPill></span>
                 ) : null}

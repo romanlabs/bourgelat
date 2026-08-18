@@ -576,7 +576,11 @@ export default function DashboardPage() {
   const mascotasActivas = resumen?.totales?.mascotas ?? 0
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
   const citasPendientesHoy = resumen?.hoy?.citasPendientes ?? 0
-  const alertasInventario = resumen?.alertas?.productosbajoStock ?? 0
+  // Los dos inventarios cuentan: quedarse sin un insumo clínico frena una
+  // cirugía igual que quedarse sin un producto frena una venta.
+  const productosBajoStock = resumen?.alertas?.productosbajoStock ?? 0
+  const insumosBajoStock = resumen?.alertas?.insumosBajoStock ?? 0
+  const alertasInventario = productosBajoStock + insumosBajoStock
   const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
   const diasRestantes = suscripcionQuery.data?.diasRestantes
@@ -700,8 +704,10 @@ export default function DashboardPage() {
         title: 'Inventario crítico',
         detail:
           alertasInventario === 1
-            ? '1 producto está por debajo del mínimo y puede trabar ventas o tratamientos hoy.'
-            : `${formatNumber(alertasInventario)} productos están por debajo del mínimo y pueden trabar ventas o tratamientos hoy.`,
+            ? '1 artículo está por debajo del mínimo y puede trabar ventas o tratamientos hoy.'
+            : `${formatNumber(alertasInventario)} artículos están por debajo del mínimo`
+              + ` (${formatNumber(productosBajoStock)} de ventas, ${formatNumber(insumosBajoStock)} clínicos)`
+              + ' y pueden trabar ventas o tratamientos hoy.',
         to: '/inventario',
         actionLabel: 'Ver inventario',
       })
@@ -718,7 +724,7 @@ export default function DashboardPage() {
     }
 
     return rows
-  }, [alertasInventario, dianErrores, diasRestantes, urgenciasSinHistoria])
+  }, [alertasInventario, productosBajoStock, insumosBajoStock, dianErrores, diasRestantes, urgenciasSinHistoria])
 
   const todayBridgeRows = useMemo(() => {
     // Tope de 5 para que el Command Center entre sin scroll en 1366x768.

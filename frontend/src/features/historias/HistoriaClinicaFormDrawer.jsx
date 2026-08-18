@@ -336,8 +336,8 @@ export default function HistoriaClinicaFormDrawer({
 
   // Tratamiento intrahospitalario -> inventario clinico (unidad base fraccionada).
   const catalogoInsumosQuery = useQuery({
-    queryKey: ['historias-catalogo-insumos-dosis', insumoSearchDeferred],
-    queryFn: () => inventarioClinicoApi.obtenerCatalogoDosis({ buscar: insumoSearchDeferred || undefined, limite: 6 }),
+    queryKey: ['historias-catalogo-insumos-consumo', insumoSearchDeferred],
+    queryFn: () => inventarioClinicoApi.obtenerCatalogoConsumo({ buscar: insumoSearchDeferred || undefined, limite: 6 }),
     enabled: open && puedeEditarHistorias && puedeConsultarInventarioClinico,
     placeholderData: (prev) => prev,
   })
@@ -860,6 +860,8 @@ export default function HistoriaClinicaFormDrawer({
                   Lo aplicado al paciente dentro de la clínica. Sale del{' '}
                   <strong className="text-foreground">inventario clínico</strong> en unidad base (ml, mg)
                   y se descuenta al <strong className="text-foreground">cerrar la historia</strong>.
+                  No se cobra en la factura: su costo queda registrado como{' '}
+                  <strong className="text-foreground">gasto de insumos</strong>.
                 </p>
 
                 {puedeConsultarInventarioClinico && (
@@ -888,7 +890,7 @@ export default function HistoriaClinicaFormDrawer({
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin insumos de dosis disponibles.</p>}
+                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin insumos disponibles en el inventario clínico.</p>}
                     </div>
                   </div>
                 )}

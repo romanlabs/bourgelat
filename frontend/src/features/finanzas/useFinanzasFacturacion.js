@@ -15,7 +15,6 @@ const createBlankInvoiceItem = () => ({
   precioUnitario: '',
   productoId: '',
   servicioClinicoId: '',
-  insumoClinicoId: '',
   stock: null,
   precioMinimo: 0,
 })
@@ -235,11 +234,12 @@ export function useFinanzasFacturacion({
   }
 
   /**
-   * Carga en el carrito lo cobrable de una consulta cerrada. El backend marca
-   * el tipo de cada linea y aqui se respeta, porque determina si la factura
-   * mueve stock:
-   *   'insumo'   -> tratamiento intrahospitalario, ya descontado al cerrar
-   *   'producto' -> plan farmacologico, se descuenta al emitir la factura
+   * Carga en el carrito lo cobrable de una consulta cerrada: el plan
+   * farmacologico que el tutor se lleva, que descuenta del inventario de
+   * ventas al emitir la factura.
+   *
+   * El tratamiento intrahospitalario no llega aqui: no se cobra al tutor, se
+   * registra como gasto de insumos al cerrar la historia.
    */
   const loadPreliquidacionHistoria = (preliquidacion) => {
     const items = (preliquidacion?.items || []).map((item) => ({
@@ -250,9 +250,7 @@ export function useFinanzasFacturacion({
       precioUnitario: String(item.precioUnitario || 0),
       productoId: item.productoId || '',
       servicioClinicoId: '',
-      insumoClinicoId: item.insumoClinicoId || '',
-      // Solo los productos validan existencias: el insumo ya salio de stock.
-      stock: item.tipo === 'producto' ? item.stock ?? null : null,
+      stock: item.stock ?? null,
       precioMinimo: toAmount(item.precioMinimo),
     }))
 
@@ -262,12 +260,6 @@ export function useFinanzasFacturacion({
       historiaClinicaId: preliquidacion?.historiaClinicaId || '',
       items: [...curr.items, ...items],
     }))
-
-    if (preliquidacion?.insumosSinPrecio?.length) {
-      toast.warning(
-        `Sin precio de venta configurado: ${preliquidacion.insumosSinPrecio.join(', ')}. Ajusta el precio antes de facturar.`
-      )
-    }
 
     if (preliquidacion?.productosSinStock?.length) {
       toast.warning(
@@ -294,7 +286,6 @@ export function useFinanzasFacturacion({
         tipo: item.tipo,
         productoId: item.productoId || undefined,
         servicioClinicoId: item.servicioClinicoId || undefined,
-        insumoClinicoId: item.insumoClinicoId || undefined,
       }))
       .filter((item) => item.descripcion && item.cantidad > 0)
 
@@ -308,10 +299,10 @@ export function useFinanzasFacturacion({
       return
     }
 
-    // Piso de precio: ni un producto ni un insumo se venden bajo su costo.
+    // Piso de precio: un producto no se vende por debajo de su costo.
     const itemBajoCosto = invoiceForm.items.find(
       (item) =>
-        (item.tipo === 'producto' || item.tipo === 'insumo') &&
+        item.tipo === 'producto' &&
         toAmount(item.precioMinimo) > 0 &&
         toAmount(item.precioUnitario) < toAmount(item.precioMinimo)
     )

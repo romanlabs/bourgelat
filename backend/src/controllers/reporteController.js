@@ -7,6 +7,7 @@ const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
 const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
+const InsumoClinico = require('../models/InsumoClinico');
 const Gasto = require('../models/Gasto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 
@@ -130,7 +131,23 @@ const reporteInventario = async (req, res) => {
       return acc;
     }, {});
 
-    res.json({ resumen, porCategoria, productos });
+    // El inventario clínico va aparte: no se vende, así que se valoriza al
+    // costo (precioUnitarioBase) y no tiene precio de venta que sumar.
+    const insumos = await InsumoClinico.findAll({
+      where: { clinicaId, activo: true },
+      attributes: ['id', 'nombre', 'categoria', 'unidadBase', 'stock', 'stockMinimo', 'precioUnitarioBase', 'fechaVencimiento'],
+      order: [['categoria', 'ASC'], ['nombre', 'ASC']],
+    });
+
+    const resumenClinico = {
+      totalInsumos: insumos.length,
+      valorTotalInventario: insumos.reduce((sum, i) => sum + (parseFloat(i.precioUnitarioBase) * parseFloat(i.stock)), 0),
+      bajoStock: insumos.filter(i => parseFloat(i.stock) <= parseFloat(i.stockMinimo)).length,
+      vencidos: insumos.filter(i => i.fechaVencimiento && new Date(i.fechaVencimiento) < hoy).length,
+      proximosVencer: insumos.filter(i => i.fechaVencimiento && new Date(i.fechaVencimiento) <= en30dias && new Date(i.fechaVencimiento) >= hoy).length,
+    };
+
+    res.json({ resumen, porCategoria, productos, resumenClinico, insumos });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -167,8 +184,18 @@ const dashboardGeneral = async (req, res) => {
     const totalMascotas = await Mascota.count({ where: { clinicaId, activo: true } });
     const totalUsuarios = await Usuario.count({ where: { clinicaId, activo: true } });
 
-    // Alertas de inventario
+    // Alertas de inventario. Son dos inventarios distintos y ambos importan:
+    // quedarse sin un insumo clínico frena una cirugía igual que quedarse sin
+    // un producto frena una venta.
     const productosbajoStock = await Producto.count({
+      where: {
+        clinicaId,
+        activo: true,
+        stock: { [Op.lte]: sequelize.col('stockMinimo') },
+      },
+    });
+
+    const insumosBajoStock = await InsumoClinico.count({
       where: {
         clinicaId,
         activo: true,
@@ -192,6 +219,7 @@ const dashboardGeneral = async (req, res) => {
       },
       alertas: {
         productosbajoStock,
+        insumosBajoStock,
       },
     });
   } catch (error) {

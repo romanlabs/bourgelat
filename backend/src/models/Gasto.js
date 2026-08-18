@@ -6,6 +6,7 @@ const Clinica = require('./Clinica')
 const Usuario = require('./Usuario')
 const CajaTurno = require('./CajaTurno')
 const MovimientoCaja = require('./MovimientoCaja')
+const HistoriaClinica = require('./HistoriaClinica')
 const { registrarHooksCifrado } = require('../config/modelEncryption')
 
 // Gasto del negocio (nómina, arriendo, servicios...). Distinto de MovimientoCaja:
@@ -13,6 +14,10 @@ const { registrarHooksCifrado } = require('../config/modelEncryption')
 // (genera automáticamente un MovimientoCaja egreso en el turno abierto).
 // Es un libro inmutable: los gastos se anulan, no se editan ni se borran,
 // para que el reporte de rentabilidad sea auditable.
+//
+// No todos se digitan: los insumos clínicos consumidos en una consulta generan
+// un gasto automático al cerrar la historia (origen 'consumo_insumos'). Ese no
+// mueve caja — el dinero salió cuando se compró el insumo, no al aplicarlo.
 const Gasto = sequelize.define('Gasto', {
   id: {
     type: DataTypes.UUID,
@@ -55,6 +60,23 @@ const Gasto = sequelize.define('Gasto', {
     type: DataTypes.ENUM('efectivo', 'transferencia', 'tarjeta', 'otro'),
     allowNull: false,
     defaultValue: 'efectivo',
+  },
+  // 'manual' lo digitó alguien; 'consumo_insumos' lo generó el sistema al
+  // cerrar una historia clínica. La UI no ofrece el segundo al registrar.
+  origen: {
+    type: DataTypes.ENUM('manual', 'consumo_insumos'),
+    allowNull: false,
+    defaultValue: 'manual',
+  },
+  // Consulta que originó el consumo. Solo se llena en gastos automáticos, y
+  // un índice único parcial impide que una misma historia genere dos.
+  historiaClinicaId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: HistoriaClinica,
+      key: 'id',
+    },
   },
   anulado: {
     type: DataTypes.BOOLEAN,
@@ -122,5 +144,7 @@ Gasto.belongsTo(Clinica, { foreignKey: 'clinicaId' })
 CajaTurno.hasMany(Gasto, { foreignKey: 'cajaTurnoId', as: 'gastos' })
 Gasto.belongsTo(CajaTurno, { foreignKey: 'cajaTurnoId', as: 'cajaTurno' })
 Gasto.belongsTo(MovimientoCaja, { foreignKey: 'movimientoCajaId', as: 'movimientoCaja' })
+HistoriaClinica.hasOne(Gasto, { foreignKey: 'historiaClinicaId', as: 'gastoConsumo' })
+Gasto.belongsTo(HistoriaClinica, { foreignKey: 'historiaClinicaId', as: 'historiaClinica' })
 
 module.exports = Gasto
