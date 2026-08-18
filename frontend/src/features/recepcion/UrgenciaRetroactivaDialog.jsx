@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { TutorPetSelector } from './TutorPetSelector'
+import { Select } from '@/components/ui/select'
 
 const getToday = () => new Date().toISOString().slice(0, 10)
 const nowHHMM = () => new Date().toTimeString().slice(0, 5)
@@ -137,16 +138,14 @@ export function UrgenciaRetroactivaDialog({
             onSelectMascota={setMascotaId}
           />
 
-          <select
+          <Select
+            variant="field"
+            aria-label="Profesional"
+            placeholder="Selecciona el profesional"
             value={form.veterinarioId || preferredVeterinarioId}
-            onChange={(event) => setForm((current) => ({ ...current, veterinarioId: event.target.value }))}
-            className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-          >
-            <option value="">Selecciona el profesional</option>
-            {veterinarios.map((item) => (
-              <option key={item.id} value={item.id}>{item.nombre}</option>
-            ))}
-          </select>
+            onValueChange={(value) => setForm((current) => ({ ...current, veterinarioId: value }))}
+            options={veterinarios.map((item) => ({ value: item.id, label: item.nombre }))}
+          />
 
           <input
             type="text"

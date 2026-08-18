@@ -33,6 +33,8 @@ const buildInitialForm = () => ({
   metodoPago: 'efectivo',
   observaciones: '',
   items: [],
+  // Cuando la factura cobra una consulta: marca la historia como facturada.
+  historiaClinicaId: '',
 })
 
 export const PAYMENT_METHOD_OPTIONS = [
@@ -231,6 +233,41 @@ export function useFinanzasFacturacion({
     }))
   }
 
+  /**
+   * Carga en el carrito lo cobrable de una consulta cerrada: el plan
+   * farmacologico que el tutor se lleva, que descuenta del inventario de
+   * ventas al emitir la factura.
+   *
+   * El tratamiento intrahospitalario no llega aqui: no se cobra al tutor, se
+   * registra como gasto de insumos al cerrar la historia.
+   */
+  const loadPreliquidacionHistoria = (preliquidacion) => {
+    const items = (preliquidacion?.items || []).map((item) => ({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      tipo: item.tipo,
+      descripcion: item.descripcion,
+      cantidad: String(item.cantidad),
+      precioUnitario: String(item.precioUnitario || 0),
+      productoId: item.productoId || '',
+      servicioClinicoId: '',
+      stock: item.stock ?? null,
+      precioMinimo: toAmount(item.precioMinimo),
+    }))
+
+    setInvoiceForm((curr) => ({
+      ...curr,
+      propietarioId: preliquidacion?.propietario?.id || curr.propietarioId,
+      historiaClinicaId: preliquidacion?.historiaClinicaId || '',
+      items: [...curr.items, ...items],
+    }))
+
+    if (preliquidacion?.productosSinStock?.length) {
+      toast.warning(
+        `Sin stock suficiente: ${preliquidacion.productosSinStock.join(', ')}. Ajusta la cantidad antes de facturar.`
+      )
+    }
+  }
+
   const handleBarcodeScan = () => {
     const codigo = barcodeInput.trim()
     if (!codigo) {
@@ -262,7 +299,7 @@ export function useFinanzasFacturacion({
       return
     }
 
-    // Piso de precio: un producto no se puede vender por debajo de su costo.
+    // Piso de precio: un producto no se vende por debajo de su costo.
     const itemBajoCosto = invoiceForm.items.find(
       (item) =>
         item.tipo === 'producto' &&
@@ -296,6 +333,7 @@ export function useFinanzasFacturacion({
       metodoPago: invoiceForm.metodoPago,
       observaciones: invoiceForm.observaciones.trim() || undefined,
       emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
+      historiaClinicaId: invoiceForm.historiaClinicaId || undefined,
       items: itemsValidos,
     })
   }
@@ -331,6 +369,7 @@ export function useFinanzasFacturacion({
     addServiceItem,
     addServiceFromCatalog,
     addProductToInvoice,
+    loadPreliquidacionHistoria,
     removeInvoiceItem,
     updateInvoiceItem,
   }

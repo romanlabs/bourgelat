@@ -20,6 +20,14 @@ export const inventarioClinicoApi = {
     return data
   },
 
+  // Insumos con existencia que pueden aplicarse a un paciente desde la historia.
+  async obtenerCatalogoConsumo({ buscar, pagina = 1, limite = 6 } = {}) {
+    const { data } = await api.get('/inventario-clinico/catalogo-consumo', {
+      params: cleanParams({ buscar, pagina, limite }),
+    })
+    return data
+  },
+
   async obtenerAlertas() {
     const { data } = await api.get('/inventario-clinico/alertas')
     return data

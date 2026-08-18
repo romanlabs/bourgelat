@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { buildStateTone, STATUS_OPTIONS } from './calendarConstants'
+import { Select } from '@/components/ui/select'
 
 export function CitaDetailDialog({
   cita,
@@ -182,19 +183,13 @@ export function CitaDetailDialog({
         {/* Sección estado */}
         {activeSection === 'estado' && puedeGestionarEstado && (
           <form className="grid gap-3" onSubmit={handleStatusSubmit}>
-            <select
+            <Select
+              variant="field"
+              aria-label="Estado de la cita"
               value={statusForm.estado}
-              onChange={(e) =>
-                setStatusForm((prev) => ({ ...prev, estado: e.target.value }))
-              }
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => setStatusForm((prev) => ({ ...prev, estado: value }))}
+              options={STATUS_OPTIONS}
+            />
 
             {statusForm.estado === 'cancelada' && (
               <textarea

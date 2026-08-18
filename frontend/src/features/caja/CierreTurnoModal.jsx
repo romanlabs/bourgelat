@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
+import { Select } from '@/components/ui/select'
 import {
   CATEGORIA_DIFERENCIA_OPCIONES,
   MIN_CARACTERES_JUSTIFICACION,
@@ -159,20 +160,15 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Categoria (obligatoria)
               </span>
-              <select
+              <Select
+                variant="field"
+                aria-label="Categoria de la diferencia"
+                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-red-300' : ''}`}
+                placeholder="Selecciona una categoria"
                 value={form.categoriaDiferencia}
-                onChange={(event) => setForm((curr) => ({ ...curr, categoriaDiferencia: event.target.value }))}
-                className={`h-10 rounded-xl border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
-                  !form.categoriaDiferencia ? 'border-red-300' : 'border-border'
-                }`}
-              >
-                <option value="">Selecciona una categoria</option>
-                {CATEGORIA_DIFERENCIA_OPCIONES.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => setForm((curr) => ({ ...curr, categoriaDiferencia: value }))}
+                options={CATEGORIA_DIFERENCIA_OPCIONES}
+              />
             </label>
           )}
 

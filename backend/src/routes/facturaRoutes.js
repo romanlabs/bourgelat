@@ -35,6 +35,14 @@ router.post(
     body('items.*.precioUnitario')
       .isFloat({ min: 0 })
       .withMessage('Precio debe ser mayor o igual a 0'),
+    body('items.*.tipo')
+      .optional({ values: 'falsy' })
+      .isIn(['producto', 'servicio'])
+      .withMessage('Tipo de item no valido'),
+    body('historiaClinicaId')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Historia clinica no valida'),
     body('metodoPago')
       .optional()
       .isIn([

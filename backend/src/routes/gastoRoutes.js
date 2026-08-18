@@ -28,6 +28,10 @@ const CATEGORIAS_GASTO = [
 
 const METODOS_PAGO_GASTO = ['efectivo', 'transferencia', 'tarjeta', 'otro']
 
+// 'consumo_insumos' solo lo genera el sistema al cerrar una historia clínica:
+// se puede filtrar, pero nunca registrar por esta ruta.
+const ORIGENES_GASTO = ['manual', 'consumo_insumos']
+
 router.post(
   '/',
   verificarToken,
@@ -53,6 +57,7 @@ router.get(
     query('fechaFin').optional({ values: 'falsy' }).isISO8601().withMessage('Fecha fin no valida'),
     query('categoria').optional({ values: 'falsy' }).isIn(CATEGORIAS_GASTO).withMessage('Categoria no valida'),
     query('metodoPago').optional({ values: 'falsy' }).isIn(METODOS_PAGO_GASTO).withMessage('Metodo de pago no valido'),
+    query('origen').optional({ values: 'falsy' }).isIn(ORIGENES_GASTO).withMessage('Origen no valido'),
     validar,
   ],
   listarGastos

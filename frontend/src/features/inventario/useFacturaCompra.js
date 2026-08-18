@@ -51,6 +51,7 @@ export function useFacturaCompra() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingFactura, setEditingFactura] = useState(null)
+  const [facturaDetalle, setFacturaDetalle] = useState(null)
   const [form, setForm] = useState(FORM_INICIAL)
   const [confirmDialog, setConfirmDialog] = useState({ open: false, tipo: null, facturaId: null })
 
@@ -127,6 +128,14 @@ export function useFacturaCompra() {
       })),
     })
     setDrawerOpen(true)
+  }, [])
+
+  const abrirDetalle = useCallback((factura) => {
+    setFacturaDetalle(factura)
+  }, [])
+
+  const cerrarDetalle = useCallback(() => {
+    setFacturaDetalle(null)
   }, [])
 
   const cerrarDrawer = useCallback(() => {
@@ -305,6 +314,10 @@ export function useFacturaCompra() {
     cerrarDrawer,
     submitForm,
     isSaving,
+    // Detalle de solo lectura
+    facturaDetalle,
+    abrirDetalle,
+    cerrarDetalle,
     // Items
     agregarItem,
     actualizarItem,

@@ -55,6 +55,8 @@ const InsumoClinico = sequelize.define('InsumoClinico', {
     defaultValue: 0,
     comment: 'Costo por unidad base, calculado como costo promedio ponderado',
   },
+  // No hay precio de venta: el insumo clinico no se factura. Se consume, y su
+  // costo entra al negocio como gasto (ver Gasto.origen = 'consumo_insumos').
   stock: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

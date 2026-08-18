@@ -49,6 +49,12 @@ export const historiasApi = {
     return data
   },
 
+  // Borrador de cobro de una consulta cerrada: lineas de los insumos aplicados.
+  async obtenerPreliquidacion(historiaId) {
+    const { data } = await api.get(`/historias/${historiaId}/preliquidacion`)
+    return data
+  },
+
   async obtenerHistoriasMascota(mascotaId) {
     const { data } = await api.get(`/historias/mascota/${mascotaId}`)
     return data

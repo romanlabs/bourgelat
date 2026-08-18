@@ -42,6 +42,7 @@ import {
 } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
 import { hasRole } from '@/lib/permissions'
+import { Select } from '@/components/ui/select'
 
 const ESTADO_SUSCRIPCION_LABELS = {
   activa: 'Activas',
@@ -133,9 +134,9 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
   }, [clinica?.id])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+  const setValor = (key) => (valor) => setForm((f) => ({ ...f, [key]: valor }))
 
-  const onPlanChange = (e) => {
-    const plan = e.target.value
+  const onPlanChange = (plan) => {
     const precio = catalogoPlanes?.[plan]?.precioMensual ?? ''
     setForm((f) => ({ ...f, plan, precio: precio !== null ? String(precio) : '' }))
   }
@@ -172,13 +173,17 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Plan</label>
-              <select value={form.plan} onChange={onPlanChange} className={inputCls} required>
-                {Object.entries(catalogoPlanes || {}).map(([key, p]) => (
-                  <option key={key} value={key}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+              <Select
+                variant="field"
+                aria-label="Plan"
+                required
+                value={form.plan}
+                onValueChange={onPlanChange}
+                options={Object.entries(catalogoPlanes || {}).map(([key, p]) => ({
+                  value: key,
+                  label: p.nombre,
+                }))}
+              />
               {planInfo ? (
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Hasta {planInfo.limiteUsuarios ?? '∞'} usuarios · {planInfo.limiteMascotas ?? '∞'} mascotas
@@ -188,10 +193,17 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
 
             <div>
               <label className={labelCls}>Estado</label>
-              <select value={form.estado} onChange={set('estado')} className={inputCls} required>
-                <option value="activa">Activa</option>
-                <option value="prueba">Temporal / prueba</option>
-              </select>
+              <Select
+                variant="field"
+                aria-label="Estado"
+                required
+                value={form.estado}
+                onValueChange={setValor('estado')}
+                options={[
+                  { value: 'activa', label: 'Activa' },
+                  { value: 'prueba', label: 'Temporal / prueba' },
+                ]}
+              />
             </div>
           </div>
 
@@ -218,14 +230,14 @@ function AsignarPlanDialog({ open, onOpenChange, clinica, catalogoPlanes, onSubm
             </div>
             <div>
               <label className={labelCls}>Método de pago</label>
-              <select value={form.metodoPago} onChange={set('metodoPago')} className={inputCls}>
-                <option value="">— Opcional —</option>
-                {METODOS_PAGO.map((m) => (
-                  <option key={m} value={m}>
-                    {METODO_LABELS[m]}
-                  </option>
-                ))}
-              </select>
+              <Select
+                variant="field"
+                aria-label="Metodo de pago"
+                placeholder="— Opcional —"
+                value={form.metodoPago}
+                onValueChange={setValor('metodoPago')}
+                options={METODOS_PAGO.map((m) => ({ value: m, label: METODO_LABELS[m] }))}
+              />
             </div>
           </div>
 

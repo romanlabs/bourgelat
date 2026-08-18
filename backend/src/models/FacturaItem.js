@@ -18,6 +18,9 @@ const FacturaItem = sequelize.define('FacturaItem', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  // Solo se factura lo que se vende: productos del inventario de ventas y
+  // servicios del catalogo. Los insumos clinicos no se cobran como linea —
+  // su costo se registra como gasto al cerrar la historia que los consumio.
   tipo: {
     type: DataTypes.ENUM('producto', 'servicio'),
     allowNull: false,

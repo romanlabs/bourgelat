@@ -5,6 +5,7 @@ const {
   crearInsumo,
   obtenerInsumos,
   obtenerInsumo,
+  obtenerCatalogoConsumo,
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,
@@ -54,6 +55,13 @@ const validarCreacionInsumo = [
   body('fechaVencimiento').optional({ values: 'falsy' }).isISO8601().withMessage('La fecha de vencimiento no es valida'),
   body('lote').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
   body('laboratorio').optional({ values: 'falsy' }).trim().isLength({ max: 120 }),
+  validar,
+]
+
+const validarCatalogoConsumo = [
+  query('buscar').optional().trim().isLength({ max: 120 }).withMessage('La busqueda no puede exceder 120 caracteres'),
+  query('pagina').optional().isInt({ min: 1 }).withMessage('La pagina debe ser un entero mayor a 0'),
+  query('limite').optional().isInt({ min: 1, max: 50 }).withMessage('El limite debe ser un entero entre 1 y 50'),
   validar,
 ]
 
@@ -120,6 +128,15 @@ router.get(
   verificarToken,
   verificarRol('admin', 'superadmin', 'auxiliar'),
   obtenerAlertas
+)
+
+// Antes de '/:id' para que el path literal no lo capture como UUID.
+router.get(
+  '/catalogo-consumo',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar', 'veterinario'),
+  validarCatalogoConsumo,
+  obtenerCatalogoConsumo
 )
 
 router.get(

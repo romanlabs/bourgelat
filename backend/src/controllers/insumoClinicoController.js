@@ -186,6 +186,57 @@ const obtenerInsumo = async (req, res) => {
   }
 };
 
+// Catalogo que alimenta el buscador de tratamiento intrahospitalario de la
+// historia clinica. Cualquier insumo activo con existencia puede aplicarse a un
+// paciente; lo que se registre aqui se descuenta al cerrar la historia.
+const obtenerCatalogoConsumo = async (req, res) => {
+  try {
+    const { buscar } = req.query;
+    const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 8 });
+
+    const where = tenantWhere(req, {
+      activo: true,
+      stock: { [Op.gt]: 0 },
+    });
+
+    if (buscar) {
+      where[Op.or] = [
+        { nombre: { [Op.iLike]: `%${buscar}%` } },
+        { laboratorio: { [Op.iLike]: `%${buscar}%` } },
+        { lote: { [Op.iLike]: `%${buscar}%` } },
+        { descripcion: { [Op.iLike]: `%${buscar}%` } },
+      ];
+    }
+
+    const { count, rows } = await InsumoClinico.findAndCountAll({
+      where,
+      attributes: [
+        'id',
+        'nombre',
+        'categoria',
+        'descripcion',
+        'unidadBase',
+        'laboratorio',
+        'lote',
+        'stock',
+        'precioUnitarioBase',
+      ],
+      limit: limite,
+      offset,
+      order: [['nombre', 'ASC']],
+    });
+
+    res.json({
+      total: count,
+      paginas: Math.ceil(count / limite),
+      paginaActual: parseInt(pagina),
+      insumos: rows,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const editarInsumo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -460,6 +511,7 @@ module.exports = {
   crearInsumo,
   obtenerInsumos,
   obtenerInsumo,
+  obtenerCatalogoConsumo,
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,

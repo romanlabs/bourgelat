@@ -335,6 +335,9 @@ const obtenerDetalleTurno = async (req, res) => {
     // Trazabilidad de mermas: qué productos se vendieron/descontaron de stock
     // en este turno, construido desde FacturaItem + Factura.cajaTurnoId, sin
     // modificar MovimientoInventario (decisión de alcance del plan).
+    // Solo productos: son los unicos items que descuentan stock al facturarse.
+    // Los insumos clinicos no se venden — salen del inventario al cerrar la
+    // historia clinica, no en la caja.
     const itemsVendidos = await FacturaItem.findAll({
       where: { tipo: 'producto' },
       include: [
@@ -355,9 +358,11 @@ const obtenerDetalleTurno = async (req, res) => {
 
     const trazabilidadPorProducto = new Map()
     for (const item of itemsVendidos) {
-      const key = item.productoId || 'sin-producto'
+      const key = item.productoId ? `producto:${item.productoId}` : 'producto:sin-referencia'
+
       const actual = trazabilidadPorProducto.get(key) || {
         productoId: item.productoId,
+        tipo: item.tipo,
         nombre: item.producto?.nombre || 'Producto eliminado',
         categoria: item.producto?.categoria || null,
         cantidadVendida: 0,
