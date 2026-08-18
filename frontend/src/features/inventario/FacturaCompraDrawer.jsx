@@ -6,6 +6,7 @@ import MoneyInput from '@/components/shared/MoneyInput'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import { inventarioApi } from './inventarioApi'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
+import { Select } from '@/components/ui/select'
 
 const PRODUCT_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')
 
@@ -299,32 +300,30 @@ export default function FacturaCompraDrawer({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-muted-foreground">Categoría *</label>
-                          <select
-                            className={`${fieldClass(!item.productoNuevo.categoria)} cursor-pointer`}
+                          <Select
+                            variant="field"
+                            aria-label="Categoría del producto"
+                            className={!item.productoNuevo.categoria ? 'border-red-300' : undefined}
+                            placeholder="— Selecciona —"
                             value={item.productoNuevo.categoria}
-                            onChange={(e) => actualizarItemProductoNuevo(idx, 'categoria', e.target.value)}
-                          >
-                            <option value="">— Selecciona —</option>
-                            {PRODUCT_CATEGORY_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
+                            onValueChange={(value) => actualizarItemProductoNuevo(idx, 'categoria', value)}
+                            options={PRODUCT_CATEGORY_OPTIONS}
+                          />
                           {!item.productoNuevo.categoria && (
                             <p className="text-xs text-red-500">Selecciona una categoría</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-muted-foreground">Unidad de medida *</label>
-                          <select
-                            className={`${fieldClass(!item.productoNuevo.unidadMedida)} cursor-pointer`}
+                          <Select
+                            variant="field"
+                            aria-label="Unidad de medida"
+                            className={!item.productoNuevo.unidadMedida ? 'border-red-300' : undefined}
+                            placeholder="— Selecciona —"
                             value={item.productoNuevo.unidadMedida}
-                            onChange={(e) => actualizarItemProductoNuevo(idx, 'unidadMedida', e.target.value)}
-                          >
-                            <option value="">— Selecciona —</option>
-                            {UNIT_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
+                            onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadMedida', value)}
+                            options={UNIT_OPTIONS}
+                          />
                           {!item.productoNuevo.unidadMedida && (
                             <p className="text-xs text-red-500">Selecciona una unidad</p>
                           )}
