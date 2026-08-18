@@ -103,7 +103,7 @@ const crearGasto = async (req, res) => {
 const listarGastos = async (req, res) => {
   try {
     const { clinicaId } = req.usuario
-    const { fechaInicio, fechaFin, categoria, metodoPago, incluirAnulados } = req.query
+    const { fechaInicio, fechaFin, categoria, metodoPago, origen, incluirAnulados } = req.query
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
     const where = { clinicaId }
@@ -111,6 +111,7 @@ const listarGastos = async (req, res) => {
     if (incluirAnulados !== 'true') where.anulado = false
     if (categoria) where.categoria = categoria
     if (metodoPago) where.metodoPago = metodoPago
+    if (origen) where.origen = origen
     if (fechaInicio && fechaFin) {
       where.fecha = { [Op.between]: [fechaInicio, fechaFin] }
     }
@@ -206,9 +207,19 @@ const anularGasto = async (req, res) => {
       accion: 'ANULAR_GASTO',
       entidad: 'Gasto',
       entidadId: gasto.id,
-      descripcion: `Gasto anulado (${gasto.categoria}, $${gasto.monto}). Motivo: ${motivoAnulacion}`,
+      // Se deja constancia del origen: anular un gasto automático borra de la
+      // rentabilidad el costo de una consulta que sí se atendió.
+      descripcion: `Gasto anulado (${gasto.categoria}, $${gasto.monto}`
+        + `${gasto.origen === 'consumo_insumos' ? ', generado por una historia clínica' : ''}). `
+        + `Motivo: ${motivoAnulacion}`,
       datosAnteriores: { anulado: false },
-      datosNuevos: { anulado: true, motivoAnulacion, cajaCompensada },
+      datosNuevos: {
+        anulado: true,
+        motivoAnulacion,
+        cajaCompensada,
+        origen: gasto.origen,
+        historiaClinicaId: gasto.historiaClinicaId,
+      },
       req,
       resultado: 'exitoso',
     })

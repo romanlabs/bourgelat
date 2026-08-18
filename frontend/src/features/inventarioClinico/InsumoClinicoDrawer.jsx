@@ -24,8 +24,6 @@ const insumoSchema = z.object({
   cantidadPresentacion: z.coerce.number().min(0.01, 'Debe ser mayor a 0'),
   unidadPresentacion: z.string().optional(),
   precioPresentacion: z.coerce.number().min(0).default(0),
-  precioVenta: z.coerce.number().min(0).default(0),
-  modoConsumo: z.enum(['por_dosis', 'por_receta']).default('por_receta'),
   stockMinimo: z.coerce.number().min(0).default(0),
   fechaVencimiento: z.string().optional(),
   lote: z.string().optional(),
@@ -39,26 +37,11 @@ const DEFAULT_VALUES = {
   cantidadPresentacion: '',
   unidadPresentacion: '',
   precioPresentacion: '',
-  precioVenta: '',
-  modoConsumo: 'por_receta',
   stockMinimo: 0,
   fechaVencimiento: '',
   lote: '',
   laboratorio: '',
 }
-
-const MODO_CONSUMO_OPTIONS = [
-  {
-    value: 'por_receta',
-    label: 'Dentro de un servicio',
-    hint: 'Se descuenta al facturar un servicio que lo incluye en su receta.',
-  },
-  {
-    value: 'por_dosis',
-    label: 'Por dosis en la historia clínica',
-    hint: 'El veterinario indica la cantidad aplicada y se descuenta al cerrar la historia.',
-  },
-]
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -114,8 +97,6 @@ export default function InsumoClinicoDrawer({
         cantidadPresentacion: editingInsumo.cantidadPresentacion ?? '',
         unidadPresentacion: editingInsumo.unidadPresentacion || '',
         precioPresentacion: editingInsumo.precioPresentacion ?? '',
-        precioVenta: editingInsumo.precioVenta ?? '',
-        modoConsumo: editingInsumo.modoConsumo || 'por_receta',
         stockMinimo: editingInsumo.stockMinimo ?? 0,
         fechaVencimiento: editingInsumo.fechaVencimiento || '',
         lote: editingInsumo.lote || '',
@@ -327,57 +308,15 @@ export default function InsumoClinicoDrawer({
               </div>
             )}
 
-            <div className="grid gap-4 border-t border-border pt-5">
+            <div className="grid gap-2 border-t border-border pt-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Cobro y consumo
+                Cómo se consume
               </p>
-
-              <div className="grid gap-1.5">
-                <label htmlFor="ic-precio-venta" className={labelClass}>
-                  Precio de venta por {unidadLabel}
-                </label>
-                <Controller
-                  name="precioVenta"
-                  control={control}
-                  render={({ field }) => (
-                    <MoneyInput
-                      id="ic-precio-venta"
-                      value={field.value}
-                      onChange={field.onChange}
-                      hasError={errors.precioVenta}
-                      prefix="$"
-                      placeholder="Ej. 900"
-                    />
-                  )}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Se usa al cobrar el insumo como línea propia en la factura. Déjalo en 0 si su
-                  costo ya está incluido en el precio de un servicio.
-                </p>
-              </div>
-
-              <div className="grid gap-1.5">
-                <span className={labelClass}>¿Cómo se descuenta del inventario?</span>
-                <div className="grid gap-2">
-                  {MODO_CONSUMO_OPTIONS.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex cursor-pointer items-start gap-2.5 border border-border bg-card px-3 py-2.5 transition hover:bg-muted/60"
-                    >
-                      <input
-                        type="radio"
-                        value={option.value}
-                        className="mt-0.5"
-                        {...register('modoConsumo')}
-                      />
-                      <span className="grid gap-0.5">
-                        <span className="text-sm font-semibold text-foreground">{option.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{option.hint}</span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Este insumo no se vende ni se cobra en factura. Sale del inventario cuando se
+                registra en el tratamiento intrahospitalario de una historia clínica, y su costo
+                queda en Finanzas como <span className="font-semibold text-foreground">gasto de insumos</span>.
+              </p>
             </div>
 
             {editingInsumo && (

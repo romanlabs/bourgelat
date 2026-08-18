@@ -591,7 +591,7 @@ export default function InventarioPage() {
               ) : (
                 <DataTable
                   title="Insumos clínicos"
-                  subtitle="Existencias de consumo interno para servicios y procedimientos. No se venden directamente."
+                  subtitle="Existencias de consumo interno para servicios y procedimientos. No se venden: lo aplicado se descuenta al cerrar la historia clínica y se registra como gasto de insumos."
                   rows={insumosClinicosHook.insumosRows}
                   columns={[
                     { key: 'nombre', label: 'Insumo' },
