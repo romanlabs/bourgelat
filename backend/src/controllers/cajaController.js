@@ -7,7 +7,6 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
-const InsumoClinico = require('../models/InsumoClinico')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { parsePaginacion } = require('../utils/paginacion')
@@ -336,8 +335,11 @@ const obtenerDetalleTurno = async (req, res) => {
     // Trazabilidad de mermas: qué productos se vendieron/descontaron de stock
     // en este turno, construido desde FacturaItem + Factura.cajaTurnoId, sin
     // modificar MovimientoInventario (decisión de alcance del plan).
+    // Solo productos: son los unicos items que descuentan stock al facturarse.
+    // Los insumos clinicos no se venden — salen del inventario al cerrar la
+    // historia clinica, no en la caja.
     const itemsVendidos = await FacturaItem.findAll({
-      where: { tipo: { [Op.in]: ['producto', 'insumo'] } },
+      where: { tipo: 'producto' },
       include: [
         {
           model: Factura,
@@ -351,30 +353,18 @@ const obtenerDetalleTurno = async (req, res) => {
           as: 'producto',
           attributes: ['id', 'nombre', 'categoria'],
         },
-        {
-          model: InsumoClinico,
-          as: 'insumoClinico',
-          attributes: ['id', 'nombre', 'categoria', 'unidadBase'],
-        },
       ],
     })
 
-    // Los insumos clinicos se descontaron al bloquear la historia, no en esta
-    // factura, pero se listan igual porque salieron de stock durante el turno.
     const trazabilidadPorProducto = new Map()
     for (const item of itemsVendidos) {
-      const esInsumo = item.tipo === 'insumo'
-      const referenciaId = esInsumo ? item.insumoClinicoId : item.productoId
-      const key = referenciaId ? `${item.tipo}:${referenciaId}` : `${item.tipo}:sin-referencia`
-      const origen = esInsumo ? item.insumoClinico : item.producto
+      const key = item.productoId ? `producto:${item.productoId}` : 'producto:sin-referencia'
 
       const actual = trazabilidadPorProducto.get(key) || {
-        productoId: esInsumo ? null : item.productoId,
-        insumoClinicoId: esInsumo ? item.insumoClinicoId : null,
+        productoId: item.productoId,
         tipo: item.tipo,
-        nombre: origen?.nombre || (esInsumo ? 'Insumo eliminado' : 'Producto eliminado'),
-        categoria: origen?.categoria || null,
-        unidad: esInsumo ? origen?.unidadBase || null : null,
+        nombre: item.producto?.nombre || 'Producto eliminado',
+        categoria: item.producto?.categoria || null,
         cantidadVendida: 0,
       }
       actual.cantidadVendida += Number(item.cantidad)

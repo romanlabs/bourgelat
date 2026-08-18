@@ -6,6 +6,7 @@ const Cita = require('../models/Cita')
 const Producto = require('../models/Producto')
 const InsumoClinico = require('../models/InsumoClinico')
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
+const Gasto = require('../models/Gasto')
 const sequelize = require('../config/database')
 const logger = require('../utils/logger')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
@@ -201,7 +202,6 @@ const attachTratamientoInventoryData = async (tratamiento, clinicaId) => {
       id: { [Op.in]: insumoIds },
       clinicaId,
       activo: true,
-      modoConsumo: 'por_dosis',
     },
     attributes: ['id', 'nombre', 'unidadBase', 'laboratorio', 'lote'],
   })
@@ -797,7 +797,15 @@ const sincronizarConsumoInsumos = async ({ historia, usuarioId, clinicaId, trans
       historiaClinicaId: historia.id,
     }, { transaction })
 
-    aplicados.push({ insumoClinicoId, nombre: insumo.nombre, delta, unidadBase: insumo.unidadBase })
+    // El costo se valoriza aqui, con el mismo precio que queda congelado en el
+    // movimiento. De la suma de estos costos sale el gasto de la consulta.
+    aplicados.push({
+      insumoClinicoId,
+      nombre: insumo.nombre,
+      delta,
+      unidadBase: insumo.unidadBase,
+      costo: redondearCantidad(delta * Number(insumo.precioUnitarioBase)),
+    })
   }
 
   return aplicados
@@ -805,10 +813,12 @@ const sincronizarConsumoInsumos = async ({ historia, usuarioId, clinicaId, trans
 
 /**
  * Borrador de cobro de una consulta ya cerrada. No persiste nada: arma las
- * lineas de factura de las dos secciones para precargar el carrito.
+ * lineas de factura para precargar el carrito.
  *
- *   tratamiento intrahospitalario -> tipo 'insumo'   (ya descontado al cerrar)
- *   plan farmacologico            -> tipo 'producto' (descuenta al facturar)
+ * Solo entra el plan farmacologico (tipo 'producto'): son los medicamentos que
+ * el tutor se lleva, y descuentan del inventario de ventas al facturar. El
+ * tratamiento intrahospitalario NO se cobra — salio del inventario clinico al
+ * cerrar la historia y su costo quedo registrado como gasto de insumos.
  *
  * El servicio de consulta se agrega aparte desde el catalogo de servicios.
  */
@@ -845,34 +855,6 @@ const obtenerPreliquidacion = async (req, res) => {
     }
 
     const items = []
-
-    // ── Tratamiento intrahospitalario: ya salio de stock, aqui solo se cobra ──
-    const cantidadesPorInsumo = agruparCantidadesPorInsumo(historia.tratamientoIntrahospitalario)
-
-    if (cantidadesPorInsumo.size > 0) {
-      const insumos = await InsumoClinico.findAll({
-        where: { id: { [Op.in]: [...cantidadesPorInsumo.keys()] }, clinicaId },
-        attributes: ['id', 'nombre', 'unidadBase', 'precioVenta', 'precioUnitarioBase'],
-      })
-
-      for (const insumo of insumos) {
-        const cantidad = cantidadesPorInsumo.get(insumo.id)
-        const precioUnitario = Number(insumo.precioVenta)
-
-        items.push({
-          tipo: 'insumo',
-          insumoClinicoId: insumo.id,
-          descripcion: `${insumo.nombre} (${cantidad} ${insumo.unidadBase})`,
-          cantidad,
-          unidadBase: insumo.unidadBase,
-          precioUnitario,
-          precioMinimo: Number(insumo.precioUnitarioBase),
-          // null: el stock ya se descontó, no hay existencia que validar aquí.
-          stock: null,
-          subtotal: redondearCantidad(cantidad * precioUnitario),
-        })
-      }
-    }
 
     // ── Plan farmacologico: se dispensa y descuenta al facturar ──────────────
     const cantidadesPorProducto = new Map()
@@ -917,13 +899,10 @@ const obtenerPreliquidacion = async (req, res) => {
       mascota: historia.mascota,
       propietario: historia.propietario,
       items,
-      // Avisos para la UI: sin precio se cobraria en $0, y sin stock la factura
-      // sera rechazada al intentar descontar el producto.
-      insumosSinPrecio: items
-        .filter((item) => item.precioUnitario <= 0)
-        .map((item) => item.descripcion),
+      // Aviso para la UI: sin stock la factura sera rechazada al intentar
+      // descontar el producto.
       productosSinStock: items
-        .filter((item) => item.tipo === 'producto' && item.stock !== null && item.cantidad > item.stock)
+        .filter((item) => item.stock !== null && item.cantidad > item.stock)
         .map((item) => item.descripcion),
     })
   } catch (error) {
@@ -936,9 +915,10 @@ const bloquearHistoria = async (req, res) => {
     const { id } = req.params
     const { clinicaId } = req.usuario
 
-    // El descuento de stock y el bloqueo van juntos: si falta stock, la historia
-    // no se bloquea, y si el bloqueo falla, no queda inventario descontado.
-    const consumos = await sequelize.transaction(async (transaction) => {
+    // El descuento de stock, el gasto y el bloqueo van juntos: si falta stock,
+    // la historia no se bloquea, y si el bloqueo falla, no queda inventario
+    // descontado ni un gasto colgando.
+    const { consumos, gastoInsumos } = await sequelize.transaction(async (transaction) => {
       const historia = await HistoriaClinica.findOne({
         where: { id, clinicaId },
         transaction,
@@ -964,9 +944,44 @@ const bloquearHistoria = async (req, res) => {
         transaction,
       })
 
+      // Lo consumido no se le cobra al tutor: es un costo del negocio. Queda
+      // como gasto, no como linea de factura. Se crea aqui, una sola vez,
+      // porque el bloqueo es de una sola via y la historia ya no puede
+      // cambiar — asi el gasto nunca necesita corregirse y el libro de gastos
+      // sigue siendo inmutable.
+      const costoInsumos = redondearCantidad(
+        aplicados.reduce((total, consumo) => total + consumo.costo, 0)
+      )
+
+      let gasto = null
+
+      if (costoInsumos > 0) {
+        const mascota = await Mascota.findOne({
+          where: { id: historia.mascotaId, clinicaId },
+          attributes: ['nombre'],
+          transaction,
+        })
+
+        gasto = await Gasto.create({
+          categoria: 'insumos',
+          origen: 'consumo_insumos',
+          historiaClinicaId: historia.id,
+          descripcion: `Consumo de insumos en consulta${mascota ? ` de ${mascota.nombre}` : ''}`,
+          monto: costoInsumos,
+          fecha: new Date(),
+          // 'otro' y sin turno: no hay salida de caja. El dinero salio cuando
+          // se compro el insumo, no al aplicarlo al paciente.
+          metodoPago: 'otro',
+          cajaTurnoId: null,
+          movimientoCajaId: null,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction })
+      }
+
       await historia.update({ bloqueada: true }, { transaction })
 
-      return aplicados
+      return { consumos: aplicados, gastoInsumos: gasto }
     })
 
     // ── Auditoría bloquear historia ────────────────────────
@@ -976,9 +991,15 @@ const bloquearHistoria = async (req, res) => {
       entidadId: id,
       descripcion: consumos.length
         ? `Historia clínica bloqueada — se descontaron ${consumos.length} insumo(s) del inventario clínico`
+          + (gastoInsumos ? ` y se registró un gasto de $${gastoInsumos.monto}` : '')
         : `Historia clínica bloqueada — ya no puede ser modificada`,
       datosAnteriores: { bloqueada: false },
-      datosNuevos: { bloqueada: true, consumos },
+      datosNuevos: {
+        bloqueada: true,
+        consumos,
+        gastoInsumosId: gastoInsumos?.id || null,
+        costoInsumos: gastoInsumos ? Number(gastoInsumos.monto) : 0,
+      },
       req,
       resultado: 'exitoso',
     })
@@ -986,6 +1007,8 @@ const bloquearHistoria = async (req, res) => {
     res.json({
       message: 'Historia clinica bloqueada exitosamente',
       consumos,
+      // El costo de lo aplicado, ya registrado como gasto del negocio.
+      costoInsumos: gastoInsumos ? Number(gastoInsumos.monto) : 0,
     })
   } catch (error) {
     res
