@@ -6,7 +6,10 @@ import { esSoloLectura, estaEnPrueba, diasRestantesPrueba } from '@/lib/suscripc
 // Aviso persistente del estado de la suscripción. En solo lectura el mensaje
 // deja claro que los datos siguen ahí y se pueden exportar: la clínica maneja
 // historias clínicas y no puede sentir que se las secuestraron.
-const SuscripcionBanner = () => {
+// soloLecturaOnly: oculta el aviso de "dias de prueba" (informativo, se ve solo en
+// el panel de control) y deja unicamente el aviso critico de suscripcion vencida,
+// que si debe verse en cualquier modulo porque bloquea la escritura ahi mismo.
+const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
   const suscripcion = useAuthStore((state) => state.suscripcion)
 
   if (esSoloLectura(suscripcion)) {
@@ -30,7 +33,7 @@ const SuscripcionBanner = () => {
     )
   }
 
-  if (!estaEnPrueba(suscripcion)) {
+  if (soloLecturaOnly || !estaEnPrueba(suscripcion)) {
     return null
   }
 

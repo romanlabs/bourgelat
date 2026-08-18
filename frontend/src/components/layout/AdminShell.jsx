@@ -29,6 +29,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
 import { HeaderSlotContext } from './HeaderSlotContext'
@@ -112,7 +113,10 @@ export default function AdminShell({
   headerBadge,
   quickActions = null,
   showQuickActions = false,
+  headerVariant = 'dark',
+  hidePageHeader = false,
 }) {
+  const headerLight = headerVariant === 'light'
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
   const dark = useThemeStore((state) => state.dark)
@@ -206,22 +210,48 @@ export default function AdminShell({
   return (
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-[#0c2235] bg-[#06111c] px-3 text-white sm:px-4">
+      <header
+        className={cn(
+          'sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b px-3 sm:px-4',
+          headerLight
+            ? 'border-border bg-white text-foreground'
+            : 'border-[#0c2235] bg-[#06111c] text-white'
+        )}
+      >
         <div className="flex min-w-0 items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setIsNavOpen(true)}
-            title="Abrir menu"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#91e7e0]/70 transition hover:bg-[#081827] hover:text-[#91e7e0]"
-          >
-            <Menu className="h-[18px] w-[18px]" />
-          </button>
+          <SimpleTooltip label="Menú principal">
+            <button
+              type="button"
+              onClick={() => setIsNavOpen(true)}
+              aria-label="Menú principal"
+              className={cn(
+                'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
+                headerLight
+                  ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  : 'text-[#91e7e0]/70 hover:bg-[#081827] hover:text-[#91e7e0]'
+              )}
+            >
+              <Menu className="h-[18px] w-[18px]" />
+            </button>
+          </SimpleTooltip>
 
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#91e7e0]/10 text-[#91e7e0]">
+            <span
+              className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                headerLight ? 'bg-primary/10 text-primary' : 'bg-[#91e7e0]/10 text-[#91e7e0]'
+              )}
+            >
               <Stethoscope className="h-4 w-4" />
             </span>
-            <span className="truncate text-sm font-semibold text-white">{nombreClinica}</span>
+            <span
+              className={cn(
+                'truncate text-sm font-semibold',
+                headerLight ? 'text-foreground' : 'text-white'
+              )}
+            >
+              {nombreClinica}
+            </span>
           </Link>
         </div>
 
@@ -230,11 +260,23 @@ export default function AdminShell({
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className="flex w-full max-w-xs items-center gap-2 rounded-lg border border-white/10 bg-[#081827] px-3 py-1.5 text-sm text-[#91e7e0]/50 transition hover:border-white/20 hover:text-[#91e7e0]/80"
+              className={cn(
+                'flex w-full max-w-xs items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition',
+                headerLight
+                  ? 'border-border bg-muted text-muted-foreground hover:border-foreground/20 hover:text-foreground'
+                  : 'border-white/10 bg-[#081827] text-[#91e7e0]/50 hover:border-white/20 hover:text-[#91e7e0]/80'
+              )}
             >
               <Search className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate text-left">Buscar</span>
-              <kbd className="rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-[11px] font-semibold text-[#91e7e0]/50">
+              <kbd
+                className={cn(
+                  'rounded border px-1.5 py-0.5 text-[11px] font-semibold',
+                  headerLight
+                    ? 'border-border bg-card text-muted-foreground'
+                    : 'border-white/15 bg-white/5 text-[#91e7e0]/50'
+                )}
+              >
                 /
               </kbd>
             </button>
@@ -247,7 +289,12 @@ export default function AdminShell({
               <button
                 type="button"
                 title={`${usuario?.nombre || 'Mi perfil'} · Ver perfil`}
-                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-[#081827] text-sm font-semibold text-[#91e7e0] transition hover:ring-2 hover:ring-[#91e7e0]/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#91e7e0]/40"
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus:outline-none focus-visible:ring-2',
+                  headerLight
+                    ? 'border-border bg-muted text-primary hover:ring-2 hover:ring-primary/40 focus-visible:ring-primary/40'
+                    : 'border-white/15 bg-[#081827] text-[#91e7e0] hover:ring-2 hover:ring-[#91e7e0]/40 focus-visible:ring-[#91e7e0]/40'
+                )}
               >
                 {usuario?.foto ? (
                   <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
@@ -547,28 +594,30 @@ export default function AdminShell({
       </Dialog.Root>
 
       <main className="mx-auto max-w-[1720px] space-y-4 px-4 py-4 sm:px-6 lg:px-8">
-        <SuscripcionBanner />
+        <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
-        <div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h1 className="text-lg font-semibold leading-tight text-foreground sm:text-xl">{title}</h1>
-                {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
+        {!hidePageHeader && (
+          <div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h1 className="text-lg font-semibold leading-tight text-foreground sm:text-xl">{title}</h1>
+                  {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
+                </div>
+                {description ? (
+                  <p className="max-w-4xl text-sm leading-5 text-muted-foreground">{description}</p>
+                ) : null}
               </div>
-              {description ? (
-                <p className="max-w-4xl text-sm leading-5 text-muted-foreground">{description}</p>
+
+              {actions || visibleQuickActions.length > 0 ? (
+                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                  {actions}
+                  <QuickCreateMenu actions={visibleQuickActions} />
+                </div>
               ) : null}
             </div>
-
-            {actions || visibleQuickActions.length > 0 ? (
-              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                {actions}
-                <QuickCreateMenu actions={visibleQuickActions} />
-              </div>
-            ) : null}
           </div>
-        </div>
+        )}
 
         {children}
       </main>

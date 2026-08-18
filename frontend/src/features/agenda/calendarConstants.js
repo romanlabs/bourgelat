@@ -4,8 +4,8 @@ export const HORA_INICIO = 0   // 00:00 — dia completo, como Google Calendar
 export const HORA_FIN = 24     // 24:00 (exclusive — ultimo slot es 23:30)
 export const SLOT_MINUTOS = 30
 export const TOTAL_SLOTS = (HORA_FIN - HORA_INICIO) * 2
-export const SLOT_HEIGHT_MAX = 52 // px por slot de 30 min
-export const SLOT_HEIGHT_MIN = 28
+export const SLOT_HEIGHT_MAX = 30 // px por slot de 30 min — densidad compacta tipo Google
+export const SLOT_HEIGHT_MIN = 22 // evita que el punto de "ahora" (9px) domine visualmente la franja
 
 /** Genera los slots de horario del día: ["07:00", "07:30", ..., "19:30"] */
 export function generarSlots() {
@@ -103,6 +103,22 @@ export function especieToEmoji(especie) {
   }
   return '🐾'
 }
+
+export const VIEW_OPTIONS = [
+  { value: 'dia', label: 'Día', shortcut: 'D' },
+  { value: 'semana', label: 'Semana', shortcut: 'W' },
+  { value: 'mes', label: 'Mes', shortcut: 'M' },
+  { value: 'anio', label: 'Año', shortcut: 'Y' },
+  { value: 'agenda', label: 'Agenda', shortcut: 'A' },
+  { value: '4dias', label: '4 días', shortcut: 'X' },
+]
+
+/** Preferencias de visualización del calendario (checkboxes del selector de vista). */
+export const VIEW_PREFS = [
+  { key: 'mostrarFinesDeSemana', label: 'Mostrar fines de semana' },
+  { key: 'mostrarCanceladas', label: 'Mostrar citas canceladas' },
+  { key: 'mostrarCompletadas', label: 'Mostrar citas completadas' },
+]
 
 export const STATUS_OPTIONS = [
   { value: 'programada', label: 'Programada' },
