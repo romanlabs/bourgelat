@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { historiasApi } from '@/features/historias/historiasApi'
 import {
   Boxes,
   CircleAlert,
@@ -78,9 +81,13 @@ function RestrictedFinancePage() {
 export default function FinanzasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
+  const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('facturacion')
   const [posOpen, setPosOpen] = useState(false)
   const [ventaExitosa, setVentaExitosa] = useState(false)
+  // Factura recién emitida: el POS la muestra sin salir del flujo de venta.
+  const [facturaCreadaId, setFacturaCreadaId] = useState(null)
 
   const abrirPos = () => {
     // Sin turno de caja no se puede facturar: llevamos al guard de la pestana.
@@ -89,11 +96,13 @@ export default function FinanzasPage() {
       return
     }
     setVentaExitosa(false)
+    setFacturaCreadaId(null)
     setPosOpen(true)
   }
   const cerrarPos = () => {
     setPosOpen(false)
     setVentaExitosa(false)
+    setFacturaCreadaId(null)
   }
 
   useEffect(() => {
@@ -128,10 +137,48 @@ export default function FinanzasPage() {
     puedeConsultarInventario,
     emisionAutomaticaActiva,
     // La venta se cierra dentro del modal (paso de vuelto), no saltamos de tab.
-    onFacturaCreada: () => {
+    onFacturaCreada: (facturaId) => {
+      setFacturaCreadaId(facturaId)
       setVentaExitosa(true)
     },
   })
+
+  // Llegada desde una historia clínica cerrada: precargamos el carrito con los
+  // insumos que ya se le aplicaron al paciente y abrimos el POS.
+  const historiaAFacturar = location.state?.facturarHistoriaId || null
+
+  useEffect(() => {
+    if (!historiaAFacturar || !puedeVerFinanzas) return
+
+    let cancelado = false
+
+    historiasApi
+      .obtenerPreliquidacion(historiaAFacturar)
+      .then((preliquidacion) => {
+        if (cancelado) return
+        facturacionHook.loadPreliquidacionHistoria(preliquidacion)
+        setActiveTab('facturacion')
+        if (cajaHook.turnoActivo) {
+          setVentaExitosa(false)
+          setPosOpen(true)
+        }
+      })
+      .catch((error) => {
+        if (cancelado) return
+        toast.error(
+          error?.response?.data?.message || 'No fue posible cargar los insumos de la consulta.'
+        )
+      })
+      .finally(() => {
+        // Limpiar el state evita recargar la preliquidación al volver atrás.
+        if (!cancelado) navigate(location.pathname, { replace: true, state: {} })
+      })
+
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historiaAFacturar, puedeVerFinanzas])
 
   if (!rolPermitido) {
     return <RestrictedFinancePage />
@@ -481,7 +528,11 @@ export default function FinanzasPage() {
           facturacionHook={facturacionHook}
           puedeConsultarInventario={puedeConsultarInventario}
           ventaExitosa={ventaExitosa}
-          onNuevaVenta={() => setVentaExitosa(false)}
+          facturaCreadaId={facturaCreadaId}
+          onNuevaVenta={() => {
+            setVentaExitosa(false)
+            setFacturaCreadaId(null)
+          }}
         />
       ) : null}
     </AdminShell>

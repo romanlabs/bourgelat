@@ -85,6 +85,15 @@ const HistoriaClinica = sequelize.define('HistoriaClinica', {
     defaultValue: [],
     comment: 'Lista de medicamentos formulados con dosis e instrucciones',
   },
+  // Lo aplicado al paciente DENTRO de la clinica. Descuenta inventario clinico
+  // (fraccionado) al bloquear la historia. Distinto del plan farmacologico en
+  // `medicamentos`, que sale del inventario de ventas al facturarse.
+  tratamientoIntrahospitalario: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: [],
+    comment: 'Insumos clinicos aplicados en procedimiento u hospitalizacion',
+  },
   indicaciones: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -99,6 +108,13 @@ const HistoriaClinica = sequelize.define('HistoriaClinica', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
     comment: 'Una vez bloqueada no se puede editar - RF-31',
+  },
+  // Marca que la consulta ya se cobro. Impide facturar dos veces la misma historia.
+  // Sin `references` para no acoplar este modelo a Factura (mismo criterio que
+  // MovimientoInventarioClinico.facturaId); la FK real la crea la migracion.
+  facturaId: {
+    type: DataTypes.UUID,
+    allowNull: true,
   },
   citaId: {
     type: DataTypes.UUID,
@@ -150,6 +166,7 @@ const HistoriaClinica = sequelize.define('HistoriaClinica', {
     { fields: ['clinicaId', 'fechaConsulta'] },
     { fields: ['veterinarioId'] },
     { fields: ['citaId'] },
+    { fields: ['facturaId'] },
   ],
 });
 

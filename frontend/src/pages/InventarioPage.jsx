@@ -18,6 +18,7 @@ import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
+import FacturaCompraDetalleModal from '@/features/inventario/FacturaCompraDetalleModal'
 import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
@@ -1072,6 +1073,13 @@ export default function InventarioPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => facturaCompraHook.abrirDetalle(row.raw)}
+                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                          >
+                            Ver
+                          </button>
                           {row.raw.estado === 'borrador' && (
                             <>
                               <button
@@ -1228,6 +1236,11 @@ export default function InventarioPage() {
         toggleItemEsNuevo={facturaCompraHook.toggleItemEsNuevo}
         actualizarItemProductoNuevo={facturaCompraHook.actualizarItemProductoNuevo}
         errorMsg={facturaCompraHook.errorMsg}
+      />
+
+      <FacturaCompraDetalleModal
+        factura={facturaCompraHook.facturaDetalle}
+        onClose={facturaCompraHook.cerrarDetalle}
       />
 
       {/* ConfirmDialog facturas de compra */}

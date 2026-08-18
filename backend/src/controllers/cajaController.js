@@ -7,6 +7,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
+const InsumoClinico = require('../models/InsumoClinico')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { parsePaginacion } = require('../utils/paginacion')
@@ -336,7 +337,7 @@ const obtenerDetalleTurno = async (req, res) => {
     // en este turno, construido desde FacturaItem + Factura.cajaTurnoId, sin
     // modificar MovimientoInventario (decisión de alcance del plan).
     const itemsVendidos = await FacturaItem.findAll({
-      where: { tipo: 'producto' },
+      where: { tipo: { [Op.in]: ['producto', 'insumo'] } },
       include: [
         {
           model: Factura,
@@ -350,16 +351,30 @@ const obtenerDetalleTurno = async (req, res) => {
           as: 'producto',
           attributes: ['id', 'nombre', 'categoria'],
         },
+        {
+          model: InsumoClinico,
+          as: 'insumoClinico',
+          attributes: ['id', 'nombre', 'categoria', 'unidadBase'],
+        },
       ],
     })
 
+    // Los insumos clinicos se descontaron al bloquear la historia, no en esta
+    // factura, pero se listan igual porque salieron de stock durante el turno.
     const trazabilidadPorProducto = new Map()
     for (const item of itemsVendidos) {
-      const key = item.productoId || 'sin-producto'
+      const esInsumo = item.tipo === 'insumo'
+      const referenciaId = esInsumo ? item.insumoClinicoId : item.productoId
+      const key = referenciaId ? `${item.tipo}:${referenciaId}` : `${item.tipo}:sin-referencia`
+      const origen = esInsumo ? item.insumoClinico : item.producto
+
       const actual = trazabilidadPorProducto.get(key) || {
-        productoId: item.productoId,
-        nombre: item.producto?.nombre || 'Producto eliminado',
-        categoria: item.producto?.categoria || null,
+        productoId: esInsumo ? null : item.productoId,
+        insumoClinicoId: esInsumo ? item.insumoClinicoId : null,
+        tipo: item.tipo,
+        nombre: origen?.nombre || (esInsumo ? 'Insumo eliminado' : 'Producto eliminado'),
+        categoria: origen?.categoria || null,
+        unidad: esInsumo ? origen?.unidadBase || null : null,
         cantidadVendida: 0,
       }
       actual.cantidadVendida += Number(item.cantidad)

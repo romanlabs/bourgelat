@@ -55,6 +55,18 @@ const InsumoClinico = sequelize.define('InsumoClinico', {
     defaultValue: 0,
     comment: 'Costo por unidad base, calculado como costo promedio ponderado',
   },
+  precioVenta: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    comment: 'Precio de venta por unidad base, usado al facturar el insumo como linea propia',
+  },
+  modoConsumo: {
+    type: DataTypes.ENUM('por_dosis', 'por_receta'),
+    allowNull: false,
+    defaultValue: 'por_receta',
+    comment: 'por_dosis: se descuenta desde la historia clinica. por_receta: se descuenta al facturar un servicio',
+  },
   stock: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

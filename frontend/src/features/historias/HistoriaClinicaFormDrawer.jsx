@@ -1,15 +1,17 @@
 import { useDeferredValue, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Activity, CalendarCheck, ChevronDown, ClipboardCheck, FlaskConical,
-  HeartPulse, Link2, MessageSquare, Pill, Plus, Search, X,
+  HeartPulse, Link2, MessageSquare, Pill, Plus, Search, Syringe, X,
 } from 'lucide-react'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
+import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
@@ -63,6 +65,8 @@ const getErrorMessage = (error, fallback) =>
 
 const createMedicationId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
+// Plan farmacologico: lo que el tutor se lleva. Sale del inventario de VENTAS
+// y se descuenta al facturar, no al cerrar la historia.
 const createMedicationDraft = (overrides = {}) => ({
   id: createMedicationId(),
   productoId: '',
@@ -77,6 +81,29 @@ const createMedicationDraft = (overrides = {}) => ({
   indicacion: '',
   ...overrides,
 })
+
+// Tratamiento intrahospitalario: lo aplicado dentro de la clinica. Sale del
+// inventario CLINICO en unidad base y se descuenta al cerrar la historia.
+const createTratamientoDraft = (overrides = {}) => ({
+  id: createMedicationId(),
+  insumoClinicoId: '',
+  nombre: '',
+  unidadBase: '',
+  stockDisponible: null,
+  cantidad: '',
+  via: '',
+  responsableId: '',
+  aplicadoEn: '',
+  ...overrides,
+})
+
+// Valor para <input type="datetime-local">, que no admite zona horaria.
+const toDateTimeLocal = (value) => {
+  const fecha = value ? new Date(value) : new Date()
+  if (Number.isNaN(fecha.getTime())) return ''
+  const offset = fecha.getTimezoneOffset() * 60000
+  return new Date(fecha.getTime() - offset).toISOString().slice(0, 16)
+}
 
 const createDefaultForm = (citaId = '') => ({
   motivoConsulta: '',
@@ -93,6 +120,7 @@ const createDefaultForm = (citaId = '') => ({
   diagnosticoPresuntivo: '',
   tratamiento: '',
   medicamentos: [createMedicationDraft()],
+  tratamientoIntrahospitalario: [],
   indicaciones: '',
   proximaConsulta: '',
   citaId,
@@ -103,6 +131,14 @@ const normalizeNumber = (value) => {
   if (value === '' || value === null || value === undefined) return undefined
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
+}
+
+// El inventario clinico se descuenta al cerrar la historia, asi que avisamos
+// aqui en vez de dejar que el backend responda 400 al intentar bloquear.
+const excedeStock = (item) => {
+  if (!item?.insumoClinicoId || item.stockDisponible === null || item.stockDisponible === undefined) return false
+  const cantidad = Number(item.cantidad)
+  return Number.isFinite(cantidad) && cantidad > Number(item.stockDisponible)
 }
 
 const medicationHasAnyValue = (item) =>
@@ -134,6 +170,25 @@ const mapMedicamentosToDrafts = (medicamentos) => {
   return drafts.length > 0 ? drafts : [createMedicationDraft()]
 }
 
+// Sin fila vacia por defecto: la seccion arranca colapsada y solo se llena
+// cuando el veterinario elige un insumo del inventario clinico.
+const mapTratamientoToDrafts = (lineas) => {
+  if (!Array.isArray(lineas)) return []
+  return lineas
+    .filter((item) => item && typeof item === 'object' && item.insumoClinicoId)
+    .map((item) =>
+      createTratamientoDraft({
+        insumoClinicoId: item.insumoClinicoId,
+        nombre: item.nombre || '',
+        unidadBase: item.unidadBase || '',
+        cantidad: item.cantidad === undefined || item.cantidad === null ? '' : String(item.cantidad),
+        via: item.via || '',
+        responsableId: item.responsableId || '',
+        aplicadoEn: toDateTimeLocal(item.aplicadoEn),
+      })
+    )
+}
+
 const mapHistoriaToForm = (historia) => ({
   motivoConsulta: historia?.motivoConsulta || '',
   anamnesis: historia?.anamnesis || '',
@@ -149,6 +204,7 @@ const mapHistoriaToForm = (historia) => ({
   diagnosticoPresuntivo: historia?.diagnosticoPresuntivo || '',
   tratamiento: historia?.tratamiento || '',
   medicamentos: mapMedicamentosToDrafts(historia?.medicamentos),
+  tratamientoIntrahospitalario: mapTratamientoToDrafts(historia?.tratamientoIntrahospitalario),
   indicaciones: historia?.indicaciones || '',
   proximaConsulta: historia?.proximaConsulta || '',
   citaId: historia?.citaId || '',
@@ -195,6 +251,7 @@ export default function HistoriaClinicaFormDrawer({
   onSuccess,
 }) {
   const usuario = useAuthStore((s) => s.usuario)
+  const navigate = useNavigate()
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   // Todos los planes incluyen inventario.
   const puedeConsultarInventarioClinico = true
@@ -203,11 +260,13 @@ export default function HistoriaClinicaFormDrawer({
   const [form, setForm] = useState(() => createDefaultForm(citaIdInicial))
   const [formSections, setFormSections] = useState(new Set(['contexto', 'anamnesis']))
   const [medicationSearch, setMedicationSearch] = useState('')
+  const [insumoSearch, setInsumoSearch] = useState('')
   const [antecedentesOpen, setAntecedentesOpen] = useState(false)
   const [examenesOpen, setExamenesOpen] = useState(false)
   const [localHistoria, setLocalHistoria] = useState(null)
 
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
+  const insumoSearchDeferred = useDeferredValue(insumoSearch.trim())
 
   // Historia efectiva (puede actualizarse localmente después de editar/bloquear)
   const historiaActual = localHistoria
@@ -224,6 +283,7 @@ export default function HistoriaClinicaFormDrawer({
       setLocalHistoria(null)
       setFormSections(new Set(['contexto', 'anamnesis']))
       setMedicationSearch('')
+      setInsumoSearch('')
       setAntecedentesOpen(false)
     }
   }, [open, historiaToEdit, citaIdInicial])
@@ -265,6 +325,7 @@ export default function HistoriaClinicaFormDrawer({
     placeholderData: (prev) => prev,
   })
 
+  // Plan farmacologico -> inventario de ventas (productos enteros).
   const catalogoMedicamentosQuery = useQuery({
     queryKey: ['historias-catalogo-medicamentos', medicationSearchDeferred],
     queryFn: () => inventarioApi.obtenerCatalogoMedicamentos({ buscar: medicationSearchDeferred || undefined, limite: 6 }),
@@ -272,9 +333,18 @@ export default function HistoriaClinicaFormDrawer({
     placeholderData: (prev) => prev,
   })
 
+  // Tratamiento intrahospitalario -> inventario clinico (unidad base fraccionada).
+  const catalogoInsumosQuery = useQuery({
+    queryKey: ['historias-catalogo-insumos-dosis', insumoSearchDeferred],
+    queryFn: () => inventarioClinicoApi.obtenerCatalogoDosis({ buscar: insumoSearchDeferred || undefined, limite: 6 }),
+    enabled: open && puedeEditarHistorias && puedeConsultarInventarioClinico,
+    placeholderData: (prev) => prev,
+  })
+
   const veterinarios = veterinariosQuery.data?.usuarios || []
   const citasRelacionadas = citasRelacionadasQuery.data?.citas || []
   const medicamentosCatalogo = catalogoMedicamentosQuery.data?.productos || []
+  const insumosCatalogo = catalogoInsumosQuery.data?.insumos || []
 
   const preferredVetId =
     veterinarios.find((v) => v.id === usuario?.id)?.id || veterinarios[0]?.id || ''
@@ -319,6 +389,31 @@ export default function HistoriaClinicaFormDrawer({
     },
   })
 
+  // Solo el tratamiento intrahospitalario descuenta al cerrar la historia.
+  const hayInsumoSobreStock = form.tratamientoIntrahospitalario.some(excedeStock)
+
+  // Bloquear descuenta inventario clinico. Si hay cambios sin guardar, lo que se
+  // descuenta es lo ya persistido, no lo que se ve en pantalla.
+  const handleBloquearHistoria = () => {
+    if (!historiaActual?.id) return
+
+    if (hayInsumoSobreStock) {
+      toast.error('Ajusta las cantidades: hay insumos que superan el stock disponible.')
+      return
+    }
+
+    const sinCantidad = form.tratamientoIntrahospitalario.find(
+      (item) => !item.cantidad || Number(item.cantidad) <= 0
+    )
+
+    if (sinCantidad) {
+      toast.error(`Indica la cantidad aplicada de "${sinCantidad.nombre || 'el insumo'}".`)
+      return
+    }
+
+    bloquearHistoriaMutation.mutate(historiaActual.id)
+  }
+
   // ── Medicamentos ─────────────────────────────────────────────────────────────
   const updateMedicationDraft = (draftId, field, value) =>
     setForm((c) => ({ ...c, medicamentos: c.medicamentos.map((item) => item.id === draftId ? { ...item, [field]: value } : item) }))
@@ -350,6 +445,39 @@ export default function HistoriaClinicaFormDrawer({
     })
   }
 
+  // ── Tratamiento intrahospitalario ────────────────────────────────────────────
+  const updateTratamientoDraft = (draftId, field, value) =>
+    setForm((c) => ({
+      ...c,
+      tratamientoIntrahospitalario: c.tratamientoIntrahospitalario.map((item) =>
+        item.id === draftId ? { ...item, [field]: value } : item
+      ),
+    }))
+
+  const removeTratamientoDraft = (draftId) =>
+    setForm((c) => ({
+      ...c,
+      tratamientoIntrahospitalario: c.tratamientoIntrahospitalario.filter((item) => item.id !== draftId),
+    }))
+
+  const addInsumoAlTratamiento = (insumo) => {
+    const draft = createTratamientoDraft({
+      insumoClinicoId: insumo.id,
+      nombre: insumo.nombre || '',
+      unidadBase: insumo.unidadBase || '',
+      stockDisponible: Number(insumo.stock),
+      // Sin cantidad por defecto: la dosis depende del paciente y se descuenta
+      // literal del stock, asi que debe escribirla el veterinario.
+      cantidad: '',
+      responsableId: form.veterinarioId || preferredVetId || '',
+      aplicadoEn: toDateTimeLocal(),
+    })
+    setForm((c) => ({
+      ...c,
+      tratamientoIntrahospitalario: [...c.tratamientoIntrahospitalario, draft],
+    }))
+  }
+
   // ── Payload y submit ─────────────────────────────────────────────────────────
   const buildPayload = () => {
     const medicamentos = form.medicamentos
@@ -366,6 +494,18 @@ export default function HistoriaClinicaFormDrawer({
       }))
       .filter((item) => item.nombre)
 
+    const tratamientoIntrahospitalario = form.tratamientoIntrahospitalario
+      .filter((item) => item.insumoClinicoId && normalizeNumber(item.cantidad) > 0)
+      .map((item) => ({
+        insumoClinicoId: item.insumoClinicoId,
+        nombre: item.nombre.trim() || undefined,
+        cantidad: normalizeNumber(item.cantidad),
+        unidadBase: item.unidadBase || undefined,
+        via: item.via || undefined,
+        responsableId: item.responsableId || undefined,
+        aplicadoEn: item.aplicadoEn ? new Date(item.aplicadoEn).toISOString() : undefined,
+      }))
+
     return {
       motivoConsulta: form.motivoConsulta.trim(),
       anamnesis: form.anamnesis.trim() || undefined,
@@ -381,6 +521,7 @@ export default function HistoriaClinicaFormDrawer({
       diagnosticoPresuntivo: form.diagnosticoPresuntivo.trim() || undefined,
       tratamiento: form.tratamiento.trim(),
       medicamentos,
+      tratamientoIntrahospitalario,
       indicaciones: form.indicaciones.trim() || undefined,
       proximaConsulta: form.proximaConsulta || undefined,
       citaId: form.citaId || undefined,
@@ -703,6 +844,123 @@ export default function HistoriaClinicaFormDrawer({
                 <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
               </FormSection>
 
+              {/* ── Tratamiento intrahospitalario ── */}
+              <FormSection
+                icon={<Syringe className="h-4 w-4" />}
+                title="Tratamiento intrahospitalario"
+                filled={form.tratamientoIntrahospitalario.length > 0}
+                open={formSections.has('intrahospitalario')}
+                onToggle={() => toggleFormSection('intrahospitalario')}
+              >
+                <p className="border-l-2 border-emerald-500 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  Lo aplicado al paciente dentro de la clínica. Sale del{' '}
+                  <strong className="text-foreground">inventario clínico</strong> en unidad base (ml, mg)
+                  y se descuenta al <strong className="text-foreground">cerrar la historia</strong>.
+                </p>
+
+                {puedeConsultarInventarioClinico && (
+                  <div className="grid gap-2 border border-dashed border-border bg-muted/50 px-3 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario clínico</p>
+                    <label className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={insumoSearch}
+                        onChange={(e) => setInsumoSearch(e.target.value)}
+                        placeholder="Insumo, laboratorio o lote"
+                        className="h-9 w-full border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
+                      />
+                    </label>
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {insumosCatalogo.length ? insumosCatalogo.map((i) => (
+                        <div key={i.id} className="flex items-center justify-between gap-2 border border-border bg-card px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-foreground">{i.nombre}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Disponible {formatNumber(i.stock)} {i.unidadBase}
+                            </p>
+                          </div>
+                          <button type="button" onClick={() => addInsumoAlTratamiento(i)} className="shrink-0 border border-border bg-muted px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted/70">
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )) : <p className="text-xs text-muted-foreground sm:col-span-2">Sin insumos de dosis disponibles.</p>}
+                    </div>
+                  </div>
+                )}
+
+                {form.tratamientoIntrahospitalario.length === 0 ? (
+                  <p className="border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                    Sin aplicaciones registradas. Busca un insumo arriba para agregarlo.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {form.tratamientoIntrahospitalario.map((item, index) => (
+                      <div key={item.id} className="grid gap-2 border border-border bg-card px-3 py-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-foreground">
+                            Aplicación {index + 1}
+                            <span className="ml-2 text-emerald-700">· {item.nombre}</span>
+                          </p>
+                          <button type="button" onClick={() => removeTratamientoDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="grid gap-1">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.cantidad}
+                              onChange={(e) => updateTratamientoDraft(item.id, 'cantidad', e.target.value)}
+                              placeholder={item.unidadBase ? `Cantidad aplicada (${item.unidadBase})` : 'Cantidad aplicada'}
+                              className={cn('h-9 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500', excedeStock(item) ? 'border-rose-400' : 'border-border')}
+                            />
+                            {item.stockDisponible !== null && (
+                              <p className={cn('text-[10px] font-semibold', excedeStock(item) ? 'text-rose-700' : 'text-muted-foreground')}>
+                                {excedeStock(item)
+                                  ? `Solo hay ${formatNumber(item.stockDisponible)} ${item.unidadBase}`
+                                  : `Disponible ${formatNumber(item.stockDisponible)} ${item.unidadBase}`}
+                              </p>
+                            )}
+                          </div>
+                          <select
+                            value={item.via}
+                            onChange={(e) => updateTratamientoDraft(item.id, 'via', e.target.value)}
+                            className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
+                          >
+                            {MEDICATION_ROUTE_OPTIONS.map((o) => <option key={o.value || 'default'} value={o.value}>{o.label}</option>)}
+                          </select>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="grid gap-1">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aplicado por</span>
+                            <select
+                              value={item.responsableId}
+                              onChange={(e) => updateTratamientoDraft(item.id, 'responsableId', e.target.value)}
+                              className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
+                            >
+                              <option value="">Sin especificar</option>
+                              {veterinarios.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+                            </select>
+                          </div>
+                          <div className="grid gap-1">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Fecha y hora</span>
+                            <input
+                              type="datetime-local"
+                              value={item.aplicadoEn}
+                              onChange={(e) => updateTratamientoDraft(item.id, 'aplicadoEn', e.target.value)}
+                              className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </FormSection>
+
               {/* ── Plan farmacológico y cierre ── */}
               <FormSection
                 icon={<Pill className="h-4 w-4" />}
@@ -711,9 +969,14 @@ export default function HistoriaClinicaFormDrawer({
                 open={formSections.has('plan')}
                 onToggle={() => toggleFormSection('plan')}
               >
+                <p className="border-l-2 border-cyan-500 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  Lo que el tutor se lleva a casa. Sale del <strong className="text-foreground">inventario de ventas</strong> y
+                  se descuenta al facturar, no al cerrar la historia.
+                </p>
+
                 {puedeConsultarInventarioClinico && (
                   <div className="grid gap-2 border border-dashed border-border bg-muted/50 px-3 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Buscar en inventario de ventas</p>
                     <label className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input
@@ -784,7 +1047,7 @@ export default function HistoriaClinicaFormDrawer({
                         </div>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-[100px_1fr]">
-                        <input type="number" min="0" step="0.01" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
+                        <input type="number" min="0" step="1" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                         <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[56px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                       </div>
                     </div>
@@ -823,11 +1086,20 @@ export default function HistoriaClinicaFormDrawer({
             {historiaActual?.id && (
               <button
                 type="button"
-                onClick={() => bloquearHistoriaMutation.mutate(historiaActual.id)}
-                disabled={bloquearHistoriaMutation.isPending || historiaActual.bloqueada}
+                onClick={handleBloquearHistoria}
+                disabled={bloquearHistoriaMutation.isPending || historiaActual.bloqueada || hayInsumoSobreStock}
                 className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
+              </button>
+            )}
+            {historiaActual?.id && historiaActual.bloqueada && !historiaActual.facturaId && (
+              <button
+                type="button"
+                onClick={() => navigate('/finanzas', { state: { facturarHistoriaId: historiaActual.id } })}
+                className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                Facturar consulta
               </button>
             )}
             <button type="button" onClick={onClose} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
