@@ -5,6 +5,7 @@ const {
   crearUsuario,
   obtenerUsuarios,
   obtenerEquipoAgenda,
+  obtenerEquipoClinica,
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,
@@ -111,6 +112,12 @@ router.get(
   verificarToken,
   verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'),
   obtenerEquipoAgenda
+)
+router.get(
+  '/equipo-clinica',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'veterinario', 'recepcionista', 'auxiliar'),
+  obtenerEquipoClinica
 )
 router.get('/:id', verificarToken, verificarRol('admin', 'superadmin'), obtenerUsuario)
 
