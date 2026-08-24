@@ -7,11 +7,20 @@ import {
 } from 'lucide-react'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { historiasApi } from '@/features/historias/historiasApi'
+import { agendaApi } from '@/features/agenda/agendaApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import HistoriaClinicaFormDrawer from '@/features/historias/HistoriaClinicaFormDrawer'
 import HistoriaClinicaTimeline from '@/features/historias/HistoriaClinicaTimeline'
+import EstilosTimeline from '@/features/estilos/EstilosTimeline'
+import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
+import { useEstilosMascota } from '@/features/estilos/useEstilos'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
+
+const TABS = [
+  { id: 'historia', label: 'Historia Clínica' },
+  { id: 'estilos', label: 'Estilos' },
+]
 
 const SPECIES_LABELS = {
   perro: 'Perro',
@@ -50,16 +59,36 @@ export default function PacienteHistorialPage() {
 
   const citaIdParam = searchParams.get('citaId') || ''
 
+  const [activeTab, setActiveTab] = useState('historia')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [historiaToEdit, setHistoriaToEdit] = useState(null)
+  const [estiloDrawerOpen, setEstiloDrawerOpen] = useState(false)
+  const [registroEstiloToEdit, setRegistroEstiloToEdit] = useState(null)
 
-  // Abrir drawer automáticamente si viene ?citaId desde la agenda
+  const citaQuery = useQuery({
+    queryKey: ['cita-detalle', citaIdParam],
+    queryFn: () => agendaApi.obtenerCita(citaIdParam),
+    enabled: Boolean(citaIdParam),
+  })
+
+  // La agenda navega aqui con ?citaId= al atender una cita. Una cita de
+  // peluqueria abre Estilos; cualquier otra, la historia clinica.
   useEffect(() => {
-    if (citaIdParam && tieneHistorias && puedeEditarHistorias) {
+    if (!citaIdParam) return
+
+    const tipoCita = citaQuery.data?.cita?.tipoCita
+    if (!tipoCita) return
+
+    if (tipoCita === 'peluqueria') {
+      setActiveTab('estilos')
+      setRegistroEstiloToEdit(null)
+      setEstiloDrawerOpen(true)
+    } else if (tieneHistorias && puedeEditarHistorias) {
+      setActiveTab('historia')
       setHistoriaToEdit(null)
       setDrawerOpen(true)
     }
-  }, [citaIdParam, tieneHistorias, puedeEditarHistorias])
+  }, [citaIdParam, citaQuery.data, tieneHistorias, puedeEditarHistorias])
 
   useEffect(() => {
     document.title = 'Historial clínico | Bourgelat'
@@ -76,6 +105,8 @@ export default function PacienteHistorialPage() {
     queryFn: () => historiasApi.obtenerHistoriasMascota(mascotaId),
     enabled: Boolean(mascotaId) && tieneHistorias,
   })
+
+  const { registrosQuery, registros } = useEstilosMascota({ mascotaId })
 
   const mascota = mascotaQuery.data?.mascota
   const historias = historiasQuery.data?.historias || []
@@ -104,6 +135,18 @@ export default function PacienteHistorialPage() {
       setDrawerOpen(false)
       if (citaIdParam) setSearchParams({})
     }
+  }
+
+  const handleEstiloDrawerClose = () => {
+    setEstiloDrawerOpen(false)
+    setRegistroEstiloToEdit(null)
+    if (citaIdParam) setSearchParams({})
+  }
+
+  const handleEstiloDrawerSuccess = () => {
+    setEstiloDrawerOpen(false)
+    setRegistroEstiloToEdit(null)
+    if (citaIdParam) setSearchParams({})
   }
 
   // Construir el objeto mascota en el formato que espera el drawer
@@ -204,27 +247,69 @@ export default function PacienteHistorialPage() {
         </div>
       )}
 
-      {/* Timeline */}
+      {/* Pestañas + contenido */}
       <div className="mx-auto max-w-3xl px-6 py-8">
-        {!historiasQuery.isPending && (
-          <p className="mb-6 text-sm text-muted-foreground">
-            {historias.length === 0
-              ? 'Sin consultas registradas'
-              : `${historias.length} consulta${historias.length !== 1 ? 's' : ''} registrada${historias.length !== 1 ? 's' : ''}`}
-          </p>
-        )}
+        <div className="mb-6 flex gap-1 border-b border-border">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`border-b-2 px-4 py-2 text-sm font-semibold transition ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {historiasQuery.isError && (
-          <p className="text-sm text-rose-600">No fue posible cargar el historial clínico.</p>
-        )}
+        {activeTab === 'historia' ? (
+          <>
+            {!historiasQuery.isPending && (
+              <p className="mb-6 text-sm text-muted-foreground">
+                {historias.length === 0
+                  ? 'Sin consultas registradas'
+                  : `${historias.length} consulta${historias.length !== 1 ? 's' : ''} registrada${historias.length !== 1 ? 's' : ''}`}
+              </p>
+            )}
 
-        {!historiasQuery.isError && (
-          <HistoriaClinicaTimeline
-            historias={historias}
-            isPending={historiasQuery.isPending}
-            onNuevaConsulta={handleNuevaConsulta}
-            onEditHistoria={handleEditHistoria}
-          />
+            {historiasQuery.isError && (
+              <p className="text-sm text-rose-600">No fue posible cargar el historial clínico.</p>
+            )}
+
+            {!historiasQuery.isError && (
+              <HistoriaClinicaTimeline
+                historias={historias}
+                isPending={historiasQuery.isPending}
+                onNuevaConsulta={handleNuevaConsulta}
+                onEditHistoria={handleEditHistoria}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {registrosQuery.isError && (
+              <p className="text-sm text-rose-600">No fue posible cargar los registros de estilos.</p>
+            )}
+
+            {!registrosQuery.isError && (
+              <EstilosTimeline
+                registros={registros}
+                isPending={registrosQuery.isPending}
+                onNuevoRegistro={() => {
+                  setRegistroEstiloToEdit(null)
+                  setEstiloDrawerOpen(true)
+                }}
+                onEditRegistro={(registro) => {
+                  setRegistroEstiloToEdit(registro)
+                  setEstiloDrawerOpen(true)
+                }}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -239,6 +324,16 @@ export default function PacienteHistorialPage() {
           onSuccess={handleDrawerSuccess}
         />
       )}
+
+      {/* Drawer de estilos */}
+      <RegistroEstiloFormDrawer
+        open={estiloDrawerOpen}
+        onClose={handleEstiloDrawerClose}
+        mascota={mascotaParaDrawer}
+        registroToEdit={registroEstiloToEdit}
+        citaId={citaIdParam || undefined}
+        onSuccess={handleEstiloDrawerSuccess}
+      />
     </div>
   )
 }

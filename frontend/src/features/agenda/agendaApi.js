@@ -47,4 +47,9 @@ export const agendaApi = {
     const { data } = await api.get('/usuarios/equipo-agenda')
     return data
   },
+
+  async obtenerCita(citaId) {
+    const { data } = await api.get(`/citas/${citaId}`)
+    return data
+  },
 }
