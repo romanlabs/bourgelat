@@ -66,7 +66,11 @@ const appConfig = {
   nodeEnv,
   isProduction,
   port: parseNumber(process.env.PORT, 3000),
-  trustProxy: parseTrustProxy(process.env.TRUST_PROXY, isProduction ? 1 : false, isProduction),
+  // Cliente -> Cloudflare (proxy) -> Render -> app: son 2 saltos, no 1.
+  // Con trustProxy=1, Express resuelve req.ip como la IP de borde de Cloudflare
+  // para todo el trafico, lo que junta el rate limit (y las IPs de auditoria)
+  // de todas las clinicas en un solo balde compartido.
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY, isProduction ? 2 : false, isProduction),
   frontendOrigins,
   enableDbMigrations: parseBoolean(process.env.DB_RUN_MIGRATIONS, true),
   enableDbSync: parseBoolean(process.env.DB_SYNC, !isProduction),
@@ -79,7 +83,9 @@ const appConfig = {
   },
   rateLimit: {
     windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
-    maxRequests: parseNumber(process.env.RATE_LIMIT_MAX, 500),
+    // Recepcion sola ya hace ~120 peticiones/15min via polling (2 queries cada 15s);
+    // con varios modulos y usuarios detras de la misma IP de clinica, 500 se queda corto.
+    maxRequests: parseNumber(process.env.RATE_LIMIT_MAX, 1500),
     authWindowMs: parseNumber(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     authMaxRequests: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 20),
   },
