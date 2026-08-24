@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   ChevronLeft, PawPrint, Phone, User, Weight,
-  HeartPulse, Plus,
+  HeartPulse, Plus, Scissors,
 } from 'lucide-react'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { historiasApi } from '@/features/historias/historiasApi'
@@ -57,6 +57,10 @@ export default function PacienteHistorialPage() {
   const tieneHistorias = true
   const tieneAntecedentes = true
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
+  // Mismo criterio de roles que Agenda/backend para el modulo de estilos.
+  const puedeEditarEstilos = hasAnyRole(usuario, [
+    'admin', 'superadmin', 'veterinario', 'recepcionista', 'auxiliar',
+  ])
 
   const citaIdParam = searchParams.get('citaId') || ''
 
@@ -140,6 +144,11 @@ export default function PacienteHistorialPage() {
   const handleNuevaConsulta = () => {
     setHistoriaToEdit(null)
     setDrawerOpen(true)
+  }
+
+  const handleNuevoRegistroEstilo = () => {
+    setRegistroEstiloToEdit(null)
+    setEstiloDrawerOpen(true)
   }
 
   const handleEditHistoria = (historia) => {
@@ -267,6 +276,16 @@ export default function PacienteHistorialPage() {
                     Antecedentes
                   </button>
                 )}
+                {activeTab === 'estilos' && puedeEditarEstilos && (
+                  <button
+                    type="button"
+                    onClick={handleNuevoRegistroEstilo}
+                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    <Scissors className="h-4 w-4" />
+                    Nuevo servicio de estilos
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -325,10 +344,7 @@ export default function PacienteHistorialPage() {
               <EstilosTimeline
                 registros={registros}
                 isPending={registrosQuery.isPending}
-                onNuevoRegistro={() => {
-                  setRegistroEstiloToEdit(null)
-                  setEstiloDrawerOpen(true)
-                }}
+                onNuevoRegistro={handleNuevoRegistroEstilo}
                 onEditRegistro={(registro) => {
                   setRegistroEstiloToEdit(registro)
                   setEstiloDrawerOpen(true)
@@ -352,14 +368,16 @@ export default function PacienteHistorialPage() {
       )}
 
       {/* Drawer de estilos */}
-      <RegistroEstiloFormDrawer
-        open={estiloDrawerOpen}
-        onClose={handleEstiloDrawerClose}
-        mascota={mascotaParaDrawer}
-        registroToEdit={registroEstiloToEdit}
-        citaId={citaIdParam || undefined}
-        onSuccess={handleEstiloDrawerSuccess}
-      />
+      {mascotaParaDrawer && (
+        <RegistroEstiloFormDrawer
+          open={estiloDrawerOpen}
+          onClose={handleEstiloDrawerClose}
+          mascota={mascotaParaDrawer}
+          registroToEdit={registroEstiloToEdit}
+          citaId={citaIdParam || undefined}
+          onSuccess={handleEstiloDrawerSuccess}
+        />
+      )}
     </div>
   )
 }
