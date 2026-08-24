@@ -11,7 +11,18 @@ const cleanText = (value, maxLength = 500) => {
 
 const normalizarTipoCorte = (value) => cleanText(value, 240)
 
-const normalizarObservaciones = (value) => cleanText(value, 4000)
+// Igual que normalizarProximaCita: '' o null limpian explicitamente el campo
+// al editar (undefined se preserva para que crear sin observaciones no
+// sobreescriba nada).
+const normalizarObservaciones = (value) => {
+  if (value === undefined) return undefined
+  if (value === null) return null
+
+  const normalized = String(value).replace(/\s+/g, ' ').trim()
+  if (!normalized) return null
+
+  return normalized.slice(0, 4000)
+}
 
 // Devuelve null (no undefined) cuando viene vacia: el campo es nullable en BD
 // y null la limpia explicitamente al editar.

@@ -24,8 +24,14 @@ assert.strictEqual(normalizarTipoCorte('  '), undefined, 'vacio -> undefined')
 assert.strictEqual(normalizarTipoCorte('x'.repeat(300)).length, 240, 'tipo de corte se recorta a 240')
 
 // ── normalizarObservaciones ────────────────────────────────────────────────
+// '' o null limpian explicitamente el campo al editar (igual que
+// normalizarProximaCita); undefined se preserva para no pisar nada al crear
+// sin observaciones.
 assert.strictEqual(normalizarObservaciones('Pelaje enredado'), 'Pelaje enredado', 'texto normal')
-assert.strictEqual(normalizarObservaciones(''), undefined, 'vacio -> undefined')
+assert.strictEqual(normalizarObservaciones(''), null, 'vacio -> null (limpia al editar)')
+assert.strictEqual(normalizarObservaciones('   '), null, 'solo espacios -> null (limpia al editar)')
+assert.strictEqual(normalizarObservaciones(null), null, 'null -> null')
+assert.strictEqual(normalizarObservaciones(undefined), undefined, 'undefined -> undefined (no se toca al crear)')
 assert.strictEqual(normalizarObservaciones('y'.repeat(5000)).length, 4000, 'observaciones se recortan a 4000')
 
 // ── normalizarProximaCita ──────────────────────────────────────────────────
