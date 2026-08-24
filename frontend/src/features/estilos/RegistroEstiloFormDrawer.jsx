@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
-import { Lock, Scissors, X } from 'lucide-react'
+import { Lock, Receipt, Scissors, X } from 'lucide-react'
 import { Select } from '@/components/ui/select'
 import { estilosApi } from './estilosApi'
 import { useEstilosMascota } from './useEstilos'
@@ -49,6 +50,7 @@ export default function RegistroEstiloFormDrawer({
   onSuccess,
 }) {
   const bloqueado = Boolean(registroToEdit?.bloqueado)
+  const navigate = useNavigate()
 
   const { crearRegistro, editarRegistro, isPending } = useEstilosMascota({
     mascotaId: mascota?.id,
@@ -86,11 +88,15 @@ export default function RegistroEstiloFormDrawer({
 
   const handleFormSubmit = (formData) => {
     if (registroToEdit?.id) {
+      // En edicion se envia '' explicitamente (no undefined) para que el
+      // backend pueda limpiar un valor previamente guardado: JSON.stringify
+      // descarta las claves con valor undefined, asi que omitirlas deja el
+      // valor anterior intacto en vez de borrarlo.
       const payload = {
         tipoCorte: formData.tipoCorte.trim(),
         estilistaId: formData.estilistaId,
-        proximaCitaSugerida: formData.proximaCitaSugerida || undefined,
-        observaciones: formData.observaciones?.trim() || undefined,
+        proximaCitaSugerida: formData.proximaCitaSugerida || '',
+        observaciones: formData.observaciones?.trim() || '',
       }
       editarRegistro(
         { registroId: registroToEdit.id, payload },
@@ -249,7 +255,7 @@ export default function RegistroEstiloFormDrawer({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-border px-5 py-4">
+        <div className="flex flex-wrap gap-3 border-t border-border px-5 py-4">
           {!bloqueado && (
             <button
               type="submit"
@@ -259,6 +265,18 @@ export default function RegistroEstiloFormDrawer({
             >
               <Scissors className="h-3.5 w-3.5" />
               {isPending ? 'Guardando...' : registroToEdit ? 'Guardar cambios' : 'Registrar servicio'}
+            </button>
+          )}
+          {registroToEdit?.id && !bloqueado && !registroToEdit?.facturaId && (
+            <button
+              type="button"
+              onClick={() =>
+                navigate('/finanzas', { state: { facturarEstiloId: registroToEdit.id } })
+              }
+              className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+            >
+              <Receipt className="h-3.5 w-3.5" />
+              Facturar servicio
             </button>
           )}
           <button
