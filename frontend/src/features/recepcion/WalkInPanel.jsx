@@ -27,6 +27,8 @@ export function WalkInPanel({
   mascotas,
   puedeProgramar,
   crearWalkInMutation,
+  bare = false,
+  onSuccess,
 }) {
   const [ownerSearch, setOwnerSearch] = useState('')
   const [selectedOwner, setSelectedOwner] = useState(null)
@@ -57,16 +59,13 @@ export function WalkInPanel({
         setForm(DEFAULT_FORM)
         setSelectedOwner(null)
         setMascotaId('')
+        onSuccess?.()
       },
     })
   }
 
-  return (
-    <DashboardPanel
-      title="Ingreso directo"
-      subtitle="Registra un paciente que llega sin cita. Entra a la sala de espera de inmediato."
-      action={<UserPlus className="h-4 w-4 text-primary" />}
-    >
+  const contenido = (
+    <>
       {!puedeProgramar ? (
         <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
           Tu rol actual no puede registrar ingresos directos.
@@ -153,6 +152,18 @@ export function WalkInPanel({
           </button>
         </form>
       )}
+    </>
+  )
+
+  if (bare) return contenido
+
+  return (
+    <DashboardPanel
+      title="Ingreso directo"
+      subtitle="Registra un paciente que llega sin cita. Entra a la sala de espera de inmediato."
+      action={<UserPlus className="h-4 w-4 text-primary" />}
+    >
+      {contenido}
     </DashboardPanel>
   )
 }

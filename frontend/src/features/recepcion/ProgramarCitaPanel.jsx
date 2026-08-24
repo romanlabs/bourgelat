@@ -51,6 +51,8 @@ export function ProgramarCitaPanel({
   usuario,
   puedeProgramar,
   crearCitaMutation,
+  bare = false,
+  onSuccess,
 }) {
   const [ownerSearch, setOwnerSearch] = useState('')
   const [selectedOwner, setSelectedOwner] = useState(null)
@@ -105,16 +107,13 @@ export function ProgramarCitaPanel({
         reset({ ...DEFAULT_VALUES, fecha: values.fecha, veterinarioId: values.veterinarioId })
         setSelectedOwner(null)
         setMascotaId('')
+        onSuccess?.()
       },
     })
   }
 
-  return (
-    <DashboardPanel
-      title="Programar nueva cita"
-      subtitle="Selecciona tutor, mascota, horario y profesional. Al confirmar, entra a la sala de espera como pendiente de llegada."
-      action={<Plus className="h-4 w-4 text-primary" />}
-    >
+  const contenido = (
+    <>
       {!puedeProgramar ? (
         <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
           Tu rol actual puede consultar la agenda, pero no crear nuevas citas.
@@ -202,6 +201,18 @@ export function ProgramarCitaPanel({
           </button>
         </form>
       )}
+    </>
+  )
+
+  if (bare) return contenido
+
+  return (
+    <DashboardPanel
+      title="Programar nueva cita"
+      subtitle="Selecciona tutor, mascota, horario y profesional. Al confirmar, entra a la sala de espera como pendiente de llegada."
+      action={<Plus className="h-4 w-4 text-primary" />}
+    >
+      {contenido}
     </DashboardPanel>
   )
 }
