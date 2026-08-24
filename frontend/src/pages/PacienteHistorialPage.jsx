@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   ChevronLeft, PawPrint, Phone, User, Weight,
   HeartPulse, Plus,
@@ -69,12 +70,37 @@ export default function PacienteHistorialPage() {
     queryKey: ['cita-detalle', citaIdParam],
     queryFn: () => agendaApi.obtenerCita(citaIdParam),
     enabled: Boolean(citaIdParam),
+    retry: 1,
   })
+
+  // Si la consulta de la cita falla, no queremos dejar al usuario sin nada:
+  // se restaura el comportamiento previo a este módulo (abrir historia
+  // clínica) una sola vez por citaId, no en cada re-render.
+  const citaFallbackFiredRef = useRef(false)
+  useEffect(() => {
+    citaFallbackFiredRef.current = false
+  }, [citaIdParam])
 
   // La agenda navega aqui con ?citaId= al atender una cita. Una cita de
   // peluqueria abre Estilos; cualquier otra, la historia clinica.
   useEffect(() => {
     if (!citaIdParam) return
+
+    if (citaQuery.isError) {
+      if (citaFallbackFiredRef.current) return
+      citaFallbackFiredRef.current = true
+
+      toast.error(
+        'No pudimos cargar los datos de la cita. Abrimos la historia clínica; si era un servicio de estilos, cámbiate a esa pestaña.'
+      )
+
+      if (tieneHistorias && puedeEditarHistorias) {
+        setActiveTab('historia')
+        setHistoriaToEdit(null)
+        setDrawerOpen(true)
+      }
+      return
+    }
 
     const tipoCita = citaQuery.data?.cita?.tipoCita
     if (!tipoCita) return
@@ -88,7 +114,7 @@ export default function PacienteHistorialPage() {
       setHistoriaToEdit(null)
       setDrawerOpen(true)
     }
-  }, [citaIdParam, citaQuery.data, tieneHistorias, puedeEditarHistorias])
+  }, [citaIdParam, citaQuery.data, citaQuery.isError, tieneHistorias, puedeEditarHistorias])
 
   useEffect(() => {
     document.title = 'Historial clínico | Bourgelat'
