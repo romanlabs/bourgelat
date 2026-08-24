@@ -134,7 +134,9 @@ export default function HistoriaClinicaTimeline({
 }) {
   if (isPending) {
     return (
-      <div className="space-y-4">
+      <div className="relative space-y-4">
+        <div className="absolute bottom-0 left-[9px] top-0 w-px bg-border" />
+        <TimelineItemSkeleton />
         <TimelineItemSkeleton />
         <TimelineItemSkeleton />
       </div>
@@ -146,10 +148,23 @@ export default function HistoriaClinicaTimeline({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
+      <div className="absolute bottom-4 left-[9px] top-0 w-px bg-border" />
+
       {historias.map((historia) => (
-        <TimelineCard key={historia.id} historia={historia} onEdit={onEditHistoria} />
+        <TimelineCard
+          key={historia.id}
+          historia={historia}
+          onEdit={onEditHistoria}
+        />
       ))}
+
+      <div className="relative pl-8">
+        <div className="absolute left-0 top-1 flex h-5 w-5 items-center justify-center">
+          <div className="h-3 w-3 rounded-full border-2 border-border bg-muted" />
+        </div>
+        <p className="py-1 text-xs text-muted-foreground">Inicio del historial</p>
+      </div>
     </div>
   )
 }
