@@ -2,9 +2,17 @@ import { CalendarDays, Lock, Pencil, Plus, Scissors } from 'lucide-react'
 
 const formatDate = (value) => {
   if (!value) return '—'
+  // fechaServicio/proximaCitaSugerida llegan como fecha sin hora
+  // (YYYY-MM-DD). `new Date('2026-09-01')` se interpreta como UTC medianoche
+  // y en America/Bogota (UTC-5) cae un dia antes. Anclar a medianoche local
+  // evita ese corrimiento — mismo patron que lib/utils.js y dashboardUtils.js.
+  const s = String(value)
+  const isoLocal = s.includes('T') ? s : `${s}T00:00:00`
+  const date = new Date(isoLocal)
+  if (Number.isNaN(date.getTime())) return '—'
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric', month: 'short', year: 'numeric',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 function EmptyEstilos({ onNuevoRegistro }) {
