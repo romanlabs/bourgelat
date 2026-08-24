@@ -1,3 +1,5 @@
+const tokens = require('./theme.tokens.cjs')
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
@@ -5,6 +7,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Escalas numéricas de theme.tokens.cjs — fuente única de verdad.
+        // Sin esto, clases como bg-warm-100 o bg-clinical-500 (usadas por
+        // StatusBadge y por toda la app) no generan CSS.
+        clinical: tokens.colors.clinical,
+        warm: tokens.colors.warm,
+        blue: tokens.colors.blue,
+
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -56,6 +65,7 @@ module.exports = {
           5: 'hsl(var(--chart-5))',
         },
         caramel: {
+          ...tokens.colors.caramel,
           DEFAULT: 'hsl(var(--caramel))',
           foreground: 'hsl(var(--caramel-foreground))',
           muted: 'hsl(var(--caramel-muted))',
