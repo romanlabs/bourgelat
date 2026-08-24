@@ -15,7 +15,7 @@
 
 ## 2. Variables clave del backend
 - `NODE_ENV=production`
-- `TRUST_PROXY=1`
+- `TRUST_PROXY=2`
 - `DB_SSL_REJECT_UNAUTHORIZED=false` si Render Postgres reporta `self-signed certificate`
 - `COOKIE_SECURE=true`
 - `COOKIE_SAME_SITE=lax`

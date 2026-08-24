@@ -59,6 +59,8 @@ const TABS = [
   { id: 'analitica', label: 'Analítica' },
 ]
 
+const AGENDA_REFETCH_INTERVAL = 60000
+
 const getToday = () => new Date().toISOString().slice(0, 10)
 
 const getErrorMessage = (error, fallback) =>
@@ -124,6 +126,8 @@ export default function AgendaPage() {
       }),
     enabled: rolPermitido && puedeVerAgenda,
     placeholderData: (previousData) => previousData,
+    refetchInterval: AGENDA_REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
   })
 
   const reporteQuery = useQuery({

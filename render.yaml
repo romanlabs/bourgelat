@@ -65,7 +65,7 @@ services:
       - key: PUBLIC_UPLOADS_BASE_URL
         value: https://api.bourgelat.co/uploads
       - key: TRUST_PROXY
-        value: "1"
+        value: "2"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -121,7 +121,7 @@ services:
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: RATE_LIMIT_MAX
-        value: "100"
+        value: "1500"
       - key: AUTH_RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: AUTH_RATE_LIMIT_MAX
@@ -235,7 +235,7 @@ services:
       - key: PUBLIC_UPLOADS_BASE_URL
         value: https://api-staging.bourgelat.co/uploads
       - key: TRUST_PROXY
-        value: "1"
+        value: "2"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -291,7 +291,7 @@ services:
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: RATE_LIMIT_MAX
-        value: "100"
+        value: "1500"
       - key: AUTH_RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: AUTH_RATE_LIMIT_MAX
