@@ -18,7 +18,16 @@ const registroEstiloSchema = z.object({
   observaciones: z.string().max(4000).optional().or(z.literal('')),
 })
 
-const hoyISO = () => new Date().toISOString().slice(0, 10)
+// No usar toISOString(): convierte a UTC y en Bogota (UTC-5), desde las
+// 19:00 en adelante, ya es el dia siguiente en UTC — el campo se
+// prellenaria con manana en vez de hoy. Se arma el string con partes
+// locales para que coincida con el dia calendario del usuario.
+const hoyISO = () => {
+  const d = new Date()
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const dia = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mes}-${dia}`
+}
 
 const DEFAULT_VALUES = {
   tipoCorte: '',

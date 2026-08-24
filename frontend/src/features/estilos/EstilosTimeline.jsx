@@ -2,13 +2,17 @@ import { CalendarDays, Lock, Pencil, Plus, Scissors } from 'lucide-react'
 
 const formatDate = (value) => {
   if (!value) return '—'
-  // fechaServicio/proximaCitaSugerida llegan como fecha sin hora
-  // (YYYY-MM-DD). `new Date('2026-09-01')` se interpreta como UTC medianoche
-  // y en America/Bogota (UTC-5) cae un dia antes. Anclar a medianoche local
-  // evita ese corrimiento — mismo patron que lib/utils.js y dashboardUtils.js.
-  const s = String(value)
-  const isoLocal = s.includes('T') ? s : `${s}T00:00:00`
-  const date = new Date(isoLocal)
+  // proximaCitaSugerida es DATEONLY ("2026-09-01"); fechaServicio es DATE y
+  // llega como timestamp UTC ("2026-08-24T00:00:00.000Z"). En ambos casos el
+  // dia calendario que se debe mostrar son los primeros 10 caracteres
+  // (YYYY-MM-DD): el backend corre en UTC en produccion (Render) y guarda esa
+  // fecha como medianoche UTC del dia que el usuario eligio en Bogota
+  // (UTC-5). Si se deja pasar el timestamp completo, `new Date(...)` conserva
+  // el instante UTC y `Intl.DateTimeFormat` lo renderiza en la zona del
+  // navegador, corriendo el dia un dia atras. Anclar a medianoche local evita
+  // ese corrimiento — mismo patron que lib/utils.js y dashboardUtils.js.
+  const diaCalendario = String(value).slice(0, 10)
+  const date = new Date(`${diaCalendario}T00:00:00`)
   if (Number.isNaN(date.getTime())) return '—'
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric', month: 'short', year: 'numeric',
