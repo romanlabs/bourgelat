@@ -313,7 +313,7 @@ export default function FinanzasPage() {
             cajaHook.turnoActivoQuery.isLoading ? (
               <div className="h-40 animate-pulse rounded-[28px] border border-border bg-muted" />
             ) : !cajaHook.turnoActivo ? (
-              <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
+              <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
@@ -327,7 +327,7 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : (
-              <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-card">
+              <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-panel">
                 <div className="max-w-sm text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Receipt className="h-8 w-8" />

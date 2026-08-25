@@ -19,23 +19,14 @@ import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import {
-  BarPanel,
   DashboardPanel,
   DataTable,
-  DonutCard,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
-import { dashboardApi } from '@/features/dashboard/dashboardApi'
-import {
-  CITA_ESTADO_LABELS,
-  CITA_TIPO_LABELS,
-  formatLongDate,
-  formatNumber,
-  getCurrentMonthRange,
-  objectToChartData,
-} from '@/features/dashboard/dashboardUtils'
+import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
+import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
 import { UrgenciaRetroactivaDialog } from '@/features/recepcion/UrgenciaRetroactivaDialog'
@@ -98,7 +89,6 @@ export default function AgendaPage() {
   const [urgenciaOpen, setUrgenciaOpen] = useState(false)
   const [recepcionPrefill, setRecepcionPrefill] = useState(null)
 
-  const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
   // Todos los planes incluyen citas y reportes operativos.
   const puedeVerAgenda = true
@@ -122,13 +112,6 @@ export default function AgendaPage() {
         limite: 14,
       }),
     enabled: rolPermitido && puedeVerAgenda,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const reporteQuery = useQuery({
-    queryKey: ['agenda-reporte-mensual', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () => dashboardApi.obtenerReporteCitas(rangoMes),
-    enabled: rolPermitido && puedeVerAgenda && puedeVerAnalitica,
     placeholderData: (previousData) => previousData,
   })
 
@@ -156,7 +139,7 @@ export default function AgendaPage() {
       toast.success(data?.message || 'Urgencia registrada exitosamente')
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
@@ -177,7 +160,7 @@ export default function AgendaPage() {
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
@@ -200,7 +183,7 @@ export default function AgendaPage() {
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
     onError: (error) => {
@@ -220,44 +203,6 @@ export default function AgendaPage() {
   const pendientes = citas.filter((item) =>
     ['programada', 'en_espera'].includes(item.estado)
   ).length
-
-  const estadoLocalData = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      acc[cita.estado] = (acc[cita.estado] || 0) + 1
-      return acc
-    }, {})
-    return objectToChartData(record, CITA_ESTADO_LABELS)
-  }, [citas])
-
-  const tipoLocalData = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      acc[cita.tipoCita] = (acc[cita.tipoCita] || 0) + 1
-      return acc
-    }, {})
-    return objectToChartData(record, CITA_TIPO_LABELS)
-  }, [citas])
-
-  const estadoChartData = puedeVerAnalitica
-    ? objectToChartData(reporteQuery.data?.citasPorEstado, CITA_ESTADO_LABELS)
-    : estadoLocalData
-
-  const tipoChartData = puedeVerAnalitica
-    ? objectToChartData(reporteQuery.data?.citasPorTipo, CITA_TIPO_LABELS)
-    : tipoLocalData
-
-  const cargaProfesionales = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      const nombre = cita.veterinario?.nombre || 'Sin profesional'
-      acc[nombre] = (acc[nombre] || 0) + 1
-      return acc
-    }, {})
-
-    return Object.entries(record).map(([name, total]) => ({
-      key: name,
-      name,
-      total,
-    }))
-  }, [citas])
 
   const citasRows = useMemo(
     () =>
@@ -339,7 +284,7 @@ export default function AgendaPage() {
       ) : (
         <div className="space-y-0">
           {/* ── Banners de error — siempre visibles ── */}
-          {(citasQuery.isError || veterinariosQuery.isError || reporteQuery.isError) && (
+          {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
               {citasQuery.isError && (
                 <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
@@ -351,14 +296,6 @@ export default function AgendaPage() {
                   {getErrorMessage(
                     veterinariosQuery.error,
                     'No fue posible cargar el equipo veterinario disponible.'
-                  )}
-                </div>
-              )}
-              {reporteQuery.isError && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(
-                    reporteQuery.error,
-                    'No fue posible cargar la lectura mensual de agenda.'
                   )}
                 </div>
               )}
@@ -675,56 +612,7 @@ export default function AgendaPage() {
               Tab: Analítica
           ══════════════════════════════ */}
           {activeTab === 'analitica' && (
-            <div className="space-y-5 pt-5">
-              <div className="grid gap-5 2xl:grid-cols-3">
-                <DonutCard
-                  title={puedeVerAnalitica ? 'Estado mensual de citas' : 'Estado del dia'}
-                  subtitle={
-                    puedeVerAnalitica
-                      ? 'Lectura del periodo actual para medir avance y asistencia.'
-                      : 'Distribucion de la agenda visible en la fecha seleccionada.'
-                  }
-                  data={estadoChartData}
-                  centerLabel={puedeVerAnalitica ? 'Mes actual' : 'Dia activo'}
-                  centerValue={
-                    puedeVerAnalitica
-                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                      : formatNumber(citasDelDia)
-                  }
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay citas para mostrar."
-                />
-                <DonutCard
-                  title={puedeVerAnalitica ? 'Tipo de cita del mes' : 'Tipo de cita del dia'}
-                  subtitle="Ayuda a leer el mix operativo que mas se esta moviendo."
-                  data={tipoChartData}
-                  centerLabel="Tipos"
-                  centerValue={
-                    puedeVerAnalitica
-                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                      : formatNumber(citasDelDia)
-                  }
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay tipos de cita para mostrar."
-                />
-                <BarPanel
-                  title="Carga del dia por profesional"
-                  subtitle="Distribucion visible de citas por medico en la fecha seleccionada."
-                  data={cargaProfesionales}
-                  dataKey="total"
-                  color="#0f4c81"
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay citas para medir carga por profesional."
-                />
-              </div>
-
-              {!puedeVerAnalitica && (
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  Estas viendo la lectura del dia seleccionado. Con el plan Profesional o superior
-                  accedes a reportes mensuales completos, tendencias y exportables.
-                </div>
-              )}
-            </div>
+            <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
           )}
         </div>
       )}

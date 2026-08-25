@@ -144,7 +144,7 @@ const buildBillingHref = (appointment) =>
 
 function CommandPanel({ title, subtitle, action, className = '', children }) {
   return (
-    <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
+    <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-panel', className)}>
       <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
@@ -171,7 +171,7 @@ function TodayAlerts({ alerts, summary }) {
     <section
       className={cn(
         'overflow-hidden rounded-xl border',
-        hayAlertas ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card shadow-card'
+        hayAlertas ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card shadow-panel'
       )}
     >
       {hayAlertas ? (
@@ -282,7 +282,7 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-1.5 shadow-card">
+    <section className="rounded-2xl border border-border bg-card p-1.5 shadow-panel">
       <div
         role="tablist"
         aria-label="Secciones del panel de control"
@@ -1341,10 +1341,10 @@ export default function DashboardPage() {
             {[0, 1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-card"
+                className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-panel"
               />
             ))}
-            <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-card sm:col-span-2 lg:col-span-4" />
+            <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-panel sm:col-span-2 lg:col-span-4" />
           </div>
         ) : (
           renderActiveView()

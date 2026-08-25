@@ -1,13 +1,16 @@
 const express = require('express')
+const { query } = require('express-validator')
 
 const {
   reporteIngresos,
   reporteCitas,
+  reporteAgenda,
   reporteInventario,
   dashboardGeneral,
   reporteRentabilidad,
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
+const { validar } = require('../middlewares/validacionMiddleware')
 
 const router = express.Router()
 
@@ -33,6 +36,19 @@ router.get(
   verificarToken,
   verificarRol('admin', 'superadmin', 'veterinario'),
   reporteCitas
+)
+
+// Analítica de agenda: agregados del periodo para el tab de analítica.
+router.get(
+  '/agenda',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'veterinario'),
+  [
+    query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
+    query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
+    validar,
+  ],
+  reporteAgenda
 )
 
 router.get(

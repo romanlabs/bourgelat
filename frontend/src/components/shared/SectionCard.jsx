@@ -2,7 +2,7 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const sectionCardVariants = cva(
-  'overflow-hidden rounded-2xl border border-border bg-card shadow-card',
+  'overflow-hidden rounded-2xl border border-border bg-card shadow-panel',
   {
     variants: {
       padding: {

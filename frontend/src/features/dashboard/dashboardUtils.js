@@ -84,6 +84,36 @@ export const CITA_TIPO_LABELS = {
 
 export const CHART_COLORS = ['#0f4c81', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626', '#64748b']
 
+// Color por estado, alineado con `getAccentColor` del calendario: sin esto el
+// color lo asignaba el indice de iteracion, de modo que "cancelada" cambiaba de
+// color segun cuantos estados trajera el periodo y nunca coincidia con la grilla.
+export const CITA_ESTADO_COLORS = {
+  programada: '#93c5fd',
+  en_espera: '#a78bfa',
+  en_atencion: '#e879f9',
+  completada: '#34d399',
+  cancelada: '#f87171',
+  no_asistio: '#fbbf24',
+}
+
+export const CITA_TIPO_COLORS = {
+  consulta_general: '#0f766e',
+  vacunacion: '#0f4c81',
+  cirugia: '#dc2626',
+  desparasitacion: '#7c3aed',
+  control: '#f59e0b',
+  urgencia: '#e11d48',
+  peluqueria: '#0ea5e9',
+  laboratorio: '#65a30d',
+  radiografia: '#475569',
+  otro: '#64748b',
+}
+
+export const CITA_ORIGEN_LABELS = {
+  programada: 'Programadas',
+  walk_in: 'Llegada espontánea',
+}
+
 export const formatCurrency = (value) =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -140,12 +170,73 @@ export const getCurrentMonthRange = () => {
   }
 }
 
-export const objectToChartData = (record, labels = {}) =>
+// `colors` es opcional: cuando se pasa un mapa por clave el color es semantico
+// (el mismo estado siempre del mismo color); si falta la clave se cae al ciclo
+// por indice de siempre, que es lo que usan las demas graficas.
+const serializeDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export const PERIODO_PRESETS = [
+  { id: '7d', label: '7 días' },
+  { id: '30d', label: '30 días' },
+  { id: 'mes', label: 'Mes actual' },
+  { id: 'trimestre', label: 'Trimestre' },
+]
+
+// Rango de fechas de un preset del selector de periodo. Los rangos "N dias"
+// incluyen hoy, de modo que 7d son hoy y los seis dias anteriores.
+export const getRangeForPreset = (preset) => {
+  const hoy = new Date()
+
+  if (preset === 'mes') return getCurrentMonthRange()
+
+  if (preset === 'trimestre') {
+    const trimestre = Math.floor(hoy.getMonth() / 3)
+    return {
+      fechaInicio: serializeDate(new Date(hoy.getFullYear(), trimestre * 3, 1)),
+      fechaFin: serializeDate(new Date(hoy.getFullYear(), trimestre * 3 + 3, 0)),
+    }
+  }
+
+  const dias = preset === '7d' ? 7 : 30
+  const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - (dias - 1))
+
+  return { fechaInicio: serializeDate(inicio), fechaFin: serializeDate(hoy) }
+}
+
+// El backend entrega serieDiaria ya ordenada por fecha; aqui solo se le agrega
+// la etiqueta legible del eje X, conservando la clave ISO como en mapIngresosPorDia.
+export const mapSerieCitas = (serie) =>
+  (serie || []).map((punto) => ({
+    fechaISO: punto.fecha,
+    fecha: formatShortDate(punto.fecha),
+    total: Number(punto.total || 0),
+    completadas: Number(punto.completadas || 0),
+    noAsistio: Number(punto.noAsistio || 0),
+  }))
+
+// Franja horaria: el backend agrupa por EXTRACT(HOUR ...), asi que las claves
+// son numeros de hora. Se ordenan y se etiquetan en formato de 12 horas.
+export const mapFranjaHoraria = (record) =>
+  Object.entries(record || {})
+    .map(([hora, total]) => ({ hora: Number(hora), total: Number(total || 0) }))
+    .sort((a, b) => a.hora - b.hora)
+    .map(({ hora, total }) => ({
+      key: String(hora),
+      name: hora === 0 ? '12a' : hora === 12 ? '12m' : hora > 12 ? `${hora - 12}p` : `${hora}a`,
+      total,
+    }))
+
+export const objectToChartData = (record, labels = {}, colors = {}) =>
   Object.entries(record || {}).map(([key, value], index) => ({
     key,
     name: labels[key] || key,
     value: Number(value || 0),
-    color: CHART_COLORS[index % CHART_COLORS.length],
+    color: colors[key] || CHART_COLORS[index % CHART_COLORS.length],
   }))
 
 // `fecha` es la etiqueta visible del eje X; `fechaISO` conserva la clave original

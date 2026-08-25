@@ -86,6 +86,27 @@ module.exports = {
         mono: ['Geist Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
       },
 
+      // Sin esto, `shadow-panel` y `shadow-dropdown` — declaradas en KpiCard,
+      // DonutCard, LinePanel, BarPanel, DataTable, SectionCard y ChartTooltip —
+      // no generan CSS y las tarjetas quedan planas, solo con borde.
+      //
+      // Ojo con el nombre: `boxShadow.card` colisionaria con `colors.card`
+      // (ambos producen la clase .shadow-card) y ganaria la regla de color, que
+      // solo tiñe la sombra — es decir, sombra blanca sobre tarjeta blanca.
+      boxShadow: {
+        panel: tokens.shadows.card,
+        modal: tokens.shadows.modal,
+        dropdown: tokens.shadows.dropdown,
+      },
+
+      // Idem para `text-h4` / `text-small`, usadas por EmptyState.
+      fontSize: Object.fromEntries(
+        Object.entries(tokens.typography.scale).map(([nombre, escala]) => [
+          nombre,
+          [escala.size, { lineHeight: escala.lineHeight, fontWeight: escala.weight, letterSpacing: escala.tracking }],
+        ])
+      ),
+
       zIndex: {
         60: '60',
       },
