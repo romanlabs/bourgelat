@@ -4,6 +4,7 @@ import { UserPlus } from 'lucide-react'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { TutorPetSelector } from './TutorPetSelector'
 import { TYPE_OPTIONS } from './recepcionConstants'
+import { Select, SelectItem, SelectGroup, SelectLabel } from '@/components/ui/select'
 
 const fieldClass =
   'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
@@ -86,47 +87,45 @@ export function WalkInPanel({
           />
 
           <div>
-            <select
+            <Select
+              variant="field"
+              aria-label="Veterinario"
+              placeholder="Selecciona un veterinario libre"
               value={form.veterinarioId}
-              onChange={(event) => setForm((current) => ({ ...current, veterinarioId: event.target.value }))}
-              className={`${fieldClass} w-full`}
+              onValueChange={(value) => setForm((current) => ({ ...current, veterinarioId: value }))}
             >
-              <option value="">Selecciona un veterinario libre</option>
               {libres.map((vet) => (
-                <option key={vet.id} value={vet.id}>{vet.nombre}</option>
+                <SelectItem key={vet.id} value={vet.id}>{vet.nombre}</SelectItem>
               ))}
               {ocupados.length > 0 ? (
-                <optgroup label="Ocupados ahora">
+                <SelectGroup>
+                  <SelectLabel>Ocupados ahora</SelectLabel>
                   {ocupados.map((vet) => (
-                    <option key={vet.id} value={vet.id} disabled>
+                    <SelectItem key={vet.id} value={vet.id} disabled>
                       {vet.nombre} — atendiendo {vet.citaActual?.paciente || 'paciente'}
-                    </option>
+                    </SelectItem>
                   ))}
-                </optgroup>
+                </SelectGroup>
               ) : null}
-            </select>
+            </Select>
           </div>
 
-          <select
+          <Select
+            variant="field"
+            aria-label="Consultorio"
+            placeholder="Sin consultorio asignado"
             value={form.consultorioId}
-            onChange={(event) => setForm((current) => ({ ...current, consultorioId: event.target.value }))}
-            className={fieldClass}
-          >
-            <option value="">Sin consultorio asignado</option>
-            {consultorios.map((item) => (
-              <option key={item.id} value={item.id}>{item.nombre}</option>
-            ))}
-          </select>
+            onValueChange={(value) => setForm((current) => ({ ...current, consultorioId: value }))}
+            options={consultorios.map((item) => ({ value: item.id, label: item.nombre }))}
+          />
 
-          <select
+          <Select
+            variant="field"
+            aria-label="Tipo de cita"
             value={form.tipoCita}
-            onChange={(event) => setForm((current) => ({ ...current, tipoCita: event.target.value }))}
-            className={fieldClass}
-          >
-            {TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            onValueChange={(value) => setForm((current) => ({ ...current, tipoCita: value }))}
+            options={TYPE_OPTIONS}
+          />
 
           <input
             type="text"

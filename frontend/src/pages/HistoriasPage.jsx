@@ -17,6 +17,7 @@ import { historiasApi } from '@/features/historias/historiasApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
+import { Select } from '@/components/ui/select'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -251,25 +252,21 @@ export default function HistoriasPage() {
                       onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
                       className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
                     />
-                    <select
+                    <Select
+                      aria-label="Filtrar por médico"
                       value={veterinarioId}
-                      onChange={(e) => { setVeterinarioId(e.target.value); setPagina(1) }}
-                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    >
-                      <option value="todos">Todos los medicos</option>
-                      {veterinarios.map((v) => (
-                        <option key={v.id} value={v.id}>{v.nombre}</option>
-                      ))}
-                    </select>
-                    <select
+                      onValueChange={(value) => { setVeterinarioId(value); setPagina(1) }}
+                      options={[
+                        { value: 'todos', label: 'Todos los medicos' },
+                        ...veterinarios.map((v) => ({ value: v.id, label: v.nombre })),
+                      ]}
+                    />
+                    <Select
+                      aria-label="Filtrar por estado de la historia"
                       value={bloqueada}
-                      onChange={(e) => { setBloqueada(e.target.value); setPagina(1) }}
-                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
-                    >
-                      {BLOCK_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => { setBloqueada(value); setPagina(1) }}
+                      options={BLOCK_OPTIONS}
+                    />
                   </div>
                 }
               >

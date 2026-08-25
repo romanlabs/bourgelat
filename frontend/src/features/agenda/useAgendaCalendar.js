@@ -5,9 +5,13 @@ import {
   endOfWeek,
   startOfMonth,
   endOfMonth,
+  startOfYear,
+  endOfYear,
   addDays,
   addMonths,
+  addYears,
   eachDayOfInterval,
+  isWeekend,
   format,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -26,16 +30,26 @@ export {
 } from './calendarConstants'
 
 const WEEK_OPTS = { weekStartsOn: 0 } // domingo primero, como Google Calendar
+const DIAS_AGENDA = 30 // ventana de la vista "Agenda" (lista), como Google
 
 function calcularRango(fechaBase, view) {
   if (view === 'dia') {
     return { desde: fechaBase, hasta: fechaBase }
+  }
+  if (view === '4dias') {
+    return { desde: fechaBase, hasta: addDays(fechaBase, 3) }
   }
   if (view === 'mes') {
     return {
       desde: startOfWeek(startOfMonth(fechaBase), WEEK_OPTS),
       hasta: endOfWeek(endOfMonth(fechaBase), WEEK_OPTS),
     }
+  }
+  if (view === 'anio') {
+    return { desde: startOfYear(fechaBase), hasta: endOfYear(fechaBase) }
+  }
+  if (view === 'agenda') {
+    return { desde: fechaBase, hasta: addDays(fechaBase, DIAS_AGENDA - 1) }
   }
   const inicio = startOfWeek(fechaBase, WEEK_OPTS)
   return { desde: inicio, hasta: addDays(inicio, 6) }
@@ -48,6 +62,9 @@ function calcularTitulo(fechaBase, view, desde, hasta) {
   if (view === 'mes') {
     return format(fechaBase, 'MMMM yyyy', { locale: es })
   }
+  if (view === 'anio') {
+    return format(fechaBase, 'yyyy')
+  }
   const mismoMes = desde.getMonth() === hasta.getMonth()
   const mismoAnio = desde.getFullYear() === hasta.getFullYear()
   if (mismoMes) {
@@ -59,15 +76,31 @@ function calcularTitulo(fechaBase, view, desde, hasta) {
   return `${format(desde, 'd MMM yyyy', { locale: es })} – ${format(hasta, 'd MMM yyyy', { locale: es })}`
 }
 
-export function useAgendaCalendar({ veterinarioId, estado, enabled = true, view = 'semana' }) {
+export function useAgendaCalendar({
+  veterinarioId,
+  estado,
+  enabled = true,
+  view = 'semana',
+  prefs = {},
+}) {
   const [fechaBase, setFechaBase] = useState(() => new Date())
+  const {
+    mostrarFinesDeSemana = true,
+    mostrarCanceladas = true,
+    mostrarCompletadas = true,
+  } = prefs
 
   const { desde, hasta } = useMemo(() => calcularRango(fechaBase, view), [fechaBase, view])
 
-  const diasVisibles = useMemo(
-    () => eachDayOfInterval({ start: desde, end: hasta }),
-    [desde, hasta]
-  )
+  // Ocultar fines de semana solo aplica a las vistas de grilla; en día/año/agenda
+  // esconder columnas dejaría huecos sin sentido.
+  const ocultarFinesDeSemana =
+    !mostrarFinesDeSemana && ['semana', 'mes', '4dias'].includes(view)
+
+  const diasVisibles = useMemo(() => {
+    const dias = eachDayOfInterval({ start: desde, end: hasta })
+    return ocultarFinesDeSemana ? dias.filter((dia) => !isWeekend(dia)) : dias
+  }, [desde, hasta, ocultarFinesDeSemana])
 
   const fechaDesde = format(desde, 'yyyy-MM-dd')
   const fechaHasta = format(hasta, 'yyyy-MM-dd')
@@ -87,7 +120,14 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true, view 
   })
 
   const slots = useMemo(() => generarSlots(), [])
-  const citas = useMemo(() => citasQuery.data?.citas || [], [citasQuery.data?.citas])
+  const citas = useMemo(() => {
+    const todas = citasQuery.data?.citas || []
+    return todas.filter((cita) => {
+      if (!mostrarCanceladas && cita.estado === 'cancelada') return false
+      if (!mostrarCompletadas && cita.estado === 'completada') return false
+      return true
+    })
+  }, [citasQuery.data?.citas, mostrarCanceladas, mostrarCompletadas])
 
   // Mapa fecha ('yyyy-MM-dd') → citas ordenadas por hora; en mes se consulta 42 veces por render
   const citasPorDia = useMemo(() => {
@@ -129,14 +169,18 @@ export function useAgendaCalendar({ veterinarioId, estado, enabled = true, view 
     return mejor?.id ?? null
   }, [citas])
 
-  const irAnterior = () =>
-    setFechaBase((prev) =>
-      view === 'mes' ? addMonths(prev, -1) : addDays(prev, view === 'dia' ? -1 : -7)
-    )
-  const irSiguiente = () =>
-    setFechaBase((prev) =>
-      view === 'mes' ? addMonths(prev, 1) : addDays(prev, view === 'dia' ? 1 : 7)
-    )
+  const saltar = (signo) =>
+    setFechaBase((prev) => {
+      if (view === 'mes') return addMonths(prev, signo)
+      if (view === 'anio') return addYears(prev, signo)
+      if (view === 'agenda') return addDays(prev, signo * DIAS_AGENDA)
+      if (view === 'dia') return addDays(prev, signo)
+      if (view === '4dias') return addDays(prev, signo * 4)
+      return addDays(prev, signo * 7)
+    })
+
+  const irAnterior = () => saltar(-1)
+  const irSiguiente = () => saltar(1)
   const irHoy = () => setFechaBase(new Date())
   const irADia = (date) => setFechaBase(date)
 

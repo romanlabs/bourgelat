@@ -35,6 +35,9 @@ const buildInitialForm = () => ({
   items: [],
   // Cuando la factura cobra una consulta: marca la historia como facturada.
   historiaClinicaId: '',
+  // Cuando la factura cobra un servicio de estilos: marca el registro como
+  // facturado y lo bloquea (ver facturaController.js).
+  registroEstiloId: '',
 })
 
 export const PAYMENT_METHOD_OPTIONS = [
@@ -268,6 +271,24 @@ export function useFinanzasFacturacion({
     }
   }
 
+  /**
+   * Carga en el carrito el tutor y el vinculo de un servicio de estilos aun
+   * no facturado. A diferencia de la historia clinica, el registro de
+   * estilos no trae items propios (no define precios): el cajero agrega el
+   * servicio de peluqueria desde el catalogo. El aviso ayuda a no olvidarlo.
+   */
+  const loadPreliquidacionEstilo = (preliquidacion) => {
+    setInvoiceForm((curr) => ({
+      ...curr,
+      propietarioId: preliquidacion?.propietario?.id || curr.propietarioId,
+      registroEstiloId: preliquidacion?.registroEstiloId || '',
+    }))
+
+    if (preliquidacion?.tipoCorte) {
+      toast.info(`Agrega el servicio de estilos al carrito: ${preliquidacion.tipoCorte}.`)
+    }
+  }
+
   const handleBarcodeScan = () => {
     const codigo = barcodeInput.trim()
     if (!codigo) {
@@ -334,6 +355,7 @@ export function useFinanzasFacturacion({
       observaciones: invoiceForm.observaciones.trim() || undefined,
       emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
       historiaClinicaId: invoiceForm.historiaClinicaId || undefined,
+      registroEstiloId: invoiceForm.registroEstiloId || undefined,
       items: itemsValidos,
     })
   }
@@ -370,6 +392,7 @@ export function useFinanzasFacturacion({
     addServiceFromCatalog,
     addProductToInvoice,
     loadPreliquidacionHistoria,
+    loadPreliquidacionEstilo,
     removeInvoiceItem,
     updateInvoiceItem,
   }

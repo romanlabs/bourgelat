@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PawPrint, Search, Upload, X } from 'lucide-react'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import { Select } from '@/components/ui/select'
 
 export const SPECIES_FORM_OPTIONS = [
   { value: 'perro', label: 'Perro' },
@@ -73,6 +74,7 @@ export default function PacienteDrawer({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     watch,
@@ -309,9 +311,21 @@ export default function PacienteDrawer({
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-especie" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Especie *</label>
-                  <select id="p-especie" className={fieldClass} {...register('especie')}>
-                    {SPECIES_FORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                  <Controller
+                    name="especie"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="p-especie"
+                        aria-label="Especie"
+                        className="h-11"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={SPECIES_FORM_OPTIONS}
+                      />
+                    )}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-raza" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Raza o cruce</label>
@@ -319,9 +333,21 @@ export default function PacienteDrawer({
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-sexo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sexo</label>
-                  <select id="p-sexo" className={fieldClass} {...register('sexo')}>
-                    {SEX_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                  <Controller
+                    name="sexo"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="p-sexo"
+                        aria-label="Sexo"
+                        className="h-11"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={SEX_OPTIONS}
+                      />
+                    )}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>

@@ -13,6 +13,7 @@ import {
   formatLongDate,
   formatNumber,
 } from '@/features/dashboard/dashboardUtils'
+import { Select } from '@/components/ui/select'
 import {
   ESTADO_LABELS,
   ESTADO_ELECTRONICO_LABELS,
@@ -234,24 +235,20 @@ export default function FacturaDetalleModal({ historialHook }) {
                       <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Forma de pago
                       </span>
-                      <select
+                      <Select
+                        variant="field"
+                        aria-label="Forma de pago"
                         value={emisionForm.formaPagoCodigo}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
                           setEmisionForm((curr) => ({
                             ...curr,
-                            formaPagoCodigo: event.target.value,
+                            formaPagoCodigo: value,
                             fechaVencimientoPago:
-                              event.target.value === '1' ? '' : curr.fechaVencimientoPago,
+                              value === '1' ? '' : curr.fechaVencimientoPago,
                           }))
                         }
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                      >
-                        {PAYMENT_FORM_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                        options={PAYMENT_FORM_OPTIONS}
+                      />
                     </label>
                     <label className="grid gap-2">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -303,20 +300,22 @@ export default function FacturaDetalleModal({ historialHook }) {
                     <Wallet className="h-4 w-4 text-primary" />
                     <p className="text-sm font-semibold text-slate-950">Registrar pago</p>
                   </div>
-                  <select
+                  <Select
+                    variant="field"
+                    aria-label="Método de pago"
+                    placeholder="Método de pago (opcional)"
                     value={pagoMetodo}
-                    onChange={(event) => setPagoMetodo(event.target.value)}
-                    className="w-full border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    <option value="">Método de pago (opcional)</option>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="nequi">Nequi</option>
-                    <option value="daviplata">Daviplata</option>
-                    <option value="tarjeta_debito">Tarjeta débito</option>
-                    <option value="tarjeta_credito">Tarjeta crédito</option>
-                    <option value="otro">Otro</option>
-                  </select>
+                    onValueChange={setPagoMetodo}
+                    options={[
+                      { value: 'efectivo', label: 'Efectivo' },
+                      { value: 'transferencia', label: 'Transferencia' },
+                      { value: 'nequi', label: 'Nequi' },
+                      { value: 'daviplata', label: 'Daviplata' },
+                      { value: 'tarjeta_debito', label: 'Tarjeta débito' },
+                      { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+                      { value: 'otro', label: 'Otro' },
+                    ]}
+                  />
                   <button
                     type="button"
                     onClick={handleRegistrarPago}

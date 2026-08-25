@@ -18,6 +18,7 @@ import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
 import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
+import FacturaCompraDetalleModal from '@/features/inventario/FacturaCompraDetalleModal'
 import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
@@ -33,6 +34,7 @@ import { useInsumosClinicos, CATEGORY_OPTIONS as CLINICO_CATEGORY_OPTIONS } from
 import { useMovimientosClinicos } from '@/features/inventarioClinico/useMovimientosClinicos'
 import ServicioDrawer from '@/features/servicios/ServicioDrawer'
 import { useServicios } from '@/features/servicios/useServicios'
+import { Select } from '@/components/ui/select'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -787,38 +789,33 @@ export default function InventarioPage() {
                         <label htmlFor="mov-tipo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           Tipo de movimiento
                         </label>
-                        <select
+                        <Select
+                          variant="field"
                           id="mov-tipo"
+                          className="h-11"
                           value={movementForm.tipo}
-                          onChange={(e) => {
-                            const nextType = e.target.value
+                          onValueChange={(nextType) => {
                             setMovementForm((cur) => ({
                               ...cur,
                               tipo: nextType,
                               motivo: (MOVEMENT_REASON_OPTIONS[nextType] || MOVEMENT_REASON_OPTIONS.entrada)[0].value,
                             }))
                           }}
-                          className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        >
-                          {MOVEMENT_TYPE_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                          ))}
-                        </select>
+                          options={MOVEMENT_TYPE_OPTIONS}
+                        />
                       </div>
                       <div className="grid gap-1.5">
                         <label htmlFor="mov-motivo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           Motivo
                         </label>
-                        <select
+                        <Select
+                          variant="field"
                           id="mov-motivo"
+                          className="h-11"
                           value={movementForm.motivo}
-                          onChange={(e) => setMovementForm((cur) => ({ ...cur, motivo: e.target.value }))}
-                          className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        >
-                          {motivosDisponibles.map((o) => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                          ))}
-                        </select>
+                          onValueChange={(value) => setMovementForm((cur) => ({ ...cur, motivo: value }))}
+                          options={motivosDisponibles}
+                        />
                       </div>
                     </div>
 
@@ -1076,6 +1073,13 @@ export default function InventarioPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => facturaCompraHook.abrirDetalle(row.raw)}
+                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                          >
+                            Ver
+                          </button>
                           {row.raw.estado === 'borrador' && (
                             <>
                               <button
@@ -1226,11 +1230,17 @@ export default function InventarioPage() {
         isSaving={facturaCompraHook.isSaving}
         agregarItem={facturaCompraHook.agregarItem}
         actualizarItem={facturaCompraHook.actualizarItem}
+        seleccionarProductoItem={facturaCompraHook.seleccionarProductoItem}
         eliminarItem={facturaCompraHook.eliminarItem}
         totalCalculado={facturaCompraHook.totalCalculado}
         toggleItemEsNuevo={facturaCompraHook.toggleItemEsNuevo}
         actualizarItemProductoNuevo={facturaCompraHook.actualizarItemProductoNuevo}
         errorMsg={facturaCompraHook.errorMsg}
+      />
+
+      <FacturaCompraDetalleModal
+        factura={facturaCompraHook.facturaDetalle}
+        onClose={facturaCompraHook.cerrarDetalle}
       />
 
       {/* ConfirmDialog facturas de compra */}

@@ -40,29 +40,33 @@ function useSlotHeight(containerRef) {
 }
 
 function NowLine({ slotHeight }) {
+  // Incluye segundos como fraccion de minuto para que la linea avance
+  // de forma continua, no a saltos de un minuto completo.
   const getNowTop = () => {
     const now = new Date()
     const str = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    return timeToTop(str, slotHeight)
+    const base = timeToTop(str, slotHeight)
+    const fraccionMinuto = now.getSeconds() / 60
+    return base + (fraccionMinuto * slotHeight) / 30
   }
 
   const [top, setTop] = useState(getNowTop)
 
   useEffect(() => {
     setTop(getNowTop())
-    const id = setInterval(() => setTop(getNowTop()), 60_000)
+    const id = setInterval(() => setTop(getNowTop()), 1_000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotHeight])
 
   return (
     <div
-      className="pointer-events-none absolute left-0 right-0 z-30"
+      className="pointer-events-none absolute left-0 right-0 z-10"
       style={{ top: `${top}px` }}
     >
       <div className="flex items-center">
-        <div className="h-2 w-2 flex-shrink-0 -translate-x-1 rounded-full bg-red-500" />
-        <div className="h-[1.5px] flex-1 bg-red-400/70" />
+        <div className="h-3 w-3 flex-shrink-0 -translate-x-1.5 rounded-full bg-[#db372d]" />
+        <div className="h-[2px] flex-1 bg-[#db372d]" />
       </div>
     </div>
   )
@@ -80,12 +84,13 @@ export function TimeGridView({
   onSlotClick,
   onCitaClick,
   isLoading,
+  showTimezoneLabel = true,
 }) {
   const scrollRef = useRef(null)
   const slotHeight = useSlotHeight(scrollRef)
   const gridHeight = TOTAL_SLOTS * slotHeight
   const esDia = days.length === 1
-  const gridCols = `52px repeat(${days.length}, minmax(0, 1fr))`
+  const gridCols = `64px repeat(${days.length}, minmax(0, 1fr))`
 
   // Auto-scroll inicial a la hora actual cuando la grilla no cabe completa
   useEffect(() => {
@@ -101,7 +106,7 @@ export function TimeGridView({
   return (
     <div
       ref={scrollRef}
-      className="overflow-y-auto overflow-x-hidden rounded-sm border border-border"
+      className="overflow-y-auto overflow-x-hidden"
       style={{ height: 'max(480px, calc(100vh - 300px))' }}
     >
       {/* Cabecera: nombres de día */}
@@ -109,8 +114,10 @@ export function TimeGridView({
         className="sticky top-0 z-20 grid border-b border-border bg-card"
         style={{ gridTemplateColumns: gridCols }}
       >
-        <div className="flex items-end justify-start border-r border-border pb-1 pl-1.5">
-          <span className="text-[9px] font-medium text-muted-foreground/70">GMT-05</span>
+        <div className="flex items-end justify-start pb-1 pl-1.5">
+          {showTimezoneLabel && (
+            <span className="text-[9px] font-medium text-muted-foreground/70">GMT-05</span>
+          )}
         </div>
         {days.map((day) => {
           const esHoy = isToday(day)
@@ -123,14 +130,14 @@ export function TimeGridView({
                 esHoy && 'bg-primary/5'
               )}
             >
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 {format(day, esDia ? 'EEEE' : 'EEE', { locale: es })}
               </p>
               <p
                 className={cn(
-                  'mt-0.5 text-sm font-semibold leading-none',
+                  'mt-1 text-xl font-normal leading-none',
                   esHoy
-                    ? 'mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white'
+                    ? 'mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary text-2xl text-white'
                     : 'text-foreground'
                 )}
               >
@@ -155,13 +162,13 @@ export function TimeGridView({
       <div className="grid" style={{ gridTemplateColumns: gridCols }}>
         {/* Columna de horas: sin lineas propias (solo las columnas de dia las tienen),
             la etiqueta flota debajo de la altura de su hora, como en Google */}
-        <div className="relative border-r border-border">
+        <div className="relative">
           {slots.map((slot, idx) => (
             <div key={slot} style={{ height: `${slotHeight}px` }}>
               {slot.endsWith(':00') && idx > 0 && (
                 <span
-                  className="absolute right-1.5 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground"
-                  style={{ top: `${idx * slotHeight + 4}px` }}
+                  className="absolute right-1.5 -translate-y-1/2 whitespace-nowrap text-[11px] font-medium tabular-nums text-muted-foreground"
+                  style={{ top: `${idx * slotHeight}px` }}
                 >
                   {formatHourLabel(slot)}
                 </span>
@@ -178,10 +185,7 @@ export function TimeGridView({
           return (
             <div
               key={day.toISOString()}
-              className={cn(
-                'relative border-r border-border last:border-r-0',
-                esHoy && 'bg-primary/[0.025]'
-              )}
+              className="relative border-r border-border last:border-r-0"
               style={{ height: `${gridHeight}px` }}
             >
               {/* Fondos de slot (clickeables para nueva cita) */}
@@ -196,8 +200,8 @@ export function TimeGridView({
                       : undefined
                   }
                   className={cn(
-                    'absolute w-full border-b border-border/40',
-                    slot.endsWith(':00') && 'border-border/70',
+                    'absolute w-full',
+                    slot.endsWith(':00') && idx > 0 && 'border-t border-border',
                     puedeProgramar && 'hover:bg-accent/30 cursor-pointer transition-colors'
                   )}
                   style={{

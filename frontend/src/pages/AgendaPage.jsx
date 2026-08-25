@@ -7,10 +7,10 @@ import {
   CalendarDays,
   Clock3,
   List,
-  PawPrint,
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Zap,
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
@@ -32,6 +32,7 @@ import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
 import { UrgenciaRetroactivaDialog } from '@/features/recepcion/UrgenciaRetroactivaDialog'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { Select } from '@/components/ui/select'
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -48,6 +49,8 @@ const TABS = [
   { id: 'recepcion', label: 'Recepción' },
   { id: 'analitica', label: 'Analítica' },
 ]
+
+const AGENDA_REFETCH_INTERVAL = 60000
 
 const getToday = () => new Date().toISOString().slice(0, 10)
 
@@ -113,6 +116,8 @@ export default function AgendaPage() {
       }),
     enabled: rolPermitido && puedeVerAgenda,
     placeholderData: (previousData) => previousData,
+    refetchInterval: AGENDA_REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
   })
 
   const veterinariosQuery = useQuery({
@@ -165,7 +170,11 @@ export default function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
       if (payload.estado === 'completada' && cita?.mascota?.id) {
-        toast.info('Cita completada. Registra la historia clínica de la consulta.')
+        toast.info(
+          cita.tipoCita === 'peluqueria'
+            ? 'Cita completada. Registra el servicio de estilos.'
+            : 'Cita completada. Registra la historia clínica de la consulta.'
+        )
         navigate(`/pacientes/${cita.mascota.id}/historial?citaId=${cita.id}`)
       } else {
         toast.success(data?.message || 'Estado actualizado')
@@ -247,33 +256,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <AdminShell
-      currentKey="agenda"
-      title="Agenda y coordinacion de citas"
-      description="Organiza el día por profesional, programa nuevas citas y resuelve confirmaciones o reprogramaciones sin salir de esta pantalla."
-      headerBadge={
-        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Operacion diaria
-        </StatusPill>
-      }
-      actions={
-        <div className="flex flex-wrap gap-2">
-          {puedeProgramar && (
-            <button
-              type="button"
-              onClick={() => setUrgenciaOpen(true)}
-              className="inline-flex items-center gap-2 border border-red-500 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-            >
-              ⚡ Atender urgencia
-            </button>
-          )}
-          <NavCta to="/pacientes" icon={PawPrint}>
-            Abrir pacientes
-          </NavCta>
-        </div>
-      }
-      asideNote="Recepcion y consulta pueden operar desde aqui con filtros simples, una agenda diaria clara y acciones directas sobre cada cita."
-    >
+    <AdminShell currentKey="agenda" headerVariant="light" hidePageHeader title="Agenda y coordinacion de citas">
       {!puedeVerAgenda ? (
         <EmptyState
           icon={<Sparkles />}
@@ -390,33 +373,48 @@ export default function AgendaPage() {
                   </div>
                 )
 
-                // En la barra oscura de AdminShell (calendario) el toggle usa la paleta navy/cyan
+                // El header de Agenda usa headerVariant="light" (paleta clara tipo Google).
+                // Cada boton es un circulo independiente (sin píldora compartida partida a
+                // la mitad) para que el estado activo se lea limpio. "Atender urgencia" vive
+                // aqui (ya no hay banner de titulo/acciones debajo del header).
                 const vistaToggleCompacto = (
-                  <div className="flex h-8 overflow-hidden rounded-full border border-white/10 bg-[#081827]">
-                    <button
-                      type="button"
-                      onClick={() => setVistaAgenda('calendario')}
-                      title="Vista calendario"
-                      className={`flex h-8 w-8 items-center justify-center transition ${
-                        vistaAgenda === 'calendario'
-                          ? 'bg-[#91e7e0]/15 text-[#91e7e0]'
-                          : 'text-[#91e7e0]/50 hover:text-[#91e7e0]/80'
-                      }`}
-                    >
-                      <CalendarDays className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVistaAgenda('lista')}
-                      title="Vista lista"
-                      className={`flex h-8 w-8 items-center justify-center transition ${
-                        vistaAgenda === 'lista'
-                          ? 'bg-[#91e7e0]/15 text-[#91e7e0]'
-                          : 'text-[#91e7e0]/50 hover:text-[#91e7e0]/80'
-                      }`}
-                    >
-                      <List className="h-4 w-4" />
-                    </button>
+                  <div className="flex items-center gap-2">
+                    {puedeProgramar && (
+                      <button
+                        type="button"
+                        onClick={() => setUrgenciaOpen(true)}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700"
+                      >
+                        <Zap className="h-4 w-4" />
+                        Urgencia
+                      </button>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setVistaAgenda('calendario')}
+                        title="Vista calendario"
+                        className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                          vistaAgenda === 'calendario'
+                            ? 'bg-primary text-white'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVistaAgenda('lista')}
+                        title="Vista lista"
+                        className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                          vistaAgenda === 'lista'
+                            ? 'bg-primary text-white'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        <List className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 )
 
@@ -470,35 +468,29 @@ export default function AgendaPage() {
                           }}
                           className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                         />
-                        <select
+                        <Select
+                          aria-label="Filtrar por estado"
+                          className="h-9"
                           value={estado}
-                          onChange={(event) => {
-                            setEstado(event.target.value)
+                          onValueChange={(value) => {
+                            setEstado(value)
                             setPagina(1)
                           }}
-                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        <select
+                          options={STATUS_OPTIONS}
+                        />
+                        <Select
+                          aria-label="Filtrar por profesional"
+                          className="h-9"
                           value={veterinarioId}
-                          onChange={(event) => {
-                            setVeterinarioId(event.target.value)
+                          onValueChange={(value) => {
+                            setVeterinarioId(value)
                             setPagina(1)
                           }}
-                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                        >
-                          <option value="todos">Todos los profesionales</option>
-                          {veterinarios.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.nombre}
-                            </option>
-                          ))}
-                        </select>
+                          options={[
+                            { value: 'todos', label: 'Todos los profesionales' },
+                            ...veterinarios.map((item) => ({ value: item.id, label: item.nombre })),
+                          ]}
+                        />
                       </div>
                     }
                   >

@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { CalendarClock, Plus, Zap } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus, Zap } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
-import { STATUS_OPTIONS } from './calendarConstants'
+import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
 import { CalendarToolbar } from './CalendarToolbar'
 import { TimeGridView } from './TimeGridView'
 import { MonthView } from './MonthView'
+import { YearView } from './YearView'
+import { AgendaListView } from './AgendaListView'
 import { CalendarLegend } from './CalendarLegend'
 import { CitaDetailDialog } from './CitaDetailDialog'
 import { MiniCalendar } from './MiniCalendar'
+import { SimpleTooltip } from '@/components/ui/tooltip'
+import { Select } from '@/components/ui/select'
 
-const SHORTCUT_TO_VIEW = { d: 'dia', w: 'semana', m: 'mes' }
+const SHORTCUT_TO_VIEW = Object.fromEntries(
+  VIEW_OPTIONS.map((opt) => [opt.shortcut.toLowerCase(), opt.value])
+)
 
 export default function AgendaCalendar({
   veterinarioId,
@@ -34,7 +40,8 @@ export default function AgendaCalendar({
   isRescheduling = false,
   toolbarExtra,
 }) {
-  const { view, effectiveView, setView, isMobile, sidebarOpen, toggleSidebar } = useCalendarView()
+  const { effectiveView, setView, isMobile, sidebarOpen, toggleSidebar, prefs, togglePref } =
+    useCalendarView()
 
   // Atajos de teclado tipo Google Calendar: D/W/M cambian de vista
   useEffect(() => {
@@ -63,7 +70,7 @@ export default function AgendaCalendar({
     isLoading,
     isFetching,
     slots,
-  } = useAgendaCalendar({ veterinarioId, estado, enabled, view: effectiveView })
+  } = useAgendaCalendar({ veterinarioId, estado, enabled, view: effectiveView, prefs })
 
   const [selectedCita, setSelectedCita] = useState(null)
 
@@ -82,9 +89,9 @@ export default function AgendaCalendar({
       onToday={irHoy}
       isMobile={isMobile}
       isFetching={isFetching && !isLoading}
-      sidebarOpen={sidebarOpen}
-      onToggleSidebar={toggleSidebar}
       extra={toolbarExtra}
+      prefs={prefs}
+      onTogglePref={togglePref}
       compact={!isMobile}
     />
   )
@@ -106,20 +113,17 @@ export default function AgendaCalendar({
           type="button"
           aria-label="Crear"
           className={cn(
-            'flex shrink-0 items-center border border-border bg-card font-semibold text-foreground shadow-[0_1px_3px_rgba(8,25,39,0.15)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-            sidebarOpen
-              ? 'h-11 w-full gap-3 rounded-full pl-3 pr-4 text-sm'
-              : 'h-14 w-14 justify-center rounded-2xl'
+            'flex shrink-0 items-center rounded-2xl border border-border bg-card font-medium text-foreground shadow-[0_1px_2px_rgba(8,25,39,0.15),0_1px_3px_1px_rgba(8,25,39,0.1)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            sidebarOpen ? 'h-14 min-w-0 flex-1 gap-3 py-0 pl-3 pr-2 text-sm' : 'h-14 w-14 justify-center'
           )}
         >
-          {sidebarOpen ? (
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
-              <Plus className="h-4 w-4" />
-            </span>
-          ) : (
-            <Plus className="h-6 w-6 text-foreground" />
+          <Plus className="h-6 w-6 shrink-0 text-primary" />
+          {sidebarOpen && (
+            <>
+              <span className="flex-1 text-left">Crear</span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </>
           )}
-          {sidebarOpen && 'Crear'}
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -153,16 +157,41 @@ export default function AgendaCalendar({
 
   return (
     <div className="relative flex">
-      {/* Boton "Crear" flotando sobre la grilla cuando el panel esta cerrado
-          (como Google: no reserva una columna vacia permanente) */}
-      {!sidebarOpen && crearMenu && (
-        <div className="absolute left-0 top-0 z-40">{crearMenu}</div>
+      {/* Panel cerrado: "Crear" y el boton de reabrir se superponen sobre el
+          gutter de horas de la grilla (espacio libre, igual que hace Google),
+          en vez de reservar una columna aparte que empuje la grilla */}
+      {!sidebarOpen && (
+        <div className="absolute left-0 top-0 z-40 flex w-16 flex-col items-center gap-1.5">
+          {crearMenu}
+          <SimpleTooltip label="Mostrar mini calendario">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Mostrar mini calendario"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </SimpleTooltip>
+        </div>
       )}
 
       {/* Columna lateral: solo ocupa espacio en el flujo cuando esta abierta */}
       {sidebarOpen && (
         <div className="mr-4 flex w-[190px] shrink-0 flex-col">
-          {crearMenu && <div className="mb-4">{crearMenu}</div>}
+          <div className="mb-4 flex items-center gap-1.5">
+            {crearMenu}
+            <SimpleTooltip label="Ocultar mini calendario">
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                aria-label="Ocultar mini calendario"
+                className="flex h-14 w-9 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </SimpleTooltip>
+          </div>
 
           <aside className="border-r border-border pr-4">
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
@@ -173,32 +202,28 @@ export default function AgendaCalendar({
                 Filtros
               </p>
               {onEstadoChange && (
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Filtrar por estado"
                   value={estado}
-                  onChange={(e) => onEstadoChange(e.target.value)}
-                  className="h-8 w-full border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
-                >
-                  <option value="todos">Todos los estados</option>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={onEstadoChange}
+                  options={[
+                    { value: 'todos', label: 'Todos los estados' },
+                    ...STATUS_OPTIONS,
+                  ]}
+                />
               )}
               {onVeterinarioChange && (
-                <select
+                <Select
+                  variant="field"
+                  aria-label="Filtrar por profesional"
                   value={veterinarioId}
-                  onChange={(e) => onVeterinarioChange(e.target.value)}
-                  className="h-8 w-full border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
-                >
-                  <option value="todos">Todos los profesionales</option>
-                  {veterinarios.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.nombre}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={onVeterinarioChange}
+                  options={[
+                    { value: 'todos', label: 'Todos los profesionales' },
+                    ...veterinarios.map((item) => ({ value: item.id, label: item.nombre })),
+                  ]}
+                />
               )}
             </div>
           )}
@@ -221,6 +246,23 @@ export default function AgendaCalendar({
             onVerDia={verDia}
             isLoading={isLoading}
           />
+        ) : effectiveView === 'anio' ? (
+          <YearView
+            fechaBase={fechaBase}
+            getCitasDelDia={getCitasDelDia}
+            onVerDia={verDia}
+            isLoading={isLoading}
+            insetLeft={!sidebarOpen}
+          />
+        ) : effectiveView === 'agenda' ? (
+          <AgendaListView
+            days={diasVisibles}
+            getCitasDelDia={getCitasDelDia}
+            proximaCitaId={proximaCitaId}
+            onCitaClick={setSelectedCita}
+            isLoading={isLoading}
+            insetLeft={!sidebarOpen}
+          />
         ) : (
           <TimeGridView
             days={diasVisibles}
@@ -231,6 +273,7 @@ export default function AgendaCalendar({
             onSlotClick={onSlotClick}
             onCitaClick={setSelectedCita}
             isLoading={isLoading}
+            showTimezoneLabel={sidebarOpen}
           />
         )}
 

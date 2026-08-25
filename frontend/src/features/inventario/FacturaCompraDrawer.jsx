@@ -1,9 +1,12 @@
-import { useEffect } from 'react'
+import { useDeferredValue, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { X, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import MoneyInput from '@/components/shared/MoneyInput'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
+import { inventarioApi } from './inventarioApi'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
+import { Select } from '@/components/ui/select'
 
 const PRODUCT_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')
 
@@ -11,6 +14,31 @@ const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
     hasError ? 'border-red-400' : 'border-border'
   }`
+
+function AvisoProductoDuplicado({ nombre }) {
+  const nombreDiferido = useDeferredValue(nombre.trim())
+
+  const { data } = useQuery({
+    queryKey: ['producto-combobox', nombreDiferido],
+    queryFn: () => inventarioApi.obtenerProductos({ buscar: nombreDiferido, limite: 5 }),
+    enabled: nombreDiferido.length > 1,
+    placeholderData: (prev) => prev,
+  })
+
+  const coincidencia = (data?.productos || []).find(
+    (p) => p.nombre.trim().toLowerCase() === nombreDiferido.toLowerCase()
+  )
+
+  if (!coincidencia) return null
+
+  return (
+    <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+      <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+      Ya existe un producto llamado &quot;{coincidencia.nombre}&quot; en el catálogo. Verifica que
+      no sea el mismo antes de crear uno nuevo.
+    </p>
+  )
+}
 
 export default function FacturaCompraDrawer({
   open,
@@ -22,6 +50,7 @@ export default function FacturaCompraDrawer({
   isSaving,
   agregarItem,
   actualizarItem,
+  seleccionarProductoItem,
   actualizarItemProductoNuevo,
   toggleItemEsNuevo,
   eliminarItem,
@@ -261,33 +290,43 @@ export default function FacturaCompraDrawer({
                           onChange={(e) => actualizarItemProductoNuevo(idx, 'nombre', e.target.value)}
                           maxLength={200}
                         />
+                        {!item.productoNuevo.nombre.trim() && (
+                          <p className="text-xs text-red-500">El nombre es obligatorio</p>
+                        )}
+                        {item.productoNuevo.nombre.trim() && (
+                          <AvisoProductoDuplicado nombre={item.productoNuevo.nombre} />
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-muted-foreground">Categoría *</label>
-                          <select
-                            className={`${fieldClass(!item.productoNuevo.categoria)} cursor-pointer`}
+                          <Select
+                            variant="field"
+                            aria-label="Categoría del producto"
+                            className={!item.productoNuevo.categoria ? 'border-red-300' : undefined}
+                            placeholder="— Selecciona —"
                             value={item.productoNuevo.categoria}
-                            onChange={(e) => actualizarItemProductoNuevo(idx, 'categoria', e.target.value)}
-                          >
-                            <option value="">— Selecciona —</option>
-                            {PRODUCT_CATEGORY_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
+                            onValueChange={(value) => actualizarItemProductoNuevo(idx, 'categoria', value)}
+                            options={PRODUCT_CATEGORY_OPTIONS}
+                          />
+                          {!item.productoNuevo.categoria && (
+                            <p className="text-xs text-red-500">Selecciona una categoría</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-1">
                           <label className="text-xs text-muted-foreground">Unidad de medida *</label>
-                          <select
-                            className={`${fieldClass(!item.productoNuevo.unidadMedida)} cursor-pointer`}
+                          <Select
+                            variant="field"
+                            aria-label="Unidad de medida"
+                            className={!item.productoNuevo.unidadMedida ? 'border-red-300' : undefined}
+                            placeholder="— Selecciona —"
                             value={item.productoNuevo.unidadMedida}
-                            onChange={(e) => actualizarItemProductoNuevo(idx, 'unidadMedida', e.target.value)}
-                          >
-                            <option value="">— Selecciona —</option>
-                            {UNIT_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
+                            onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadMedida', value)}
+                            options={UNIT_OPTIONS}
+                          />
+                          {!item.productoNuevo.unidadMedida && (
+                            <p className="text-xs text-red-500">Selecciona una unidad</p>
+                          )}
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -303,7 +342,7 @@ export default function FacturaCompraDrawer({
                         value={item.productoId}
                         productoSeleccionado={item.producto}
                         hasError={!item.productoId}
-                        onChange={(id) => actualizarItem(idx, 'productoId', id)}
+                        onChange={(id, producto) => seleccionarProductoItem(idx, producto)}
                         placeholder="Buscar producto..."
                       />
                     </div>

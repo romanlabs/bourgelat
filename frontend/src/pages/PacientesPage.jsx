@@ -31,6 +31,7 @@ import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { usePacientesResumen } from '@/features/pacientes/usePacientesResumen'
 import { usePacientesMascotas, SPECIES_OPTIONS } from '@/features/pacientes/usePacientesMascotas'
 import { useTutores } from '@/features/pacientes/useTutores'
+import { Select } from '@/components/ui/select'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -264,13 +265,12 @@ export default function PacientesPage() {
                       className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
-                  <select
+                  <Select
+                    aria-label="Filtrar por especie"
                     value={mascotasHook.especie}
-                    onChange={(e) => { mascotasHook.setEspecie(e.target.value); mascotasHook.setPagina(1) }}
-                    className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  >
-                    {SPECIES_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                    onValueChange={(value) => { mascotasHook.setEspecie(value); mascotasHook.setPagina(1) }}
+                    options={SPECIES_OPTIONS}
+                  />
                 </div>
                 {puedeCrearPaciente && (
                   <button

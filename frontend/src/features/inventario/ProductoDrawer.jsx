@@ -7,6 +7,7 @@ import { AlertTriangle, ImageOff, Upload, X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
+import { Select } from '@/components/ui/select'
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -231,29 +232,41 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                   <label htmlFor="d-categoria" className={labelClass}>
                     Categoría *
                   </label>
-                  <select
-                    id="d-categoria"
-                    className={fieldClass(errors.categoria)}
-                    {...register('categoria')}
-                  >
-                    {CATEGORY_OPTIONS.filter((o) => o.value !== 'todas').map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="categoria"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="d-categoria"
+                        aria-label="Categoría"
+                        className={errors.categoria ? 'border-red-400' : undefined}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')}
+                      />
+                    )}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="d-unidad" className={labelClass}>
                     Se cuenta por *
                   </label>
-                  <select
-                    id="d-unidad"
-                    className={fieldClass(errors.unidadMedida)}
-                    {...register('unidadMedida')}
-                  >
-                    {UNIT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="unidadMedida"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="d-unidad"
+                        aria-label="Se cuenta por"
+                        className={errors.unidadMedida ? 'border-red-400' : undefined}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={UNIT_OPTIONS}
+                      />
+                    )}
+                  />
                 </div>
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">

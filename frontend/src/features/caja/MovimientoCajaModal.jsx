@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { MOVIMIENTO_CAJA_MOTIVOS } from './cajaConstants'
+import { Select } from '@/components/ui/select'
 
 const buildInitialForm = () => ({ tipo: 'egreso', monto: '', motivo: 'gasto_menor', observaciones: '' })
 
@@ -89,17 +90,14 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
 
           <label className="grid gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Motivo</span>
-            <select
+            <Select
+              variant="field"
+              aria-label="Motivo del movimiento"
+              className="rounded-xl"
               value={form.motivo}
-              onChange={(event) => setForm((curr) => ({ ...curr, motivo: event.target.value }))}
-              className="h-10 rounded-xl border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-            >
-              {MOVIMIENTO_CAJA_MOTIVOS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => setForm((curr) => ({ ...curr, motivo: value }))}
+              options={MOVIMIENTO_CAJA_MOTIVOS}
+            />
           </label>
 
           <label className="grid gap-2">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus } from 'lucide-react'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { TutorPetSelector } from './TutorPetSelector'
 import { TYPE_OPTIONS } from './recepcionConstants'
+import { Select } from '@/components/ui/select'
 
 const getToday = () => new Date().toISOString().slice(0, 10)
 
@@ -60,6 +61,7 @@ export function ProgramarCitaPanel({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
@@ -138,11 +140,19 @@ export function ProgramarCitaPanel({
               <input type="date" {...register('fecha')} className={`${fieldClass} w-full`} />
               {errors.fecha ? <p className="mt-1 text-xs text-red-600">{errors.fecha.message}</p> : null}
             </div>
-            <select {...register('tipoCita')} className={fieldClass}>
-              {TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+            <Controller
+              name="tipoCita"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  variant="field"
+                  aria-label="Tipo de cita"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={TYPE_OPTIONS}
+                />
+              )}
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -156,23 +166,36 @@ export function ProgramarCitaPanel({
             </div>
           </div>
 
-          <select {...register('consultorioId')} className={fieldClass}>
-            <option value="">Sin consultorio asignado</option>
-            {consultorios.map((item) => (
-              <option key={item.id} value={item.id}>{item.nombre}</option>
-            ))}
-          </select>
+          <Controller
+            name="consultorioId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                variant="field"
+                aria-label="Consultorio"
+                placeholder="Sin consultorio asignado"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={consultorios.map((item) => ({ value: item.id, label: item.nombre }))}
+              />
+            )}
+          />
 
           <div>
-            <select
-              {...register('veterinarioId')}
-              className={`${fieldClass} w-full`}
-            >
-              <option value="">Selecciona el profesional</option>
-              {veterinarios.map((item) => (
-                <option key={item.id} value={item.id}>{item.nombre}</option>
-              ))}
-            </select>
+            <Controller
+              name="veterinarioId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  variant="field"
+                  aria-label="Profesional"
+                  placeholder="Selecciona el profesional"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  options={veterinarios.map((item) => ({ value: item.id, label: item.nombre }))}
+                />
+              )}
+            />
             {errors.veterinarioId ? <p className="mt-1 text-xs text-red-600">{errors.veterinarioId.message}</p> : null}
           </div>
 

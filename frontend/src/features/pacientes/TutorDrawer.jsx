@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
 import { DOCUMENT_OPTIONS } from './useTutores'
+import { Select } from '@/components/ui/select'
 
 const tutorSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -34,6 +35,7 @@ const fieldClass =
 export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -95,9 +97,21 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
                 <label htmlFor="t-tipo-doc" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Tipo de documento *
                 </label>
-                <select id="t-tipo-doc" className={fieldClass} {...register('tipoDocumento')}>
-                  {DOCUMENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Controller
+                  name="tipoDocumento"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      variant="field"
+                      id="t-tipo-doc"
+                      aria-label="Tipo de documento"
+                      className="h-11"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={DOCUMENT_OPTIONS}
+                    />
+                  )}
+                />
               </div>
               <div className="grid gap-1.5">
                 <label htmlFor="t-num-doc" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">

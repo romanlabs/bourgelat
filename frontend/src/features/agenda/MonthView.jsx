@@ -131,12 +131,15 @@ export function MonthView({
   onVerDia,
   isLoading,
 }) {
-  const nombresDias = days.slice(0, 7)
+  // 7 columnas normalmente; 5 cuando se ocultan los fines de semana
+  const columnas = new Set(days.map((day) => day.getDay())).size || 7
+  const nombresDias = days.slice(0, columnas)
+  const gridCols = { gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }
 
   return (
     <div className="overflow-hidden rounded-sm border border-border">
       {/* Cabecera con nombres de día */}
-      <div className="grid grid-cols-7 border-b border-border bg-card">
+      <div className="grid border-b border-border bg-card" style={gridCols}>
         {nombresDias.map((day) => (
           <div
             key={day.toISOString()}
@@ -150,7 +153,7 @@ export function MonthView({
       </div>
 
       {/* Celdas */}
-      <div className="grid grid-cols-7">
+      <div className="grid" style={gridCols}>
         {isLoading
           ? days.map((day) => (
               <div

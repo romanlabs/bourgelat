@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
+import { estilosApi } from '@/features/estilos/estilosApi'
 import {
   Boxes,
   CircleAlert,
@@ -49,6 +50,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
+import { Select } from '@/components/ui/select'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -178,6 +180,45 @@ export default function FinanzasPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historiaAFacturar, puedeVerFinanzas])
+
+  // Llegada desde un registro de estilos ya editable (no bloqueado): igual
+  // que la historia clinica, pero aqui no hay insumos que precargar — el
+  // cajero elige el servicio del catalogo y el vinculo lo hace
+  // registroEstiloId al crear la factura.
+  const estiloAFacturar = location.state?.facturarEstiloId || null
+
+  useEffect(() => {
+    if (!estiloAFacturar || !puedeVerFinanzas) return
+
+    let cancelado = false
+
+    estilosApi
+      .obtenerPreliquidacion(estiloAFacturar)
+      .then((preliquidacion) => {
+        if (cancelado) return
+        facturacionHook.loadPreliquidacionEstilo(preliquidacion)
+        setActiveTab('facturacion')
+        if (cajaHook.turnoActivo) {
+          setVentaExitosa(false)
+          setPosOpen(true)
+        }
+      })
+      .catch((error) => {
+        if (cancelado) return
+        toast.error(
+          error?.response?.data?.message || 'No fue posible cargar el servicio de estilos.'
+        )
+      })
+      .finally(() => {
+        // Limpiar el state evita recargar la preliquidacion al volver atras.
+        if (!cancelado) navigate(location.pathname, { replace: true, state: {} })
+      })
+
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estiloAFacturar, puedeVerFinanzas])
 
   if (!rolPermitido) {
     return <RestrictedFinancePage />
@@ -440,21 +481,16 @@ export default function FinanzasPage() {
                         className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                       />
                     </div>
-                    <select
+                    <Select
+                      aria-label="Filtrar por estado"
                       value={historialHook.estado}
-                      onChange={(event) => {
-                        historialHook.setEstado(event.target.value)
+                      onValueChange={(value) => {
+                        historialHook.setEstado(value)
                         historialHook.setPagina(1)
                         historialHook.resetSeleccion()
                       }}
-                      className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={STATUS_OPTIONS}
+                    />
                     <button
                       type="submit"
                       className="border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"

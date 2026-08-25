@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS } from './useInsumosClinicos'
+import { Select } from '@/components/ui/select'
 
 // Unidades base para consumo clinico: fraccionables, no presentaciones enteras.
 const UNIDAD_BASE_OPTIONS = [
@@ -214,24 +215,40 @@ export default function InsumoClinicoDrawer({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="ic-categoria" className={labelClass}>Categoría *</label>
-                  <select id="ic-categoria" className={fieldClass(errors.categoria)} {...register('categoria')}>
-                    {CATEGORY_OPTIONS.filter((o) => o.value !== 'todas').map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="categoria"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="ic-categoria"
+                        aria-label="Categoría"
+                        className={errors.categoria ? 'border-red-400' : undefined}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')}
+                      />
+                    )}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="ic-unidad-base" className={labelClass}>Unidad base *</label>
-                  <select
-                    id="ic-unidad-base"
-                    className={fieldClass(errors.unidadBase)}
-                    disabled={Boolean(editingInsumo)}
-                    {...register('unidadBase')}
-                  >
-                    {UNIDAD_BASE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="unidadBase"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        variant="field"
+                        id="ic-unidad-base"
+                        aria-label="Unidad base"
+                        className={errors.unidadBase ? 'border-red-400' : undefined}
+                        disabled={Boolean(editingInsumo)}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={UNIDAD_BASE_OPTIONS}
+                      />
+                    )}
+                  />
                 </div>
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">
@@ -422,15 +439,13 @@ export default function InsumoClinicoDrawer({
                       </div>
                       <div className="grid gap-1.5">
                         <label className={labelClass}>Motivo</label>
-                        <select
+                        <Select
+                          variant="field"
+                          aria-label="Motivo de la merma"
                           value={mermaForm.motivo}
-                          onChange={(e) => setMermaForm((f) => ({ ...f, motivo: e.target.value }))}
-                          className={fieldClass(false)}
-                        >
-                          {MERMA_MOTIVO_OPTIONS.map((m) => (
-                            <option key={m.value} value={m.value}>{m.label}</option>
-                          ))}
-                        </select>
+                          onValueChange={(value) => setMermaForm((f) => ({ ...f, motivo: value }))}
+                          options={MERMA_MOTIVO_OPTIONS}
+                        />
                       </div>
                     </div>
                     <div className="grid gap-1.5">
