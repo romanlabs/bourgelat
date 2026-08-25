@@ -206,7 +206,7 @@ export default function PacientesPage() {
                   chartSize={140}
                 />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card lg:col-span-9">
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-panel lg:col-span-9">
                   <div className="border-b border-border px-4 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                       Ultimos pacientes registrados

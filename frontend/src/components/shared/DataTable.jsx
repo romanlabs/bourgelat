@@ -199,7 +199,7 @@ export function DataTable({
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-card', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-panel', className)}>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-border text-sm">
 

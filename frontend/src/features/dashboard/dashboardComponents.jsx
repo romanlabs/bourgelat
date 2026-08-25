@@ -42,7 +42,7 @@ function ChartTooltip({ active, payload, label, formatter }) {
 export function DashboardPanel({ title, subtitle, action, children, className = '' }) {
   return (
     <section
-      className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_8px_32px_rgba(8,25,39,0.07)] ${className}`}
+      className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-panel ${className}`}
     >
       <div
         className={`flex flex-col gap-3 px-5 py-4 lg:flex-row lg:justify-between ${
@@ -108,22 +108,35 @@ export function KpiCard({
   tone = 'text-primary',
   borderTone = 'border-border',
   className = '',
+  // Etiqueta corta bajo la cifra: comparación con el periodo anterior, unidad o
+  // matiz de la métrica. Sin ella la tarjeta se ve igual que siempre.
+  badge,
+  badgeTone = 'bg-muted text-muted-foreground',
 }) {
   return (
     <div
       title={helper || undefined}
-      className={`flex h-full items-center gap-3 rounded-xl border bg-card px-3.5 py-2.5 shadow-card ${borderTone} ${className}`}
+      className={`flex h-full gap-3 rounded-xl border bg-card px-3.5 py-2.5 shadow-panel ${
+        badge ? 'items-start' : 'items-center'
+      } ${borderTone} ${className}`}
     >
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted ${tone}`}>
         {createElement(icon, { className: 'h-4 w-4' })}
       </span>
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-1">
         <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
         <p className="text-lg font-bold leading-tight tabular-nums text-card-foreground [overflow-wrap:anywhere]">
           {value}
         </p>
+        {badge ? (
+          <span
+            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeTone}`}
+          >
+            {badge}
+          </span>
+        ) : null}
       </div>
     </div>
   )
@@ -136,14 +149,16 @@ export function KpiCard({
  * Los items falsy se descartan, de modo que quien la usa puede condicionar un KPI
  * segun el plan de la clinica (`mostrarDian && {...}`) sin armar el arreglo aparte.
  */
-export function KpiGrid({ items, className = '', action }) {
+export function KpiGrid({ items, className = '', action, columns }) {
   const visibles = (items || []).filter(Boolean)
   if (visibles.length === 0) return null
 
+  // `columns` permite salirse de las 4 por defecto sin duplicar la grilla
+  // (el tab de analítica muestra 5 indicadores en una sola fila).
+  const columnasLg = columns === 5 ? 'lg:grid-cols-5' : columns === 3 ? 'lg:grid-cols-3' : action ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+
   return (
-    <div
-      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${action ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} ${className}`.trim()}
-    >
+    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${columnasLg} ${className}`.trim()}>
       {action ? (
         <div className="flex items-center justify-end sm:col-span-2 lg:col-span-1 lg:order-last">{action}</div>
       ) : null}
@@ -156,6 +171,8 @@ export function KpiGrid({ items, className = '', action }) {
           helper={item.helper}
           tone={item.tone}
           borderTone={item.borderTone}
+          badge={item.badge}
+          badgeTone={item.badgeTone}
         />
       ))}
     </div>
@@ -183,18 +200,26 @@ export function DonutCard({
   className = '',
   contentClassName = '',
   chartSize = 160,
+  // 'split' (por defecto) pone la leyenda al lado del donut; 'stacked' la deja
+  // debajo, que es lo que funciona en una tarjeta angosta — antes el donut
+  // quedaba pequeño a la izquierda con la leyenda medio vacía a la derecha.
+  layout = 'split',
 }) {
   const hasData = data.some((item) => item.value > 0)
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-border bg-card shadow-card ${className}`}
+      className={`flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel ${className}`}
     >
-      <div className="border-b border-border px-4 py-3">
+      <div className="border-b border-border px-5 py-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-        {subtitle ? <p className="mt-1 text-xs leading-5 text-muted-foreground">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
-      <div className={`grid items-center gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)] ${contentClassName}`.trim()}>
+      <div
+        className={`grid flex-1 items-center gap-4 p-5 ${
+          layout === 'stacked' ? 'justify-items-center' : 'sm:grid-cols-[auto_minmax(0,1fr)]'
+        } ${contentClassName}`.trim()}
+      >
         <div className="relative mx-auto" style={{ width: `${chartSize}px`, height: `${chartSize}px` }}>
           {hasData ? (
             <>
@@ -232,7 +257,7 @@ export function DonutCard({
           )}
         </div>
 
-        <div className="flex flex-col gap-2.5 2xl:flex-1">
+        <div className={`flex w-full flex-col gap-2.5 ${layout === 'stacked' ? '' : '2xl:flex-1'}`}>
           {data.map((item) => (
             <div key={item.key || item.name} className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5">
@@ -301,24 +326,41 @@ export function MiniDonutChart({
   )
 }
 
-export function LinePanel({ title, subtitle, data, dataKey, color = '#0f4c81', formatter, emptyMessage }) {
+export function LinePanel({
+  title,
+  subtitle,
+  data,
+  dataKey,
+  color = '#0f4c81',
+  formatter,
+  emptyMessage,
+  action,
+  height = 'h-[300px]',
+  // Varias series sobre el mismo eje: [{ dataKey, name, color }]. La primera
+  // lleva el degradado de área; las demás se dibujan como línea limpia encima.
+  series,
+}) {
   const gradientId = useId().replaceAll(':', '')
-  const hasData = data.some((item) => Number(item[dataKey] || 0) > 0)
+  const lineas = series?.length ? series : [{ dataKey, name: title, color }]
+  const hasData = data.some((item) => lineas.some((linea) => Number(item[linea.dataKey] || 0) > 0))
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
-      <div className="border-b border-border px-5 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-        {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+          {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {action}
       </div>
-      <div className="h-[300px] px-2 py-4">
+      <div className={`${height} px-2 py-4`}>
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.18} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                  <stop offset="0%" stopColor={lineas[0].color || color} stopOpacity={0.18} />
+                  <stop offset="100%" stopColor={lineas[0].color || color} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
@@ -339,15 +381,19 @@ export function LinePanel({ title, subtitle, data, dataKey, color = '#0f4c81', f
                 width={72}
               />
               <Tooltip content={<ChartTooltip formatter={formatter} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }} />
-              <Area
-                type="monotone"
-                dataKey={dataKey}
-                stroke={color}
-                strokeWidth={2.5}
-                fill={`url(#${gradientId})`}
-                dot={false}
-                activeDot={{ r: 4, fill: color, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
-              />
+              {lineas.map((linea, index) => (
+                <Area
+                  key={linea.dataKey}
+                  type="monotone"
+                  dataKey={linea.dataKey}
+                  name={linea.name}
+                  stroke={linea.color || color}
+                  strokeWidth={2.5}
+                  fill={index === 0 ? `url(#${gradientId})` : 'none'}
+                  dot={false}
+                  activeDot={{ r: 4, fill: linea.color || color, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+                />
+              ))}
             </AreaChart>
           </ResponsiveContainer>
         ) : (
@@ -365,17 +411,17 @@ function GradientBar({ fill, x, y, width, height }) {
   return <rect x={x} y={y} width={width} height={height} fill={fill} rx={4} ry={4} />
 }
 
-export function BarPanel({ title, subtitle, data, dataKey, color = '#0f766e', formatter, emptyMessage }) {
+export function BarPanel({ title, subtitle, data, dataKey, color = '#0f766e', formatter, emptyMessage, height = 'h-[300px]' }) {
   const gradientId = useId().replaceAll(':', '')
   const hasData = data.some((item) => Number(item[dataKey] || 0) > 0)
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
       <div className="border-b border-border px-5 py-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
-      <div className="h-[300px] px-2 py-4">
+      <div className={`flex-1 ${height} px-2 py-4`}>
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barCategoryGap="38%">
@@ -418,7 +464,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = '#0f766e', fo
 
 export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, filters, collapsed = false }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-card">
+    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
       <div
         className={`flex flex-col gap-2.5 px-5 py-3 lg:flex-row lg:items-center lg:justify-between ${
           collapsed ? '' : 'border-b border-border'

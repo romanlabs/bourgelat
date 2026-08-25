@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js",
+    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js",
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
