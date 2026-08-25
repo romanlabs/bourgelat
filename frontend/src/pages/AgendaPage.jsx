@@ -187,7 +187,11 @@ export default function AgendaPage() {
       queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
       if (payload.estado === 'completada' && cita?.mascota?.id) {
-        toast.info('Cita completada. Registra la historia clínica de la consulta.')
+        toast.info(
+          cita.tipoCita === 'peluqueria'
+            ? 'Cita completada. Registra el servicio de estilos.'
+            : 'Cita completada. Registra la historia clínica de la consulta.'
+        )
         navigate(`/pacientes/${cita.mascota.id}/historial?citaId=${cita.id}`)
       } else {
         toast.success(data?.message || 'Estado actualizado')

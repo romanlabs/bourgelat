@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
+import { estilosApi } from '@/features/estilos/estilosApi'
 import {
   Boxes,
   CircleAlert,
@@ -179,6 +180,45 @@ export default function FinanzasPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historiaAFacturar, puedeVerFinanzas])
+
+  // Llegada desde un registro de estilos ya editable (no bloqueado): igual
+  // que la historia clinica, pero aqui no hay insumos que precargar — el
+  // cajero elige el servicio del catalogo y el vinculo lo hace
+  // registroEstiloId al crear la factura.
+  const estiloAFacturar = location.state?.facturarEstiloId || null
+
+  useEffect(() => {
+    if (!estiloAFacturar || !puedeVerFinanzas) return
+
+    let cancelado = false
+
+    estilosApi
+      .obtenerPreliquidacion(estiloAFacturar)
+      .then((preliquidacion) => {
+        if (cancelado) return
+        facturacionHook.loadPreliquidacionEstilo(preliquidacion)
+        setActiveTab('facturacion')
+        if (cajaHook.turnoActivo) {
+          setVentaExitosa(false)
+          setPosOpen(true)
+        }
+      })
+      .catch((error) => {
+        if (cancelado) return
+        toast.error(
+          error?.response?.data?.message || 'No fue posible cargar el servicio de estilos.'
+        )
+      })
+      .finally(() => {
+        // Limpiar el state evita recargar la preliquidacion al volver atras.
+        if (!cancelado) navigate(location.pathname, { replace: true, state: {} })
+      })
+
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estiloAFacturar, puedeVerFinanzas])
 
   if (!rolPermitido) {
     return <RestrictedFinancePage />

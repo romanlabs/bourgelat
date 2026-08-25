@@ -9,6 +9,7 @@ const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo')
 const InsumoClinico = require('../models/InsumoClinico')
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
 const HistoriaClinica = require('../models/HistoriaClinica')
+const RegistroEstilo = require('../models/RegistroEstilo')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
@@ -424,6 +425,7 @@ const crearFactura = async (req, res) => {
       documentoElectronico = '01',
       rangoNumeracionId = null,
       historiaClinicaId = null,
+      registroEstiloId = null,
     } = req.body
     const { clinicaId } = req.usuario
 
@@ -495,6 +497,31 @@ const crearFactura = async (req, res) => {
         return res.status(400).json({
           message: 'Cierra la historia clinica antes de facturarla',
           code: 'HISTORIA_NO_CERRADA',
+        })
+      }
+    }
+
+    // Cobro de un servicio de estilos. A diferencia de la historia clinica, aqui
+    // no se exige un cierre previo: facturar es lo que bloquea el registro.
+    let estiloAFacturar = null
+    if (registroEstiloId) {
+      estiloAFacturar = await RegistroEstilo.findOne({
+        where: { id: registroEstiloId, clinicaId },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      })
+
+      if (!estiloAFacturar) {
+        await transaction.rollback()
+        return res.status(404).json({ message: 'Registro de estilos no encontrado' })
+      }
+
+      if (estiloAFacturar.facturaId) {
+        await transaction.rollback()
+        return res.status(409).json({
+          message: 'Este servicio de estilos ya fue facturado',
+          code: 'ESTILO_YA_FACTURADO',
+          facturaId: estiloAFacturar.facturaId,
         })
       }
     }
@@ -728,6 +755,13 @@ const crearFactura = async (req, res) => {
 
     if (historiaAFacturar) {
       await historiaAFacturar.update({ facturaId: factura.id }, { transaction })
+    }
+
+    if (estiloAFacturar) {
+      await estiloAFacturar.update(
+        { facturaId: factura.id, bloqueado: true },
+        { transaction }
+      )
     }
 
     if (metodoPago === 'efectivo') {
@@ -1454,6 +1488,11 @@ const anularFactura = async (req, res) => {
     // sigue en pie: se genero al cerrar la historia, no al facturarla.
     await HistoriaClinica.update(
       { facturaId: null },
+      { where: { facturaId: factura.id, clinicaId }, transaction }
+    )
+
+    await RegistroEstilo.update(
+      { facturaId: null, bloqueado: false },
       { where: { facturaId: factura.id, clinicaId }, transaction }
     )
 
