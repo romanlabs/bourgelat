@@ -187,6 +187,33 @@ const obtenerEquipoAgenda = async (req, res) => {
   }
 }
 
+// Equipo completo de la clinica habilitado para operar modulos donde
+// cualquier rol operativo puede ser responsable (ej. estilista en Estilos):
+// a diferencia de obtenerEquipoAgenda, no se limita a veterinarios.
+const obtenerEquipoClinica = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+    const rolesEquipo = ['admin', 'superadmin', 'veterinario', 'recepcionista', 'auxiliar']
+
+    const usuarios = await Usuario.findAll({
+      where: {
+        clinicaId,
+        activo: true,
+        [Op.or]: [
+          { rol: { [Op.in]: rolesEquipo } },
+          { rolesAdicionales: { [Op.overlap]: rolesEquipo } },
+        ],
+      },
+      attributes: ['id', 'nombre', 'rol'],
+      order: [['nombre', 'ASC']],
+    })
+
+    res.json({ usuarios })
+  } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
 const obtenerUsuario = async (req, res) => {
   try {
     const { id } = req.params
@@ -575,6 +602,7 @@ module.exports = {
   crearUsuario,
   obtenerUsuarios,
   obtenerEquipoAgenda,
+  obtenerEquipoClinica,
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,

@@ -43,6 +43,10 @@ router.post(
       .optional({ values: 'falsy' })
       .isUUID()
       .withMessage('Historia clinica no valida'),
+    body('registroEstiloId')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Registro de estilos no valido'),
     body('metodoPago')
       .optional()
       .isIn([
