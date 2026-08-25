@@ -20,25 +20,6 @@ export const ESTADO_LABELS = {
   no_asistio: 'No asistio',
 }
 
-/** Clases con soporte dark mode — usadas por la fila de la sala de espera y sus badges. */
-export const ESTADO_TONE = {
-  programada: 'border-warm-300 bg-warm-100 text-warm-700 dark:border-warm-500/40 dark:bg-warm-500/15 dark:text-warm-200',
-  en_espera: 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-blue-200',
-  en_atencion: 'border-violet-300 bg-violet-100 text-violet-700 dark:border-violet-500/40 dark:bg-violet-500/15 dark:text-violet-200',
-  completada: 'border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200',
-  cancelada: 'border-red-300 bg-red-100 text-red-700 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200',
-  no_asistio: 'border-orange-300 bg-orange-100 text-orange-700 dark:border-orange-500/40 dark:bg-orange-500/15 dark:text-orange-200',
-}
-
-export const ESTADO_DOT = {
-  programada: 'bg-warm-400',
-  en_espera: 'bg-blue-500',
-  en_atencion: 'bg-violet-500',
-  completada: 'bg-emerald-500',
-  cancelada: 'bg-red-400',
-  no_asistio: 'bg-orange-400',
-}
-
 export const ORIGEN_LABELS = {
   programada: 'Programada',
   walk_in: 'Walk-in',
@@ -61,3 +42,24 @@ export const ACCION_LABELS = {
   cancelada: 'Cancelar',
   no_asistio: 'No asistio',
 }
+
+/**
+ * De todas las transiciones validas de un estado, la que recepcion hace casi
+ * siempre. Se muestra como unico boton en la fila; el resto de TRANSICIONES
+ * queda en el menu secundario. Debe ser siempre un valor presente en
+ * TRANSICIONES[estado] o la fila no ofrecera accion primaria.
+ */
+export const ACCION_PRIMARIA = {
+  programada: 'en_espera',
+  en_espera: 'en_atencion',
+  en_atencion: 'completada',
+}
+
+/** Orden de lectura de la sala de espera: lo que esta pasando primero. */
+export const GRUPOS = [
+  { estado: 'en_atencion', label: 'En atencion', dot: 'bg-violet-500', text: 'text-violet-700' },
+  { estado: 'en_espera', label: 'En espera', dot: 'bg-blue-500', text: 'text-blue-700' },
+  { estado: 'programada', label: 'Por llegar', dot: 'bg-warm-400', text: 'text-warm-700' },
+]
+
+export const ESTADOS_RESUELTOS = ['completada', 'cancelada', 'no_asistio']
