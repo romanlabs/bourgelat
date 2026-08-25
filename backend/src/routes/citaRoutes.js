@@ -5,7 +5,7 @@ const { verificarToken, verificarRol } = require('../middlewares/authMiddleware'
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const {
-  crearCita, crearCitaUrgencia, crearWalkIn,
+  crearCita, crearWalkIn,
   obtenerCitas, obtenerCita, obtenerSalaEspera, obtenerDisponibilidadVeterinarios,
   actualizarEstadoCita, reprogramarCita,
 } = require('../controllers/citaController')
@@ -27,17 +27,6 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
   body('tipoCita').optional().isIn(TIPOS_CITA).withMessage('Tipo de cita no válido'),
   validar,
 ], crearCita)
-
-router.post('/urgencia', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
-  body('fecha').isDate().withMessage('Fecha no válida'),
-  body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
-  body('horaFin').optional().notEmpty().withMessage('La hora de fin no puede estar vacía'),
-  body('motivo').notEmpty().withMessage('El motivo es obligatorio').trim(),
-  body('mascotaId').isUUID().withMessage('Mascota no válida'),
-  body('propietarioId').isUUID().withMessage('Propietario no válido'),
-  body('veterinarioId').isUUID().withMessage('Veterinario no válido'),
-  validar,
-], crearCitaUrgencia)
 
 router.post('/walk-in', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
   body('motivo').notEmpty().withMessage('El motivo es obligatorio').trim(),
