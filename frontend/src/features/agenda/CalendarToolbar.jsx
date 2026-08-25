@@ -1,5 +1,5 @@
 import { DropdownMenu } from 'radix-ui'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { VIEW_OPTIONS, VIEW_PREFS } from './calendarConstants'
@@ -16,9 +16,9 @@ export function CalendarToolbar({
   onToday,
   isMobile,
   isFetching,
-  extra,
   prefs = {},
   onTogglePref,
+  onVistaTablaChange,
   compact = false,
 }) {
   // "compact" = renderizado dentro de la barra superior de AdminShell
@@ -101,6 +101,21 @@ export function CalendarToolbar({
                 </DropdownMenu.Item>
               ))}
 
+              {onVistaTablaChange && (
+                <>
+                  <DropdownMenu.Separator className="my-2 h-px bg-border" />
+                  <DropdownMenu.Item
+                    onSelect={onVistaTablaChange}
+                    className="flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+                  >
+                    <span className="flex items-center gap-3">
+                      <List className="h-4 w-4 text-muted-foreground" />
+                      Vista de lista
+                    </span>
+                  </DropdownMenu.Item>
+                </>
+              )}
+
               <DropdownMenu.Separator className="my-2 h-px bg-border" />
 
               {VIEW_PREFS.map((pref) => (
@@ -122,8 +137,6 @@ export function CalendarToolbar({
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
-
-        {extra}
       </div>
     </div>
   )

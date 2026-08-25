@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus, Zap } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
@@ -35,10 +34,10 @@ export default function AgendaCalendar({
   onSlotClick,
   onUpdateStatus,
   onReschedule,
-  onCreateUrgencia,
+  onVistaTablaChange,
+  onToolbarChange,
   isUpdating = false,
   isRescheduling = false,
-  toolbarExtra,
 }) {
   const { effectiveView, setView, isMobile, sidebarOpen, toggleSidebar, prefs, togglePref } =
     useCalendarView()
@@ -79,34 +78,45 @@ export default function AgendaCalendar({
     setView('dia')
   }
 
-  const toolbarNode = (
-    <CalendarToolbar
-      titulo={tituloRango}
-      view={effectiveView}
-      onViewChange={setView}
-      onPrev={irAnterior}
-      onNext={irSiguiente}
-      onToday={irHoy}
-      isMobile={isMobile}
-      isFetching={isFetching && !isLoading}
-      extra={toolbarExtra}
-      prefs={prefs}
-      onTogglePref={togglePref}
-      compact={!isMobile}
-    />
+  // Memoizado a proposito: sin esto, toolbarNode seria un objeto nuevo en
+  // cada render y el efecto de abajo llamaria a onToolbarChange sin parar,
+  // lo que hace que AgendaPage vuelva a renderizar, lo que vuelve a crear un
+  // toolbarNode nuevo — bucle infinito ("Maximum update depth exceeded").
+  // irAnterior/irSiguiente/irHoy/setView/togglePref no estan en las deps:
+  // no estan memoizados en los hooks de origen, pero cierran sobre el mismo
+  // estado que ya vigilan tituloRango/effectiveView/prefs, asi que usarlos
+  // "un render viejos" es equivalente mientras esas deps no cambien.
+  const toolbarNode = useMemo(
+    () => (
+      <CalendarToolbar
+        titulo={tituloRango}
+        view={effectiveView}
+        onViewChange={setView}
+        onPrev={irAnterior}
+        onNext={irSiguiente}
+        onToday={irHoy}
+        isMobile={isMobile}
+        isFetching={isFetching && !isLoading}
+        prefs={prefs}
+        onTogglePref={togglePref}
+        onVistaTablaChange={onVistaTablaChange}
+        compact={!isMobile}
+      />
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tituloRango, effectiveView, isMobile, isFetching, isLoading, prefs, onVistaTablaChange]
   )
 
-  // En pantallas >= 640px el toolbar vive en la barra superior de AdminShell
-  // (el mismo espacio que aprovecha Google Calendar); en movil se queda inline.
-  const setHeaderCenter = useAdminHeaderSlot()
+  // En pantallas >= 640px el toolbar lo compone AgendaPage junto con las
+  // pestañas en la barra superior de AdminShell (el mismo espacio que
+  // aprovecha Google Calendar); en movil se queda inline (ver mas abajo).
   useEffect(() => {
-    if (!setHeaderCenter) return
-    setHeaderCenter(isMobile ? null : toolbarNode)
-    return () => setHeaderCenter(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  })
+    if (!onToolbarChange) return
+    onToolbarChange(isMobile ? null : toolbarNode)
+    return () => onToolbarChange(null)
+  }, [toolbarNode, isMobile, onToolbarChange])
 
-  const crearMenu = (puedeProgramar || onCreateUrgencia) && (
+  const crearMenu = puedeProgramar && (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
@@ -139,15 +149,6 @@ export default function AgendaCalendar({
             >
               <CalendarClock className="h-4 w-4 text-muted-foreground" />
               Nueva cita
-            </DropdownMenu.Item>
-          )}
-          {onCreateUrgencia && (
-            <DropdownMenu.Item
-              onSelect={onCreateUrgencia}
-              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-red-700 outline-none transition hover:bg-red-50 focus:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20"
-            >
-              <Zap className="h-4 w-4" />
-              Atender urgencia
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>

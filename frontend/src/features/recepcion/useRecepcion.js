@@ -139,22 +139,6 @@ export function useRecepcion({ fecha, habilitado = true }) {
     },
   })
 
-  const crearCitaUrgenciaMutation = useMutation({
-    mutationFn: agendaApi.crearCitaUrgencia,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Urgencia registrada exitosamente')
-      invalidarTodo()
-
-      const mascotaId = data?.cita?.mascota?.id
-      if (mascotaId) {
-        navigate(`/pacientes/${mascotaId}/historial?citaId=${data.cita.id}`)
-      }
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar la urgencia.'))
-    },
-  })
-
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
     onSuccess: (data, { payload, cita }) => {
@@ -199,7 +183,6 @@ export function useRecepcion({ fecha, habilitado = true }) {
     mascotas,
     crearCitaMutation,
     crearWalkInMutation,
-    crearCitaUrgenciaMutation,
     actualizarEstadoMutation,
     invalidarTodo,
   }

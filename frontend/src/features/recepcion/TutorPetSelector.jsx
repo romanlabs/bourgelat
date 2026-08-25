@@ -24,8 +24,7 @@ const getOwnerPets = (owner, fallbackPets) => {
 
 /**
  * Buscador de tutor + selector de mascota asociada. Reutilizado por
- * ProgramarCitaPanel, WalkInPanel y UrgenciaRetroactivaDialog — antes estaba
- * duplicado entre el formulario de cita y el modal de urgencia en AgendaPage.
+ * ProgramarCitaPanel y WalkInPanel.
  */
 export function TutorPetSelector({
   ownerSearch,
