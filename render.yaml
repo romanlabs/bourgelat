@@ -149,8 +149,9 @@ services:
       - key: FACTUS_AMBIENTE
         value: production
 
-  - type: static
+  - type: web
     name: bourgelat-web
+    runtime: static
     region: oregon
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
@@ -319,8 +320,9 @@ services:
       - key: FACTUS_AMBIENTE
         value: sandbox
 
-  - type: static
+  - type: web
     name: bourgelat-web-staging
+    runtime: static
     region: oregon
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
