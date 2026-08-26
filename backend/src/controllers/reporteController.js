@@ -10,6 +10,7 @@ const Producto = require('../models/Producto');
 const InsumoClinico = require('../models/InsumoClinico');
 const Gasto = require('../models/Gasto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
+const { tenantWhere } = require('../utils/tenant');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -292,4 +293,198 @@ const reporteRentabilidad = async (req, res) => {
   }
 };
 
-module.exports = { reporteIngresos, reporteCitas, reporteInventario, dashboardGeneral, reporteRentabilidad };
+// ── Analítica de agenda ──────────────────────────────────────────────────────
+// A diferencia de `reporteCitas`, que trae las filas y agrega en memoria, aquí
+// todo se resuelve con GROUP BY en Postgres apoyándose en los índices que ya
+// existen sobre (clinicaId, fecha, estado) y (fecha, veterinarioId, clinicaId).
+const ESTADOS_RESUELTOS = ['completada', 'cancelada', 'no_asistio'];
+
+// horaLlegada / horaInicioAtencion son TIME sin fecha: una diferencia negativa
+// significa que la atención cruzó la medianoche, no una espera negativa. Se
+// descartan esas filas en vez de promediarlas y ensuciar la media.
+const ESPERA_VALIDA =
+  '"horaLlegada" IS NOT NULL AND "horaInicioAtencion" IS NOT NULL AND "horaInicioAtencion" >= "horaLlegada"';
+
+const contarPorEstado = (estado) =>
+  sequelize.literal(`COUNT(*) FILTER (WHERE "estado" = '${estado}')`);
+
+const aRecord = (filas, clave, valor = 'total') =>
+  filas.reduce((acc, fila) => {
+    acc[fila[clave]] = Number(fila[valor] || 0);
+    return acc;
+  }, {});
+
+const porcentaje = (parte, total) =>
+  total > 0 ? Number(((parte / total) * 100).toFixed(1)) : 0;
+
+const redondear = (valor) =>
+  valor === null || valor === undefined ? null : Math.round(Number(valor));
+
+const reporteAgenda = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ message: 'fechaInicio y fechaFin son obligatorios' });
+    }
+
+    const where = tenantWhere(req, { fecha: { [Op.between]: [fechaInicio, fechaFin] } });
+    const total = [sequelize.fn('COUNT', sequelize.col('id')), 'total'];
+    const horaDeInicio = sequelize.literal('EXTRACT(HOUR FROM "horaInicio")');
+    const diaDeLaSemana = sequelize.literal('EXTRACT(DOW FROM "fecha")');
+    const motivoNormalizado = sequelize.literal('LOWER(TRIM("motivoCancelacion"))');
+
+    const [
+      porEstado,
+      porTipo,
+      porOrigen,
+      serieDiaria,
+      porFranja,
+      porDiaSemana,
+      porVeterinario,
+      topMotivosCancelacion,
+      [tiempos],
+    ] = await Promise.all([
+      Cita.findAll({ attributes: ['estado', total], where, group: ['estado'], raw: true }),
+
+      Cita.findAll({ attributes: ['tipoCita', total], where, group: ['tipoCita'], raw: true }),
+
+      Cita.findAll({ attributes: ['origen', total], where, group: ['origen'], raw: true }),
+
+      Cita.findAll({
+        attributes: [
+          'fecha',
+          total,
+          [contarPorEstado('completada'), 'completadas'],
+          [contarPorEstado('no_asistio'), 'noAsistio'],
+        ],
+        where,
+        group: ['fecha'],
+        order: [['fecha', 'ASC']],
+        raw: true,
+      }),
+
+      Cita.findAll({
+        attributes: [[horaDeInicio, 'hora'], total],
+        where,
+        group: [horaDeInicio],
+        order: [[horaDeInicio, 'ASC']],
+        raw: true,
+      }),
+
+      Cita.findAll({
+        attributes: [[diaDeLaSemana, 'dia'], total],
+        where,
+        group: [diaDeLaSemana],
+        order: [[diaDeLaSemana, 'ASC']],
+        raw: true,
+      }),
+
+      Cita.findAll({
+        attributes: [
+          'veterinarioId',
+          [sequelize.fn('COUNT', sequelize.col('Cita.id')), 'total'],
+          [contarPorEstado('completada'), 'completadas'],
+          [contarPorEstado('no_asistio'), 'noAsistio'],
+        ],
+        include: [{ model: Usuario, as: 'veterinario', attributes: ['nombre'] }],
+        where,
+        group: ['Cita.veterinarioId', 'veterinario.id'],
+        order: [[sequelize.literal('total'), 'DESC']],
+        raw: true,
+        nest: true,
+      }),
+
+      Cita.findAll({
+        attributes: [[motivoNormalizado, 'motivo'], total],
+        where: { ...where, estado: 'cancelada', motivoCancelacion: { [Op.ne]: null } },
+        group: [motivoNormalizado],
+        order: [[sequelize.literal('total'), 'DESC']],
+        limit: 5,
+        raw: true,
+      }),
+
+      Cita.findAll({
+        attributes: [
+          [
+            sequelize.literal(
+              `AVG(EXTRACT(EPOCH FROM ("horaInicioAtencion" - "horaLlegada")) / 60) FILTER (WHERE ${ESPERA_VALIDA})`
+            ),
+            'esperaMediaMin',
+          ],
+          [
+            sequelize.literal(
+              'AVG(EXTRACT(EPOCH FROM ("horaFin" - "horaInicio")) / 60) FILTER (WHERE "horaFin" >= "horaInicio")'
+            ),
+            'duracionMediaMin',
+          ],
+        ],
+        where,
+        raw: true,
+      }),
+    ]);
+
+    const citasPorEstado = aRecord(porEstado, 'estado');
+    const totalCitas = Object.values(citasPorEstado).reduce((suma, n) => suma + n, 0);
+    const completadas = citasPorEstado.completada || 0;
+    const canceladas = citasPorEstado.cancelada || 0;
+    const noAsistio = citasPorEstado.no_asistio || 0;
+
+    // Las citas aún `programada` no cuentan como fracaso ni como éxito: la tasa
+    // se mide solo sobre lo que ya se resolvió, para que un periodo con días
+    // futuros no la hunda artificialmente.
+    const resueltas = ESTADOS_RESUELTOS.reduce(
+      (suma, estado) => suma + (citasPorEstado[estado] || 0),
+      0
+    );
+
+    const citasPorOrigen = aRecord(porOrigen, 'origen');
+    const walkIn = citasPorOrigen.walk_in || 0;
+
+    res.json({
+      periodo: {
+        fechaInicio,
+        fechaFin,
+        dias: Math.round((new Date(fechaFin) - new Date(fechaInicio)) / 86400000) + 1,
+      },
+      resumen: {
+        totalCitas,
+        completadas,
+        canceladas,
+        noAsistio,
+        walkIn,
+        tasaAsistencia: porcentaje(completadas, resueltas),
+        tasaNoShow: porcentaje(noAsistio, resueltas),
+        walkInPct: porcentaje(walkIn, totalCitas),
+        esperaMediaMin: redondear(tiempos?.esperaMediaMin),
+        duracionMediaMin: redondear(tiempos?.duracionMediaMin),
+      },
+      serieDiaria: serieDiaria.map((fila) => ({
+        fecha: fila.fecha,
+        total: Number(fila.total || 0),
+        completadas: Number(fila.completadas || 0),
+        noAsistio: Number(fila.noAsistio || 0),
+      })),
+      citasPorEstado,
+      citasPorTipo: aRecord(porTipo, 'tipoCita'),
+      citasPorFranja: aRecord(porFranja, 'hora'),
+      citasPorDiaSemana: aRecord(porDiaSemana, 'dia'),
+      citasPorOrigen,
+      porVeterinario: porVeterinario.map((fila) => ({
+        id: fila.veterinarioId,
+        nombre: fila.veterinario?.nombre || 'Sin profesional',
+        total: Number(fila.total || 0),
+        completadas: Number(fila.completadas || 0),
+        noAsistio: Number(fila.noAsistio || 0),
+      })),
+      topMotivosCancelacion: topMotivosCancelacion.map((fila) => ({
+        motivo: fila.motivo,
+        total: Number(fila.total || 0),
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+module.exports = { reporteIngresos, reporteCitas, reporteAgenda, reporteInventario, dashboardGeneral, reporteRentabilidad };

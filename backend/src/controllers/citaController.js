@@ -42,7 +42,7 @@ const esProfesionalVeterinario = (usuario) =>
     (Array.isArray(usuario.rolesAdicionales) && usuario.rolesAdicionales.includes('veterinario')));
 
 /**
- * Valida veterinario/propietario/mascota compartidos por crearCita, crearCitaUrgencia y crearWalkIn.
+ * Valida veterinario/propietario/mascota compartidos por crearCita y crearWalkIn.
  * Retorna { error, status } o { veterinario, propietario, mascota }.
  */
 const validarParticipantesCita = async ({ clinicaId, veterinarioId, propietarioId, mascotaId }) => {
@@ -218,64 +218,6 @@ const crearCita = async (req, res) => {
       advertencia: walkInEnCurso
         ? { tipo: 'walk_in_en_curso', paciente: walkInEnCurso.mascota?.nombre || null }
         : null,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
-  }
-};
-
-const crearCitaUrgencia = async (req, res) => {
-  try {
-    const {
-      fecha, horaInicio, horaFin, motivo,
-      observaciones, mascotaId, propietarioId, veterinarioId
-    } = req.body;
-    const { clinicaId } = req.usuario;
-
-    if (!fecha || !horaInicio || !motivo || !mascotaId || !propietarioId || !veterinarioId) {
-      return res.status(400).json({ message: 'Todos los campos obligatorios deben completarse' });
-    }
-
-    if (!isValidDateOnly(fecha)) {
-      return res.status(400).json({ message: 'Fecha no valida' });
-    }
-
-    // La urgencia ya fue atendida: puede ser de hoy (incluso horas atras), pero no un dia anterior ni futuro.
-    const hoy = formatDateOnlyLocal();
-    if (fecha !== hoy) {
-      return res.status(400).json({ message: 'La fecha de una urgencia atendida debe ser la de hoy' });
-    }
-
-    const ahoraHHMM = new Date().toTimeString().slice(0, 5);
-    if (horaInicio > ahoraHHMM) {
-      return res.status(400).json({ message: 'La hora de atencion no puede ser futura' });
-    }
-
-    const horaFinCalculada = horaFin && horaFin > horaInicio
-      ? horaFin
-      : sumarMinutos(horaInicio, 30);
-
-    const { error, status } = await validarParticipantesCita({
-      clinicaId, veterinarioId, propietarioId, mascotaId,
-    });
-    if (error) {
-      return res.status(status).json({ message: error });
-    }
-
-    // No se verifica solapamiento: la atencion ya ocurrio y puede coincidir con otras citas agendadas.
-    const cita = await Cita.create({
-      fecha, horaInicio, horaFin: horaFinCalculada, motivo,
-      tipoCita: 'urgencia', estado: 'completada', origen: 'walk_in',
-      horaLlegada: horaInicio,
-      observaciones, mascotaId, propietarioId,
-      veterinarioId, clinicaId,
-    });
-
-    const citaCompleta = await incluirRelacionesCita(cita, clinicaId);
-
-    res.status(201).json({
-      message: 'Urgencia registrada exitosamente',
-      cita: citaCompleta,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
@@ -618,7 +560,7 @@ const reprogramarCita = async (req, res) => {
 };
 
 module.exports = {
-  crearCita, crearCitaUrgencia, crearWalkIn,
+  crearCita, crearWalkIn,
   obtenerCitas, obtenerCita, obtenerSalaEspera, obtenerDisponibilidadVeterinarios,
   actualizarEstadoCita, reprogramarCita,
 };

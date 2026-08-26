@@ -10,35 +10,25 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
-  Zap,
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
 import AdminShell from '@/components/layout/AdminShell'
+import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import {
-  BarPanel,
   DashboardPanel,
   DataTable,
-  DonutCard,
   KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
-import { dashboardApi } from '@/features/dashboard/dashboardApi'
-import {
-  CITA_ESTADO_LABELS,
-  CITA_TIPO_LABELS,
-  formatLongDate,
-  formatNumber,
-  getCurrentMonthRange,
-  objectToChartData,
-} from '@/features/dashboard/dashboardUtils'
+import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
+import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
-import { UrgenciaRetroactivaDialog } from '@/features/recepcion/UrgenciaRetroactivaDialog'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { Select } from '@/components/ui/select'
@@ -67,6 +57,44 @@ const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - ${horaFin?.slice(0, 5)}`
+
+// Pestañas Agenda/Recepción/Analítica compactas para vivir en la barra
+// superior de AdminShell junto al toolbar del calendario (Hoy/nav/fecha/Vista),
+// en vez de una segunda fila debajo. Tiene que ser un componente propio (no
+// codigo inline en AgendaPage) porque useAdminHeaderSlot lee el contexto que
+// AdminShell provee a SUS hijos — AgendaPage es quien crea <AdminShell>, no
+// un descendiente suyo, asi que llamar el hook ahi arriba siempre da null.
+function AgendaHeaderTabs({ activeTab, onTabChange, calendarToolbar }) {
+  const setHeaderCenter = useAdminHeaderSlot()
+
+  useEffect(() => {
+    if (!setHeaderCenter) return
+    setHeaderCenter(
+      <div className="flex w-full items-center gap-4">
+        <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={`h-8 rounded-full px-3.5 text-sm font-semibold transition ${
+                activeTab === tab.id
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {calendarToolbar && <div className="min-w-0 flex-1">{calendarToolbar}</div>}
+      </div>
+    )
+    return () => setHeaderCenter(null)
+  }, [setHeaderCenter, activeTab, onTabChange, calendarToolbar])
+
+  return null
+}
 
 function RestrictedAgendaPage() {
   return (
@@ -98,10 +126,9 @@ export default function AgendaPage() {
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
-  const [urgenciaOpen, setUrgenciaOpen] = useState(false)
   const [recepcionPrefill, setRecepcionPrefill] = useState(null)
+  const [calendarToolbar, setCalendarToolbar] = useState(null)
 
-  const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
   // Todos los planes incluyen citas y reportes operativos.
   const puedeVerAgenda = true
@@ -113,6 +140,11 @@ export default function AgendaPage() {
   useEffect(() => {
     document.title = 'Agenda | Bourgelat'
   }, [])
+
+  // Estable entre renders: se lo pasamos a AgendaCalendar y no debe cambiar
+  // de identidad en cada render o el toolbar memorizado del calendario se
+  // reconstruiria sin parar (ver nota en AgendaCalendar.jsx).
+  const handleVistaTabla = useCallback(() => setVistaAgenda('lista'), [])
 
   const citasQuery = useQuery({
     queryKey: ['agenda-citas', fecha, estado, veterinarioId, pagina],
@@ -128,13 +160,6 @@ export default function AgendaPage() {
     placeholderData: (previousData) => previousData,
     refetchInterval: AGENDA_REFETCH_INTERVAL,
     refetchOnWindowFocus: true,
-  })
-
-  const reporteQuery = useQuery({
-    queryKey: ['agenda-reporte-mensual', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () => dashboardApi.obtenerReporteCitas(rangoMes),
-    enabled: rolPermitido && puedeVerAgenda && puedeVerAnalitica,
-    placeholderData: (previousData) => previousData,
   })
 
   const veterinariosQuery = useQuery({
@@ -155,34 +180,13 @@ export default function AgendaPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const crearCitaUrgenciaMutation = useMutation({
-    mutationFn: agendaApi.crearCitaUrgencia,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Urgencia registrada exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
-      queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
-      queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
-
-      const mascotaId = data?.cita?.mascota?.id
-      if (mascotaId) {
-        navigate(`/pacientes/${mascotaId}/historial?citaId=${data.cita.id}`)
-      }
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar la urgencia.'))
-    },
-  })
-
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
     onSuccess: (data, { payload, cita }) => {
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
       queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
@@ -209,7 +213,7 @@ export default function AgendaPage() {
       setSelectedAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-reporte-mensual'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
     },
     onError: (error) => {
@@ -229,44 +233,6 @@ export default function AgendaPage() {
   const pendientes = citas.filter((item) =>
     ['programada', 'en_espera'].includes(item.estado)
   ).length
-
-  const estadoLocalData = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      acc[cita.estado] = (acc[cita.estado] || 0) + 1
-      return acc
-    }, {})
-    return objectToChartData(record, CITA_ESTADO_LABELS)
-  }, [citas])
-
-  const tipoLocalData = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      acc[cita.tipoCita] = (acc[cita.tipoCita] || 0) + 1
-      return acc
-    }, {})
-    return objectToChartData(record, CITA_TIPO_LABELS)
-  }, [citas])
-
-  const estadoChartData = puedeVerAnalitica
-    ? objectToChartData(reporteQuery.data?.citasPorEstado, CITA_ESTADO_LABELS)
-    : estadoLocalData
-
-  const tipoChartData = puedeVerAnalitica
-    ? objectToChartData(reporteQuery.data?.citasPorTipo, CITA_TIPO_LABELS)
-    : tipoLocalData
-
-  const cargaProfesionales = useMemo(() => {
-    const record = citas.reduce((acc, cita) => {
-      const nombre = cita.veterinario?.nombre || 'Sin profesional'
-      acc[nombre] = (acc[nombre] || 0) + 1
-      return acc
-    }, {})
-
-    return Object.entries(record).map(([name, total]) => ({
-      key: name,
-      name,
-      total,
-    }))
-  }, [citas])
 
   const citasRows = useMemo(
     () =>
@@ -312,6 +278,7 @@ export default function AgendaPage() {
 
   return (
     <AdminShell currentKey="agenda" headerVariant="light" hidePageHeader title="Agenda y coordinacion de citas">
+      <AgendaHeaderTabs activeTab={activeTab} onTabChange={setActiveTab} calendarToolbar={calendarToolbar} />
       {!puedeVerAgenda ? (
         <EmptyState
           icon={<Sparkles />}
@@ -322,7 +289,7 @@ export default function AgendaPage() {
       ) : (
         <div className="space-y-0">
           {/* ── Banners de error — siempre visibles ── */}
-          {(citasQuery.isError || veterinariosQuery.isError || reporteQuery.isError) && (
+          {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
               {citasQuery.isError && (
                 <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
@@ -337,19 +304,11 @@ export default function AgendaPage() {
                   )}
                 </div>
               )}
-              {reporteQuery.isError && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                  {getErrorMessage(
-                    reporteQuery.error,
-                    'No fue posible cargar la lectura mensual de agenda.'
-                  )}
-                </div>
-              )}
             </div>
           )}
 
-          {/* ── Navegación de tabs ── */}
-          <div className="flex gap-0 border-b border-border">
+          {/* ── Navegación de tabs — solo movil, en escritorio vive en la barra superior ── */}
+          <div className="flex gap-0 border-b border-border sm:hidden">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -370,7 +329,7 @@ export default function AgendaPage() {
               Tab: Agenda
           ══════════════════════════════ */}
           {activeTab === 'agenda' && (
-            <div className="space-y-5 pt-5">
+            <div className="space-y-5 pt-5 sm:pt-0">
               {/* KPI cards — solo en vista lista; el calendario aprovecha ese espacio para la grilla */}
               {vistaAgenda === 'lista' && (
                 <div className="grid gap-4 xl:grid-cols-4">
@@ -436,51 +395,6 @@ export default function AgendaPage() {
                   </div>
                 )
 
-                // El header de Agenda usa headerVariant="light" (paleta clara tipo Google).
-                // Cada boton es un circulo independiente (sin píldora compartida partida a
-                // la mitad) para que el estado activo se lea limpio. "Atender urgencia" vive
-                // aqui (ya no hay banner de titulo/acciones debajo del header).
-                const vistaToggleCompacto = (
-                  <div className="flex items-center gap-2">
-                    {puedeProgramar && (
-                      <button
-                        type="button"
-                        onClick={() => setUrgenciaOpen(true)}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700"
-                      >
-                        <Zap className="h-4 w-4" />
-                        Urgencia
-                      </button>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setVistaAgenda('calendario')}
-                        title="Vista calendario"
-                        className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
-                          vistaAgenda === 'calendario'
-                            ? 'bg-primary text-white'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        }`}
-                      >
-                        <CalendarDays className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVistaAgenda('lista')}
-                        title="Vista lista"
-                        className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
-                          vistaAgenda === 'lista'
-                            ? 'bg-primary text-white'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        }`}
-                      >
-                        <List className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                )
-
                 /* Vista calendario: sin tarjeta envolvente — Google tampoco mete el
                    calendario dentro de una caja blanca grande, va directo sobre el fondo */
                 if (vistaAgenda === 'calendario') {
@@ -507,8 +421,8 @@ export default function AgendaPage() {
                         onReschedule={handleCalendarReschedule}
                         isUpdating={actualizarEstadoMutation.isPending}
                         isRescheduling={reprogramarMutation.isPending}
-                        toolbarExtra={vistaToggleCompacto}
-                        onCreateUrgencia={puedeProgramar ? () => setUrgenciaOpen(true) : undefined}
+                        onVistaTablaChange={handleVistaTabla}
+                        onToolbarChange={setCalendarToolbar}
                       />
                     </>
                   )
@@ -667,56 +581,7 @@ export default function AgendaPage() {
               Tab: Analítica
           ══════════════════════════════ */}
           {activeTab === 'analitica' && (
-            <div className="space-y-5 pt-5">
-              <div className="grid gap-5 2xl:grid-cols-3">
-                <DonutCard
-                  title={puedeVerAnalitica ? 'Estado mensual de citas' : 'Estado del dia'}
-                  subtitle={
-                    puedeVerAnalitica
-                      ? 'Lectura del periodo actual para medir avance y asistencia.'
-                      : 'Distribucion de la agenda visible en la fecha seleccionada.'
-                  }
-                  data={estadoChartData}
-                  centerLabel={puedeVerAnalitica ? 'Mes actual' : 'Dia activo'}
-                  centerValue={
-                    puedeVerAnalitica
-                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                      : formatNumber(citasDelDia)
-                  }
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay citas para mostrar."
-                />
-                <DonutCard
-                  title={puedeVerAnalitica ? 'Tipo de cita del mes' : 'Tipo de cita del dia'}
-                  subtitle="Ayuda a leer el mix operativo que mas se esta moviendo."
-                  data={tipoChartData}
-                  centerLabel="Tipos"
-                  centerValue={
-                    puedeVerAnalitica
-                      ? formatNumber(reporteQuery.data?.totalCitas || 0)
-                      : formatNumber(citasDelDia)
-                  }
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay tipos de cita para mostrar."
-                />
-                <BarPanel
-                  title="Carga del dia por profesional"
-                  subtitle="Distribucion visible de citas por medico en la fecha seleccionada."
-                  data={cargaProfesionales}
-                  dataKey="total"
-                  color="#0f4c81"
-                  formatter={formatNumber}
-                  emptyMessage="Aun no hay citas para medir carga por profesional."
-                />
-              </div>
-
-              {!puedeVerAnalitica && (
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  Estas viendo la lectura del dia seleccionado. Con el plan Profesional o superior
-                  accedes a reportes mensuales completos, tendencias y exportables.
-                </div>
-              )}
-            </div>
+            <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
           )}
         </div>
       )}
@@ -731,15 +596,6 @@ export default function AgendaPage() {
         onReschedule={handleCalendarReschedule}
         isUpdating={actualizarEstadoMutation.isPending}
         isRescheduling={reprogramarMutation.isPending}
-      />
-
-      <UrgenciaRetroactivaDialog
-        open={urgenciaOpen}
-        onOpenChange={setUrgenciaOpen}
-        veterinarios={veterinarios}
-        mascotas={mascotas}
-        usuario={usuario}
-        crearCitaUrgenciaMutation={crearCitaUrgenciaMutation}
       />
     </AdminShell>
   )

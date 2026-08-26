@@ -42,7 +42,9 @@ const registrarIntentoFallido = async (usuario) => {
   // para que rafagas concurrentes de login no se pisen el contador y
   // permitan saltarse el bloqueo. reload() trae el valor real ya aplicado.
   await usuario.increment('intentosFallidos')
-  await usuario.reload()
+  // reload() dispara un findOne interno sin propagar el `sinTenant` que uso
+  // la consulta original — hay que repetirlo aqui o el tenantGuard lo bloquea.
+  await usuario.reload({ sinTenant: true })
 
   if (usuario.intentosFallidos >= appConfig.auth.maxIntentosFallidos) {
     const bloqueadoHasta = new Date()
