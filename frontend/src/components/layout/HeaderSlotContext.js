@@ -8,3 +8,13 @@ export const HeaderSlotContext = createContext(null)
 export function useAdminHeaderSlot() {
   return useContext(HeaderSlotContext)
 }
+
+// Funcion para abrir el dialog de busqueda global de AdminShell (el mismo que
+// abre el atajo "/"). Paginas que reemplazan el centro de la barra superior
+// (ver HeaderSlotContext) y aun asi quieren ofrecer un acceso rapido a esa
+// busqueda usan este hook para un boton de lupa propio.
+export const AdminSearchContext = createContext(null)
+
+export function useAdminSearch() {
+  return useContext(AdminSearchContext)
+}
