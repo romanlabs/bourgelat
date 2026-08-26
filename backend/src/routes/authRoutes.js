@@ -22,6 +22,7 @@ const {
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
+const { permitirOpenerEnPopupOauth } = require('../middlewares/oauthPopupMiddleware')
 const { normalizarTelefonoColombiano } = require('../utils/normalizar')
 
 const router = express.Router()
@@ -161,8 +162,8 @@ router.post(
   cambiarPassword
 )
 
-router.get('/oauth/:proveedor', limitadorAuth, oauthIniciar)
-router.get('/oauth/:proveedor/callback', limitadorAuth, oauthCallback)
+router.get('/oauth/:proveedor', limitadorAuth, permitirOpenerEnPopupOauth, oauthIniciar)
+router.get('/oauth/:proveedor/callback', limitadorAuth, permitirOpenerEnPopupOauth, oauthCallback)
 
 router.post(
   '/oauth/completar-registro',

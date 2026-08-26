@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
@@ -32,7 +32,7 @@ import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
-import { HeaderSlotContext } from './HeaderSlotContext'
+import { AdminSearchContext, HeaderSlotContext } from './HeaderSlotContext'
 
 const ROL_LABELS_SIDEBAR = {
   admin: 'Administrador',
@@ -127,6 +127,7 @@ export default function AdminShell({
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [bannerVerificacionOculto, setBannerVerificacionOculto] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const openSearch = useCallback(() => setIsSearchOpen(true), [])
   const [searchQuery, setSearchQuery] = useState('')
   // Slot central de la barra superior: paginas como Agenda ponen ahi su propio
   // toolbar (Hoy/prev/next/vista) en vez de duplicar una segunda barra debajo.
@@ -208,6 +209,7 @@ export default function AdminShell({
   }, [usuario?.email, usuario?.nombre])
 
   return (
+    <AdminSearchContext.Provider value={openSearch}>
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
       <header
@@ -623,5 +625,6 @@ export default function AdminShell({
       </main>
     </div>
     </HeaderSlotContext.Provider>
+    </AdminSearchContext.Provider>
   )
 }

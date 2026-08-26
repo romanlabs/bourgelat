@@ -152,3 +152,4 @@ playwright-report/
 .claude/
 .superpowers/
 ruvector.db
+.claude-flow/

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeftRight, CircleAlert, FileSpreadsheet, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical, Wallet } from 'lucide-react'
+import { DropdownMenu } from 'radix-ui'
+import { ArrowLeftRight, Check, CircleAlert, FileSpreadsheet, Filter, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical, Wallet } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 import AdminShell from '@/components/layout/AdminShell'
+import { useAdminHeaderSlot, useAdminSearch } from '@/components/layout/HeaderSlotContext'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import {
@@ -43,6 +47,74 @@ const TABS = [
   { id: 'movimientos', label: 'Movimientos' },
   { id: 'facturas-compra', label: 'Facturas de Compra' },
 ]
+
+// Menú de filtros (categoría + solo cantidad baja) para las tablas de inventario.
+// Reemplaza la fila de pills por un ícono junto al buscador, con el mismo
+// estilo de dropdown (radix-ui) usado en el selector de vista de Agenda.
+function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, bajoStock, onBajoStockChange }) {
+  const filtroActivo = categoria !== 'todas' || bajoStock
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Filtrar por categoría"
+          className={cn(
+            'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 data-[state=open]:bg-muted',
+            filtroActivo && 'border-primary text-primary'
+          )}
+        >
+          <Filter className="h-4 w-4" />
+          {filtroActivo && (
+            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
+          )}
+        </button>
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={6}
+          className="z-50 w-56 rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          <DropdownMenu.Label className="px-5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Categoría
+          </DropdownMenu.Label>
+          {categoryOptions.map((opt) => (
+            <DropdownMenu.Item
+              key={opt.value}
+              onSelect={() => onCategoriaChange(opt.value)}
+              className={cn(
+                'flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
+                categoria === opt.value && 'font-medium text-primary'
+              )}
+            >
+              {opt.label}
+              {categoria === opt.value && <Check className="h-4 w-4" />}
+            </DropdownMenu.Item>
+          ))}
+
+          <DropdownMenu.Separator className="my-2 h-px bg-border" />
+
+          <DropdownMenu.CheckboxItem
+            checked={bajoStock}
+            onCheckedChange={onBajoStockChange}
+            onSelect={(event) => event.preventDefault()}
+            className="flex cursor-pointer items-center gap-3 px-5 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+          >
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+              <DropdownMenu.ItemIndicator>
+                <Check className="h-4 w-4" />
+              </DropdownMenu.ItemIndicator>
+            </span>
+            Solo cantidad baja
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
 
 function StockBadge({ stock, stockMinimo }) {
   const num = Number(stock ?? 0)
@@ -103,6 +175,56 @@ function InventarioContextBar({ inventario, onCambiar }) {
       </button>
     </div>
   )
+}
+
+// Pestañas Resumen/Productos/Servicios/... compactas para vivir en la barra
+// superior de AdminShell (igual que en Agenda) en vez de una segunda fila
+// debajo del título. Componente propio porque useAdminHeaderSlot lee el
+// contexto que AdminShell provee a SUS hijos — InventarioPage es quien crea
+// <AdminShell>, no un descendiente suyo, asi que llamar el hook ahi arriba
+// siempre da null.
+function InventarioHeaderTabs({ activeTab, onTabChange }) {
+  const setHeaderCenter = useAdminHeaderSlot()
+  const openSearch = useAdminSearch()
+
+  useEffect(() => {
+    if (!setHeaderCenter) return
+    setHeaderCenter(
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={`h-8 rounded-full px-3.5 text-sm font-semibold transition ${
+                activeTab === tab.id
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {openSearch && (
+          <SimpleTooltip label="Buscar">
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label="Buscar"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </SimpleTooltip>
+        )}
+      </div>
+    )
+    return () => setHeaderCenter(null)
+  }, [setHeaderCenter, openSearch, activeTab, onTabChange])
+
+  return null
 }
 
 function RestrictedInventoryPage() {
@@ -220,6 +342,7 @@ export default function InventarioPage() {
   return (
     <AdminShell
       currentKey="inventario"
+      headerVariant="light"
       title="Inventario y control de cantidades"
       description="Revisa categorías, alertas, productos activos y movimientos de inventario con un lenguaje claro de oficina clínica."
       headerBadge={
@@ -232,6 +355,7 @@ export default function InventarioPage() {
       }
       asideNote="Aquí se concentran alertas, productos y movimientos. Lo importante es cuidar el inventario antes de afectar la caja o la consulta."
     >
+      <InventarioHeaderTabs activeTab={activeTab} onTabChange={handleTabClick} />
       {!puedeVerInventario ? (
         <EmptyState
           icon={<Sparkles />}
@@ -257,8 +381,8 @@ export default function InventarioPage() {
             </div>
           )}
 
-          {/* Tab navigation */}
-          <div className="flex gap-0 border-b border-border">
+          {/* Navegación de tabs — solo movil, en escritorio vive en la barra superior */}
+          <div className="flex gap-0 border-b border-border sm:hidden">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -380,8 +504,8 @@ export default function InventarioPage() {
             <div className="space-y-4">
               <InventarioContextBar inventario="ventas" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-1 flex-col gap-3 min-w-0">
-                  <div className="relative max-w-sm">
+                <div className="flex flex-1 items-center gap-2 min-w-0">
+                  <div className="relative max-w-sm flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                       id="buscar-productos"
@@ -393,33 +517,13 @@ export default function InventarioPage() {
                       className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORY_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => { setCategoria(opt.value); setPaginaProductos(1) }}
-                        className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                          categoria === opt.value
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
-                      className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                        bajoStock
-                          ? 'border-amber-400 bg-amber-50 text-amber-700'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      Solo cantidad baja
-                    </button>
-                  </div>
+                  <FiltroInventarioMenu
+                    categoryOptions={CATEGORY_OPTIONS}
+                    categoria={categoria}
+                    onCategoriaChange={(value) => { setCategoria(value); setPaginaProductos(1) }}
+                    bajoStock={bajoStock}
+                    onBajoStockChange={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
+                  />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -534,8 +638,8 @@ export default function InventarioPage() {
             <div className="space-y-4">
               <InventarioContextBar inventario="clinica" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-1 flex-col gap-3 min-w-0">
-                  <div className="relative max-w-sm">
+                <div className="flex flex-1 items-center gap-2 min-w-0">
+                  <div className="relative max-w-sm flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                       id="buscar-insumos-clinicos"
@@ -547,33 +651,13 @@ export default function InventarioPage() {
                       className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {CLINICO_CATEGORY_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => { insumosClinicosHook.setCategoria(opt.value); insumosClinicosHook.setPagina(1) }}
-                        className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                          insumosClinicosHook.categoria === opt.value
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
-                      className={`border px-3 py-1.5 text-xs font-semibold transition ${
-                        insumosClinicosHook.bajoStock
-                          ? 'border-amber-400 bg-amber-50 text-amber-700'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      Solo cantidad baja
-                    </button>
-                  </div>
+                  <FiltroInventarioMenu
+                    categoryOptions={CLINICO_CATEGORY_OPTIONS}
+                    categoria={insumosClinicosHook.categoria}
+                    onCategoriaChange={(value) => { insumosClinicosHook.setCategoria(value); insumosClinicosHook.setPagina(1) }}
+                    bajoStock={insumosClinicosHook.bajoStock}
+                    onBajoStockChange={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
+                  />
                 </div>
                 <button
                   type="button"
