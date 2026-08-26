@@ -152,7 +152,6 @@ services:
   - type: web
     name: bourgelat-web
     runtime: static
-    region: oregon
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     autoDeployTrigger: commit
@@ -323,7 +322,6 @@ services:
   - type: web
     name: bourgelat-web-staging
     runtime: static
-    region: oregon
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     autoDeployTrigger: commit
