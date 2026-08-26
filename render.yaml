@@ -49,7 +49,7 @@ services:
       - key: DB_SSL
         value: "true"
       - key: DB_SSL_REJECT_UNAUTHORIZED
-        value: "true"
+        value: "false"
       - key: DB_RUN_MIGRATIONS
         value: "true"
       - key: DB_SYNC
@@ -214,7 +214,7 @@ services:
       - key: DB_SSL
         value: "true"
       - key: DB_SSL_REJECT_UNAUTHORIZED
-        value: "true"
+        value: "false"
       - key: DB_RUN_MIGRATIONS
         value: "true"
       - key: DB_SYNC
