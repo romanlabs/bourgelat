@@ -21,6 +21,7 @@ const validarRecetaInsumos = async (insumos, clinicaId, transaction) => {
   }
 
   const filasValidas = [];
+  const insumosVistos = new Set();
 
   for (const item of insumos) {
     const cantidadConsumida = normalizarNumero(item?.cantidadConsumida, Number.NaN);
@@ -28,6 +29,11 @@ const validarRecetaInsumos = async (insumos, clinicaId, transaction) => {
     if (!item?.insumoClinicoId || Number.isNaN(cantidadConsumida) || cantidadConsumida <= 0) {
       return { error: 'Cada insumo de la receta debe tener insumoClinicoId y cantidadConsumida mayor a 0' };
     }
+
+    if (insumosVistos.has(item.insumoClinicoId)) {
+      return { error: 'No se puede repetir el mismo insumo dos veces en la receta' };
+    }
+    insumosVistos.add(item.insumoClinicoId);
 
     const insumo = await InsumoClinico.findOne({
       where: { id: item.insumoClinicoId, clinicaId, activo: true },
@@ -194,7 +200,7 @@ const editarServicio = async (req, res) => {
         return res.status(400).json({ message: error });
       }
 
-      await ServicioClinicoInsumo.destroy({ where: { servicioClinicoId: id }, transaction });
+      await ServicioClinicoInsumo.destroy({ where: { servicioClinicoId: id, clinicaId }, transaction });
       await ServicioClinicoInsumo.bulkCreate(
         filasValidas.map((fila) => ({ ...fila, servicioClinicoId: id, clinicaId })),
         { transaction }
