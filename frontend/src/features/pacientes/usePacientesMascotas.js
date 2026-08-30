@@ -30,24 +30,44 @@ const SPECIES_LABELS = {
 
 export function usePacientesMascotas({ enabled }) {
   const queryClient = useQueryClient()
-  const [searchParams] = useSearchParams()
-  const buscarParam = searchParams.get('tab') === 'pacientes' ? searchParams.get('buscar') : null
+  const [searchParams, setSearchParams] = useSearchParams()
+  const esTabActivo = searchParams.get('tab') === 'pacientes'
 
-  const [buscar, setBuscar] = useState(() => buscarParam || '')
+  const [buscar, setBuscar] = useState(() => (esTabActivo && searchParams.get('buscar')) || '')
   const [especie, setEspecie] = useState('todas')
   const [pagina, setPagina] = useState(1)
-
-  useEffect(() => {
-    if (buscarParam !== null) {
-      setBuscar(buscarParam)
-      setPagina(1)
-    }
-  }, [buscarParam])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [ownerSearch, setOwnerSearch] = useState('')
 
   const buscarDiferido = useDebouncedValue(buscar.trim())
   const ownerSearchDiferido = useDebouncedValue(ownerSearch.trim())
+
+  // Refleja el termino en la URL para que la busqueda sea compartible y
+  // sobreviva a un refresh. Se escribe el valor ya diferido para no apilar una
+  // entrada por pulsacion, y en modo replace para no romper el boton atras.
+  useEffect(() => {
+    if (!esTabActivo) return
+    setSearchParams(
+      (previos) => {
+        const siguientes = new URLSearchParams(previos)
+        if (buscarDiferido) siguientes.set('buscar', buscarDiferido)
+        else siguientes.delete('buscar')
+        return siguientes
+      },
+      { replace: true }
+    )
+  }, [buscarDiferido, esTabActivo, setSearchParams])
+
+  // Unico punto de entrada del termino: garantiza que la paginacion vuelva a 1.
+  function cambiarBuscar(valor) {
+    setBuscar(valor)
+    setPagina(1)
+  }
+
+  function cambiarEspecie(valor) {
+    setEspecie(valor)
+    setPagina(1)
+  }
 
   const mascotasQuery = useQuery({
     queryKey: ['pacientes-mascotas', buscarDiferido, especie, pagina],
@@ -156,8 +176,9 @@ export function usePacientesMascotas({ enabled }) {
     mascotasQuery,
     propietariosSelectorQuery,
     mascotasRows,
-    buscar, setBuscar,
-    especie, setEspecie,
+    buscar, setBuscar: cambiarBuscar,
+    buscarAplicado: buscarDiferido,
+    especie, setEspecie: cambiarEspecie,
     pagina, setPagina,
     drawerOpen,
     ownerSearch, setOwnerSearch,
