@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
@@ -190,10 +191,14 @@ export function useRecepcion({ fecha, habilitado = true }) {
 
 /** Hook independiente (no puede vivir dentro de useRecepcion: violaria las reglas de hooks al invocarse por panel). */
 export function useBuscarPropietarios(busqueda, habilitado = true) {
+  // Sin debounce se lanzaba una peticion por pulsacion, que ademas consume la
+  // cuota del rate limit global (RATE_LIMIT_MAX en render.yaml).
+  const busquedaDiferida = useDebouncedValue(busqueda.trim())
+
   return useQuery({
-    queryKey: ['agenda-propietarios', busqueda.trim()],
+    queryKey: ['agenda-propietarios', busquedaDiferida],
     queryFn: () =>
-      pacientesApi.obtenerPropietarios({ buscar: busqueda.trim() || undefined, pagina: 1, limite: 8 }),
+      pacientesApi.obtenerPropietarios({ buscar: busquedaDiferida || undefined, pagina: 1, limite: 8 }),
     enabled: habilitado,
     placeholderData: (previousData) => previousData,
   })

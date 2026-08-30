@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   PawPrint,
   Plus,
-  Search,
   ShieldCheck,
   Sparkles,
   UserRound,
@@ -26,6 +25,7 @@ import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
+import SearchInput from '@/components/shared/SearchInput'
 import PacienteDrawer from '@/features/pacientes/PacienteDrawer'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { usePacientesResumen } from '@/features/pacientes/usePacientesResumen'
@@ -255,20 +255,18 @@ export default function PacientesPage() {
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={mascotasHook.buscar}
-                      onChange={(e) => { mascotasHook.setBuscar(e.target.value); mascotasHook.setPagina(1) }}
-                      placeholder="Buscar paciente"
-                      className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
-                    />
-                  </div>
+                  <SearchInput
+                    value={mascotasHook.buscar}
+                    onChange={mascotasHook.setBuscar}
+                    placeholder="Nombre, raza, microchip o tutor"
+                    ariaLabel="Buscar paciente"
+                    cargando={mascotasHook.mascotasQuery.isFetching}
+                    className="w-72 max-w-full"
+                  />
                   <Select
                     aria-label="Filtrar por especie"
                     value={mascotasHook.especie}
-                    onValueChange={(value) => { mascotasHook.setEspecie(value); mascotasHook.setPagina(1) }}
+                    onValueChange={mascotasHook.setEspecie}
                     options={SPECIES_OPTIONS}
                   />
                 </div>
@@ -340,8 +338,16 @@ export default function PacientesPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay pacientes para este filtro"
-                  emptyBody="Ajusta la busqueda o registra el primer paciente con el boton Nuevo paciente."
+                  emptyTitle={
+                    mascotasHook.buscarAplicado
+                      ? `Sin resultados para "${mascotasHook.buscarAplicado}"`
+                      : 'Aun no hay pacientes registrados'
+                  }
+                  emptyBody={
+                    mascotasHook.buscarAplicado
+                      ? 'Puedes buscar por nombre, raza, microchip o por los datos del tutor.'
+                      : 'Registra el primer paciente con el boton Nuevo paciente.'
+                  }
                 />
               )}
 
@@ -357,16 +363,14 @@ export default function PacientesPage() {
           {activeTab === 'tutores' && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={tutoresHook.buscar}
-                    onChange={(e) => { tutoresHook.setBuscar(e.target.value); tutoresHook.setPagina(1) }}
-                    placeholder="Buscar tutor"
-                    className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                </div>
+                <SearchInput
+                  value={tutoresHook.buscar}
+                  onChange={tutoresHook.setBuscar}
+                  placeholder="Nombre, documento o telefono"
+                  ariaLabel="Buscar tutor"
+                  cargando={tutoresHook.tutoresQuery.isFetching}
+                  className="w-72 max-w-full"
+                />
                 {puedeCrearTutor && (
                   <button
                     type="button"
@@ -404,8 +408,16 @@ export default function PacientesPage() {
                     { key: 'email', label: 'Correo' },
                     { key: 'ciudad', label: 'Ciudad' },
                   ]}
-                  emptyTitle="No hay tutores para este filtro"
-                  emptyBody="Ajusta la busqueda o registra un nuevo tutor con el boton Nuevo tutor."
+                  emptyTitle={
+                    tutoresHook.buscarAplicado
+                      ? `Sin resultados para "${tutoresHook.buscarAplicado}"`
+                      : 'Aun no hay tutores registrados'
+                  }
+                  emptyBody={
+                    tutoresHook.buscarAplicado
+                      ? 'Puedes buscar por nombre, numero de documento o telefono.'
+                      : 'Registra un nuevo tutor con el boton Nuevo tutor.'
+                  }
                 />
               )}
 
