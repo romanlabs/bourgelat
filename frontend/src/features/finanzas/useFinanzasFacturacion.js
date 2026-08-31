@@ -40,14 +40,23 @@ const buildInitialForm = () => ({
   registroEstiloId: '',
 })
 
+// `tipo` distingue como se confirma el pago, no como se llama:
+//   'manual'   → el cajero registra algo que YA paso (la plata esta en el cajon
+//                o ya llego a la cuenta). La venta se cierra al oprimir el boton.
+//   'pasarela' → el cobro lo confirma un tercero (Wompi) por webhook. La venta
+//                NO puede cerrarse hasta que llegue esa confirmacion.
+// Hoy todos son 'manual'. Cuando entre la pasarela, su metodo se agrega aqui
+// con tipo 'pasarela' y el POS ramifica sobre este campo, en vez de comparar
+// contra un value hardcodeado. Ojo: la lista de metodos validos tambien vive
+// duplicada en los validadores de backend/src/routes/facturaRoutes.js (3 sitios).
 export const PAYMENT_METHOD_OPTIONS = [
-  { value: 'efectivo', label: 'Efectivo' },
-  { value: 'tarjeta_debito', label: 'Tarjeta debito' },
-  { value: 'tarjeta_credito', label: 'Tarjeta credito' },
-  { value: 'transferencia', label: 'Transferencia' },
-  { value: 'nequi', label: 'Nequi' },
-  { value: 'daviplata', label: 'Daviplata' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'efectivo', label: 'Efectivo', tipo: 'manual' },
+  { value: 'tarjeta_debito', label: 'Tarjeta debito', tipo: 'manual' },
+  { value: 'tarjeta_credito', label: 'Tarjeta credito', tipo: 'manual' },
+  { value: 'transferencia', label: 'Transferencia', tipo: 'manual' },
+  { value: 'nequi', label: 'Nequi', tipo: 'manual' },
+  { value: 'daviplata', label: 'Daviplata', tipo: 'manual' },
+  { value: 'otro', label: 'Otro', tipo: 'manual' },
 ]
 
 export function useFinanzasFacturacion({
