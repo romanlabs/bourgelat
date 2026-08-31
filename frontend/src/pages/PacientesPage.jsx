@@ -327,12 +327,21 @@ export default function PacientesPage() {
                       key: 'acciones',
                       label: 'Acciones',
                       render: (row) => (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {row.historiasTo && (
-                            <NavCtaLink to={row.historiasTo} size="sm">Historia</NavCtaLink>
+                            <NavCtaLink to={row.historiasTo} size="sm">
+                              <FileText />
+                              Historia
+                            </NavCtaLink>
+                          )}
+                          {row.historiasTo && row.antecedentesTo && (
+                            <span className="h-3.5 w-px bg-border" aria-hidden="true" />
                           )}
                           {row.antecedentesTo && (
-                            <NavCtaLink to={row.antecedentesTo} size="sm">Antecedentes</NavCtaLink>
+                            <NavCtaLink to={row.antecedentesTo} size="sm">
+                              <HeartPulse />
+                              Antecedentes
+                            </NavCtaLink>
                           )}
                         </div>
                       ),
