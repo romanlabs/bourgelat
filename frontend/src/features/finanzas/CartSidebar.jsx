@@ -210,9 +210,29 @@ export default function CartSidebar({
 
       {/* ── Pie fijo compacto ── */}
       <div className="shrink-0 border-t border-border bg-muted/40">
-        {/* Método de pago: fila horizontal deslizable */}
-        <div className="flex items-center gap-1 px-3 pt-2">
-          <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Metodo de pago en grilla: la fila deslizable cortaba "Transferencia"
+            a media palabra y escondia los metodos de la derecha. Cuando entre
+            una pasarela (Wompi), su metodo aparece aqui como una celda mas. */}
+        <div className="px-3 pt-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Método de pago
+            </span>
+            <button
+              type="button"
+              onClick={() => setObsOpen((v) => !v)}
+              aria-label="Observaciones"
+              title="Observaciones"
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
+                obsOpen || hasObs
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <StickyNote className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
             {PAYMENT_METHOD_OPTIONS.map((opt) => {
               const Icon = PAYMENT_METHOD_ICONS[opt.value]
               return (
@@ -220,31 +240,18 @@ export default function CartSidebar({
                   key={opt.value}
                   type="button"
                   onClick={() => setMetodoPago(opt.value)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] font-semibold transition ${
                     metodoPago === opt.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border bg-card text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {Icon && <Icon className="h-3 w-3" />}
-                  {PAYMENT_METHOD_SHORT[opt.value] || opt.label}
+                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+                  <span className="truncate">{PAYMENT_METHOD_SHORT[opt.value] || opt.label}</span>
                 </button>
               )
             })}
           </div>
-          <button
-            type="button"
-            onClick={() => setObsOpen((v) => !v)}
-            aria-label="Observaciones"
-            title="Observaciones"
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
-              obsOpen || hasObs
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <StickyNote className="h-3 w-3" />
-          </button>
         </div>
 
         {/* Observaciones (solo si está abierto) */}
@@ -270,15 +277,15 @@ export default function CartSidebar({
         )}
 
         {/* Total + cobrar en un bloque */}
-        <div className="space-y-2 px-3 pb-3 pt-2">
-          <div className="flex items-baseline justify-between">
+        <div className="space-y-2.5 px-3 pb-3 pt-3">
+          <div className="flex items-baseline justify-between gap-2">
             <span className="text-xs font-semibold text-muted-foreground">
               Total
               {!selectedOwnerData && hasItems && (
                 <span className="ml-1.5 font-normal">· mostrador</span>
               )}
             </span>
-            <span className="text-lg font-bold leading-none tabular-nums text-foreground">
+            <span className="text-2xl font-bold leading-none tracking-tight tabular-nums text-foreground">
               {formatCOP(invoiceTotals?.total ?? 0)}
             </span>
           </div>
@@ -286,7 +293,7 @@ export default function CartSidebar({
             type="button"
             onClick={onOpenPaymentModal}
             disabled={!hasItems}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
           >
             <ShoppingCart className="h-4 w-4" />
             {!hasItems ? 'Agrega productos' : 'Cobrar'}
