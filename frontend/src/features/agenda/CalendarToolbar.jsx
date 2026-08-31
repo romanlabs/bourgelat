@@ -22,8 +22,8 @@ export function CalendarToolbar({
   compact = false,
 }) {
   // "compact" = renderizado dentro de la barra superior de AdminShell
-  // (ver useAdminHeaderSlot en AgendaCalendar.jsx); AdminShell usa headerVariant="light"
-  // en Agenda, asi que el toolbar compacto tambien usa la paleta clara tipo Google.
+  // (ver useAdminHeaderSlot en AgendaCalendar.jsx), que es clara, asi que el
+  // toolbar compacto tambien usa la paleta clara tipo Google.
   const iconBtn =
     'flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
   const pillBtn =

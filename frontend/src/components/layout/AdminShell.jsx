@@ -113,10 +113,8 @@ export default function AdminShell({
   headerBadge,
   quickActions = null,
   showQuickActions = false,
-  headerVariant = 'dark',
   hidePageHeader = false,
 }) {
-  const headerLight = headerVariant === 'light'
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
   const dark = useThemeStore((state) => state.dark)
@@ -212,91 +210,49 @@ export default function AdminShell({
     <AdminSearchContext.Provider value={openSearch}>
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
-      <header
-        className={cn(
-          'sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b px-3 sm:px-4',
-          headerLight
-            ? 'border-border bg-white text-foreground'
-            : 'border-[#0c2235] bg-[#06111c] text-white'
-        )}
-      >
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-white px-3 text-foreground sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <SimpleTooltip label="Menú principal">
             <button
               type="button"
               onClick={() => setIsNavOpen(true)}
               aria-label="Menú principal"
-              className={cn(
-                'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition',
-                headerLight
-                  ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  : 'text-[#91e7e0]/70 hover:bg-[#081827] hover:text-[#91e7e0]'
-              )}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
             >
               <Menu className="h-[18px] w-[18px]" />
             </button>
           </SimpleTooltip>
 
           <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5">
-            <span
-              className={cn(
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                headerLight ? 'bg-primary/10 text-primary' : 'bg-[#91e7e0]/10 text-[#91e7e0]'
-              )}
-            >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Stethoscope className="h-4 w-4" />
             </span>
-            <span
-              className={cn(
-                'truncate text-sm font-semibold',
-                headerLight ? 'text-foreground' : 'text-white'
-              )}
-            >
-              {nombreClinica}
-            </span>
+            <span className="truncate text-sm font-semibold text-foreground">{nombreClinica}</span>
           </Link>
         </div>
 
-        <div className="hidden flex-1 justify-center sm:flex">
-          {headerCenter || (
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              className={cn(
-                'flex w-full max-w-xs items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition',
-                headerLight
-                  ? 'border-border bg-muted text-muted-foreground hover:border-foreground/20 hover:text-foreground'
-                  : 'border-white/10 bg-[#081827] text-[#91e7e0]/50 hover:border-white/20 hover:text-[#91e7e0]/80'
-              )}
-            >
-              <Search className="h-4 w-4 shrink-0" />
-              <span className="flex-1 truncate text-left">Buscar</span>
-              <kbd
-                className={cn(
-                  'rounded border px-1.5 py-0.5 text-[11px] font-semibold',
-                  headerLight
-                    ? 'border-border bg-card text-muted-foreground'
-                    : 'border-white/15 bg-white/5 text-[#91e7e0]/50'
-                )}
-              >
-                /
-              </kbd>
-            </button>
-          )}
-        </div>
+        {/* Centro: cada pagina decide que va aqui (ver HeaderSlotContext).
+            La busqueda global vive en la lupa de la derecha, no aqui. */}
+        <div className="hidden min-w-0 flex-1 justify-center sm:flex">{headerCenter}</div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <SimpleTooltip label="Buscar  /">
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label="Buscar"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <Search className="h-[18px] w-[18px]" />
+            </button>
+          </SimpleTooltip>
+
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
                 title={`${usuario?.nombre || 'Mi perfil'} · Ver perfil`}
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold transition focus:outline-none focus-visible:ring-2',
-                  headerLight
-                    ? 'border-border bg-muted text-primary hover:ring-2 hover:ring-primary/40 focus-visible:ring-primary/40'
-                    : 'border-white/15 bg-[#081827] text-[#91e7e0] hover:ring-2 hover:ring-[#91e7e0]/40 focus-visible:ring-[#91e7e0]/40'
-                )}
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-muted text-sm font-semibold text-primary transition hover:ring-2 hover:ring-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 {usuario?.foto ? (
                   <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
