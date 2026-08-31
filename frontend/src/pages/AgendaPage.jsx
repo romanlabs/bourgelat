@@ -277,7 +277,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <AdminShell currentKey="agenda" headerVariant="light" hidePageHeader title="Agenda y coordinacion de citas">
+    <AdminShell currentKey="agenda" hidePageHeader title="Agenda y coordinacion de citas">
       <AgendaHeaderTabs activeTab={activeTab} onTabChange={setActiveTab} calendarToolbar={calendarToolbar} />
       {!puedeVerAgenda ? (
         <EmptyState
