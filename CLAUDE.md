@@ -65,7 +65,9 @@ bourgelat/
 │       │   └── ui/          # Shadcn components
 │       ├── content/         # publicSiteContent.js (copy del sitio público)
 │       ├── data/            # colombia.js (departamentos y municipios)
-│       ├── features/        # Módulos por dominio — cada uno con *Api.js + hooks + componentes
+│       ├── features/        # Módulos por dominio (agenda, pacientes, inventario,
+│       │                    #   inventarioClinico, caja, finanzas, onboarding, perfil,
+│       │                    #   estilos...) — cada uno con *Api.js + hooks + componentes
 │       ├── lib/             # api.js, permissions.js, utils.js, theme.js
 │       ├── pages/           # Páginas completas
 │       ├── router/          # index.jsx con React Router v7
@@ -130,13 +132,17 @@ Usados directamente en `LandingPage.jsx` y componentes de marketing:
 | Pacientes | `/pacientes` | `/api/mascotas`, `/api/propietarios` |
 | Historias clínicas | `/historias` | `/api/historias` |
 | Antecedentes | `/antecedentes` | `/api/antecedentes` |
-| Inventario | `/inventario` | `/api/inventario` |
-| Finanzas | `/finanzas` | `/api/facturas`, `/api/reportes` |
+| Inventario (productos, servicios, movimientos, compras) | `/inventario` (pestañas) | `/api/inventario`, `/api/inventario-clinico`, `/api/servicios-clinicos`, `/api/facturas-compra` |
+| Finanzas (venta, gastos/rentabilidad, turnos de caja) | `/finanzas` (pestañas) | `/api/facturas`, `/api/gastos`, `/api/caja`, `/api/reportes` |
+| Exámenes de laboratorio | — (integrado en historias/pacientes) | `/api/examenes-laboratorio` |
+| Estilos de historia clínica | — (integrado en configuración) | `/api/registros-estilo` |
 | Usuarios | `/usuarios` | `/api/usuarios` |
-| Configuración | `/configuracion` | `/api/clinica`, `/api/suscripciones` |
+| Perfil de usuario | `/perfil` | `/api/usuarios` |
+| Configuración | `/configuracion` | `/api/clinica`, `/api/suscripciones`, `/api/consultorios` |
+| Onboarding (wizard de registro) | `/onboarding` | `/api/clinica` |
 | Auditoría | `/auditoria` | `/api/auditoria` |
 | Superadmin | `/superadmin` | `/api/superadmin` |
-| Auth | `/login`, `/registro` | `/api/auth` |
+| Auth (incl. OAuth Google) | `/login`, `/registro` | `/api/auth` |
 | Público | `/`, `/planes`, `/nosotros` | — |
 
 ---
