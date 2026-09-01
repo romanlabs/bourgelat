@@ -37,6 +37,7 @@ export function usePacientesMascotas({ enabled }) {
   const [especie, setEspecie] = useState('todas')
   const [pagina, setPagina] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingPaciente, setEditingPaciente] = useState(null)
   const [ownerSearch, setOwnerSearch] = useState('')
 
   const buscarDiferido = useDebouncedValue(buscar.trim())
@@ -90,7 +91,8 @@ export function usePacientesMascotas({ enabled }) {
         pagina: 1,
         limite: 8,
       }),
-    enabled: enabled && drawerOpen,
+    // En edicion el tutor no se puede reasignar, asi que no hace falta el selector.
+    enabled: enabled && drawerOpen && !editingPaciente,
     placeholderData: (prev) => prev,
   })
 
@@ -99,15 +101,28 @@ export function usePacientesMascotas({ enabled }) {
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cargar la foto del paciente.')),
   })
 
+  function invalidarMascotas() {
+    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
+    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas-resumen'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+  }
+
   const crearMascotaMutation = useMutation({
     mutationFn: pacientesApi.crearMascota,
     onSuccess: (data) => {
       toast.success(data?.message || 'Paciente registrado exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
-      queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      invalidarMascotas()
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el paciente.')),
+  })
+
+  const editarMascotaMutation = useMutation({
+    mutationFn: ({ mascotaId, payload }) => pacientesApi.editarMascota(mascotaId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Paciente actualizado exitosamente')
+      invalidarMascotas()
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el paciente.')),
   })
 
   // Todos los planes incluyen historias y antecedentes.
@@ -149,13 +164,21 @@ export function usePacientesMascotas({ enabled }) {
     [mascotasQuery.data?.mascotas, historiasDisponibles, antecedentesDisponibles]
   )
 
-  function openDrawer() {
+  function openCreateDrawer() {
+    setEditingPaciente(null)
+    setOwnerSearch('')
+    setDrawerOpen(true)
+  }
+
+  function openEditDrawer(mascota) {
+    setEditingPaciente(mascota)
     setOwnerSearch('')
     setDrawerOpen(true)
   }
 
   function closeDrawer() {
     setDrawerOpen(false)
+    setEditingPaciente(null)
     setOwnerSearch('')
   }
 
@@ -165,7 +188,17 @@ export function usePacientesMascotas({ enabled }) {
         const uploaded = await subirFotoMascotaMutation.mutateAsync(photoFile)
         payload.fotoPerfil = uploaded?.fotoPerfil
       }
-      await crearMascotaMutation.mutateAsync(payload)
+
+      if (editingPaciente) {
+        // Ni la especie ni el tutor son editables: el backend los ignora y enviarlos
+        // solo confundiria la traza de auditoria.
+        const editable = { ...payload }
+        delete editable.propietarioId
+        delete editable.especie
+        await editarMascotaMutation.mutateAsync({ mascotaId: editingPaciente.id, payload: editable })
+      } else {
+        await crearMascotaMutation.mutateAsync(payload)
+      }
       onDone?.()
     } catch {
       // errors handled in mutation callbacks
@@ -181,9 +214,14 @@ export function usePacientesMascotas({ enabled }) {
     especie, setEspecie: cambiarEspecie,
     pagina, setPagina,
     drawerOpen,
+    editingPaciente,
     ownerSearch, setOwnerSearch,
-    isPending: crearMascotaMutation.isPending || subirFotoMascotaMutation.isPending,
-    openDrawer,
+    isPending:
+      crearMascotaMutation.isPending ||
+      editarMascotaMutation.isPending ||
+      subirFotoMascotaMutation.isPending,
+    openCreateDrawer,
+    openEditDrawer,
     closeDrawer,
     handleDrawerSubmit,
   }

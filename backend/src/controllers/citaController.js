@@ -10,6 +10,8 @@ const { isPastDateOnly, isValidDateOnly, formatDateOnlyLocal } = require('../uti
 const { parsePaginacion } = require('../utils/paginacion');
 const { tenantWhere } = require('../utils/tenant');
 const { DURACION_ESTIMADA_MINUTOS } = require('../config/duracionesCita');
+const { obtenerContextoAgenda, evaluarVentana } = require('../services/horarioAtencionService');
+const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
 
 const ESTADOS_ACTIVOS_AGENDA = ['programada', 'en_espera', 'en_atencion'];
 
@@ -82,6 +84,45 @@ const validarConsultorio = async (consultorioId, clinicaId) => {
   return { consultorio };
 };
 
+const ROLES_OVERRIDE_HORARIO = ['admin', 'superadmin'];
+
+/**
+ * Valida que el intervalo caiga dentro del horario de atencion de la clinica y
+ * fuera de todo bloqueo de agenda.
+ *
+ * Un admin puede forzar la cita (urgencias) enviando forzarFueraDeHorario: true;
+ * queda registrado en auditoria. Para el resto de roles el rechazo es duro.
+ * Retorna {} si se puede continuar, o { error, status, codigo }.
+ */
+const validarVentanaAtencion = async ({ req, clinicaId, fecha, horaInicio, horaFin, forzar }) => {
+  const { horarioAtencion, bloqueos } = await obtenerContextoAgenda(clinicaId, {
+    desde: fecha,
+    hasta: fecha,
+  });
+
+  const resultado = evaluarVentana({ horarioAtencion, bloqueos, fecha, horaInicio, horaFin });
+
+  if (resultado.valido) return {};
+
+  const puedeForzar = forzar === true && ROLES_OVERRIDE_HORARIO.includes(req?.usuario?.rol);
+
+  if (!puedeForzar) {
+    return { error: resultado.message, status: 400, codigo: resultado.codigo };
+  }
+
+  await registrarAuditoria({
+    accion: 'CITA_FUERA_DE_HORARIO',
+    entidad: 'Cita',
+    entidadId: null,
+    descripcion: `Cita agendada fuera del horario de atencion (${resultado.codigo}) el ${fecha} de ${horaInicio} a ${horaFin}`,
+    datosNuevos: { fecha, horaInicio, horaFin, codigo: resultado.codigo },
+    req,
+    resultado: 'exitoso',
+  });
+
+  return {};
+};
+
 /**
  * Busca choque de horario contra el veterinario y, si se indica, contra el
  * consultorio. Solo las citas de origen 'programada' bloquean agenda: los
@@ -151,6 +192,7 @@ const crearCita = async (req, res) => {
     const {
       fecha, horaInicio, horaFin, motivo, tipoCita,
       observaciones, mascotaId, propietarioId, veterinarioId, consultorioId,
+      forzarFueraDeHorario,
     } = req.body;
     const { clinicaId } = req.usuario;
 
@@ -182,6 +224,13 @@ const crearCita = async (req, res) => {
     const consultorioResult = await validarConsultorio(consultorioId, clinicaId);
     if (consultorioResult.error) {
       return res.status(consultorioResult.status).json({ message: consultorioResult.error });
+    }
+
+    const ventana = await validarVentanaAtencion({
+      req, clinicaId, fecha, horaInicio, horaFin, forzar: forzarFueraDeHorario,
+    });
+    if (ventana.error) {
+      return res.status(ventana.status).json({ message: ventana.error, codigo: ventana.codigo });
     }
 
     const solapamiento = await buscarSolapamiento({
@@ -276,16 +325,31 @@ const crearWalkIn = async (req, res) => {
       origenBuscado: 'programada',
     });
 
-    res.status(201).json({
-      message: 'Paciente registrado en sala de espera',
-      cita: citaCompleta,
-      advertencia: citaProgramadaProxima
+    // Un ingreso directo fuera del horario de atencion es una urgencia legitima:
+    // no se bloquea, solo se avisa a recepcion.
+    const { horarioAtencion, bloqueos } = await obtenerContextoAgenda(clinicaId, {
+      desde: fecha, hasta: fecha,
+    });
+    const ventana = evaluarVentana({
+      horarioAtencion, bloqueos, fecha, horaInicio: ahora, horaFin: horaFinEstimada,
+    });
+
+    const advertencias = [
+      citaProgramadaProxima
         ? {
             tipo: 'cita_programada_proxima',
             horaInicio: citaProgramadaProxima.horaInicio,
             paciente: citaProgramadaProxima.mascota?.nombre || null,
           }
         : null,
+      ventana.valido ? null : { tipo: 'fuera_de_horario', codigo: ventana.codigo, message: ventana.message },
+    ].filter(Boolean);
+
+    res.status(201).json({
+      message: 'Paciente registrado en sala de espera',
+      cita: citaCompleta,
+      advertencia: advertencias[0] || null,
+      advertencias,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
@@ -504,7 +568,7 @@ const reprogramarCita = async (req, res) => {
   try {
     const { id } = req.params;
     const { clinicaId } = req.usuario;
-    const { fecha, horaInicio, horaFin } = req.body;
+    const { fecha, horaInicio, horaFin, forzarFueraDeHorario } = req.body;
 
     if (!fecha || !horaInicio || !horaFin) {
       return res.status(400).json({ message: 'Fecha y horario son obligatorios' });
@@ -533,6 +597,13 @@ const reprogramarCita = async (req, res) => {
 
     if (cita.origen === 'walk_in') {
       return res.status(400).json({ message: 'Un registro de ingreso directo no se puede reprogramar' });
+    }
+
+    const ventana = await validarVentanaAtencion({
+      req, clinicaId, fecha, horaInicio, horaFin, forzar: forzarFueraDeHorario,
+    });
+    if (ventana.error) {
+      return res.status(ventana.status).json({ message: ventana.error, codigo: ventana.codigo });
     }
 
     const solapamiento = await buscarSolapamiento({

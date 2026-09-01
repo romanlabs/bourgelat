@@ -5,6 +5,7 @@ const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const telefonoColombiaRegex = /^3\d{9}$/
 
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano, normalizarNit } = require('../utils/normalizar')
+const { normalizarHorario, HorarioInvalidoError } = require('../services/horarioAtencionService')
 
 const serializarClinica = (clinica) => {
   if (!clinica) return null
@@ -30,6 +31,7 @@ const serializarClinica = (clinica) => {
     logo: clinica.logo,
     activo: clinica.activo,
     ultimoAcceso: clinica.ultimoAcceso,
+    horarioAtencion: clinica.horarioAtencion || null,
   }
 }
 
@@ -208,9 +210,54 @@ const actualizarClinicaActual = async (req, res) => {
   }
 }
 
+const actualizarHorarioAtencion = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+
+    const clinica = await Clinica.findByPk(clinicaId)
+
+    if (!clinica) {
+      return res.status(404).json({ message: 'Clinica no encontrada' })
+    }
+
+    let horarioAtencion
+    try {
+      horarioAtencion = normalizarHorario(req.body.horarioAtencion)
+    } catch (error) {
+      if (error instanceof HorarioInvalidoError) {
+        return res.status(400).json({ message: error.message })
+      }
+      throw error
+    }
+
+    const datosAnteriores = { horarioAtencion: clinica.horarioAtencion || null }
+
+    await clinica.update({ horarioAtencion })
+
+    await registrarAuditoria({
+      accion: 'ACTUALIZAR_HORARIO_ATENCION',
+      entidad: 'Clinica',
+      entidadId: clinica.id,
+      descripcion: 'Horario de atencion actualizado desde configuracion',
+      datosAnteriores,
+      datosNuevos: { horarioAtencion },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({
+      message: 'Horario de atencion actualizado exitosamente',
+      horarioAtencion: clinica.horarioAtencion || null,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 module.exports = {
   obtenerClinicaActual,
   actualizarClinicaActual,
+  actualizarHorarioAtencion,
   serializarClinica,
   calcularPerfilFiscal,
 }

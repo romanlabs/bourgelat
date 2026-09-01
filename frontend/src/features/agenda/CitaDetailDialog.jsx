@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FileWarning, Loader2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { FileWarning, Loader2, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NavCta } from '@/components/shared/NavCta'
 import {
@@ -13,8 +14,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { buildStateTone, STATUS_OPTIONS } from './calendarConstants'
+import { buildStateTone, STATUS_OPTIONS, evaluarIntervalo } from './calendarConstants'
 import { Select } from '@/components/ui/select'
+import { HoraPicker } from '@/components/shared/HoraPicker'
+import { formatHora12, formatFranja12 } from '@/lib/hora'
+import { agendaApi } from './agendaApi'
+import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 
 export function CitaDetailDialog({
   cita,
@@ -30,6 +36,8 @@ export function CitaDetailDialog({
   const [statusForm, setStatusForm] = useState({ estado: '', motivoCancelacion: '' })
   const [rescheduleForm, setRescheduleForm] = useState({ fecha: '', horaInicio: '', horaFin: '' })
   const [activeSection, setActiveSection] = useState('estado')
+  const [forzar, setForzar] = useState(false)
+  const usuario = useAuthStore((state) => state.usuario)
 
   useEffect(() => {
     if (cita) {
@@ -40,8 +48,32 @@ export function CitaDetailDialog({
         horaFin: cita.horaFin?.slice(0, 5) || '',
       })
       setActiveSection('estado')
+      setForzar(false)
     }
   }, [cita])
+
+  // Horario de atencion y bloqueos de la fecha destino, para avisar antes de
+  // que el backend rechace la reprogramacion.
+  const disponibilidadQuery = useQuery({
+    queryKey: ['agenda-disponibilidad', rescheduleForm.fecha, rescheduleForm.fecha],
+    queryFn: () =>
+      agendaApi.obtenerDisponibilidadAgenda({
+        desde: rescheduleForm.fecha,
+        hasta: rescheduleForm.fecha,
+      }),
+    enabled: open && Boolean(rescheduleForm.fecha) && activeSection === 'reprogramar',
+  })
+
+  const ventana =
+    rescheduleForm.fecha && rescheduleForm.horaFin > rescheduleForm.horaInicio
+      ? evaluarIntervalo(rescheduleForm.fecha, rescheduleForm.horaInicio, rescheduleForm.horaFin, {
+          horarioAtencion: disponibilidadQuery.data?.horarioAtencion || null,
+          bloqueos: disponibilidadQuery.data?.bloqueos || [],
+        })
+      : { valido: true }
+
+  // Solo la administracion puede forzar fuera de horario; el backend valida igual.
+  const puedeForzar = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   if (!cita) return null
 
@@ -67,6 +99,7 @@ export function CitaDetailDialog({
       fecha: rescheduleForm.fecha,
       horaInicio: rescheduleForm.horaInicio,
       horaFin: rescheduleForm.horaFin,
+      forzarFueraDeHorario: forzar || undefined,
     })
   }
 
@@ -91,7 +124,7 @@ export function CitaDetailDialog({
               <p className="text-muted-foreground">
                 Horario:{' '}
                 <span className="font-medium text-foreground">
-                  {cita.horaInicio?.slice(0, 5)} – {cita.horaFin?.slice(0, 5)}
+                  {formatHora12(cita.horaInicio)} – {formatHora12(cita.horaFin)}
                 </span>
               </p>
               <p className="text-muted-foreground">
@@ -226,30 +259,54 @@ export function CitaDetailDialog({
               className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
               required
             />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="time"
+            <div className="grid gap-2">
+              <HoraPicker
+                aria-label="Nueva hora de inicio"
                 value={rescheduleForm.horaInicio}
-                onChange={(e) =>
-                  setRescheduleForm((prev) => ({ ...prev, horaInicio: e.target.value }))
-                }
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
-                required
+                onChange={(valor) => setRescheduleForm((prev) => ({ ...prev, horaInicio: valor }))}
               />
-              <input
-                type="time"
+              <HoraPicker
+                aria-label="Nueva hora de fin"
                 value={rescheduleForm.horaFin}
-                onChange={(e) =>
-                  setRescheduleForm((prev) => ({ ...prev, horaFin: e.target.value }))
-                }
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
-                required
+                onChange={(valor) => setRescheduleForm((prev) => ({ ...prev, horaFin: valor }))}
               />
             </div>
 
+            {!ventana.valido ? (
+              <div className="border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-6 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                <p className="flex items-start gap-2 font-semibold">
+                  <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  {ventana.codigo === 'bloqueado'
+                    ? `Agenda bloqueada: ${ventana.motivo}`
+                    : ventana.codigo === 'dia_cerrado'
+                      ? 'La clínica no atiende ese día.'
+                      : 'Fuera del horario de atención.'}
+                </p>
+                {ventana.franjas?.length ? (
+                  <p className="mt-1 pl-6">
+                    Horario de ese día:{' '}
+                    {ventana.franjas
+                      .map((franja) => formatFranja12(franja.inicio, franja.fin))
+                      .join(' · ')}
+                  </p>
+                ) : null}
+                {puedeForzar ? (
+                  <label className="mt-2 flex items-center gap-2 font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={forzar}
+                      onChange={(event) => setForzar(event.target.checked)}
+                      className="h-4 w-4 border-border text-primary focus:ring-primary"
+                    />
+                    Reprogramar de todos modos (urgencia)
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+
             <button
               type="submit"
-              disabled={isRescheduling}
+              disabled={isRescheduling || (!ventana.valido && !forzar)}
               className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRescheduling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

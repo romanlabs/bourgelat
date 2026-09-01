@@ -7,14 +7,103 @@ export const TOTAL_SLOTS = (HORA_FIN - HORA_INICIO) * 2
 export const SLOT_HEIGHT_MAX = 30 // px por slot de 30 min — densidad compacta tipo Google
 export const SLOT_HEIGHT_MIN = 22 // evita que el punto de "ahora" (9px) domine visualmente la franja
 
-/** Genera los slots de horario del día: ["07:00", "07:30", ..., "19:30"] */
-export function generarSlots() {
+/**
+ * Genera los slots de la grilla en pasos de 30 min.
+ * generarSlots(8, 18) → ["08:00", "08:30", ..., "17:30"]
+ */
+export function generarSlots(horaInicio = HORA_INICIO, horaFin = HORA_FIN) {
   const slots = []
-  for (let h = HORA_INICIO; h < HORA_FIN; h++) {
+  for (let h = horaInicio; h < horaFin; h++) {
     slots.push(`${String(h).padStart(2, '0')}:00`)
     slots.push(`${String(h).padStart(2, '0')}:30`)
   }
   return slots
+}
+
+/**
+ * Rango de horas que conviene mostrar en la grilla dado el horario de atención
+ * de la clínica, con una hora de margen a cada lado. Sin horario configurado se
+ * mantiene el día completo.
+ */
+export function rangoVisibleDeHorario(horarioAtencion) {
+  if (!horarioAtencion) return { horaInicio: HORA_INICIO, horaFin: HORA_FIN }
+
+  const franjas = Object.values(horarioAtencion).flat()
+  if (!franjas.length) return { horaInicio: HORA_INICIO, horaFin: HORA_FIN }
+
+  const aperturas = franjas.map((franja) => Math.floor(parseMinutes(franja.inicio) / 60))
+  const cierres = franjas.map((franja) => Math.ceil(parseMinutes(franja.fin) / 60))
+
+  return {
+    horaInicio: Math.max(HORA_INICIO, Math.min(...aperturas) - 1),
+    horaFin: Math.min(HORA_FIN, Math.max(...cierres) + 1),
+  }
+}
+
+/** true si el bloqueo cubre el día entero (sin franja horaria). */
+const esBloqueoDiaCompleto = (bloqueo) => !bloqueo.horaInicio || !bloqueo.horaFin
+
+/** Bloqueo que cubre una fecha 'yyyy-MM-dd' completa, si lo hay. */
+export function bloqueoDeDiaCompleto(fecha, bloqueos = []) {
+  return bloqueos.find(
+    (bloqueo) =>
+      esBloqueoDiaCompleto(bloqueo) && fecha >= bloqueo.fechaInicio && fecha <= bloqueo.fechaFin
+  )
+}
+
+/**
+ * Espeja la regla del backend (horarioAtencionService.evaluarVentana) para no
+ * ofrecer horarios que la API va a rechazar. Devuelve { valido, codigo, motivo }.
+ */
+export function evaluarIntervalo(fecha, horaInicio, horaFin, { horarioAtencion, bloqueos = [] } = {}) {
+  const inicio = parseMinutes(horaInicio)
+  const fin = parseMinutes(horaFin)
+
+  for (const bloqueo of bloqueos) {
+    if (fecha < bloqueo.fechaInicio || fecha > bloqueo.fechaFin) continue
+    if (esBloqueoDiaCompleto(bloqueo) ||
+      (inicio < parseMinutes(bloqueo.horaFin) && fin > parseMinutes(bloqueo.horaInicio))) {
+      return { valido: false, codigo: 'bloqueado', motivo: bloqueo.motivo }
+    }
+  }
+
+  if (!horarioAtencion) return { valido: true }
+
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  const diaSemana = new Date(anio, mes - 1, dia).getDay()
+  const franjas = horarioAtencion[String(diaSemana)] || []
+
+  if (!franjas.length) return { valido: false, codigo: 'dia_cerrado' }
+
+  const cabe = franjas.some(
+    (franja) => inicio >= parseMinutes(franja.inicio) && fin <= parseMinutes(franja.fin)
+  )
+
+  return cabe ? { valido: true } : { valido: false, codigo: 'fuera_de_horario', franjas }
+}
+
+/**
+ * ¿Se puede agendar en este slot de la grilla? Evalúa [slot, slot + 30).
+ */
+export function esSlotHabil(fecha, slot, { horarioAtencion, bloqueos = [] } = {}) {
+  const inicio = parseMinutes(slot)
+  const fin = inicio + SLOT_MINUTOS
+
+  for (const bloqueo of bloqueos) {
+    if (fecha < bloqueo.fechaInicio || fecha > bloqueo.fechaFin) continue
+    if (esBloqueoDiaCompleto(bloqueo)) return false
+    if (inicio < parseMinutes(bloqueo.horaFin) && fin > parseMinutes(bloqueo.horaInicio)) return false
+  }
+
+  if (!horarioAtencion) return true
+
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  const diaSemana = new Date(anio, mes - 1, dia).getDay()
+  const franjas = horarioAtencion[String(diaSemana)] || []
+
+  return franjas.some(
+    (franja) => inicio >= parseMinutes(franja.inicio) && fin <= parseMinutes(franja.fin)
+  )
 }
 
 /** Convierte "HH:MM" o "HH:MM:SS" a minutos totales desde medianoche. */
@@ -24,19 +113,29 @@ export function parseMinutes(timeStr) {
   return parts[0] * 60 + (parts[1] || 0)
 }
 
-/** Calcula posición top (px) dentro de la grilla para una hora dada. */
-export function timeToTop(timeStr, slotHeight = SLOT_HEIGHT_MAX) {
+/**
+ * Calcula posición top (px) dentro de la grilla para una hora dada.
+ * `gridInicio` es la primera hora que pinta la grilla, que ya no es
+ * necesariamente medianoche: depende del horario de atención de la clínica.
+ */
+export function timeToTop(timeStr, slotHeight = SLOT_HEIGHT_MAX, gridInicio = HORA_INICIO) {
   const mins = parseMinutes(timeStr)
-  const minutesFromStart = mins - HORA_INICIO * 60
+  const minutesFromStart = mins - gridInicio * 60
   return Math.max(0, (minutesFromStart / SLOT_MINUTOS) * slotHeight)
 }
 
 /** Calcula la altura (px) de un chip dados horaInicio y horaFin. */
-export function calcCitaHeight(horaInicio, horaFin, slotHeight = SLOT_HEIGHT_MAX) {
+export function calcCitaHeight(
+  horaInicio,
+  horaFin,
+  slotHeight = SLOT_HEIGHT_MAX,
+  gridInicio = HORA_INICIO,
+  gridFin = HORA_FIN
+) {
   const startMins = parseMinutes(horaInicio)
   const endMins = parseMinutes(horaFin)
-  const clampedEnd = Math.min(endMins, HORA_FIN * 60)
-  const clampedStart = Math.max(startMins, HORA_INICIO * 60)
+  const clampedEnd = Math.min(endMins, gridFin * 60)
+  const clampedStart = Math.max(startMins, gridInicio * 60)
   const effectiveDuration = Math.max(clampedEnd - clampedStart, 15)
   return Math.max((effectiveDuration / SLOT_MINUTOS) * slotHeight, 24)
 }

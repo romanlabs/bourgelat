@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { formatHora12 } from '@/lib/hora'
 import {
   buildStateTone,
   getAccentColor,
@@ -9,10 +10,10 @@ import {
 } from './calendarConstants'
 
 // Chip posicionado absoluto dentro de una columna de la grilla horaria
-export function CitaChip({ cita, onClick, esProxima, slotHeight }) {
-  const top = timeToTop(cita.horaInicio, slotHeight)
-  const height = calcCitaHeight(cita.horaInicio, cita.horaFin, slotHeight)
-  const horaLabel = cita.horaInicio?.slice(0, 5) || ''
+export function CitaChip({ cita, onClick, esProxima, slotHeight, gridInicio, gridFin }) {
+  const top = timeToTop(cita.horaInicio, slotHeight, gridInicio)
+  const height = calcCitaHeight(cita.horaInicio, cita.horaFin, slotHeight, gridInicio, gridFin)
+  const horaLabel = formatHora12(cita.horaInicio)
   const emoji = especieToEmoji(cita.mascota?.especie)
   const tipoCorto = TIPO_SHORT[cita.tipoCita] || cita.tipoCita
   const esUrgencia = cita.tipoCita === 'urgencia'
@@ -71,7 +72,7 @@ export function CitaChip({ cita, onClick, esProxima, slotHeight }) {
 
 // Variante compacta para las celdas de la vista mensual
 export function CitaChipMini({ cita, onClick, esProxima }) {
-  const horaLabel = cita.horaInicio?.slice(0, 5) || ''
+  const horaLabel = formatHora12(cita.horaInicio)
   const emoji = especieToEmoji(cita.mascota?.especie)
   const esUrgencia = cita.tipoCita === 'urgencia'
   const sinHistoria = esUrgencia && cita.estado === 'completada' && !cita.historia?.id

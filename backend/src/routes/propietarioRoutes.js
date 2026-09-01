@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { body, query } = require('express-validator')
+const { body, param, query } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -39,8 +39,13 @@ router.get('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionis
 router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario', 'facturador'), obtenerPropietario)
 
 router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), requerirEscritura, [
+  param('id').isUUID().withMessage('Propietario no valido'),
+  body('nombre').optional().notEmpty().withMessage('El nombre no puede estar vacío').trim(),
   body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
   body('telefono').optional().notEmpty().withMessage('El teléfono no puede estar vacío').trim(),
+  body('tipoDocumento').optional().isIn(['CC', 'CE', 'NIT', 'PP']).withMessage('Tipo de documento no válido'),
+  body('numeroDocumento').optional().notEmpty().withMessage('El número de documento no puede estar vacío').trim(),
+  body('tipoPersona').optional().isIn(['persona_natural', 'persona_juridica']).withMessage('Tipo de persona no válido'),
   validar,
 ], editarPropietario)
 

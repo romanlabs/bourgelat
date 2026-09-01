@@ -69,6 +69,10 @@ export default function AgendaCalendar({
     isLoading,
     isFetching,
     slots,
+    gridInicio,
+    gridFin,
+    esHabil,
+    getBloqueoDelDia,
   } = useAgendaCalendar({ veterinarioId, estado, enabled, view: effectiveView, prefs })
 
   const [selectedCita, setSelectedCita] = useState(null)
@@ -246,6 +250,7 @@ export default function AgendaCalendar({
             onCitaClick={setSelectedCita}
             onVerDia={verDia}
             isLoading={isLoading}
+            getBloqueoDelDia={getBloqueoDelDia}
           />
         ) : effectiveView === 'anio' ? (
           <YearView
@@ -275,6 +280,10 @@ export default function AgendaCalendar({
             onCitaClick={setSelectedCita}
             isLoading={isLoading}
             showTimezoneLabel={sidebarOpen}
+            gridInicio={gridInicio}
+            gridFin={gridFin}
+            esHabil={esHabil}
+            getBloqueoDelDia={getBloqueoDelDia}
           />
         )}
 
