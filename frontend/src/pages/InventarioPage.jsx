@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, CircleAlert, FileSpreadsheet, Filter, PackagePlus, Plus, Search, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SimpleTooltip } from '@/components/ui/tooltip'
 import AdminShell from '@/components/layout/AdminShell'
-import { useAdminHeaderSlot, useAdminSearch } from '@/components/layout/HeaderSlotContext'
+import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import {
@@ -185,44 +184,29 @@ function InventarioContextBar({ inventario, onCambiar }) {
 // siempre da null.
 function InventarioHeaderTabs({ activeTab, onTabChange }) {
   const setHeaderCenter = useAdminHeaderSlot()
-  const openSearch = useAdminSearch()
 
   useEffect(() => {
     if (!setHeaderCenter) return
     setHeaderCenter(
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={`h-8 rounded-full px-3.5 text-sm font-semibold transition ${
-                activeTab === tab.id
-                  ? 'bg-card text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        {openSearch && (
-          <SimpleTooltip label="Buscar">
-            <button
-              type="button"
-              onClick={openSearch}
-              aria-label="Buscar"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          </SimpleTooltip>
-        )}
+      <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            className={`h-8 rounded-full px-3.5 text-sm font-semibold transition ${
+              activeTab === tab.id
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
     )
     return () => setHeaderCenter(null)
-  }, [setHeaderCenter, openSearch, activeTab, onTabChange])
+  }, [setHeaderCenter, activeTab, onTabChange])
 
   return null
 }
@@ -342,7 +326,6 @@ export default function InventarioPage() {
   return (
     <AdminShell
       currentKey="inventario"
-      headerVariant="light"
       title="Inventario y control de cantidades"
       description="Revisa categorías, alertas, productos activos y movimientos de inventario con un lenguaje claro de oficina clínica."
       headerBadge={
