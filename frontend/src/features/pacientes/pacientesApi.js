@@ -30,8 +30,18 @@ export const pacientesApi = {
     return data
   },
 
+  async editarPropietario(propietarioId, payload) {
+    const { data } = await api.put(`/propietarios/${propietarioId}`, payload)
+    return data
+  },
+
   async crearMascota(payload) {
     const { data } = await api.post('/mascotas', payload)
+    return data
+  },
+
+  async editarMascota(mascotaId, payload) {
+    const { data } = await api.put(`/mascotas/${mascotaId}`, payload)
     return data
   },
 

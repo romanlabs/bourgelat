@@ -32,7 +32,10 @@ const DEFAULT_VALUES = {
 const fieldClass =
   'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
 
-export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
+// editingTutor es opcional: el drawer tambien se usa en alta rapida desde recepcion.
+export default function TutorDrawer({ open, onClose, onSubmit, isPending, editingTutor = null }) {
+  const modoEdicion = Boolean(editingTutor)
+
   const {
     register,
     control,
@@ -42,8 +45,20 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
   } = useForm({ resolver: zodResolver(tutorSchema), defaultValues: DEFAULT_VALUES })
 
   useEffect(() => {
-    if (open) reset(DEFAULT_VALUES)
-  }, [open, reset])
+    if (!open) return
+    reset(
+      editingTutor
+        ? {
+            nombre: editingTutor.nombre || '',
+            tipoDocumento: editingTutor.tipoDocumento || 'CC',
+            numeroDocumento: editingTutor.numeroDocumento || '',
+            telefono: editingTutor.telefono || '',
+            email: editingTutor.email || '',
+            ciudad: editingTutor.ciudad || '',
+          }
+        : DEFAULT_VALUES
+    )
+  }, [open, editingTutor, reset])
 
   useEffect(() => {
     if (!open) return
@@ -64,13 +79,17 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Nuevo tutor"
+        aria-label={modoEdicion ? 'Editar tutor' : 'Nuevo tutor'}
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
-            <p className="text-sm font-semibold text-foreground">Nuevo tutor</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Alta rapida del responsable del paciente.</p>
+            <p className="text-sm font-semibold text-foreground">{modoEdicion ? 'Editar tutor' : 'Nuevo tutor'}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {modoEdicion
+                ? 'Corrige los datos del responsable del paciente.'
+                : 'Alta rapida del responsable del paciente.'}
+            </p>
           </div>
           <button
             type="button"
@@ -155,7 +174,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending }) {
             disabled={isPending}
             className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Guardando...' : 'Guardar tutor'}
+            {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar tutor' : 'Guardar tutor'}
           </button>
           <button type="button" onClick={onClose} className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted">
             Cancelar

@@ -6,6 +6,7 @@ const { parsePaginacion } = require('../utils/paginacion')
 const { iLikeSinTildes } = require('../utils/busqueda')
 const { tenantWhere } = require('../utils/tenant')
 const busquedaPropietario = require('../services/busquedaPropietarioService')
+const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 
 const crearMascota = async (req, res) => {
   try {
@@ -28,6 +29,15 @@ const crearMascota = async (req, res) => {
       nombre, especie, raza, sexo, fechaNacimiento,
       peso, color, esterilizado, microchip, observaciones, fotoPerfil,
       propietarioId, clinicaId,
+    });
+
+    await registrarAuditoria({
+      accion: 'CREAR_MASCOTA',
+      entidad: 'Mascota',
+      entidadId: mascota.id,
+      descripcion: 'Paciente registrado',
+      req,
+      resultado: 'exitoso',
     });
 
     res.status(201).json({
@@ -152,15 +162,27 @@ const editarMascota = async (req, res) => {
       fotoPerfil,
     } = req.body;
 
-    const mascota = await Mascota.findOne({ where: { id, clinicaId } });
+    const mascota = await Mascota.findOne({ where: tenantWhere(req, { id }) });
 
     if (!mascota) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
     }
 
-    await mascota.update({
+    const cambios = {
       nombre, raza, sexo, fechaNacimiento,
       peso, color, esterilizado, microchip, observaciones, fotoPerfil,
+    };
+
+    await mascota.update(cambios);
+
+    await registrarAuditoria({
+      accion: 'EDITAR_MASCOTA',
+      entidad: 'Mascota',
+      entidadId: mascota.id,
+      descripcion: 'Paciente actualizado',
+      datosNuevos: { camposModificados: Object.keys(cambios).filter((c) => cambios[c] !== undefined) },
+      req,
+      resultado: 'exitoso',
     });
 
     res.json({
@@ -184,6 +206,15 @@ const desactivarMascota = async (req, res) => {
     }
 
     await mascota.update({ activo: false });
+
+    await registrarAuditoria({
+      accion: 'DESACTIVAR_MASCOTA',
+      entidad: 'Mascota',
+      entidadId: mascota.id,
+      descripcion: 'Paciente desactivado',
+      req,
+      resultado: 'exitoso',
+    });
 
     res.json({ message: 'Mascota desactivada exitosamente' });
   } catch (error) {
