@@ -6,6 +6,7 @@ import {
   HeartPulse,
   LayoutDashboard,
   PawPrint,
+  Pencil,
   Plus,
   ShieldCheck,
   Sparkles,
@@ -24,6 +25,7 @@ import {
 import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { useSoloLectura } from '@/lib/useSoloLectura'
 import Paginacion from '@/components/shared/Paginacion'
 import SearchInput from '@/components/shared/SearchInput'
 import PacienteDrawer from '@/features/pacientes/PacienteDrawer'
@@ -81,8 +83,10 @@ export default function PacientesPage() {
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
   // Todos los planes incluyen pacientes, propietarios e historias.
   const puedeVerModulo = true
-  const puedeCrearTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
-  const puedeCrearPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  // Mismos roles que aceptan el POST y el PUT del backend en cada entidad.
+  const puedeGestionarTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
+  const puedeGestionarPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  const { propsAccion } = useSoloLectura()
 
   const enabled = rolPermitido && puedeVerModulo
 
@@ -270,11 +274,12 @@ export default function PacientesPage() {
                     options={SPECIES_OPTIONS}
                   />
                 </div>
-                {puedeCrearPaciente && (
+                {puedeGestionarPaciente && (
                   <button
                     type="button"
-                    onClick={mascotasHook.openDrawer}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    onClick={mascotasHook.openCreateDrawer}
+                    {...propsAccion}
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" />
                     Nuevo paciente
@@ -343,6 +348,20 @@ export default function PacientesPage() {
                               Antecedentes
                             </NavCtaLink>
                           )}
+                          {puedeGestionarPaciente && (
+                            <>
+                              <span className="h-3.5 w-px bg-border" aria-hidden="true" />
+                              <NavCtaLink
+                                size="sm"
+                                onClick={() => mascotasHook.openEditDrawer(row.raw)}
+                                aria-label={`Editar ${row.paciente}`}
+                                {...propsAccion}
+                              >
+                                <Pencil />
+                                Editar
+                              </NavCtaLink>
+                            </>
+                          )}
                         </div>
                       ),
                     },
@@ -380,11 +399,12 @@ export default function PacientesPage() {
                   cargando={tutoresHook.tutoresQuery.isFetching}
                   className="w-72 max-w-full"
                 />
-                {puedeCrearTutor && (
+                {puedeGestionarTutor && (
                   <button
                     type="button"
-                    onClick={tutoresHook.openDrawer}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    onClick={tutoresHook.openCreateDrawer}
+                    {...propsAccion}
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <UserRound className="h-4 w-4" />
                     Nuevo tutor
@@ -416,6 +436,23 @@ export default function PacientesPage() {
                     { key: 'telefono', label: 'Telefono' },
                     { key: 'email', label: 'Correo' },
                     { key: 'ciudad', label: 'Ciudad' },
+                    ...(puedeGestionarTutor
+                      ? [{
+                          key: 'acciones',
+                          label: 'Acciones',
+                          render: (row) => (
+                            <NavCtaLink
+                              size="sm"
+                              onClick={() => tutoresHook.openEditDrawer(row.raw)}
+                              aria-label={`Editar ${row.nombre}`}
+                              {...propsAccion}
+                            >
+                              <Pencil />
+                              Editar
+                            </NavCtaLink>
+                          ),
+                        }]
+                      : []),
                   ]}
                   emptyTitle={
                     tutoresHook.buscarAplicado
@@ -440,9 +477,10 @@ export default function PacientesPage() {
         </div>
       )}
 
-      {/* Drawer: Nuevo paciente */}
+      {/* Drawer: alta y edicion de paciente */}
       <PacienteDrawer
         open={mascotasHook.drawerOpen}
+        editingPaciente={mascotasHook.editingPaciente}
         propietarios={mascotasHook.propietariosSelectorQuery.data?.propietarios || []}
         isSearchingOwners={mascotasHook.propietariosSelectorQuery.isFetching}
         ownerSearch={mascotasHook.ownerSearch}
@@ -452,9 +490,10 @@ export default function PacientesPage() {
         isPending={mascotasHook.isPending}
       />
 
-      {/* Drawer: Nuevo tutor */}
+      {/* Drawer: alta y edicion de tutor */}
       <TutorDrawer
         open={tutoresHook.drawerOpen}
+        editingTutor={tutoresHook.editingTutor}
         onClose={tutoresHook.closeDrawer}
         onSubmit={tutoresHook.handleDrawerSubmit}
         isPending={tutoresHook.isPending}

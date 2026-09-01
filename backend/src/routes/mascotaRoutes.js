@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { body, query } = require('express-validator')
+const { body, param, query } = require('express-validator')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -96,6 +96,8 @@ router.put(
   verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'),
   requerirEscritura,
   [
+    param('id').isUUID().withMessage('Mascota no valida'),
+    body('nombre').optional().notEmpty().withMessage('El nombre no puede estar vacio').trim(),
     body('peso').optional().isFloat({ min: 0 }).withMessage('El peso debe ser un numero positivo'),
     body('sexo')
       .optional()

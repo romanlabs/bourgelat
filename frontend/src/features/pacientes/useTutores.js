@@ -23,6 +23,7 @@ export function useTutores({ enabled }) {
   const [buscar, setBuscar] = useState(() => (esTabActivo && searchParams.get('buscar')) || '')
   const [pagina, setPagina] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingTutor, setEditingTutor] = useState(null)
 
   const buscarDiferido = useDebouncedValue(buscar.trim())
 
@@ -60,15 +61,31 @@ export function useTutores({ enabled }) {
     placeholderData: (prev) => prev,
   })
 
+  // La tabla de pacientes muestra nombre y telefono del tutor embebidos, por eso
+  // cualquier mutacion de tutores tambien invalida 'pacientes-mascotas'.
+  function invalidarTutores() {
+    queryClient.invalidateQueries({ queryKey: ['pacientes-tutores'] })
+    queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-resumen'] })
+    queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-selector'] })
+    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
+  }
+
   const crearPropietarioMutation = useMutation({
     mutationFn: pacientesApi.crearPropietario,
     onSuccess: (data) => {
       toast.success(data?.message || 'Tutor registrado exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['pacientes-tutores'] })
-      queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-selector'] })
+      invalidarTutores()
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el tutor.')),
+  })
+
+  const editarPropietarioMutation = useMutation({
+    mutationFn: ({ propietarioId, payload }) => pacientesApi.editarPropietario(propietarioId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Tutor actualizado exitosamente')
+      invalidarTutores()
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el tutor.')),
   })
 
   const tutoresRows = useMemo(
@@ -85,8 +102,20 @@ export function useTutores({ enabled }) {
     [tutoresQuery.data?.propietarios]
   )
 
-  function openDrawer() { setDrawerOpen(true) }
-  function closeDrawer() { setDrawerOpen(false) }
+  function openCreateDrawer() {
+    setEditingTutor(null)
+    setDrawerOpen(true)
+  }
+
+  function openEditDrawer(tutor) {
+    setEditingTutor(tutor)
+    setDrawerOpen(true)
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false)
+    setEditingTutor(null)
+  }
 
   function handleDrawerSubmit(formData) {
     const payload = {
@@ -97,6 +126,15 @@ export function useTutores({ enabled }) {
       email: formData.email?.trim().toLowerCase() || undefined,
       ciudad: formData.ciudad?.trim() || undefined,
     }
+
+    if (editingTutor) {
+      editarPropietarioMutation.mutate(
+        { propietarioId: editingTutor.id, payload },
+        { onSuccess: () => closeDrawer() }
+      )
+      return
+    }
+
     crearPropietarioMutation.mutate(payload, {
       onSuccess: () => closeDrawer(),
     })
@@ -109,8 +147,10 @@ export function useTutores({ enabled }) {
     buscarAplicado: buscarDiferido,
     pagina, setPagina,
     drawerOpen,
-    isPending: crearPropietarioMutation.isPending,
-    openDrawer,
+    editingTutor,
+    isPending: crearPropietarioMutation.isPending || editarPropietarioMutation.isPending,
+    openCreateDrawer,
+    openEditDrawer,
     closeDrawer,
     handleDrawerSubmit,
   }

@@ -67,7 +67,9 @@ export default function PacienteDrawer({
   onClose,
   onSubmit,
   isPending,
+  editingPaciente = null,
 }) {
+  const modoEdicion = Boolean(editingPaciente)
   const [selectedOwner, setSelectedOwner] = useState(null)
   const [photoFile, setPhotoFile] = useState(null)
   const [photoInputKey, setPhotoInputKey] = useState(0)
@@ -85,24 +87,42 @@ export default function PacienteDrawer({
   const especieWatch = watch('especie')
   const razaWatch = watch('raza')
 
-  const photoPreview = useMemo(() => {
+  const photoObjectUrl = useMemo(() => {
     if (!photoFile) return ''
     return URL.createObjectURL(photoFile)
   }, [photoFile])
 
   useEffect(() => {
-    return () => { if (photoPreview) URL.revokeObjectURL(photoPreview) }
-  }, [photoPreview])
+    return () => { if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl) }
+  }, [photoObjectUrl])
+
+  // Sin foto nueva, en edicion se muestra la que ya tiene el paciente.
+  const photoPreview = photoObjectUrl || (modoEdicion ? editingPaciente.fotoPerfil || '' : '')
 
   useEffect(() => {
-    if (open) {
-      reset(DEFAULT_VALUES)
-      setSelectedOwner(null)
-      setPhotoFile(null)
-      setPhotoInputKey((k) => k + 1)
-      onOwnerSearch('')
-    }
-  }, [open, reset, onOwnerSearch])
+    if (!open) return
+    reset(
+      editingPaciente
+        ? {
+            nombre: editingPaciente.nombre || '',
+            especie: editingPaciente.especie || 'perro',
+            raza: editingPaciente.raza || '',
+            sexo: editingPaciente.sexo || 'desconocido',
+            fechaNacimiento: editingPaciente.fechaNacimiento
+              ? String(editingPaciente.fechaNacimiento).slice(0, 10)
+              : '',
+            peso: editingPaciente.peso ?? '',
+            color: editingPaciente.color || '',
+            observaciones: editingPaciente.observaciones || '',
+            esterilizado: Boolean(editingPaciente.esterilizado),
+          }
+        : DEFAULT_VALUES
+    )
+    setSelectedOwner(editingPaciente?.Propietario || null)
+    setPhotoFile(null)
+    setPhotoInputKey((k) => k + 1)
+    onOwnerSearch('')
+  }, [open, editingPaciente, reset, onOwnerSearch])
 
   useEffect(() => {
     if (!open) return
@@ -128,12 +148,12 @@ export default function PacienteDrawer({
   }
 
   function handleFormSubmit(formData) {
-    if (!selectedOwner) {
+    if (!modoEdicion && !selectedOwner) {
       alert('Selecciona un tutor antes de registrar el paciente.')
       return
     }
     const payload = {
-      propietarioId: selectedOwner.id,
+      propietarioId: selectedOwner?.id,
       nombre: formData.nombre.trim(),
       especie: formData.especie,
       raza: formData.raza?.trim() || undefined,
@@ -171,14 +191,18 @@ export default function PacienteDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Nuevo paciente"
+        aria-label={modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[520px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
-            <p className="text-sm font-semibold text-foreground">Nuevo paciente</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Selecciona el tutor y completa la ficha del paciente.</p>
+            <p className="text-sm font-semibold text-foreground">{modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {modoEdicion
+                ? 'Corrige la ficha del paciente.'
+                : 'Selecciona el tutor y completa la ficha del paciente.'}
+            </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground">
             <X className="h-4 w-4" />
@@ -195,7 +219,19 @@ export default function PacienteDrawer({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Tutor responsable *</p>
               </div>
 
-              {selectedOwner ? (
+              {modoEdicion ? (
+                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
+                  <p className="font-semibold">{selectedOwner?.nombre || 'Sin tutor'}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {selectedOwner?.telefono || 'Sin telefono'}
+                    {selectedOwner?.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
+                  </p>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    El tutor no se puede reasignar desde aqui: cambiarlo afectaria historias, citas y
+                    facturas ya emitidas.
+                  </p>
+                </div>
+              ) : selectedOwner ? (
                 <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   <p className="font-semibold">{selectedOwner.nombre}</p>
                   <p className="mt-1 text-xs">
@@ -323,9 +359,15 @@ export default function PacienteDrawer({
                         value={field.value}
                         onValueChange={field.onChange}
                         options={SPECIES_FORM_OPTIONS}
+                        disabled={modoEdicion}
                       />
                     )}
                   />
+                  {modoEdicion && (
+                    <p className="text-[11px] text-muted-foreground">
+                      La especie no se puede cambiar despues del registro.
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-raza" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Raza o cruce</label>
@@ -385,7 +427,7 @@ export default function PacienteDrawer({
             disabled={isPending}
             className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Guardando...' : 'Guardar paciente'}
+            {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar paciente' : 'Guardar paciente'}
           </button>
           <button type="button" onClick={onClose} className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted">
             Cancelar
