@@ -15,10 +15,25 @@ const TIPOS_CITA = [
   'control', 'urgencia', 'peluqueria', 'laboratorio', 'radiografia', 'otro',
 ]
 
+const HORA_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/
+
+// El horario de atencion compara horas como texto, asi que el formato HH:MM
+// tiene que estar garantizado antes de llegar al controlador.
+const validadoresHorario = [
+  body('horaInicio')
+    .notEmpty().withMessage('La hora de inicio es obligatoria')
+    .bail()
+    .matches(HORA_REGEX).withMessage('La hora de inicio debe tener el formato HH:MM'),
+  body('horaFin')
+    .notEmpty().withMessage('La hora de fin es obligatoria')
+    .bail()
+    .matches(HORA_REGEX).withMessage('La hora de fin debe tener el formato HH:MM'),
+  body('forzarFueraDeHorario').optional().isBoolean(),
+]
+
 router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'veterinario'), requerirEscritura, [
   body('fecha').isDate().withMessage('Fecha no válida'),
-  body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
-  body('horaFin').notEmpty().withMessage('La hora de fin es obligatoria'),
+  ...validadoresHorario,
   body('motivo').notEmpty().withMessage('El motivo es obligatorio').trim(),
   body('mascotaId').isUUID().withMessage('Mascota no válida'),
   body('propietarioId').isUUID().withMessage('Propietario no válido'),
@@ -66,8 +81,7 @@ router.patch('/:id/estado', verificarToken, verificarRol('admin', 'superadmin', 
 
 router.patch('/:id/reprogramar', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista'), requerirEscritura, [
   body('fecha').isDate().withMessage('Fecha no válida'),
-  body('horaInicio').notEmpty().withMessage('La hora de inicio es obligatoria'),
-  body('horaFin').notEmpty().withMessage('La hora de fin es obligatoria'),
+  ...validadoresHorario,
   validar,
 ], reprogramarCita)
 

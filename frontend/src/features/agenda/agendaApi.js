@@ -6,6 +6,12 @@ const cleanParams = (params) =>
   )
 
 export const agendaApi = {
+  /** Horario de atencion + bloqueos del rango; los devuelve el mismo endpoint. */
+  async obtenerDisponibilidadAgenda({ desde, hasta } = {}) {
+    const { data } = await api.get('/bloqueos-agenda', { params: cleanParams({ desde, hasta }) })
+    return data
+  },
+
   async obtenerCitas({
     fecha,
     fechaDesde,
