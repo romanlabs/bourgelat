@@ -3,7 +3,8 @@ import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import {
-  TOTAL_SLOTS,
+  HORA_INICIO,
+  HORA_FIN,
   SLOT_HEIGHT_MAX,
   SLOT_HEIGHT_MIN,
   timeToTop,
@@ -17,35 +18,35 @@ function formatHourLabel(slot) {
   return `${h12} ${hour < 12 ? 'AM' : 'PM'}`
 }
 
-/** Alto de slot fluido: intenta que el día completo quepa en el contenedor. */
-function useSlotHeight(containerRef) {
+/** Alto de slot fluido: intenta que la grilla completa quepa en el contenedor. */
+function useSlotHeight(containerRef, totalSlots) {
   const [slotHeight, setSlotHeight] = useState(SLOT_HEIGHT_MAX)
 
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || !totalSlots) return
     const medir = () => {
       const disponible = el.clientHeight
       if (!disponible) return
-      const ideal = Math.floor(disponible / TOTAL_SLOTS)
+      const ideal = Math.floor(disponible / totalSlots)
       setSlotHeight(Math.min(SLOT_HEIGHT_MAX, Math.max(SLOT_HEIGHT_MIN, ideal)))
     }
     medir()
     const ro = new ResizeObserver(medir)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [containerRef])
+  }, [containerRef, totalSlots])
 
   return slotHeight
 }
 
-function NowLine({ slotHeight }) {
+function NowLine({ slotHeight, gridInicio }) {
   // Incluye segundos como fraccion de minuto para que la linea avance
   // de forma continua, no a saltos de un minuto completo.
   const getNowTop = () => {
     const now = new Date()
     const str = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    const base = timeToTop(str, slotHeight)
+    const base = timeToTop(str, slotHeight, gridInicio)
     const fraccionMinuto = now.getSeconds() / 60
     return base + (fraccionMinuto * slotHeight) / 30
   }
@@ -57,7 +58,7 @@ function NowLine({ slotHeight }) {
     const id = setInterval(() => setTop(getNowTop()), 1_000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slotHeight])
+  }, [slotHeight, gridInicio])
 
   return (
     <div
@@ -85,10 +86,14 @@ export function TimeGridView({
   onCitaClick,
   isLoading,
   showTimezoneLabel = true,
+  gridInicio = HORA_INICIO,
+  gridFin = HORA_FIN,
+  esHabil,
+  getBloqueoDelDia,
 }) {
   const scrollRef = useRef(null)
-  const slotHeight = useSlotHeight(scrollRef)
-  const gridHeight = TOTAL_SLOTS * slotHeight
+  const slotHeight = useSlotHeight(scrollRef, slots.length)
+  const gridHeight = slots.length * slotHeight
   const esDia = days.length === 1
   const gridCols = `64px repeat(${days.length}, minmax(0, 1fr))`
 
@@ -98,10 +103,9 @@ export function TimeGridView({
     if (!el || el.scrollHeight <= el.clientHeight) return
     const now = new Date()
     const str = `${String(now.getHours()).padStart(2, '0')}:00`
-    el.scrollTop = Math.max(0, timeToTop(str, slotHeight) - 80)
+    el.scrollTop = Math.max(0, timeToTop(str, slotHeight, gridInicio) - 80)
     // Solo al montar / cambiar densidad — no perseguir el reloj
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slotHeight])
+  }, [slotHeight, gridInicio])
 
   return (
     <div
@@ -122,12 +126,14 @@ export function TimeGridView({
         {days.map((day) => {
           const esHoy = isToday(day)
           const count = getCitasDelDia(day).length
+          const bloqueo = getBloqueoDelDia?.(day)
           return (
             <div
               key={day.toISOString()}
               className={cn(
                 'border-r border-border py-2 text-center last:border-r-0',
-                esHoy && 'bg-primary/5'
+                esHoy && 'bg-primary/5',
+                bloqueo && 'bg-amber-50 dark:bg-amber-950/30'
               )}
             >
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -153,6 +159,16 @@ export function TimeGridView({
                   {count}
                 </span>
               )}
+              {/* En la cabecera (sticky) para que el motivo siga visible al
+                  desplazar la grilla */}
+              {bloqueo ? (
+                <p
+                  title={bloqueo.motivo}
+                  className="mx-1 mt-1 truncate rounded-sm bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200"
+                >
+                  {bloqueo.motivo}
+                </p>
+              ) : null}
             </div>
           )
         })}
@@ -181,6 +197,7 @@ export function TimeGridView({
         {days.map((day) => {
           const esHoy = isToday(day)
           const citasDelDia = getCitasDelDia(day)
+          const bloqueoDelDia = getBloqueoDelDia?.(day)
 
           return (
             <div
@@ -189,37 +206,48 @@ export function TimeGridView({
               style={{ height: `${gridHeight}px` }}
             >
               {/* Fondos de slot (clickeables para nueva cita) */}
-              {slots.map((slot, idx) => (
-                <div
-                  key={slot}
-                  role={puedeProgramar ? 'button' : undefined}
-                  tabIndex={puedeProgramar ? 0 : undefined}
-                  aria-label={
-                    puedeProgramar
-                      ? `Nueva cita el ${format(day, "d 'de' MMMM", { locale: es })} a las ${slot}`
-                      : undefined
-                  }
-                  className={cn(
-                    'absolute w-full',
-                    slot.endsWith(':00') && idx > 0 && 'border-t border-border',
-                    puedeProgramar && 'hover:bg-accent/30 cursor-pointer transition-colors'
-                  )}
-                  style={{
-                    top: `${idx * slotHeight}px`,
-                    height: `${slotHeight}px`,
-                  }}
-                  onClick={() => {
-                    if (puedeProgramar && onSlotClick) {
-                      onSlotClick(format(day, 'yyyy-MM-dd'), slot)
+              {slots.map((slot, idx) => {
+                // Fuera del horario de atención o dentro de un bloqueo: la API
+                // rechazaría la cita, así que tampoco se ofrece el slot.
+                const habil = esHabil ? esHabil(day, slot) : true
+                const clickeable = puedeProgramar && habil
+
+                return (
+                  <div
+                    key={slot}
+                    role={clickeable ? 'button' : undefined}
+                    tabIndex={clickeable ? 0 : undefined}
+                    aria-disabled={puedeProgramar && !habil ? true : undefined}
+                    title={!habil ? bloqueoDelDia?.motivo || 'Fuera del horario de atención' : undefined}
+                    aria-label={
+                      clickeable
+                        ? `Nueva cita el ${format(day, "d 'de' MMMM", { locale: es })} a las ${slot}`
+                        : undefined
                     }
-                  }}
-                  onKeyDown={(e) => {
-                    if (puedeProgramar && onSlotClick && (e.key === 'Enter' || e.key === ' ')) {
-                      onSlotClick(format(day, 'yyyy-MM-dd'), slot)
-                    }
-                  }}
-                />
-              ))}
+                    className={cn(
+                      'absolute w-full',
+                      slot.endsWith(':00') && idx > 0 && 'border-t border-border',
+                      !habil && 'bg-muted/60',
+                      clickeable && 'hover:bg-accent/30 cursor-pointer transition-colors'
+                    )}
+                    style={{
+                      top: `${idx * slotHeight}px`,
+                      height: `${slotHeight}px`,
+                    }}
+                    onClick={() => {
+                      if (clickeable && onSlotClick) {
+                        onSlotClick(format(day, 'yyyy-MM-dd'), slot)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (clickeable && onSlotClick && (e.key === 'Enter' || e.key === ' ')) {
+                        onSlotClick(format(day, 'yyyy-MM-dd'), slot)
+                      }
+                    }}
+                  />
+                )
+              })}
+
 
               {/* Skeleton de carga */}
               {isLoading &&
@@ -232,7 +260,7 @@ export function TimeGridView({
                 ))}
 
               {/* Indicador de hora actual */}
-              {!isLoading && esHoy && <NowLine slotHeight={slotHeight} />}
+              {!isLoading && esHoy && <NowLine slotHeight={slotHeight} gridInicio={gridInicio} />}
 
               {/* Chips de citas */}
               {!isLoading &&
@@ -243,6 +271,8 @@ export function TimeGridView({
                     onClick={onCitaClick}
                     esProxima={esHoy && cita.id === proximaCitaId}
                     slotHeight={slotHeight}
+                    gridInicio={gridInicio}
+                    gridFin={gridFin}
                   />
                 ))}
             </div>

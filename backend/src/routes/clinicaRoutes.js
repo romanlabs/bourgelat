@@ -4,6 +4,7 @@ const { body } = require('express-validator')
 const {
   obtenerClinicaActual,
   actualizarClinicaActual,
+  actualizarHorarioAtencion,
 } = require('../controllers/clinicaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
@@ -55,6 +56,24 @@ router.put(
     validar,
   ],
   actualizarClinicaActual
+)
+
+// El horario se lee con GET / (viene dentro de la ficha de la clinica); aqui
+// solo se guarda completo. La validacion fina de franjas vive en el servicio.
+router.put(
+  '/horario-atencion',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  [
+    body('horarioAtencion')
+      .exists()
+      .withMessage('Debes enviar el horario de atencion')
+      .custom((valor) => valor === null || (typeof valor === 'object' && !Array.isArray(valor)))
+      .withMessage('El horario debe ser un objeto con los dias de la semana'),
+    validar,
+  ],
+  actualizarHorarioAtencion
 )
 
 module.exports = router

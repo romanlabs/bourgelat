@@ -1,5 +1,10 @@
 import api from '@/lib/api'
 
+const cleanParams = (params) =>
+  Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+  )
+
 export const configuracionApi = {
   async obtenerClinica() {
     const { data } = await api.get('/clinica')
@@ -8,6 +13,33 @@ export const configuracionApi = {
 
   async actualizarClinica(payload) {
     const { data } = await api.put('/clinica', payload)
+    return data
+  },
+
+  async actualizarHorarioAtencion(horarioAtencion) {
+    const { data } = await api.put('/clinica/horario-atencion', { horarioAtencion })
+    return data
+  },
+
+  async obtenerBloqueos({ desde, hasta } = {}) {
+    const { data } = await api.get('/bloqueos-agenda', { params: cleanParams({ desde, hasta }) })
+    return data
+  },
+
+  async calcularImpactoBloqueo({ fechaInicio, fechaFin, horaInicio, horaFin }) {
+    const { data } = await api.get('/bloqueos-agenda/impacto', {
+      params: cleanParams({ fechaInicio, fechaFin, horaInicio, horaFin }),
+    })
+    return data
+  },
+
+  async crearBloqueo(payload) {
+    const { data } = await api.post('/bloqueos-agenda', payload)
+    return data
+  },
+
+  async eliminarBloqueo(id) {
+    const { data } = await api.delete(`/bloqueos-agenda/${id}`)
     return data
   },
 

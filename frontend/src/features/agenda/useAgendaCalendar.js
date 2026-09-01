@@ -16,7 +16,13 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { agendaApi } from './agendaApi'
-import { generarSlots, parseMinutes } from './calendarConstants'
+import {
+  generarSlots,
+  parseMinutes,
+  rangoVisibleDeHorario,
+  esSlotHabil,
+  bloqueoDeDiaCompleto,
+} from './calendarConstants'
 
 // Re-exports para compatibilidad con imports existentes
 export {
@@ -119,7 +125,34 @@ export function useAgendaCalendar({
     placeholderData: (prev) => prev,
   })
 
-  const slots = useMemo(() => generarSlots(), [])
+  // Horario de atencion y bloqueos: definen que slots se pueden agendar y
+  // recortan la grilla a las horas en las que la clinica realmente atiende.
+  const disponibilidadQuery = useQuery({
+    queryKey: ['agenda-disponibilidad', fechaDesde, fechaHasta],
+    queryFn: () => agendaApi.obtenerDisponibilidadAgenda({ desde: fechaDesde, hasta: fechaHasta }),
+    enabled,
+    placeholderData: (prev) => prev,
+  })
+
+  const horarioAtencion = disponibilidadQuery.data?.horarioAtencion || null
+  const bloqueos = useMemo(
+    () => disponibilidadQuery.data?.bloqueos || [],
+    [disponibilidadQuery.data?.bloqueos]
+  )
+
+  const { horaInicio: gridInicio, horaFin: gridFin } = useMemo(
+    () => rangoVisibleDeHorario(horarioAtencion),
+    [horarioAtencion]
+  )
+
+  const slots = useMemo(() => generarSlots(gridInicio, gridFin), [gridInicio, gridFin])
+
+  /** ¿Se puede agendar en este slot? (objeto Date + "HH:MM") */
+  const esHabil = (date, slot) =>
+    esSlotHabil(format(date, 'yyyy-MM-dd'), slot, { horarioAtencion, bloqueos })
+
+  /** Bloqueo que cubre el día completo, si lo hay (para marcarlo en la vista mes). */
+  const getBloqueoDelDia = (date) => bloqueoDeDiaCompleto(format(date, 'yyyy-MM-dd'), bloqueos)
   const citas = useMemo(() => {
     const todas = citasQuery.data?.citas || []
     return todas.filter((cita) => {
@@ -205,5 +238,11 @@ export function useAgendaCalendar({
     isLoading: citasQuery.isLoading,
     isFetching: citasQuery.isFetching,
     slots,
+    gridInicio,
+    gridFin,
+    horarioAtencion,
+    bloqueos,
+    esHabil,
+    getBloqueoDelDia,
   }
 }
