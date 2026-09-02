@@ -34,6 +34,47 @@ const esTurnoVencido = (turno, ahora = new Date()) => {
   return inicioDelDia(turno.fechaApertura).getTime() < inicioDelDia(ahora).getTime()
 }
 
+const aHoraHHMM = (fecha) => {
+  const d = new Date(fecha)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+/**
+ * Hora de cierre ('HH:MM') de un dia de la semana segun el horario de atencion
+ * de la clinica, o null si ese dia no atiende o no hay horario configurado.
+ * El horario tiene la forma { '0'..'6': [{ inicio, fin }] } que produce
+ * horarioAtencionService; el cierre es el fin de la ultima franja del dia.
+ * Se comparan cadenas 'HH:MM', igual que ese servicio: el orden lexicografico
+ * coincide con el cronologico y evita pasar por Date.
+ */
+const horaCierreDelDia = (horarioAtencion, diaSemana) => {
+  if (!horarioAtencion) return null
+
+  const franjas = horarioAtencion[String(diaSemana)]
+  if (!Array.isArray(franjas) || franjas.length === 0) return null
+
+  const cierre = franjas.reduce((mayor, franja) => {
+    const fin = typeof franja?.fin === 'string' ? franja.fin.slice(0, 5) : null
+    return fin && fin > mayor ? fin : mayor
+  }, '')
+
+  return cierre || null
+}
+
+/**
+ * Aviso, no bloqueo: la clinica ya cerro segun su horario configurado y el
+ * turno de hoy sigue abierto. Un turno ya vencido (de un dia anterior) no
+ * entra aqui, porque ese caso ya bloquea la operacion.
+ */
+const turnoFueraDeHorario = (turno, horarioAtencion, ahora = new Date()) => {
+  if (esTurnoVencido(turno, ahora)) return false
+
+  const cierre = horaCierreDelDia(horarioAtencion, new Date(turno.fechaApertura).getDay())
+  if (!cierre) return false
+
+  return aHoraHHMM(ahora) > cierre
+}
+
 // Valida el monto contado y calcula el descuadre del cierre. No toca la BD:
 // devuelve { error } o los datos ya listos para el update() del modelo.
 const calcularCierreTurno = (turno, { montoFinalContado, observacionesCierre, categoriaDiferencia }) => {
@@ -87,5 +128,7 @@ module.exports = {
   convertirANumero,
   redondear,
   esTurnoVencido,
+  horaCierreDelDia,
+  turnoFueraDeHorario,
   calcularCierreTurno,
 }

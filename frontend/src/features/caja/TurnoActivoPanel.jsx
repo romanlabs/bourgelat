@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Banknote, ChevronDown, ChevronUp, PlusCircle, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Banknote, ChevronDown, ChevronUp, Clock, PlusCircle, Wallet } from 'lucide-react'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -83,6 +83,16 @@ export default function TurnoActivoPanel({ cajaHook }) {
           )
         }
       >
+        {!turnoActivo.vencido && turnoActivo.fueraDeHorario ? (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm leading-6 text-cyan-800 dark:border-cyan-700/60 dark:bg-cyan-900/30 dark:text-cyan-200">
+            <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <p>
+              La clinica ya cerro{turnoActivo.horaCierre ? ` (${turnoActivo.horaCierre})` : ''} y tu turno sigue abierto.
+              Puedes seguir cobrando si lo necesitas, pero cierralo antes de irte para dejar el corte del dia listo.
+            </p>
+          </div>
+        ) : null}
+
         {turnoActivo.vencido ? (
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />

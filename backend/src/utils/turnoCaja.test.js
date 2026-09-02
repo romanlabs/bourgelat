@@ -3,7 +3,14 @@
 // `npm test`). No requieren base de datos.
 
 const assert = require('assert')
-const { esTurnoVencido, calcularCierreTurno, convertirANumero, redondear } = require('./turnoCaja')
+const {
+  esTurnoVencido,
+  calcularCierreTurno,
+  convertirANumero,
+  redondear,
+  horaCierreDelDia,
+  turnoFueraDeHorario,
+} = require('./turnoCaja')
 
 // ── convertirANumero ─────────────────────────────────────────────────────
 assert.strictEqual(convertirANumero('12.5'), 12.5, 'string numerico')
@@ -105,5 +112,61 @@ resultado = calcularCierreTurno(turnoBase, {
 })
 assert.ok(!resultado.error)
 assert.strictEqual(resultado.requiereRevisionAdmin, true, '37000 de diferencia exige revision admin')
+
+// ── horaCierreDelDia ─────────────────────────────────────────────────────
+// El horario se guarda como { '0'..'6': [{ inicio, fin }] }, igual que en
+// horarioAtencionService. El cierre del dia es el fin de la ultima franja.
+const DIA_HOY = HOY.getDay()
+const horarioJornadaPartida = {
+  [String(DIA_HOY)]: [
+    { inicio: '08:00', fin: '12:00' },
+    { inicio: '14:00', fin: '18:00' },
+  ],
+}
+
+assert.strictEqual(horaCierreDelDia(null, DIA_HOY), null, 'sin horario configurado -> null')
+assert.strictEqual(horaCierreDelDia({}, DIA_HOY), null, 'dia sin franjas -> null')
+assert.strictEqual(horaCierreDelDia({ [String(DIA_HOY)]: [] }, DIA_HOY), null, 'lista vacia -> null')
+assert.strictEqual(
+  horaCierreDelDia(horarioJornadaPartida, DIA_HOY),
+  '18:00',
+  'jornada partida -> cierra con el fin de la ultima franja'
+)
+assert.strictEqual(
+  horaCierreDelDia({ [String(DIA_HOY)]: [{ inicio: '09:00', fin: '13:00' }] }, DIA_HOY),
+  '13:00',
+  'franja unica -> su hora de fin'
+)
+
+// ── turnoFueraDeHorario ──────────────────────────────────────────────────
+// Aviso (no bloqueo): la clinica ya cerro y el turno de hoy sigue abierto.
+const turnoDeHoy = { fechaApertura: hoyTemprano }
+const turnoDeAyer = { fechaApertura: ayerMismaHora }
+
+assert.strictEqual(
+  turnoFueraDeHorario(turnoDeHoy, horarioJornadaPartida, new Date('2026-09-02T17:30:00')),
+  false,
+  'antes del cierre no hay aviso'
+)
+assert.strictEqual(
+  turnoFueraDeHorario(turnoDeHoy, horarioJornadaPartida, new Date('2026-09-02T18:30:00')),
+  true,
+  'pasada la hora de cierre aparece el aviso'
+)
+assert.strictEqual(
+  turnoFueraDeHorario(turnoDeHoy, null, new Date('2026-09-02T23:00:00')),
+  false,
+  'sin horario configurado no hay aviso'
+)
+assert.strictEqual(
+  turnoFueraDeHorario(turnoDeHoy, {}, new Date('2026-09-02T23:00:00')),
+  false,
+  'dia sin franjas no genera aviso'
+)
+assert.strictEqual(
+  turnoFueraDeHorario(turnoDeAyer, horarioJornadaPartida, HOY),
+  false,
+  'un turno ya vencido es bloqueo, no aviso'
+)
 
 console.log('turnoCaja.test.js: OK')
