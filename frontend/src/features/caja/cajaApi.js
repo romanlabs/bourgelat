@@ -49,4 +49,14 @@ export const cajaApi = {
     })
     return data
   },
+
+  async listarTurnosVencidos() {
+    const { data } = await api.get('/caja/turnos/vencidos')
+    return data
+  },
+
+  async cerrarTurnoAdmin(turnoId, payload) {
+    const { data } = await api.patch(`/caja/turnos/${turnoId}/cerrar-admin`, payload)
+    return data
+  },
 }

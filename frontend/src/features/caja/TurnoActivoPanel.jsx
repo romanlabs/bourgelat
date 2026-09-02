@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowDownCircle, ArrowUpCircle, Banknote, ChevronDown, ChevronUp, PlusCircle, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Banknote, ChevronDown, ChevronUp, PlusCircle, Wallet } from 'lucide-react'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -74,9 +74,23 @@ export default function TurnoActivoPanel({ cajaHook }) {
         title="Turno activo"
         subtitle="Resumen en vivo del efectivo del turno. El sistema recalcula el efectivo esperado con cada venta y movimiento."
         action={
-          <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">Turno abierto</StatusPill>
+          turnoActivo.vencido ? (
+            <StatusPill tone="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+              Turno vencido
+            </StatusPill>
+          ) : (
+            <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">Turno abierto</StatusPill>
+          )
         }
       >
+        {turnoActivo.vencido ? (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <p>
+              Este turno se abrio el {new Date(turnoActivo.fechaApertura).toLocaleDateString('es-CO')} y quedo abierto de un dia anterior. No puedes seguir vendiendo ni registrar movimientos hasta cerrarlo.
+            </p>
+          </div>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Fondo inicial</p>
@@ -107,14 +121,16 @@ export default function TurnoActivoPanel({ cajaHook }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => setMovimientoOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Registrar movimiento
-          </button>
+          {!turnoActivo.vencido ? (
+            <button
+              type="button"
+              onClick={() => setMovimientoOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Registrar movimiento
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setCierreOpen(true)}
