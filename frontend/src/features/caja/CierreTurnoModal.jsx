@@ -20,7 +20,15 @@ import {
 
 const buildInitialForm = () => ({ montoFinalContado: '', observacionesCierre: '', categoriaDiferencia: '' })
 
-export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTurnoMutation }) {
+export default function CierreTurnoModal({
+  open,
+  onClose,
+  turnoActivo,
+  cerrarTurnoMutation,
+  turnoId = null,
+  titulo = 'Cerrar turno de caja',
+  descripcion = 'Cuenta el efectivo fisico en caja para comparar con lo esperado por el sistema.',
+}) {
   const [form, setForm] = useState(buildInitialForm)
 
   const montoFinalEsperado = useMemo(() => {
@@ -57,12 +65,14 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
     event.preventDefault()
     if (!puedeConfirmar) return
 
+    const payload = {
+      montoFinalContado: montoContado,
+      observacionesCierre: form.observacionesCierre.trim() || undefined,
+      categoriaDiferencia: form.categoriaDiferencia || undefined,
+    }
+
     cerrarTurnoMutation.mutate(
-      {
-        montoFinalContado: montoContado,
-        observacionesCierre: form.observacionesCierre.trim() || undefined,
-        categoriaDiferencia: form.categoriaDiferencia || undefined,
-      },
+      turnoId ? { turnoId, payload } : payload,
       { onSuccess: () => handleOpenChange(false) }
     )
   }
@@ -71,8 +81,8 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
     <DialogRoot open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Cerrar turno de caja</DialogTitle>
-          <DialogDescription>Cuenta el efectivo fisico en caja para comparar con lo esperado por el sistema.</DialogDescription>
+          <DialogTitle>{titulo}</DialogTitle>
+          <DialogDescription>{descripcion}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">

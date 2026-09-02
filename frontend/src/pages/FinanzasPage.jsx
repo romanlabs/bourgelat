@@ -45,6 +45,7 @@ import GastosRentabilidadPanel from '@/features/finanzas/GastosRentabilidadPanel
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
+import TurnosVencidosPanel from '@/features/caja/TurnosVencidosPanel'
 import ReporteDescuadresPanel from '@/features/caja/ReporteDescuadresPanel'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { hasAnyRole } from '@/lib/permissions'
@@ -91,8 +92,9 @@ export default function FinanzasPage() {
   const [facturaCreadaId, setFacturaCreadaId] = useState(null)
 
   const abrirPos = () => {
-    // Sin turno de caja no se puede facturar: llevamos al guard de la pestana.
-    if (!cajaHook.turnoActivo) {
+    // Sin turno de caja (o con uno vencido de un dia anterior) no se puede
+    // facturar: llevamos al guard de la pestana.
+    if (!cajaHook.turnoActivo || cajaHook.turnoActivo.vencido) {
       setActiveTab('facturacion')
       return
     }
@@ -159,7 +161,7 @@ export default function FinanzasPage() {
         if (cancelado) return
         facturacionHook.loadPreliquidacionHistoria(preliquidacion)
         setActiveTab('facturacion')
-        if (cajaHook.turnoActivo) {
+        if (cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido) {
           setVentaExitosa(false)
           setPosOpen(true)
         }
@@ -198,7 +200,7 @@ export default function FinanzasPage() {
         if (cancelado) return
         facturacionHook.loadPreliquidacionEstilo(preliquidacion)
         setActiveTab('facturacion')
-        if (cajaHook.turnoActivo) {
+        if (cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido) {
           setVentaExitosa(false)
           setPosOpen(true)
         }
@@ -367,6 +369,20 @@ export default function FinanzasPage() {
                   }
                 />
               </div>
+            ) : cajaHook.turnoActivo.vencido ? (
+              <div className="overflow-hidden rounded-[28px] border border-amber-300 bg-amber-50 shadow-panel dark:border-amber-700/60 dark:bg-amber-900/20">
+                <EmptyState
+                  icon={<Wallet />}
+                  variant="primary"
+                  title="Tu turno de caja quedo abierto desde un dia anterior"
+                  description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo — asi el corte del dia queda correcto."
+                  action={
+                    <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
+                      Cerrar turno vencido
+                    </NavCta>
+                  }
+                />
+              </div>
             ) : (
               <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-panel">
                 <div className="max-w-sm text-center">
@@ -401,6 +417,7 @@ export default function FinanzasPage() {
           {activeTab === 'turnos' && (
             <div className="space-y-5">
               <TurnoActivoPanel cajaHook={cajaHook} />
+              {esAdminCaja ? <TurnosVencidosPanel cajaHook={cajaHook} /> : null}
               <HistorialTurnosPanel cajaHook={cajaHook} esAdmin={esAdminCaja} />
               {esAdminCaja ? <ReporteDescuadresPanel cajaHook={cajaHook} /> : null}
             </div>
