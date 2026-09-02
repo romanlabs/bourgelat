@@ -121,7 +121,7 @@ export default function InsumoClinicoDrawer({
 
   const fieldClass = (hasError) =>
     `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
-      hasError ? 'border-red-400' : 'border-border'
+      hasError ? 'border-red-400 dark:border-red-600/70' : 'border-border'
     }`
 
   const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
@@ -209,7 +209,7 @@ export default function InsumoClinicoDrawer({
                   className={fieldClass(errors.nombre)}
                   {...register('nombre')}
                 />
-                {errors.nombre && <p className="text-xs text-red-600">{errors.nombre.message}</p>}
+                {errors.nombre && <p className="text-xs text-red-600 dark:text-red-400">{errors.nombre.message}</p>}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -223,7 +223,7 @@ export default function InsumoClinicoDrawer({
                         variant="field"
                         id="ic-categoria"
                         aria-label="Categoría"
-                        className={errors.categoria ? 'border-red-400' : undefined}
+                        className={errors.categoria ? 'border-red-400 dark:border-red-600/70' : undefined}
                         value={field.value}
                         onValueChange={field.onChange}
                         options={CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')}
@@ -241,7 +241,7 @@ export default function InsumoClinicoDrawer({
                         variant="field"
                         id="ic-unidad-base"
                         aria-label="Unidad base"
-                        className={errors.unidadBase ? 'border-red-400' : undefined}
+                        className={errors.unidadBase ? 'border-red-400 dark:border-red-600/70' : undefined}
                         disabled={Boolean(editingInsumo)}
                         value={field.value}
                         onValueChange={field.onChange}
@@ -277,7 +277,7 @@ export default function InsumoClinicoDrawer({
                       {...register('cantidadPresentacion')}
                     />
                     {errors.cantidadPresentacion && (
-                      <p className="text-xs text-red-600">{errors.cantidadPresentacion.message}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">{errors.cantidadPresentacion.message}</p>
                     )}
                   </div>
                   <div className="grid gap-1.5">
@@ -405,7 +405,7 @@ export default function InsumoClinicoDrawer({
                       type="button"
                       onClick={submitCompra}
                       disabled={!compraValida || isPendingCompra}
-                      className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingCompra ? 'Registrando...' : 'Registrar compra y recalcular costo'}
                     </button>
@@ -460,7 +460,7 @@ export default function InsumoClinicoDrawer({
                       />
                     </div>
                     {Number(mermaForm.cantidad) > stockActual ? (
-                      <p className="text-xs text-red-600">
+                      <p className="text-xs text-red-600 dark:text-red-400">
                         No puedes descontar más de la cantidad actual ({formatNumber(stockActual)} {unidadLabel}).
                       </p>
                     ) : null}
@@ -468,7 +468,7 @@ export default function InsumoClinicoDrawer({
                       type="button"
                       onClick={submitMerma}
                       disabled={!mermaValida || isPendingMerma}
-                      className="border border-red-200 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-red-200 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingMerma ? 'Registrando...' : 'Descontar del inventario'}
                     </button>
@@ -518,7 +518,7 @@ export default function InsumoClinicoDrawer({
             type="submit"
             form="insumo-clinico-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingInsumo ? 'Actualizar insumo' : 'Guardar insumo'}
           </button>

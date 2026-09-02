@@ -7,12 +7,12 @@ import { cn } from '@/lib/utils'
  */
 export function ErrorBanner({ message, onRetry, variant = 'red' }) {
   const styles = {
-    red:   'border-red-200 bg-red-50 text-red-700',
-    amber: 'border-amber-200 bg-amber-50 text-amber-800',
+    red:   'border-red-200 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-200',
+    amber: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
   }
   const btnStyles = {
-    red:   'text-red-700 hover:text-red-900',
-    amber: 'text-amber-800 hover:text-amber-950',
+    red:   'text-red-700 hover:text-red-900 dark:text-red-200 dark:hover:text-red-100',
+    amber: 'text-amber-800 hover:text-amber-950 dark:text-amber-200 dark:hover:text-amber-100',
   }
 
   return (

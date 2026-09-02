@@ -260,7 +260,7 @@ export default function PacienteHistorialPage() {
                   <button
                     type="button"
                     onClick={handleNuevaConsulta}
-                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                   >
                     <Plus className="h-4 w-4" />
                     Nueva consulta
@@ -280,7 +280,7 @@ export default function PacienteHistorialPage() {
                   <button
                     type="button"
                     onClick={handleNuevoRegistroEstilo}
-                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                   >
                     <Scissors className="h-4 w-4" />
                     Nuevo servicio de estilos
@@ -322,7 +322,7 @@ export default function PacienteHistorialPage() {
             )}
 
             {historiasQuery.isError && (
-              <p className="text-sm text-rose-600">No fue posible cargar el historial clínico.</p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">No fue posible cargar el historial clínico.</p>
             )}
 
             {!historiasQuery.isError && (
@@ -337,7 +337,7 @@ export default function PacienteHistorialPage() {
         ) : (
           <>
             {registrosQuery.isError && (
-              <p className="text-sm text-rose-600">No fue posible cargar los registros de estilos.</p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">No fue posible cargar los registros de estilos.</p>
             )}
 
             {!registrosQuery.isError && (

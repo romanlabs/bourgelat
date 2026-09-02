@@ -156,7 +156,7 @@ export default function CartSidebar({
                           onChange={(e) => updateInvoiceItem(item.id, 'precioUnitario', e.target.value)}
                           className={`w-16 rounded border bg-background px-1 py-0.5 text-[11px] font-semibold tabular-nums focus:outline-none ${
                             bajoCosto
-                              ? 'border-red-400 text-red-600 focus:border-red-500'
+                              ? 'border-red-400 text-red-600 focus:border-red-500 dark:border-red-600 dark:text-red-400 dark:focus:border-red-500'
                               : 'border-border text-foreground focus:border-primary'
                           }`}
                           placeholder="0"
@@ -189,14 +189,14 @@ export default function CartSidebar({
                         type="button"
                         onClick={() => removeInvoiceItem(item.id)}
                         aria-label="Quitar del carrito"
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition hover:bg-red-50 hover:text-red-500"
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
 
                     {bajoCosto && (
-                      <p className="mt-1 text-[10px] font-semibold text-red-600">
+                      <p className="mt-1 text-[10px] font-semibold text-red-600 dark:text-red-400">
                         Mínimo {formatCOP(precioMinimo)} (costo)
                       </p>
                     )}

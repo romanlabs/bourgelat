@@ -91,7 +91,7 @@ export default function ProductoComboBox({
     <div ref={containerRef} className="relative">
       <div
         className={`flex h-11 items-center gap-2 border bg-card px-3 text-sm text-foreground transition focus-within:border-primary ${
-          hasError ? 'border-red-400' : 'border-border'
+          hasError ? 'border-red-400 dark:border-red-500/70' : 'border-border'
         } ${disabled ? 'opacity-60' : ''}`}
       >
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />

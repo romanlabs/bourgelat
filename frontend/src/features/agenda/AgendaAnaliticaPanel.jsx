@@ -112,7 +112,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       value: formatPercent(resumen?.tasaAsistencia),
       helper:
         'Completadas sobre las citas ya resueltas (completadas, canceladas y no asistió). Las que siguen programadas no cuentan.',
-      tone: 'text-emerald-700',
+      tone: 'text-emerald-700 dark:text-emerald-300',
       badge: 'sobre citas resueltas',
       badgeTone: 'bg-secondary text-secondary-foreground',
     },
@@ -122,10 +122,10 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       label: 'No asistió',
       value: formatPercent(resumen?.tasaNoShow),
       helper: 'Pacientes que nunca llegaron. Cada uno es un cupo que quedó vacío.',
-      tone: 'text-amber-700',
-      borderTone: 'border-amber-200',
+      tone: 'text-amber-700 dark:text-amber-300',
+      borderTone: 'border-amber-200 dark:border-amber-700',
       badge: `${formatNumber(resumen?.noAsistio || 0)} cupos perdidos`,
-      badgeTone: 'bg-amber-100 text-amber-800',
+      badgeTone: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
     },
     {
       id: 'espera',
@@ -134,7 +134,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       value: formatMinutos(resumen?.esperaMediaMin),
       helper:
         'Desde que el paciente llega a recepción hasta que entra a consulta. Solo cuenta las citas con llegada y atención registradas.',
-      tone: 'text-violet-700',
+      tone: 'text-violet-700 dark:text-violet-300',
       badge: `consulta media ${formatMinutos(resumen?.duracionMediaMin)}`,
     },
     {
@@ -143,7 +143,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       label: 'Llegada espontánea',
       value: formatPercent(resumen?.walkInPct),
       helper: 'Proporción de la agenda que llegó sin cita previa.',
-      tone: 'text-blue-700',
+      tone: 'text-blue-700 dark:text-blue-300',
       badge: `${formatNumber(resumen?.walkIn || 0)} sin cita previa`,
       badgeTone: 'bg-accent text-accent-foreground',
     },
@@ -183,7 +183,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       </div>
 
       {query.isError && (
-        <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+        <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
           {getErrorMessage(query.error, 'No fue posible cargar la analítica de la agenda.')}
         </div>
       )}
@@ -304,7 +304,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                           }}
                         />
                         <div
-                          className="bg-amber-400 transition-all duration-normal"
+                          className="bg-amber-400 transition-all duration-normal dark:bg-amber-500"
                           style={{
                             width: `${(profesional.noAsistio / maxCargaProfesional) * 100}%`,
                           }}

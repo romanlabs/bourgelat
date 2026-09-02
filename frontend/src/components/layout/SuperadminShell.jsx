@@ -62,7 +62,7 @@ export default function SuperadminShell({
   const { logout } = useLogout()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-workspace min-h-screen bg-background">
       <div className="mx-auto max-w-[1660px] px-4 py-4 sm:px-6 lg:px-8">
         <div className="grid gap-5 xl:grid-cols-[270px_minmax(0,1fr)]">
           <aside className="border border-slate-900 bg-slate-950 px-4 py-5 text-white shadow-sm">

@@ -230,7 +230,7 @@ export default function FinanzasPage() {
       title="Caja y facturacion"
       description="Operacion diaria de ventas, servicios, productos y control de facturas con una lectura mas natural para recepcion, auxiliares, medicos y facturacion."
       headerBadge={
-        <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700">
+        <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">
           Corte mensual activo
         </StatusPill>
       }
@@ -283,12 +283,12 @@ export default function FinanzasPage() {
               {resumenHook.ingresosQuery.isError || resumenHook.resumenQuery.isError ? (
                 <div className="grid gap-4">
                   {resumenHook.ingresosQuery.isError ? (
-                    <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                    <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
                       No fue posible cargar el reporte de ingresos del periodo.
                     </div>
                   ) : null}
                   {resumenHook.resumenQuery.isError ? (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
                       No fue posible cargar el resumen de facturas.
                     </div>
                   ) : null}
@@ -301,28 +301,28 @@ export default function FinanzasPage() {
                   label="Ingresos del mes"
                   value={formatCurrency(resumenHook.totalIngresos)}
                   helper="Suma total del periodo en curso para el cierre administrativo."
-                  tone="text-emerald-700"
+                  tone="text-emerald-700 dark:text-emerald-400"
                 />
                 <KpiCard
                   icon={Receipt}
                   label="Facturas emitidas"
                   value={formatNumber(resumenHook.resumenEstados.emitida?.cantidad || 0)}
                   helper="Documentos listos para cobro o seguimiento financiero."
-                  tone="text-cyan-700"
+                  tone="text-cyan-700 dark:text-cyan-400"
                 />
                 <KpiCard
                   icon={ShieldCheck}
                   label="Facturas pagadas"
                   value={formatNumber(resumenHook.resumenEstados.pagada?.cantidad || 0)}
                   helper="Documentos ya cerrados dentro del periodo actual."
-                  tone="text-emerald-700"
+                  tone="text-emerald-700 dark:text-emerald-400"
                 />
                 <KpiCard
                   icon={CircleAlert}
                   label="Pendientes electronicos"
                   value={formatNumber(resumenHook.pendientesElectronicos)}
                   helper="Facturas con emision pendiente, rechazada o con error tecnico."
-                  tone="text-amber-700"
+                  tone="text-amber-700 dark:text-amber-400"
                 />
               </div>
 
@@ -410,7 +410,7 @@ export default function FinanzasPage() {
           {activeTab === 'historial' && (
             <div className="space-y-5">
               {historialHook.facturasQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
                   No fue posible cargar la tabla administrativa de facturas.
                 </div>
               ) : null}

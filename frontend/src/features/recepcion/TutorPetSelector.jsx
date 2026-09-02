@@ -92,13 +92,13 @@ export function TutorPetSelector({
 
         <div className="mt-4 space-y-2">
           {selectedOwner ? (
-            <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground">
-              <p className="font-semibold text-slate-950">{selectedOwner.nombre}</p>
+            <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-foreground dark:border-emerald-700 dark:bg-emerald-900/30">
+              <p className="font-semibold text-slate-950 dark:text-slate-100">{selectedOwner.nombre}</p>
               <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
-                className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
               >
                 Cambiar tutor
               </button>
@@ -114,7 +114,7 @@ export function TutorPetSelector({
                   className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-slate-950">{owner.nombre}</p>
+                    <p className="text-sm font-semibold text-slate-950 dark:text-slate-100">{owner.nombre}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {owner.telefono || 'Sin telefono principal'}
                     </p>
@@ -158,7 +158,7 @@ export function TutorPetSelector({
       />
 
       {selectedOwner && mascotasDelTutor.length === 0 ? (
-        <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800">
+        <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
           Este tutor aún no tiene pacientes activos. Primero registra la mascota en la sección de pacientes.
         </div>
       ) : null}

@@ -107,8 +107,8 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
               <label htmlFor="t-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Nombre completo *
               </label>
-              <input id="t-nombre" type="text" placeholder="Nombre del tutor" className={`${fieldClass} ${errors.nombre ? 'border-red-400' : ''}`} {...register('nombre')} />
-              {errors.nombre && <p className="text-xs text-red-600">{errors.nombre.message}</p>}
+              <input id="t-nombre" type="text" placeholder="Nombre del tutor" className={`${fieldClass} ${errors.nombre ? 'border-red-400 dark:border-red-500' : ''}`} {...register('nombre')} />
+              {errors.nombre && <p className="text-xs text-red-600 dark:text-red-400">{errors.nombre.message}</p>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -136,8 +136,8 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 <label htmlFor="t-num-doc" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Numero de documento *
                 </label>
-                <input id="t-num-doc" type="text" placeholder="Documento principal" className={`${fieldClass} ${errors.numeroDocumento ? 'border-red-400' : ''}`} {...register('numeroDocumento')} />
-                {errors.numeroDocumento && <p className="text-xs text-red-600">{errors.numeroDocumento.message}</p>}
+                <input id="t-num-doc" type="text" placeholder="Documento principal" className={`${fieldClass} ${errors.numeroDocumento ? 'border-red-400 dark:border-red-500' : ''}`} {...register('numeroDocumento')} />
+                {errors.numeroDocumento && <p className="text-xs text-red-600 dark:text-red-400">{errors.numeroDocumento.message}</p>}
               </div>
             </div>
 
@@ -146,15 +146,15 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 <label htmlFor="t-tel" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Telefono o celular *
                 </label>
-                <input id="t-tel" type="text" inputMode="numeric" placeholder="Numero principal" className={`${fieldClass} ${errors.telefono ? 'border-red-400' : ''}`} {...register('telefono')} />
-                {errors.telefono && <p className="text-xs text-red-600">{errors.telefono.message}</p>}
+                <input id="t-tel" type="text" inputMode="numeric" placeholder="Numero principal" className={`${fieldClass} ${errors.telefono ? 'border-red-400 dark:border-red-500' : ''}`} {...register('telefono')} />
+                {errors.telefono && <p className="text-xs text-red-600 dark:text-red-400">{errors.telefono.message}</p>}
               </div>
               <div className="grid gap-1.5">
                 <label htmlFor="t-email" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Correo <span className="font-normal normal-case tracking-normal text-muted-foreground/70">(opcional)</span>
                 </label>
-                <input id="t-email" type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-red-400' : ''}`} {...register('email')} />
-                {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
+                <input id="t-email" type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-red-400 dark:border-red-500' : ''}`} {...register('email')} />
+                {errors.email && <p className="text-xs text-red-600 dark:text-red-400">{errors.email.message}</p>}
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             type="submit"
             form="tutor-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar tutor' : 'Guardar tutor'}
           </button>

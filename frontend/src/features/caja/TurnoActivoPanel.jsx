@@ -74,7 +74,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
         title="Turno activo"
         subtitle="Resumen en vivo del efectivo del turno. El sistema recalcula el efectivo esperado con cada venta y movimiento."
         action={
-          <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700">Turno abierto</StatusPill>
+          <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">Turno abierto</StatusPill>
         }
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -150,9 +150,9 @@ export default function TurnoActivoPanel({ cajaHook }) {
                 <div key={movimiento.id} className="flex items-center justify-between gap-3 py-2">
                   <div className="flex items-center gap-3">
                     {movimiento.tipo === 'ingreso' ? (
-                      <ArrowUpCircle className="h-4 w-4 text-emerald-600" />
+                      <ArrowUpCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <ArrowDownCircle className="h-4 w-4 text-red-600" />
+                      <ArrowDownCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                     )}
                     <div>
                       <p className="text-sm font-semibold text-foreground">{motivoLabel(movimiento.motivo)}</p>
@@ -163,7 +163,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
                   </div>
                   <p
                     className={`text-sm font-bold tabular-nums ${
-                      movimiento.tipo === 'ingreso' ? 'text-emerald-700' : 'text-red-700'
+                      movimiento.tipo === 'ingreso' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
                     }`}
                   >
                     {movimiento.tipo === 'ingreso' ? '+' : '-'}

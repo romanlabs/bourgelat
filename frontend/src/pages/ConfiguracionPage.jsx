@@ -517,7 +517,7 @@ function ConfiguracionContent({
                 <button
                   type="button"
                   onClick={() => setActiveSection('ficha')}
-                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Editar ficha institucional
                 </button>
@@ -828,7 +828,7 @@ function ConfiguracionContent({
               <button
                 type="submit"
                 disabled={actualizarClinicaMutation.isPending}
-                className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
@@ -1108,7 +1108,7 @@ function ConfiguracionContent({
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {guardarFactusMutation.isPending ? 'Guardando...' : 'Guardar Factus'}
                   </button>
@@ -1455,7 +1455,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
                           type="button"
                           aria-label={`Eliminar franja de ${label.toLowerCase()}`}
                           onClick={() => eliminarFranja(clave, indice)}
-                          className="border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600"
+                          className="border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -1474,7 +1474,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
           type="button"
           onClick={onGuardar}
           disabled={guardando}
-          className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {guardando ? 'Guardando...' : 'Guardar horario'}
         </button>
@@ -1722,7 +1722,7 @@ function HorariosSection({ horarioAtencion }) {
                     aria-label="Eliminar bloqueo"
                     disabled={eliminarBloqueoMutation.isPending}
                     onClick={() => eliminarBloqueoMutation.mutate(bloqueo.id)}
-                    className="shrink-0 border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="shrink-0 border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1809,7 +1809,7 @@ function HorariosSection({ horarioAtencion }) {
             <button
               type="submit"
               disabled={impactoMutation.isPending || crearBloqueoMutation.isPending}
-              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {impactoMutation.isPending
                 ? 'Revisando citas...'
@@ -1918,8 +1918,8 @@ function ConsultoriosSection() {
                   }
                   className={`shrink-0 border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     consultorio.activo
-                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50'
+                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50'
                   }`}
                 >
                   {consultorio.activo ? 'Desactivar' : 'Activar'}
@@ -1951,7 +1951,7 @@ function ConsultoriosSection() {
           <button
             type="submit"
             disabled={crearMutation.isPending}
-            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearMutation.isPending ? 'Guardando...' : 'Crear consultorio'}
           </button>

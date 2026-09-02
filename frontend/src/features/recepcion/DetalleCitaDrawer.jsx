@@ -8,11 +8,11 @@ const formatTime = (value) => value?.slice(0, 5) || '--:--'
 const tipoLabel = (value) => TYPE_OPTIONS.find((option) => option.value === value)?.label || value
 
 const ACTION_TONE = {
-  en_espera: 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100',
-  en_atencion: 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100',
-  completada: 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
-  cancelada: 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100',
-  no_asistio: 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100',
+  en_espera: 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50',
+  en_atencion: 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-200 dark:hover:bg-violet-900/50',
+  completada: 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50',
+  cancelada: 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-600 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50',
+  no_asistio: 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-orange-900/50',
 }
 
 function Dato({ label, children }) {

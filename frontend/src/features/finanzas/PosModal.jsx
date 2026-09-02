@@ -360,13 +360,13 @@ export default function PosModal({
                       placeholder="$ 0"
                       autoFocus
                       className={`w-full rounded-xl border-2 bg-card px-4 py-3 text-right text-2xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none ${
-                        montoRecibido && !vueltoOk ? 'border-red-300 focus:border-red-400' : 'border-border focus:border-primary'
+                        montoRecibido && !vueltoOk ? 'border-red-300 focus:border-red-400 dark:border-red-600 dark:focus:border-red-500' : 'border-border focus:border-primary'
                       }`}
                     />
                     {/* Vuelto: el número que el cajero necesita ver grande */}
                     <div
                       className={`flex items-center justify-between rounded-xl px-4 py-3 ${
-                        montoRecibido && vueltoOk ? 'bg-primary/10' : montoRecibido ? 'bg-red-50' : 'bg-muted'
+                        montoRecibido && vueltoOk ? 'bg-primary/10' : montoRecibido ? 'bg-red-50 dark:bg-red-900/30' : 'bg-muted'
                       }`}
                     >
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -374,7 +374,7 @@ export default function PosModal({
                       </span>
                       <span
                         className={`text-2xl font-bold tabular-nums ${
-                          !montoRecibido ? 'text-muted-foreground/50' : vueltoOk ? 'text-primary' : 'text-red-600'
+                          !montoRecibido ? 'text-muted-foreground/50' : vueltoOk ? 'text-primary' : 'text-red-600 dark:text-red-400'
                         }`}
                       >
                         {formatCOP(Math.abs(montoRecibido ? vuelto : 0))}
@@ -485,7 +485,7 @@ export default function PosModal({
               <div className="h-full overflow-y-auto px-5 py-5">
                 <div className="mx-auto max-w-lg">
                   {facturaQuery.isError ? (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
                       No fue posible cargar la factura. Quedó registrada y puedes verla en el
                       historial.
                     </div>

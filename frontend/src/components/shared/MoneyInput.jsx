@@ -42,7 +42,7 @@ export default function MoneyInput({
           className ??
           `h-11 w-full border bg-card text-sm tabular-nums text-foreground outline-none transition focus:border-primary ${
             prefix ? 'pl-7' : 'pl-3'
-          } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-red-400' : 'border-border'}`
+          } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-red-400 dark:border-red-500/70' : 'border-border'}`
         }
       />
       {suffix ? (
