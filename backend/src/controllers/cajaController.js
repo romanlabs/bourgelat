@@ -10,7 +10,14 @@ const Producto = require('../models/Producto')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { parsePaginacion } = require('../utils/paginacion')
-const { convertirANumero, esTurnoVencido, calcularCierreTurno } = require('../utils/turnoCaja')
+const Clinica = require('../models/Clinica')
+const {
+  convertirANumero,
+  esTurnoVencido,
+  calcularCierreTurno,
+  horaCierreDelDia,
+  turnoFueraDeHorario,
+} = require('../utils/turnoCaja')
 
 const ROLES_ADMIN = ['admin', 'superadmin']
 
@@ -85,7 +92,19 @@ const obtenerTurnoActivo = async (req, res) => {
       return res.json({ turno: null })
     }
 
-    res.json({ turno: { ...turno.toJSON(), vencido: esTurnoVencido(turno) } })
+    // El aviso de "ya cerramos" sale del horario de atencion que configura
+    // cada clinica; si no lo tiene definido, simplemente no hay aviso.
+    const clinica = await Clinica.findByPk(clinicaId, { attributes: ['id', 'horarioAtencion'] })
+    const horarioAtencion = clinica?.horarioAtencion || null
+
+    res.json({
+      turno: {
+        ...turno.toJSON(),
+        vencido: esTurnoVencido(turno),
+        fueraDeHorario: turnoFueraDeHorario(turno, horarioAtencion),
+        horaCierre: horaCierreDelDia(horarioAtencion, new Date(turno.fechaApertura).getDay()),
+      },
+    })
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
