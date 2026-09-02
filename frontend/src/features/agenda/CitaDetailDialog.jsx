@@ -239,7 +239,7 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isUpdating || (statusForm.estado === 'cancelada' && !statusForm.motivoCancelacion.trim())}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {isUpdating ? 'Guardando...' : 'Actualizar estado'}
@@ -307,7 +307,7 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isRescheduling || (!ventana.valido && !forzar)}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRescheduling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {isRescheduling ? 'Guardando...' : 'Reprogramar cita'}

@@ -26,7 +26,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     <Dialog.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 border border-slate-200 bg-white p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        'fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 border border-border bg-card p-6 text-card-foreground shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className,
       )}
       {...props}
@@ -49,7 +49,7 @@ DialogHeader.displayName = 'DialogHeader'
 const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
   <Dialog.Title
     ref={ref}
-    className={cn('text-base font-semibold leading-none text-slate-900', className)}
+    className={cn('text-base font-semibold leading-none text-foreground', className)}
     {...props}
   />
 ))
@@ -58,7 +58,7 @@ DialogTitle.displayName = 'DialogTitle'
 const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
   <Dialog.Description
     ref={ref}
-    className={cn('text-sm text-slate-500', className)}
+    className={cn('text-sm text-muted-foreground', className)}
     {...props}
   />
 ))

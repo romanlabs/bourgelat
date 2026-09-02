@@ -110,7 +110,7 @@ const formatTime = (value) => {
 
 const getAppointmentTone = (estado) => {
   if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'en_espera') return 'border-sky-200 bg-sky-50 text-sky-700'
+  if (estado === 'en_espera') return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-200'
   if (estado === 'cancelada' || estado === 'no_asistio') {
     return 'border-red-200 bg-red-50 text-red-700'
   }
@@ -966,7 +966,7 @@ export default function DashboardPage() {
               label: 'Control DIAN',
               value: formatNumber(dianErrores),
               helper: `Facturas rechazadas o que no se pudieron enviar. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
-              tone: 'text-violet-700',
+              tone: 'text-violet-700 dark:text-violet-300',
             },
           ]}
         />
@@ -1133,7 +1133,7 @@ export default function DashboardPage() {
             label: 'Usuarios activos',
             value: formatNumber(usuariosActivos),
             helper: 'Equipo actualmente activo en la clínica.',
-            tone: 'text-violet-700',
+            tone: 'text-violet-700 dark:text-violet-300',
           },
         ]}
       />

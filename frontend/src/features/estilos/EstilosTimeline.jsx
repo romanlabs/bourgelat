@@ -30,7 +30,7 @@ function EmptyEstilos({ onNuevoRegistro }) {
       <button
         type="button"
         onClick={onNuevoRegistro}
-        className="mt-4 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+        className="mt-4 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
       >
         <Plus className="h-3.5 w-3.5" />
         Registrar primer servicio
@@ -46,7 +46,7 @@ function EstiloCard({ registro, onEdit }) {
     <div className="relative pl-8">
       <div className="absolute left-0 top-4 flex h-5 w-5 items-center justify-center">
         <div className={`h-3 w-3 rounded-full border-2 ${
-          bloqueado ? 'border-amber-400 bg-amber-100' : 'border-primary bg-primary/20'
+          bloqueado ? 'border-amber-400 bg-amber-100 dark:border-amber-500 dark:bg-amber-900/50' : 'border-primary bg-primary/20'
         }`} />
       </div>
 
@@ -66,8 +66,8 @@ function EstiloCard({ registro, onEdit }) {
           </div>
           <span className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${
             bloqueado
-              ? 'border-amber-200 bg-amber-50 text-amber-700'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300'
           }`}>
             {bloqueado ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
             {bloqueado ? 'Facturado' : 'Editable'}

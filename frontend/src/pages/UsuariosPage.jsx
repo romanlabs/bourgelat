@@ -151,7 +151,7 @@ function RoleBadges({ user }) {
           key={`${user.id}-${role}-${index}`}
           tone={
             role === 'admin'
-              ? 'border-violet-200 bg-violet-50 text-violet-700'
+              ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-200'
               : role === 'veterinario'
                 ? 'border-primary/30 bg-primary/10 text-primary'
                 : 'border-border bg-muted text-foreground'
@@ -987,7 +987,7 @@ export default function UsuariosPage() {
                   label="Acceso administrativo"
                   value={formatNumber(totalAdministrativos)}
                   helper="Usuarios activos con capacidad de administracion."
-                  tone="text-violet-700"
+                  tone="text-violet-700 dark:text-violet-300"
                 />
                 <KpiCard
                   icon={Stethoscope}

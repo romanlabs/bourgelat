@@ -182,7 +182,7 @@ export function ProgramarCitaPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <input type="date" {...register('fecha')} className={`${fieldClass} w-full`} />
-              {errors.fecha ? <p className="mt-1 text-xs text-red-600">{errors.fecha.message}</p> : null}
+              {errors.fecha ? <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.fecha.message}</p> : null}
             </div>
             <Controller
               name="tipoCita"
@@ -215,7 +215,7 @@ export function ProgramarCitaPanel({
                   />
                 )}
               />
-              {errors.horaInicio ? <p className="mt-1 text-xs text-red-600">{errors.horaInicio.message}</p> : null}
+              {errors.horaInicio ? <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.horaInicio.message}</p> : null}
             </div>
             <div>
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -228,12 +228,12 @@ export function ProgramarCitaPanel({
                   <HoraPicker aria-label="Hora de fin" value={field.value} onChange={field.onChange} />
                 )}
               />
-              {errors.horaFin ? <p className="mt-1 text-xs text-red-600">{errors.horaFin.message}</p> : null}
+              {errors.horaFin ? <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.horaFin.message}</p> : null}
             </div>
           </div>
 
           {!ventana.valido ? (
-            <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+            <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
               <p className="flex items-start gap-2 font-semibold">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 {ventana.codigo === 'bloqueado'
@@ -294,7 +294,7 @@ export function ProgramarCitaPanel({
                 />
               )}
             />
-            {errors.veterinarioId ? <p className="mt-1 text-xs text-red-600">{errors.veterinarioId.message}</p> : null}
+            {errors.veterinarioId ? <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.veterinarioId.message}</p> : null}
           </div>
 
           <div>
@@ -304,7 +304,7 @@ export function ProgramarCitaPanel({
               placeholder="Motivo principal de la cita"
               className={`${fieldClass} w-full`}
             />
-            {errors.motivo ? <p className="mt-1 text-xs text-red-600">{errors.motivo.message}</p> : null}
+            {errors.motivo ? <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.motivo.message}</p> : null}
           </div>
 
           <textarea
@@ -322,7 +322,7 @@ export function ProgramarCitaPanel({
               veterinarios.length === 0 ||
               (!ventana.valido && !forzar)
             }
-            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
           </button>

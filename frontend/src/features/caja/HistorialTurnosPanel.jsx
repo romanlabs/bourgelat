@@ -6,9 +6,9 @@ import TurnoDetalleModal from './TurnoDetalleModal'
 import { CATEGORIA_DIFERENCIA_LABELS } from './cajaConstants'
 
 const getDiferenciaTone = (turno) => {
-  if (turno.requiereRevisionAdmin) return 'border-red-300 bg-red-50 text-red-700'
-  if (Number(turno.diferencia) === 0) return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  return 'border-amber-200 bg-amber-50 text-amber-800'
+  if (turno.requiereRevisionAdmin) return 'border-red-300 bg-red-50 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200'
+  if (Number(turno.diferencia) === 0) return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200'
+  return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200'
 }
 
 export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
