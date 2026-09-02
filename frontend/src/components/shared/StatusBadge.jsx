@@ -10,38 +10,38 @@ import { cn } from '@/lib/utils'
  */
 const STATUS_MAP = {
   // ── Citas ─────────────────────────────────────────────────────
-  programada:  { label: 'Programada',  colors: 'bg-warm-100    border-warm-300    text-warm-700',    dot: 'bg-warm-400'     },
-  en_espera:   { label: 'En espera',   colors: 'bg-blue-100    border-blue-300    text-blue-700',    dot: 'bg-blue-500'     },
-  en_atencion: { label: 'En atención', colors: 'bg-violet-100  border-violet-300  text-violet-700',  dot: 'bg-violet-500'   },
-  completada:  { label: 'Completada',  colors: 'bg-warm-100    border-warm-200    text-warm-600',    dot: 'bg-warm-400'     },
-  cancelada:   { label: 'Cancelada',   colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  no_asistio:  { label: 'No asistió',  colors: 'bg-orange-50   border-orange-200  text-orange-600',  dot: 'bg-orange-400'   },
-  atrasada:    { label: 'Atrasada',    colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
+  programada:  { label: 'Programada',  colors: 'bg-warm-100    border-warm-300    text-warm-700    dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200',    dot: 'bg-warm-400'     },
+  en_espera:   { label: 'En espera',   colors: 'bg-blue-100    border-blue-300    text-blue-700    dark:border-blue-500/50 dark:bg-blue-900/40 dark:text-blue-200',    dot: 'bg-blue-500'     },
+  en_atencion: { label: 'En atención', colors: 'bg-violet-100  border-violet-300  text-violet-700  dark:border-violet-500/50 dark:bg-violet-900/40 dark:text-violet-200',  dot: 'bg-violet-500'   },
+  completada:  { label: 'Completada',  colors: 'bg-warm-100    border-warm-200    text-warm-600    dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300',    dot: 'bg-warm-400'     },
+  cancelada:   { label: 'Cancelada',   colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
+  no_asistio:  { label: 'No asistió',  colors: 'bg-orange-50   border-orange-200  text-orange-600  dark:border-orange-800/60 dark:bg-orange-900/30 dark:text-orange-300',  dot: 'bg-orange-400'   },
+  atrasada:    { label: 'Atrasada',    colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
 
   // ── Facturas ──────────────────────────────────────────────────
-  pendiente:   { label: 'Pendiente',   colors: 'bg-amber-50    border-amber-200   text-amber-700',   dot: 'bg-amber-400'    },
-  emitida:     { label: 'Emitida',     colors: 'bg-blue-50     border-blue-200    text-blue-700',    dot: 'bg-blue-400'     },
-  pagada:      { label: 'Pagada',      colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
-  anulada:     { label: 'Anulada',     colors: 'bg-warm-100    border-warm-200    text-warm-500',    dot: 'bg-warm-300'     },
-  borrador:    { label: 'Borrador',    colors: 'bg-warm-50     border-warm-200    text-warm-600',    dot: 'bg-warm-300'     },
+  pendiente:   { label: 'Pendiente',   colors: 'bg-amber-50    border-amber-200   text-amber-700   dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',   dot: 'bg-amber-400'    },
+  emitida:     { label: 'Emitida',     colors: 'bg-blue-50     border-blue-200    text-blue-700    dark:border-blue-500/50 dark:bg-blue-900/40 dark:text-blue-200',    dot: 'bg-blue-400'     },
+  pagada:      { label: 'Pagada',      colors: 'bg-clinical-50 border-clinical-200 text-clinical-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200', dot: 'bg-clinical-500' },
+  anulada:     { label: 'Anulada',     colors: 'bg-warm-100    border-warm-200    text-warm-500    dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400',    dot: 'bg-warm-300'     },
+  borrador:    { label: 'Borrador',    colors: 'bg-warm-50     border-warm-200    text-warm-600    dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300',    dot: 'bg-warm-300'     },
 
   // ── DIAN ──────────────────────────────────────────────────────
-  enviado:     { label: 'Enviado',     colors: 'bg-blue-50     border-blue-200    text-blue-700',    dot: 'bg-blue-400'     },
-  aceptado:    { label: 'Aceptado',    colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
-  rechazado:   { label: 'Rechazado',   colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  error_dian:  { label: 'Rechazada por la DIAN', colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
+  enviado:     { label: 'Enviado',     colors: 'bg-blue-50     border-blue-200    text-blue-700    dark:border-blue-500/50 dark:bg-blue-900/40 dark:text-blue-200',    dot: 'bg-blue-400'     },
+  aceptado:    { label: 'Aceptado',    colors: 'bg-clinical-50 border-clinical-200 text-clinical-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200', dot: 'bg-clinical-500' },
+  rechazado:   { label: 'Rechazado',   colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
+  error_dian:  { label: 'Rechazada por la DIAN', colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
 
   // ── Suscripciones ─────────────────────────────────────────────
-  activa:      { label: 'Activa',      colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
-  vencida:     { label: 'Vencida',     colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  trial:       { label: 'Prueba gratis', colors: 'bg-purple-50   border-purple-200  text-purple-700',  dot: 'bg-purple-400'   },
-  inactiva:    { label: 'Inactiva',    colors: 'bg-warm-100    border-warm-200    text-warm-500',    dot: 'bg-warm-300'     },
+  activa:      { label: 'Activa',      colors: 'bg-clinical-50 border-clinical-200 text-clinical-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200', dot: 'bg-clinical-500' },
+  vencida:     { label: 'Vencida',     colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
+  trial:       { label: 'Prueba gratis', colors: 'bg-purple-50   border-purple-200  text-purple-700  dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-200',  dot: 'bg-purple-400'   },
+  inactiva:    { label: 'Inactiva',    colors: 'bg-warm-100    border-warm-200    text-warm-500    dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400',    dot: 'bg-warm-300'     },
 
   // ── Inventario ────────────────────────────────────────────────
-  disponible:  { label: 'Disponible',  colors: 'bg-clinical-50 border-clinical-200 text-clinical-700', dot: 'bg-clinical-500' },
-  bajo_stock:  { label: 'Cantidad baja', colors: 'bg-amber-50    border-amber-200   text-amber-700',   dot: 'bg-amber-400'    },
-  agotado:     { label: 'Agotado',     colors: 'bg-red-50      border-red-200     text-red-600',     dot: 'bg-red-400'      },
-  vencido:     { label: 'Vencido',     colors: 'bg-orange-50   border-orange-200  text-orange-600',  dot: 'bg-orange-400'   },
+  disponible:  { label: 'Disponible',  colors: 'bg-clinical-50 border-clinical-200 text-clinical-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200', dot: 'bg-clinical-500' },
+  bajo_stock:  { label: 'Cantidad baja', colors: 'bg-amber-50    border-amber-200   text-amber-700   dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',   dot: 'bg-amber-400'    },
+  agotado:     { label: 'Agotado',     colors: 'bg-red-50      border-red-200     text-red-600     dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-300',     dot: 'bg-red-400'      },
+  vencido:     { label: 'Vencido',     colors: 'bg-orange-50   border-orange-200  text-orange-600  dark:border-orange-800/60 dark:bg-orange-900/30 dark:text-orange-300',  dot: 'bg-orange-400'   },
 }
 
 const badgeVariants = cva(
@@ -78,7 +78,7 @@ export function StatusBadge({ variant, label, showDot = false, size = 'md', clas
 
   if (!config) {
     return (
-      <span className={cn(badgeVariants({ size }), 'border-warm-200 bg-warm-100 text-warm-600', className)}>
+      <span className={cn(badgeVariants({ size }), 'border-warm-200 bg-warm-100 text-warm-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400', className)}>
         {label ?? variant}
       </span>
     )

@@ -659,7 +659,7 @@ export default function AntecedentesPage() {
           ) : (
           <>
           {antecedentesQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
               {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
             </div>
           ) : null}
@@ -670,14 +670,14 @@ export default function AntecedentesPage() {
               label="Alergias"
               value={formatNumber(alergiasRows.length)}
               helper="Alertas clinicas visibles para la atencion."
-              tone="text-rose-700"
+              tone="text-rose-700 dark:text-rose-300"
             />
             <KpiCard
               icon={ShieldCheck}
               label="Vacunas"
               value={formatNumber(vacunasRows.length)}
               helper="Vacunas registradas dentro del expediente."
-              tone="text-emerald-700"
+              tone="text-emerald-700 dark:text-emerald-300"
             />
             <KpiCard
               icon={Stethoscope}
@@ -691,21 +691,21 @@ export default function AntecedentesPage() {
               label="Condiciones cronicas"
               value={formatNumber(condicionesRows.length)}
               helper="Problemas permanentes o de seguimiento."
-              tone="text-amber-700"
+              tone="text-amber-700 dark:text-amber-300"
             />
             <KpiCard
               icon={Bug}
               label="Desparasitaciones"
               value={formatNumber(desparasitacionesRows.length)}
               helper="Control antiparasitario interno y externo."
-              tone="text-orange-700"
+              tone="text-orange-700 dark:text-orange-300"
             />
             <KpiCard
               icon={CalendarClock}
               label="Planificacion"
               value={formatNumber(planificacionesRows.length)}
               helper="Metodos de planificacion aplicados."
-              tone="text-sky-700"
+              tone="text-sky-700 dark:text-sky-300"
             />
           </div>
           </>
@@ -717,7 +717,7 @@ export default function AntecedentesPage() {
           {activeTab === 'antecedentes' && (
           <div className="space-y-4 pt-5">
             {antecedentesQuery.isError && (
-              <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+              <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
                 {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
               </div>
             )}
@@ -735,7 +735,7 @@ export default function AntecedentesPage() {
                 <button
                   type="button"
                   onClick={() => { setSelectedPet(null); setGeneralDraft(null) }}
-                  className="ml-4 flex-shrink-0 text-sm font-semibold text-emerald-700 transition hover:text-emerald-800"
+                  className="ml-4 flex-shrink-0 text-sm font-semibold text-emerald-700 transition hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-100"
                 >
                   Cambiar
                 </button>
@@ -791,7 +791,7 @@ export default function AntecedentesPage() {
                 <div className="space-y-2 text-sm">
                   {selectedAntecedentes ? (
                     <>
-                      <p className={selectedAntecedentes.esterilizado ? 'font-semibold text-emerald-700' : 'text-muted-foreground'}>
+                      <p className={selectedAntecedentes.esterilizado ? 'font-semibold text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'}>
                         {selectedAntecedentes.esterilizado
                           ? `Esterilizado${selectedAntecedentes.fechaEsterilizacion ? ` · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}` : ''}`
                           : 'No esterilizado'}
@@ -1172,7 +1172,7 @@ export default function AntecedentesPage() {
               agregarCirugiaMutation.isPending ||
               agregarCondicionMutation.isPending
             }
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Guardar
           </button>

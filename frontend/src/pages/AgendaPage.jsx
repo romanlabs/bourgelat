@@ -298,12 +298,12 @@ export default function AgendaPage() {
           {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
               {citasQuery.isError && (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
                   {getErrorMessage(citasQuery.error, 'No fue posible cargar la agenda seleccionada.')}
                 </div>
               )}
               {veterinariosQuery.isError && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                   {getErrorMessage(
                     veterinariosQuery.error,
                     'No fue posible cargar el equipo veterinario disponible.'
@@ -351,21 +351,21 @@ export default function AgendaPage() {
                     label="En espera"
                     value={formatNumber(enEspera)}
                     helper="Pacientes que ya llegaron y esperan ser atendidos."
-                    tone="text-emerald-700"
+                    tone="text-emerald-700 dark:text-emerald-300"
                   />
                   <KpiCard
                     icon={Clock3}
                     label="Pendientes"
                     value={formatNumber(pendientes)}
                     helper="Programadas o en espera, aun sin cierre definitivo."
-                    tone="text-amber-700"
+                    tone="text-amber-700 dark:text-amber-300"
                   />
                   <KpiCard
                     icon={Stethoscope}
                     label="Profesionales"
                     value={formatNumber(veterinarios.length)}
                     helper="Equipo veterinario disponible para asignacion."
-                    tone="text-violet-700"
+                    tone="text-violet-700 dark:text-violet-300"
                   />
                 </div>
               )}
@@ -380,7 +380,7 @@ export default function AgendaPage() {
                       title="Vista calendario"
                       className={`flex h-9 w-9 items-center justify-center transition ${
                         vistaAgenda === 'calendario'
-                          ? 'bg-foreground text-white'
+                          ? 'bg-foreground text-white dark:bg-white dark:text-slate-900'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
@@ -392,7 +392,7 @@ export default function AgendaPage() {
                       title="Vista lista"
                       className={`flex h-9 w-9 items-center justify-center transition ${
                         vistaAgenda === 'lista'
-                          ? 'bg-foreground text-white'
+                          ? 'bg-foreground text-white dark:bg-white dark:text-slate-900'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
@@ -503,7 +503,7 @@ export default function AgendaPage() {
                             <div className="flex items-center gap-2">
                               <StatusBadge variant={row.estado} showDot size="sm" />
                               {row.sinHistoria && (
-                                <StatusPill tone="border-red-300 bg-red-50 text-red-700">
+                                <StatusPill tone="border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
                                   Sin historia
                                 </StatusPill>
                               )}

@@ -4,7 +4,7 @@
 export const PLAN_META = {
   prueba: {
     nombre: 'Prueba',
-    tone: 'bg-sky-50 text-sky-700 border-sky-200',
+    tone: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-200 dark:border-sky-700',
     accent: '#0369a1',
   },
   activo: {
@@ -14,7 +14,7 @@ export const PLAN_META = {
   },
   cortesia: {
     nombre: 'Cortesía',
-    tone: 'bg-violet-50 text-violet-700 border-violet-200',
+    tone: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-200 dark:border-violet-700',
     accent: '#6d28d9',
   },
   personalizado: {

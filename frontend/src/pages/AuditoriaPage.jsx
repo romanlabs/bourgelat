@@ -220,7 +220,7 @@ export default function AuditoriaPage() {
             label="Usuarios involucrados"
             value={formatNumber(auditoriaQuery.data?.resumen?.usuariosInvolucrados || 0)}
             helper="Cantidad de cuentas distintas presentes en el corte."
-            tone="text-violet-700"
+            tone="text-violet-700 dark:text-violet-300"
           />
         </div>
 

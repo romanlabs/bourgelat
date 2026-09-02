@@ -35,8 +35,8 @@ const getErrorMessage = (error, fallback) =>
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
-    ? 'border-amber-200 bg-amber-50 text-amber-700'
-    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300'
+    : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300'
 
 function RestrictedHistoriasPage() {
   return (
@@ -136,7 +136,7 @@ export default function HistoriasPage() {
       title="Historias clinicas"
       description="Vista administrativa de consultas documentadas. Para registrar o editar una historia, abre el historial del paciente."
       headerBadge={
-        <StatusPill tone="border-rose-200 bg-rose-50 text-rose-700">
+        <StatusPill tone="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/30 dark:text-rose-300">
           Consulta documentada
         </StatusPill>
       }
@@ -178,28 +178,28 @@ export default function HistoriasPage() {
                   label="Historias del mes"
                   value={formatNumber(resumenHook.totalHistorias)}
                   helper="Total de consultas documentadas en el mes actual."
-                  tone="text-cyan-700"
+                  tone="text-cyan-700 dark:text-cyan-300"
                 />
                 <KpiCard
                   icon={Lock}
                   label="Bloqueadas"
                   value={formatNumber(resumenHook.historiasBloqueadas)}
                   helper="Consultas que ya no admiten modificaciones."
-                  tone="text-amber-700"
+                  tone="text-amber-700 dark:text-amber-300"
                 />
                 <KpiCard
                   icon={ShieldCheck}
                   label="Con control"
                   value={formatNumber(resumenHook.conControl)}
                   helper="Historias del mes con proxima consulta programada."
-                  tone="text-emerald-700"
+                  tone="text-emerald-700 dark:text-emerald-300"
                 />
                 <KpiCard
                   icon={Stethoscope}
                   label="Profesionales"
                   value={formatNumber(resumenHook.profesionalesActivos)}
                   helper="Medicos con consultas registradas este mes."
-                  tone="text-violet-700"
+                  tone="text-violet-700 dark:text-violet-300"
                 />
               </div>
 
@@ -223,12 +223,12 @@ export default function HistoriasPage() {
               {historiasQuery.isError || veterinariosQuery.isError ? (
                 <div className="grid gap-4">
                   {historiasQuery.isError && (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
                       {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
                     </div>
                   )}
                   {veterinariosQuery.isError && (
-                    <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                    <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
                       {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
                     </div>
                   )}

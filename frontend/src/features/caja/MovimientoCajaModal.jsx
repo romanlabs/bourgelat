@@ -56,8 +56,8 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
               onClick={() => setForm((curr) => ({ ...curr, tipo: 'ingreso' }))}
               className={`flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-semibold transition ${
                 form.tipo === 'ingreso'
-                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                  : 'border-border bg-card text-muted-foreground hover:border-emerald-200'
+                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-600/70 dark:bg-emerald-900/30 dark:text-emerald-200'
+                  : 'border-border bg-card text-muted-foreground hover:border-emerald-200 dark:hover:border-emerald-700/60'
               }`}
             >
               <ArrowUpCircle className="h-4 w-4" />
@@ -68,8 +68,8 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
               onClick={() => setForm((curr) => ({ ...curr, tipo: 'egreso' }))}
               className={`flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-sm font-semibold transition ${
                 form.tipo === 'egreso'
-                  ? 'border-red-300 bg-red-50 text-red-700'
-                  : 'border-border bg-card text-muted-foreground hover:border-red-200'
+                  ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200'
+                  : 'border-border bg-card text-muted-foreground hover:border-red-200 dark:hover:border-red-700/60'
               }`}
             >
               <ArrowDownCircle className="h-4 w-4" />
