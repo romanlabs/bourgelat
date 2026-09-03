@@ -10,23 +10,14 @@ const Producto = require('../models/Producto')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { parsePaginacion } = require('../utils/paginacion')
-
-const UMBRAL_COMENTARIO_OPCIONAL = 3000
-const UMBRAL_REVISION_ADMIN = 30000
-const MIN_CARACTERES_JUSTIFICACION = 20
-
-const convertirANumero = (valor, valorPorDefecto = 0) => {
-  if (valor === undefined || valor === null || valor === '') {
-    return valorPorDefecto
-  }
-  const numero = Number.parseFloat(valor)
-  return Number.isNaN(numero) ? valorPorDefecto : numero
-}
-
-const redondear = (valor, decimales = 2) => {
-  const factor = 10 ** decimales
-  return Math.round((convertirANumero(valor) + Number.EPSILON) * factor) / factor
-}
+const Clinica = require('../models/Clinica')
+const {
+  convertirANumero,
+  esTurnoVencido,
+  calcularCierreTurno,
+  horaCierreDelDia,
+  turnoFueraDeHorario,
+} = require('../utils/turnoCaja')
 
 const ROLES_ADMIN = ['admin', 'superadmin']
 
@@ -97,7 +88,23 @@ const obtenerTurnoActivo = async (req, res) => {
       where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
     })
 
-    res.json({ turno: turno || null })
+    if (!turno) {
+      return res.json({ turno: null })
+    }
+
+    // El aviso de "ya cerramos" sale del horario de atencion que configura
+    // cada clinica; si no lo tiene definido, simplemente no hay aviso.
+    const clinica = await Clinica.findByPk(clinicaId, { attributes: ['id', 'horarioAtencion'] })
+    const horarioAtencion = clinica?.horarioAtencion || null
+
+    res.json({
+      turno: {
+        ...turno.toJSON(),
+        vencido: esTurnoVencido(turno),
+        fueraDeHorario: turnoFueraDeHorario(turno, horarioAtencion),
+        horaCierre: horaCierreDelDia(horarioAtencion, new Date(turno.fechaApertura).getDay()),
+      },
+    })
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
@@ -153,6 +160,14 @@ const registrarMovimientoCaja = async (req, res) => {
       return res.status(409).json({ message: 'No tienes un turno de caja abierto' })
     }
 
+    if (esTurnoVencido(turno)) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'Tu turno de caja quedo abierto desde un dia anterior. Debes cerrarlo antes de continuar.',
+        code: 'TURNO_VENCIDO',
+      })
+    }
+
     const movimiento = await MovimientoCaja.create({
       tipo,
       monto: montoNumero,
@@ -191,14 +206,7 @@ const cerrarTurno = async (req, res) => {
   const transaction = await sequelize.transaction()
 
   try {
-    const { montoFinalContado, observacionesCierre, categoriaDiferencia } = req.body
     const { clinicaId } = req.usuario
-    const montoContado = convertirANumero(montoFinalContado, NaN)
-
-    if (!Number.isFinite(montoContado) || montoContado < 0) {
-      await transaction.rollback()
-      return res.status(400).json({ message: 'Monto contado invalido' })
-    }
 
     const turno = await CajaTurno.findOne({
       where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
@@ -211,42 +219,23 @@ const cerrarTurno = async (req, res) => {
       return res.status(409).json({ message: 'No tienes un turno de caja abierto' })
     }
 
-    const montoInicial = convertirANumero(turno.montoInicial)
-    const totalVentasEfectivo = convertirANumero(turno.totalVentasEfectivo)
-    const totalIngresosManuales = convertirANumero(turno.totalIngresosManuales)
-    const totalEgresosManuales = convertirANumero(turno.totalEgresosManuales)
+    const resultado = calcularCierreTurno(turno, req.body)
 
-    const montoFinalEsperado = redondear(
-      montoInicial + totalVentasEfectivo + totalIngresosManuales - totalEgresosManuales
-    )
-    const diferencia = redondear(montoContado - montoFinalEsperado)
-    const diferenciaAbs = Math.abs(diferencia)
-    const comentarioLimpio = String(observacionesCierre || '').trim()
-
-    if (diferenciaAbs > UMBRAL_COMENTARIO_OPCIONAL) {
-      if (comentarioLimpio.length < MIN_CARACTERES_JUSTIFICACION) {
-        await transaction.rollback()
-        return res.status(400).json({
-          message: `Debes justificar la diferencia con al menos ${MIN_CARACTERES_JUSTIFICACION} caracteres`,
-        })
-      }
-
-      if (!categoriaDiferencia) {
-        await transaction.rollback()
-        return res.status(400).json({ message: 'Debes seleccionar una categoria para la diferencia' })
-      }
+    if (resultado.error) {
+      await transaction.rollback()
+      return res.status(resultado.error.status).json({ message: resultado.error.message })
     }
 
-    const requiereRevisionAdmin = diferenciaAbs > UMBRAL_REVISION_ADMIN
+    const { diferencia, categoriaDiferencia, requiereRevisionAdmin } = resultado
 
     await turno.update({
       estado: 'cerrado',
       fechaCierre: new Date(),
-      montoFinalContado: montoContado,
-      montoFinalEsperado,
+      montoFinalContado: resultado.montoFinalContado,
+      montoFinalEsperado: resultado.montoFinalEsperado,
       diferencia,
-      categoriaDiferencia: diferenciaAbs > 0 ? (categoriaDiferencia || null) : null,
-      observacionesCierre: comentarioLimpio || null,
+      categoriaDiferencia,
+      observacionesCierre: resultado.observacionesCierre,
       requiereRevisionAdmin,
     }, { transaction })
 
@@ -257,7 +246,104 @@ const cerrarTurno = async (req, res) => {
       entidad: 'CajaTurno',
       entidadId: turno.id,
       descripcion: `Turno de caja cerrado con diferencia de $${diferencia}`,
-      datosNuevos: { diferencia, categoriaDiferencia: categoriaDiferencia || null, requiereRevisionAdmin },
+      datosNuevos: { diferencia, categoriaDiferencia, requiereRevisionAdmin },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({
+      message: 'Turno cerrado exitosamente',
+      turno,
+    })
+  } catch (error) {
+    await transaction.rollback()
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Lista, para admin/superadmin, los turnos abiertos de toda la clinica cuya
+// fechaApertura cae en un dia calendario anterior al de hoy (ver esTurnoVencido).
+const listarTurnosVencidos = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+
+    const turnosAbiertos = await CajaTurno.findAll({
+      where: { clinicaId, estado: 'abierto' },
+      include: [{ model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email'] }],
+      order: [['fechaApertura', 'ASC']],
+    })
+
+    const turnosVencidos = turnosAbiertos.filter((turno) => esTurnoVencido(turno))
+
+    res.json({ turnos: turnosVencidos })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
+// Permite a un admin/superadmin cerrar el turno vencido de otro usuario (p.
+// ej. si ya no tiene acceso para cerrarlo el mismo). Mismo calculo de
+// descuadre que el autocierre; queda auditado que lo cerro un admin.
+const cerrarTurnoAdmin = async (req, res) => {
+  const transaction = await sequelize.transaction()
+
+  try {
+    const { turnoId } = req.params
+    const { clinicaId } = req.usuario
+
+    const turno = await CajaTurno.findOne({
+      where: { id: turnoId, clinicaId, estado: 'abierto' },
+      include: [{ model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email'] }],
+      transaction,
+      // El include genera un LEFT JOIN y Postgres rechaza FOR UPDATE sobre el
+      // lado nulable: se bloquea solo la fila de caja_turnos.
+      lock: { level: transaction.LOCK.UPDATE, of: CajaTurno },
+    })
+
+    if (!turno) {
+      await transaction.rollback()
+      return res.status(404).json({ message: 'Turno no encontrado o ya esta cerrado' })
+    }
+
+    // Este endpoint existe para destrabar turnos vencidos, no para cerrarle el
+    // turno del dia a un cajero que sigue operando.
+    if (!esTurnoVencido(turno)) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'Solo puedes cerrar turnos que quedaron abiertos de un dia anterior',
+        code: 'TURNO_NO_VENCIDO',
+      })
+    }
+
+    const resultado = calcularCierreTurno(turno, req.body)
+
+    if (resultado.error) {
+      await transaction.rollback()
+      return res.status(resultado.error.status).json({ message: resultado.error.message })
+    }
+
+    const { diferencia, categoriaDiferencia, requiereRevisionAdmin } = resultado
+    const propietario = turno.usuario?.nombre || turno.usuarioId
+
+    await turno.update({
+      estado: 'cerrado',
+      fechaCierre: new Date(),
+      montoFinalContado: resultado.montoFinalContado,
+      montoFinalEsperado: resultado.montoFinalEsperado,
+      diferencia,
+      categoriaDiferencia,
+      observacionesCierre: resultado.observacionesCierre,
+      requiereRevisionAdmin,
+    }, { transaction })
+
+    await transaction.commit()
+
+    await registrarAuditoria({
+      accion: 'CERRAR_TURNO_CAJA_ADMIN',
+      entidad: 'CajaTurno',
+      entidadId: turno.id,
+      descripcion: `Turno vencido de ${propietario} cerrado por un administrador, con diferencia de $${diferencia}`,
+      datosNuevos: { diferencia, categoriaDiferencia, requiereRevisionAdmin, cerradoPorAdmin: true },
       req,
       resultado: 'exitoso',
     })
@@ -439,6 +525,8 @@ module.exports = {
   listarMovimientosTurno,
   registrarMovimientoCaja,
   cerrarTurno,
+  listarTurnosVencidos,
+  cerrarTurnoAdmin,
   listarHistorialTurnos,
   obtenerDetalleTurno,
   obtenerReporteDescuadres,

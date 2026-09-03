@@ -63,7 +63,7 @@ export default function FacturaDetalleModal({ historialHook }) {
 
         <div className="mt-4 max-h-[75vh] overflow-y-auto pr-1">
           {facturaDetalleQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
               No fue posible cargar el detalle de la factura seleccionada.
             </div>
           ) : facturaDetalleQuery.isLoading || facturaDetalleQuery.isPlaceholderData ? (
@@ -210,7 +210,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     </div>
                   ) : null}
                   {facturaSeleccionada.motivoAnulacion ? (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
                       Motivo de anulacion: {facturaSeleccionada.motivoAnulacion}
                     </div>
                   ) : null}
@@ -331,7 +331,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               {canVoidInvoice ? (
                 <div className="space-y-4 border-t border-border pt-4">
                   <div className="flex items-center gap-2">
-                    <Ban className="h-4 w-4 text-red-700" />
+                    <Ban className="h-4 w-4 text-red-700 dark:text-red-400" />
                     <p className="text-sm font-semibold text-slate-950">Anular factura</p>
                   </div>
                   <textarea
@@ -352,7 +352,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : facturaSeleccionada?.estadoElectronico === 'validada' &&
                 facturaSeleccionada?.cufe ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
                   Esta factura ya fue validada electronicamente. No se puede anular desde
                   caja: requiere un flujo tributario controlado como nota credito.
                 </div>

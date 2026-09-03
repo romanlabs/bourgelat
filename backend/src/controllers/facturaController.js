@@ -13,6 +13,7 @@ const RegistroEstilo = require('../models/RegistroEstilo')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
+const { esTurnoVencido } = require('../utils/turnoCaja')
 const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
@@ -537,6 +538,14 @@ const crearFactura = async (req, res) => {
       return res.status(409).json({
         message: 'Debes abrir un turno de caja antes de facturar',
         code: 'TURNO_CAJA_REQUERIDO',
+      })
+    }
+
+    if (esTurnoVencido(turnoActivo)) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'Tu turno de caja quedo abierto desde un dia anterior. Debes cerrarlo antes de facturar.',
+        code: 'TURNO_VENCIDO',
       })
     }
 
@@ -1217,6 +1226,17 @@ const registrarAbono = async (req, res) => {
         transaction,
         lock: transaction.LOCK.UPDATE,
       })
+
+      // Un turno vencido no recibe mas movimientos. Dejar pasar el abono sin
+      // asociarlo a caja meteria efectivo real al cajon sin que ningun turno
+      // lo registre, asi que se bloquea igual que la venta de contado.
+      if (turno && esTurnoVencido(turno)) {
+        await transaction.rollback()
+        return res.status(409).json({
+          message: 'Tu turno de caja quedo abierto desde un dia anterior. Debes cerrarlo antes de recibir efectivo.',
+          code: 'TURNO_VENCIDO',
+        })
+      }
 
       if (turno) {
         await turno.increment('totalVentasEfectivo', { by: montoNumero, transaction })

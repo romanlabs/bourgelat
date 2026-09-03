@@ -23,7 +23,7 @@ const esClinico = (item) => item.destinoInventario === 'clinico'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
-    hasError ? 'border-red-400' : 'border-border'
+    hasError ? 'border-red-400 dark:border-red-600/70' : 'border-border'
   }`
 
 function AvisoProductoDuplicado({ nombre, origen }) {
@@ -162,7 +162,7 @@ export default function FacturaCompraDrawer({
                 maxLength={200}
               />
               {!form.proveedor.trim() && (
-                <p className="text-xs text-red-500">El proveedor es obligatorio</p>
+                <p className="text-xs text-red-500 dark:text-red-400">El proveedor es obligatorio</p>
               )}
             </div>
 
@@ -242,7 +242,7 @@ export default function FacturaCompraDrawer({
                     onChange={(e) => setForm((f) => ({ ...f, fechaPagoFinal: e.target.value }))}
                   />
                   {!form.fechaPagoFinal && (
-                    <p className="text-xs text-red-500">Debes ingresar la fecha límite de pago</p>
+                    <p className="text-xs text-red-500 dark:text-red-400">Debes ingresar la fecha límite de pago</p>
                   )}
                 </div>
               )}
@@ -277,7 +277,7 @@ export default function FacturaCompraDrawer({
                       <button
                         type="button"
                         onClick={() => eliminarItem(idx)}
-                        className="text-muted-foreground hover:text-red-500 transition"
+                        className="text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition"
                         aria-label="Eliminar ítem"
                       >
                         <Trash2 size={14} />
@@ -337,7 +337,7 @@ export default function FacturaCompraDrawer({
                           maxLength={200}
                         />
                         {!item.productoNuevo.nombre.trim() && (
-                          <p className="text-xs text-red-500">El nombre es obligatorio</p>
+                          <p className="text-xs text-red-500 dark:text-red-400">El nombre es obligatorio</p>
                         )}
                         {item.productoNuevo.nombre.trim() && (
                           <AvisoProductoDuplicado
@@ -352,14 +352,14 @@ export default function FacturaCompraDrawer({
                           <Select
                             variant="field"
                             aria-label="Categoría del producto"
-                            className={!item.productoNuevo.categoria ? 'border-red-300' : undefined}
+                            className={!item.productoNuevo.categoria ? 'border-red-300 dark:border-red-600/70' : undefined}
                             placeholder="— Selecciona —"
                             value={item.productoNuevo.categoria}
                             onValueChange={(value) => actualizarItemProductoNuevo(idx, 'categoria', value)}
                             options={esClinico(item) ? INSUMO_CATEGORY_OPTIONS : PRODUCT_CATEGORY_OPTIONS}
                           />
                           {!item.productoNuevo.categoria && (
-                            <p className="text-xs text-red-500">Selecciona una categoría</p>
+                            <p className="text-xs text-red-500 dark:text-red-400">Selecciona una categoría</p>
                           )}
                         </div>
                         {esClinico(item) ? (
@@ -368,14 +368,14 @@ export default function FacturaCompraDrawer({
                             <Select
                               variant="field"
                               aria-label="Unidad base de consumo"
-                              className={!item.productoNuevo.unidadBase ? 'border-red-300' : undefined}
+                              className={!item.productoNuevo.unidadBase ? 'border-red-300 dark:border-red-600/70' : undefined}
                               placeholder="— Selecciona —"
                               value={item.productoNuevo.unidadBase}
                               onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadBase', value)}
                               options={UNIDAD_BASE_OPTIONS}
                             />
                             {!item.productoNuevo.unidadBase && (
-                              <p className="text-xs text-red-500">Selecciona una unidad</p>
+                              <p className="text-xs text-red-500 dark:text-red-400">Selecciona una unidad</p>
                             )}
                           </div>
                         ) : (
@@ -384,14 +384,14 @@ export default function FacturaCompraDrawer({
                             <Select
                               variant="field"
                               aria-label="Unidad de medida"
-                              className={!item.productoNuevo.unidadMedida ? 'border-red-300' : undefined}
+                              className={!item.productoNuevo.unidadMedida ? 'border-red-300 dark:border-red-600/70' : undefined}
                               placeholder="— Selecciona —"
                               value={item.productoNuevo.unidadMedida}
                               onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadMedida', value)}
                               options={UNIT_OPTIONS}
                             />
                             {!item.productoNuevo.unidadMedida && (
-                              <p className="text-xs text-red-500">Selecciona una unidad</p>
+                              <p className="text-xs text-red-500 dark:text-red-400">Selecciona una unidad</p>
                             )}
                           </div>
                         )}
@@ -413,7 +413,7 @@ export default function FacturaCompraDrawer({
                             }
                           />
                           {!(Number(item.productoNuevo.cantidadPresentacion) > 0) && (
-                            <p className="text-xs text-red-500">
+                            <p className="text-xs text-red-500 dark:text-red-400">
                               Indica cuánto trae cada presentación
                             </p>
                           )}
@@ -490,7 +490,7 @@ export default function FacturaCompraDrawer({
 
           {/* Error */}
           {errorMsg && (
-            <p className="text-sm text-red-500 rounded border border-red-200 bg-red-50 dark:bg-red-900/20 px-3 py-2">
+            <p className="text-sm text-red-500 dark:text-red-400 rounded border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-3 py-2">
               {errorMsg}
             </p>
           )}

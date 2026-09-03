@@ -20,7 +20,15 @@ import {
 
 const buildInitialForm = () => ({ montoFinalContado: '', observacionesCierre: '', categoriaDiferencia: '' })
 
-export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTurnoMutation }) {
+export default function CierreTurnoModal({
+  open,
+  onClose,
+  turnoActivo,
+  cerrarTurnoMutation,
+  turnoId = null,
+  titulo = 'Cerrar turno de caja',
+  descripcion = 'Cuenta el efectivo fisico en caja para comparar con lo esperado por el sistema.',
+}) {
   const [form, setForm] = useState(buildInitialForm)
 
   const montoFinalEsperado = useMemo(() => {
@@ -57,12 +65,14 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
     event.preventDefault()
     if (!puedeConfirmar) return
 
+    const payload = {
+      montoFinalContado: montoContado,
+      observacionesCierre: form.observacionesCierre.trim() || undefined,
+      categoriaDiferencia: form.categoriaDiferencia || undefined,
+    }
+
     cerrarTurnoMutation.mutate(
-      {
-        montoFinalContado: montoContado,
-        observacionesCierre: form.observacionesCierre.trim() || undefined,
-        categoriaDiferencia: form.categoriaDiferencia || undefined,
-      },
+      turnoId ? { turnoId, payload } : payload,
       { onSuccess: () => handleOpenChange(false) }
     )
   }
@@ -71,8 +81,8 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
     <DialogRoot open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Cerrar turno de caja</DialogTitle>
-          <DialogDescription>Cuenta el efectivo fisico en caja para comparar con lo esperado por el sistema.</DialogDescription>
+          <DialogTitle>{titulo}</DialogTitle>
+          <DialogDescription>{descripcion}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -97,7 +107,7 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
           </label>
 
           {tieneMontoValido && diferenciaAbs === 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">
               <CheckCircle2 className="h-4 w-4" />
               Cierre cuadrado, sin diferencias.
             </div>
@@ -106,7 +116,9 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
           {tieneMontoValido && diferenciaAbs > 0 && (
             <div
               className={`rounded-xl border px-4 py-3 text-sm ${
-                diferencia > 0 ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-amber-200 bg-amber-50 text-amber-800'
+                diferencia > 0
+                  ? 'border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-700/60 dark:bg-cyan-900/30 dark:text-cyan-200'
+                  : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200'
               }`}
             >
               {diferencia > 0 ? 'Sobrante' : 'Faltante'} de {formatCurrency(diferenciaAbs)}
@@ -114,7 +126,7 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
           )}
 
           {requiereRevisionAdmin && (
-            <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               La diferencia supera $30.000. Se notificara automaticamente al administrador de la clinica.
             </div>
@@ -148,8 +160,8 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
                 value={form.observacionesCierre}
                 onChange={(event) => setForm((curr) => ({ ...curr, observacionesCierre: event.target.value }))}
                 placeholder="Explica que pudo causar la diferencia"
-                className={`min-h-20 w-full rounded-xl border px-3 py-2.5 text-sm leading-6 text-foreground outline-none transition focus:border-primary ${
-                  requiereJustificacion && !comentarioValido ? 'border-red-300' : 'border-border'
+                className={`min-h-20 w-full rounded-xl border bg-card px-3 py-2.5 text-sm leading-6 text-foreground outline-none transition focus:border-primary ${
+                  requiereJustificacion && !comentarioValido ? 'border-red-300 dark:border-red-700' : 'border-border'
                 }`}
               />
             </label>
@@ -163,7 +175,7 @@ export default function CierreTurnoModal({ open, onClose, turnoActivo, cerrarTur
               <Select
                 variant="field"
                 aria-label="Categoria de la diferencia"
-                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-red-300' : ''}`}
+                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-red-300 dark:border-red-700' : ''}`}
                 placeholder="Selecciona una categoria"
                 value={form.categoriaDiferencia}
                 onValueChange={(value) => setForm((curr) => ({ ...curr, categoriaDiferencia: value }))}

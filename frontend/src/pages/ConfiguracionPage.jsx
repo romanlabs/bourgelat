@@ -3,16 +3,31 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Building2,
+  CalendarOff,
+  Clock,
   Mail,
   Phone,
+  Plus,
   ShieldCheck,
   Sparkles,
+  Trash2,
   Users,
   Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { HoraPicker } from '@/components/shared/HoraPicker'
+import {
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { formatHora12, formatFranja12 } from '@/lib/hora'
 import {
   DashboardPanel,
   KpiCard,
@@ -375,6 +390,7 @@ function ConfiguracionContent({
     { id: 'resumen', label: 'Resumen', helper: 'Panorama institucional' },
     { id: 'ficha', label: 'Ficha editable', helper: 'Identidad, contacto y fiscal' },
     { id: 'consultorios', label: 'Consultorios', helper: 'Salas usadas por recepción y agenda' },
+    { id: 'horarios', label: 'Horarios y cierres', helper: 'Horario de atención y días bloqueados' },
     ...(puedeVerFacturacionElectronica
       ? [{ id: 'facturacion', label: 'Facturación electrónica', helper: 'Estado e integración' }]
       : []),
@@ -391,7 +407,7 @@ function ConfiguracionContent({
           </StatusPill>
         }
       >
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           {sectionOptions.map((section) => (
             <button
               key={section.id}
@@ -501,7 +517,7 @@ function ConfiguracionContent({
                 <button
                   type="button"
                   onClick={() => setActiveSection('ficha')}
-                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Editar ficha institucional
                 </button>
@@ -812,7 +828,7 @@ function ConfiguracionContent({
               <button
                 type="submit"
                 disabled={actualizarClinicaMutation.isPending}
-                className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
@@ -895,6 +911,10 @@ function ConfiguracionContent({
       ) : null}
 
       {activeSection === 'consultorios' ? <ConsultoriosSection /> : null}
+
+      {activeSection === 'horarios' ? (
+        <HorariosSection horarioAtencion={initialClinica?.horarioAtencion} />
+      ) : null}
 
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (
@@ -1088,7 +1108,7 @@ function ConfiguracionContent({
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
-                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {guardarFactusMutation.isPending ? 'Guardando...' : 'Guardar Factus'}
                   </button>
@@ -1264,6 +1284,555 @@ function ConfiguracionContent({
   )
 }
 
+// El horario se guarda con las claves de Date.getDay() (0 = domingo), pero la
+// clinica lo lee empezando en lunes.
+const DIAS_SEMANA = [
+  { clave: '1', label: 'Lunes' },
+  { clave: '2', label: 'Martes' },
+  { clave: '3', label: 'Miércoles' },
+  { clave: '4', label: 'Jueves' },
+  { clave: '5', label: 'Viernes' },
+  { clave: '6', label: 'Sábado' },
+  { clave: '0', label: 'Domingo' },
+]
+
+const FRANJA_POR_DEFECTO = { inicio: '08:00', fin: '12:00' }
+
+const buildHorarioForm = (horarioAtencion) =>
+  Object.fromEntries(
+    DIAS_SEMANA.map(({ clave }) => [
+      clave,
+      (horarioAtencion?.[clave] || []).map((franja) => ({
+        inicio: franja.inicio,
+        fin: franja.fin,
+      })),
+    ])
+  )
+
+/** Repite la validacion del backend para no enviar un horario que va a fallar. */
+const validarHorarioForm = (horario) => {
+  for (const { clave, label } of DIAS_SEMANA) {
+    const franjas = [...(horario[clave] || [])].sort((a, b) => a.inicio.localeCompare(b.inicio))
+
+    for (const franja of franjas) {
+      if (franja.fin <= franja.inicio) {
+        return `En ${label.toLowerCase()} la hora de cierre debe ser mayor a la de apertura.`
+      }
+    }
+
+    for (let i = 1; i < franjas.length; i += 1) {
+      if (franjas[i].inicio < franjas[i - 1].fin) {
+        return `Las franjas de ${label.toLowerCase()} no se pueden solapar entre sí.`
+      }
+    }
+  }
+
+  return null
+}
+
+const formatRangoFechas = (fechaInicio, fechaFin) => {
+  const formatear = (valor) => {
+    const [anio, mes, dia] = valor.split('-').map(Number)
+    return new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium' }).format(
+      new Date(anio, mes - 1, dia)
+    )
+  }
+
+  return fechaInicio === fechaFin ? formatear(fechaInicio) : `${formatear(fechaInicio)} — ${formatear(fechaFin)}`
+}
+
+const hoyLocal = () => {
+  const ahora = new Date()
+  return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(
+    ahora.getDate()
+  ).padStart(2, '0')}`
+}
+
+function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
+  const actualizarDia = (clave, franjas) =>
+    setHorario((current) => ({ ...current, [clave]: franjas }))
+
+  const alternarDia = (clave) =>
+    actualizarDia(clave, horario[clave]?.length ? [] : [{ ...FRANJA_POR_DEFECTO }])
+
+  const actualizarFranja = (clave, indice, cambios) =>
+    actualizarDia(
+      clave,
+      horario[clave].map((franja, i) => (i === indice ? { ...franja, ...cambios } : franja))
+    )
+
+  const agregarFranja = (clave) =>
+    actualizarDia(clave, [...horario[clave], { inicio: '14:00', fin: '18:00' }])
+
+  const eliminarFranja = (clave, indice) =>
+    actualizarDia(
+      clave,
+      horario[clave].filter((_, i) => i !== indice)
+    )
+
+  // Copiar el primer dia abierto al resto ahorra configurar siete veces lo mismo.
+  const copiarATodaLaSemana = () => {
+    const origen = DIAS_SEMANA.find(({ clave }) => horario[clave]?.length)
+
+    if (!origen) {
+      toast.error('Configura primero un día para poder copiarlo.')
+      return
+    }
+
+    const franjas = horario[origen.clave].map((franja) => ({ ...franja }))
+
+    setHorario((current) =>
+      Object.fromEntries(
+        Object.keys(current).map((clave) => [
+          clave,
+          // El domingo suele ser cerrado: no se sobreescribe si ya lo esta.
+          clave === '0' && !current['0'].length ? [] : franjas.map((franja) => ({ ...franja })),
+        ])
+      )
+    )
+  }
+
+  return (
+    <DashboardPanel
+      title="Horario de atención"
+      subtitle="Define en qué días y franjas atiende la clínica. La agenda solo permitirá programar citas dentro de este horario."
+      action={<Clock className="h-4 w-4 text-primary" />}
+    >
+      <div className="grid gap-3">
+        {DIAS_SEMANA.map(({ clave, label }) => {
+          const franjas = horario[clave] || []
+          const abierto = franjas.length > 0
+
+          return (
+            <div
+              key={clave}
+              className={`border px-4 py-3 ${abierto ? 'border-border bg-card' : 'border-border bg-muted'}`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={abierto}
+                    onChange={() => alternarDia(clave)}
+                    className="h-4 w-4 border-border text-primary focus:ring-primary"
+                  />
+                  {label}
+                </label>
+
+                {abierto ? (
+                  <button
+                    type="button"
+                    onClick={() => agregarFranja(clave)}
+                    className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Agregar franja
+                  </button>
+                ) : (
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Cerrado
+                  </span>
+                )}
+              </div>
+
+              {abierto ? (
+                <div className="mt-3 grid gap-2">
+                  {franjas.map((franja, indice) => (
+                    <div key={indice} className="flex flex-wrap items-center gap-2">
+                      <HoraPicker
+                        aria-label={`${label}, apertura`}
+                        value={franja.inicio}
+                        onChange={(valor) => actualizarFranja(clave, indice, { inicio: valor })}
+                      />
+                      <span className="text-sm text-muted-foreground">a</span>
+                      <HoraPicker
+                        aria-label={`${label}, cierre`}
+                        value={franja.fin}
+                        onChange={(valor) => actualizarFranja(clave, indice, { fin: valor })}
+                      />
+                      {franjas.length > 1 ? (
+                        <button
+                          type="button"
+                          aria-label={`Eliminar franja de ${label.toLowerCase()}`}
+                          onClick={() => eliminarFranja(clave, indice)}
+                          className="border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+        <button
+          type="button"
+          onClick={onGuardar}
+          disabled={guardando}
+          className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {guardando ? 'Guardando...' : 'Guardar horario'}
+        </button>
+        <button
+          type="button"
+          onClick={copiarATodaLaSemana}
+          className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+        >
+          Copiar a toda la semana
+        </button>
+      </div>
+    </DashboardPanel>
+  )
+}
+
+function ImpactoBloqueoDialog({ impacto, onCancelar, onConfirmar, guardando }) {
+  const citas = impacto?.citas || []
+
+  return (
+    <DialogRoot open={Boolean(impacto)} onOpenChange={(abierto) => (abierto ? null : onCancelar())}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            Este bloqueo afecta {citas.length} {citas.length === 1 ? 'cita' : 'citas'}
+          </DialogTitle>
+          <DialogDescription>
+            Decide si quieres cancelar las citas ya programadas o solo impedir que se agenden nuevas.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-64 divide-y divide-border overflow-y-auto border border-border">
+          {citas.map((cita) => (
+            <div key={cita.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+              <div>
+                <p className="font-semibold text-foreground">
+                  {formatHora12(cita.horaInicio)} · {cita.mascota?.nombre || 'Paciente sin nombre'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatRangoFechas(cita.fecha, cita.fecha)}
+                  {cita.veterinario?.nombre ? ` · ${cita.veterinario.nombre}` : ''}
+                </p>
+              </div>
+              {cita.cancelable ? null : (
+                <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
+                  No cancelable
+                </StatusPill>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {citas.some((cita) => !cita.cancelable) ? (
+          <p className="text-xs leading-6 text-muted-foreground">
+            Las citas completadas o en atención no se cancelan automáticamente: resuélvelas desde la
+            agenda.
+          </p>
+        ) : null}
+
+        <DialogFooter className="mt-4">
+          <Button variant="outline" size="sm" disabled={guardando} onClick={() => onConfirmar(false)}>
+            Bloquear sin cancelar
+          </Button>
+          <Button variant="destructive" size="sm" disabled={guardando} onClick={() => onConfirmar(true)}>
+            Cancelar esas citas y bloquear
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </DialogRoot>
+  )
+}
+
+function HorariosSection({ horarioAtencion }) {
+  const queryClient = useQueryClient()
+  const [horario, setHorario] = useState(() => buildHorarioForm(horarioAtencion))
+  const [bloqueoForm, setBloqueoForm] = useState({
+    fechaInicio: hoyLocal(),
+    fechaFin: '',
+    diaCompleto: true,
+    horaInicio: '08:00',
+    horaFin: '12:00',
+    motivo: '',
+  })
+  const [impacto, setImpacto] = useState(null)
+
+  useEffect(() => {
+    setHorario(buildHorarioForm(horarioAtencion))
+  }, [horarioAtencion])
+
+  const bloqueosQuery = useQuery({
+    queryKey: ['configuracion-bloqueos'],
+    queryFn: () => configuracionApi.obtenerBloqueos({ desde: hoyLocal() }),
+  })
+
+  const guardarHorarioMutation = useMutation({
+    mutationFn: configuracionApi.actualizarHorarioAtencion,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Horario de atención actualizado')
+      // La pagina re-sincroniza el store con la ficha al refrescar esta query.
+      queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-horario'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible guardar el horario de atención.'))
+    },
+  })
+
+  const crearBloqueoMutation = useMutation({
+    mutationFn: configuracionApi.crearBloqueo,
+    onSuccess: (data) => {
+      const canceladas = data?.citasCanceladas?.length || 0
+      toast.success(
+        canceladas
+          ? `Bloqueo creado y ${canceladas} ${canceladas === 1 ? 'cita cancelada' : 'citas canceladas'}`
+          : data?.message || 'Bloqueo creado'
+      )
+      setImpacto(null)
+      setBloqueoForm((current) => ({ ...current, motivo: '' }))
+      queryClient.invalidateQueries({ queryKey: ['configuracion-bloqueos'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-bloqueos'] })
+      queryClient.invalidateQueries({ queryKey: ['citas'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible crear el bloqueo.'))
+    },
+  })
+
+  const eliminarBloqueoMutation = useMutation({
+    mutationFn: configuracionApi.eliminarBloqueo,
+    onSuccess: () => {
+      toast.success('Bloqueo eliminado')
+      queryClient.invalidateQueries({ queryKey: ['configuracion-bloqueos'] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-bloqueos'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible eliminar el bloqueo.'))
+    },
+  })
+
+  const impactoMutation = useMutation({
+    mutationFn: configuracionApi.calcularImpactoBloqueo,
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible revisar las citas afectadas.'))
+    },
+  })
+
+  const handleGuardarHorario = () => {
+    const error = validarHorarioForm(horario)
+    if (error) {
+      toast.error(error)
+      return
+    }
+
+    guardarHorarioMutation.mutate(horario)
+  }
+
+  const construirPayloadBloqueo = () => ({
+    fechaInicio: bloqueoForm.fechaInicio,
+    fechaFin: bloqueoForm.fechaFin || bloqueoForm.fechaInicio,
+    horaInicio: bloqueoForm.diaCompleto ? null : bloqueoForm.horaInicio,
+    horaFin: bloqueoForm.diaCompleto ? null : bloqueoForm.horaFin,
+    motivo: bloqueoForm.motivo.trim(),
+  })
+
+  // Antes de bloquear se consulta el impacto: si hay citas en conflicto el
+  // administrador decide si las cancela, en vez de perderlas sin avisar.
+  const handleSubmitBloqueo = async (event) => {
+    event.preventDefault()
+
+    const payload = construirPayloadBloqueo()
+
+    if (!payload.motivo) {
+      toast.error('Escribe el motivo del bloqueo.')
+      return
+    }
+
+    if (payload.fechaFin < payload.fechaInicio) {
+      toast.error('La fecha final no puede ser anterior a la inicial.')
+      return
+    }
+
+    if (!bloqueoForm.diaCompleto && payload.horaFin <= payload.horaInicio) {
+      toast.error('La hora de fin debe ser mayor a la hora de inicio.')
+      return
+    }
+
+    const resultado = await impactoMutation.mutateAsync(payload).catch(() => null)
+    if (!resultado) return
+
+    if (resultado.total > 0) {
+      setImpacto({ ...resultado, payload })
+      return
+    }
+
+    crearBloqueoMutation.mutate(payload)
+  }
+
+  const bloqueos = bloqueosQuery.data?.bloqueos || []
+
+  return (
+    <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
+      <HorarioSemanal
+        horario={horario}
+        setHorario={setHorario}
+        onGuardar={handleGuardarHorario}
+        guardando={guardarHorarioMutation.isPending}
+      />
+
+      <div className="space-y-5">
+        <DashboardPanel
+          title="Días y franjas bloqueadas"
+          subtitle="Cierres puntuales por imprevistos. La agenda no permitirá programar citas en estos rangos."
+          action={<CalendarOff className="h-4 w-4 text-primary" />}
+        >
+          {bloqueosQuery.isLoading ? (
+            <div className="grid gap-3">
+              {[0, 1].map((item) => (
+                <div key={item} className="h-14 animate-pulse border border-border bg-muted" />
+              ))}
+            </div>
+          ) : bloqueos.length === 0 ? (
+            <EmptyState
+              icon={<CalendarOff />}
+              title="Sin bloqueos"
+              description="No hay cierres programados. Agrega uno cuando tengas un imprevisto."
+              bordered
+            />
+          ) : (
+            <div className="divide-y divide-border border border-border">
+              {bloqueos.map((bloqueo) => (
+                <div key={bloqueo.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {formatRangoFechas(bloqueo.fechaInicio, bloqueo.fechaFin)}
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {bloqueo.horaInicio && bloqueo.horaFin
+                        ? formatFranja12(bloqueo.horaInicio, bloqueo.horaFin)
+                        : 'Día completo'}
+                      {' · '}
+                      {bloqueo.motivo}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Eliminar bloqueo"
+                    disabled={eliminarBloqueoMutation.isPending}
+                    onClick={() => eliminarBloqueoMutation.mutate(bloqueo.id)}
+                    className="shrink-0 border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </DashboardPanel>
+
+        <DashboardPanel
+          title="Nuevo bloqueo"
+          subtitle="Antes de guardar te mostramos las citas que quedarían afectadas."
+        >
+          <form className="grid gap-4" onSubmit={handleSubmitBloqueo}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Desde" required>
+                <input
+                  type="date"
+                  value={bloqueoForm.fechaInicio}
+                  onChange={(event) =>
+                    setBloqueoForm((current) => ({ ...current, fechaInicio: event.target.value }))
+                  }
+                  className={INPUT_CLASS}
+                />
+              </FormField>
+              <FormField label="Hasta" helper="Déjalo vacío para bloquear un solo día.">
+                <input
+                  type="date"
+                  value={bloqueoForm.fechaFin}
+                  min={bloqueoForm.fechaInicio}
+                  onChange={(event) =>
+                    setBloqueoForm((current) => ({ ...current, fechaFin: event.target.value }))
+                  }
+                  className={INPUT_CLASS}
+                />
+              </FormField>
+            </div>
+
+            <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={bloqueoForm.diaCompleto}
+                onChange={(event) =>
+                  setBloqueoForm((current) => ({ ...current, diaCompleto: event.target.checked }))
+                }
+                className="h-4 w-4 border-border text-primary focus:ring-primary"
+              />
+              Bloquear el día completo
+            </label>
+
+            {!bloqueoForm.diaCompleto ? (
+              <div className="grid gap-3">
+                <FormField label="Desde la hora">
+                  <HoraPicker
+                    aria-label="Inicio del bloqueo"
+                    value={bloqueoForm.horaInicio}
+                    onChange={(valor) =>
+                      setBloqueoForm((current) => ({ ...current, horaInicio: valor }))
+                    }
+                  />
+                </FormField>
+                <FormField label="Hasta la hora">
+                  <HoraPicker
+                    aria-label="Fin del bloqueo"
+                    value={bloqueoForm.horaFin}
+                    onChange={(valor) => setBloqueoForm((current) => ({ ...current, horaFin: valor }))}
+                  />
+                </FormField>
+              </div>
+            ) : null}
+
+            <FormField label="Motivo" required>
+              <input
+                type="text"
+                value={bloqueoForm.motivo}
+                onChange={(event) =>
+                  setBloqueoForm((current) => ({ ...current, motivo: event.target.value }))
+                }
+                placeholder="Ej. Mantenimiento eléctrico"
+                className={INPUT_CLASS}
+              />
+            </FormField>
+
+            <button
+              type="submit"
+              disabled={impactoMutation.isPending || crearBloqueoMutation.isPending}
+              className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {impactoMutation.isPending
+                ? 'Revisando citas...'
+                : crearBloqueoMutation.isPending
+                  ? 'Guardando...'
+                  : 'Bloquear'}
+            </button>
+          </form>
+        </DashboardPanel>
+      </div>
+
+      <ImpactoBloqueoDialog
+        impacto={impacto}
+        guardando={crearBloqueoMutation.isPending}
+        onCancelar={() => setImpacto(null)}
+        onConfirmar={(cancelarCitas) =>
+          crearBloqueoMutation.mutate({ ...impacto.payload, cancelarCitas })
+        }
+      />
+    </div>
+  )
+}
+
 function ConsultoriosSection() {
   const queryClient = useQueryClient()
   const [nombre, setNombre] = useState('')
@@ -1349,8 +1918,8 @@ function ConsultoriosSection() {
                   }
                   className={`shrink-0 border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     consultorio.activo
-                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50'
+                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50'
                   }`}
                 >
                   {consultorio.activo ? 'Desactivar' : 'Activar'}
@@ -1382,7 +1951,7 @@ function ConsultoriosSection() {
           <button
             type="submit"
             disabled={crearMutation.isPending}
-            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearMutation.isPending ? 'Guardando...' : 'Crear consultorio'}
           </button>

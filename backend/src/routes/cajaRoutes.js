@@ -7,6 +7,8 @@ const {
   listarMovimientosTurno,
   registrarMovimientoCaja,
   cerrarTurno,
+  listarTurnosVencidos,
+  cerrarTurnoAdmin,
   listarHistorialTurnos,
   obtenerDetalleTurno,
   obtenerReporteDescuadres,
@@ -111,6 +113,30 @@ router.patch(
     validar,
   ],
   cerrarTurno
+)
+
+router.get(
+  '/turnos/vencidos',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  listarTurnosVencidos
+)
+
+router.patch(
+  '/turnos/:turnoId/cerrar-admin',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  [
+    body('montoFinalContado').isFloat({ min: 0 }).withMessage('Monto final invalido'),
+    body('observacionesCierre').optional({ values: 'falsy' }).trim(),
+    body('categoriaDiferencia')
+      .optional({ values: 'falsy' })
+      .isIn(CATEGORIAS_DIFERENCIA)
+      .withMessage('Categoria de diferencia no valida'),
+    validar,
+  ],
+  cerrarTurnoAdmin
 )
 
 router.get(

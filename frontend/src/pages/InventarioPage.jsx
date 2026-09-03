@@ -120,18 +120,18 @@ function StockBadge({ stock, stockMinimo }) {
   const min = Number(stockMinimo ?? 0)
   if (num === 0)
     return (
-      <span className="inline-flex items-center gap-1 border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">
+      <span className="inline-flex items-center gap-1 border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
         0 / {min}
       </span>
     )
   if (num <= min)
     return (
-      <span className="inline-flex items-center gap-1 border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+      <span className="inline-flex items-center gap-1 border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
         {num} / {min}
       </span>
     )
   return (
-    <span className="inline-flex items-center gap-1 border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+    <span className="inline-flex items-center gap-1 border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
       {num} / {min}
     </span>
   )
@@ -352,12 +352,12 @@ export default function InventarioPage() {
           {(reporteQuery.isError || productosQuery.isError) && (
             <div className="grid gap-3">
               {reporteQuery.isError && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                <div className="border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-4 text-sm leading-7 text-amber-800 dark:text-amber-300">
                   No fue posible cargar el resumen de inventario.
                 </div>
               )}
               {productosQuery.isError && (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+                <div className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-4 py-4 text-sm leading-7 text-red-700 dark:text-red-300">
                   No fue posible cargar la tabla de productos.
                 </div>
               )}
@@ -397,21 +397,21 @@ export default function InventarioPage() {
                   label="Valor inventariado"
                   value={formatCurrency(resumen.valorTotalInventario || 0)}
                   helper="Valor estimado a precio de venta del inventario cargado."
-                  tone="text-emerald-700"
+                  tone="text-emerald-700 dark:text-emerald-400"
                 />
                 <KpiCard
                   icon={CircleAlert}
                   label="Cantidad baja"
                   value={formatNumber(resumen.bajoStock || 0)}
                   helper="Productos por debajo del mínimo definido."
-                  tone="text-amber-700"
+                  tone="text-amber-700 dark:text-amber-400"
                 />
                 <KpiCard
                   icon={Sparkles}
                   label="Alertas totales"
                   value={formatNumber(alertsRows.length)}
                   helper="Suma de cantidad baja, próximos a vencer y vencidos."
-                  tone="text-rose-700"
+                  tone="text-rose-700 dark:text-rose-400"
                 />
               </div>
 
@@ -438,10 +438,10 @@ export default function InventarioPage() {
                         <StatusPill
                           tone={
                             row.tipo === 'Vencido'
-                              ? 'border-red-200 bg-red-50 text-red-700'
+                              ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                               : row.tipo === 'Proximo a vencer'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                : 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                                ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+                                : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
                           }
                         >
                           {row.tipo}
@@ -473,7 +473,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={() => setSelectorOpen(true)}
-                  className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <ArrowLeftRight className="h-4 w-4" />
                   Elegir inventario
@@ -520,7 +520,7 @@ export default function InventarioPage() {
                   <button
                     type="button"
                     onClick={openCreateDrawer}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                   >
                     <PackagePlus className="h-4 w-4" />
                     Nuevo producto
@@ -557,10 +557,10 @@ export default function InventarioPage() {
                                 key={`${row.id}-${alerta}`}
                                 tone={
                                   alerta === 'vencido'
-                                    ? 'border-red-200 bg-red-50 text-red-700'
+                                    ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                                     : alerta === 'proximo_vencimiento'
-                                      ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                      : 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                                      ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+                                      : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
                                 }
                               >
                                 {alerta.replaceAll('_', ' ')}
@@ -594,7 +594,7 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => openConfirmDelete(row.raw)}
-                            className="text-sm font-semibold text-red-600 hover:text-red-800"
+                            className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           >
                             Desactivar
                           </button>
@@ -645,7 +645,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={insumosClinicosHook.openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <FlaskConical className="h-4 w-4" />
                   Nuevo insumo clínico
@@ -694,10 +694,10 @@ export default function InventarioPage() {
                                 key={`${row.id}-${alerta}`}
                                 tone={
                                   alerta === 'vencido'
-                                    ? 'border-red-200 bg-red-50 text-red-700'
+                                    ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                                     : alerta === 'proximo_vencimiento'
-                                      ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                      : 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                                      ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+                                      : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
                                 }
                               >
                                 {alerta.replaceAll('_', ' ')}
@@ -723,7 +723,7 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => insumosClinicosHook.openConfirmDelete(row.raw)}
-                            className="text-sm font-semibold text-red-600 hover:text-red-800"
+                            className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                           >
                             Desactivar
                           </button>
@@ -777,7 +777,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={serviciosHook.openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <Plus className="h-4 w-4" />
                   Nuevo servicio
@@ -809,7 +809,7 @@ export default function InventarioPage() {
                         <button
                           type="button"
                           onClick={() => serviciosHook.openConfirmDelete(row.raw)}
-                          className="text-sm font-semibold text-red-600 hover:text-red-800"
+                          className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           Desactivar
                         </button>
@@ -935,7 +935,7 @@ export default function InventarioPage() {
                     <button
                       type="submit"
                       disabled={isPendingMovement}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingMovement ? 'Registrando...' : 'Registrar movimiento'}
                     </button>
@@ -1076,7 +1076,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={facturaCompraHook.abrirNueva}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   Nueva factura de compra
@@ -1169,7 +1169,7 @@ export default function InventarioPage() {
                             <button
                               type="button"
                               onClick={() => facturaCompraHook.pedirPagar(row.raw.id)}
-                              className="text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+                              className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300"
                             >
                               Confirmar pago
                             </button>
@@ -1178,7 +1178,7 @@ export default function InventarioPage() {
                             <button
                               type="button"
                               onClick={() => facturaCompraHook.pedirAnular(row.raw.id)}
-                              className="text-sm font-semibold text-red-600 hover:text-red-800"
+                              className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                             >
                               Anular
                             </button>
@@ -1269,7 +1269,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={serviciosHook.confirmDelete}
                 disabled={serviciosHook.isPendingDelete}
-                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
               >
                 {serviciosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>
@@ -1340,8 +1340,8 @@ export default function InventarioPage() {
                 disabled={facturaCompraHook.isActuando}
                 className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
                   facturaCompraHook.confirmDialog.tipo === 'anular'
-                    ? 'border border-red-300 bg-red-600 hover:bg-red-700'
-                    : 'border border-emerald-300 bg-emerald-600 hover:bg-emerald-700'
+                    ? 'border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600'
+                    : 'border border-emerald-300 dark:border-emerald-800 bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600'
                 }`}
               >
                 {facturaCompraHook.isActuando
@@ -1384,7 +1384,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={insumosClinicosHook.confirmDelete}
                 disabled={insumosClinicosHook.isPendingDelete}
-                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
               >
                 {insumosClinicosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>
@@ -1421,7 +1421,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={confirmDelete}
                 disabled={isPendingDelete}
-                className="flex-1 border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
               >
                 {isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>

@@ -227,7 +227,7 @@ function FormSection({ icon, title, filled, required, open, onToggle, children }
         <span className="flex-shrink-0 text-muted-foreground">{icon}</span>
         <span className="flex-1 text-sm font-semibold text-foreground">{title}</span>
         {required && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500">requerido</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-500 dark:text-rose-400">requerido</span>
         )}
         <div className={cn('h-2 w-2 flex-shrink-0 rounded-full transition-colors', filled ? 'bg-primary' : 'bg-muted-foreground/30')} />
         <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
@@ -663,10 +663,10 @@ export default function HistoriaClinicaFormDrawer({
               className="flex w-full items-center justify-between px-5 py-2 transition hover:bg-muted/40"
             >
               <div className="flex items-center gap-2">
-                <HeartPulse className="h-3.5 w-3.5 text-rose-600" />
+                <HeartPulse className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                 <span className="text-xs font-semibold text-foreground">Antecedentes del paciente</span>
                 {antecedentesQuery.data?.antecedentes?.alergias?.length > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                  <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
                     {antecedentesQuery.data.antecedentes.alergias.length} alerg.
                   </span>
                 )}
@@ -678,7 +678,7 @@ export default function HistoriaClinicaFormDrawer({
                 {antecedentesQuery.isPending ? (
                   <p className="text-xs text-muted-foreground">Cargando antecedentes...</p>
                 ) : antecedentesQuery.isError ? (
-                  <p className="text-xs text-rose-600">No fue posible cargar los antecedentes.</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400">No fue posible cargar los antecedentes.</p>
                 ) : (
                   <AntecedentesResumen
                     antecedentes={antecedentesQuery.data?.antecedentes}
@@ -699,7 +699,7 @@ export default function HistoriaClinicaFormDrawer({
               className="flex w-full items-center justify-between px-5 py-2 transition hover:bg-muted/40"
             >
               <div className="flex items-center gap-2">
-                <FlaskConical className="h-3.5 w-3.5 text-cyan-600" />
+                <FlaskConical className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
                 <span className="text-xs font-semibold text-foreground">Exámenes de laboratorio</span>
               </div>
               <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition', examenesOpen && 'rotate-180')} />
@@ -906,9 +906,9 @@ export default function HistoriaClinicaFormDrawer({
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-foreground">
                             Aplicación {index + 1}
-                            <span className="ml-2 text-emerald-700">· {item.nombre}</span>
+                            <span className="ml-2 text-emerald-700 dark:text-emerald-300">· {item.nombre}</span>
                           </p>
-                          <button type="button" onClick={() => removeTratamientoDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
+                          <button type="button" onClick={() => removeTratamientoDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-100">Quitar</button>
                         </div>
 
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -920,10 +920,10 @@ export default function HistoriaClinicaFormDrawer({
                               value={item.cantidad}
                               onChange={(e) => updateTratamientoDraft(item.id, 'cantidad', e.target.value)}
                               placeholder={item.unidadBase ? `Cantidad aplicada (${item.unidadBase})` : 'Cantidad aplicada'}
-                              className={cn('h-9 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500', excedeStock(item) ? 'border-rose-400' : 'border-border')}
+                              className={cn('h-9 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-emerald-500', excedeStock(item) ? 'border-rose-400 dark:border-rose-500' : 'border-border')}
                             />
                             {item.stockDisponible !== null && (
-                              <p className={cn('text-[10px] font-semibold', excedeStock(item) ? 'text-rose-700' : 'text-muted-foreground')}>
+                              <p className={cn('text-[10px] font-semibold', excedeStock(item) ? 'text-rose-700 dark:text-rose-300' : 'text-muted-foreground')}>
                                 {excedeStock(item)
                                   ? `Solo hay ${formatNumber(item.stockDisponible)} ${item.unidadBase}`
                                   : `Disponible ${formatNumber(item.stockDisponible)} ${item.unidadBase}`}
@@ -1024,9 +1024,9 @@ export default function HistoriaClinicaFormDrawer({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-foreground">
                           Medicamento {index + 1}
-                          {item.fuente === 'inventario' && <span className="ml-2 text-cyan-700">· inventario</span>}
+                          {item.fuente === 'inventario' && <span className="ml-2 text-cyan-700 dark:text-cyan-300">· inventario</span>}
                         </p>
-                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800">Quitar</button>
+                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-xs font-semibold text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-100">Quitar</button>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
@@ -1046,7 +1046,7 @@ export default function HistoriaClinicaFormDrawer({
                           <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                           <div className="flex flex-wrap gap-1">
                             {MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => (
-                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'frecuencia', s)} className={cn('border px-1.5 py-0.5 text-[10px] font-semibold transition', item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground')}>{s}</button>
+                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'frecuencia', s)} className={cn('border px-1.5 py-0.5 text-[10px] font-semibold transition', item.frecuencia === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/30 dark:text-cyan-300' : 'border-border bg-muted text-muted-foreground hover:text-foreground')}>{s}</button>
                             ))}
                           </div>
                         </div>
@@ -1054,7 +1054,7 @@ export default function HistoriaClinicaFormDrawer({
                           <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duración" className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500" />
                           <div className="flex flex-wrap gap-1">
                             {MEDICATION_DURATION_SUGGESTIONS.map((s) => (
-                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'duracion', s)} className={cn('border px-1.5 py-0.5 text-[10px] font-semibold transition', item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-border bg-muted text-muted-foreground hover:text-foreground')}>{s}</button>
+                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'duracion', s)} className={cn('border px-1.5 py-0.5 text-[10px] font-semibold transition', item.duracion === s ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/30 dark:text-cyan-300' : 'border-border bg-muted text-muted-foreground hover:text-foreground')}>{s}</button>
                             ))}
                           </div>
                         </div>
@@ -1075,7 +1075,7 @@ export default function HistoriaClinicaFormDrawer({
               </FormSection>
 
               {historiaActual?.bloqueada && (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
                   Esta historia ya está bloqueada. Puedes consultarla, pero no volver a editarla.
                 </div>
               )}
@@ -1090,7 +1090,7 @@ export default function HistoriaClinicaFormDrawer({
               type="submit"
               form="historia-drawer-form"
               disabled={isSaving || historiaActual?.bloqueada}
-              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {historiaActual?.id
                 ? isSaving ? 'Guardando...' : 'Guardar cambios'

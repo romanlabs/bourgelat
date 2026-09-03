@@ -121,7 +121,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
                   className={cn(
                     'border px-1.5 py-0.5 text-[10px] font-semibold transition',
                     form.tipo === tipo
-                      ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                      ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/30 dark:text-cyan-300'
                       : 'border-border bg-muted text-muted-foreground hover:text-foreground'
                   )}
                 >
@@ -191,7 +191,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
             type="button"
             onClick={handleSubmit}
             disabled={guardarMutation.isPending}
-            className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardarMutation.isPending ? 'Guardando...' : examen ? 'Guardar cambios' : 'Registrar examen'}
           </button>
@@ -259,7 +259,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
       {examenesQuery.isPending ? (
         <p className="text-xs text-muted-foreground">Cargando exámenes...</p>
       ) : examenesQuery.isError ? (
-        <p className="text-xs text-rose-600">No fue posible cargar los exámenes.</p>
+        <p className="text-xs text-rose-600 dark:text-rose-400">No fue posible cargar los exámenes.</p>
       ) : examenes.length === 0 ? (
         <div className="border border-dashed border-border bg-muted/40 px-4 py-4 text-center">
           <FlaskConical className="mx-auto mb-1 h-5 w-5 text-muted-foreground/50" />
@@ -283,7 +283,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                     <button
                       type="button"
                       onClick={() => abrirEditar(examen)}
-                      className="text-xs font-semibold text-cyan-700 hover:text-cyan-800"
+                      className="text-xs font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-100"
                     >
                       Editar
                     </button>
@@ -297,7 +297,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                         }
                       }}
                       disabled={eliminarMutation.isPending}
-                      className="text-xs font-semibold text-rose-700 hover:text-rose-800 disabled:opacity-60"
+                      className="text-xs font-semibold text-rose-700 hover:text-rose-800 disabled:opacity-60 dark:text-rose-300 dark:hover:text-rose-100"
                     >
                       Eliminar
                     </button>
@@ -317,7 +317,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                   href={examen.archivoUrlPublica}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800"
+                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-100"
                 >
                   <Paperclip className="h-3 w-3" />
                   {examen.archivoNombre || 'Ver adjunto'}

@@ -163,14 +163,14 @@ export default function PacientesPage() {
                   label="Pacientes activos"
                   value={formatNumber(resumenHook.totalMascotas)}
                   helper="Total de pacientes registrados en la clinica."
-                  tone="text-cyan-700"
+                  tone="text-cyan-700 dark:text-cyan-300"
                 />
                 <KpiCard
                   icon={Users}
                   label="Tutores"
                   value={formatNumber(resumenHook.totalPropietarios)}
                   helper="Total de tutores registrados en la clinica."
-                  tone="text-emerald-700"
+                  tone="text-emerald-700 dark:text-emerald-300"
                 />
                 <KpiCard
                   icon={ShieldCheck}
@@ -185,14 +185,14 @@ export default function PacientesPage() {
                       ? 'La suscripcion actual no tiene tope de pacientes.'
                       : `${formatNumber(resumenHook.totalMascotas)} de ${formatNumber(limiteMascotas)} en uso.`
                   }
-                  tone="text-violet-700"
+                  tone="text-violet-700 dark:text-violet-300"
                 />
                 <KpiCard
                   icon={HeartPulse}
                   label="Historia clinica"
                   value="Activa"
                   helper="Define si esta base ya puede pasar directo a evolucion clinica."
-                  tone="text-rose-700"
+                  tone="text-rose-700 dark:text-rose-300"
                 />
               </div>
 
@@ -279,7 +279,7 @@ export default function PacientesPage() {
                     type="button"
                     onClick={mascotasHook.openCreateDrawer}
                     {...propsAccion}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" />
                     Nuevo paciente
@@ -404,7 +404,7 @@ export default function PacientesPage() {
                     type="button"
                     onClick={tutoresHook.openCreateDrawer}
                     {...propsAccion}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <UserRound className="h-4 w-4" />
                     Nuevo tutor

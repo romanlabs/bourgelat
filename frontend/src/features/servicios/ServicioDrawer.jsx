@@ -6,7 +6,7 @@ import { Select } from '@/components/ui/select'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
-    hasError ? 'border-red-400' : 'border-border'
+    hasError ? 'border-red-400 dark:border-red-600/70' : 'border-border'
   }`
 
 const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
@@ -227,7 +227,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
                     <button
                       type="button"
                       onClick={() => eliminarFila(row.rowId)}
-                      className="mt-1 text-muted-foreground hover:text-red-600"
+                      className="mt-1 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
                       aria-label="Quitar insumo"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -256,7 +256,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             type="submit"
             form="servicio-drawer-form"
             disabled={isPending || !formularioValido}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingServicio ? 'Actualizar servicio' : 'Guardar servicio'}
           </button>

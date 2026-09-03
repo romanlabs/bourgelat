@@ -37,6 +37,12 @@ export function useCajaTurno({ enabled, esAdmin }) {
     enabled: enabled && esAdmin,
   })
 
+  const turnosVencidosQuery = useQuery({
+    queryKey: ['caja-turnos-vencidos'],
+    queryFn: () => cajaApi.listarTurnosVencidos(),
+    enabled: enabled && esAdmin,
+  })
+
   const invalidarTurno = () => {
     queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
     queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
@@ -77,6 +83,22 @@ export function useCajaTurno({ enabled, esAdmin }) {
     },
   })
 
+  const cerrarTurnoAdminMutation = useMutation({
+    mutationFn: ({ turnoId, payload }) => cajaApi.cerrarTurnoAdmin(turnoId, payload),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Turno cerrado exitosamente')
+      // El admin puede estar cerrando su propio turno vencido: hay que
+      // refrescar tambien el turno activo o la UI lo sigue mostrando abierto.
+      invalidarTurno()
+      queryClient.invalidateQueries({ queryKey: ['caja-turnos-vencidos'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-historial'] })
+      queryClient.invalidateQueries({ queryKey: ['caja-reporte-descuadres'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible cerrar el turno.'))
+    },
+  })
+
   return {
     turnoActivoQuery,
     turnoActivo,
@@ -90,8 +112,11 @@ export function useCajaTurno({ enabled, esAdmin }) {
     setReporteFiltros,
     reporteDescuadresQuery,
     reporteDescuadres: reporteDescuadresQuery.data?.reporte || [],
+    turnosVencidosQuery,
+    turnosVencidos: turnosVencidosQuery.data?.turnos || [],
     abrirTurnoMutation,
     registrarMovimientoMutation,
     cerrarTurnoMutation,
+    cerrarTurnoAdminMutation,
   }
 }

@@ -127,7 +127,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
   const fieldClass = (hasError) =>
     `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
-      hasError ? 'border-red-400' : 'border-border'
+      hasError ? 'border-red-400 dark:border-red-600/70' : 'border-border'
     }`
 
   const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
@@ -224,7 +224,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                   className={fieldClass(errors.nombre)}
                   {...register('nombre')}
                 />
-                {errors.nombre && <p className="text-xs text-red-600">{errors.nombre.message}</p>}
+                {errors.nombre && <p className="text-xs text-red-600 dark:text-red-400">{errors.nombre.message}</p>}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -240,7 +240,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                         variant="field"
                         id="d-categoria"
                         aria-label="Categoría"
-                        className={errors.categoria ? 'border-red-400' : undefined}
+                        className={errors.categoria ? 'border-red-400 dark:border-red-600/70' : undefined}
                         value={field.value}
                         onValueChange={field.onChange}
                         options={CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')}
@@ -260,7 +260,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                         variant="field"
                         id="d-unidad"
                         aria-label="Se cuenta por"
-                        className={errors.unidadMedida ? 'border-red-400' : undefined}
+                        className={errors.unidadMedida ? 'border-red-400 dark:border-red-600/70' : undefined}
                         value={field.value}
                         onValueChange={field.onChange}
                         options={UNIT_OPTIONS}
@@ -378,7 +378,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
               {/* Ganancia / margen calculado */}
               {ventaBajoCosto ? (
-                <div className="flex items-center gap-2 border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                <div className="flex items-center gap-2 border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs font-semibold text-red-700 dark:text-red-300">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   El precio de venta está por debajo del costo.
                 </div>
@@ -463,7 +463,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
             type="submit"
             form="product-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingProduct ? 'Actualizar producto' : 'Guardar producto'}
           </button>

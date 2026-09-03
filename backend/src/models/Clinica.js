@@ -112,6 +112,11 @@ const Clinica = sequelize.define('Clinica', {
     defaultValue: 0,
     comment: 'Megabytes ocupados por archivos subidos por la clinica',
   },
+  horarioAtencion: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    comment: 'Horario semanal { "0".."6": [{ inicio: "HH:MM", fin: "HH:MM" }] }; null = sin restriccion',
+  },
 }, {
   tableName: 'clinicas',
   timestamps: true,

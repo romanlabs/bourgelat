@@ -48,7 +48,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
             </div>
 
             {detalle.turno.categoriaDiferencia ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
                 <p className="font-semibold">{CATEGORIA_DIFERENCIA_LABELS[detalle.turno.categoriaDiferencia] || detalle.turno.categoriaDiferencia}</p>
                 {detalle.turno.observacionesCierre ? (
                   <p className="mt-1 text-xs">{detalle.turno.observacionesCierre}</p>
@@ -67,7 +67,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
                   {detalle.movimientos.map((movimiento) => (
                     <div key={movimiento.id} className="flex items-center justify-between py-2">
                       <span className="text-foreground">{movimiento.motivo}</span>
-                      <span className={movimiento.tipo === 'ingreso' ? 'text-emerald-700' : 'text-red-700'}>
+                      <span className={movimiento.tipo === 'ingreso' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}>
                         {movimiento.tipo === 'ingreso' ? '+' : '-'}
                         {formatCurrency(movimiento.monto)}
                       </span>

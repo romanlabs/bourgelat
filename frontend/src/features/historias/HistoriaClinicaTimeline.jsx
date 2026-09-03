@@ -38,7 +38,7 @@ function EmptyTimeline({ onNuevaConsulta }) {
       <button
         type="button"
         onClick={onNuevaConsulta}
-        className="mt-4 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+        className="mt-4 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
       >
         <Plus className="h-3.5 w-3.5" />
         Registrar primera consulta
@@ -57,7 +57,7 @@ function TimelineCard({ historia, onEdit }) {
         <div
           className={`h-3 w-3 rounded-full border-2 ${
             bloqueada
-              ? 'border-amber-400 bg-amber-100'
+              ? 'border-amber-400 bg-amber-100 dark:border-amber-500 dark:bg-amber-900/50'
               : 'border-primary bg-primary/20'
           }`}
         />
@@ -81,8 +81,8 @@ function TimelineCard({ historia, onEdit }) {
           <span
             className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${
               bloqueada
-                ? 'border-amber-200 bg-amber-50 text-amber-700'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300'
             }`}
           >
             {bloqueada ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}

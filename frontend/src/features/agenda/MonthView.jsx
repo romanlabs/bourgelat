@@ -16,19 +16,24 @@ function DiaCell({
   onSlotClick,
   onCitaClick,
   onVerDia,
+  bloqueo,
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const esHoy = isToday(day)
   const delMes = isSameMonth(day, fechaBase)
   const visibles = citas.slice(0, MAX_CHIPS)
   const ocultas = citas.length - visibles.length
+  // Un día bloqueado no acepta citas nuevas: la celda deja de ser clickeable.
+  const clickeable = puedeProgramar && !bloqueo
 
   return (
     <div
-      role={puedeProgramar ? 'button' : undefined}
-      tabIndex={puedeProgramar ? 0 : undefined}
+      role={clickeable ? 'button' : undefined}
+      tabIndex={clickeable ? 0 : undefined}
+      aria-disabled={puedeProgramar && bloqueo ? true : undefined}
+      title={bloqueo ? bloqueo.motivo : undefined}
       aria-label={
-        puedeProgramar
+        clickeable
           ? `Nueva cita el ${format(day, "d 'de' MMMM", { locale: es })}`
           : undefined
       }
@@ -36,15 +41,16 @@ function DiaCell({
         'relative flex min-h-[76px] flex-col gap-0.5 border-b border-r border-border p-1 sm:min-h-[92px]',
         !delMes && 'bg-muted/30',
         esHoy && 'bg-primary/5',
-        puedeProgramar && 'cursor-pointer transition-colors hover:bg-accent/30'
+        bloqueo && 'bg-amber-50 dark:bg-amber-950/30',
+        clickeable && 'cursor-pointer transition-colors hover:bg-accent/30'
       )}
       onClick={() => {
-        if (puedeProgramar && onSlotClick) {
+        if (clickeable && onSlotClick) {
           onSlotClick(format(day, 'yyyy-MM-dd'), '09:00')
         }
       }}
       onKeyDown={(e) => {
-        if (puedeProgramar && onSlotClick && (e.key === 'Enter' || e.key === ' ')) {
+        if (clickeable && onSlotClick && (e.key === 'Enter' || e.key === ' ')) {
           onSlotClick(format(day, 'yyyy-MM-dd'), '09:00')
         }
       }}
@@ -67,6 +73,12 @@ function DiaCell({
       >
         {format(day, 'd')}
       </button>
+
+      {bloqueo ? (
+        <p className="truncate rounded-sm bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+          {bloqueo.motivo}
+        </p>
+      ) : null}
 
       {visibles.map((cita) => (
         <CitaChipMini
@@ -130,6 +142,7 @@ export function MonthView({
   onCitaClick,
   onVerDia,
   isLoading,
+  getBloqueoDelDia,
 }) {
   // 7 columnas normalmente; 5 cuando se ocultan los fines de semana
   const columnas = new Set(days.map((day) => day.getDay())).size || 7
@@ -174,6 +187,7 @@ export function MonthView({
                 onSlotClick={onSlotClick}
                 onCitaClick={onCitaClick}
                 onVerDia={onVerDia}
+                bloqueo={getBloqueoDelDia?.(day)}
               />
             ))}
       </div>

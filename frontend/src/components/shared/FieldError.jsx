@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 export function FieldError({ message, className }) {
   if (!message) return null
   return (
-    <p className={cn('mt-1 text-xs text-red-500', className)} role="alert">
+    <p className={cn('mt-1 text-xs text-red-500 dark:text-red-400', className)} role="alert">
       {message}
     </p>
   )

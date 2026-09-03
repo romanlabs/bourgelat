@@ -29,6 +29,9 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      # El horario de atencion y los walk-in dependen de la hora local del
+      # proceso; sin esto el contenedor corre en UTC y se desfasa 5 horas.
+      TZ: America/Bogota
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: bourgelat_db

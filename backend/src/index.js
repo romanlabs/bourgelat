@@ -1,3 +1,6 @@
+// Primero que todo: fija la zona horaria del proceso antes de que cualquier
+// modulo calcule fechas (ver config/timezone.js).
+const { zonaHoraria } = require('./config/timezone')
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
@@ -135,6 +138,7 @@ const propietarioRoutes = require('./routes/propietarioRoutes')
 const mascotaRoutes = require('./routes/mascotaRoutes')
 const citaRoutes = require('./routes/citaRoutes')
 const consultorioRoutes = require('./routes/consultorioRoutes')
+const bloqueoAgendaRoutes = require('./routes/bloqueoAgendaRoutes')
 const historiaClinicaRoutes = require('./routes/historiaClinicaRoutes')
 const registroEstiloRoutes = require('./routes/registroEstiloRoutes')
 const inventarioRoutes = require('./routes/inventarioRoutes')
@@ -159,6 +163,7 @@ app.use('/api/propietarios', propietarioRoutes)
 app.use('/api/mascotas', mascotaRoutes)
 app.use('/api/citas', citaRoutes)
 app.use('/api/consultorios', consultorioRoutes)
+app.use('/api/bloqueos-agenda', bloqueoAgendaRoutes)
 app.use('/api/historias', historiaClinicaRoutes)
 app.use('/api/registros-estilo', registroEstiloRoutes)
 app.use('/api/inventario', inventarioRoutes)
@@ -241,7 +246,7 @@ sequelize.authenticate()
   .then(() => {
     logger.info('Inicializacion de base de datos completada')
     app.listen(PORT, () => {
-      logger.info(`Servidor Bourgelat corriendo en el puerto ${PORT}`);
+      logger.info(`Servidor Bourgelat corriendo en el puerto ${PORT} (zona horaria: ${zonaHoraria})`);
     })
 
     // ── Jobs de limpieza ─────────────────────────────────

@@ -545,7 +545,7 @@ export default function SuperadminPage() {
             label="Eventos fallidos semana"
             value={formatNumber(resumenQuery.data?.resumen?.eventosFallidosSemana || 0)}
             helper="Senal temprana de errores operativos o intentos rechazados."
-            tone="text-violet-700"
+            tone="text-violet-700 dark:text-violet-300"
           />
         </div>
 

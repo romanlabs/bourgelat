@@ -45,19 +45,19 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
     <div className="space-y-3">
       {alergias.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-rose-700 dark:text-rose-300">
             Alergias
           </p>
           <div className="space-y-1">
             {alergias.map((item, index) => (
               <div
                 key={index}
-                className="rounded border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-800"
+                className="rounded border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/30 dark:text-rose-200"
               >
                 <span className="font-semibold">{item.tipo || 'Alergia'}</span>
                 {item.descripcion ? <span> · {item.descripcion}</span> : null}
                 {item.reaccion ? (
-                  <span className="text-rose-600"> → {item.reaccion}</span>
+                  <span className="text-rose-600 dark:text-rose-300"> → {item.reaccion}</span>
                 ) : null}
               </div>
             ))}
@@ -67,14 +67,14 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {condiciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
             Condiciones crónicas
           </p>
           <div className="space-y-1">
             {condiciones.map((item, index) => (
               <div
                 key={index}
-                className="rounded border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                className="rounded border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200"
               >
                 <span className="font-semibold">{item.nombre}</span>
                 {item.tratamientoActual ? <span> · {item.tratamientoActual}</span> : null}
@@ -86,7 +86,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {medicamentosTexto ? (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
             Medicamentos actuales
           </p>
           <p className="whitespace-pre-line text-sm leading-6 text-foreground">
@@ -97,7 +97,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {vacunas.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
             Vacunas
           </p>
           <div className="space-y-1">
@@ -108,7 +108,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
                   <span className="text-muted-foreground"> · {item.fecha}</span>
                 ) : null}
                 {item.proximaDosis ? (
-                  <span className="text-emerald-700"> · Próxima: {item.proximaDosis}</span>
+                  <span className="text-emerald-700 dark:text-emerald-300"> · Próxima: {item.proximaDosis}</span>
                 ) : null}
               </div>
             ))}
@@ -121,7 +121,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {desparasitaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700 dark:text-orange-300">
             Desparasitación
           </p>
           <div className="space-y-1">
@@ -132,7 +132,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
                   <span className="text-muted-foreground"> · {item.fecha}</span>
                 ) : null}
                 {item.proximaFecha ? (
-                  <span className="text-orange-700"> · Próxima: {item.proximaFecha}</span>
+                  <span className="text-orange-700 dark:text-orange-300"> · Próxima: {item.proximaFecha}</span>
                 ) : null}
               </div>
             ))}
@@ -145,7 +145,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {planificaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
             Planificación
           </p>
           <div className="space-y-1">
@@ -156,7 +156,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
                   <span className="text-muted-foreground"> · {item.fecha}</span>
                 ) : null}
                 {item.proximaFecha ? (
-                  <span className="text-sky-700"> · Próxima: {item.proximaFecha}</span>
+                  <span className="text-sky-700 dark:text-sky-300"> · Próxima: {item.proximaFecha}</span>
                 ) : null}
               </div>
             ))}
