@@ -6,17 +6,8 @@ import { z } from 'zod'
 import { X } from 'lucide-react'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
-import { CATEGORY_OPTIONS } from './useInsumosClinicos'
+import { CATEGORY_OPTIONS, UNIDAD_BASE_OPTIONS } from './useInsumosClinicos'
 import { Select } from '@/components/ui/select'
-
-// Unidades base para consumo clinico: fraccionables, no presentaciones enteras.
-const UNIDAD_BASE_OPTIONS = [
-  { value: 'ml', label: 'Mililitro (ml)' },
-  { value: 'mg', label: 'Miligramo (mg)' },
-  { value: 'gr', label: 'Gramo (gr)' },
-  { value: 'unidad', label: 'Unidad' },
-  { value: 'dosis', label: 'Dosis' },
-]
 
 const insumoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),

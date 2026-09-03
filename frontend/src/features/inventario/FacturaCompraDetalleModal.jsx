@@ -16,6 +16,22 @@ function estadoBadge(estado) {
   )
 }
 
+const DESTINO_BADGE = {
+  clinico: { label: 'Clínico', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  ventas: { label: 'Ventas', className: 'bg-muted text-muted-foreground' },
+}
+
+// Un ítem apunta a un producto de venta o a un insumo clínico según su destino.
+function referenciaItem(item) {
+  const destino = item.destinoInventario === 'clinico' ? 'clinico' : 'ventas'
+  const registro = destino === 'clinico' ? item.insumoClinico : item.producto
+  return {
+    destino,
+    nombre: registro?.nombre,
+    unidad: destino === 'clinico' ? registro?.unidadBase : registro?.unidadMedida,
+  }
+}
+
 function estadoPagoTexto(factura) {
   if (factura.pagada) return `Pagada · ${factura.fechaPago}`
   if (!factura.fechaPagoFinal) return 'Contado'
@@ -101,15 +117,25 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {(factura.items || []).map((item) => (
+                  {(factura.items || []).map((item) => {
+                    const { destino, nombre, unidad } = referenciaItem(item)
+                    const badge = DESTINO_BADGE[destino]
+                    return (
                     <tr key={item.id}>
                       <td className="px-3 py-3 text-foreground">
-                        {item.producto?.nombre || 'Producto eliminado'}
-                        {item.producto?.unidadMedida && (
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            ({item.producto.unidadMedida})
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>
+                            {nombre || (destino === 'clinico' ? 'Insumo eliminado' : 'Producto eliminado')}
+                            {unidad && (
+                              <span className="ml-1 text-xs text-muted-foreground">({unidad})</span>
+                            )}
                           </span>
-                        )}
+                          <span
+                            className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums text-foreground">
                         {formatNumber(item.cantidad)}
@@ -121,7 +147,8 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                         {formatCurrency(Number(item.subtotal || 0))}
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-border bg-muted">

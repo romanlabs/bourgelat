@@ -2,6 +2,35 @@ import { useDeferredValue, useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
+import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
+
+// El buscador sirve a los dos catálogos: productos de venta e insumos clínicos.
+// Cada uno responde con una forma distinta, así que se normaliza a
+// { id, nombre, stock, unidad } antes de pintar la lista.
+const CATALOGOS = {
+  ventas: {
+    buscar: async (buscar) => {
+      const data = await inventarioApi.obtenerProductos({ buscar, limite: 8 })
+      return (data?.productos || []).map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        stock: p.stock,
+        unidad: p.unidadMedida,
+      }))
+    },
+  },
+  clinico: {
+    buscar: async (buscar) => {
+      const data = await inventarioClinicoApi.obtenerInsumos({ buscar, limite: 8 })
+      return (data?.insumos || []).map((i) => ({
+        id: i.id,
+        nombre: i.nombre,
+        stock: i.stock,
+        unidad: i.unidadBase,
+      }))
+    },
+  },
+}
 
 export default function ProductoComboBox({
   value,
@@ -10,6 +39,7 @@ export default function ProductoComboBox({
   placeholder = 'Buscar producto...',
   hasError = false,
   disabled = false,
+  origen = 'ventas',
   id,
 }) {
   const [query, setQuery] = useState(productoSeleccionado?.nombre || '')
@@ -28,14 +58,16 @@ export default function ProductoComboBox({
 
   const queryDiferida = useDeferredValue(query.trim())
 
+  const catalogo = CATALOGOS[origen] || CATALOGOS.ventas
+
   const productosQuery = useQuery({
-    queryKey: ['producto-combobox', queryDiferida],
-    queryFn: () => inventarioApi.obtenerProductos({ buscar: queryDiferida || undefined, limite: 8 }),
+    queryKey: ['producto-combobox', origen, queryDiferida],
+    queryFn: () => catalogo.buscar(queryDiferida || undefined),
     enabled: open,
     placeholderData: (prev) => prev,
   })
 
-  const resultados = productosQuery.data?.productos || []
+  const resultados = productosQuery.data || []
   const highlightedIndexClamped = Math.min(highlightedIndex, Math.max(resultados.length - 1, 0))
 
   useEffect(() => {
@@ -132,7 +164,10 @@ export default function ProductoComboBox({
                 }`}
               >
                 <span className="truncate">{p.nombre}</span>
-                <span className="ml-2 shrink-0 text-xs text-muted-foreground">Cantidad: {p.stock}</span>
+                <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+                  Cantidad: {p.stock}
+                  {p.unidad ? ` ${p.unidad}` : ''}
+                </span>
               </button>
             ))
           )}

@@ -22,7 +22,7 @@ const crearInsumo = async (req, res) => {
     const {
       nombre, descripcion, categoria, unidadBase,
       cantidadPresentacion, unidadPresentacion, precioPresentacion,
-      stockMinimo, fechaVencimiento, lote, laboratorio,
+      stockMinimo, stockInicial, fechaVencimiento, lote, laboratorio,
     } = req.body;
 
     const { clinicaId } = req.usuario;
@@ -55,6 +55,17 @@ const crearInsumo = async (req, res) => {
       });
     }
 
+    // Por defecto el alta trae una presentacion en existencia. Quien crea el
+    // insumo como paso previo a otra entrada (una factura de compra por
+    // confirmar) manda stockInicial: 0 para no contar la mercancia dos veces.
+    const stockInicialNormalizado = normalizarNumero(stockInicial, cantidadPresentacionNormalizada);
+
+    if (Number.isNaN(stockInicialNormalizado) || stockInicialNormalizado < 0) {
+      return res.status(400).json({
+        message: 'El stock inicial debe ser un numero mayor o igual a 0'
+      });
+    }
+
     const precioUnitarioBase = redondear(precioPresentacionNormalizado / cantidadPresentacionNormalizada);
 
     const insumo = await sequelize.transaction(async (transaction) => {
@@ -67,7 +78,7 @@ const crearInsumo = async (req, res) => {
         unidadPresentacion,
         precioPresentacion: precioPresentacionNormalizado,
         precioUnitarioBase,
-        stock: cantidadPresentacionNormalizada,
+        stock: stockInicialNormalizado,
         stockMinimo: stockMinimoNormalizado,
         fechaVencimiento,
         lote,
@@ -75,20 +86,22 @@ const crearInsumo = async (req, res) => {
         clinicaId,
       }, { transaction });
 
-      await MovimientoInventarioClinico.create({
-        tipo: 'entrada',
-        cantidad: cantidadPresentacionNormalizada,
-        stockAnterior: 0,
-        stockNuevo: cantidadPresentacionNormalizada,
-        motivo: 'inventario_inicial',
-        precioUnitario: precioUnitarioBase,
-        cantidadPresentacion: cantidadPresentacionNormalizada,
-        unidadPresentacion,
-        precioPresentacion: precioPresentacionNormalizado,
-        insumoClinicoId: nuevoInsumo.id,
-        usuarioId: req.usuario.id,
-        clinicaId,
-      }, { transaction });
+      if (stockInicialNormalizado > 0) {
+        await MovimientoInventarioClinico.create({
+          tipo: 'entrada',
+          cantidad: stockInicialNormalizado,
+          stockAnterior: 0,
+          stockNuevo: stockInicialNormalizado,
+          motivo: 'inventario_inicial',
+          precioUnitario: precioUnitarioBase,
+          cantidadPresentacion: cantidadPresentacionNormalizada,
+          unidadPresentacion,
+          precioPresentacion: precioPresentacionNormalizado,
+          insumoClinicoId: nuevoInsumo.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction });
+      }
 
       return nuevoInsumo;
     });

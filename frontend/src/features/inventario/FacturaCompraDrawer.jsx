@@ -5,27 +5,45 @@ import { X, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import MoneyInput from '@/components/shared/MoneyInput'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import { inventarioApi } from './inventarioApi'
+import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
+import {
+  CATEGORY_OPTIONS as CATEGORIAS_CLINICAS,
+  UNIDAD_BASE_OPTIONS,
+} from '@/features/inventarioClinico/useInsumosClinicos'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
+import { DESTINO_INVENTARIO_OPTIONS } from './useFacturaCompra'
 import { Select } from '@/components/ui/select'
 
-const PRODUCT_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== 'todas')
+const sinOpcionTodas = (opciones) => opciones.filter((o) => o.value !== 'todas')
+
+const PRODUCT_CATEGORY_OPTIONS = sinOpcionTodas(CATEGORY_OPTIONS)
+const INSUMO_CATEGORY_OPTIONS = sinOpcionTodas(CATEGORIAS_CLINICAS)
+
+const esClinico = (item) => item.destinoInventario === 'clinico'
 
 const fieldClass = (hasError) =>
   `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
     hasError ? 'border-red-400' : 'border-border'
   }`
 
-function AvisoProductoDuplicado({ nombre }) {
+function AvisoProductoDuplicado({ nombre, origen }) {
   const nombreDiferido = useDeferredValue(nombre.trim())
 
   const { data } = useQuery({
-    queryKey: ['producto-combobox', nombreDiferido],
-    queryFn: () => inventarioApi.obtenerProductos({ buscar: nombreDiferido, limite: 5 }),
+    queryKey: ['producto-combobox-duplicado', origen, nombreDiferido],
+    queryFn: async () => {
+      if (origen === 'clinico') {
+        const respuesta = await inventarioClinicoApi.obtenerInsumos({ buscar: nombreDiferido, limite: 5 })
+        return respuesta?.insumos || []
+      }
+      const respuesta = await inventarioApi.obtenerProductos({ buscar: nombreDiferido, limite: 5 })
+      return respuesta?.productos || []
+    },
     enabled: nombreDiferido.length > 1,
     placeholderData: (prev) => prev,
   })
 
-  const coincidencia = (data?.productos || []).find(
+  const coincidencia = (data || []).find(
     (p) => p.nombre.trim().toLowerCase() === nombreDiferido.toLowerCase()
   )
 
@@ -34,8 +52,9 @@ function AvisoProductoDuplicado({ nombre }) {
   return (
     <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
       <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-      Ya existe un producto llamado &quot;{coincidencia.nombre}&quot; en el catálogo. Verifica que
-      no sea el mismo antes de crear uno nuevo.
+      Ya existe {origen === 'clinico' ? 'un insumo' : 'un producto'} llamado &quot;
+      {coincidencia.nombre}&quot; en el catálogo. Verifica que no sea el mismo antes de crear uno
+      nuevo.
     </p>
   )
 }
@@ -51,6 +70,7 @@ export default function FacturaCompraDrawer({
   agregarItem,
   actualizarItem,
   seleccionarProductoItem,
+  actualizarItemDestino,
   actualizarItemProductoNuevo,
   toggleItemEsNuevo,
   eliminarItem,
@@ -70,10 +90,18 @@ export default function FacturaCompraDrawer({
     Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
   const itemsValidos = form.items.every((i) => {
-    const productoValido = i.esNuevo
-      ? Boolean(i.productoNuevo.nombre.trim() && i.productoNuevo.categoria && i.productoNuevo.unidadMedida)
-      : Boolean(i.productoId)
-    return productoValido && Number(i.cantidad) > 0
+    let referenciaValida
+    if (i.esNuevo) {
+      const base = Boolean(i.productoNuevo.nombre.trim() && i.productoNuevo.categoria)
+      referenciaValida = esClinico(i)
+        ? base &&
+          Boolean(i.productoNuevo.unidadBase) &&
+          Number(i.productoNuevo.cantidadPresentacion) > 0
+        : base && Boolean(i.productoNuevo.unidadMedida)
+    } else {
+      referenciaValida = Boolean(esClinico(i) ? i.insumoClinicoId : i.productoId)
+    }
+    return referenciaValida && Number(i.cantidad) > 0
   })
   const plazoValido = form.tipoPago !== 'credito' || !!form.fechaPagoFinal
   const formularioValido = form.proveedor.trim() && form.fecha && itemsValidos && plazoValido
@@ -257,10 +285,26 @@ export default function FacturaCompraDrawer({
                     )}
                   </div>
 
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-muted-foreground">Inventario destino *</label>
+                    <Select
+                      variant="field"
+                      aria-label="Inventario al que pertenece el producto"
+                      value={item.destinoInventario}
+                      onValueChange={(value) => actualizarItemDestino(idx, value)}
+                      options={DESTINO_INVENTARIO_OPTIONS}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {esClinico(item)
+                        ? 'Se consume en consultas y procedimientos, no se vende al tutor.'
+                        : 'Mercancía que se le vende al tutor en el punto de venta.'}
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { value: false, label: 'Producto existente' },
-                      { value: true, label: 'Producto nuevo' },
+                      { value: false, label: esClinico(item) ? 'Insumo existente' : 'Producto existente' },
+                      { value: true, label: esClinico(item) ? 'Insumo nuevo' : 'Producto nuevo' },
                     ].map((op) => (
                       <button
                         key={String(op.value)}
@@ -282,10 +326,12 @@ export default function FacturaCompraDrawer({
                   {item.esNuevo ? (
                     <div className="space-y-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs text-muted-foreground">Nombre del producto *</label>
+                        <label className="text-xs text-muted-foreground">
+                          {esClinico(item) ? 'Nombre del insumo *' : 'Nombre del producto *'}
+                        </label>
                         <input
                           className={fieldClass(!item.productoNuevo.nombre.trim())}
-                          placeholder="Nombre del producto nuevo"
+                          placeholder={esClinico(item) ? 'Nombre del insumo nuevo' : 'Nombre del producto nuevo'}
                           value={item.productoNuevo.nombre}
                           onChange={(e) => actualizarItemProductoNuevo(idx, 'nombre', e.target.value)}
                           maxLength={200}
@@ -294,7 +340,10 @@ export default function FacturaCompraDrawer({
                           <p className="text-xs text-red-500">El nombre es obligatorio</p>
                         )}
                         {item.productoNuevo.nombre.trim() && (
-                          <AvisoProductoDuplicado nombre={item.productoNuevo.nombre} />
+                          <AvisoProductoDuplicado
+                            nombre={item.productoNuevo.nombre}
+                            origen={item.destinoInventario}
+                          />
                         )}
                       </div>
                       <div className="grid grid-cols-2 gap-3">
@@ -307,50 +356,107 @@ export default function FacturaCompraDrawer({
                             placeholder="— Selecciona —"
                             value={item.productoNuevo.categoria}
                             onValueChange={(value) => actualizarItemProductoNuevo(idx, 'categoria', value)}
-                            options={PRODUCT_CATEGORY_OPTIONS}
+                            options={esClinico(item) ? INSUMO_CATEGORY_OPTIONS : PRODUCT_CATEGORY_OPTIONS}
                           />
                           {!item.productoNuevo.categoria && (
                             <p className="text-xs text-red-500">Selecciona una categoría</p>
                           )}
                         </div>
+                        {esClinico(item) ? (
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-muted-foreground">Unidad base *</label>
+                            <Select
+                              variant="field"
+                              aria-label="Unidad base de consumo"
+                              className={!item.productoNuevo.unidadBase ? 'border-red-300' : undefined}
+                              placeholder="— Selecciona —"
+                              value={item.productoNuevo.unidadBase}
+                              onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadBase', value)}
+                              options={UNIDAD_BASE_OPTIONS}
+                            />
+                            {!item.productoNuevo.unidadBase && (
+                              <p className="text-xs text-red-500">Selecciona una unidad</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-muted-foreground">Unidad de medida *</label>
+                            <Select
+                              variant="field"
+                              aria-label="Unidad de medida"
+                              className={!item.productoNuevo.unidadMedida ? 'border-red-300' : undefined}
+                              placeholder="— Selecciona —"
+                              value={item.productoNuevo.unidadMedida}
+                              onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadMedida', value)}
+                              options={UNIT_OPTIONS}
+                            />
+                            {!item.productoNuevo.unidadMedida && (
+                              <p className="text-xs text-red-500">Selecciona una unidad</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {esClinico(item) && (
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs text-muted-foreground">Unidad de medida *</label>
-                          <Select
-                            variant="field"
-                            aria-label="Unidad de medida"
-                            className={!item.productoNuevo.unidadMedida ? 'border-red-300' : undefined}
-                            placeholder="— Selecciona —"
-                            value={item.productoNuevo.unidadMedida}
-                            onValueChange={(value) => actualizarItemProductoNuevo(idx, 'unidadMedida', value)}
-                            options={UNIT_OPTIONS}
+                          <label className="text-xs text-muted-foreground">
+                            Cantidad por presentación *
+                          </label>
+                          <input
+                            type="number"
+                            min={0.01}
+                            step="any"
+                            className={fieldClass(!(Number(item.productoNuevo.cantidadPresentacion) > 0))}
+                            placeholder={`Ej: 100 (un frasco de 100 ${item.productoNuevo.unidadBase || 'ml'})`}
+                            value={item.productoNuevo.cantidadPresentacion}
+                            onChange={(e) =>
+                              actualizarItemProductoNuevo(idx, 'cantidadPresentacion', e.target.value)
+                            }
                           />
-                          {!item.productoNuevo.unidadMedida && (
-                            <p className="text-xs text-red-500">Selecciona una unidad</p>
+                          {!(Number(item.productoNuevo.cantidadPresentacion) > 0) && (
+                            <p className="text-xs text-red-500">
+                              Indica cuánto trae cada presentación
+                            </p>
                           )}
                         </div>
-                      </div>
+                      )}
                       <p className="text-xs text-muted-foreground">
-                        Se creará en el inventario con el precio unitario de este ítem como precio de compra
-                        y cantidad inicial 0. Completa precio de venta, stock mínimo, laboratorio, etc. luego
-                        desde Inventario &gt; Productos.
+                        {esClinico(item) ? (
+                          <>
+                            Se creará en el inventario clínico con existencia 0 y el precio de este ítem
+                            como precio de la presentación; el stock entra al confirmar la factura.
+                            Completa stock mínimo, lote, laboratorio, etc. luego desde Inventario &gt;
+                            Clínico.
+                          </>
+                        ) : (
+                          <>
+                            Se creará en el inventario con el precio unitario de este ítem como precio de
+                            compra y cantidad inicial 0. Completa precio de venta, stock mínimo,
+                            laboratorio, etc. luego desde Inventario &gt; Productos.
+                          </>
+                        )}
                       </p>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">Producto *</label>
+                      <label className="text-xs text-muted-foreground">
+                        {esClinico(item) ? 'Insumo clínico *' : 'Producto *'}
+                      </label>
                       <ProductoComboBox
-                        value={item.productoId}
+                        origen={item.destinoInventario}
+                        value={esClinico(item) ? item.insumoClinicoId : item.productoId}
                         productoSeleccionado={item.producto}
-                        hasError={!item.productoId}
+                        hasError={!(esClinico(item) ? item.insumoClinicoId : item.productoId)}
                         onChange={(id, producto) => seleccionarProductoItem(idx, producto)}
-                        placeholder="Buscar producto..."
+                        placeholder={esClinico(item) ? 'Buscar insumo clínico...' : 'Buscar producto...'}
                       />
                     </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">Cantidad *</label>
+                      <label className="text-xs text-muted-foreground">
+                        {esClinico(item) ? 'Cantidad (presentaciones) *' : 'Cantidad *'}
+                      </label>
                       <input
                         type="number"
                         min={1}
@@ -360,7 +466,9 @@ export default function FacturaCompraDrawer({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">Precio unitario (COP)</label>
+                      <label className="text-xs text-muted-foreground">
+                        {esClinico(item) ? 'Precio por presentación (COP)' : 'Precio unitario (COP)'}
+                      </label>
                       <MoneyInput
                         value={item.precioUnitario}
                         onChange={(value) => actualizarItem(idx, 'precioUnitario', value)}
