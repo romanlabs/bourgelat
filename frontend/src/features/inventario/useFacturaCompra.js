@@ -10,6 +10,8 @@ import {
   obtenerAlertasCompra,
 } from './facturaCompraApi'
 import { inventarioApi } from './inventarioApi'
+import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
+import { invalidateInventarioClinicoQueries } from '@/features/inventarioClinico/inventarioClinicoUtils'
 import { getErrorMessage, invalidateInventarioQueries } from './inventarioUtils'
 
 export const ESTADO_FACTURA_COMPRA = [
@@ -25,10 +27,27 @@ export const ESTADO_COLORS = {
   anulada: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 }
 
+export const DESTINO_INVENTARIO_OPTIONS = [
+  { value: 'ventas', label: 'Inventario de ventas' },
+  { value: 'clinico', label: 'Inventario clínico' },
+]
+
+const PRODUCTO_NUEVO_VACIO = () => ({
+  nombre: '',
+  categoria: '',
+  // Destino ventas: presentación entera que se vende tal cual.
+  unidadMedida: '',
+  // Destino clínico: unidad fraccionable de consumo y cuánto trae la presentación.
+  unidadBase: '',
+  cantidadPresentacion: '',
+})
+
 const ITEM_VACIO = () => ({
+  destinoInventario: 'ventas',
   esNuevo: false,
   productoId: '',
-  productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
+  insumoClinicoId: '',
+  productoNuevo: PRODUCTO_NUEVO_VACIO(),
   cantidad: 1,
   precioUnitario: 0,
 })
@@ -68,7 +87,10 @@ export function useFacturaCompra() {
 
   const invalidar = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['facturas-compra'] })
+    queryClient.invalidateQueries({ queryKey: ['producto-combobox'] })
     invalidateInventarioQueries(queryClient)
+    // Una factura puede abastecer los dos inventarios en la misma operación.
+    invalidateInventarioClinicoQueries(queryClient)
   }, [queryClient])
 
   const mutCrear = useMutation({
@@ -103,6 +125,10 @@ export function useFacturaCompra() {
     mutationFn: inventarioApi.crearProducto,
   })
 
+  const crearInsumoInlineMutation = useMutation({
+    mutationFn: inventarioClinicoApi.crearInsumo,
+  })
+
   const abrirNueva = useCallback(() => {
     setEditingFactura(null)
     setForm(FORM_INICIAL)
@@ -119,10 +145,12 @@ export function useFacturaCompra() {
       tipoPago: factura.fechaPagoFinal ? 'credito' : 'contado',
       fechaPagoFinal: factura.fechaPagoFinal || '',
       items: factura.items.map((i) => ({
+        destinoInventario: i.destinoInventario || 'ventas',
         esNuevo: false,
-        productoId: i.productoId,
-        producto: i.producto,
-        productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
+        productoId: i.productoId || '',
+        insumoClinicoId: i.insumoClinicoId || '',
+        producto: i.producto || i.insumoClinico || null,
+        productoNuevo: PRODUCTO_NUEVO_VACIO(),
         cantidad: i.cantidad,
         precioUnitario: Number(i.precioUnitario),
       })),
@@ -145,25 +173,47 @@ export function useFacturaCompra() {
   }, [])
 
   const submitForm = useCallback(async () => {
-    // Resuelve productoId real para los ítems marcados como "nuevo", creando
-    // el producto en el catálogo antes de guardar la factura. Se hace en
-    // secuencia (no Promise.all) para poder ir actualizando form.items y no
-    // volver a crear productos ya creados si algo falla a mitad de camino.
+    // Resuelve la referencia real de los ítems marcados como "nuevo", creando
+    // el producto o el insumo en su catálogo antes de guardar la factura. Se
+    // hace en secuencia (no Promise.all) para poder ir actualizando form.items
+    // y no volver a crear registros ya creados si algo falla a mitad de camino.
     let itemsResueltos = form.items
     for (let idx = 0; idx < itemsResueltos.length; idx += 1) {
       const item = itemsResueltos[idx]
       if (!item.esNuevo) continue
 
-      const producto = await crearProductoInlineMutation.mutateAsync({
-        nombre: item.productoNuevo.nombre.trim(),
-        categoria: item.productoNuevo.categoria,
-        unidadMedida: item.productoNuevo.unidadMedida,
-        precioCompra: Number(item.precioUnitario) || 0,
-        stock: 0,
-      })
+      let campoId
+      let idCreado
+
+      if (item.destinoInventario === 'clinico') {
+        // stockInicial en 0: la existencia entra al confirmar la factura, no al
+        // crear el insumo, o la mercancía quedaría contada dos veces.
+        const respuesta = await crearInsumoInlineMutation.mutateAsync({
+          nombre: item.productoNuevo.nombre.trim(),
+          categoria: item.productoNuevo.categoria,
+          unidadBase: item.productoNuevo.unidadBase,
+          cantidadPresentacion: Number(item.productoNuevo.cantidadPresentacion),
+          unidadPresentacion: item.productoNuevo.unidadBase,
+          precioPresentacion: Number(item.precioUnitario) || 0,
+          stockMinimo: 0,
+          stockInicial: 0,
+        })
+        campoId = 'insumoClinicoId'
+        idCreado = respuesta.insumo?.id ?? respuesta.id
+      } else {
+        const respuesta = await crearProductoInlineMutation.mutateAsync({
+          nombre: item.productoNuevo.nombre.trim(),
+          categoria: item.productoNuevo.categoria,
+          unidadMedida: item.productoNuevo.unidadMedida,
+          precioCompra: Number(item.precioUnitario) || 0,
+          stock: 0,
+        })
+        campoId = 'productoId'
+        idCreado = respuesta.producto?.id ?? respuesta.id
+      }
 
       itemsResueltos = itemsResueltos.map((it, i) =>
-        i === idx ? { ...it, esNuevo: false, productoId: producto.producto?.id ?? producto.id } : it
+        i === idx ? { ...it, esNuevo: false, [campoId]: idCreado } : it
       )
       setForm((f) => ({ ...f, items: itemsResueltos }))
     }
@@ -175,7 +225,10 @@ export function useFacturaCompra() {
       fechaPagoFinal: form.tipoPago === 'credito' ? form.fechaPagoFinal || undefined : undefined,
       tipoPago: undefined,
       items: itemsResueltos.map((i) => ({
-        productoId: i.productoId,
+        destinoInventario: i.destinoInventario,
+        ...(i.destinoInventario === 'clinico'
+          ? { insumoClinicoId: i.insumoClinicoId }
+          : { productoId: i.productoId }),
         cantidad: Number(i.cantidad),
         precioUnitario: Number(i.precioUnitario),
       })),
@@ -187,7 +240,15 @@ export function useFacturaCompra() {
       await mutCrear.mutateAsync(payload)
     }
     cerrarDrawer()
-  }, [form, editingFactura, mutCrear, mutEditar, cerrarDrawer, crearProductoInlineMutation])
+  }, [
+    form,
+    editingFactura,
+    mutCrear,
+    mutEditar,
+    cerrarDrawer,
+    crearProductoInlineMutation,
+    crearInsumoInlineMutation,
+  ])
 
   const pedirConfirmar = useCallback((facturaId) => {
     setConfirmDialog({ open: true, tipo: 'confirmar', facturaId })
@@ -233,8 +294,30 @@ export function useFacturaCompra() {
   const seleccionarProductoItem = useCallback((idx, producto) => {
     setForm((f) => ({
       ...f,
+      items: f.items.map((item, i) => {
+        if (i !== idx) return item
+        const campoId = item.destinoInventario === 'clinico' ? 'insumoClinicoId' : 'productoId'
+        return { ...item, [campoId]: producto?.id ?? '', producto: producto ?? null }
+      }),
+    }))
+  }, [])
+
+  // El destino decide catálogo, categorías y unidades, que no se solapan entre
+  // inventarios: al cambiarlo se descarta lo elegido para el destino anterior.
+  const actualizarItemDestino = useCallback((idx, destino) => {
+    setForm((f) => ({
+      ...f,
       items: f.items.map((item, i) =>
-        i === idx ? { ...item, productoId: producto?.id ?? '', producto: producto ?? null } : item
+        i === idx
+          ? {
+              ...item,
+              destinoInventario: destino,
+              productoId: '',
+              insumoClinicoId: '',
+              producto: null,
+              productoNuevo: PRODUCTO_NUEVO_VACIO(),
+            }
+          : item
       ),
     }))
   }, [])
@@ -257,7 +340,9 @@ export function useFacturaCompra() {
               ...item,
               esNuevo: !item.esNuevo,
               productoId: '',
-              productoNuevo: { nombre: '', categoria: '', unidadMedida: '' },
+              insumoClinicoId: '',
+              producto: null,
+              productoNuevo: PRODUCTO_NUEVO_VACIO(),
             }
           : item
       ),
@@ -279,9 +364,14 @@ export function useFacturaCompra() {
     getErrorMessage(mutConfirmar.error, null) ||
     getErrorMessage(mutAnular.error, null) ||
     getErrorMessage(mutPagar.error, null) ||
-    getErrorMessage(crearProductoInlineMutation.error, null)
+    getErrorMessage(crearProductoInlineMutation.error, null) ||
+    getErrorMessage(crearInsumoInlineMutation.error, null)
 
-  const isSaving = mutCrear.isPending || mutEditar.isPending || crearProductoInlineMutation.isPending
+  const isSaving =
+    mutCrear.isPending ||
+    mutEditar.isPending ||
+    crearProductoInlineMutation.isPending ||
+    crearInsumoInlineMutation.isPending
 
   const alertasCompra = {
     vencidas: alertasData?.vencidas?.facturas ?? [],
@@ -322,6 +412,7 @@ export function useFacturaCompra() {
     agregarItem,
     actualizarItem,
     seleccionarProductoItem,
+    actualizarItemDestino,
     actualizarItemProductoNuevo,
     toggleItemEsNuevo,
     eliminarItem,

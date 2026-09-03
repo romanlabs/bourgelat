@@ -17,13 +17,52 @@ const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 
 const router = express.Router()
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+const esEnteroPositivo = (valor) => Number.isInteger(Number(valor)) && Number(valor) >= 1
+const esDecimalNoNegativo = (valor) =>
+  valor !== '' && valor !== null && Number.isFinite(Number(valor)) && Number(valor) >= 0
+
+// Cada ítem apunta a un producto de venta o a un insumo clínico según su
+// destino. Se valida el arreglo completo en un custom en vez de encadenar
+// condiciones por índice sobre `items.*`, que no puede leer el destino del
+// mismo ítem; el mensaje sigue señalando cuál falló.
+const validarItemsCompra = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('Debe incluir al menos un ítem')
+  }
+
+  items.forEach((item, idx) => {
+    const posicion = `Ítem ${idx + 1}`
+    const destino = item?.destinoInventario ?? 'ventas'
+
+    if (!['ventas', 'clinico'].includes(destino)) {
+      throw new Error(`${posicion}: el destino de inventario debe ser "ventas" o "clinico"`)
+    }
+
+    if (destino === 'clinico') {
+      if (!UUID_RE.test(String(item?.insumoClinicoId || ''))) {
+        throw new Error(`${posicion}: debe tener un insumoClinicoId válido`)
+      }
+    } else if (!UUID_RE.test(String(item?.productoId || ''))) {
+      throw new Error(`${posicion}: debe tener un productoId válido`)
+    }
+
+    if (!esEnteroPositivo(item?.cantidad)) {
+      throw new Error(`${posicion}: la cantidad debe ser un entero mayor a 0`)
+    }
+
+    if (!esDecimalNoNegativo(item?.precioUnitario)) {
+      throw new Error(`${posicion}: el precio unitario debe ser mayor o igual a 0`)
+    }
+  })
+
+  return true
+}
+
 const validarItem = [
   body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un ítem'),
-  body('items.*.productoId').isUUID().withMessage('Cada ítem debe tener un productoId válido'),
-  body('items.*.cantidad').isInt({ min: 1 }).withMessage('La cantidad de cada ítem debe ser mayor a 0'),
-  body('items.*.precioUnitario')
-    .isFloat({ min: 0 })
-    .withMessage('El precio unitario de cada ítem debe ser mayor o igual a 0'),
+  body('items').custom(validarItemsCompra),
 ]
 
 const validarCreacion = [
@@ -77,18 +116,7 @@ const validarEdicion = [
     .isISO8601()
     .withMessage('La fecha de pago final no es válida'),
   body('items').optional().isArray({ min: 1 }).withMessage('Debe incluir al menos un ítem'),
-  body('items.*.productoId')
-    .if(body('items').exists())
-    .isUUID()
-    .withMessage('Cada ítem debe tener un productoId válido'),
-  body('items.*.cantidad')
-    .if(body('items').exists())
-    .isInt({ min: 1 })
-    .withMessage('La cantidad de cada ítem debe ser mayor a 0'),
-  body('items.*.precioUnitario')
-    .if(body('items').exists())
-    .isFloat({ min: 0 })
-    .withMessage('El precio unitario de cada ítem debe ser mayor o igual a 0'),
+  body('items').optional().custom(validarItemsCompra),
   validar,
 ]
 
