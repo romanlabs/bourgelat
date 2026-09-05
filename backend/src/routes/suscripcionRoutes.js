@@ -2,22 +2,22 @@ const express = require('express');
 const router = express.Router();
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
 const {
-  crearSuscripcion,
   obtenerSuscripcionActiva,
   obtenerHistorialSuscripciones,
-  cancelarSuscripcion,
   obtenerPlanes,
 } = require('../controllers/suscripcionController');
 
 // Publico - cualquiera puede ver los planes
 router.get('/planes', obtenerPlanes);
 
-// Solo superadmin puede crear y cancelar suscripciones
-router.post('/', verificarToken, verificarRol('superadmin'), crearSuscripcion);
-router.patch('/:id/cancelar', verificarToken, verificarRol('superadmin'), cancelarSuscripcion);
+// Asignar y cancelar suscripciones ya no se expone por HTTP: eran las dos unicas
+// rutas de escritura con poder sobre CUALQUIER clinica, alcanzables desde el
+// login publico con una cuenta superadmin. Ahora se operan desde el servidor con
+// `npm run suscripcion:asignar` y `npm run suscripcion:cancelar`
+// (backend/src/scripts/gestionarSuscripcion.js).
 
 // La clinica puede ver su propia suscripcion
-router.get('/activa', verificarToken, verificarRol('admin', 'superadmin'), obtenerSuscripcionActiva);
-router.get('/historial', verificarToken, verificarRol('admin', 'superadmin'), obtenerHistorialSuscripciones);
+router.get('/activa', verificarToken, verificarRol('admin'), obtenerSuscripcionActiva);
+router.get('/historial', verificarToken, verificarRol('admin'), obtenerHistorialSuscripciones);
 
 module.exports = router;

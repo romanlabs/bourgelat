@@ -14,7 +14,6 @@ const OAuthPopupCallbackPage = lazy(() => import('@/pages/OAuthPopupCallbackPage
 const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
 const OnboardingWizardPage = lazy(() => import('@/pages/OnboardingWizardPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
-const SuperadminPage = lazy(() => import('@/pages/SuperadminPage'))
 const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
 const PacientesPage = lazy(() => import('@/pages/PacientesPage'))
 const PacienteHistorialPage = lazy(() => import('@/pages/PacienteHistorialPage'))
@@ -57,7 +56,7 @@ const HostAwareHome = () => {
 
   if (APP_HOSTS.has(hostname)) {
     if (isAuthenticated) {
-      return <Navigate to={hasRole(usuario, 'superadmin') ? '/superadmin' : '/dashboard'} replace />
+      return <Navigate to="/dashboard" replace />
     }
 
     return <Navigate to="/login" replace />
@@ -89,7 +88,6 @@ const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: '/dashboard', element: <Suspense fallback={<Loader />}><DashboardPage /></Suspense> },
-          { path: '/superadmin', element: <Suspense fallback={<Loader />}><SuperadminPage /></Suspense> },
           { path: '/agenda', element: <Suspense fallback={<Loader />}><AgendaPage /></Suspense> },
           { path: '/pacientes', element: <Suspense fallback={<Loader />}><PacientesPage /></Suspense> },
           { path: '/pacientes/:mascotaId/historial', element: <Suspense fallback={<Loader />}><PacienteHistorialPage /></Suspense> },
