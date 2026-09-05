@@ -11,6 +11,8 @@
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
     "suscripcion:cortesia": "node src/scripts/extenderSuscripcionCortesia.js",
+    "suscripcion:asignar": "node src/scripts/gestionarSuscripcion.js asignar",
+    "suscripcion:cancelar": "node src/scripts/gestionarSuscripcion.js cancelar",
     "secrets:generate": "node src/scripts/generateSecrets.js",
     "cifrado:rotar": "node src/scripts/rotarCifrado.js"
   },

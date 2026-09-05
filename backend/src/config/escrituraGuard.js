@@ -1,9 +1,11 @@
 const fs = require('fs')
 const path = require('path')
 
-// Rutas que deben seguir funcionando con la suscripcion vencida:
-// autenticarse, pagar para reactivarse, y la operacion de superadmin.
-const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js', 'superadminRoutes.js']
+// Rutas que deben seguir funcionando con la suscripcion vencida: autenticarse y
+// pagar para reactivarse. `superadminRoutes.js` salio de la lista al retirarse
+// el panel de superadmin; asignar y cancelar suscripciones ahora se opera desde
+// el servidor (backend/src/scripts/gestionarSuscripcion.js).
+const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js']
 
 const METODOS_MUTACION = ['post', 'put', 'patch', 'delete']
 const GUARD = 'requerirEscritura'
