@@ -9,7 +9,21 @@ const {
   aplicarEntradaCompraClinica,
   revertirEntradaCompraClinica,
 } = require('../services/inventarioClinicoService');
+const {
+  clasificarReferencias,
+  mensajeReferenciasInvalidas,
+  referenciasSonValidas,
+} = require('./facturaCompraReferencias');
 const { parsePaginacion } = require('../utils/paginacion');
+
+// Los errores de detalle se responden como 400. Se marcan con una bandera en
+// vez de inspeccionar el texto del mensaje: el catch antes buscaba subcadenas
+// como 'producto', y cualquier mensaje que no la incluyera terminaba en un 500.
+const errorDeDetalle = (mensaje) => {
+  const error = new Error(mensaje);
+  error.esDetalleInvalido = true;
+  return error;
+};
 
 const normalizarEntero = (valor, valorPorDefecto = 0) => {
   if (valor === undefined || valor === null || valor === '') return valorPorDefecto;
@@ -44,37 +58,54 @@ const calcularItems = (items) =>
 const referenciaDeItem = (item) =>
   item.destinoInventario === 'clinico' ? item.insumoClinicoId : item.productoId;
 
-// Verifica que cada referencia exista, este activa y pertenezca a la clinica.
-// Lanza un Error con mensaje presentable; los llamadores ya lo traducen a 400.
-const validarReferenciasItems = async (itemsCalculados, clinicaId, transaction) => {
-  const idsProductos = [...new Set(
-    itemsCalculados.filter((i) => i.destinoInventario === 'ventas').map((i) => i.productoId)
-  )];
-  const idsInsumos = [...new Set(
-    itemsCalculados.filter((i) => i.destinoInventario === 'clinico').map((i) => i.insumoClinicoId)
-  )];
+// Verifica que cada referencia exista y pertenezca a la clinica. Una referencia
+// desactivada solo invalida el detalle si es NUEVA: las que ya estaban guardadas
+// en la factura se aceptan igual, porque la compra ocurrio cuando el producto
+// seguia vigente (ver facturaCompraReferencias.js).
+// Lanza un Error marcado; los llamadores ya lo traducen a 400.
+const validarReferenciasItems = async (
+  itemsCalculados,
+  clinicaId,
+  transaction,
+  preexistentes = {}
+) => {
+  const revisar = async ({ ids, modelo, tipo, idsPreexistentes }) => {
+    if (!ids.length) return;
 
-  if (idsProductos.length) {
-    const productos = await Producto.findAll({
-      where: { id: { [Op.in]: idsProductos }, clinicaId, activo: true },
-      attributes: ['id'],
+    const filas = await modelo.findAll({
+      where: { id: { [Op.in]: ids }, clinicaId },
+      attributes: ['id', 'nombre', 'activo'],
       transaction,
     });
-    if (productos.length !== idsProductos.length) {
-      throw new Error('Uno o más productos del detalle no existen o no pertenecen a la clínica');
-    }
-  }
 
-  if (idsInsumos.length) {
-    const insumos = await InsumoClinico.findAll({
-      where: { id: { [Op.in]: idsInsumos }, clinicaId, activo: true },
-      attributes: ['id'],
-      transaction,
+    const clasificacion = clasificarReferencias({
+      idsSolicitados: ids,
+      filas: filas.map(({ id, nombre, activo }) => ({ id, nombre, activo })),
+      idsPreexistentes,
     });
-    if (insumos.length !== idsInsumos.length) {
-      throw new Error('Uno o más insumos clínicos del detalle no existen o no pertenecen a la clínica');
+
+    if (!referenciasSonValidas(clasificacion)) {
+      throw errorDeDetalle(mensajeReferenciasInvalidas({ ...clasificacion, tipo }));
     }
-  }
+  };
+
+  await revisar({
+    ids: [...new Set(
+      itemsCalculados.filter((i) => i.destinoInventario === 'ventas').map((i) => i.productoId)
+    )],
+    modelo: Producto,
+    tipo: 'producto',
+    idsPreexistentes: preexistentes.productos || [],
+  });
+
+  await revisar({
+    ids: [...new Set(
+      itemsCalculados.filter((i) => i.destinoInventario === 'clinico').map((i) => i.insumoClinicoId)
+    )],
+    modelo: InsumoClinico,
+    tipo: 'insumo',
+    idsPreexistentes: preexistentes.insumos || [],
+  });
 };
 
 const ATRIBUTOS_PRODUCTO_ITEM = ['id', 'nombre', 'unidadMedida'];
@@ -107,6 +138,9 @@ const obtenerFacturasCompra = async (req, res) => {
       limit: limite,
       offset,
       order: [['createdAt', 'DESC']],
+      // Sin `distinct` el conteo suma las filas del JOIN con los items, no las
+      // facturas: 4 facturas con 11 items reportaban total 11 y 2 paginas.
+      distinct: true,
       include: [
         includeItems([
           'id', 'destinoInventario', 'productoId', 'insumoClinicoId',
@@ -170,6 +204,9 @@ const crearFacturaCompra = async (req, res) => {
     try {
       await validarReferenciasItems(itemsCalculados, clinicaId);
     } catch (error) {
+      // Solo los rechazos de detalle son del usuario. Un fallo de base de datos
+      // aqui se responde como 500 en vez de devolverle su mensaje interno.
+      if (!error.esDetalleInvalido) throw error;
       return res.status(400).json({ message: error.message });
     }
 
@@ -228,17 +265,28 @@ const editarFacturaCompra = async (req, res) => {
 
       if (Array.isArray(items)) {
         if (items.length === 0) {
-          throw new Error('La factura debe tener al menos un ítem');
+          throw errorDeDetalle('La factura debe tener al menos un ítem');
         }
         const itemsCalculados = calcularItems(items);
         const itemInvalido = itemsCalculados.find(
           (i) => !referenciaDeItem(i) || Number.isNaN(i.cantidad) || i.cantidad <= 0
         );
         if (itemInvalido) {
-          throw new Error('Cada ítem debe tener un producto o insumo válido y cantidad mayor a 0');
+          throw errorDeDetalle('Cada ítem debe tener un producto o insumo válido y cantidad mayor a 0');
         }
 
-        await validarReferenciasItems(itemsCalculados, clinicaId, transaction);
+        // Lo que ya estaba guardado puede seguir aunque se haya desactivado
+        // despues; asi la factura se puede corregir en vez de quedar trabada.
+        const itemsActuales = await FacturaCompraItem.findAll({
+          where: { facturaCompraId: id },
+          attributes: ['productoId', 'insumoClinicoId'],
+          transaction,
+        });
+
+        await validarReferenciasItems(itemsCalculados, clinicaId, transaction, {
+          productos: itemsActuales.map((i) => i.productoId).filter(Boolean),
+          insumos: itemsActuales.map((i) => i.insumoClinicoId).filter(Boolean),
+        });
 
         await FacturaCompraItem.destroy({ where: { facturaCompraId: id }, transaction });
         await FacturaCompraItem.bulkCreate(
@@ -255,12 +303,7 @@ const editarFacturaCompra = async (req, res) => {
 
     res.json({ message: 'Factura de compra actualizada', factura: facturaActualizada });
   } catch (error) {
-    if (
-      error.message.includes('ítem') ||
-      error.message.includes('borrador') ||
-      error.message.includes('producto') ||
-      error.message.includes('insumo')
-    ) {
+    if (error.esDetalleInvalido) {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: 'Error en el servidor' });
@@ -274,7 +317,9 @@ const confirmarFacturaCompra = async (req, res) => {
 
     const factura = await FacturaCompra.findOne({
       where: { id, clinicaId },
-      include: [{ model: FacturaCompraItem, as: 'items' }],
+      // Con los nombres cargados, un detalle roto se puede reportar diciendo
+      // que producto es, en vez de escupir su UUID.
+      include: [includeItems()],
     });
 
     if (!factura) return res.status(404).json({ message: 'Factura de compra no encontrada' });
@@ -290,14 +335,19 @@ const confirmarFacturaCompra = async (req, res) => {
 
       for (const item of factura.items) {
         if (item.destinoInventario === 'clinico') {
+          // Sin filtro por `activo`: confirmar registra una compra que ya
+          // ocurrio. Si el insumo se desactivo despues, la entrada sigue
+          // siendo valida y la factura no queda trabada para siempre.
           const insumo = await InsumoClinico.findOne({
-            where: { id: item.insumoClinicoId, clinicaId, activo: true },
+            where: { id: item.insumoClinicoId, clinicaId },
             transaction,
             lock: transaction.LOCK.UPDATE,
           });
 
           if (!insumo) {
-            throw new Error(`Insumo clínico ${item.insumoClinicoId} no encontrado o inactivo`);
+            throw errorDeDetalle(
+              mensajeReferenciasInvalidas({ faltantes: [item.insumoClinicoId], tipo: 'insumo' })
+            );
           }
 
           // En destino clinico la cantidad son presentaciones y el precio
@@ -312,14 +362,18 @@ const confirmarFacturaCompra = async (req, res) => {
             transaction,
           });
         } else {
+          // Mismo criterio que en el destino clinico: un producto desactivado
+          // despues de registrar la factura no invalida la compra.
           const producto = await Producto.findOne({
-            where: { id: item.productoId, clinicaId, activo: true },
+            where: { id: item.productoId, clinicaId },
             transaction,
             lock: transaction.LOCK.UPDATE,
           });
 
           if (!producto) {
-            throw new Error(`Producto ${item.productoId} no encontrado o inactivo`);
+            throw errorDeDetalle(
+              mensajeReferenciasInvalidas({ faltantes: [item.productoId], tipo: 'producto' })
+            );
           }
 
           const stockAnterior = Number(producto.stock);
@@ -352,7 +406,7 @@ const confirmarFacturaCompra = async (req, res) => {
 
     res.json({ message: 'Factura de compra confirmada exitosamente' });
   } catch (error) {
-    if (error.message.includes('no encontrado') || error.message.includes('inactivo')) {
+    if (error.esDetalleInvalido) {
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: 'Error en el servidor' });

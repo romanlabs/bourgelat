@@ -21,14 +21,27 @@ const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
   )]
 }
 
+// Roles que mandan dentro de la clinica. `superadmin` no esta en ROLES_VALIDOS
+// porque no se puede asignar desde la UI, pero si cuenta como administrador:
+// al omitirlo, la guarda de "ultimo administrador" de toggleUsuario se saltaba
+// entera para esa cuenta (tienePermisoAdmin devolvia false y ni siquiera se
+// llegaba a contar), asi que el superadmin se podia desactivar sin ninguna
+// proteccion y quedaba fuera del sistema.
+const ROLES_CON_PERMISO_ADMIN = ['admin', 'superadmin']
+
 const tienePermisoAdmin = ({ rol, rolesAdicionales = [], activo = true }) =>
-  Boolean(activo) && (rol === 'admin' || rolesAdicionales.includes('admin'))
+  Boolean(activo) && (
+    ROLES_CON_PERMISO_ADMIN.includes(rol) || rolesAdicionales.includes('admin')
+  )
 
 const contarAdminsActivos = async ({ clinicaId, excludeUsuarioId = null }) => {
   const where = {
     clinicaId,
     activo: true,
-    [Op.or]: [{ rol: 'admin' }, { rolesAdicionales: { [Op.contains]: ['admin'] } }],
+    [Op.or]: [
+      { rol: { [Op.in]: ROLES_CON_PERMISO_ADMIN } },
+      { rolesAdicionales: { [Op.contains]: ['admin'] } },
+    ],
   }
 
   if (excludeUsuarioId) {
