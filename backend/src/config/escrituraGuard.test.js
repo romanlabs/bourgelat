@@ -64,7 +64,7 @@ assert.ok(ARCHIVOS_EXENTOS.includes('suscripcionRoutes.js'), 'debe poder pagar p
 // pensarlo y deja rastro en el diff.
 assert.deepStrictEqual(
   [...ARCHIVOS_EXENTOS].sort(),
-  ['authRoutes.js', 'superadminRoutes.js', 'suscripcionRoutes.js'],
+  ['authRoutes.js', 'suscripcionRoutes.js'],
   'ARCHIVOS_EXENTOS cambio: agregar exenciones desprotege rutas en bloque'
 )
 
