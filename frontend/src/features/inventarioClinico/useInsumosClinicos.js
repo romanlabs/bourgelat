@@ -15,6 +15,15 @@ export const CATEGORY_OPTIONS = [
   { value: 'otro', label: 'Otros' },
 ]
 
+// Unidades base para consumo clinico: fraccionables, no presentaciones enteras.
+export const UNIDAD_BASE_OPTIONS = [
+  { value: 'ml', label: 'Mililitro (ml)' },
+  { value: 'mg', label: 'Miligramo (mg)' },
+  { value: 'gr', label: 'Gramo (gr)' },
+  { value: 'unidad', label: 'Unidad' },
+  { value: 'dosis', label: 'Dosis' },
+]
+
 export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
   const queryClient = useQueryClient()
 

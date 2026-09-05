@@ -52,6 +52,7 @@ const validarCreacionInsumo = [
   body('unidadPresentacion').optional({ values: 'falsy' }).trim().isLength({ max: 40 }),
   body('precioPresentacion').notEmpty().withMessage('El precio de la presentacion es obligatorio').isFloat({ min: 0 }).withMessage('El precio de la presentacion debe ser mayor o igual a 0'),
   body('stockMinimo').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('El stock minimo debe ser mayor o igual a 0'),
+  body('stockInicial').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('El stock inicial debe ser mayor o igual a 0'),
   body('fechaVencimiento').optional({ values: 'falsy' }).isISO8601().withMessage('La fecha de vencimiento no es valida'),
   body('lote').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
   body('laboratorio').optional({ values: 'falsy' }).trim().isLength({ max: 120 }),

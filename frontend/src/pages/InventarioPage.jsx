@@ -1298,6 +1298,7 @@ export default function InventarioPage() {
         agregarItem={facturaCompraHook.agregarItem}
         actualizarItem={facturaCompraHook.actualizarItem}
         seleccionarProductoItem={facturaCompraHook.seleccionarProductoItem}
+        actualizarItemDestino={facturaCompraHook.actualizarItemDestino}
         eliminarItem={facturaCompraHook.eliminarItem}
         totalCalculado={facturaCompraHook.totalCalculado}
         toggleItemEsNuevo={facturaCompraHook.toggleItemEsNuevo}

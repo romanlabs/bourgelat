@@ -92,6 +92,11 @@ const MovimientoInventarioClinico = sequelize.define('MovimientoInventarioClinic
     allowNull: true,
     comment: 'Factura de venta que origino el consumo (motivo=uso_servicio o su reversion)',
   },
+  facturaCompraId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: 'Factura de compra que origino la entrada (motivo=compra o su reversion)',
+  },
   servicioClinicoId: {
     type: DataTypes.UUID,
     allowNull: true,
@@ -111,6 +116,7 @@ const MovimientoInventarioClinico = sequelize.define('MovimientoInventarioClinic
     { fields: ['clinicaId', 'createdAt'] },
     { fields: ['motivo'] },
     { fields: ['facturaId'] },
+    { fields: ['facturaCompraId'] },
     { fields: ['historiaClinicaId'] },
   ]
 });
