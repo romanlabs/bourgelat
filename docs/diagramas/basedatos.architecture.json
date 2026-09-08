@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bourgelat — distribucion de la base de datos",
+    "output": "basedatos-distribucion.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/romanlabs/bourgelat",
+      "revision": "601e7576b180c07bda6f118be53f9c7aa06784a1"
+    },
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Raiz del tenant"
+        },
+        "security": {
+          "label": "Identidad y auditoria"
+        },
+        "database": {
+          "label": "Tablas de dominio"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "tenant",
+        "label": "Raiz del tenant",
+        "focus": [
+          "clinicas",
+          "usuarios",
+          "propietarios",
+          "compras",
+          "auditoria"
+        ],
+        "note": "Todo cuelga de clinicas a traves de clinicaId."
+      },
+      {
+        "id": "clinico",
+        "label": "Cadena clinica",
+        "focus": [
+          "propietarios",
+          "mascotas",
+          "agenda",
+          "historias"
+        ],
+        "note": "Propietario, mascota, cita e historia clinica."
+      },
+      {
+        "id": "dinero",
+        "label": "Dinero e inventario",
+        "focus": [
+          "compras",
+          "inventario",
+          "facturacion",
+          "caja"
+        ],
+        "note": "Compras, stock, facturacion y cierre de caja."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clinicas",
+      "type": "cloud",
+      "label": "Cuenta clinica",
+      "sublabel": "3 tablas",
+      "tag": "raiz tenant",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Clinica.js",
+          "label": "clinicas"
+        },
+        {
+          "path": "backend/src/models/Suscripcion.js",
+          "label": "suscripciones"
+        },
+        {
+          "path": "backend/src/models/IntegracionFacturacion.js",
+          "label": "integraciones"
+        }
+      ]
+    },
+    {
+      "id": "usuarios",
+      "type": "security",
+      "label": "Usuarios",
+      "sublabel": "4 tablas",
+      "tag": "+ tokens",
+      "pos": [
+        310,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Usuario.js",
+          "label": "usuarios"
+        },
+        {
+          "path": "backend/src/models/RefreshToken.js",
+          "label": "refresh_tokens"
+        }
+      ]
+    },
+    {
+      "id": "auditoria",
+      "type": "security",
+      "label": "Auditoria",
+      "sublabel": "1 tabla",
+      "tag": "sin FK",
+      "pos": [
+        1120,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/AuditoriaLog.js",
+          "label": "auditoria_logs"
+        }
+      ]
+    },
+    {
+      "id": "propietarios",
+      "type": "database",
+      "label": "Propietarios",
+      "sublabel": "1 tabla",
+      "pos": [
+        310,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Propietario.js",
+          "label": "propietarios"
+        }
+      ]
+    },
+    {
+      "id": "mascotas",
+      "type": "database",
+      "label": "Mascotas",
+      "sublabel": "1 tabla",
+      "pos": [
+        580,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Mascota.js",
+          "label": "mascotas"
+        }
+      ]
+    },
+    {
+      "id": "agenda",
+      "type": "database",
+      "label": "Agenda",
+      "sublabel": "3 tablas",
+      "tag": "citas",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Cita.js",
+          "label": "citas"
+        },
+        {
+          "path": "backend/src/models/Consultorio.js",
+          "label": "consultorios"
+        },
+        {
+          "path": "backend/src/models/BloqueoAgenda.js",
+          "label": "bloqueos_agenda"
+        }
+      ]
+    },
+    {
+      "id": "historias",
+      "type": "database",
+      "label": "Historias",
+      "sublabel": "4 tablas",
+      "tag": "+ examenes",
+      "pos": [
+        1120,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/HistoriaClinica.js",
+          "label": "historias_clinicas"
+        },
+        {
+          "path": "backend/src/models/AntecedentesMascota.js",
+          "label": "antecedentes"
+        },
+        {
+          "path": "backend/src/models/ExamenLaboratorio.js",
+          "label": "examenes"
+        }
+      ]
+    },
+    {
+      "id": "compras",
+      "type": "database",
+      "label": "Compras",
+      "sublabel": "2 tablas",
+      "pos": [
+        310,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/FacturaCompra.js",
+          "label": "facturas_compra"
+        },
+        {
+          "path": "backend/src/models/FacturaCompraItem.js",
+          "label": "items"
+        }
+      ]
+    },
+    {
+      "id": "inventario",
+      "type": "database",
+      "label": "Inventario",
+      "sublabel": "6 tablas",
+      "tag": "productos",
+      "pos": [
+        580,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Producto.js",
+          "label": "productos"
+        },
+        {
+          "path": "backend/src/models/InsumoClinico.js",
+          "label": "insumos_clinicos"
+        },
+        {
+          "path": "backend/src/models/ServicioClinico.js",
+          "label": "servicios_clinicos"
+        }
+      ]
+    },
+    {
+      "id": "facturacion",
+      "type": "database",
+      "label": "Facturacion",
+      "sublabel": "3 tablas",
+      "tag": "+ abonos",
+      "pos": [
+        850,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/Factura.js",
+          "label": "facturas"
+        },
+        {
+          "path": "backend/src/models/FacturaItem.js",
+          "label": "factura_items"
+        },
+        {
+          "path": "backend/src/models/AbonoFactura.js",
+          "label": "abonos_factura"
+        }
+      ]
+    },
+    {
+      "id": "caja",
+      "type": "database",
+      "label": "Caja y gastos",
+      "sublabel": "3 tablas",
+      "pos": [
+        1120,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/models/CajaTurno.js",
+          "label": "caja_turnos"
+        },
+        {
+          "path": "backend/src/models/MovimientoCaja.js",
+          "label": "movimientos_caja"
+        },
+        {
+          "path": "backend/src/models/Gasto.js",
+          "label": "gastos"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Ambito del tenant — clinicaId",
+      "wraps": [
+        "usuarios",
+        "auditoria",
+        "propietarios",
+        "mascotas",
+        "agenda",
+        "historias",
+        "compras",
+        "inventario",
+        "facturacion",
+        "caja"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clinicas-usuarios",
+      "from": "clinicas",
+      "to": "usuarios",
+      "label": "clinicaId",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "clinicas-propietarios",
+      "from": "clinicas",
+      "to": "propietarios",
+      "label": "clinicaId",
+      "variant": "emphasis"
+    },
+    {
+      "id": "clinicas-compras",
+      "from": "clinicas",
+      "to": "compras",
+      "label": "clinicaId",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "usuarios-auditoria",
+      "from": "usuarios",
+      "to": "auditoria",
+      "label": "usuarioId sin FK",
+      "variant": "dashed"
+    },
+    {
+      "id": "propietarios-mascotas",
+      "from": "propietarios",
+      "to": "mascotas",
+      "label": "propietarioId"
+    },
+    {
+      "id": "mascotas-agenda",
+      "from": "mascotas",
+      "to": "agenda",
+      "label": "mascotaId"
+    },
+    {
+      "id": "agenda-historias",
+      "from": "agenda",
+      "to": "historias",
+      "label": "citaId"
+    },
+    {
+      "id": "compras-inventario",
+      "from": "compras",
+      "to": "inventario",
+      "label": "productoId"
+    },
+    {
+      "id": "facturacion-inventario",
+      "from": "facturacion",
+      "to": "inventario",
+      "label": "servicioId"
+    },
+    {
+      "id": "facturacion-caja",
+      "from": "facturacion",
+      "to": "caja",
+      "label": "cajaTurnoId"
+    },
+    {
+      "id": "caja-historias",
+      "from": "caja",
+      "to": "historias",
+      "label": "historiaClinicaId",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Raiz del tenant",
+      "items": [
+        "clinicas es la raiz; suscripciones e integraciones_facturacion cuelgan de ella",
+        "26 de las 31 tablas llevan columna clinicaId y tenantGuard exige ese filtro en toda query",
+        "Las otras 5 heredan el tenant del padre: factura_items, factura_compra_items y los 3 de tokens"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cadena clinica",
+      "items": [
+        "propietarios → mascotas → citas → historias_clinicas es la espina del dominio",
+        "antecedentes_mascota es 1:1 con mascota; examenes_laboratorio y registros_estilo cuelgan de mascota"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Dinero e inventario",
+      "items": [
+        "factura_items y factura_compra_items apuntan a productos, insumos_clinicos y servicios_clinicos",
+        "facturas, gastos y abonos se agrupan por caja_turnos para el cierre de caja",
+        "gastos puede referenciar la historia clinica que consumio los insumos"
+      ]
+    }
+  ]
+}
