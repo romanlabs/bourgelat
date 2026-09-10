@@ -5,14 +5,30 @@ const {
   obtenerClinicaActual,
   actualizarClinicaActual,
   actualizarHorarioAtencion,
+  subirLogoClinica,
 } = require('../controllers/clinicaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
+const { uploadClinicaLogoSingle } = require('../middlewares/uploadClinicaLogoMiddleware')
+const { esUrlDeUploadPropio, CLINICAS_SUBDIR } = require('../config/uploads')
+
+const esUrlDeLogoPropia = (valor) => esUrlDeUploadPropio(valor, CLINICAS_SUBDIR)
 
 const router = express.Router()
 
 router.get('/', verificarToken, verificarRol('admin', 'superadmin'), obtenerClinicaActual)
+
+// El logo se sube por su cuenta y no con el PUT del formulario: es multipart y
+// necesita persistirse junto con el archivo para no dejar huerfanos en disco.
+router.post(
+  '/logo',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  uploadClinicaLogoSingle,
+  subirLogoClinica
+)
 
 router.put(
   '/',
@@ -52,7 +68,18 @@ router.put(
       .withMessage('Tipo de documento fiscal no valido'),
     body('organizacionJuridicaId').optional({ nullable: true }).trim().isLength({ max: 20 }),
     body('tributoId').optional({ nullable: true }).trim().isLength({ max: 20 }),
-    body('logo').optional({ nullable: true }).trim().isURL().withMessage('Logo debe ser una URL valida'),
+    // El logo ya no se escribe a mano: se sube por POST /logo. Aqui solo se
+    // acepta vaciarlo ('' o null, de ahi el 'falsy') o recibir de vuelta la
+    // misma URL que emitimos nosotros, para que reenviar la ficha completa sea
+    // idempotente. Cualquier otro valor se rechaza: un isURL a secas no sirve
+    // porque en desarrollo nuestra propia URL es http://localhost:3000/... y
+    // los hosts sin TLD no lo pasan, mientras que aflojarlo con
+    // require_tld:false llega a aceptar cualquier palabra suelta como host.
+    body('logo')
+      .optional({ values: 'falsy' })
+      .trim()
+      .custom(esUrlDeLogoPropia)
+      .withMessage('El logo se actualiza subiendo la imagen, no escribiendo una URL'),
     validar,
   ],
   actualizarClinicaActual

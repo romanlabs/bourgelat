@@ -21,9 +21,11 @@ const formatCantidad = (value) =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value || 0))
 
 /**
- * El logo vive en Cloudinary, asi que hay que traerlo a un canvas antes de
- * poder incrustarlo. Es decorativo: si falla (CORS, 404, clinica sin logo) el
- * encabezado cae al nombre de la clinica y la descarga sigue su curso.
+ * Hay que pasar el logo por un canvas antes de poder incrustarlo, y leer ese
+ * canvas exige que el origen mande cabeceras CORS. Por eso el logo se sube a
+ * nuestro propio /uploads, que si las manda. Aun asi es decorativo: si falla
+ * (una clinica con la URL externa que se usaba antes, un 404, o ningun logo)
+ * el encabezado cae al nombre de la clinica y la descarga sigue su curso.
  */
 const cargarLogo = async (url) => {
   if (!url) return null
