@@ -8,6 +8,7 @@ const MASCOTAS_SUBDIR = 'mascotas'
 const EXAMENES_SUBDIR = 'examenes'
 const USUARIOS_SUBDIR = 'usuarios'
 const PRODUCTOS_SUBDIR = 'productos'
+const CLINICAS_SUBDIR = 'clinicas'
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
@@ -59,6 +60,12 @@ const getProductosUploadsDir = () => {
   return productosDir
 }
 
+const getClinicasUploadsDir = () => {
+  const clinicasDir = path.join(UPLOADS_ROOT_DIR, CLINICAS_SUBDIR)
+  ensureDirectory(clinicasDir)
+  return clinicasDir
+}
+
 const generateUploadFilename = (originalName = '', mimeType = '') => {
   const extension = MIME_EXTENSIONS[mimeType] || '.jpg'
 
@@ -82,6 +89,24 @@ const buildPublicUploadUrl = (req, relativePath) => {
   return `${protocol}://${host}${UPLOADS_PUBLIC_PATH}/${normalizedRelativePath}`
 }
 
+// Reconoce las URLs que emitimos nosotros con buildPublicUploadUrl. Sirve para
+// aceptar de vuelta un valor que ya habiamos entregado sin abrir la puerta a
+// apuntar el campo a cualquier sitio externo.
+const esUrlDeUploadPropio = (valor, subdir) => {
+  if (typeof valor !== 'string' || !valor) return false
+
+  let parsed
+  try {
+    parsed = new URL(valor)
+  } catch {
+    return false
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+
+  return parsed.pathname.startsWith(`${UPLOADS_PUBLIC_PATH}/${subdir}/`)
+}
+
 module.exports = {
   UPLOADS_PUBLIC_PATH,
   UPLOADS_ROOT_DIR,
@@ -89,12 +114,15 @@ module.exports = {
   EXAMENES_SUBDIR,
   USUARIOS_SUBDIR,
   PRODUCTOS_SUBDIR,
+  CLINICAS_SUBDIR,
   ALLOWED_IMAGE_MIME_TYPES,
   ALLOWED_EXAMEN_MIME_TYPES,
   getMascotasUploadsDir,
   getExamenesUploadsDir,
   getUsuariosUploadsDir,
   getProductosUploadsDir,
+  getClinicasUploadsDir,
   generateUploadFilename,
   buildPublicUploadUrl,
+  esUrlDeUploadPropio,
 }

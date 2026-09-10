@@ -16,6 +16,15 @@ export const configuracionApi = {
     return data
   },
 
+  async subirLogoClinica(file) {
+    const formData = new FormData()
+    formData.append('logo', file)
+    const { data } = await api.post('/clinica/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  },
+
   async actualizarHorarioAtencion(horarioAtencion) {
     const { data } = await api.put('/clinica/horario-atencion', { horarioAtencion })
     return data

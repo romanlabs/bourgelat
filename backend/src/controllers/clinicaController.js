@@ -1,6 +1,15 @@
+const fs = require('fs/promises')
+const path = require('path')
 const { Op } = require('sequelize')
 const Clinica = require('../models/Clinica')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
+const {
+  buildPublicUploadUrl,
+  getClinicasUploadsDir,
+  CLINICAS_SUBDIR,
+  UPLOADS_PUBLIC_PATH,
+} = require('../config/uploads')
+const { registrarUsoAlmacenamiento } = require('../services/almacenamientoService')
 
 const telefonoColombiaRegex = /^3\d{9}$/
 
@@ -187,7 +196,13 @@ const actualizarClinicaActual = async (req, res) => {
     if (tributoId !== undefined) data.tributoId = tributoId
     if (logo !== undefined) data.logo = logo
 
+    const logoAnterior = clinica.logo
     await clinica.update(data)
+
+    // Quitar el logo desde el formulario tambien deja el archivo en disco.
+    if (logo !== undefined && logo !== logoAnterior) {
+      await borrarLogoAnterior(logoAnterior, clinicaId)
+    }
 
     await registrarAuditoria({
       accion: 'ACTUALIZAR_CLINICA',
@@ -254,10 +269,91 @@ const actualizarHorarioAtencion = async (req, res) => {
   }
 }
 
+// El logo anterior queda ocupando cupo del plan para siempre si no se borra al
+// reemplazarlo. Solo tocamos archivos servidos por nosotros: una clinica que
+// todavia tenga pegada una URL externa (como se hacia antes de la subida) no
+// tiene nada que limpiar.
+const extraerArchivoLocalDeLogo = (logoUrl) => {
+  if (!logoUrl) return null
+
+  const prefijo = `${UPLOADS_PUBLIC_PATH}/${CLINICAS_SUBDIR}/`
+  let ruta
+
+  try {
+    ruta = new URL(logoUrl).pathname
+  } catch {
+    return null
+  }
+
+  if (!ruta.startsWith(prefijo)) return null
+
+  // basename descarta cualquier intento de salirse del directorio con "..".
+  const archivo = path.basename(decodeURIComponent(ruta.slice(prefijo.length)))
+  if (!archivo || archivo === '.' || archivo === '..') return null
+
+  return path.join(getClinicasUploadsDir(), archivo)
+}
+
+const borrarLogoAnterior = async (logoUrl, clinicaId) => {
+  const rutaArchivo = extraerArchivoLocalDeLogo(logoUrl)
+  if (!rutaArchivo) return
+
+  // El logo nuevo ya quedo guardado: si la limpieza falla preferimos dejar un
+  // archivo huerfano antes que devolverle un error a quien ya subio bien.
+  try {
+    const { size } = await fs.stat(rutaArchivo)
+    await fs.unlink(rutaArchivo)
+    await registrarUsoAlmacenamiento(clinicaId, -size)
+  } catch {
+    // Sin rastro en disco no hay nada que descontar.
+  }
+}
+
+const subirLogoClinica = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se recibio ningun logo' })
+    }
+
+    const { clinicaId } = req.usuario
+    const clinica = await Clinica.findByPk(clinicaId)
+
+    if (!clinica) {
+      return res.status(404).json({ message: 'Clinica no encontrada' })
+    }
+
+    const logoAnterior = clinica.logo
+    const logo = buildPublicUploadUrl(req, `${CLINICAS_SUBDIR}/${req.file.filename}`)
+
+    await clinica.update({ logo })
+    await borrarLogoAnterior(logoAnterior, clinicaId)
+
+    await registrarAuditoria({
+      accion: 'ACTUALIZAR_LOGO_CLINICA',
+      entidad: 'Clinica',
+      entidadId: clinica.id,
+      descripcion: 'Logo de la clinica actualizado desde configuracion',
+      datosAnteriores: { logo: logoAnterior },
+      datosNuevos: { logo },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({
+      message: 'Logo actualizado exitosamente',
+      clinica: serializarClinica(clinica),
+      perfilFiscal: calcularPerfilFiscal(clinica),
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 module.exports = {
   obtenerClinicaActual,
   actualizarClinicaActual,
   actualizarHorarioAtencion,
+  subirLogoClinica,
   serializarClinica,
   calcularPerfilFiscal,
 }
