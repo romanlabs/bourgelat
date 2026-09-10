@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Loader2, PackageSearch, Printer, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Loader2, PackageSearch, Printer, ShoppingCart } from 'lucide-react'
 import { DialogRoot, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ProductCommandSearch from './ProductCommandSearch'
 import CartSidebar from './CartSidebar'
@@ -8,6 +8,7 @@ import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
 import { finanzasApi } from './finanzasApi'
 import { imprimirTirilla, formatDateTime } from './reciboTermico'
+import { descargarFacturaPdf } from './facturaPdf'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { useAuthStore } from '@/store/authStore'
 
@@ -47,6 +48,7 @@ export default function PosModal({
   const [mobilePane, setMobilePane] = useState('productos')
   const [montoRecibido, setMontoRecibido] = useState('')
   const [snapshot, setSnapshot] = useState(null)     // { total, recibido, vuelto, metodo }
+  const [generandoPdf, setGenerandoPdf] = useState(false)
   const searchInputRef = useRef(null)
   const clinica = useAuthStore((state) => state.clinica)
 
@@ -127,6 +129,17 @@ export default function PosModal({
   })
 
   const facturaEmitida = facturaQuery.data?.factura || null
+
+  // La generación es asíncrona (jsPDF se carga bajo demanda y el logo viaja por
+  // red), así que el botón se bloquea mientras corre para no soltar dos archivos.
+  const descargarPdf = async () => {
+    setGenerandoPdf(true)
+    try {
+      await descargarFacturaPdf({ factura: facturaEmitida, clinica })
+    } finally {
+      setGenerandoPdf(false)
+    }
+  }
 
   const puedeConfirmar = itemCount > 0 && (!esEfectivo || (montoRecibido !== '' && vueltoOk))
 
@@ -504,14 +517,30 @@ export default function PosModal({
                             {formatDateTime(facturaEmitida.createdAt || facturaEmitida.fecha)}
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
-                          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
-                        >
-                          <Printer className="h-4 w-4" />
-                          Imprimir tirilla
-                        </button>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
+                            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+                          >
+                            <Printer className="h-4 w-4" />
+                            Imprimir tirilla
+                          </button>
+                          {/* Formato carta para entregar o enviar al cliente. */}
+                          <button
+                            type="button"
+                            onClick={descargarPdf}
+                            disabled={generandoPdf}
+                            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {generandoPdf ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                            Descargar PDF
+                          </button>
+                        </div>
                       </div>
 
                       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border text-sm">

@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Building2,
   CalendarOff,
   Clock,
+  ImageIcon,
+  Loader2,
   Mail,
   Phone,
   Plus,
   ShieldCheck,
   Sparkles,
   Trash2,
+  Upload,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -257,6 +260,36 @@ function ConfiguracionContent({
     },
   })
 
+  const logoInputRef = useRef(null)
+
+  // El logo se persiste en su propio endpoint, no con el formulario: asi el
+  // archivo y la fila quedan sincronizados en una sola operacion.
+  const subirLogoMutation = useMutation({
+    mutationFn: configuracionApi.subirLogoClinica,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Logo actualizado correctamente')
+      if (data?.clinica) {
+        setClinica(data.clinica)
+        setClinicForm(buildClinicForm(data.clinica))
+      }
+      queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible actualizar el logo de la clínica.'))
+    },
+  })
+
+  const quitarLogo = () => {
+    actualizarClinicaMutation.mutate({ logo: '' })
+  }
+
+  const onSeleccionarLogo = (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    subirLogoMutation.mutate(file)
+  }
+
   const guardarFactusMutation = useMutation({
     mutationFn: configuracionApi.guardarConfiguracionFactus,
     onSuccess: (data) => {
@@ -311,7 +344,6 @@ function ConfiguracionContent({
       tipoDocumentoFacturacionId: clinicForm.tipoDocumentoFacturacionId,
       organizacionJuridicaId: clinicForm.organizacionJuridicaId.trim(),
       tributoId: clinicForm.tributoId.trim(),
-      logo: clinicForm.logo.trim(),
     }
 
     if (payload.nombre.length < 3) {
@@ -334,11 +366,6 @@ function ConfiguracionContent({
       return
     }
 
-    if (payload.logo && !/^https?:\/\/.+/i.test(payload.logo)) {
-      toast.error('La URL del logo debe iniciar con http:// o https://.')
-      return
-    }
-
     actualizarClinicaMutation.mutate({
       ...payload,
       nombreComercial: payload.nombreComercial || '',
@@ -351,7 +378,6 @@ function ConfiguracionContent({
       tipoDocumentoFacturacionId: payload.tipoDocumentoFacturacionId || '',
       organizacionJuridicaId: payload.organizacionJuridicaId || '',
       tributoId: payload.tributoId || '',
-      logo: payload.logo || '',
     })
   }
 
@@ -728,14 +754,55 @@ function ConfiguracionContent({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <FormField label="URL del logo" helper="Debe ser un enlace público a la imagen del logo.">
-                <input
-                  type="text"
-                  value={clinicForm.logo}
-                  onChange={(event) => setClinicForm((current) => ({ ...current, logo: event.target.value }))}
-                  placeholder="https://tu-dominio.com/logo.png"
-                  className={INPUT_CLASS}
-                />
+              <FormField
+                label="Logo"
+                helper="Aparecerá en el encabezado de las facturas que descargues o imprimas. JPG, PNG o WEBP, máximo 4 MB."
+              >
+                <div className="flex items-center gap-4">
+                  {clinicForm.logo ? (
+                    <img
+                      src={clinicForm.logo}
+                      alt="Logo de la clínica"
+                      className="h-16 w-16 rounded-lg border border-border bg-card object-contain p-1"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
+                      <ImageIcon className="h-6 w-6" />
+                    </div>
+                  )}
+                  <div className="flex flex-col items-start gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={subirLogoMutation.isPending}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {subirLogoMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      {clinicForm.logo ? 'Cambiar logo' : 'Subir logo'}
+                    </button>
+                    {clinicForm.logo ? (
+                      <button
+                        type="button"
+                        onClick={quitarLogo}
+                        disabled={actualizarClinicaMutation.isPending}
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground transition hover:text-destructive disabled:opacity-60"
+                      >
+                        <Trash2 className="h-3 w-3" /> Quitar logo
+                      </button>
+                    ) : null}
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={onSeleccionarLogo}
+                  />
+                </div>
               </FormField>
               <FormField label="NIT">
                 <input
