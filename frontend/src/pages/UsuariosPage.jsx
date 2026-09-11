@@ -27,6 +27,7 @@ import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 
 const ROLE_OPTIONS = [
@@ -257,8 +258,7 @@ export default function UsuariosPage() {
       setCreateForm(DEFAULT_CREATE_FORM)
       setShowPasswordChecklist(false)
       setActiveSection('equipo')
-      queryClient.invalidateQueries({ queryKey: ['usuarios-clinica'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      invalidarDominios(queryClient, 'equipo')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear el usuario.'))
@@ -283,8 +283,7 @@ export default function UsuariosPage() {
           }))
         }
       }
-      queryClient.invalidateQueries({ queryKey: ['usuarios-clinica'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      invalidarDominios(queryClient, 'equipo')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar el usuario.'))
@@ -298,8 +297,7 @@ export default function UsuariosPage() {
       if (variables.id === selectedUserId) {
         setEditForm((current) => ({ ...current, activo: Boolean(data?.activo) }))
       }
-      queryClient.invalidateQueries({ queryKey: ['usuarios-clinica'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      invalidarDominios(queryClient, 'equipo')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible cambiar el estado del usuario.'))

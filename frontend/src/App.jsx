@@ -11,13 +11,20 @@ import { useThemeStore } from '@/store/themeStore'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
+      // Ventana corta: los datos de una clinica los cambian varias personas a la vez
+      // (recepcion, consultorio, caja). Con 5 minutos se veian precios y stock viejos
+      // al cambiar de seccion.
+      staleTime: 1000 * 30,
       retry: (failureCount, error) => {
         const status = error?.response?.status
         if (status && status >= 400 && status < 500) return false
         return failureCount < 1
       },
-      refetchOnWindowFocus: false,
+      // Al entrar a una seccion se muestra lo cacheado y se revalida detras: sin
+      // parpadeo, porque las pantallas distinguen isLoading de isFetching.
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
     },
     mutations: {
       retry: false,

@@ -2,7 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
-import { invalidateInventarioQueries } from '@/features/inventario/inventarioUtils'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { serviciosApi } from '@/features/servicios/serviciosApi'
 import { finanzasApi } from './finanzasApi'
@@ -106,9 +106,7 @@ export function useFinanzasFacturacion({
   const emitirParaAutoEmision = useMutation({
     mutationFn: ({ facturaId, payload }) => finanzasApi.emitirFacturaElectronica(facturaId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
+      invalidarDominios(queryClient, 'facturacion')
     },
   })
 
@@ -121,17 +119,8 @@ export function useFinanzasFacturacion({
       setOwnerSearch('')
       setProductSearch('')
       setBarcodeInput('')
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
-      // La venta descuenta stock: refrescar productos y movimientos de inventario.
-      invalidateInventarioQueries(queryClient)
-      queryClient.invalidateQueries({ queryKey: ['finanzas-productos'] })
-      // La venta suma al turno de caja abierto: refrescar totales y movimientos.
-      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
+      // La venta descuenta stock y suma al turno de caja abierto.
+      invalidarDominios(queryClient, 'facturacion', 'productos', 'caja')
 
       if (emisionAutomaticaActiva && data?.factura?.id && data?.factura?.estadoElectronico === 'pendiente') {
         emitirParaAutoEmision.mutate({
