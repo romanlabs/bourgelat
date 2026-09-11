@@ -8,6 +8,7 @@ import {
   getCurrentMonthRange,
 } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { finanzasApi } from './finanzasApi'
 import { formatDateTime, imprimirTirilla } from './reciboTermico'
 
@@ -135,13 +136,9 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
 
   const emitirFacturaMutation = useMutation({
     mutationFn: ({ facturaId, payload }) => finanzasApi.emitirFacturaElectronica(facturaId, payload),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       toast.success(data?.message || 'Factura emitida electronicamente')
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-factura-detalle', variables.facturaId] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
+      invalidarDominios(queryClient, 'facturacion')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible emitir la factura electronicamente.'))
@@ -150,14 +147,10 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
 
   const registrarPagoMutation = useMutation({
     mutationFn: ({ facturaId, metodoPago }) => finanzasApi.registrarPago(facturaId, { metodoPago }),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       toast.success(data?.message || 'Pago registrado exitosamente')
       setPagoMetodo('')
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-factura-detalle', variables.facturaId] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
+      invalidarDominios(queryClient, 'facturacion')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible registrar el pago.'))
@@ -166,17 +159,12 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
 
   const anularFacturaMutation = useMutation({
     mutationFn: ({ facturaId, motivo }) => finanzasApi.anularFactura(facturaId, motivo),
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       toast.success(data?.message || 'Factura anulada exitosamente')
       setMotivoAnulacion('')
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-factura-detalle', variables.facturaId] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-ingresos'] })
-      // La anulacion revierte el efectivo del turno de caja abierto.
-      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
+      // La anulacion revierte el efectivo del turno de caja abierto y devuelve
+      // el stock de los items de producto (ver facturaController.anularFactura).
+      invalidarDominios(queryClient, 'facturacion', 'caja', 'productos')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible anular la factura.'))

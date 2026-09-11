@@ -42,6 +42,7 @@ import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { Select } from '@/components/ui/select'
 
@@ -1659,9 +1660,9 @@ function HorariosSection({ horarioAtencion }) {
       )
       setImpacto(null)
       setBloqueoForm((current) => ({ ...current, motivo: '' }))
-      queryClient.invalidateQueries({ queryKey: ['configuracion-bloqueos'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-bloqueos'] })
-      queryClient.invalidateQueries({ queryKey: ['citas'] })
+      // Crear un bloqueo puede cancelar citas: la agenda tiene que reflejarlo.
+      // (Antes se invalidaba ['citas'], clave que ninguna query usa.)
+      invalidarDominios(queryClient, 'configuracion', 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear el bloqueo.'))
@@ -1672,8 +1673,8 @@ function HorariosSection({ horarioAtencion }) {
     mutationFn: configuracionApi.eliminarBloqueo,
     onSuccess: () => {
       toast.success('Bloqueo eliminado')
-      queryClient.invalidateQueries({ queryKey: ['configuracion-bloqueos'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-bloqueos'] })
+      // Liberar el bloqueo devuelve horarios disponibles a la agenda.
+      invalidarDominios(queryClient, 'configuracion', 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible eliminar el bloqueo.'))

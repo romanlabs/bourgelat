@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Activity, CalendarCheck, ChevronDown, ClipboardCheck, FlaskConical,
@@ -15,6 +15,7 @@ import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioCli
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
@@ -253,6 +254,7 @@ export default function HistoriaClinicaFormDrawer({
 }) {
   const usuario = useAuthStore((s) => s.usuario)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   // Todos los planes incluyen inventario.
   const puedeConsultarInventarioClinico = true
@@ -359,6 +361,7 @@ export default function HistoriaClinicaFormDrawer({
     mutationFn: historiasApi.crearHistoria,
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica registrada exitosamente')
+      invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
@@ -371,6 +374,7 @@ export default function HistoriaClinicaFormDrawer({
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica actualizada exitosamente')
       if (data?.historia) setLocalHistoria(data.historia)
+      invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
@@ -383,6 +387,8 @@ export default function HistoriaClinicaFormDrawer({
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica bloqueada exitosamente')
       setLocalHistoria((prev) => (prev ? { ...prev, bloqueada: true } : prev))
+      // Bloquear descuenta el tratamiento intrahospitalario del inventario clinico.
+      invalidarDominios(queryClient, 'historias', 'insumosClinicos')
       onSuccess?.(null)
     },
     onError: (error) => {
