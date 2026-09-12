@@ -10,6 +10,8 @@ export const historiasApi = {
     mascotaId,
     veterinarioId,
     bloqueada,
+    conControlPendiente,
+    buscar,
     fechaInicio,
     fechaFin,
     pagina = 1,
@@ -20,12 +22,20 @@ export const historiasApi = {
         mascotaId,
         veterinarioId,
         bloqueada,
+        conControlPendiente,
+        buscar,
         fechaInicio,
         fechaFin,
         pagina,
         limite,
       }),
     })
+    return data
+  },
+
+  // Contadores de la bandeja clinica, calculados en el servidor sobre el total.
+  async obtenerResumen() {
+    const { data } = await api.get('/historias/resumen')
     return data
   },
 

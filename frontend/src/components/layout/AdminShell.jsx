@@ -5,6 +5,7 @@ import {
   Boxes,
   Building2,
   CalendarClock,
+  FileText,
   HeartPulse,
   History,
   LayoutDashboard,
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
   { key: 'dashboard', label: 'Panel de control', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
+  { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
@@ -61,7 +63,7 @@ const NAV_SECTIONS = [
   {
     key: 'operacion',
     label: 'Operación diaria',
-    items: ['dashboard', 'agenda', 'pacientes', 'antecedentes'],
+    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes'],
   },
   {
     key: 'gestion',
