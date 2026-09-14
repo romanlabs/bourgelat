@@ -1,7 +1,8 @@
 import {
-  FileText, Lock, Pencil, CalendarDays, Stethoscope, Plus,
+  FileText, Lock, Pencil, CalendarDays, Stethoscope, Plus, Printer,
 } from 'lucide-react'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
+import { tienePlanFarmacologico } from './formulaPdf'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -47,7 +48,7 @@ function EmptyTimeline({ onNuevaConsulta }) {
   )
 }
 
-function TimelineCard({ historia, onEdit }) {
+function TimelineCard({ historia, onEdit, onImprimirFormula, imprimiendo }) {
   const { bloqueada, motivoConsulta, diagnostico, fechaConsulta, createdAt, veterinario } = historia
 
   return (
@@ -111,7 +112,18 @@ function TimelineCard({ historia, onEdit }) {
         </div>
 
         {/* Action */}
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-4">
+          {onImprimirFormula && tienePlanFarmacologico(historia) && (
+            <button
+              type="button"
+              onClick={() => onImprimirFormula(historia.id)}
+              disabled={imprimiendo}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              {imprimiendo ? 'Generando...' : 'Imprimir fórmula'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onEdit(historia)}
@@ -131,6 +143,8 @@ export default function HistoriaClinicaTimeline({
   isPending,
   onNuevaConsulta,
   onEditHistoria,
+  onImprimirFormula,
+  historiaImprimiendo = null,
 }) {
   if (isPending) {
     return (
@@ -156,6 +170,8 @@ export default function HistoriaClinicaTimeline({
           key={historia.id}
           historia={historia}
           onEdit={onEditHistoria}
+          onImprimirFormula={onImprimirFormula}
+          imprimiendo={historiaImprimiendo === historia.id}
         />
       ))}
 

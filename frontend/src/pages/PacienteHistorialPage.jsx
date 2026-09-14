@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import HistoriaClinicaFormDrawer from '@/features/historias/HistoriaClinicaFormDrawer'
 import HistoriaClinicaTimeline from '@/features/historias/HistoriaClinicaTimeline'
+import { useImprimirFormula } from '@/features/historias/useImprimirFormula'
 import EstilosTimeline from '@/features/estilos/EstilosTimeline'
 import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
@@ -63,6 +64,9 @@ export default function PacienteHistorialPage() {
   ])
 
   const citaIdParam = searchParams.get('citaId') || ''
+  // La bandeja de /historias entra aqui con ?historiaId= para abrir una
+  // consulta concreta sin obligar a buscarla en el timeline.
+  const historiaIdParam = searchParams.get('historiaId') || ''
 
   const [activeTab, setActiveTab] = useState('historia')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -141,6 +145,31 @@ export default function PacienteHistorialPage() {
   const mascota = mascotaQuery.data?.mascota
   const historias = historiasQuery.data?.historias || []
 
+  // Igual que con citaId: una sola apertura por historiaId, para que cerrar el
+  // drawer no lo vuelva a abrir en el siguiente render.
+  const historiaDeepLinkFiredRef = useRef(false)
+  useEffect(() => {
+    historiaDeepLinkFiredRef.current = false
+  }, [historiaIdParam])
+
+  useEffect(() => {
+    if (!historiaIdParam || historiaDeepLinkFiredRef.current) return
+    if (historiasQuery.isPending) return
+
+    const historia = (historiasQuery.data?.historias || []).find((h) => h.id === historiaIdParam)
+    historiaDeepLinkFiredRef.current = true
+
+    if (!historia) {
+      toast.error('No encontramos esa consulta en el historial de este paciente.')
+      setSearchParams({}, { replace: true })
+      return
+    }
+
+    setActiveTab('historia')
+    setHistoriaToEdit(historia)
+    setDrawerOpen(true)
+  }, [historiaIdParam, historiasQuery.data, historiasQuery.isPending, setSearchParams])
+
   const handleNuevaConsulta = () => {
     setHistoriaToEdit(null)
     setDrawerOpen(true)
@@ -156,11 +185,13 @@ export default function PacienteHistorialPage() {
     setDrawerOpen(true)
   }
 
+  const imprimirFormula = useImprimirFormula()
+
   const handleDrawerClose = () => {
     setDrawerOpen(false)
     setHistoriaToEdit(null)
-    // Limpiar citaId de la URL para evitar que se re-abra al recargar
-    if (citaIdParam) setSearchParams({})
+    // Limpiar citaId/historiaId de la URL para evitar que se re-abra al recargar
+    if (citaIdParam || historiaIdParam) setSearchParams({})
   }
 
   const handleDrawerSuccess = () => {
@@ -168,7 +199,7 @@ export default function PacienteHistorialPage() {
     // Solo cerrar al crear nueva historia; al editar/bloquear se deja el drawer abierto
     if (!historiaToEdit) {
       setDrawerOpen(false)
-      if (citaIdParam) setSearchParams({})
+      if (citaIdParam || historiaIdParam) setSearchParams({})
     }
   }
 
@@ -331,6 +362,8 @@ export default function PacienteHistorialPage() {
                 isPending={historiasQuery.isPending}
                 onNuevaConsulta={handleNuevaConsulta}
                 onEditHistoria={handleEditHistoria}
+                onImprimirFormula={imprimirFormula.imprimir}
+                historiaImprimiendo={imprimirFormula.historiaEnCurso}
               />
             )}
           </>

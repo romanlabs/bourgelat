@@ -7,6 +7,7 @@ const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { formatDateOnlyLocal, isValidDateOnly } = require('../utils/dateOnly')
 const {
   obtenerHistorias,
+  obtenerResumenHistorias,
   crearHistoria,
   obtenerHistoriasMascota,
   obtenerHistoria,
@@ -91,6 +92,11 @@ const validateTratamientoIntrahospitalario = (value) => {
   return true
 }
 
+/**
+ * Fecha de control que se AGENDA: no tiene sentido en el pasado.
+ * Solo para `proximaConsulta` del body — nunca para filtros de listado, que
+ * por definicion miran hacia atras.
+ */
 const validateFollowUpDate = (value) => {
   if (!value) return true
 
@@ -100,6 +106,17 @@ const validateFollowUpDate = (value) => {
 
   if (value < formatDateOnlyLocal()) {
     throw new Error('La proxima consulta no puede quedar en una fecha pasada')
+  }
+
+  return true
+}
+
+// Extremo de un rango de consulta: solo se valida el formato.
+const validateRangeDate = (value) => {
+  if (!value) return true
+
+  if (!isValidDateOnly(value)) {
+    throw new Error('La fecha del filtro no es valida')
   }
 
   return true
@@ -172,14 +189,13 @@ router.get(
     query('mascotaId').optional().isUUID().withMessage('Mascota no valida'),
     query('veterinarioId').optional().isUUID().withMessage('Veterinario no valido'),
     query('bloqueada').optional().isIn(['true', 'false']).withMessage('bloqueada debe ser true o false'),
-    query('fechaInicio').optional().custom(validateFollowUpDate),
-    query('fechaFin').optional().custom((value) => {
-      if (!value) return true
-      if (!isValidDateOnly(value)) {
-        throw new Error('La fecha final no es valida')
-      }
-      return true
-    }),
+    query('conControlPendiente')
+      .optional()
+      .isIn(['true', 'false'])
+      .withMessage('conControlPendiente debe ser true o false'),
+    query('buscar').optional().isLength({ max: 120 }).withMessage('La busqueda es demasiado larga').trim(),
+    query('fechaInicio').optional().custom(validateRangeDate),
+    query('fechaFin').optional().custom(validateRangeDate),
     query('pagina').optional().isInt({ min: 1 }).withMessage('La pagina debe ser un entero mayor a 0'),
     query('limite').optional().isInt({ min: 1, max: 100 }).withMessage('El limite debe ser un entero entre 1 y 100'),
     validar,
@@ -226,6 +242,14 @@ router.post(
     validar,
   ],
   crearHistoria
+)
+
+// Antes de '/:id': si no, 'resumen' entra por ahi y rebota como UUID invalido.
+router.get(
+  '/resumen',
+  verificarToken,
+  verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'),
+  obtenerResumenHistorias
 )
 
 router.get(

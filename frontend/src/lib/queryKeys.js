@@ -98,7 +98,7 @@ export const DOMINIOS = {
 
   historias: [
     'historias-listado',
-    'historias-resumen-mes',
+    'historias-resumen',
     'paciente-historial',
     'historias-citas-relacionadas',
     'historias-antecedentes',
