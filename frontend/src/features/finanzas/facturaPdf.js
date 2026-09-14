@@ -1,5 +1,15 @@
 import { toast } from 'sonner'
 import { PAYMENT_METHOD_LABELS, formatCurrency } from '@/features/dashboard/dashboardUtils'
+import {
+  BRAND,
+  LINE,
+  MARGIN,
+  MUTED,
+  TEXT,
+  cargarLogo,
+  dibujarEncabezado,
+  dibujarPie,
+} from '@/lib/pdfComun'
 import { formatDateTime } from './reciboTermico'
 
 // Segundo formato de salida de una venta, al lado de la tirilla termica de 80mm:
@@ -7,86 +17,12 @@ import { formatDateTime } from './reciboTermico'
 // al cliente o enviarsela por correo/WhatsApp. La tirilla sigue siendo la del
 // mostrador; esta es la copia presentable.
 
-const MARGIN = 15
-const BRAND = [8, 32, 51] // #082033, el mismo azul del sidebar
-const MUTED = [107, 114, 128]
-const TEXT = [17, 24, 39]
-const LINE = [209, 213, 219]
-
 // Intl mete un espacio duro entre el simbolo y el numero; en las fuentes base de
 // jsPDF ese caracter no siempre cae en un glifo util, asi que lo normalizamos.
 const money = (value) => formatCurrency(value).replace(/\u00a0/g, ' ')
 
 const formatCantidad = (value) =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value || 0))
-
-/**
- * Hay que pasar el logo por un canvas antes de poder incrustarlo, y leer ese
- * canvas exige que el origen mande cabeceras CORS. Por eso el logo se sube a
- * nuestro propio /uploads, que si las manda. Aun asi es decorativo: si falla
- * (una clinica con la URL externa que se usaba antes, un 404, o ningun logo)
- * el encabezado cae al nombre de la clinica y la descarga sigue su curso.
- */
-const cargarLogo = async (url) => {
-  if (!url) return null
-  try {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    await new Promise((resolve, reject) => {
-      img.onload = resolve
-      img.onerror = reject
-      img.src = url
-    })
-    const canvas = document.createElement('canvas')
-    canvas.width = img.naturalWidth
-    canvas.height = img.naturalHeight
-    canvas.getContext('2d').drawImage(img, 0, 0)
-    return {
-      dataUrl: canvas.toDataURL('image/png'),
-      ratio: img.naturalWidth / img.naturalHeight,
-    }
-  } catch {
-    return null
-  }
-}
-
-const dibujarEncabezado = (doc, { clinica, logo }) => {
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Bourgelat'
-  let y = MARGIN
-  let textX = MARGIN
-
-  if (logo) {
-    const alto = Math.min(18, 30 / logo.ratio)
-    const ancho = alto * logo.ratio
-    doc.addImage(logo.dataUrl, 'PNG', MARGIN, y, ancho, alto)
-    textX = MARGIN + ancho + 5
-  }
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(15)
-  doc.setTextColor(...BRAND)
-  doc.text(nombreClinica, textX, y + 5)
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.setTextColor(...MUTED)
-
-  const lineas = [
-    clinica?.razonSocial && clinica.razonSocial !== nombreClinica ? clinica.razonSocial : null,
-    clinica?.nit ? `NIT ${clinica.nit}` : null,
-    clinica?.direccion || null,
-    [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ') || null,
-    [clinica?.telefono, clinica?.email].filter(Boolean).join(' · ') || null,
-  ].filter(Boolean)
-
-  let lineaY = y + 10
-  for (const linea of lineas) {
-    doc.text(linea, textX, lineaY)
-    lineaY += 4.2
-  }
-
-  return Math.max(lineaY, y + 30)
-}
 
 const dibujarBloqueDocumento = (doc, { factura, pageWidth }) => {
   const ancho = 62
@@ -205,22 +141,6 @@ const dibujarTotales = (doc, { factura, pageWidth, y }) => {
   }
 
   return cursor
-}
-
-const dibujarPie = (doc, { clinica, pageWidth, pageHeight }) => {
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Bourgelat'
-  const total = doc.getNumberOfPages()
-
-  for (let pagina = 1; pagina <= total; pagina += 1) {
-    doc.setPage(pagina)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(8)
-    doc.setTextColor(...MUTED)
-    doc.setDrawColor(...LINE)
-    doc.line(MARGIN, pageHeight - 14, pageWidth - MARGIN, pageHeight - 14)
-    doc.text(`${nombreClinica} · Generado por Bourgelat`, MARGIN, pageHeight - 9)
-    doc.text(`Página ${pagina} de ${total}`, pageWidth - MARGIN, pageHeight - 9, { align: 'right' })
-  }
 }
 
 /**

@@ -638,7 +638,8 @@ const obtenerHistoria = async (req, res) => {
     const historia = await HistoriaClinica.findOne({
       where: { id, clinicaId },
       include: [
-        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza', 'fechaNacimiento', 'fotoPerfil'] },
+        // sexo y especieDetalle alimentan la formula impresa para el tutor.
+        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email'] },
         { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
         { model: Cita, as: 'cita', attributes: ['id', 'fecha', 'tipoCita'] },
