@@ -175,6 +175,33 @@ services:
       - key: VITE_OAUTH_ENABLED
         value: "true"
 
+  # Reemplazo gratuito de bourgelat-web (Docker, Starter $7/mes). Render no
+  # permite cambiar el tipo de un servicio existente, por eso es un servicio
+  # nuevo: se crea sin dominios, se valida en *.onrender.com y luego se mueven
+  # bourgelat.co y app.bourgelat.co a mano (ver docs/render-reduccion-costos.md).
+  - type: static
+    name: bourgelat-frontend
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - frontend/**
+        - render.yaml
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.bourgelat.co/api
+      - key: VITE_OAUTH_ENABLED
+        value: "true"
+
   - type: web
     name: bourgelat-api-staging
     runtime: docker
@@ -184,8 +211,10 @@ services:
     dockerfilePath: backend/Dockerfile.prod
     autoDeployTrigger: commit
     healthCheckPath: /health
-    domains:
-      - api-staging.bourgelat.co
+    # Staging suspendido: dominio desconectado para no pagarlo. Para reactivar,
+    # descomentar (ver docs/render-reduccion-costos.md).
+    # domains:
+    #   - api-staging.bourgelat.co
     buildFilter:
       paths:
         - backend/**
@@ -331,8 +360,10 @@ services:
     dockerfilePath: frontend/Dockerfile.prod
     autoDeployTrigger: commit
     healthCheckPath: /healthz
-    domains:
-      - staging.bourgelat.co
+    # Staging suspendido: dominio desconectado para no pagarlo. Para reactivar,
+    # descomentar (ver docs/render-reduccion-costos.md).
+    # domains:
+    #   - staging.bourgelat.co
     buildFilter:
       paths:
         - frontend/**
