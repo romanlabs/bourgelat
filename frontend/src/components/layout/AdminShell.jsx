@@ -5,6 +5,7 @@ import {
   Boxes,
   Building2,
   CalendarClock,
+  FileText,
   HeartPulse,
   History,
   LayoutDashboard,
@@ -29,6 +30,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
+import { RefrescarDatosButton } from '@/components/shared/RefrescarDatosButton'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
@@ -47,6 +49,7 @@ const NAV_ITEMS = [
   { key: 'dashboard', label: 'Panel de control', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
+  { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
   { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
@@ -60,7 +63,7 @@ const NAV_SECTIONS = [
   {
     key: 'operacion',
     label: 'Operación diaria',
-    items: ['dashboard', 'agenda', 'pacientes', 'antecedentes'],
+    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes'],
   },
   {
     key: 'gestion',
@@ -236,6 +239,8 @@ export default function AdminShell({
         <div className="hidden min-w-0 flex-1 justify-center sm:flex">{headerCenter}</div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <RefrescarDatosButton />
+
           <SimpleTooltip label="Buscar  /">
             <button
               type="button"

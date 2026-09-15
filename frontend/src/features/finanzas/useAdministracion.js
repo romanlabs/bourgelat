@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { administracionApi } from './administracionApi'
 
 const KEYS = {
@@ -49,13 +50,8 @@ export function useRegistrarAbono() {
     mutationFn: ({ facturaId, ...payload }) =>
       administracionApi.registrarAbono(facturaId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['administracion'] })
       // El abono cambia estado/saldo de la factura y puede tocar la caja.
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-facturas-resumen'] })
-      queryClient.invalidateQueries({ queryKey: ['finanzas-ingresos'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
+      invalidarDominios(queryClient, 'facturacion', 'caja')
     },
   })
 }

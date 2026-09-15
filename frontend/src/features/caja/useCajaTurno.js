@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { cajaApi } from './cajaApi'
 
 const getErrorMessage = (error, fallback) =>
@@ -44,8 +45,7 @@ export function useCajaTurno({ enabled, esAdmin }) {
   })
 
   const invalidarTurno = () => {
-    queryClient.invalidateQueries({ queryKey: ['caja-turno-activo'] })
-    queryClient.invalidateQueries({ queryKey: ['caja-movimientos'] })
+    invalidarDominios(queryClient, 'caja')
   }
 
   const abrirTurnoMutation = useMutation({
@@ -75,8 +75,6 @@ export function useCajaTurno({ enabled, esAdmin }) {
     onSuccess: (data) => {
       toast.success(data?.message || 'Turno cerrado exitosamente')
       invalidarTurno()
-      queryClient.invalidateQueries({ queryKey: ['caja-historial'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-reporte-descuadres'] })
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible cerrar el turno.'))
@@ -90,9 +88,6 @@ export function useCajaTurno({ enabled, esAdmin }) {
       // El admin puede estar cerrando su propio turno vencido: hay que
       // refrescar tambien el turno activo o la UI lo sigue mostrando abierto.
       invalidarTurno()
-      queryClient.invalidateQueries({ queryKey: ['caja-turnos-vencidos'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-historial'] })
-      queryClient.invalidateQueries({ queryKey: ['caja-reporte-descuadres'] })
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible cerrar el turno.'))

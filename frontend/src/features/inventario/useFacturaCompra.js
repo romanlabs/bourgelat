@@ -11,8 +11,8 @@ import {
 } from './facturaCompraApi'
 import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
-import { invalidateInventarioClinicoQueries } from '@/features/inventarioClinico/inventarioClinicoUtils'
-import { getErrorMessage, invalidateInventarioQueries } from './inventarioUtils'
+import { invalidarDominios } from '@/lib/queryKeys'
+import { getErrorMessage } from './inventarioUtils'
 
 export const ESTADO_FACTURA_COMPRA = [
   { value: '', label: 'Todos' },
@@ -86,11 +86,8 @@ export function useFacturaCompra() {
   })
 
   const invalidar = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['facturas-compra'] })
-    queryClient.invalidateQueries({ queryKey: ['producto-combobox'] })
-    invalidateInventarioQueries(queryClient)
     // Una factura puede abastecer los dos inventarios en la misma operación.
-    invalidateInventarioClinicoQueries(queryClient)
+    invalidarDominios(queryClient, 'comprasProveedor', 'productos', 'insumosClinicos')
   }, [queryClient])
 
   const mutCrear = useMutation({
@@ -121,12 +118,16 @@ export function useFacturaCompra() {
     },
   })
 
+  // El producto/insumo queda creado aunque la factura falle despues; hay que
+  // refrescar el catalogo por su cuenta y no confiar en el invalidar() del guardado.
   const crearProductoInlineMutation = useMutation({
     mutationFn: inventarioApi.crearProducto,
+    onSuccess: () => invalidarDominios(queryClient, 'productos'),
   })
 
   const crearInsumoInlineMutation = useMutation({
     mutationFn: inventarioClinicoApi.crearInsumo,
+    onSuccess: () => invalidarDominios(queryClient, 'insumosClinicos'),
   })
 
   const abrirNueva = useCallback(() => {

@@ -11,8 +11,9 @@ const sequelize = require('../config/database')
 const logger = require('../utils/logger')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { Op } = require('sequelize')
-const { isValidDateOnly } = require('../utils/dateOnly')
+const { isValidDateOnly, formatDateOnlyLocal } = require('../utils/dateOnly')
 const { parsePaginacion } = require('../utils/paginacion')
+const { tenantWhere } = require('../utils/tenant')
 
 const HYDRATION_STATES = [
   'normal',
@@ -296,32 +297,74 @@ const updatePetWeight = async (mascota, peso) => {
   await mascota.update({ peso })
 }
 
+/**
+ * Un control vencido solo cuenta si el paciente NO ha vuelto. Sin esta
+ * exclusion la bandeja se llena de pacientes ya atendidos y deja de usarse.
+ *
+ * El alias "HistoriaClinica" es el que Sequelize le da a la tabla principal
+ * (nombre del modelo); "posterior" es la copia correlacionada.
+ */
+const SIN_CONSULTA_POSTERIOR = `NOT EXISTS (
+  SELECT 1 FROM "historias_clinicas" AS "posterior"
+  WHERE "posterior"."mascotaId" = "HistoriaClinica"."mascotaId"
+    AND "posterior"."clinicaId" = "HistoriaClinica"."clinicaId"
+    AND "posterior"."id" <> "HistoriaClinica"."id"
+    AND "posterior"."fechaConsulta" >= "HistoriaClinica"."proximaConsulta"
+)`
+
+/**
+ * Where compartido por el listado y por los contadores del resumen: si se
+ * separan, los chips de la bandeja dejan de cuadrar con la tabla que filtran.
+ */
+const construirFiltroHistorias = (req) => {
+  const {
+    mascotaId,
+    veterinarioId,
+    bloqueada,
+    conControlPendiente,
+    buscar,
+    fechaInicio,
+    fechaFin,
+  } = req.query
+
+  const where = tenantWhere(req)
+
+  if (mascotaId) where.mascotaId = mascotaId
+  if (veterinarioId) where.veterinarioId = veterinarioId
+  if (bloqueada === 'true') where.bloqueada = true
+  if (bloqueada === 'false') where.bloqueada = false
+
+  // El nombre del tutor va cifrado en BD, asi que no entra en el ILIKE:
+  // para filtrar por tutor se usa mascotaId desde el selector.
+  const textoBuscado = String(buscar || '').trim()
+  if (textoBuscado) {
+    where[Op.or] = [
+      { motivoConsulta: { [Op.iLike]: `%${textoBuscado}%` } },
+      { diagnostico: { [Op.iLike]: `%${textoBuscado}%` } },
+    ]
+  }
+
+  if (conControlPendiente === 'true') {
+    where.proximaConsulta = { [Op.ne]: null, [Op.lte]: formatDateOnlyLocal() }
+    where[Op.and] = [...(where[Op.and] || []), sequelize.literal(SIN_CONSULTA_POSTERIOR)]
+  }
+
+  if (fechaInicio && fechaFin) {
+    where.fechaConsulta = { [Op.between]: [fechaInicio, fechaFin] }
+  } else if (fechaInicio) {
+    where.fechaConsulta = { [Op.gte]: fechaInicio }
+  } else if (fechaFin) {
+    where.fechaConsulta = { [Op.lte]: fechaFin }
+  }
+
+  return where
+}
+
 const obtenerHistorias = async (req, res) => {
   try {
-    const { clinicaId } = req.usuario
-    const {
-      mascotaId,
-      veterinarioId,
-      bloqueada,
-      fechaInicio,
-      fechaFin,
-    } = req.query
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 })
 
-    const where = { clinicaId }
-
-    if (mascotaId) where.mascotaId = mascotaId
-    if (veterinarioId) where.veterinarioId = veterinarioId
-    if (bloqueada === 'true') where.bloqueada = true
-    if (bloqueada === 'false') where.bloqueada = false
-
-    if (fechaInicio && fechaFin) {
-      where.fechaConsulta = { [Op.between]: [fechaInicio, fechaFin] }
-    } else if (fechaInicio) {
-      where.fechaConsulta = { [Op.gte]: fechaInicio }
-    } else if (fechaFin) {
-      where.fechaConsulta = { [Op.lte]: fechaFin }
-    }
+    const where = construirFiltroHistorias(req)
 
     const { count, rows } = await HistoriaClinica.findAndCountAll({
       where,
@@ -351,6 +394,48 @@ const obtenerHistorias = async (req, res) => {
     res
       .status(error.statusCode || 500)
       .json({ message: error.statusCode && error.statusCode < 500 ? error.message : 'Error en el servidor' })
+  }
+}
+
+/**
+ * Contadores de la bandeja clinica. Van al servidor a proposito: calcularlos
+ * en el cliente sobre una pagina de resultados da cifras que mienten en cuanto
+ * la clinica pasa del tamano de esa pagina.
+ */
+const obtenerResumenHistorias = async (req, res) => {
+  try {
+    const ahora = new Date()
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
+    const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999)
+    const enElMes = { fechaConsulta: { [Op.between]: [inicioMes, finMes] } }
+
+    const [pendientesPorCerrar, controlesPendientes, totalMes, profesionalesActivos] =
+      await Promise.all([
+        // Sin tope de fecha: una consulta sin cerrar de hace tres meses sigue
+        // siendo inventario sin descontar y plata sin cobrar.
+        HistoriaClinica.count({ where: tenantWhere(req, { bloqueada: false }) }),
+        HistoriaClinica.count({
+          where: tenantWhere(req, {
+            proximaConsulta: { [Op.ne]: null, [Op.lte]: formatDateOnlyLocal() },
+            [Op.and]: [sequelize.literal(SIN_CONSULTA_POSTERIOR)],
+          }),
+        }),
+        HistoriaClinica.count({ where: tenantWhere(req, enElMes) }),
+        HistoriaClinica.count({
+          where: tenantWhere(req, enElMes),
+          distinct: true,
+          col: 'veterinarioId',
+        }),
+      ])
+
+    res.json({ pendientesPorCerrar, controlesPendientes, totalMes, profesionalesActivos })
+  } catch (error) {
+    logger.error({
+      contexto: 'obtenerResumenHistorias',
+      mensaje: error.message,
+      stack: error.stack,
+    })
+    res.status(500).json({ message: 'Error en el servidor' })
   }
 }
 
@@ -553,7 +638,8 @@ const obtenerHistoria = async (req, res) => {
     const historia = await HistoriaClinica.findOne({
       where: { id, clinicaId },
       include: [
-        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza', 'fechaNacimiento', 'fotoPerfil'] },
+        // sexo y especieDetalle alimentan la formula impresa para el tutor.
+        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email'] },
         { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
         { model: Cita, as: 'cita', attributes: ['id', 'fecha', 'tipoCita'] },
@@ -1023,6 +1109,7 @@ const bloquearHistoria = async (req, res) => {
 
 module.exports = {
   obtenerHistorias,
+  obtenerResumenHistorias,
   crearHistoria,
   obtenerHistoriasMascota,
   obtenerHistoria,

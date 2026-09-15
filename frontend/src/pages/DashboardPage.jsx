@@ -683,7 +683,10 @@ export default function DashboardPage() {
           urgenciasSinHistoria === 1
             ? '1 urgencia atendida hoy aún no tiene historia clínica registrada. Ciérrala antes de que se pierda el detalle clínico.'
             : `${formatNumber(urgenciasSinHistoria)} urgencias atendidas hoy aún no tienen historia clínica registrada. Ciérralas antes de que se pierda el detalle clínico.`,
-        to: '/historias',
+        // A la agenda, no a /historias: esas urgencias todavia no tienen
+        // historia creada, asi que no aparecen en la bandeja clinica. La
+        // historia se abre desde la cita.
+        to: '/agenda',
         actionLabel: 'Documentar urgencias',
       })
     }
@@ -780,7 +783,10 @@ export default function DashboardPage() {
         label: 'Sin documentar',
         value: formatNumber(sinDocumentar),
         helper: 'Consultas de hoy sin historia clínica registrada.',
-        to: '/historias',
+        // Igual que la alerta de urgencias: la consulta se documenta desde su
+        // cita en la agenda; la bandeja de /historias solo lista historias ya
+        // creadas.
+        to: puedeAbrirAgenda ? '/agenda' : null,
       },
       {
         id: 'stock-critico',

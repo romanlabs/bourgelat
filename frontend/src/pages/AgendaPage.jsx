@@ -31,6 +31,7 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 
 const STATUS_OPTIONS = [
@@ -190,12 +191,7 @@ export default function AgendaPage() {
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
     onSuccess: (data, { payload, cita }) => {
       setSelectedAppointment(null)
-      queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
-      queryClient.invalidateQueries({ queryKey: ['recepcion-sala-espera'] })
-      queryClient.invalidateQueries({ queryKey: ['recepcion-disponibilidad'] })
+      invalidarDominios(queryClient, 'agenda')
       if (payload.estado === 'completada' && cita?.mascota?.id) {
         toast.info(
           cita.tipoCita === 'peluqueria'
@@ -217,10 +213,7 @@ export default function AgendaPage() {
     onSuccess: (data) => {
       toast.success(data?.message || 'Cita reprogramada exitosamente')
       setSelectedAppointment(null)
-      queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-calendario'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-analitica'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+      invalidarDominios(queryClient, 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible reprogramar la cita.'))

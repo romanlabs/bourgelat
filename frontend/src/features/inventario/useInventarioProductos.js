@@ -91,7 +91,6 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
       if (editingProduct?.id === productoId) closeDrawer()
       onProductDeleted?.(productoId)
       invalidateInventarioQueries(queryClient)
-      queryClient.invalidateQueries({ queryKey: ['inventario-movimientos'] })
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el producto.')),
   })

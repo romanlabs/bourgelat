@@ -2,17 +2,16 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { serviciosApi } from './serviciosApi'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
 
 function invalidateServiciosQueries(queryClient) {
-  queryClient.invalidateQueries({ queryKey: ['servicios-clinicos'] })
-  queryClient.invalidateQueries({ queryKey: ['servicios-clinicos-selector'] })
-  // El POS consulta el catalogo con su propia clave; sin esto, un servicio
-  // recien creado no aparece en el punto de venta hasta recargar la pagina.
-  queryClient.invalidateQueries({ queryKey: ['finanzas-servicios'] })
+  // El dominio incluye la clave que usa el POS ('finanzas-servicios'); sin ella un
+  // servicio recien creado no aparece en el punto de venta hasta recargar la pagina.
+  invalidarDominios(queryClient, 'servicios')
 }
 
 export function useServicios({ enabled, forSelector = false } = {}) {

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
@@ -29,15 +30,6 @@ const mostrarAdvertenciaCruce = (advertencia) => {
   }
 }
 
-const INVALIDATE_KEYS = [
-  ['recepcion-sala-espera'],
-  ['recepcion-disponibilidad'],
-  ['agenda-citas'],
-  ['agenda-calendario'],
-  ['agenda-reporte-mensual'],
-  ['dashboard-general'],
-]
-
 export const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
@@ -52,7 +44,7 @@ export function useRecepcion({ fecha, habilitado = true }) {
   const navigate = useNavigate()
 
   const invalidarTodo = () => {
-    INVALIDATE_KEYS.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }))
+    invalidarDominios(queryClient, 'agenda')
   }
 
   const salaEsperaQuery = useQuery({

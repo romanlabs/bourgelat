@@ -1,13 +1,15 @@
 import { useDeferredValue, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Activity, CalendarCheck, ChevronDown, ClipboardCheck, FlaskConical,
-  HeartPulse, Link2, MessageSquare, Pill, Plus, Search, Syringe, X,
+  HeartPulse, Link2, MessageSquare, Pill, Plus, Printer, Search, Syringe, X,
 } from 'lucide-react'
 import { historiasApi } from '@/features/historias/historiasApi'
+import { MEDICATION_ROUTE_OPTIONS } from '@/features/historias/historiaConstants'
+import { useImprimirFormula } from '@/features/historias/useImprimirFormula'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
@@ -15,6 +17,7 @@ import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioCli
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
@@ -28,21 +31,6 @@ const HYDRATION_OPTIONS = [
   { value: 'deshidratacion_leve', label: 'Deshidratacion leve' },
   { value: 'deshidratacion_moderada', label: 'Deshidratacion moderada' },
   { value: 'deshidratacion_severa', label: 'Deshidratacion severa' },
-]
-
-const MEDICATION_ROUTE_OPTIONS = [
-  { value: '', label: 'Via de administracion' },
-  { value: 'oral', label: 'Oral' },
-  { value: 'subcutanea', label: 'Subcutanea' },
-  { value: 'intramuscular', label: 'Intramuscular' },
-  { value: 'intravenosa', label: 'Intravenosa' },
-  { value: 'topica', label: 'Topica' },
-  { value: 'otica', label: 'Otica' },
-  { value: 'oftalmica', label: 'Oftalmica' },
-  { value: 'inhalada', label: 'Inhalada' },
-  { value: 'rectal', label: 'Rectal' },
-  { value: 'transdermica', label: 'Transdermica' },
-  { value: 'otra', label: 'Otra' },
 ]
 
 const MEDICATION_FREQUENCY_SUGGESTIONS = [
@@ -253,6 +241,7 @@ export default function HistoriaClinicaFormDrawer({
 }) {
   const usuario = useAuthStore((s) => s.usuario)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   // Todos los planes incluyen inventario.
   const puedeConsultarInventarioClinico = true
@@ -359,6 +348,7 @@ export default function HistoriaClinicaFormDrawer({
     mutationFn: historiasApi.crearHistoria,
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica registrada exitosamente')
+      invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
@@ -371,6 +361,7 @@ export default function HistoriaClinicaFormDrawer({
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica actualizada exitosamente')
       if (data?.historia) setLocalHistoria(data.historia)
+      invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
@@ -383,6 +374,8 @@ export default function HistoriaClinicaFormDrawer({
     onSuccess: (data) => {
       toast.success(data?.message || 'Historia clinica bloqueada exitosamente')
       setLocalHistoria((prev) => (prev ? { ...prev, bloqueada: true } : prev))
+      // Bloquear descuenta el tratamiento intrahospitalario del inventario clinico.
+      invalidarDominios(queryClient, 'historias', 'insumosClinicos')
       onSuccess?.(null)
     },
     onError: (error) => {
@@ -392,6 +385,31 @@ export default function HistoriaClinicaFormDrawer({
 
   // Solo el tratamiento intrahospitalario descuenta al cerrar la historia.
   const hayInsumoSobreStock = form.tratamientoIntrahospitalario.some(excedeStock)
+
+  // ── Formula para el tutor ────────────────────────────────────────────────────
+  const imprimirFormula = useImprimirFormula()
+
+  // La formula sale de la version guardada. Esta firma compara el plan en
+  // pantalla con el persistido para avisar si hay cambios sin guardar.
+  const firmaPlan = (f) =>
+    JSON.stringify({
+      medicamentos: f.medicamentos
+        .filter(medicationHasAnyValue)
+        .map((m) =>
+          [m.nombre, m.concentracion, m.dosis, m.via, m.frecuencia, m.duracion, m.cantidad, m.indicacion]
+            .map((v) => String(v || '').trim())
+        ),
+      indicaciones: f.indicaciones.trim(),
+      proximaConsulta: f.proximaConsulta || '',
+    })
+
+  const handleImprimirFormula = () => {
+    if (!historiaActual?.id) return
+    if (firmaPlan(form) !== firmaPlan(mapHistoriaToForm(historiaActual))) {
+      toast.warning('Se imprime la versión guardada. Guarda los cambios del plan farmacológico para incluirlos.')
+    }
+    imprimirFormula.imprimir(historiaActual.id)
+  }
 
   // Bloquear descuenta inventario clinico. Si hay cambios sin guardar, lo que se
   // descuenta es lo ya persistido, no lo que se ve en pantalla.
@@ -1083,20 +1101,22 @@ export default function HistoriaClinicaFormDrawer({
           )}
         </div>
 
-        {/* Footer */}
-        {puedeEditarHistorias && (
+        {/* Footer: quien solo consulta historias (auxiliar) igual puede imprimir la formula */}
+        {(puedeEditarHistorias || historiaActual?.id) && (
           <div className="flex flex-wrap gap-3 border-t border-border px-5 py-4">
-            <button
-              type="submit"
-              form="historia-drawer-form"
-              disabled={isSaving || historiaActual?.bloqueada}
-              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {historiaActual?.id
-                ? isSaving ? 'Guardando...' : 'Guardar cambios'
-                : isSaving ? 'Guardando...' : 'Registrar historia'}
-            </button>
-            {historiaActual?.id && (
+            {puedeEditarHistorias && (
+              <button
+                type="submit"
+                form="historia-drawer-form"
+                disabled={isSaving || historiaActual?.bloqueada}
+                className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {historiaActual?.id
+                  ? isSaving ? 'Guardando...' : 'Guardar cambios'
+                  : isSaving ? 'Guardando...' : 'Registrar historia'}
+              </button>
+            )}
+            {puedeEditarHistorias && historiaActual?.id && (
               <button
                 type="button"
                 onClick={handleBloquearHistoria}
@@ -1106,13 +1126,24 @@ export default function HistoriaClinicaFormDrawer({
                 {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
               </button>
             )}
-            {historiaActual?.id && historiaActual.bloqueada && !historiaActual.facturaId && (
+            {puedeEditarHistorias && historiaActual?.id && historiaActual.bloqueada && !historiaActual.facturaId && (
               <button
                 type="button"
                 onClick={() => navigate('/finanzas', { state: { facturarHistoriaId: historiaActual.id } })}
                 className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
               >
                 Facturar consulta
+              </button>
+            )}
+            {historiaActual?.id && (
+              <button
+                type="button"
+                onClick={handleImprimirFormula}
+                disabled={imprimirFormula.isPending}
+                className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+              >
+                <Printer className="h-4 w-4" />
+                {imprimirFormula.isPending ? 'Generando...' : 'Imprimir fórmula'}
               </button>
             )}
             <button type="button" onClick={onClose} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
