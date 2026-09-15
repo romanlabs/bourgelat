@@ -7,6 +7,7 @@ Esta carpeta concentra la documentacion operativa del proyecto para mantener la 
 - `render-cloudflare-pilot.md`: guia de validacion para staging y piloto.
 - `render-cloudflare-checklist.md`: checklist practico de Render y Cloudflare.
 - `production-cloudflare.md`: criterios de produccion, DNS y seguridad.
+- `render-reduccion-costos.md`: diagnostico de la factura de Render y opciones para reducir costos.
 - `docker-local.md`: entorno local con Docker Compose.
 - `roadmap.md`: fases de producto.
 - `secrets-rotation.md`: rotacion y manejo de secretos.
