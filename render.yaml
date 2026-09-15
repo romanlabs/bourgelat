@@ -179,8 +179,11 @@ services:
   # permite cambiar el tipo de un servicio existente, por eso es un servicio
   # nuevo: se crea sin dominios, se valida en *.onrender.com y luego se mueven
   # bourgelat.co y app.bourgelat.co a mano (ver docs/render-reduccion-costos.md).
-  - type: static
+  # En Blueprints un Static Site es type: web + runtime: static; "type: static"
+  # rompe el sync entero ("unknown type") y no se aplica ningun cambio.
+  - type: web
     name: bourgelat-frontend
+    runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     autoDeployTrigger: commit

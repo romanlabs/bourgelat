@@ -135,8 +135,9 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
    `render.yaml` **con otro nombre** y **sin dominios** (el viejo sigue igual):
 
    ```yaml
-   - type: static
+   - type: web
      name: bourgelat-frontend
+     runtime: static
      buildCommand: cd frontend && npm ci && npm run build
      staticPublishPath: frontend/dist
      autoDeployTrigger: commit
@@ -159,7 +160,13 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
          value: "true"
    ```
 
-   Nota: los Static Sites no aceptan `region` (commit `a124777`).
+   Notas:
+   - En Blueprints un Static Site se declara `type: web` + `runtime: static`.
+     `type: static` hace fallar el sync completo con `unknown type "static"`
+     (paso en agosto, commit `25c08b6`, y otra vez el 2026-09-15, PR #147).
+   - Los Static Sites no aceptan `region` (commit `a124777`).
+   - Validar el YAML con un parser no detecta estos errores de esquema:
+     despues de mergear a `main`, revisar Render > Blueprints > "Last sync".
 
 2. Mergear y dejar que el Blueprint cree el servicio. Verificar en la URL
    `bourgelat-frontend.onrender.com`:
