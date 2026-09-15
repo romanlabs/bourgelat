@@ -34,6 +34,7 @@ const ENTITY_LABELS = {
   Antecedente: 'Antecedentes',
   Clinica: 'Clínica',
   IntegracionFacturacion: 'Facturación electrónica',
+  TicketSoporte: 'Soporte',
   Auth: 'Ingreso al sistema',
 }
 

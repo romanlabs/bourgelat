@@ -141,6 +141,7 @@ Usados directamente en `LandingPage.jsx` y componentes de marketing:
 | Configuración | `/configuracion` | `/api/clinica`, `/api/suscripciones`, `/api/consultorios` |
 | Onboarding (wizard de registro) | `/onboarding` | `/api/clinica` |
 | Auditoría | `/auditoria` | `/api/auditoria` |
+| Soporte (tickets de clínicas) | `/soporte` | `/api/soporte` (el equipo responde con `npm run soporte:*`, ver `docs/soporte.md`) |
 | Superadmin | `/superadmin` | `/api/superadmin` |
 | Auth (incl. OAuth Google) | `/login`, `/registro` | `/api/auth` |
 | Público | `/`, `/planes`, `/nosotros` | — |
