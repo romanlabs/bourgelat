@@ -195,6 +195,11 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
 
 ### Opcion C — Postgres con disco de menor tamano (~−$4.20)
 
+**Decision (2026-09-14): no se hace por ahora.** Es la unica opcion que toca
+datos de produccion y exige una ventana de corte para la clinica piloto, a
+cambio de ~$4.20/mes. Los 15 GB quedan como margen para crecer. Aprovecharla
+solo si hay que migrar la base por otra razon (cambio de plan o de region).
+
 **Por que:** la base tiene 15 GB reservados ($4.50/mes) y los datos reales de
 una clinica piloto ocupan muy poco. **Render no permite reducir el disco de
 Postgres, solo aumentarlo**, asi que hay que crear una base nueva y migrar.
