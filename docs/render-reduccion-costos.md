@@ -176,6 +176,21 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
      (CORS/origen solo permite `bourgelat.co` y `app.bourgelat.co`). Es esperado;
      se valida despues de mover el dominio.
 
+**Lo aprendido al ejecutarlo (2026-09-15):**
+
+- **No hubo que tocar Cloudflare.** Los registros de produccion son A a
+  `216.24.57.1` (no CNAME) y esa IP tambien sirve para Static Sites: al agregar
+  el dominio en el servicio nuevo, Render lo verifico solo. El registro DNS se
+  queda igual, con proxy de Cloudflare activo.
+- **`www.bourgelat.co` no se mueve por separado.** Render lo crea automaticamente
+  como redireccion del dominio raiz; su menu no ofrece "Remove domain" y viaja
+  junto con `bourgelat.co`.
+- **El corte real fue de un par de minutos**, el tiempo entre quitar el dominio
+  de un servicio y agregarlo al otro.
+- **Como verificar sin que enganie la cache de Cloudflare:** pedir la URL con un
+  parametro nuevo (`?cb=123`) y confirmar `cf-cache-status: MISS`. Si responde
+  el Static Site, desaparece la cabecera `x-render-origin-server: nginx`.
+
 3. **Ventana de cambio** (hora de poco uso de la clinica piloto, avisar antes):
    1. En `bourgelat-web` > Settings > Custom Domains, eliminar `app.bourgelat.co`
       y `bourgelat.co`.

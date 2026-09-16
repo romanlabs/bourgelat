@@ -163,7 +163,6 @@ services:
     autoDeployTrigger: commit
     healthCheckPath: /healthz
     domains:
-      - bourgelat.co
       - app.bourgelat.co
     buildFilter:
       paths:
@@ -177,8 +176,10 @@ services:
 
   # Reemplazo gratuito de bourgelat-web (Docker, Starter $7/mes). Render no
   # permite cambiar el tipo de un servicio existente, por eso es un servicio
-  # nuevo: se crea sin dominios, se valida en *.onrender.com y luego se mueven
-  # bourgelat.co y app.bourgelat.co a mano (ver docs/render-reduccion-costos.md).
+  # nuevo y los dominios se mueven a mano desde el dashboard (el Blueprint no
+  # los traslada solo). Falta mover app.bourgelat.co; cuando se haga, este
+  # servicio se queda con los dos y bourgelat-web se borra.
+  # Ver docs/render-reduccion-costos.md.
   # En Blueprints un Static Site es type: web + runtime: static; "type: static"
   # rompe el sync entero ("unknown type") y no se aplica ningun cambio.
   - type: web
@@ -187,6 +188,10 @@ services:
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     autoDeployTrigger: commit
+    # www.bourgelat.co lo agrega Render solo como redireccion al dominio raiz:
+    # no se declara aqui ni se puede mover por separado.
+    domains:
+      - bourgelat.co
     buildFilter:
       paths:
         - frontend/**
