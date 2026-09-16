@@ -176,6 +176,10 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
      (CORS/origen solo permite `bourgelat.co` y `app.bourgelat.co`). Es esperado;
      se valida despues de mover el dominio.
 
+**Estado: completado el 2026-09-15.** `bourgelat.co`, `www` y
+`app.bourgelat.co` los sirve `bourgelat-frontend`. Falta borrar `bourgelat-web`
+tras unos dias estable; ahi se materializan los $7/mes de ahorro.
+
 **Lo aprendido al ejecutarlo (2026-09-15):**
 
 - **No hubo que tocar Cloudflare.** Los registros de produccion son A a
