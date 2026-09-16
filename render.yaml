@@ -162,8 +162,8 @@ services:
     dockerfilePath: frontend/Dockerfile.prod
     autoDeployTrigger: commit
     healthCheckPath: /healthz
-    domains:
-      - app.bourgelat.co
+    # Sin dominios: bourgelat.co, www y app.bourgelat.co ya los sirve
+    # bourgelat-frontend. Este servicio se borra tras unos dias estable.
     buildFilter:
       paths:
         - frontend/**
@@ -192,6 +192,7 @@ services:
     # no se declara aqui ni se puede mover por separado.
     domains:
       - bourgelat.co
+      - app.bourgelat.co
     buildFilter:
       paths:
         - frontend/**
