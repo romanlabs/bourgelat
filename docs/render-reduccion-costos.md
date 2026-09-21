@@ -177,8 +177,9 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
      se valida despues de mover el dominio.
 
 **Estado: completado el 2026-09-15.** `bourgelat.co`, `www` y
-`app.bourgelat.co` los sirve `bourgelat-frontend`. Falta borrar `bourgelat-web`
-tras unos dias estable; ahi se materializan los $7/mes de ahorro.
+`app.bourgelat.co` los sirve `bourgelat-frontend`. `bourgelat-web` quedo
+suspendido ese mismo dia (deja de cobrar) y su bloque salio de `render.yaml` el
+2026-09-21. Solo falta borrarlo en el dashboard (ver paso 5).
 
 **Lo aprendido al ejecutarlo (2026-09-15):**
 
@@ -208,9 +209,12 @@ tras unos dias estable; ahi se materializan los $7/mes de ahorro.
 4. **Rollback:** si algo falla, devolver los dominios a `bourgelat-web` y
    restaurar los CNAME. El servicio viejo sigue intacto hasta el paso 5.
 
-5. Tras 2-3 dias estable: borrar `bourgelat-web` en el dashboard y quitar su
-   bloque de `render.yaml` (el Blueprint no borra servicios solo por quitarlos
-   del archivo). Mover el bloque `domains` al nuevo servicio en `render.yaml`.
+5. Tras 2-3 dias estable: quitar el bloque de `bourgelat-web` de `render.yaml`,
+   mergear a `main` y **solo despues** borrar el servicio en el dashboard. El
+   Blueprint no borra servicios por quitarlos del archivo, pero si se borra el
+   servicio mientras el bloque sigue ahi, el siguiente sync lo recrea y vuelve a
+   cobrar. `frontend/Dockerfile.prod` y `frontend/nginx.conf` se quedan: los usa
+   `bourgelat-web-staging`.
 
 6. Repetir con `bourgelat-web-staging` cuando se reactive staging (hoy no cobra).
 
