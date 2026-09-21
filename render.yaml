@@ -153,32 +153,10 @@ services:
       - key: FACTUS_AMBIENTE
         value: production
 
-  - type: web
-    name: bourgelat-web
-    runtime: docker
-    plan: starter
-    region: oregon
-    dockerContext: frontend
-    dockerfilePath: frontend/Dockerfile.prod
-    autoDeployTrigger: commit
-    healthCheckPath: /healthz
-    # Sin dominios: bourgelat.co, www y app.bourgelat.co ya los sirve
-    # bourgelat-frontend. Este servicio se borra tras unos dias estable.
-    buildFilter:
-      paths:
-        - frontend/**
-        - render.yaml
-    envVars:
-      - key: VITE_API_URL
-        value: https://api.bourgelat.co/api
-      - key: VITE_OAUTH_ENABLED
-        value: "true"
-
-  # Reemplazo gratuito de bourgelat-web (Docker, Starter $7/mes). Render no
-  # permite cambiar el tipo de un servicio existente, por eso es un servicio
-  # nuevo y los dominios se mueven a mano desde el dashboard (el Blueprint no
-  # los traslada solo). Falta mover app.bourgelat.co; cuando se haga, este
-  # servicio se queda con los dos y bourgelat-web se borra.
+  # Reemplazo gratuito de bourgelat-web (Docker, Starter $7/mes), que ya se
+  # retiro del Blueprint. Render no permite cambiar el tipo de un servicio
+  # existente, por eso es un servicio nuevo; los dominios se movieron a mano
+  # desde el dashboard (el Blueprint no los traslada solo).
   # Ver docs/render-reduccion-costos.md.
   # En Blueprints un Static Site es type: web + runtime: static; "type: static"
   # rompe el sync entero ("unknown type") y no se aplica ningun cambio.
