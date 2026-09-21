@@ -29,14 +29,20 @@ Roadmap y planes de suscripción: ver `docs/roadmap.md` y `backend/src/config/pl
 
 ### Backend (`backend/`)
 - **Node.js** + **Express 5**
-- **PostgreSQL 16** + **Sequelize 6** (ORM, migraciones propias)
+- **PostgreSQL 18** en producción (Render) / 16 en Docker local + **Sequelize 6** (ORM, migraciones propias)
 - **JWT** con access token (15min) + refresh token (7d) en httpOnly cookies
 - **Winston** para logging
 - Integración con **Factus.com.co** para facturación electrónica
 
 ### Infraestructura
 - **Docker** + **Docker Compose** para desarrollo local (opcional, ver sección Desarrollo local)
-- **Render.com** para despliegue (blueprint en `render.yaml`, debe permanecer en la raíz)
+- **Render.com** para despliegue (blueprint en `render.yaml`, debe permanecer en la raíz):
+  `bourgelat-api` (Docker) + `bourgelat-frontend` (Static Site, sirve `bourgelat.co`
+  y `app.bourgelat.co`) + `bourgelat-postgres`. Staging existe pero está suspendido.
+  Ver `docs/render-reduccion-costos.md`
+- **Blueprint primero, dashboard después**: para retirar un servicio, quitarlo de
+  `render.yaml` y mergear a `main` ANTES de borrarlo en el dashboard; si no, el
+  siguiente sync lo recrea y vuelve a cobrar
 - **Cloudflare** para DNS, SSL y WAF
 
 ---
@@ -53,22 +59,25 @@ bourgelat/
 │       ├── migrations/      # Migraciones Sequelize (runner propio)
 │       ├── models/          # Modelos Sequelize
 │       ├── routes/          # Enrutadores Express
-│       ├── services/        # factusService, suscripcionService
+│       ├── services/        # factus, suscripcion, email, oauth, almacenamiento...
+│       ├── scripts/         # Operación por CLI: superadmin, suscripciones, secretos
+│       ├── utils/           # tenant.js, paginacion, busqueda, turnoCaja...
 │       └── jobs/            # Limpieza de tokens y logs
 │
 ├── frontend/
 │   └── src/
 │       ├── assets/          # Imágenes (auth/, landing/)
 │       ├── components/
-│       │   ├── layout/      # AdminShell, SuperadminShell
+│       │   ├── layout/      # AdminShell, QuickCreateMenu
 │       │   ├── shared/      # DataTable, EmptyState, ConfirmDialog, ECGHeartbeatCanvas...
 │       │   └── ui/          # Shadcn components
 │       ├── content/         # publicSiteContent.js (copy del sitio público)
 │       ├── data/            # colombia.js (departamentos y municipios)
-│       ├── features/        # Módulos por dominio (agenda, pacientes, inventario,
-│       │                    #   inventarioClinico, caja, finanzas, onboarding, perfil,
-│       │                    #   estilos...) — cada uno con *Api.js + hooks + componentes
-│       ├── lib/             # api.js, permissions.js, utils.js, theme.js
+│       ├── features/        # Módulos por dominio (agenda, recepcion, pacientes, historias,
+│       │                    #   inventario, inventarioClinico, servicios, caja, finanzas,
+│       │                    #   configuracion, onboarding, perfil, estilos...) — cada uno
+│       │                    #   con *Api.js + hooks + componentes
+│       ├── lib/             # api.js, queryKeys.js, pdfComun.js, permissions.js, theme.js...
 │       ├── pages/           # Páginas completas
 │       ├── router/          # index.jsx con React Router v7
 │       └── store/           # authStore.js, themeStore.js (Zustand)
@@ -138,10 +147,9 @@ Usados directamente en `LandingPage.jsx` y componentes de marketing:
 | Estilos de historia clínica | — (integrado en configuración) | `/api/registros-estilo` |
 | Usuarios | `/usuarios` | `/api/usuarios` |
 | Perfil de usuario | `/perfil` | `/api/usuarios` |
-| Configuración | `/configuracion` | `/api/clinica`, `/api/suscripciones`, `/api/consultorios` |
+| Configuración (incl. horario y bloqueos de agenda, logo) | `/configuracion` | `/api/clinica`, `/api/suscripciones`, `/api/consultorios`, `/api/bloqueos-agenda`, `/api/integraciones/facturacion` |
 | Onboarding (wizard de registro) | `/onboarding` | `/api/clinica` |
 | Auditoría | `/auditoria` | `/api/auditoria` |
-| Superadmin | `/superadmin` | `/api/superadmin` |
 | Auth (incl. OAuth Google) | `/login`, `/registro` | `/api/auth` |
 | Público | `/`, `/planes`, `/nosotros` | — |
 
@@ -167,6 +175,9 @@ UUIDs como primary keys en la mayoría de tablas.
 - Estado de servidor: **React Query** (`useQuery`, `useMutation`)
 - Estado global: **Zustand** solo para auth y tema
 - Formularios: siempre **React Hook Form** + **Zod**
+- Toda raíz de clave de React Query se registra en `lib/queryKeys.js`, agrupada por
+  dominio de datos: así una mutación invalida también las pantallas de otros módulos
+- PDFs (factura, fórmula) comparten encabezado y utilidades en `lib/pdfComun.js`
 - Path aliases configurados: `@/` = `frontend/src/`
 - Animaciones: usar `motion/react` (no `framer-motion` directamente)
 
@@ -176,15 +187,18 @@ UUIDs como primary keys en la mayoría de tablas.
 - **Multi-tenancy**: toda query sobre modelos con `clinicaId` debe filtrar por tenant
   (helper `tenantWhere(req)` en `utils/tenant.js`). El `tenantGuard`
   (`config/tenantGuard.js`) rechaza en dev cualquier query sin ese filtro; las
-  queries globales legítimas (auth, superadmin, jobs) se marcan con `sinTenant: true`
+  queries globales legítimas (auth, scripts, jobs) se marcan con `sinTenant: true`
 - Validación de requests: `express-validator` en las rutas, no en los controladores
 - Errores en producción: sanitizados por `sanitizeErrorResponseMiddleware`
 - Variables de entorno: validadas al inicio en `validateRuntimeConfig.js`
 
 ### Git
-- Ramas: `main` (producción) ← `develop` (integración) ← `feature/*`
-- No push directo a `main` ni `develop`
-- Prefijos de commit: `feat:`, `fix:`, `style:`, `refactor:`, `test:`, `chore:`
+- Ramas: `main` (producción) ← `develop` (integración) ← `<tipo>/descripcion`
+  (`feat/`, `fix/`, `chore/`, `docs/`, `refactor/`)
+- No push directo a `main` ni `develop`: rama → PR a `develop` → PR `develop` → `main`
+- Prefijos de commit: `feat:`, `fix:`, `style:`, `refactor:`, `test:`, `chore:`, `docs:`,
+  con scope opcional (`feat(historias):`)
+- Detalle completo en `CONTRIBUTING.md`
 
 ---
 
@@ -214,3 +228,17 @@ Variables de entorno:
 Lógica en `backend/src/config/planes.js` y `services/suscripcionService.js`.
 Los límites y precios vigentes se consultan ahí directamente (no se duplican en
 este archivo para evitar que queden desactualizados).
+
+## Operación de plataforma (sin panel web)
+
+El panel superadmin web se retiró: nada con poder sobre todas las clínicas es
+alcanzable por HTTP. El rol `superadmin` sigue en el ENUM de `Usuario`, pero la
+operación se hace por CLI en el servidor (`backend/`):
+
+```bash
+npm run suscripcion:asignar  -- --email admin@clinica.com --plan activo
+npm run suscripcion:cancelar -- --email admin@clinica.com --confirmar  # deja la clínica en solo lectura
+npm run suscripcion:cortesia -- --email admin@clinica.com   # cortesía sin vencimiento
+npm run create:superadmin
+npm run cifrado:rotar
+```
