@@ -1,11 +1,15 @@
 const fs = require('fs')
 const path = require('path')
 
-// Rutas que deben seguir funcionando con la suscripcion vencida: autenticarse y
-// pagar para reactivarse. `superadminRoutes.js` salio de la lista al retirarse
-// el panel de superadmin; asignar y cancelar suscripciones ahora se opera desde
-// el servidor (backend/src/scripts/gestionarSuscripcion.js).
-const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js']
+// Rutas que deben seguir funcionando con la suscripcion vencida: autenticarse,
+// pagar para reactivarse y pedir ayuda. `superadminRoutes.js` salio de la lista
+// al retirarse el panel de superadmin; asignar y cancelar suscripciones ahora
+// se opera desde el servidor (backend/src/scripts/gestionarSuscripcion.js).
+//
+// `soporteRoutes.js` es exento a proposito: una clinica vencida queda en solo
+// lectura, y "no puedo reactivar mi plan" es justo un motivo tipico para abrir
+// un ticket. Sus mutaciones solo tocan tickets de soporte, no datos clinicos.
+const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js', 'soporteRoutes.js']
 
 const METODOS_MUTACION = ['post', 'put', 'patch', 'delete']
 const GUARD = 'requerirEscritura'

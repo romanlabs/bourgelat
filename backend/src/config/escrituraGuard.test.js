@@ -56,6 +56,7 @@ assert.deepStrictEqual(analizarArchivoRutas(multilineaProtegida, 'multi-ok.js'),
 // ── Los archivos exentos se declaran explicitamente ───────────────────────
 assert.ok(ARCHIVOS_EXENTOS.includes('authRoutes.js'), 'auth debe seguir operando vencido')
 assert.ok(ARCHIVOS_EXENTOS.includes('suscripcionRoutes.js'), 'debe poder pagar para reactivarse')
+assert.ok(ARCHIVOS_EXENTOS.includes('soporteRoutes.js'), 'debe poder pedir ayuda con la suscripcion vencida')
 
 // La lista de exentos se congela a proposito. Cuando este test falle porque una
 // ruta nueva no esta protegida, la salida correcta es agregarle el guard, NO
@@ -64,7 +65,7 @@ assert.ok(ARCHIVOS_EXENTOS.includes('suscripcionRoutes.js'), 'debe poder pagar p
 // pensarlo y deja rastro en el diff.
 assert.deepStrictEqual(
   [...ARCHIVOS_EXENTOS].sort(),
-  ['authRoutes.js', 'suscripcionRoutes.js'],
+  ['authRoutes.js', 'soporteRoutes.js', 'suscripcionRoutes.js'],
   'ARCHIVOS_EXENTOS cambio: agregar exenciones desprotege rutas en bloque'
 )
 

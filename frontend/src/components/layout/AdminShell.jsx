@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
   Boxes,
@@ -9,6 +9,7 @@ import {
   HeartPulse,
   History,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Menu,
   Moon,
@@ -56,6 +57,7 @@ const NAV_ITEMS = [
   { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: Users },
   { key: 'configuracion', label: 'Clínica', to: '/configuracion', icon: Building2 },
   { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: History },
+  { key: 'soporte', label: 'Soporte', to: '/soporte', icon: LifeBuoy },
   { key: 'planes', label: 'Planes', to: '/planes', icon: ShieldCheck },
 ]
 
@@ -73,7 +75,7 @@ const NAV_SECTIONS = [
   {
     key: 'control',
     label: 'Configuración y control',
-    items: ['configuracion', 'auditoria', 'planes'],
+    items: ['configuracion', 'auditoria', 'soporte', 'planes'],
   },
 ]
 
@@ -125,6 +127,7 @@ export default function AdminShell({
   const { logout } = useLogout()
   const { mutate: reenviarVerificacion, isPending: reenviandoVerificacion } = useReenviarVerificacion()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [bannerVerificacionOculto, setBannerVerificacionOculto] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -300,6 +303,18 @@ export default function AdminShell({
                   >
                     <User className="h-4 w-4 text-muted-foreground" />
                     Mi perfil
+                  </Link>
+                </DropdownMenu.Item>
+
+                {/* Lleva la ruta actual para que el ticket nazca con el modulo
+                    donde ocurrio el problema. */}
+                <DropdownMenu.Item asChild>
+                  <Link
+                    to={`/soporte?nuevo=1&desde=${encodeURIComponent(location.pathname)}`}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+                  >
+                    <LifeBuoy className="h-4 w-4 text-muted-foreground" />
+                    Ayuda y soporte
                   </Link>
                 </DropdownMenu.Item>
 

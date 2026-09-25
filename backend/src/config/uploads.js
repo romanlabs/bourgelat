@@ -9,6 +9,7 @@ const EXAMENES_SUBDIR = 'examenes'
 const USUARIOS_SUBDIR = 'usuarios'
 const PRODUCTOS_SUBDIR = 'productos'
 const CLINICAS_SUBDIR = 'clinicas'
+const SOPORTE_SUBDIR = 'soporte'
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
@@ -66,6 +67,12 @@ const getClinicasUploadsDir = () => {
   return clinicasDir
 }
 
+const getSoporteUploadsDir = () => {
+  const soporteDir = path.join(UPLOADS_ROOT_DIR, SOPORTE_SUBDIR)
+  ensureDirectory(soporteDir)
+  return soporteDir
+}
+
 const generateUploadFilename = (originalName = '', mimeType = '') => {
   const extension = MIME_EXTENSIONS[mimeType] || '.jpg'
 
@@ -115,6 +122,7 @@ module.exports = {
   USUARIOS_SUBDIR,
   PRODUCTOS_SUBDIR,
   CLINICAS_SUBDIR,
+  SOPORTE_SUBDIR,
   ALLOWED_IMAGE_MIME_TYPES,
   ALLOWED_EXAMEN_MIME_TYPES,
   getMascotasUploadsDir,
@@ -122,6 +130,7 @@ module.exports = {
   getUsuariosUploadsDir,
   getProductosUploadsDir,
   getClinicasUploadsDir,
+  getSoporteUploadsDir,
   generateUploadFilename,
   buildPublicUploadUrl,
   esUrlDeUploadPropio,

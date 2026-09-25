@@ -229,6 +229,12 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
     }
   })
 
+  if (!String(env.SOPORTE_EMAIL || '').trim()) {
+    warnings.push(
+      'SOPORTE_EMAIL no esta definido: los tickets de soporte se guardan, pero el equipo no recibe el aviso por correo.'
+    )
+  }
+
   if (env.PUBLIC_UPLOADS_BASE_URL && !isHttpsUrl(env.PUBLIC_UPLOADS_BASE_URL)) {
     errors.push('PUBLIC_UPLOADS_BASE_URL debe usar https en produccion.')
   }

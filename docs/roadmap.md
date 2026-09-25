@@ -23,6 +23,8 @@
 - Pruebas de permisos por rol y aislamiento por clinica.
 - Rendimiento aceptable en consultas frecuentes y dashboards.
 - Soporte de incidentes y checklist operativo.
+- Soporte en la app: las clinicas abren tickets en `/soporte` y el equipo
+  responde desde el servidor con `npm run soporte:*` (ver `docs/soporte.md`).
 - Pendiente: onboarding fiscal fase 2 (perfil fiscal en Configuracion: razon
   social, DV, responsabilidad IVA, municipio DIAN, CIIU) antes de activar el
   add-on DIAN a clientes reales.
@@ -37,6 +39,11 @@
   usuario como beneficio de plan y no como complejidad tecnica; el plan base
   (v1) no la incluye por defecto.
 - Hardening de superadmin (2FA o IP allowlist) antes de escalar clientes pagando.
+- Soporte: panel del equipo. Cuando el volumen de tickets haga pesado responder
+  desde la shell de Render: rol `soporte` con alcance solo sobre tickets (no
+  superadmin), login separado con 2FA o IP allowlist, rutas en
+  `/api/soporte-equipo/*` sobre el mismo `soporteService.js`. Detalle en
+  `docs/soporte.md`.
 
 ## Fase 4. Escalado
 - Suite de pruebas automatizadas para auth, permisos, facturacion y multi-clinica.

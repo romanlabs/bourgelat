@@ -36,6 +36,15 @@ const enviarEmail = async ({ para, asunto, html, texto }) => {
   return { enviado: true }
 }
 
+// Escapa texto que escribio un usuario antes de meterlo en una plantilla HTML.
+const escaparHtml = (valor) =>
+  String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
 const enviarEmailRecuperacionPassword = async ({ para, nombre, urlReset }) => {
   const asunto = 'Restablece tu contraseña de Bourgelat'
   const texto = `Hola ${nombre},\n\nRecibimos una solicitud para restablecer tu contraseña. Abre este enlace (válido por 30 minutos):\n\n${urlReset}\n\nSi no fuiste tú, ignora este correo; tu contraseña no cambiará.`
@@ -122,6 +131,7 @@ const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFront
 
 module.exports = {
   enviarEmail,
+  escaparHtml,
   enviarEmailRecuperacionPassword,
   enviarEmailVerificacion,
   enviarEmailBienvenida,
