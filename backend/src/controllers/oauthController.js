@@ -9,6 +9,8 @@ const sequelize = require('../config/database')
 const Clinica = require('../models/Clinica')
 const Suscripcion = require('../models/Suscripcion')
 const { crearSuscripcionPrueba } = require('../config/planes')
+const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
+const { enviarEmailBienvenida } = require('../services/emailService')
 
 const COOKIE_FLUJO = 'bourgelat_oauth_flujo'
 
@@ -143,6 +145,14 @@ const completarRegistro = async (req, res) => {
         { transaction }
       )
       const suscripcion = await Suscripcion.create(crearSuscripcionPrueba(clinica.id), { transaction })
+      await registrarAceptacionesRegistro({
+        usuarioId: usuario.id,
+        clinicaId: clinica.id,
+        aceptaComunicaciones: req.body.aceptaComunicaciones,
+        origen: `registro_oauth_${datos.proveedor}`,
+        req,
+        transaction,
+      })
 
       const payload = {
         id: usuario.id,
@@ -171,6 +181,13 @@ const completarRegistro = async (req, res) => {
       req,
       resultado: 'exitoso',
     })
+
+    // No bloquea el registro si el correo falla: es informativo.
+    enviarEmailBienvenida({
+      para: resultado.usuario.email,
+      nombre: resultado.usuario.nombre || resultado.usuario.email.split('@')[0],
+      urlFrontend: oauthConfig.frontendUrl,
+    }).catch((error) => logger.warn({ contexto: 'oauth-bienvenida', mensaje: error.message }))
 
     setAuthCookies(res, {
       accessToken: resultado.accessToken,
