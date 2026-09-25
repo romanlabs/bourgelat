@@ -176,6 +176,26 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
      (CORS/origen solo permite `bourgelat.co` y `app.bourgelat.co`). Es esperado;
      se valida despues de mover el dominio.
 
+**Estado: completado el 2026-09-15.** `bourgelat.co`, `www` y
+`app.bourgelat.co` los sirve `bourgelat-frontend`. `bourgelat-web` quedo
+suspendido ese mismo dia (deja de cobrar) y su bloque salio de `render.yaml` el
+2026-09-21. Solo falta borrarlo en el dashboard (ver paso 5).
+
+**Lo aprendido al ejecutarlo (2026-09-15):**
+
+- **No hubo que tocar Cloudflare.** Los registros de produccion son A a
+  `216.24.57.1` (no CNAME) y esa IP tambien sirve para Static Sites: al agregar
+  el dominio en el servicio nuevo, Render lo verifico solo. El registro DNS se
+  queda igual, con proxy de Cloudflare activo.
+- **`www.bourgelat.co` no se mueve por separado.** Render lo crea automaticamente
+  como redireccion del dominio raiz; su menu no ofrece "Remove domain" y viaja
+  junto con `bourgelat.co`.
+- **El corte real fue de un par de minutos**, el tiempo entre quitar el dominio
+  de un servicio y agregarlo al otro.
+- **Como verificar sin que enganie la cache de Cloudflare:** pedir la URL con un
+  parametro nuevo (`?cb=123`) y confirmar `cf-cache-status: MISS`. Si responde
+  el Static Site, desaparece la cabecera `x-render-origin-server: nginx`.
+
 3. **Ventana de cambio** (hora de poco uso de la clinica piloto, avisar antes):
    1. En `bourgelat-web` > Settings > Custom Domains, eliminar `app.bourgelat.co`
       y `bourgelat.co`.
@@ -189,9 +209,12 @@ correcta es crear un servicio nuevo, mover los dominios y borrar el viejo.
 4. **Rollback:** si algo falla, devolver los dominios a `bourgelat-web` y
    restaurar los CNAME. El servicio viejo sigue intacto hasta el paso 5.
 
-5. Tras 2-3 dias estable: borrar `bourgelat-web` en el dashboard y quitar su
-   bloque de `render.yaml` (el Blueprint no borra servicios solo por quitarlos
-   del archivo). Mover el bloque `domains` al nuevo servicio en `render.yaml`.
+5. Tras 2-3 dias estable: quitar el bloque de `bourgelat-web` de `render.yaml`,
+   mergear a `main` y **solo despues** borrar el servicio en el dashboard. El
+   Blueprint no borra servicios por quitarlos del archivo, pero si se borra el
+   servicio mientras el bloque sigue ahi, el siguiente sync lo recrea y vuelve a
+   cobrar. `frontend/Dockerfile.prod` y `frontend/nginx.conf` se quedan: los usa
+   `bourgelat-web-staging`.
 
 6. Repetir con `bourgelat-web-staging` cuando se reactive staging (hoy no cobra).
 
