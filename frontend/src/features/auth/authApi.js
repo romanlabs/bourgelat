@@ -6,12 +6,14 @@ export const authApi = {
     return data
   },
 
-  registro: async ({ nombre, nombreAdministrador, email, password }) => {
+  registro: async ({ nombre, nombreAdministrador, email, password, aceptaTerminos, aceptaComunicaciones }) => {
     const { data } = await api.post('/auth/registro', {
       nombre,
       nombreAdministrador,
       email,
       password,
+      aceptaTerminos,
+      aceptaComunicaciones,
     })
     return data
   },
@@ -33,8 +35,13 @@ export const authApi = {
     return data
   },
 
-  completarRegistroOauth: async ({ token, nombreClinica }) => {
-    const { data } = await api.post('/auth/oauth/completar-registro', { token, nombreClinica })
+  completarRegistroOauth: async ({ token, nombreClinica, aceptaTerminos, aceptaComunicaciones }) => {
+    const { data } = await api.post('/auth/oauth/completar-registro', {
+      token,
+      nombreClinica,
+      aceptaTerminos,
+      aceptaComunicaciones,
+    })
     return data
   },
 

@@ -9,6 +9,7 @@ import Logo from '@/components/shared/Logo'
 import { useLogin, useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
+import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
 
 const loginSchema = z.object({
   email: z.string().trim().email('Ingresa un correo válido'),
@@ -30,6 +31,7 @@ export default function LoginPage() {
     () => searchParams.get('registro') === '1'
   )
   const [tokenOnboardingOauth, setTokenOnboardingOauth] = useState(null)
+  const [aceptaTerminosOauth, setAceptaTerminosOauth] = useState(false)
   const { mutate: completarRegistroOauth, isPending: completandoOauth } = useCompletarRegistroOauth()
 
   useEffect(() => {
@@ -194,8 +196,13 @@ export default function LoginPage() {
               className="mt-4 space-y-3"
               onSubmit={(e) => {
                 e.preventDefault()
-                const nombreClinica = new FormData(e.currentTarget).get('nombreClinica')
-                completarRegistroOauth({ token: tokenOnboardingOauth, nombreClinica })
+                const formulario = new FormData(e.currentTarget)
+                completarRegistroOauth({
+                  token: tokenOnboardingOauth,
+                  nombreClinica: formulario.get('nombreClinica'),
+                  aceptaTerminos: aceptaTerminosOauth,
+                  aceptaComunicaciones: formulario.get('aceptaComunicaciones') === 'on',
+                })
               }}
             >
               <input
@@ -205,7 +212,14 @@ export default function LoginPage() {
                 placeholder="Clínica Veterinaria Bourgelat"
                 className={inputClass}
               />
-              <Button type="submit" disabled={completandoOauth} className="h-11 w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+              <ConsentimientoRegistro
+                terminosProps={{
+                  checked: aceptaTerminosOauth,
+                  onChange: (e) => setAceptaTerminosOauth(e.target.checked),
+                }}
+                comunicacionesProps={{ name: 'aceptaComunicaciones' }}
+              />
+              <Button type="submit" disabled={completandoOauth || !aceptaTerminosOauth} className="h-11 w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
                 {completandoOauth ? 'Creando cuenta...' : 'Continuar'}
               </Button>
             </form>
