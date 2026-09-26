@@ -6,13 +6,17 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/controllers/facturaCompraReferencias.test.js",
+    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/services/aceptacionLegalService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/controllers/facturaCompraReferencias.test.js && node src/services/soporteReglas.test.js",
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
     "suscripcion:cortesia": "node src/scripts/extenderSuscripcionCortesia.js",
     "suscripcion:asignar": "node src/scripts/gestionarSuscripcion.js asignar",
     "suscripcion:cancelar": "node src/scripts/gestionarSuscripcion.js cancelar",
+    "soporte:listar": "node src/scripts/soporte.js listar",
+    "soporte:ver": "node src/scripts/soporte.js ver",
+    "soporte:responder": "node src/scripts/soporte.js responder",
+    "soporte:estado": "node src/scripts/soporte.js estado",
     "secrets:generate": "node src/scripts/generateSecrets.js",
     "cifrado:rotar": "node src/scripts/rotarCifrado.js"
   },

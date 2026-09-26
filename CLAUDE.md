@@ -150,6 +150,7 @@ Usados directamente en `LandingPage.jsx` y componentes de marketing:
 | Configuración (incl. horario y bloqueos de agenda, logo) | `/configuracion` | `/api/clinica`, `/api/suscripciones`, `/api/consultorios`, `/api/bloqueos-agenda`, `/api/integraciones/facturacion` |
 | Onboarding (wizard de registro) | `/onboarding` | `/api/clinica` |
 | Auditoría | `/auditoria` | `/api/auditoria` |
+| Soporte (tickets de clínicas) | `/soporte` | `/api/soporte` (el equipo responde con `npm run soporte:*`, ver `docs/soporte.md`) |
 | Auth (incl. OAuth Google) | `/login`, `/registro` | `/api/auth` |
 | Público | `/`, `/planes`, `/nosotros` | — |
 

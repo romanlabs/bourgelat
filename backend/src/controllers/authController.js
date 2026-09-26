@@ -26,6 +26,7 @@ const {
 } = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
 const { enviarEmailRecuperacionPassword, enviarEmailVerificacion } = require('../services/emailService')
+const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -250,6 +251,15 @@ const registro = async (req, res) => {
         transaction,
       })
 
+      await registrarAceptacionesRegistro({
+        usuarioId: usuarioAdmin.id,
+        clinicaId: clinica.id,
+        aceptaComunicaciones: req.body.aceptaComunicaciones,
+        origen: 'registro',
+        req,
+        transaction,
+      })
+
       const payload = {
         id: usuarioAdmin.id,
         clinicaId: clinica.id,
@@ -306,6 +316,7 @@ const registro = async (req, res) => {
         para: resultado.usuarioAdmin.email,
         nombre: resultado.usuarioAdmin.nombre || resultado.usuarioAdmin.email.split('@')[0],
         urlVerificacion: `${urlFrontend()}/verificar-email#token=${tokenVerificacion}`,
+        urlFrontend: urlFrontend(),
       })
     } catch {
       // No bloquea el registro si el envio de verificacion falla; el usuario
@@ -903,6 +914,7 @@ const reenviarVerificacion = async (req, res) => {
       para: usuario.email,
       nombre: usuario.nombre || usuario.email.split('@')[0],
       urlVerificacion: `${urlFrontend()}/verificar-email#token=${token}`,
+      urlFrontend: urlFrontend(),
     })
 
     return res.json({ message: mensajeGenerico })

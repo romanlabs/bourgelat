@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion as Motion } from 'motion/react'
 import { z } from 'zod'
 import { ArrowRight, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCompletarRegistroOauth } from '@/features/auth/useAuth'
+import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
 
 const ACCENT = '#b07645'
 
 const esquema = z.object({
   nombreClinica: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
+  aceptaTerminos: z
+    .boolean()
+    .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
+  aceptaComunicaciones: z.boolean(),
 })
 
 export default function CompletarRegistroPage() {
@@ -30,17 +35,19 @@ export default function CompletarRegistroPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(esquema),
-    defaultValues: { nombreClinica: '' },
+    defaultValues: { nombreClinica: '', aceptaTerminos: false, aceptaComunicaciones: false },
     mode: 'onBlur',
   })
+  const aceptaTerminos = useWatch({ control, name: 'aceptaTerminos' })
 
   const nombreClinicaField = register('nombreClinica')
 
   const onSubmit = (data) => {
-    completarRegistro({ token, nombreClinica: data.nombreClinica })
+    completarRegistro({ token, ...data })
   }
 
   const tokenExpirado = isError && error?.response?.status === 401
@@ -118,6 +125,15 @@ export default function CompletarRegistroPage() {
                   ) : null}
                 </div>
 
+                <ConsentimientoRegistro
+                  terminosProps={register('aceptaTerminos')}
+                  comunicacionesProps={register('aceptaComunicaciones')}
+                  error={errors.aceptaTerminos?.message}
+                  textoClassName="text-[#2b2018]/70"
+                  linkClassName="font-semibold text-[#2b2018] underline underline-offset-2"
+                  checkboxClassName="accent-[#b07645]"
+                />
+
                 {isError && !tokenExpirado ? (
                   <p className="text-sm text-red-600">
                     No pudimos completar el registro. Inténtalo de nuevo.
@@ -126,7 +142,7 @@ export default function CompletarRegistroPage() {
 
                 <Button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || !aceptaTerminos}
                   className="group h-14 w-full rounded-none bg-[#2b2018] px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#3d2f24]"
                 >
                   {isPending ? 'Creando clínica...' : 'Entrar a la plataforma'}

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import BotonesSociales, { oauthHabilitado } from './BotonesSociales'
+import ConsentimientoRegistro from './ConsentimientoRegistro'
 import { useRegistro } from './useAuth'
 
 // Misma paleta e identidad tipografica que LoginPage.jsx: los tokens de diseño
@@ -26,6 +27,10 @@ const esquema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/,
       'Minimo 8 caracteres con mayuscula, minuscula, numero y caracter especial'
     ),
+  aceptaTerminos: z
+    .boolean()
+    .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
+  aceptaComunicaciones: z.boolean(),
 })
 
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
@@ -47,6 +52,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(esquema),
@@ -55,9 +61,12 @@ export default function RegistroDialog({ open, onOpenChange }) {
       nombreAdministrador: '',
       email: '',
       password: '',
+      aceptaTerminos: false,
+      aceptaComunicaciones: false,
     },
     mode: 'onBlur',
   })
+  const aceptaTerminos = useWatch({ control, name: 'aceptaTerminos' })
 
   useEffect(() => {
     if (open) reset()
@@ -151,11 +160,18 @@ export default function RegistroDialog({ open, onOpenChange }) {
             {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
           </div>
 
+          <ConsentimientoRegistro
+            className="pt-1"
+            terminosProps={register('aceptaTerminos')}
+            comunicacionesProps={register('aceptaComunicaciones')}
+            error={errors.aceptaTerminos?.message}
+          />
+
           {isError ? <p className="text-sm text-red-600">{obtenerMensajeError(error)}</p> : null}
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || !aceptaTerminos}
             className="mt-4 h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
           >
             {isPending ? 'Creando cuenta...' : 'Crear cuenta'}

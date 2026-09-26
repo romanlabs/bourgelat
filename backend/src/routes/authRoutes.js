@@ -29,6 +29,19 @@ const router = express.Router()
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
+// Consentimiento del registro. La casilla obligatoria debe llegar como
+// booleano true: un valor por defecto o un string no cuentan como aceptación
+// expresa. Tras la validación ambos campos quedan como booleanos.
+const validarAceptacionesLegales = [
+  body('aceptaTerminos')
+    .custom((valor) => valor === true)
+    .withMessage('Debes aceptar los terminos y autorizar el tratamiento de datos para crear la cuenta'),
+  body('aceptaComunicaciones')
+    .optional({ values: 'undefined' })
+    .custom((valor) => typeof valor === 'boolean')
+    .withMessage('Preferencia de comunicaciones no valida'),
+]
+
 router.post(
   '/registro',
   limitadorAuth,
@@ -78,6 +91,7 @@ router.post(
       .withMessage('Tipo de documento fiscal no valido'),
     body('organizacionJuridicaId').optional({ values: 'falsy' }).trim(),
     body('tributoId').optional({ values: 'falsy' }).trim(),
+    ...validarAceptacionesLegales,
     validar,
   ],
   registro
@@ -171,6 +185,7 @@ router.post(
   [
     body('token').notEmpty().withMessage('Token requerido'),
     body('nombreClinica').trim().notEmpty().isLength({ max: 160 }).withMessage('El nombre de la clinica es obligatorio'),
+    ...validarAceptacionesLegales,
     validar,
   ],
   oauthCompletarRegistro

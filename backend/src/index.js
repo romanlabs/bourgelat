@@ -154,6 +154,7 @@ const antecedenteRoutes = require('./routes/antecedenteRoutes')
 const examenLaboratorioRoutes = require('./routes/examenLaboratorioRoutes')
 const auditoriaRoutes = require('./routes/auditoriaRoutes')
 const integracionFacturacionRoutes = require('./routes/integracionFacturacionRoutes')
+const soporteRoutes = require('./routes/soporteRoutes')
 
 app.use('/api/auth', authRoutes)
 app.use('/api/usuarios', usuarioRoutes)
@@ -178,6 +179,9 @@ app.use('/api/antecedentes', antecedenteRoutes)
 app.use('/api/examenes-laboratorio', examenLaboratorioRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
 app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
+// Soporte de la clinica. `/api/soporte-equipo` queda reservado para el panel
+// web del equipo de Bourgelat (ver docs/soporte.md).
+app.use('/api/soporte', soporteRoutes)
 
 // Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin
 // el guard de escritura. En produccion no se ejecuta: el despliegue no es el
