@@ -105,6 +105,7 @@ export default function LandingPage() {
             (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
             antes del perro, así no queda canto entre el relleno y el video. */}
         <div
+          data-velo
           className="pointer-events-none absolute inset-0 z-[1] hidden sm:block"
           style={{ background: 'linear-gradient(90deg, rgb(251,229,195) 0%, rgb(251,229,195) 36%, rgba(251,229,195,0.5) 48%, rgba(251,229,195,0) 57%)' }}
         />
