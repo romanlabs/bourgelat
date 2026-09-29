@@ -17,29 +17,9 @@ dotenv.config()
 const sequelize = require('../config/database')
 const { cifrarTexto, descifrarTexto, hmacTexto, obtenerVersionActiva } = require('../config/crypto')
 const { estaCifrado } = require('../config/modelEncryption')
+const { TABLAS } = require('../config/tablasCifradas')
 
 const TAMANO_LOTE = 200
-
-// Tablas y campos cifrados. Debe mantenerse alineado con los
-// registrarHooksCifrado(...) de los modelos y con integracionFacturacionController.
-const TABLAS = [
-  {
-    tabla: 'propietarios',
-    campos: ['nombre', 'numeroDocumento', 'email', 'telefono', 'direccion', 'razonSocial', 'nombreComercial'],
-    hashConfig: { fuente: 'numeroDocumento', destino: 'numeroDocumentoHash' },
-  },
-  {
-    tabla: 'facturas',
-    campos: ['metodoPago', 'observaciones', 'mensajeElectronico', 'payloadElectronico', 'respuestaElectronica'],
-  },
-  { tabla: 'factura_items', campos: ['descripcion'] },
-  { tabla: 'caja_turnos', campos: ['observacionesCierre'] },
-  { tabla: 'movimientos_caja', campos: ['observaciones'] },
-  {
-    tabla: 'integraciones_facturacion',
-    campos: ['clientIdCifrado', 'clientSecretCifrado', 'usernameCifrado', 'passwordCifrado'],
-  },
-]
 
 const tablaExiste = async (tabla) => {
   const [filas] = await sequelize.query('SELECT to_regclass(:nombre) AS reg', {
