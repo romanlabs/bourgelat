@@ -94,18 +94,20 @@ export default function TrustBar() {
               </div>
             </div>
 
-            {/* Desktop: logos + chips de texto para llenar la fila */}
-            <div className="hidden items-stretch lg:flex lg:flex-nowrap lg:justify-between">
+            {/* Desktop: logos + chips de texto para llenar la fila. Los chips solo
+                desde xl: entre 1024 y 1279 no caben y se partían en tres líneas. */}
+            <div className="hidden items-stretch lg:flex lg:flex-nowrap lg:justify-center xl:justify-between">
               {TRUST_LOGOS.map((logo, i) => (
                 <div key={logo.alt} className="flex items-stretch">
                   <TrustLogo logo={logo} />
-                  <div className="flex items-center">
+                  {/* El separador tras el último logo solo tiene sentido si siguen los chips. */}
+                  <div className={`items-center ${i < TRUST_LOGOS.length - 1 ? 'flex' : 'hidden xl:flex'}`}>
                     <div style={{ width: 1, height: 30, backgroundColor: 'rgba(43,32,24,0.12)' }} />
                   </div>
                 </div>
               ))}
               {TRUST_CHIPS.map((chip, i) => (
-                <div key={chip} className="flex items-stretch">
+                <div key={chip} className="hidden items-stretch xl:flex">
                   <div className="flex min-w-[148px] flex-col items-center justify-center px-5 sm:min-w-[176px] sm:px-7">
                     <div className="flex h-12 items-center justify-center">
                       <span className="text-center text-[13px] font-semibold leading-snug text-[#2b2018]">{chip}</span>

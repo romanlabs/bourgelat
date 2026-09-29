@@ -77,11 +77,12 @@ export default function LandingPage() {
         id="hero"
         className="hero-bg relative flex min-h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] lg:justify-center short:justify-center"
       >
-        {/* ── Video hero: perro completo, object-contain (no cover) para mostrarlo
-            entero; su fondo beige funde con el degradado cálido del hero.
-            Telefono y tablet vertical: va en el flujo, debajo del texto, y ocupa el
-            alto que sobra (nunca queda detras de los CTAs). Escritorio y telefono
-            en horizontal: de fondo, anclado abajo a la derecha. ── */}
+        {/* ── Video hero. Telefono y tablet vertical: va en el flujo, debajo del
+            texto, y ocupa el alto que sobra (nunca queda detras de los CTAs); con
+            object-cover anclado abajo llena su caja sin bordes laterales, y el
+            recorte cae en el fondo vacio porque el perro esta centrado en el cuadro.
+            Escritorio y telefono en horizontal: de fondo, object-contain anclado
+            abajo a la derecha para mostrar al perro entero. ── */}
         <video
           autoPlay
           muted
@@ -89,7 +90,7 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="hero-video relative order-last mt-6 min-h-[200px] w-full flex-1 basis-0 object-contain object-bottom sm:max-h-[440px] lg:absolute lg:inset-0 lg:mt-0 lg:h-full lg:max-h-none lg:object-[right_bottom] short:absolute short:inset-0 short:mt-0 short:h-full short:max-h-none short:object-[right_bottom]"
+          className="hero-video relative order-last mt-6 min-h-[200px] w-full flex-1 basis-0 object-cover object-bottom lg:absolute lg:inset-0 lg:mt-0 lg:h-full lg:object-contain lg:object-[right_bottom] short:absolute short:inset-0 short:mt-0 short:h-full short:object-contain short:object-[right_bottom]"
           style={{ transform: 'translateZ(0)' }}
         >
           {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
@@ -140,7 +141,7 @@ export default function LandingPage() {
             </div>
 
             <h1
-              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[34rem] lg:text-[3.35rem] xl:text-[3.6rem] short:mt-3 short:max-w-none short:text-[1.8rem]"
+              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[28rem] lg:text-[3rem] xl:max-w-[34rem] xl:text-[3.6rem] short:mt-3 short:max-w-none short:text-[1.8rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Tu clínica merece una operación
@@ -366,7 +367,7 @@ export default function LandingPage() {
             src="/images/perro-despedida.webp"
             alt="El perro de Bourgelat saluda con la pata"
             loading="lazy"
-            className="contact-dog pointer-events-none absolute bottom-0 right-0 hidden w-[380px] md:block lg:right-4 lg:w-[540px] xl:w-[620px]"
+            className="contact-dog pointer-events-none absolute bottom-0 right-0 hidden w-[380px] md:block lg:right-4 lg:w-[460px] xl:w-[620px]"
           />
         </div>
       </section>

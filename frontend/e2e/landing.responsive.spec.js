@@ -97,9 +97,10 @@ function buscarSuperposiciones({ perroHero, veloTransparente }) {
 
   const video = document.querySelector('#hero video')
   if (video && video.videoWidth) {
-    // Rectangulo real del cuadro con object-fit: contain y su object-position.
+    // Rectangulo real del cuadro segun object-fit (contain o cover) y object-position.
     const r = video.getBoundingClientRect()
-    const escala = Math.min(r.width / video.videoWidth, r.height / video.videoHeight)
+    const ajuste = getComputedStyle(video).objectFit === 'cover' ? Math.max : Math.min
+    const escala = ajuste(r.width / video.videoWidth, r.height / video.videoHeight)
     const ancho = video.videoWidth * escala
     const alto = video.videoHeight * escala
     const [px, py] = getComputedStyle(video).objectPosition

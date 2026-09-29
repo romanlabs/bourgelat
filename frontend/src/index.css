@@ -1262,19 +1262,11 @@ input:-webkit-autofill:focus {
       linear-gradient(100deg, rgba(224, 187, 147, 0) 48%, rgba(224, 187, 147, 0.55) 100%),
       linear-gradient(180deg, #f8e7cf 0%, #f3d8b4 36%, #efd0a9 54%, #efd0a9 100%);
   }
-  /* La caja del video se ajusta al alto que sobra, así que el cuadro
-     (object-contain) casi siempre la llena en alto y deja márgenes a los lados.
-     La máscara funde el borde superior y los laterales; se intersectan para que
-     el perro (centro del cuadro) quede intacto. */
+  /* El video llena su caja (object-cover), así que solo queda un canto: el
+     borde superior, que se funde hacia el hero. */
   .hero-video {
-    -webkit-mask-image:
-      linear-gradient(to bottom, transparent 0%, #000 14%),
-      linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to bottom, transparent 0%, #000 14%),
-      linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
-    mask-composite: intersect;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%);
   }
 }
 
