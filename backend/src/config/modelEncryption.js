@@ -123,7 +123,13 @@ const aplicarDescifrado = ({ instance, campos, camposJson }) => {
 //     camposJson: ['payload'],
 //     hashConfig: { fuente: 'documento', destino: 'documentoHash' },
 //   })
+// Tabla -> opciones de cifrado de cada modelo registrado. Lo usa el test que
+// mantiene alineado el script de rotacion (config/tablasCifradas.test.js).
+const modelosCifrados = new Map()
+
 const registrarHooksCifrado = (Model, opciones) => {
+  modelosCifrados.set(Model.getTableName(), opciones)
+
   Model.addHook('beforeCreate', (instance) =>
     aplicarCifrado({ instance, ...opciones, soloModificados: false })
   )
@@ -147,5 +153,6 @@ module.exports = {
   descifrarJsonCampo,
   aplicarDescifrado,
   registrarHooksCifrado,
+  modelosCifrados,
   hmacTexto,
 }
