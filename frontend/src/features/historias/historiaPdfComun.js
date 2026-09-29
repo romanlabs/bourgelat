@@ -1,5 +1,6 @@
 import { BRAND, LINE, MARGIN, MUTED, TEXT } from '@/lib/pdfComun'
 import { VIA_LABELS } from './historiaConstants'
+import { ESPECIE_LABELS } from '@/lib/especies'
 
 // Piezas que comparten los PDFs que salen de una historia clinica (formula
 // para el tutor, historia completa): formato de datos del paciente, cajas,
@@ -7,15 +8,6 @@ import { VIA_LABELS } from './historiaConstants'
 
 export const FONDO_SUAVE = [248, 250, 252]
 export const FONDO_CONTROL = [236, 244, 250]
-
-export const ESPECIE_LABELS = {
-  perro: 'Perro',
-  gato: 'Gato',
-  ave: 'Ave',
-  conejo: 'Conejo',
-  reptil: 'Reptil',
-  otro: 'Otro',
-}
 
 export const SEXO_LABELS = { macho: 'Macho', hembra: 'Hembra' }
 

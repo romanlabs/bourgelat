@@ -9,6 +9,7 @@ import { Lock, Receipt, Scissors, X } from 'lucide-react'
 import { Select } from '@/components/ui/select'
 import { estilosApi } from './estilosApi'
 import { useEstilosMascota } from './useEstilos'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const registroEstiloSchema = z.object({
   tipoCorte: z.string().trim().min(1, 'El tipo de corte es obligatorio').max(240),
@@ -152,7 +153,7 @@ export default function RegistroEstiloFormDrawer({
               {registroToEdit ? 'Registro de estilos' : 'Nuevo servicio de estilos'}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {mascota ? `${mascota.nombre} · ${mascota.especie}` : '—'}
+              {mascota ? `${mascota.nombre} · ${etiquetaEspecie(mascota.especie)}` : '—'}
             </p>
           </div>
           <button

@@ -16,24 +16,27 @@ toda la operación de claves debe diseñarse alrededor de este hecho.
 
 ---
 
-## 1. ⚠️ Corregir el script de rotación ANTES de la primera rotación
+## 1. Script de rotación alineado con los modelos
 
-**Estado: pendiente — crítico.**
+**Estado: resuelto.**
 
-`rotarCifrado.js` no incluye las tablas `gastos` ni `abonos_factura`, aunque
+`rotarCifrado.js` no incluía las tablas `gastos` ni `abonos_factura`, aunque
 sus modelos sí cifran campos (`Gasto.descripcion`; `AbonoFactura.metodoPago`
 y `observaciones`). Esos modelos se agregaron después de escribir el script.
 
-Secuencia de desastre si no se corrige:
+Secuencia de desastre que evitaba el fix:
 
 1. Se rota de v1 a v2 y el script re-cifra todo *menos* gastos y abonos.
 2. El resumen reporta "0 pendientes".
 3. Se retira v1 del keyring confiando en el resumen.
 4. Todos los gastos y abonos quedan ilegibles para siempre.
 
-Fix: agregar ambas tablas al arreglo `TABLAS` del script. Al agregar cualquier
-modelo nuevo con `registrarHooksCifrado(...)`, actualizar `TABLAS` en el mismo
-PR — el comentario del script ya lo exige, pero no hay chequeo automático.
+Ambas tablas están ahora en `backend/src/config/tablasCifradas.js`, la lista
+que recorre el script. `tablasCifradas.test.js` (en `npm test`) falla si un
+modelo registra `registrarHooksCifrado(...)` sobre una tabla o campo que la
+lista no cubre, así que un modelo cifrado nuevo no puede quedar fuera sin que
+lo detecte el test. `integraciones_facturacion` cifra desde su controlador y
+no pasa por ese chequeo: mantenerla a mano.
 
 ## 2. Nunca retirar una clave basándose solo en el resumen del script
 
@@ -109,8 +112,7 @@ en la misma ventana de mantenimiento.
 
 ## Checklist de rotación (resumen operativo)
 
-- [ ] `TABLAS` de `rotarCifrado.js` alineado con todos los modelos que usan
-      `registrarHooksCifrado` (hoy faltan `gastos` y `abonos_factura`)
+- [ ] `npm test` en verde (incluye el chequeo de `tablasCifradas.js`)
 - [ ] Clave nueva agregada AL FRENTE de `ENCRYPTION_KEYS`, sin retirar la vieja
 - [ ] Respaldo externo de claves actualizado
 - [ ] Desplegado / entorno recargado

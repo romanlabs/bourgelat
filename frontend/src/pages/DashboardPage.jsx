@@ -57,6 +57,7 @@ import { hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen del día', icon: LayoutDashboard },
@@ -385,7 +386,7 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
               {appointment.mascota?.nombre || 'Paciente sin nombre'}
             </p>
             <p className="mt-1 truncate text-sm text-muted-foreground">
-              {appointment.propietario?.nombre || 'Tutor pendiente'} · {appointment.mascota?.especie || 'Sin especie'}
+              {appointment.propietario?.nombre || 'Tutor pendiente'} · {etiquetaEspecie(appointment.mascota?.especie) || 'Sin especie'}
             </p>
           </div>
 

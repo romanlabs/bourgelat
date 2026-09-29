@@ -5,28 +5,12 @@ import { toast } from 'sonner'
 import { formatearEdad } from '@/lib/utils'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
+import { ESPECIE_OPCIONES_FILTRO, etiquetaEspecie } from '@/lib/especies'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
-export const SPECIES_OPTIONS = [
-  { value: 'todas', label: 'Todas las especies' },
-  { value: 'perro', label: 'Perros' },
-  { value: 'gato', label: 'Gatos' },
-  { value: 'ave', label: 'Aves' },
-  { value: 'conejo', label: 'Conejos' },
-  { value: 'reptil', label: 'Reptiles' },
-  { value: 'otro', label: 'Otros' },
-]
-
-const SPECIES_LABELS = {
-  perro: 'Perros',
-  gato: 'Gatos',
-  ave: 'Aves',
-  conejo: 'Conejos',
-  reptil: 'Reptiles',
-  otro: 'Otros',
-}
+export const SPECIES_OPTIONS = ESPECIE_OPCIONES_FILTRO
 
 export function usePacientesMascotas({ enabled }) {
   const queryClient = useQueryClient()
@@ -145,7 +129,7 @@ export function usePacientesMascotas({ enabled }) {
           id: mascota.id,
           paciente: mascota.nombre,
           fotoPerfil: mascota.fotoPerfil || '',
-          especie: SPECIES_LABELS[mascota.especie] || mascota.especie,
+          especie: etiquetaEspecie(mascota.especie),
           raza: mascota.raza || '',
           tutor: mascota.Propietario?.nombre || 'Sin tutor',
           contacto: mascota.Propietario?.telefono || 'Sin telefono',
