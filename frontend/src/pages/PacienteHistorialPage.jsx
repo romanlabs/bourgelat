@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import HistoriaClinicaFormDrawer from '@/features/historias/HistoriaClinicaFormDrawer'
 import HistoriaClinicaTimeline from '@/features/historias/HistoriaClinicaTimeline'
-import { useImprimirFormula } from '@/features/historias/useImprimirFormula'
+import { useImprimirFormula, useImprimirHistoria } from '@/features/historias/useImprimirFormula'
 import EstilosTimeline from '@/features/estilos/EstilosTimeline'
 import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
@@ -186,6 +186,7 @@ export default function PacienteHistorialPage() {
   }
 
   const imprimirFormula = useImprimirFormula()
+  const imprimirHistoria = useImprimirHistoria()
 
   const handleDrawerClose = () => {
     setDrawerOpen(false)
@@ -364,6 +365,8 @@ export default function PacienteHistorialPage() {
                 onEditHistoria={handleEditHistoria}
                 onImprimirFormula={imprimirFormula.imprimir}
                 historiaImprimiendo={imprimirFormula.historiaEnCurso}
+                onImprimirHistoria={imprimirHistoria.imprimir}
+                historiaImprimiendoCompleta={imprimirHistoria.historiaEnCurso}
               />
             )}
           </>

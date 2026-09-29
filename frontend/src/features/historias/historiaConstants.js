@@ -18,3 +18,16 @@ export const MEDICATION_ROUTE_OPTIONS = [
 export const VIA_LABELS = Object.fromEntries(
   MEDICATION_ROUTE_OPTIONS.filter((option) => option.value).map((option) => [option.value, option.label])
 )
+
+// Igual que la via: la historia impresa dice lo mismo que el selector.
+export const HYDRATION_OPTIONS = [
+  { value: '', label: 'Estado de hidratacion' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'deshidratacion_leve', label: 'Deshidratación leve' },
+  { value: 'deshidratacion_moderada', label: 'Deshidratación moderada' },
+  { value: 'deshidratacion_severa', label: 'Deshidratación severa' },
+]
+
+export const HIDRATACION_LABELS = Object.fromEntries(
+  HYDRATION_OPTIONS.filter((option) => option.value).map((option) => [option.value, option.label])
+)
