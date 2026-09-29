@@ -120,14 +120,16 @@ function buscarSuperposiciones({ perroHero, veloTransparente }) {
     })
   }
 
+  // Tambien las tarjetas del carrusel de Flujo: un perro encima de una tarjeta
+  // se ve igual de mal aunque no pise su texto.
   const contenido = []
-  for (const el of document.querySelectorAll('h1, h2, h3, p, a, button')) {
+  for (const el of document.querySelectorAll('h1, h2, h3, p, a, button, .flow-slide__inner')) {
     if (el.closest('header, a[aria-label="Escríbenos por WhatsApp"], .flow-slide__num, [aria-hidden="true"]')) continue
     if (!esVisible(el)) continue
     const texto = (el.innerText || el.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ')
     if (!texto) continue
     let cajas
-    if (el.matches('a, button')) {
+    if (el.matches('a, button, .flow-slide__inner')) {
       cajas = [el.getBoundingClientRect()]
     } else {
       if (el.closest('a, button')) continue

@@ -901,12 +901,14 @@ input:-webkit-autofill:focus {
   filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.4));
 }
 
-/* ── Perro veterinario que se asoma desde el borde izquierdo (flujo → planes) ── */
+/* ── Perro veterinario que se asoma desde el borde izquierdo (flujo → planes) ──
+   Móvil y tablet: en la franja que #flujo reserva bajo el carrusel con su
+   padding inferior (pb-32 / sm:pb-40); más arriba se montaba sobre las tarjetas. */
 .flow-dog-medic {
   position: absolute;
   left: 0;
-  bottom: -5%;
-  width: clamp(200px, 52vw, 300px);
+  bottom: 0.25rem;
+  width: clamp(140px, 34vw, 220px);
   z-index: 2;
   display: block;
   pointer-events: none;

@@ -188,8 +188,9 @@ export default function LandingPage() {
       <FlowDog />
       <FlowDogMedic />
       <section id="flujo" className="relative -mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018] overflow-x-clip">
-        {/* pt-28 / sm:pt-36: franja donde se asoma el perro con gafas en móvil y tablet. */}
-        <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-16 pt-28 sm:px-6 sm:pt-36 lg:px-8 lg:pb-24 lg:pt-10">
+        {/* Franjas donde se asoman los perros en móvil y tablet: arriba (pt) el de
+            gafas y abajo (pb) el médico, para que ninguno tape título ni tarjetas. */}
+        <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-32 pt-28 sm:px-6 sm:pb-40 sm:pt-36 lg:px-8 lg:pb-24 lg:pt-10">
           <SectionHeading
             eyebrow="Flujo diario"
             title="De la llamada al seguimiento, el día avanza sin perder el caso."
