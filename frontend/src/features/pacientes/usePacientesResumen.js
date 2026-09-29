@@ -2,15 +2,8 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { pacientesApi } from './pacientesApi'
 import { objectToChartData } from '@/features/dashboard/dashboardUtils'
+import { ESPECIE_LABELS_PLURAL } from '@/lib/especies'
 
-const SPECIES_LABELS = {
-  perro: 'Perros',
-  gato: 'Gatos',
-  ave: 'Aves',
-  conejo: 'Conejos',
-  reptil: 'Reptiles',
-  otro: 'Otros',
-}
 
 export function usePacientesResumen({ enabled }) {
   const propietariosResumenQuery = useQuery({
@@ -34,7 +27,7 @@ export function usePacientesResumen({ enabled }) {
       acc[pet.especie] = (acc[pet.especie] || 0) + 1
       return acc
     }, {})
-    return objectToChartData(record, SPECIES_LABELS)
+    return objectToChartData(record, ESPECIE_LABELS_PLURAL)
   }, [mascotas])
 
   return {

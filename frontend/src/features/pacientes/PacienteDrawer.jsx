@@ -7,15 +7,7 @@ import { PawPrint, Search, Upload, X } from 'lucide-react'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { Select } from '@/components/ui/select'
-
-export const SPECIES_FORM_OPTIONS = [
-  { value: 'perro', label: 'Perro' },
-  { value: 'gato', label: 'Gato' },
-  { value: 'ave', label: 'Ave' },
-  { value: 'conejo', label: 'Conejo' },
-  { value: 'reptil', label: 'Reptil' },
-  { value: 'otro', label: 'Otro' },
-]
+import { ESPECIE_OPCIONES_FORM, ESPECIE_VALORES, etiquetaEspecie } from '@/lib/especies'
 
 const SEX_OPTIONS = [
   { value: 'desconocido', label: 'Sin especificar' },
@@ -30,7 +22,7 @@ const hoyISO = () => new Date().toISOString().slice(0, 10)
 
 const pacienteSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
-  especie: z.enum(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro']),
+  especie: z.enum(ESPECIE_VALORES),
   raza: z.string().optional(),
   sexo: z.enum(['desconocido', 'macho', 'hembra']),
   fechaNacimiento: z
@@ -176,8 +168,6 @@ export default function PacienteDrawer({
       },
     })
   }
-
-  const SPECIES_LABELS = { perro: 'Perro', gato: 'Gato', ave: 'Ave', conejo: 'Conejo', reptil: 'Reptil', otro: 'Otro' }
 
   if (typeof document === 'undefined') return null
 
@@ -329,7 +319,7 @@ export default function PacienteDrawer({
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground">{nombreWatch}</p>
                     <p className="text-xs text-muted-foreground">
-                      {SPECIES_LABELS[especieWatch] || especieWatch}{razaWatch ? ` / ${razaWatch}` : ''}
+                      {etiquetaEspecie(especieWatch)}{razaWatch ? ` / ${razaWatch}` : ''}
                       {selectedOwner ? ` · ${selectedOwner.nombre}` : ''}
                     </p>
                   </div>
@@ -358,7 +348,7 @@ export default function PacienteDrawer({
                         className="h-11"
                         value={field.value}
                         onValueChange={field.onChange}
-                        options={SPECIES_FORM_OPTIONS}
+                        options={ESPECIE_OPCIONES_FORM}
                         disabled={modoEdicion}
                       />
                     )}

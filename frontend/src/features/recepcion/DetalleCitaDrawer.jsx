@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { RecepcionDrawer } from './RecepcionDrawer'
 import { ACCION_LABELS, ORIGEN_LABELS, TRANSICIONES, TYPE_OPTIONS } from './recepcionConstants'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const formatTime = (value) => value?.slice(0, 5) || '--:--'
 
@@ -66,7 +67,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
             <p className="text-lg font-semibold leading-7 tracking-[-0.01em] text-foreground">
               {cita.mascota?.nombre || 'Paciente'}
             </p>
-            <p className="text-xs text-muted-foreground">{cita.mascota?.especie || 'Especie sin registrar'}</p>
+            <p className="text-xs text-muted-foreground">{etiquetaEspecie(cita.mascota?.especie) || 'Especie sin registrar'}</p>
           </div>
 
           <StatusBadge variant={cita.estado} showDot size="sm" className="justify-self-start" />

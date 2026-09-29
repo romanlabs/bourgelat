@@ -19,6 +19,7 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
@@ -729,7 +730,7 @@ export default function AntecedentesPage() {
                   <span className="flex-shrink-0 text-lg">🐾</span>
                   <div className="min-w-0">
                     <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedPet.nombre}</span>
-                    <span className="text-sm text-muted-foreground"> · {selectedPet.especie}{selectedPet.Propietario?.nombre ? ` · ${selectedPet.Propietario.nombre}` : ''}</span>
+                    <span className="text-sm text-muted-foreground"> · {etiquetaEspecie(selectedPet.especie)}{selectedPet.Propietario?.nombre ? ` · ${selectedPet.Propietario.nombre}` : ''}</span>
                   </div>
                 </div>
                 <button
@@ -763,7 +764,7 @@ export default function AntecedentesPage() {
                       >
                         <div>
                           <span className="font-semibold text-foreground">{pet.nombre}</span>
-                          <span className="ml-2 text-muted-foreground">{pet.especie}</span>
+                          <span className="ml-2 text-muted-foreground">{etiquetaEspecie(pet.especie)}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">{pet.Propietario?.nombre || ''}</span>
                       </button>
@@ -1046,7 +1047,7 @@ export default function AntecedentesPage() {
               {antDrawerType === 'generales' && 'Datos generales'}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {selectedPet?.nombre || 'Paciente'} · {selectedPet?.especie}
+              {selectedPet?.nombre || 'Paciente'} · {etiquetaEspecie(selectedPet?.especie)}
             </p>
           </div>
           <button type="button" onClick={() => setAntDrawerOpen(false)} aria-label="Cerrar" className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground">

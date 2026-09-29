@@ -18,20 +18,12 @@ import EstilosTimeline from '@/features/estilos/EstilosTimeline'
 import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const TABS = [
   { id: 'historia', label: 'Historia Clínica' },
   { id: 'estilos', label: 'Estilos' },
 ]
-
-const SPECIES_LABELS = {
-  perro: 'Perro',
-  gato: 'Gato',
-  ave: 'Ave',
-  conejo: 'Conejo',
-  reptil: 'Reptil',
-  otro: 'Otro',
-}
 
 function PatientHeaderSkeleton() {
   return (
@@ -260,7 +252,7 @@ export default function PacienteHistorialPage() {
               <div className="min-w-0 flex-1">
                 <h1 className="text-lg font-bold text-foreground">{mascota.nombre}</h1>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  {SPECIES_LABELS[mascota.especie] || mascota.especie}
+                  {etiquetaEspecie(mascota.especie)}
                   {mascota.raza ? ` · ${mascota.raza}` : ''}
                   {mascota.sexo && mascota.sexo !== 'desconocido' ? ` · ${mascota.sexo === 'macho' ? 'Macho' : 'Hembra'}` : ''}
                 </p>
