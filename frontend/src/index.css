@@ -1297,11 +1297,18 @@ input:-webkit-autofill:focus {
       linear-gradient(100deg, rgba(224, 187, 147, 0) 48%, rgba(224, 187, 147, 0.55) 100%),
       linear-gradient(180deg, #f8e7cf 0%, #f3d8b4 36%, #efd0a9 54%, #efd0a9 100%);
   }
-  /* El video llena su caja (object-cover), así que solo queda un canto: el
-     borde superior, que se funde hacia el hero. */
+  /* La caja del video es 3:2 como el cuadro, así que sus bordes son los del
+     cuadro: se funden arriba y a los lados (intersectados). El perro ocupa el
+     centro (~28-65% de ancho, desde ~12% de alto) y no se toca. */
   .hero-video {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%);
-    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%);
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 11%),
+      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 11%),
+      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    mask-composite: intersect;
   }
 }
 

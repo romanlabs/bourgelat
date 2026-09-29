@@ -78,9 +78,9 @@ export default function LandingPage() {
         className="hero-bg relative flex min-h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] lg:justify-center short:justify-center"
       >
         {/* ── Video hero. Telefono y tablet vertical: va en el flujo, debajo del
-            texto, y ocupa el alto que sobra (nunca queda detras de los CTAs); con
-            object-cover anclado abajo llena su caja sin bordes laterales, y el
-            recorte cae en el fondo vacio porque el perro esta centrado en el cuadro.
+            texto (nunca queda detras de los CTAs), en una caja 3:2 como el cuadro:
+            asi lo llena exacto, sin recortar al perro (object-cover le cortaba la
+            cabeza en pantallas anchas y bajas) ni dejar cantos laterales.
             Escritorio y telefono en horizontal: de fondo, object-contain anclado
             abajo a la derecha para mostrar al perro entero. ── */}
         <video
@@ -90,7 +90,7 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="hero-video relative order-last mt-6 min-h-[200px] w-full flex-1 basis-0 object-cover object-bottom lg:absolute lg:inset-0 lg:mt-0 lg:h-full lg:object-contain lg:object-[right_bottom] short:absolute short:inset-0 short:mt-0 short:h-full short:object-contain short:object-[right_bottom]"
+          className="hero-video relative order-last mx-auto mt-auto aspect-[3/2] w-full max-w-[36rem] object-contain object-bottom lg:absolute lg:inset-0 lg:mx-0 lg:mt-0 lg:aspect-auto lg:h-full lg:max-w-none lg:object-[right_bottom] short:absolute short:inset-0 short:mx-0 short:mt-0 short:aspect-auto short:h-full short:max-w-none short:object-[right_bottom]"
           style={{ transform: 'translateZ(0)' }}
         >
           {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
@@ -124,7 +124,7 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36 short:pt-20">
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pb-6 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pb-0 lg:pt-36 short:pb-0 short:pt-20">
           {/* En horizontal el texto no pasa de la mitad: la otra mitad es del perro. */}
           <div className="max-w-[36rem] short:max-w-[46%]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">

@@ -9,6 +9,10 @@ import { test, expect } from '@playwright/test'
 const VIEWPORTS = [
   { width: 360, height: 640 },
   { width: 390, height: 844 },
+  // Intermedios (telefono grande / tablet chica): object-cover recortaba la
+  // cabeza del perro aqui y ningun otro tamano de la matriz lo mostraba.
+  { width: 553, height: 800 },
+  { width: 600, height: 960 },
   { width: 844, height: 390 },
   { width: 768, height: 1024 },
   { width: 1024, height: 768 },
@@ -208,6 +212,43 @@ for (const viewport of VIEWPORTS) {
           return el.contains(encima) ? [] : [`"${nombre}" tapado por ${encima?.tagName.toLowerCase()}`]
         })
       )
+      expect(problemas).toEqual([])
+    })
+
+    test('el perro del hero se ve completo (sin recortes ni fundidos)', async ({ page }) => {
+      await page.waitForFunction(() => document.querySelector('#hero video')?.videoWidth > 0)
+      const problemas = await page.evaluate((perro) => {
+        const video = document.querySelector('#hero video')
+        const hero = document.getElementById('hero').getBoundingClientRect()
+        const r = video.getBoundingClientRect()
+        const cs = getComputedStyle(video)
+        const ajuste = cs.objectFit === 'cover' ? Math.max : Math.min
+        const escala = ajuste(r.width / video.videoWidth, r.height / video.videoHeight)
+        const ancho = video.videoWidth * escala
+        const alto = video.videoHeight * escala
+        const [px, py] = cs.objectPosition.split(' ').map((v) => (v.endsWith('%') ? parseFloat(v) / 100 : 0.5))
+        const x = r.left + (r.width - ancho) * px
+        const y = r.top + (r.height - alto) * py
+        const zona = {
+          left: x + ancho * perro.x0,
+          right: x + ancho * perro.x1,
+          top: y + alto * perro.y0,
+          bottom: y + alto * perro.y1,
+        }
+        // Visible = dentro de la caja del video y del hero (overflow-hidden),
+        // descontando lo que funde la mascara del video en movil/tablet.
+        const mascara = getComputedStyle(video).maskImage || getComputedStyle(video).webkitMaskImage
+        const conMascara = mascara && mascara !== 'none'
+        const visible = {
+          left: Math.max(r.left + (conMascara ? r.width * 0.14 : 0), hero.left),
+          right: Math.min(r.right - (conMascara ? r.width * 0.14 : 0), hero.right),
+          top: Math.max(r.top + (conMascara ? r.height * 0.11 : 0), hero.top),
+          bottom: Math.min(r.bottom, hero.bottom),
+        }
+        return ['left', 'top'].filter((k) => zona[k] < visible[k] - 1)
+          .concat(['right', 'bottom'].filter((k) => zona[k] > visible[k] + 1))
+          .map((k) => `perro recortado por ${k}: zona ${Math.round(zona[k])} vs visible ${Math.round(visible[k])}`)
+      }, PERRO_HERO)
       expect(problemas).toEqual([])
     })
 
