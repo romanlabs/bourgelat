@@ -1,6 +1,41 @@
 @import "@fontsource-variable/geist";
 @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap');
 
+/* Respaldo de Spectral con sus medidas. Mientras Spectral descarga (display=swap)
+   se ve Georgia, que es ~11% más ancha (20% en cursiva): al llegar Spectral los
+   títulos cambiaban de número de líneas y todo lo de abajo saltaba (CLS del hero
+   ~0.12). Con size-adjust, Georgia ocupa lo mismo que Spectral y el cambio no
+   mueve nada. Valores medidos comparando anchos de texto real (bold / italic 600).
+   Usar siempre como "Spectral", "Spectral Fallback", Georgia, serif. */
+@font-face {
+  font-family: 'Spectral Fallback';
+  src: local('Georgia');
+  font-style: normal;
+  font-weight: 100 500;
+  size-adjust: 89%;
+}
+@font-face {
+  font-family: 'Spectral Fallback';
+  src: local('Georgia Bold'), local('Georgia-Bold');
+  font-style: normal;
+  font-weight: 600 900;
+  size-adjust: 89%;
+}
+@font-face {
+  font-family: 'Spectral Fallback';
+  src: local('Georgia Italic'), local('Georgia-Italic');
+  font-style: italic;
+  font-weight: 100 500;
+  size-adjust: 80%;
+}
+@font-face {
+  font-family: 'Spectral Fallback';
+  src: local('Georgia Bold Italic'), local('Georgia-BoldItalic');
+  font-style: italic;
+  font-weight: 600 900;
+  size-adjust: 80%;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -725,7 +760,7 @@ input:-webkit-autofill:focus {
   left: 16px;
   bottom: 8px;
   z-index: 2;
-  font-family: 'Spectral', Georgia, serif;
+  font-family: 'Spectral', 'Spectral Fallback', Georgia, serif;
   font-size: 4.6rem;
   line-height: 0.78;
   font-weight: 700;
@@ -759,7 +794,7 @@ input:-webkit-autofill:focus {
 }
 
 .flow-slide__title {
-  font-family: 'Spectral', Georgia, serif;
+  font-family: 'Spectral', 'Spectral Fallback', Georgia, serif;
   font-size: clamp(1.1rem, 2.5vw, 1.38rem);
   line-height: 1.18;
   letter-spacing: -0.01em;

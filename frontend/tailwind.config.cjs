@@ -89,7 +89,7 @@ module.exports = {
       },
       fontFamily: {
                 sans: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Spectral', 'Georgia', 'serif'],
+        display: ['Spectral', 'Spectral Fallback', 'Georgia', 'serif'],
         mono: ['Geist Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
       },
 

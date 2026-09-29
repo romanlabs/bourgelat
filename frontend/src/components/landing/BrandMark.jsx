@@ -8,7 +8,7 @@ export default function BrandMark({ dark = false }) {
       </div>
       <p
         className={`text-lg font-semibold tracking-[-0.02em] sm:text-xl ${dark ? 'text-white' : 'text-[#2b2018]'}`}
-        style={{ fontFamily: '"Spectral", Georgia, serif' }}
+        style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif' }}
       >
         Bourgelat
       </p>

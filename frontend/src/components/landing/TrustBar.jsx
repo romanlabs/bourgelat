@@ -63,7 +63,7 @@ export default function TrustBar() {
             </p>
             <h2
               className="mx-auto mt-2.5 max-w-[20rem] text-[1.45rem] leading-[1.08] tracking-[-0.03em] text-[#2b2018] sm:text-[1.65rem] lg:mx-0"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
             >
               Infraestructura seria para una clínica que ya funciona.
             </h2>

@@ -142,7 +142,7 @@ export default function LandingPage() {
 
             <h1
               className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[28rem] lg:text-[3rem] xl:max-w-[34rem] xl:text-[3.6rem] short:mt-3 short:max-w-none short:text-[1.8rem]"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
             >
               Tu clínica merece una operación
               <span style={{ fontStyle: 'italic', fontWeight: 600, color: '#a8662e' }}> a la altura de su medicina.</span>
@@ -256,7 +256,7 @@ export default function LandingPage() {
                 <div className="mt-3 flex items-baseline justify-between gap-3 sm:mt-4 sm:block">
                   <h3
                     className="text-[1.7rem] leading-none tracking-[-0.04em] sm:text-4xl"
-                    style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+                    style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
                   >
                     {plan.name}
                   </h3>
@@ -333,7 +333,7 @@ export default function LandingPage() {
             </p>
             <h2
               className="mt-4 text-[2.6rem] leading-[0.96] tracking-[-0.045em] text-[#fdf6ee] sm:text-5xl md:text-[3.4rem]"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
             >
               Prueba Bourgelat hoy.{' '}
               <span className="italic text-[#e9c089]">Mañana tu clínica respira distinto.</span>
