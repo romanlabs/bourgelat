@@ -48,7 +48,9 @@ function EmptyTimeline({ onNuevaConsulta }) {
   )
 }
 
-function TimelineCard({ historia, onEdit, onImprimirFormula, imprimiendo }) {
+function TimelineCard({
+  historia, onEdit, onImprimirFormula, imprimiendo, onImprimirHistoria, imprimiendoHistoria,
+}) {
   const { bloqueada, motivoConsulta, diagnostico, fechaConsulta, createdAt, veterinario } = historia
 
   return (
@@ -124,6 +126,17 @@ function TimelineCard({ historia, onEdit, onImprimirFormula, imprimiendo }) {
               {imprimiendo ? 'Generando...' : 'Imprimir fórmula'}
             </button>
           )}
+          {onImprimirHistoria && (
+            <button
+              type="button"
+              onClick={() => onImprimirHistoria(historia.id)}
+              disabled={imprimiendoHistoria}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              {imprimiendoHistoria ? 'Generando...' : 'Imprimir historia'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onEdit(historia)}
@@ -145,6 +158,8 @@ export default function HistoriaClinicaTimeline({
   onEditHistoria,
   onImprimirFormula,
   historiaImprimiendo = null,
+  onImprimirHistoria,
+  historiaImprimiendoCompleta = null,
 }) {
   if (isPending) {
     return (
@@ -172,6 +187,8 @@ export default function HistoriaClinicaTimeline({
           onEdit={onEditHistoria}
           onImprimirFormula={onImprimirFormula}
           imprimiendo={historiaImprimiendo === historia.id}
+          onImprimirHistoria={onImprimirHistoria}
+          imprimiendoHistoria={historiaImprimiendoCompleta === historia.id}
         />
       ))}
 

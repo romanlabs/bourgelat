@@ -12,7 +12,7 @@ import {
 import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { invalidarDominios } from '@/lib/queryKeys'
-import { getErrorMessage } from './inventarioUtils'
+import { getErrorMessage, requiereVencimiento } from './inventarioUtils'
 
 export const ESTADO_FACTURA_COMPRA = [
   { value: '', label: 'Todos' },
@@ -50,7 +50,12 @@ const ITEM_VACIO = () => ({
   productoNuevo: PRODUCTO_NUEVO_VACIO(),
   cantidad: 1,
   precioUnitario: 0,
+  fechaVencimiento: '',
+  lote: '',
 })
+
+export const categoriaDeItem = (item) =>
+  item.esNuevo ? item.productoNuevo.categoria : item.producto?.categoria
 
 const ITEMS_VACIO = () => [ITEM_VACIO()]
 
@@ -154,6 +159,8 @@ export function useFacturaCompra() {
         productoNuevo: PRODUCTO_NUEVO_VACIO(),
         cantidad: i.cantidad,
         precioUnitario: Number(i.precioUnitario),
+        fechaVencimiento: i.fechaVencimiento || '',
+        lote: i.lote || '',
       })),
     })
     setDrawerOpen(true)
@@ -225,14 +232,19 @@ export function useFacturaCompra() {
       observaciones: form.observaciones || undefined,
       fechaPagoFinal: form.tipoPago === 'credito' ? form.fechaPagoFinal || undefined : undefined,
       tipoPago: undefined,
-      items: itemsResueltos.map((i) => ({
-        destinoInventario: i.destinoInventario,
-        ...(i.destinoInventario === 'clinico'
-          ? { insumoClinicoId: i.insumoClinicoId }
-          : { productoId: i.productoId }),
-        cantidad: Number(i.cantidad),
-        precioUnitario: Number(i.precioUnitario),
-      })),
+      items: itemsResueltos.map((i) => {
+        const conVencimiento = requiereVencimiento(categoriaDeItem(i))
+        return {
+          destinoInventario: i.destinoInventario,
+          ...(i.destinoInventario === 'clinico'
+            ? { insumoClinicoId: i.insumoClinicoId }
+            : { productoId: i.productoId }),
+          cantidad: Number(i.cantidad),
+          precioUnitario: Number(i.precioUnitario),
+          fechaVencimiento: conVencimiento ? i.fechaVencimiento || null : null,
+          lote: conVencimiento ? i.lote.trim() || null : null,
+        }
+      }),
     }
 
     if (editingFactura) {

@@ -1031,6 +1031,9 @@ export default function DashboardPage() {
     }
 
     const resumenInventario = inventarioQuery.data?.resumen || {}
+    const resumenClinico = inventarioQuery.data?.resumenClinico || {}
+    const vencimientosVentas = (resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)
+    const vencimientosClinico = (resumenClinico.vencidos || 0) + (resumenClinico.proximosVencer || 0)
 
     return (
       <div className="space-y-5">
@@ -1064,8 +1067,8 @@ export default function DashboardPage() {
               id: 'vencimientos',
               icon: Receipt,
               label: 'Vencimientos',
-              value: formatNumber((resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)),
-              helper: 'Suma entre productos vencidos y próximos a vencer.',
+              value: formatNumber(vencimientosVentas + vencimientosClinico),
+              helper: `Vencidos y próximos a vencer. Ventas: ${formatNumber(vencimientosVentas)} · Clínico: ${formatNumber(vencimientosClinico)}.`,
               tone: 'text-rose-700',
             },
           ]}

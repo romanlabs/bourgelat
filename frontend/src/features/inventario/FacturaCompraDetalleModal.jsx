@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { ESTADO_COLORS } from './useFacturaCompra'
+import { DESTINO_BADGE } from './inventarioUtils'
 
 function estadoBadge(estado) {
   return (
@@ -14,11 +15,6 @@ function estadoBadge(estado) {
       {estado.charAt(0).toUpperCase() + estado.slice(1)}
     </span>
   )
-}
-
-const DESTINO_BADGE = {
-  clinico: { label: 'Clínico', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
-  ventas: { label: 'Ventas', className: 'bg-muted text-muted-foreground' },
 }
 
 // Un ítem apunta a un producto de venta o a un insumo clínico según su destino.
@@ -136,6 +132,12 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                             {badge.label}
                           </span>
                         </div>
+                        {item.fechaVencimiento && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Vence {item.fechaVencimiento}
+                            {item.lote && ` · Lote ${item.lote}`}
+                          </p>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-right tabular-nums text-foreground">
                         {formatNumber(item.cantidad)}

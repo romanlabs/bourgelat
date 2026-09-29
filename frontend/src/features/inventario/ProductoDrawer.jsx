@@ -8,6 +8,7 @@ import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
 import { Select } from '@/components/ui/select'
+import VencimientosSiguientes from './VencimientosSiguientes'
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -54,6 +55,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productoSchema),
@@ -443,6 +445,15 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       {...register('fechaVencimiento')}
                     />
                   </div>
+                  {editingProduct && (
+                    <VencimientosSiguientes
+                      productoId={editingProduct.id}
+                      onUsar={(fecha, lote) => {
+                        setValue('fechaVencimiento', fecha, { shouldDirty: true })
+                        setValue('lote', lote, { shouldDirty: true })
+                      }}
+                    />
+                  )}
                   <label htmlFor="d-formula" className="flex cursor-pointer items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground transition hover:bg-muted/80">
                     <input
                       id="d-formula"

@@ -24,6 +24,7 @@ import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
 import FacturaCompraDetalleModal from '@/features/inventario/FacturaCompraDetalleModal'
 import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
+import { DESTINO_BADGE } from '@/features/inventario/inventarioUtils'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
 import { useImportarInventario } from '@/features/inventario/useImportarInventario'
 import {
@@ -410,7 +411,7 @@ export default function InventarioPage() {
                   icon={Sparkles}
                   label="Alertas totales"
                   value={formatNumber(alertsRows.length)}
-                  helper="Suma de cantidad baja, próximos a vencer y vencidos."
+                  helper="Cantidad baja, próximos a vencer y vencidos, de ventas y clínico."
                   tone="text-rose-700 dark:text-rose-400"
                 />
               </div>
@@ -448,7 +449,18 @@ export default function InventarioPage() {
                         </StatusPill>
                       ),
                     },
-                    { key: 'nombre', label: 'Producto' },
+                    {
+                      key: 'inventario',
+                      label: 'Inventario',
+                      render: (row) => (
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${DESTINO_BADGE[row.inventario].className}`}
+                        >
+                          {DESTINO_BADGE[row.inventario].label}
+                        </span>
+                      ),
+                    },
+                    { key: 'nombre', label: 'Producto / insumo' },
                     { key: 'categoria', label: 'Categoría' },
                     { key: 'detalle', label: 'Detalle' },
                   ]}

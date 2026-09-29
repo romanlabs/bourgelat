@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import { inventarioApi } from './inventarioApi'
+import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
 
 const DONUT_COLORS = ['#0f4c81', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626', '#64748b']
@@ -35,19 +36,39 @@ export function useInventarioResumen({ enabled }) {
     [reporteQuery.data?.porCategoria]
   )
 
+  const alertasClinicasQuery = useQuery({
+    queryKey: ['inventario-clinico-alertas'],
+    queryFn: inventarioClinicoApi.obtenerAlertas,
+    enabled,
+    placeholderData: (prev) => prev,
+  })
+
+  // Vencidos primero, luego proximos y al final cantidad baja; dentro de cada
+  // tipo van juntos ventas y clinico para no esconder un insumo vencido al final.
   const alertsRows = useMemo(() => {
-    const rows = []
-    ;(alertasQuery.data?.vencidos?.productos || []).forEach((p) => {
-      rows.push({ id: `vencido-${p.id}`, tipo: 'Vencido', nombre: p.nombre, categoria: p.categoria, detalle: formatLongDate(p.fechaVencimiento) })
+    const ventas = alertasQuery.data
+    const clinico = alertasClinicasQuery.data
+    const fila = (tipo, inventario, item, detalle) => ({
+      id: `${tipo}-${inventario}-${item.id}`,
+      tipo,
+      inventario,
+      nombre: item.nombre,
+      categoria: item.categoria,
+      detalle,
     })
-    ;(alertasQuery.data?.proximosVencer?.productos || []).forEach((p) => {
-      rows.push({ id: `proximo-${p.id}`, tipo: 'Proximo a vencer', nombre: p.nombre, categoria: p.categoria, detalle: formatLongDate(p.fechaVencimiento) })
-    })
-    ;(alertasQuery.data?.bajoStock?.productos || []).forEach((p) => {
-      rows.push({ id: `stock-${p.id}`, tipo: 'Cantidad baja', nombre: p.nombre, categoria: p.categoria, detalle: `${p.stock}/${p.stockMinimo}` })
-    })
-    return rows
-  }, [alertasQuery.data])
+    const porVencimiento = (tipo, clave) => [
+      ...(ventas?.[clave]?.productos || []).map((p) => fila(tipo, 'ventas', p, formatLongDate(p.fechaVencimiento))),
+      ...(clinico?.[clave]?.insumos || []).map((i) => fila(tipo, 'clinico', i, formatLongDate(i.fechaVencimiento))),
+    ]
+    return [
+      ...porVencimiento('Vencido', 'vencidos'),
+      ...porVencimiento('Proximo a vencer', 'proximosVencer'),
+      ...(ventas?.bajoStock?.productos || []).map((p) =>
+        fila('Cantidad baja', 'ventas', p, `${p.stock}/${p.stockMinimo}`)),
+      ...(clinico?.bajoStock?.insumos || []).map((i) =>
+        fila('Cantidad baja', 'clinico', i, `${Number(i.stock)}/${Number(i.stockMinimo)} ${i.unidadBase}`)),
+    ]
+  }, [alertasQuery.data, alertasClinicasQuery.data])
 
   return { reporteQuery, alertasQuery, resumen, categoriasData, alertsRows }
 }

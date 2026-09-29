@@ -3,21 +3,22 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import { historiasApi } from './historiasApi'
 import { descargarFormulaPdf } from './formulaPdf'
+import { descargarHistoriaPdf } from './historiaPdf'
 
 /**
- * La formula se arma siempre desde la version guardada de la historia: el
+ * Los PDFs se arman siempre desde la version guardada de la historia: el
  * detalle trae paciente, tutor y veterinario completos, cosa que no tienen ni
  * el formulario en edicion ni las filas del timeline.
  */
-export function useImprimirFormula() {
+function useImprimirDocumento(descargar, mensajeError) {
   const clinica = useAuthStore((state) => state.clinica)
 
   const mutation = useMutation({
     mutationFn: async (historiaId) => {
       const { historia } = await historiasApi.obtenerHistoria(historiaId)
-      await descargarFormulaPdf({ historia, clinica })
+      await descargar({ historia, clinica })
     },
-    onError: () => toast.error('No se pudo cargar la historia para imprimir la fórmula.'),
+    onError: () => toast.error(mensajeError),
   })
 
   return {
@@ -29,3 +30,9 @@ export function useImprimirFormula() {
     historiaEnCurso: mutation.isPending ? mutation.variables : null,
   }
 }
+
+export const useImprimirFormula = () =>
+  useImprimirDocumento(descargarFormulaPdf, 'No se pudo cargar la historia para imprimir la fórmula.')
+
+export const useImprimirHistoria = () =>
+  useImprimirDocumento(descargarHistoriaPdf, 'No se pudo cargar la historia para imprimirla.')

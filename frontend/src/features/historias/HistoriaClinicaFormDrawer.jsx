@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  Activity, CalendarCheck, ChevronDown, ClipboardCheck, FlaskConical,
+  Activity, CalendarCheck, ChevronDown, ClipboardCheck, FileText, FlaskConical,
   HeartPulse, Link2, MessageSquare, Pill, Plus, Printer, Search, Syringe, X,
 } from 'lucide-react'
 import { historiasApi } from '@/features/historias/historiasApi'
-import { MEDICATION_ROUTE_OPTIONS } from '@/features/historias/historiaConstants'
-import { useImprimirFormula } from '@/features/historias/useImprimirFormula'
+import { HYDRATION_OPTIONS, MEDICATION_ROUTE_OPTIONS } from '@/features/historias/historiaConstants'
+import { useImprimirFormula, useImprimirHistoria } from '@/features/historias/useImprimirFormula'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
@@ -24,14 +24,6 @@ import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesL
 import { Select } from '@/components/ui/select'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
-
-const HYDRATION_OPTIONS = [
-  { value: '', label: 'Estado de hidratacion' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'deshidratacion_leve', label: 'Deshidratacion leve' },
-  { value: 'deshidratacion_moderada', label: 'Deshidratacion moderada' },
-  { value: 'deshidratacion_severa', label: 'Deshidratacion severa' },
-]
 
 const MEDICATION_FREQUENCY_SUGGESTIONS = [
   'Cada 8 horas', 'Cada 12 horas', 'Cada 24 horas', 'Dosis unica', 'Segun necesidad',
@@ -409,6 +401,32 @@ export default function HistoriaClinicaFormDrawer({
       toast.warning('Se imprime la versión guardada. Guarda los cambios del plan farmacológico para incluirlos.')
     }
     imprimirFormula.imprimir(historiaActual.id)
+  }
+
+  // ── Historia completa ────────────────────────────────────────────────────────
+  const imprimirHistoria = useImprimirHistoria()
+
+  // Mismo criterio que la formula, sobre todo lo que sale impreso.
+  const CAMPOS_HISTORIA = [
+    'motivoConsulta', 'anamnesis', 'peso', 'temperatura', 'frecuenciaCardiaca',
+    'frecuenciaRespiratoria', 'condicionCorporal', 'mucosas', 'estadoHidratacion',
+    'examenFisicoDetalle', 'diagnostico', 'diagnosticoPresuntivo', 'tratamiento',
+  ]
+  const firmaHistoria = (f) =>
+    JSON.stringify({
+      plan: firmaPlan(f),
+      campos: CAMPOS_HISTORIA.map((campo) => String(f[campo] || '').trim()),
+      intrahospitalario: f.tratamientoIntrahospitalario.map((t) =>
+        [t.insumoClinicoId, t.cantidad, t.via, t.aplicadoEn].map((v) => String(v || '').trim())
+      ),
+    })
+
+  const handleImprimirHistoria = () => {
+    if (!historiaActual?.id) return
+    if (firmaHistoria(form) !== firmaHistoria(mapHistoriaToForm(historiaActual))) {
+      toast.warning('Se imprime la versión guardada. Guarda los cambios para incluirlos en la historia.')
+    }
+    imprimirHistoria.imprimir(historiaActual.id)
   }
 
   // Bloquear descuenta inventario clinico. Si hay cambios sin guardar, lo que se
@@ -1101,7 +1119,7 @@ export default function HistoriaClinicaFormDrawer({
           )}
         </div>
 
-        {/* Footer: quien solo consulta historias (auxiliar) igual puede imprimir la formula */}
+        {/* Footer: quien solo consulta historias (auxiliar) igual puede imprimir la formula y la historia */}
         {(puedeEditarHistorias || historiaActual?.id) && (
           <div className="flex flex-wrap gap-3 border-t border-border px-5 py-4">
             {puedeEditarHistorias && (
@@ -1144,6 +1162,17 @@ export default function HistoriaClinicaFormDrawer({
               >
                 <Printer className="h-4 w-4" />
                 {imprimirFormula.isPending ? 'Generando...' : 'Imprimir fórmula'}
+              </button>
+            )}
+            {historiaActual?.id && (
+              <button
+                type="button"
+                onClick={handleImprimirHistoria}
+                disabled={imprimirHistoria.isPending}
+                className="inline-flex items-center gap-2 border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+              >
+                <FileText className="h-4 w-4" />
+                {imprimirHistoria.isPending ? 'Generando...' : 'Imprimir historia'}
               </button>
             )}
             <button type="button" onClick={onClose} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
