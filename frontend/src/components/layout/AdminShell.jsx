@@ -36,6 +36,7 @@ import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
 import { AdminSearchContext, HeaderSlotContext } from './HeaderSlotContext'
+import { etiquetaEspecie } from '@/lib/especies'
 
 const ROL_LABELS_SIDEBAR = {
   admin: 'Administrador',
@@ -487,7 +488,7 @@ export default function AdminShell({
                         <span className="min-w-0 flex-1">
                           <span className="block truncate">{mascota.nombre}</span>
                           <span className="block truncate text-xs text-[#91e7e0]/40">
-                            {[mascota.especie, mascota.Propietario?.nombre].filter(Boolean).join(' · ')}
+                            {[etiquetaEspecie(mascota.especie), mascota.Propietario?.nombre].filter(Boolean).join(' · ')}
                           </span>
                         </span>
                         <span className="shrink-0 text-xs text-[#91e7e0]/30 group-hover:text-[#91e7e0]/60">

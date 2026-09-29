@@ -22,6 +22,7 @@ import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
 import { Select } from '@/components/ui/select'
+import { etiquetaEspecie } from '@/lib/especies'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -637,7 +638,7 @@ export default function HistoriaClinicaFormDrawer({
                 {historiaActual ? 'Editar historia clínica' : 'Nueva historia clínica'}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {mascota ? `${mascota.nombre} · ${mascota.especie}` : '—'}
+                {mascota ? `${mascota.nombre} · ${etiquetaEspecie(mascota.especie)}` : '—'}
               </p>
             </div>
             <div className="flex items-center gap-2">
