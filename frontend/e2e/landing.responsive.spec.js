@@ -185,7 +185,8 @@ for (const viewport of VIEWPORTS) {
     })
 
     test('el boton de WhatsApp no aparece sobre el hero ni sobre Contacto', async ({ page }) => {
-      const fab = page.getByRole('link', { name: 'Escríbenos por WhatsApp' })
+      // Por selector y no por rol: oculto lleva aria-hidden y el rol no lo encuentra.
+      const fab = page.locator('a[aria-label="Escríbenos por WhatsApp"]')
       await page.waitForTimeout(800)
       await expect(fab).toHaveCSS('opacity', '0')
       await page.evaluate(() => window.scrollTo(0, document.getElementById('contacto').offsetTop))

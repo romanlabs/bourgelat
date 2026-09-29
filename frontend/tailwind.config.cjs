@@ -6,6 +6,13 @@ module.exports = {
   content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
+      // Telefono en horizontal: ancho de tablet pero muy poca altura. Los cortes
+      // por ancho no lo distinguen; esta variante se usa para compactar el hero.
+      // Va en extend para quedar despues de sm..2xl y poder sobreescribirlos.
+      screens: {
+        short: { raw: '(max-height: 500px) and (orientation: landscape)' },
+      },
+
       colors: {
         // Escalas numéricas de theme.tokens.cjs — fuente única de verdad.
         // Sin esto, clases como bg-warm-100 o bg-clinical-500 (usadas por

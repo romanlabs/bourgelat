@@ -846,12 +846,14 @@ input:-webkit-autofill:focus {
   transition-delay: 380ms;
 }
 
-/* ── Perro veterinario que se asoma desde el borde derecho ── */
+/* ── Perro veterinario que se asoma desde el borde derecho ──
+   Móvil y tablet: arriba del todo, en la franja que #flujo reserva con su
+   padding superior (pt-28 / sm:pt-36), así no se monta sobre el título. */
 .flow-dog {
   position: absolute;
-  right: -4%;
-  top: 8%;
-  width: clamp(150px, 40vw, 230px);
+  right: 0;
+  top: 0.5rem;
+  width: clamp(120px, 34vw, 190px);
   z-index: 2;
   display: block;
   pointer-events: none;
@@ -1244,11 +1246,12 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* En móvil el video es una banda inferior y su fondo beige marcaba un escalón.
-   Igualamos el degradado al color real del fondo del video (#efd0a9) en la mitad
-   inferior y difuminamos el borde superior del video, para que se fundan sin
-   canto. En desktop el video ocupa todo y nada de esto aplica. */
-@media (max-width: 639px) {
+/* Teléfono y tablet en vertical: el video va debajo del texto (ver LandingPage)
+   y su fondo beige marcaba un escalón. Igualamos el degradado al color real del
+   fondo del video (#efd0a9) en la mitad inferior y difuminamos los bordes del
+   video, para que se fundan sin canto. En escritorio y en teléfono horizontal el
+   video ocupa todo el hero y nada de esto aplica. */
+@media (max-width: 1023px) and (orientation: portrait), (max-width: 1023px) and (min-height: 501px) {
   .hero-bg {
     /* Base vertical empatada al fondo del video (#efd0a9) en la mitad inferior,
        + un calentamiento hacia la derecha que copia la viñeta del video (más
@@ -1257,12 +1260,19 @@ input:-webkit-autofill:focus {
       linear-gradient(100deg, rgba(224, 187, 147, 0) 48%, rgba(224, 187, 147, 0.55) 100%),
       linear-gradient(180deg, #f8e7cf 0%, #f3d8b4 36%, #efd0a9 54%, #efd0a9 100%);
   }
-  /* El video (object-contain) ocupa solo el ~64% inferior de la banda; su borde
-     superior cae cerca del 36%. La máscara mantiene vacío arriba y recién ahí
-     funde el borde real del video hacia el hero, evitando el canto duro. */
+  /* La caja del video se ajusta al alto que sobra, así que el cuadro
+     (object-contain) casi siempre la llena en alto y deja márgenes a los lados.
+     La máscara funde el borde superior y los laterales; se intersectan para que
+     el perro (centro del cuadro) quede intacto. */
   .hero-video {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
-    mask-image: linear-gradient(to bottom, transparent 0%, transparent 34%, #000 56%);
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 14%),
+      linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 14%),
+      linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
+    mask-composite: intersect;
   }
 }
 

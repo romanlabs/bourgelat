@@ -72,13 +72,16 @@ export default function LandingPage() {
     <div className="min-h-screen overflow-x-hidden bg-[#f8f4ee] text-[#2b2018]">
       <LandingNav />
 
+      {/* min-h y no h: en pantallas bajas el hero crece en vez de recortar los CTAs. */}
       <section
         id="hero"
-        className="hero-bg relative flex h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] sm:justify-center"
+        className="hero-bg relative flex min-h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] lg:justify-center short:justify-center"
       >
-        {/* ── Video hero: perro completo, contenido y anclado abajo a la derecha.
-            object-contain (no cover) muestra al perro entero; su fondo beige funde
-            con el degradado cálido del hero. ── */}
+        {/* ── Video hero: perro completo, object-contain (no cover) para mostrarlo
+            entero; su fondo beige funde con el degradado cálido del hero.
+            Telefono y tablet vertical: va en el flujo, debajo del texto, y ocupa el
+            alto que sobra (nunca queda detras de los CTAs). Escritorio y telefono
+            en horizontal: de fondo, anclado abajo a la derecha. ── */}
         <video
           autoPlay
           muted
@@ -86,7 +89,7 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="hero-video absolute inset-x-0 bottom-0 top-auto h-[48dvh] w-full object-contain object-bottom sm:inset-0 sm:top-0 sm:h-full sm:object-[right_bottom]"
+          className="hero-video relative order-last mt-6 min-h-[200px] w-full flex-1 basis-0 object-contain object-bottom sm:max-h-[440px] lg:absolute lg:inset-0 lg:mt-0 lg:h-full lg:max-h-none lg:object-[right_bottom] short:absolute short:inset-0 short:mt-0 short:h-full short:max-h-none short:object-[right_bottom]"
           style={{ transform: 'translateZ(0)' }}
         >
           {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
@@ -96,39 +99,40 @@ export default function LandingPage() {
           <source src="/videos/perroHero.webm" type="video/webm" />
         </video>
 
-        {/* Móvil: lavado cálido suave (el perro va en banda inferior). */}
+        {/* Móvil y tablet vertical: lavado cálido suave (el perro va debajo del texto). */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] sm:hidden"
+          className="pointer-events-none absolute inset-0 z-[1] lg:hidden short:hidden"
           style={{ background: 'linear-gradient(100deg, rgba(249,236,216,0.95) 0%, rgba(249,236,216,0.72) 32%, rgba(249,236,216,0.18) 56%, rgba(249,236,216,0) 70%)' }}
         />
-        {/* Desktop: velo crema OPACO del mismo color del fondo del video
-            (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
+        {/* Escritorio y horizontal: velo crema OPACO del mismo color del fondo del
+            video (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
             antes del perro, así no queda canto entre el relleno y el video. */}
         <div
           data-velo
-          className="pointer-events-none absolute inset-0 z-[1] hidden sm:block"
+          className="pointer-events-none absolute inset-0 z-[1] hidden lg:block short:block"
           style={{ background: 'linear-gradient(90deg, rgb(251,229,195) 0%, rgb(251,229,195) 36%, rgba(251,229,195,0.5) 48%, rgba(251,229,195,0) 57%)' }}
         />
 
         {/* Funde el final del hero con la banda cálida siguiente (#f8f4ee).
             Degradado con easing (no lineal) para un empalme sin banding visible. */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[12dvh] sm:h-[28dvh]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[12dvh] lg:h-[28dvh] short:h-[20dvh]"
           style={{
             background:
               'linear-gradient(180deg, rgba(248,244,238,0) 0%, rgba(248,244,238,0.08) 28%, rgba(248,244,238,0.28) 50%, rgba(248,244,238,0.58) 68%, rgba(248,244,238,0.85) 84%, #f8f4ee 100%)',
           }}
         />
 
-        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-40 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
-          <div className="max-w-[36rem]">
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36 short:pt-20">
+          {/* En horizontal el texto no pasa de la mitad: la otra mitad es del perro. */}
+          <div className="max-w-[36rem] short:max-w-[46%]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">
               Software para clínicas veterinarias
             </p>
 
             {/* Firma: línea de signo vital. El barrido recorre el trazo como el
                 monitor de un paciente — guiño al ECGHeartbeatCanvas de la marca. */}
-            <div className="hero-ecg mt-4" aria-hidden="true">
+            <div className="hero-ecg mt-4 short:hidden" aria-hidden="true">
               <svg viewBox="0 0 320 24" preserveAspectRatio="xMinYMid meet">
                 <path className="hero-ecg__base" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
                 <path className="hero-ecg__pulse" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />
@@ -136,30 +140,30 @@ export default function LandingPage() {
             </div>
 
             <h1
-              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[34rem] lg:text-[3.35rem] xl:text-[3.6rem]"
+              className="mt-6 max-w-[22rem] text-[2.25rem] leading-[0.96] tracking-[-0.045em] text-[#2b2018] sm:max-w-[32rem] sm:text-[3rem] lg:max-w-[34rem] lg:text-[3.35rem] xl:text-[3.6rem] short:mt-3 short:max-w-none short:text-[1.8rem]"
               style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Tu clínica merece una operación
               <span style={{ fontStyle: 'italic', fontWeight: 600, color: '#a8662e' }}> a la altura de su medicina.</span>
             </h1>
 
-            <p className="mt-6 max-w-[30rem] text-[15px] leading-7 text-[#6a5038] sm:text-[16.5px] sm:leading-8">
+            <p className="mt-6 max-w-[30rem] text-[15px] leading-7 text-[#6a5038] sm:text-[16.5px] sm:leading-8 short:mt-3 short:text-[14px] short:leading-6">
               Agenda, historia clínica, caja e inventario en un solo lugar. Menos reprocesos,
               un equipo coordinado y una experiencia más profesional para cada tutor.
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center short:mt-5 short:flex-row">
               <button
                 type="button"
                 onClick={() => setRegistroAbierto(true)}
-                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto"
+                className="group pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] shadow-[0_4px_12px_rgba(43,32,24,0.12)] transition-colors hover:bg-[#b07645] sm:w-auto short:w-auto short:px-5 short:py-2.5"
               >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </button>
               <Link
                 to="/planes"
-                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
+                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto short:w-auto short:px-5 short:py-2.5"
               >
                 Ver planes
               </Link>
@@ -184,7 +188,8 @@ export default function LandingPage() {
       <FlowDog />
       <FlowDogMedic />
       <section id="flujo" className="relative -mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018] overflow-x-clip">
-        <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-24 lg:pt-10">
+        {/* pt-28 / sm:pt-36: franja donde se asoma el perro con gafas en móvil y tablet. */}
+        <div className="relative z-[1] mx-auto max-w-6xl px-5 pb-16 pt-28 sm:px-6 sm:pt-36 lg:px-8 lg:pb-24 lg:pt-10">
           <SectionHeading
             eyebrow="Flujo diario"
             title="De la llamada al seguimiento, el día avanza sin perder el caso."
@@ -380,7 +385,7 @@ export default function LandingPage() {
               </p>
               <a
                 href="mailto:hola@bourgelat.co"
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:text-[#e9c089]"
+                className="mt-2 inline-flex items-center gap-2 py-3 text-sm font-semibold text-[#fdf6ee] no-underline lg:mt-5 lg:py-0 transition-colors hover:text-[#e9c089]"
               >
                 <Mail className="h-4 w-4" />
                 hola@bourgelat.co
@@ -392,14 +397,15 @@ export default function LandingPage() {
             </div>
 
             {/* Columnas de enlaces: 2 col en móvil, 3 en sm, y se integran a la
-                grilla de 4 columnas en desktop con lg:contents */}
+                grilla de 4 columnas en desktop con lg:contents. Por debajo de lg
+                los enlaces llevan py-3 (area tactil de 42px) en vez de espaciado. */}
             <div className="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-3 lg:contents">
             {/* Producto */}
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
                 Producto
               </p>
-              <ul className="mt-5 space-y-3.5">
+              <ul className="mt-2 lg:mt-5 lg:space-y-3.5">
                 {[
                   { label: 'Plataforma', href: '#plataforma' },
                   { label: 'Flujo diario', href: '#flujo' },
@@ -410,14 +416,14 @@ export default function LandingPage() {
                     {item.to ? (
                       <Link
                         to={item.to}
-                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                        className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0"
                       >
                         {item.label}
                       </Link>
                     ) : (
                       <a
                         href={item.href}
-                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                        className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0"
                       >
                         {item.label}
                       </a>
@@ -432,14 +438,14 @@ export default function LandingPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
                 Empresa
               </p>
-              <ul className="mt-5 space-y-3.5">
+              <ul className="mt-2 lg:mt-5 lg:space-y-3.5">
                 <li>
-                  <Link to="/nosotros" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                  <Link to="/nosotros" className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0">
                     Nosotros
                   </Link>
                 </li>
                 <li>
-                  <Link to="/planes" className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white">
+                  <Link to="/planes" className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0">
                     Comparar planes
                   </Link>
                 </li>
@@ -447,7 +453,7 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={() => setRegistroAbierto(true)}
-                    className="text-sm text-[#fdf6ee]/65 transition-colors hover:text-white"
+                    className="py-3 text-sm text-[#fdf6ee]/65 transition-colors hover:text-white lg:py-0"
                   >
                     Crear cuenta
                   </button>
@@ -460,14 +466,14 @@ export default function LandingPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e9c089]">
                 Legal
               </p>
-              <ul className="mt-5 space-y-3.5">
+              <ul className="mt-2 lg:mt-5 lg:space-y-3.5">
                 {footerLinks
                   .filter((l) => ['Privacidad', 'Terminos', 'Cookies'].includes(l.label))
                   .map((link) => (
                     <li key={link.to}>
                       <Link
                         to={link.to}
-                        className="text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white"
+                        className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0"
                       >
                         {link.label === 'Terminos' ? 'Términos' : link.label}
                       </Link>

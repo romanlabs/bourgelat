@@ -50,7 +50,10 @@ export default function TrustBar() {
       className="relative -mt-px overflow-hidden pb-8 pt-0 text-[#2b2018] sm:py-9 lg:py-10"
     >
       <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-0 sm:gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
+        {/* grid-cols-1 (minmax(0,1fr)) y min-w-0 en el marquee: sin ellos la pista
+            del marquee (width: max-content) ensancha la columna mas alla de la
+            pantalla y el titulo centrado queda corrido y cortado en movil. */}
+        <div className="grid grid-cols-1 items-center gap-0 sm:gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
           <div className="mx-auto max-w-[23rem] text-center lg:mx-0 lg:text-left">
             <p
               className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]"
@@ -73,6 +76,7 @@ export default function TrustBar() {
           </div>
 
           <div
+            className="min-w-0"
             style={{
               opacity: visible ? 1 : 0,
               transition: visible ? 'opacity 900ms ease 350ms' : 'none',
