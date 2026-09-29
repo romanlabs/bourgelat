@@ -25,6 +25,8 @@ export const DOMINIOS = {
     'producto-combobox-duplicado',
     // La historia clinica busca medicamentos contra inventarioApi con clave propia.
     'historias-catalogo-medicamentos',
+    // Vencimientos sugeridos desde compras confirmadas (productos e insumos).
+    'vencimientos-siguientes',
   ],
 
   insumosClinicos: [
@@ -35,6 +37,10 @@ export const DOMINIOS = {
     'inventario-clinico-movimientos',
     // La historia clinica consume insumos desde su propio catalogo.
     'historias-catalogo-insumos-consumo',
+    'vencimientos-siguientes',
+    // El resumen del dashboard trae tambien el inventario clinico.
+    'dashboard-inventario',
+    'inventario-reporte-completo',
   ],
 
   servicios: [

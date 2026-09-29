@@ -8,6 +8,7 @@ import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { CATEGORY_OPTIONS, UNIDAD_BASE_OPTIONS } from './useInsumosClinicos'
 import { Select } from '@/components/ui/select'
+import VencimientosSiguientes from '@/features/inventario/VencimientosSiguientes'
 
 const insumoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -66,6 +67,7 @@ export default function InsumoClinicoDrawer({
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(insumoSchema),
@@ -500,6 +502,15 @@ export default function InsumoClinicoDrawer({
                 <label htmlFor="ic-vencimiento" className={labelClass}>Fecha de vencimiento</label>
                 <input id="ic-vencimiento" type="date" className={fieldClass(false)} {...register('fechaVencimiento')} />
               </div>
+              {editingInsumo && (
+                <VencimientosSiguientes
+                  insumoClinicoId={editingInsumo.id}
+                  onUsar={(fecha, lote) => {
+                    setValue('fechaVencimiento', fecha, { shouldDirty: true })
+                    setValue('lote', lote, { shouldDirty: true })
+                  }}
+                />
+              )}
             </div>
           </form>
         </div>

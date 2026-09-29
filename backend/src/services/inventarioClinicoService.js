@@ -1,4 +1,5 @@
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico');
+const { resolverVencimiento } = require('../utils/vencimiento');
 
 const redondear = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 
@@ -14,6 +15,8 @@ const aplicarEntradaCompraClinica = async ({
   insumo,
   presentaciones,
   precioPorPresentacion,
+  fechaVencimiento,
+  lote,
   usuarioId,
   clinicaId,
   facturaCompraId,
@@ -33,6 +36,13 @@ const aplicarEntradaCompraClinica = async ({
     stock: stockNuevo,
     precioUnitarioBase,
     precioPresentacion: Number(precioPorPresentacion),
+    ...resolverVencimiento({
+      stockAnterior,
+      fechaActual: insumo.fechaVencimiento,
+      loteActual: insumo.lote,
+      fechaItem: fechaVencimiento,
+      loteItem: lote,
+    }),
   }, { transaction });
 
   const movimiento = await MovimientoInventarioClinico.create({

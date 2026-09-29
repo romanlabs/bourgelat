@@ -9,6 +9,7 @@ const {
   confirmarFacturaCompra,
   anularFacturaCompra,
   obtenerAlertasCompra,
+  obtenerVencimientosSiguientes,
   marcarComoPagada,
 } = require('../controllers/facturaCompraController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
@@ -22,6 +23,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const esEnteroPositivo = (valor) => Number.isInteger(Number(valor)) && Number(valor) >= 1
 const esDecimalNoNegativo = (valor) =>
   valor !== '' && valor !== null && Number.isFinite(Number(valor)) && Number(valor) >= 0
+const esFechaValida = (valor) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(String(valor)) && !Number.isNaN(Date.parse(valor))
 
 // Cada ítem apunta a un producto de venta o a un insumo clínico según su
 // destino. Se valida el arreglo completo en un custom en vez de encadenar
@@ -54,6 +57,14 @@ const validarItemsCompra = (items) => {
 
     if (!esDecimalNoNegativo(item?.precioUnitario)) {
       throw new Error(`${posicion}: el precio unitario debe ser mayor o igual a 0`)
+    }
+
+    if (item?.fechaVencimiento && !esFechaValida(item.fechaVencimiento)) {
+      throw new Error(`${posicion}: la fecha de vencimiento no es válida`)
+    }
+
+    if (item?.lote && String(item.lote).trim().length > 80) {
+      throw new Error(`${posicion}: el lote no puede exceder 80 caracteres`)
     }
   })
 
@@ -153,6 +164,24 @@ router.get(
   verificarToken,
   verificarRol(...rolesGestion),
   obtenerAlertasCompra
+)
+
+router.get(
+  '/vencimientos',
+  verificarToken,
+  verificarRol(...rolesGestion),
+  [
+    query('productoId').optional().isUUID().withMessage('productoId no válido'),
+    query('insumoClinicoId').optional().isUUID().withMessage('insumoClinicoId no válido'),
+    query('productoId').custom((_, { req }) => {
+      if (Boolean(req.query.productoId) === Boolean(req.query.insumoClinicoId)) {
+        throw new Error('Indica productoId o insumoClinicoId, no ambos')
+      }
+      return true
+    }),
+    validar,
+  ],
+  obtenerVencimientosSiguientes
 )
 
 router.get(
