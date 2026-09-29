@@ -11,7 +11,8 @@ import {
   UNIDAD_BASE_OPTIONS,
 } from '@/features/inventarioClinico/useInsumosClinicos'
 import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
-import { DESTINO_INVENTARIO_OPTIONS } from './useFacturaCompra'
+import { DESTINO_INVENTARIO_OPTIONS, categoriaDeItem } from './useFacturaCompra'
+import { requiereVencimiento } from './inventarioUtils'
 import { Select } from '@/components/ui/select'
 
 const sinOpcionTodas = (opciones) => opciones.filter((o) => o.value !== 'todas')
@@ -56,6 +57,51 @@ function AvisoProductoDuplicado({ nombre, origen }) {
       {coincidencia.nombre}&quot; en el catálogo. Verifica que no sea el mismo antes de crear uno
       nuevo.
     </p>
+  )
+}
+
+function CamposVencimiento({ item, fechaCompra, onChange }) {
+  const hoy = new Date().toISOString().slice(0, 10)
+  const fecha = item.fechaVencimiento
+  let aviso = null
+  if (!fecha) aviso = { tono: 'muted', texto: 'Obligatoria para confirmar la factura. Si hay varios lotes, registra el que vence primero.' }
+  else if (fecha < (fechaCompra || hoy)) aviso = { tono: 'warn', texto: 'La fecha es anterior a la compra. Verifica que sea correcta.' }
+  else if (fecha < hoy) aviso = { tono: 'warn', texto: 'Este producto ya está vencido.' }
+
+  return (
+    <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">Fecha de vencimiento</label>
+          <input
+            type="date"
+            className={fieldClass(false)}
+            value={fecha}
+            onChange={(e) => onChange('fechaVencimiento', e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">Lote</label>
+          <input
+            className={fieldClass(false)}
+            placeholder="Opcional"
+            value={item.lote}
+            onChange={(e) => onChange('lote', e.target.value)}
+            maxLength={80}
+          />
+        </div>
+      </div>
+      {aviso && (
+        <p
+          className={`flex items-start gap-1.5 text-xs ${
+            aviso.tono === 'warn' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
+          }`}
+        >
+          {aviso.tono === 'warn' && <AlertTriangle size={14} className="mt-0.5 shrink-0" />}
+          {aviso.texto}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -476,6 +522,14 @@ export default function FacturaCompraDrawer({
                       />
                     </div>
                   </div>
+
+                  {requiereVencimiento(categoriaDeItem(item)) && (
+                    <CamposVencimiento
+                      item={item}
+                      fechaCompra={form.fecha}
+                      onChange={(campo, valor) => actualizarItem(idx, campo, valor)}
+                    />
+                  )}
 
                   <div className="text-right text-xs text-muted-foreground">
                     Subtotal:{' '}

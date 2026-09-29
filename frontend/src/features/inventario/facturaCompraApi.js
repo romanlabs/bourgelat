@@ -26,5 +26,10 @@ export const anularFacturaCompra = (id) =>
 export const marcarComoPagada = (id, fechaPago) =>
   api.post(`/facturas-compra/${id}/pagar`, { fechaPago }).then((r) => r.data)
 
+export const obtenerVencimientosSiguientes = ({ productoId, insumoClinicoId }) =>
+  api
+    .get('/facturas-compra/vencimientos', { params: cleanParams({ productoId, insumoClinicoId }) })
+    .then((r) => r.data)
+
 export const obtenerAlertasCompra = () =>
   api.get('/facturas-compra/alertas').then((r) => r.data)

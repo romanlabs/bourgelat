@@ -15,6 +15,7 @@ const {
   referenciasSonValidas,
 } = require('./facturaCompraReferencias');
 const { parsePaginacion } = require('../utils/paginacion');
+const { requiereVencimiento, resolverVencimiento } = require('../utils/vencimiento');
 
 // Los errores de detalle se responden como 400. Se marcan con una bandera en
 // vez de inspeccionar el texto del mensaje: el catch antes buscaba subcadenas
@@ -52,6 +53,8 @@ const calcularItems = (items) =>
       cantidad,
       precioUnitario,
       subtotal: Number.isFinite(cantidad) ? cantidad * precioUnitario : 0,
+      fechaVencimiento: item.fechaVencimiento || null,
+      lote: item.lote ? String(item.lote).trim() || null : null,
     };
   });
 
@@ -108,10 +111,17 @@ const validarReferenciasItems = async (
   });
 };
 
-const ATRIBUTOS_PRODUCTO_ITEM = ['id', 'nombre', 'unidadMedida'];
+const ATRIBUTOS_PRODUCTO_ITEM = ['id', 'nombre', 'categoria', 'unidadMedida'];
 const ATRIBUTOS_INSUMO_ITEM = [
-  'id', 'nombre', 'unidadBase', 'cantidadPresentacion', 'unidadPresentacion', 'stock',
+  'id', 'nombre', 'categoria', 'unidadBase', 'cantidadPresentacion', 'unidadPresentacion', 'stock',
 ];
+
+// Solo se lleva vencimiento para categorias que caducan; en las demas se ignora
+// aunque llegue, para no generar alertas sobre accesorios.
+const vencimientoAplicable = (item, categoria) =>
+  requiereVencimiento(categoria)
+    ? { fechaVencimiento: item.fechaVencimiento, lote: item.lote }
+    : { fechaVencimiento: null, lote: null };
 
 const includeItems = (attributesItem) => ({
   model: FacturaCompraItem,
@@ -144,7 +154,7 @@ const obtenerFacturasCompra = async (req, res) => {
       include: [
         includeItems([
           'id', 'destinoInventario', 'productoId', 'insumoClinicoId',
-          'cantidad', 'precioUnitario', 'subtotal',
+          'cantidad', 'precioUnitario', 'subtotal', 'fechaVencimiento', 'lote',
         ]),
       ],
     });
@@ -330,6 +340,17 @@ const confirmarFacturaCompra = async (req, res) => {
       return res.status(400).json({ message: 'La factura no tiene ítems' });
     }
 
+    const referenciaCargada = (item) => item.producto || item.insumoClinico;
+    const sinVencimiento = factura.items
+      .filter((item) =>
+        !item.fechaVencimiento && requiereVencimiento(referenciaCargada(item)?.categoria))
+      .map((item) => referenciaCargada(item).nombre);
+    if (sinVencimiento.length) {
+      return res.status(400).json({
+        message: `Falta la fecha de vencimiento de: ${sinVencimiento.join(', ')}. Edita la factura y complétala antes de confirmar.`,
+      });
+    }
+
     await sequelize.transaction(async (transaction) => {
       let total = 0;
 
@@ -356,6 +377,7 @@ const confirmarFacturaCompra = async (req, res) => {
             insumo,
             presentaciones: Number(item.cantidad),
             precioPorPresentacion: Number(item.precioUnitario),
+            ...vencimientoAplicable(item, insumo.categoria),
             usuarioId,
             clinicaId,
             facturaCompraId: id,
@@ -379,9 +401,18 @@ const confirmarFacturaCompra = async (req, res) => {
           const stockAnterior = Number(producto.stock);
           const stockNuevo = stockAnterior + Number(item.cantidad);
 
+          const vencimientoItem = vencimientoAplicable(item, producto.categoria);
+
           await producto.update({
             stock: stockNuevo,
             precioCompra: Number(item.precioUnitario),
+            ...resolverVencimiento({
+              stockAnterior,
+              fechaActual: producto.fechaVencimiento,
+              loteActual: producto.lote,
+              fechaItem: vencimientoItem.fechaVencimiento,
+              loteItem: vencimientoItem.lote,
+            }),
           }, { transaction });
 
           await MovimientoInventario.create({
@@ -428,6 +459,8 @@ const anularFacturaCompra = async (req, res) => {
       return res.status(400).json({ message: 'La factura ya está anulada' });
     }
 
+    // El vencimiento del producto no se revierte: la reversion de stock puede ser
+    // parcial y no hay forma fiable de saber que lote quedo en bodega.
     await sequelize.transaction(async (transaction) => {
       if (factura.estado === 'confirmada') {
         const referenciaFactura = factura.numero || factura.id.slice(0, 8);
@@ -525,6 +558,51 @@ const obtenerAlertasCompra = async (req, res) => {
   }
 }
 
+// Vencimientos registrados en compras confirmadas posteriores al que tiene hoy
+// el producto/insumo: son los candidatos a "siguiente" cuando el actual se agota.
+const obtenerVencimientosSiguientes = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario;
+    const { productoId, insumoClinicoId } = req.query;
+
+    const modelo = productoId ? Producto : InsumoClinico;
+    const referencia = await modelo.findOne({
+      where: { id: productoId || insumoClinicoId, clinicaId },
+      attributes: ['id', 'fechaVencimiento'],
+    });
+    if (!referencia) return res.status(404).json({ message: 'Producto no encontrado' });
+
+    const desde = referencia.fechaVencimiento || new Date().toISOString().slice(0, 10);
+
+    const items = await FacturaCompraItem.findAll({
+      where: {
+        ...(productoId ? { productoId } : { insumoClinicoId }),
+        fechaVencimiento: { [Op.gt]: desde },
+      },
+      attributes: ['fechaVencimiento', 'lote'],
+      include: [{
+        model: FacturaCompra,
+        where: { clinicaId, estado: 'confirmada' },
+        attributes: ['id', 'numero', 'proveedor', 'fecha'],
+      }],
+      order: [['fechaVencimiento', 'ASC']],
+      limit: 10,
+    });
+
+    res.json({
+      vencimientos: items.map((i) => ({
+        fechaVencimiento: i.fechaVencimiento,
+        lote: i.lote,
+        proveedor: i.FacturaCompra.proveedor,
+        numeroFactura: i.FacturaCompra.numero,
+        fechaCompra: i.FacturaCompra.fecha,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
 const marcarComoPagada = async (req, res) => {
   try {
     const { id } = req.params
@@ -557,5 +635,6 @@ module.exports = {
   confirmarFacturaCompra,
   anularFacturaCompra,
   obtenerAlertasCompra,
+  obtenerVencimientosSiguientes,
   marcarComoPagada,
 };

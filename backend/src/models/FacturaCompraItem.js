@@ -48,6 +48,14 @@ const FacturaCompraItem = sequelize.define('FacturaCompraItem', {
     allowNull: false,
     defaultValue: 0,
   },
+  fechaVencimiento: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+  lote: {
+    type: DataTypes.STRING(80),
+    allowNull: true,
+  },
 }, {
   tableName: 'factura_compra_items',
   timestamps: true,
