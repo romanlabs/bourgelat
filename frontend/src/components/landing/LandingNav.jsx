@@ -9,7 +9,10 @@ import RegistroDialog from "@/features/auth/RegistroDialog"
 export default function LandingNav() {
   const [open, setOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [navTheme, setNavTheme] = useState('light')
+  // El hero ahora es cálido y claro, igual que el resto de la página, así que el
+  // nav usa siempre el tema claro (texto oscuro). Se mantiene como estado por si
+  // en el futuro vuelve una sección oscura bajo el header.
+  const [navTheme] = useState('light')
   const [hiddenBySection, setHiddenBySection] = useState(false)
   const [registroAbierto, setRegistroAbierto] = useState(false)
   const headerRef = useRef(null)
@@ -22,11 +25,6 @@ export default function LandingNav() {
     const onScroll = () => setIsScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-
-    // El hero ahora es cálido y claro, igual que el resto de la página, así que el
-    // nav usa siempre el tema claro (texto oscuro). Se mantiene como estado por si
-    // en el futuro vuelve una sección oscura bajo el header.
-    setNavTheme('light')
 
     // El header se oculta mientras el carrusel de flujo está en pantalla.
     const flujoSection = document.getElementById('flujo')
@@ -81,7 +79,9 @@ export default function LandingNav() {
           <BrandMark dark={!isLight} />
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        {/* Entre 1024 y 1279 el espacio no alcanza para todo: menos separación y
+            sin iconos sociales (siguen en el footer); los botones no se parten. */}
+        <nav className="hidden items-center gap-1 lg:flex xl:gap-8">
           {NAV_ITEMS.map((item) => (
             <a
               key={item.label}
@@ -98,7 +98,7 @@ export default function LandingNav() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <div className="flex items-center gap-1.5">
+          <div className="hidden items-center gap-1.5 xl:flex">
             <a
               href="https://instagram.com/bourgelat.co"
               target="_blank"
@@ -130,10 +130,10 @@ export default function LandingNav() {
               </svg>
             </a>
           </div>
-          <span className={`h-5 w-px ${isLight ? 'bg-[#2b2018]/15' : 'bg-white/15'}`} aria-hidden="true" />
+          <span className={`hidden h-5 w-px xl:block ${isLight ? 'bg-[#2b2018]/15' : 'bg-white/15'}`} aria-hidden="true" />
           <Link
             to="/login"
-            className={`rounded-md border px-4 py-2.5 text-sm font-semibold no-underline transition-[background-color,border-color,color] duration-[300ms] ease-out ${
+            className={`whitespace-nowrap rounded-md border px-4 py-2.5 text-sm font-semibold no-underline transition-[background-color,border-color,color] duration-[300ms] ease-out ${
               isLight
                 ? 'border-[rgba(43,32,24,0.25)] bg-transparent text-[#2b2018] hover:border-[#b07645] hover:text-[#b07645]'
                 : ''
@@ -157,7 +157,7 @@ export default function LandingNav() {
           <button
             type="button"
             onClick={() => setRegistroAbierto(true)}
-            className="group inline-flex items-center gap-2 rounded-md bg-[#2b2018] px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-[300ms] ease-out hover:bg-[#b07645]"
+            className="group inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-[#2b2018] px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-[300ms] ease-out hover:bg-[#b07645]"
           >
             Crear cuenta
             <ArrowRight className="h-4 w-4 transition-transform duration-[250ms] ease-out group-hover:translate-x-[3px]" />

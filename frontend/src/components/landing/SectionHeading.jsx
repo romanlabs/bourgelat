@@ -14,7 +14,7 @@ export default function SectionHeading({ eyebrow, title, body, dark = false, cen
             ? 'mt-3 text-[1.9rem] sm:text-[2.2rem] md:text-[2.5rem]'
             : 'mt-4 text-[2.7rem] sm:text-5xl md:text-6xl'
         } ${dark ? 'text-white' : 'text-[#2b2018]'}`}
-        style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+        style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
       >
         {title}
       </h2>

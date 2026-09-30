@@ -287,7 +287,7 @@ function ComingSoonCard({ plan, index, reduce, hovered, setHovered }) {
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
         Versión 2
       </p>
-      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
         {plan.nombre}
       </h3>
       <p className="mt-3 text-sm font-semibold" style={{ color: ACCENT }}>{plan.subtitulo}</p>
@@ -358,7 +358,7 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: ACCENT_ON_INK }}>
           {plan.subtitulo}
         </p>
-        <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}>
+        <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}>
           {plan.nombre}
         </h3>
         <AnimatedPrice price={price} reduce={reduce} onInk />
@@ -415,7 +415,7 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: EYEBROW }}>
         {plan.subtitulo}
       </p>
-      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+      <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
         {plan.nombre}
       </h3>
       <AnimatedPrice price={price} reduce={reduce} />
@@ -515,7 +515,7 @@ export default function PlanesPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
                 Planes Bourgelat
               </p>
-              <h1 className="mt-4 text-[2.8rem] leading-[0.95] tracking-[-0.045em] sm:text-6xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+              <h1 className="mt-4 text-[2.8rem] leading-[0.95] tracking-[-0.045em] sm:text-6xl" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
                 Un plan por cada
                 <br />
                 momento de la clínica.
@@ -593,7 +593,7 @@ export default function PlanesPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
             Cómo suele decidir una clínica
           </p>
-          <h2 className="mt-4 max-w-2xl text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+          <h2 className="mt-4 max-w-2xl text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
             Una elección según el momento, no un catálogo.
           </h2>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -613,7 +613,7 @@ export default function PlanesPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: EYEBROW }}>
               Comparativa completa
             </p>
-            <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, color: INK }}>
+            <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
               Todo lo que entra en cada plan.
             </h2>
           </div>
@@ -729,7 +729,7 @@ export default function PlanesPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: ACCENT_ON_INK }}>
                   Siguiente paso
                 </p>
-                <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}>
+                <h2 className="mt-4 text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}>
                   Cuando el plan está claro,
                   <br />
                   empezar debe ser simple.

@@ -77,7 +77,7 @@ export default function PublicPageShell({
             </p>
             <h1
               className="text-5xl leading-none tracking-[-0.05em] text-[#10263a] md:text-6xl"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
             >
               {title}
             </h1>

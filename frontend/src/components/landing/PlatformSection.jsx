@@ -29,7 +29,7 @@ export default function PlatformSection() {
             </p>
 
             <h2 style={{
-              fontFamily: '"Spectral", Georgia, serif', fontWeight: 700,
+              fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700,
               fontSize: 'clamp(2.4rem, 4vw, 3rem)', lineHeight: 0.95,
               letterSpacing: '-0.045em', color: '#2b2018',
               maxWidth: '24rem', marginTop: 20,
