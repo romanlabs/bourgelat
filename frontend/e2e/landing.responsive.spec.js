@@ -203,14 +203,29 @@ for (const viewport of VIEWPORTS) {
 
     test('los CTAs del hero se ven completos y se pueden tocar', async ({ page }) => {
       await page.waitForTimeout(800)
-      const problemas = await page.evaluate(() =>
+      // En movil el perro va arriba del texto: en telefonos bajos (vertical,
+      // < 700px) los CTAs no caben de entrada y se aceptan a un scroll corto
+      // (menos de 1/4 de pantalla). En el resto deben verse sin scroll.
+      const bajo = viewport.height < 700 && viewport.height > viewport.width
+      const margen = bajo ? viewport.height / 4 : 0
+      const problemas = await page.evaluate((margen) =>
         [...document.querySelectorAll('#hero a, #hero button')].flatMap((el) => {
-          const r = el.getBoundingClientRect()
           const nombre = el.innerText.trim()
-          if (r.top < 0 || r.bottom > window.innerHeight) return [`"${nombre}" fuera de la pantalla (bottom ${Math.round(r.bottom)})`]
+          const inicial = el.getBoundingClientRect()
+          if (inicial.top < 0 || inicial.bottom > window.innerHeight + margen) {
+            return [`"${nombre}" fuera de la pantalla (bottom ${Math.round(inicial.bottom)})`]
+          }
+          // Se trae a la vista solo con scroll vertical y se prueba el toque.
+          // behavior 'instant': la pagina usa scroll-behavior smooth y sin esto
+          // el desplazamiento se anima y el boton sigue fuera al medir.
+          if (inicial.bottom > window.innerHeight) {
+            window.scrollBy({ top: inicial.bottom - window.innerHeight + 8, behavior: 'instant' })
+          }
+          const r = el.getBoundingClientRect()
           const encima = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+          window.scrollTo({ top: 0, behavior: 'instant' })
           return el.contains(encima) ? [] : [`"${nombre}" tapado por ${encima?.tagName.toLowerCase()}`]
-        })
+        }), margen
       )
       expect(problemas).toEqual([])
     })
@@ -240,10 +255,10 @@ for (const viewport of VIEWPORTS) {
         const mascara = getComputedStyle(video).maskImage || getComputedStyle(video).webkitMaskImage
         const conMascara = mascara && mascara !== 'none'
         const visible = {
-          left: Math.max(r.left + (conMascara ? r.width * 0.14 : 0), hero.left),
-          right: Math.min(r.right - (conMascara ? r.width * 0.14 : 0), hero.right),
+          left: Math.max(r.left + (conMascara ? r.width * 0.24 : 0), hero.left),
+          right: Math.min(r.right - (conMascara ? r.width * 0.24 : 0), hero.right),
           top: Math.max(r.top + (conMascara ? r.height * 0.11 : 0), hero.top),
-          bottom: Math.min(r.bottom, hero.bottom),
+          bottom: Math.min(r.bottom - (conMascara ? r.height * 0.07 : 0), hero.bottom),
         }
         return ['left', 'top'].filter((k) => zona[k] < visible[k] - 1)
           .concat(['right', 'bottom'].filter((k) => zona[k] > visible[k] + 1))

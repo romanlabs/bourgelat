@@ -77,10 +77,10 @@ export default function LandingPage() {
         id="hero"
         className="hero-bg relative flex min-h-[100dvh] flex-col justify-start overflow-hidden text-[#2b2018] lg:justify-center short:justify-center"
       >
-        {/* ── Video hero. Telefono y tablet vertical: va en el flujo, debajo del
-            texto (nunca queda detras de los CTAs), en una caja 3:2 como el cuadro:
-            asi lo llena exacto, sin recortar al perro (object-cover le cortaba la
-            cabeza en pantallas anchas y bajas) ni dejar cantos laterales.
+        {/* ── Video hero. Telefono y tablet vertical: va en el flujo, arriba del
+            texto (debajo del nav), en una caja 3:2 como el cuadro y de alto
+            relativo a la pantalla: lo llena exacto, sin recortar al perro
+            (object-cover le cortaba la cabeza) ni dejar cantos laterales.
             Escritorio y telefono en horizontal: de fondo, object-contain anclado
             abajo a la derecha para mostrar al perro entero. ── */}
         <video
@@ -90,7 +90,7 @@ export default function LandingPage() {
           playsInline
           poster="/videos/perroHero-poster.webp"
           preload="auto"
-          className="hero-video relative order-last mx-auto mt-auto aspect-[3/2] w-full max-w-[36rem] object-contain object-bottom lg:absolute lg:inset-0 lg:mx-0 lg:mt-0 lg:aspect-auto lg:h-full lg:max-w-none lg:object-[right_bottom] short:absolute short:inset-0 short:mx-0 short:mt-0 short:aspect-auto short:h-full short:max-w-none short:object-[right_bottom]"
+          className="hero-video relative order-first mx-auto mt-20 aspect-[3/2] h-[clamp(150px,30dvh,380px)] w-auto max-w-full object-contain object-bottom sm:mt-24 lg:absolute lg:inset-0 lg:mx-0 lg:mt-0 lg:aspect-auto lg:h-full lg:w-full lg:max-w-none lg:object-[right_bottom] short:absolute short:inset-0 short:mx-0 short:mt-0 short:aspect-auto short:h-full short:w-full short:max-w-none short:object-[right_bottom]"
           style={{ transform: 'translateZ(0)' }}
         >
           {/* H.264 primero: se decodifica por hardware en casi todos los equipos,
@@ -100,11 +100,6 @@ export default function LandingPage() {
           <source src="/videos/perroHero.webm" type="video/webm" />
         </video>
 
-        {/* Móvil y tablet vertical: lavado cálido suave (el perro va debajo del texto). */}
-        <div
-          className="pointer-events-none absolute inset-0 z-[1] lg:hidden short:hidden"
-          style={{ background: 'linear-gradient(100deg, rgba(249,236,216,0.95) 0%, rgba(249,236,216,0.72) 32%, rgba(249,236,216,0.18) 56%, rgba(249,236,216,0) 70%)' }}
-        />
         {/* Escritorio y horizontal: velo crema OPACO del mismo color del fondo del
             video (rgb 251,229,195). Cubre el borde del object-contain y se desvanece
             antes del perro, así no queda canto entre el relleno y el video. */}
@@ -124,7 +119,7 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pb-6 pt-24 sm:px-6 sm:pt-32 lg:px-8 lg:pb-0 lg:pt-36 short:pb-0 short:pt-20">
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-0 lg:pt-36 short:pb-0 short:pt-20">
           {/* En horizontal el texto no pasa de la mitad: la otra mitad es del perro. */}
           <div className="max-w-[36rem] short:max-w-[46%]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]">

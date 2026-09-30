@@ -1283,7 +1283,7 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* Teléfono y tablet en vertical: el video va debajo del texto (ver LandingPage)
+/* Teléfono y tablet en vertical: el video va arriba del texto (ver LandingPage)
    y su fondo beige marcaba un escalón. Igualamos el degradado al color real del
    fondo del video (#efd0a9) en la mitad inferior y difuminamos los bordes del
    video, para que se fundan sin canto. En escritorio y en teléfono horizontal el
@@ -1298,16 +1298,18 @@ input:-webkit-autofill:focus {
       linear-gradient(180deg, #f8e7cf 0%, #f3d8b4 36%, #efd0a9 54%, #efd0a9 100%);
   }
   /* La caja del video es 3:2 como el cuadro, así que sus bordes son los del
-     cuadro: se funden arriba y a los lados (intersectados). El perro ocupa el
-     centro (~28-65% de ancho, desde ~12% de alto) y no se toca. */
+     cuadro: se funden por los cuatro lados (intersectados). Los laterales van
+     hasta el 24% porque la viñeta del video no coincide con el fondo del hero y
+     con menos se notaba el rectángulo. El perro ocupa el centro (~31-63% de
+     ancho, ~12-93% de alto) y no se toca. */
   .hero-video {
     -webkit-mask-image:
-      linear-gradient(to bottom, transparent 0%, #000 11%),
-      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      linear-gradient(to bottom, transparent 0%, #000 11%, #000 93%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 24%, #000 76%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-image:
-      linear-gradient(to bottom, transparent 0%, #000 11%),
-      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      linear-gradient(to bottom, transparent 0%, #000 11%, #000 93%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 24%, #000 76%, transparent 100%);
     mask-composite: intersect;
   }
 }
