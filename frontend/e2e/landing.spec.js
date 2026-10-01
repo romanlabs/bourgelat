@@ -26,23 +26,13 @@ test.describe('Landing page — integración', () => {
     expect(cls).toBeLessThan(0.1)
   })
 
-  test('DogTug canvas es visible en #contacto', async ({ page }) => {
+  // #contacto ya no usa el canvas de DogTug: cierra con la imagen del perro que
+  // se despide (desde md; en movil se oculta para no competir con los CTAs).
+  test('el perro de despedida se ve en #contacto', async ({ page }) => {
     await page.goto('/')
     await page.locator('#contacto').scrollIntoViewIfNeeded()
-    const canvas = page.locator('#contacto canvas')
-    await expect(canvas).toBeVisible()
-  })
-
-  test('DogTug responde a mousedown (cursor cambia)', async ({ page }) => {
-    await page.goto('/')
-    await page.locator('#contacto').scrollIntoViewIfNeeded()
-    const canvas = page.locator('#contacto canvas')
-    await expect(canvas).toBeVisible()
-    const box = await canvas.boundingBox()
-    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.75)
-    await page.mouse.down()
-    const cursor = await canvas.evaluate(c => c.style.cursor || window.getComputedStyle(c).cursor)
-    expect(['grab', 'grabbing', 'default', 'none', '']).toContain(cursor)
-    await page.mouse.up()
+    const perro = page.locator('#contacto img.contact-dog')
+    await expect(perro).toBeVisible()
+    await expect.poll(() => perro.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true)
   })
 })

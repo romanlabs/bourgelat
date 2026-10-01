@@ -1,5 +1,9 @@
-// Botón flotante de soporte por WhatsApp. Fijo abajo a la derecha; permanece
-// visible al hacer scroll (position: fixed).
+import { useEffect, useState } from "react"
+
+// Botón flotante de soporte por WhatsApp. Fijo abajo a la derecha, pero se
+// oculta donde estorbaría: sobre el hero (en móvil taparía sus CTAs) y desde
+// Contacto hasta el final, que ya tienen sus propios botones y el correo.
+// Solo vive en la landing, que siempre tiene #hero y #contacto.
 // TODO: reemplazar PLACEHOLDER por el número real de soporte en formato
 // internacional sin "+", espacios ni guiones (ej. 573001112233).
 const WHATSAPP_NUMBER = '573000000000' // ← PLACEHOLDER
@@ -7,6 +11,33 @@ const WHATSAPP_MESSAGE = 'Hola, quiero saber más sobre Bourgelat.'
 
 export default function WhatsAppFab() {
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
+  const [sobreHero, setSobreHero] = useState(true)
+  const [enCierre, setEnCierre] = useState(false)
+
+  useEffect(() => {
+    const hero = document.getElementById('hero')
+    const contacto = document.getElementById('contacto')
+    // El hero "tapa" mientras ocupe la mitad superior de la pantalla.
+    const heroObserver = hero
+      ? new IntersectionObserver(([entry]) => setSobreHero(entry.isIntersecting), {
+          rootMargin: '0px 0px -50% 0px',
+        })
+      : null
+    // Desde que Contacto asoma y durante todo el footer (queda por encima).
+    const contactoObserver = contacto
+      ? new IntersectionObserver(([entry]) =>
+          setEnCierre(entry.isIntersecting || entry.boundingClientRect.top < 0)
+        )
+      : null
+    heroObserver?.observe(hero)
+    contactoObserver?.observe(contacto)
+    return () => {
+      heroObserver?.disconnect()
+      contactoObserver?.disconnect()
+    }
+  }, [])
+
+  const oculto = sobreHero || enCierre
 
   return (
     <a
@@ -14,7 +45,13 @@ export default function WhatsAppFab() {
       target="_blank"
       rel="noreferrer"
       aria-label="Escríbenos por WhatsApp"
-      className="group fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition-transform duration-300 ease-out hover:scale-105 sm:bottom-6 sm:right-6"
+      aria-hidden={oculto || undefined}
+      tabIndex={oculto ? -1 : undefined}
+      className={`group fixed right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition-[opacity,transform] duration-300 ease-out hover:scale-105 sm:right-6 sm:h-14 sm:w-14 ${
+        oculto ? 'pointer-events-none translate-y-3 opacity-0' : 'opacity-100'
+      }`}
+      // El área segura del iPhone (barra de inicio) se suma al margen inferior.
+      style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
     >
       <span
         className="absolute inset-0 rounded-full bg-[#25D366] opacity-20 motion-safe:animate-ping"
@@ -23,7 +60,7 @@ export default function WhatsAppFab() {
       />
       <svg
         viewBox="0 0 24 24"
-        className="relative h-7 w-7"
+        className="relative h-6 w-6 sm:h-7 sm:w-7"
         fill="currentColor"
         aria-hidden="true"
       >

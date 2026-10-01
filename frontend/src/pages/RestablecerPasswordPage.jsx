@@ -89,7 +89,7 @@ export default function RestablecerPasswordPage() {
 
             <h1
               className="mt-3 text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-[#2b2018]"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
             >
               Crea tu nueva contraseña
             </h1>

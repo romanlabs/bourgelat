@@ -50,7 +50,10 @@ export default function TrustBar() {
       className="relative -mt-px overflow-hidden pb-8 pt-0 text-[#2b2018] sm:py-9 lg:py-10"
     >
       <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-0 sm:gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
+        {/* grid-cols-1 (minmax(0,1fr)) y min-w-0 en el marquee: sin ellos la pista
+            del marquee (width: max-content) ensancha la columna mas alla de la
+            pantalla y el titulo centrado queda corrido y cortado en movil. */}
+        <div className="grid grid-cols-1 items-center gap-0 sm:gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
           <div className="mx-auto max-w-[23rem] text-center lg:mx-0 lg:text-left">
             <p
               className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]"
@@ -60,7 +63,7 @@ export default function TrustBar() {
             </p>
             <h2
               className="mx-auto mt-2.5 max-w-[20rem] text-[1.45rem] leading-[1.08] tracking-[-0.03em] text-[#2b2018] sm:text-[1.65rem] lg:mx-0"
-              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
+              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, ...fadeIn(100) }}
             >
               Infraestructura seria para una clínica que ya funciona.
             </h2>
@@ -73,6 +76,7 @@ export default function TrustBar() {
           </div>
 
           <div
+            className="min-w-0"
             style={{
               opacity: visible ? 1 : 0,
               transition: visible ? 'opacity 900ms ease 350ms' : 'none',
@@ -90,18 +94,20 @@ export default function TrustBar() {
               </div>
             </div>
 
-            {/* Desktop: logos + chips de texto para llenar la fila */}
-            <div className="hidden items-stretch lg:flex lg:flex-nowrap lg:justify-between">
+            {/* Desktop: logos + chips de texto para llenar la fila. Los chips solo
+                desde xl: entre 1024 y 1279 no caben y se partían en tres líneas. */}
+            <div className="hidden items-stretch lg:flex lg:flex-nowrap lg:justify-center xl:justify-between">
               {TRUST_LOGOS.map((logo, i) => (
                 <div key={logo.alt} className="flex items-stretch">
                   <TrustLogo logo={logo} />
-                  <div className="flex items-center">
+                  {/* El separador tras el último logo solo tiene sentido si siguen los chips. */}
+                  <div className={`items-center ${i < TRUST_LOGOS.length - 1 ? 'flex' : 'hidden xl:flex'}`}>
                     <div style={{ width: 1, height: 30, backgroundColor: 'rgba(43,32,24,0.12)' }} />
                   </div>
                 </div>
               ))}
               {TRUST_CHIPS.map((chip, i) => (
-                <div key={chip} className="flex items-stretch">
+                <div key={chip} className="hidden items-stretch xl:flex">
                   <div className="flex min-w-[148px] flex-col items-center justify-center px-5 sm:min-w-[176px] sm:px-7">
                     <div className="flex h-12 items-center justify-center">
                       <span className="text-center text-[13px] font-semibold leading-snug text-[#2b2018]">{chip}</span>
