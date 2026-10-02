@@ -91,40 +91,57 @@ bourgelat/
 
 ## Paleta de colores y tokens de diseño
 
-Los valores reales están en `frontend/src/index.css` como variables CSS HSL,
-y se referencian en Tailwind vía `hsl(var(--nombre))`.
+Identidad **«Papel y pulso»**: la calidez de la ficha de papel con la precisión
+de la historia clínica. Los valores reales están en `frontend/src/index.css`
+(`:root` y `.dark`) como variables HSL; Tailwind las expone en
+`tailwind.config.cjs` y las escalas fijas viven en `theme.tokens.cjs`.
 
-### Modo claro (light)
+### Roles (no mezclarlos)
+- **Tinta** (`foreground`, `sidebar`): estructura, es decir, texto, sidebar y botón secundario
+- **Caramelo** (`brand`): la firma de marca. Pulso ECG, eyebrows, ítem activo del sidebar y foco. **Nunca un botón de acción**
+- **Pino** (`primary`): acción y estado «saludable / confirmada»
+- **Estados**: `success` · `warning` · `danger` · `info`, cada uno con su fondo `-soft`
+  (`bg-danger-soft text-danger`, `border-warning/30`…). Usarlos en vez de las paletas
+  crudas de Tailwind (`red-*`, `amber-*`, `emerald-*`, `cyan-*`…)
+
+### Modo claro
 | Token | Valor HSL | Uso |
 |-------|-----------|-----|
-| `--background` | `214 49% 97%` | Fondo global (`#f4f7fb`) |
-| `--foreground` | `210 55% 15%` | Texto principal (`#112739`) |
-| `--primary` | `160 84% 39%` | Verde esmeralda — CTA, acciones primarias |
-| `--primary-foreground` | `0 0% 100%` | Texto sobre primary |
-| `--secondary` | `152 60% 94%` | Verde pálido — fondos suaves |
-| `--accent` | `214 80% 95%` | Azul pálido — highlights |
-| `--muted` | `214 30% 94%` | Fondos apagados |
-| `--muted-foreground` | `210 20% 45%` | Texto secundario |
-| `--border` | `208 35% 88%` | Bordes |
-| `--sidebar` | `206 61% 18%` | Sidebar oscuro azul marino (`#082033`) |
+| `--background` | `36 42% 95%` | Papel (`#f8f4ee`) |
+| `--card` / `--popover` | `40 100% 99%` | Hoja (`#fffdf9`) |
+| `--foreground` | `209 57% 15%` | Tinta (`#10263a`) |
+| `--muted` / `--secondary` | `36 30% 91%` | Fondos apagados |
+| `--muted-foreground` | `206 14% 41%` | Texto secundario (`#5a6b78`, 5:1) |
+| `--border` / `--input` | `37 28% 85%` / `36 23% 79%` | Líneas |
+| `--primary` | `160 60% 30%` | Pino (`#1f7a5c`, 5,3:1 con blanco) |
+| `--brand` / `--brand-foreground` | `27 44% 48%` / `28 48% 36%` | Caramelo / caramelo para texto pequeño |
+| `--ring` | `27 44% 48%` | Foco en caramelo |
+| `--success` · `-soft` | `160 60% 30%` · `149 32% 93%` | Pino |
+| `--warning` · `-soft` | `37 87% 30%` · `38 80% 92%` | Miel |
+| `--danger` · `-soft` (= `--destructive`) | `8 59% 45%` · `13 63% 93%` | Ladrillo |
+| `--info` · `-soft` | `200 51% 37%` · `199 42% 93%` | Petróleo |
+| `--sidebar` | `207 55% 10%` | Noche (`#0b1a26`), activo en caramelo claro |
 
-### Modo oscuro (dark)
-| Token | Valor HSL | Uso |
-|-------|-----------|-----|
-| `--background` | `222 84% 5%` | Fondo oscuro |
-| `--primary` | `174 72% 56%` | Verde agua — en modo oscuro |
-| `--sidebar` | `222 47% 11%` | Sidebar oscuro profundo |
+### Modo oscuro
+Es la misma marca de noche: los mismos roles con valores más claros.
+| Token | Valor HSL |
+|-------|-----------|
+| `--background` / `--card` | `207 48% 9%` / `206 42% 13%` |
+| `--foreground` | `38 29% 89%` |
+| `--primary` | `156 47% 57%` |
+| `--brand` | `29 59% 64%` |
+| `--success` · `--warning` · `--danger` · `--info` | `156 47% 57%` · `38 80% 62%` · `8 75% 68%` · `200 55% 65%` |
 
-### Colores de marca en la landing (hardcoded)
-Usados directamente en `LandingPage.jsx` y componentes de marketing:
-- `#06111c` — Hero fondo (azul noche muy oscuro)
-- `#07131f` — Secciones oscuras
-- `#10263a` — Texto principal oscuro
-- `#f4f7fb` — Fondo claro general
-- `#91e7e0` — Cyan menta — eyebrows y acentos en fondo oscuro
-- `#effaf8` — Verde muy pálido — botón CTA claro
-- `#3a6d87` — Azul petróleo — iconos y elementos secundarios
-- `#51697d` — Gris azulado — texto de cuerpo
+### Dónde se usa cada cosa
+- **App y páginas de cuenta**: tokens del tema (siguen el modo oscuro).
+- **Páginas públicas y de error** (legales, `/nosotros`): escalas fijas `papel-*`,
+  `tinta-*`, `caramel-*`, `clinical-*`. Siempre en claro, como la landing.
+- **Gráficas**: `chartColors` de `@/lib/theme` (hex fijos de `theme.tokens.cjs`,
+  porque Recharts los pone como atributos SVG).
+- **Landing y `/planes`**: todavía con hex propios (en la paleta, pero sin tokens).
+
+`npm run lint:colores` (frontend) falla con colores sueltos fuera de los archivos
+exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
 
 ### Tipografía
 - **Sans**: `Geist Variable` — UI y cuerpo

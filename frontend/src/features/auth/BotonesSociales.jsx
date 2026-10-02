@@ -75,7 +75,7 @@ export default function BotonesSociales({ contexto = 'registro' }) {
           key={id}
           type="button"
           onClick={() => abrirPopupOauth(`${API_URL}/auth/oauth/${id}`)}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-[#2b2018]/15 bg-transparent px-4 text-sm font-medium text-[#2b2018] transition hover:border-[#2b2018]/30 hover:bg-[#2b2018]/[0.03]"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-foreground/15 bg-transparent px-4 text-sm font-medium text-foreground transition hover:border-foreground/30 hover:bg-foreground/[0.03]"
         >
           <ProviderIcon id={id} />
           {accion} con {label}

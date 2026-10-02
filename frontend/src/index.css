@@ -57,96 +57,116 @@
   to { opacity: 0; }
 }
 
-/* Posición del video/imagen de login: centrado en desktop, animales visibles en móvil */
-.login-media { object-position: 70% 45%; }
-@media (min-width: 1024px) {
-  .login-media { object-position: center; }
-}
-
-/* Neutraliza el azul del autofill del navegador en los inputs del login */
+/* Neutraliza el azul del autofill del navegador: el campo conserva el fondo y
+   el texto del tema (en oscuro también, antes quedaba un parche crema). */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #fdf8f3 inset;
-  -webkit-text-fill-color: #2b2018;
+  -webkit-box-shadow: 0 0 0px 1000px hsl(var(--background)) inset;
+  -webkit-text-fill-color: hsl(var(--foreground));
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Paleta «Papel y pulso». Roles:
+   - tinta (foreground, sidebar) = estructura
+   - brand (caramelo)            = firma: pulso, eyebrows, foco. Nunca un botón
+   - primary (pino)              = acción y "saludable/confirmada"
+   - success/warning/danger/info = estados, cada uno con su fondo -soft */
 :root {
-  --background: 214 25% 97%;
-  --foreground: 210 55% 15%;
-  --card: 0 0% 100%;
-  --card-foreground: 210 55% 15%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 210 55% 15%;
-  --primary: 160 84% 39%;
+  --background: 36 42% 95%;        /* papel #f8f4ee */
+  --foreground: 209 57% 15%;       /* tinta #10263a */
+  --card: 40 100% 99%;             /* hoja #fffdf9 */
+  --card-foreground: 209 57% 15%;
+  --popover: 40 100% 99%;
+  --popover-foreground: 209 57% 15%;
+  --primary: 160 60% 30%;          /* pino #1f7a5c */
   --primary-foreground: 0 0% 100%;
-  --secondary: 152 60% 94%;
-  --secondary-foreground: 163 78% 20%;
-  --muted: 214 20% 94%;
-  --muted-foreground: 210 20% 45%;
-  --accent: 214 80% 95%;
-  --accent-foreground: 221 70% 35%;
-  --destructive: 2 72% 55%;
+  --secondary: 36 30% 91%;
+  --secondary-foreground: 209 57% 15%;
+  --muted: 36 30% 91%;
+  --muted-foreground: 206 14% 41%; /* tinta suave #5a6b78 */
+  --accent: 30 60% 94%;
+  --accent-foreground: 28 48% 36%;
+  --destructive: 8 59% 45%;
   --destructive-foreground: 0 0% 100%;
-  --border: 208 25% 88%;
-  --input: 208 25% 88%;
-  --ring: 160 70% 55%;
-  --caramel: 27 44% 48%;
+  --border: 37 28% 85%;            /* línea #e4dccf */
+  --input: 36 23% 79%;
+  --ring: 27 44% 48%;
+  --brand: 27 44% 48%;             /* caramelo #b07645 */
+  --brand-foreground: 28 48% 36%;  /* caramelo para texto #8a5a30 */
+  --brand-muted: 27 55% 94%;
+  --caramel: var(--brand);
   --caramel-foreground: 0 0% 100%;
-  --caramel-muted: 27 55% 94%;
-  --chart-1: 160 84% 39%;
-  --chart-2: 221 83% 53%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 160 60% 65%;
-  --chart-5: 221 60% 75%;
+  --caramel-muted: var(--brand-muted);
+  --success: 160 60% 30%;
+  --success-soft: 149 32% 93%;
+  --warning: 37 87% 30%;
+  --warning-soft: 38 80% 92%;
+  --danger: 8 59% 45%;
+  --danger-soft: 13 63% 93%;
+  --info: 200 51% 37%;
+  --info-soft: 199 42% 93%;
+  --chart-1: 160 60% 30%;
+  --chart-2: 200 51% 37%;
+  --chart-3: 27 44% 48%;
+  --chart-4: 38 70% 55%;
+  --chart-5: 206 14% 41%;
   --radius: 0.625rem;
-  --sidebar: 206 61% 18%;
-  --sidebar-foreground: 206 54% 97%;
-  --sidebar-primary: 207 70% 41%;
-  --sidebar-primary-foreground: 210 100% 98%;
-  --sidebar-accent: 204 60% 25%;
-  --sidebar-accent-foreground: 206 54% 97%;
-  --sidebar-border: 207 47% 25%;
-  --sidebar-ring: 204 52% 71%;
+  --sidebar: 207 55% 10%;          /* noche #0b1a26 */
+  --sidebar-foreground: 207 20% 82%;
+  --sidebar-primary: 29 59% 64%;   /* caramelo claro #d9a06b */
+  --sidebar-primary-foreground: 207 55% 10%;
+  --sidebar-accent: 206 42% 13%;
+  --sidebar-accent-foreground: 37 41% 93%;
+  --sidebar-border: 206 39% 19%;
+  --sidebar-ring: 29 59% 64%;
 }
 
 .dark {
-  --background: 222 84% 5%;
-  --foreground: 210 40% 98%;
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 174 72% 56%;
-  --primary-foreground: 222 47% 11%;
-  --secondary: 217 33% 18%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 33% 18%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 18%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217 33% 18%;
-  --input: 217 33% 18%;
-  --ring: 174 72% 56%;
-  --caramel: 27 55% 58%;
+  --background: 207 48% 9%;
+  --foreground: 38 29% 89%;
+  --card: 206 42% 13%;
+  --card-foreground: 38 29% 89%;
+  --popover: 206 42% 13%;
+  --popover-foreground: 38 29% 89%;
+  --primary: 156 47% 57%;
+  --primary-foreground: 207 55% 10%;
+  --secondary: 207 37% 21%;
+  --secondary-foreground: 38 29% 89%;
+  --muted: 207 37% 21%;
+  --muted-foreground: 206 19% 68%;
+  --accent: 27 30% 18%;
+  --accent-foreground: 29 59% 64%;
+  --destructive: 8 59% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 207 37% 21%;
+  --input: 207 37% 24%;
+  --ring: 29 59% 64%;
+  --brand: 29 59% 64%;
+  --brand-foreground: 29 59% 64%;
+  --brand-muted: 27 30% 15%;
   --caramel-foreground: 27 20% 10%;
-  --caramel-muted: 27 30% 15%;
-  --chart-1: 221 83% 53%;
-  --chart-2: 212 95% 68%;
-  --chart-3: 173 58% 39%;
-  --chart-4: 197 37% 24%;
-  --chart-5: 212 27% 84%;
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 221 83% 53%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 217 33% 18%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 18%;
-  --sidebar-ring: 213 27% 84%;
+  --success: 156 47% 57%;
+  --success-soft: 156 35% 16%;
+  --warning: 38 80% 62%;
+  --warning-soft: 38 50% 16%;
+  --danger: 8 75% 68%;
+  --danger-soft: 8 45% 18%;
+  --info: 200 55% 65%;
+  --info-soft: 200 40% 18%;
+  --chart-1: 156 47% 57%;
+  --chart-2: 200 55% 65%;
+  --chart-3: 29 59% 64%;
+  --chart-4: 38 80% 62%;
+  --chart-5: 206 19% 68%;
+  --sidebar: 207 55% 7%;
+  --sidebar-foreground: 207 20% 82%;
+  --sidebar-primary: 29 59% 64%;
+  --sidebar-primary-foreground: 207 55% 10%;
+  --sidebar-accent: 206 42% 13%;
+  --sidebar-accent-foreground: 37 41% 93%;
+  --sidebar-border: 206 39% 19%;
+  --sidebar-ring: 29 59% 64%;
 }
 
 @layer base {
@@ -192,340 +212,6 @@ input:-webkit-autofill:focus {
 
 .dark .admin-workspace {
   color-scheme: dark;
-}
-
-.admin-workspace .bg-white {
-  background-color: hsl(var(--card));
-}
-
-.admin-workspace .bg-slate-50,
-.admin-workspace .bg-slate-100,
-.admin-workspace .bg-gray-50,
-.admin-workspace .bg-gray-100,
-.admin-workspace .bg-zinc-50,
-.admin-workspace .bg-zinc-100,
-.admin-workspace .bg-neutral-50,
-.admin-workspace .bg-neutral-100,
-.admin-workspace [class~="bg-[#f6f8fb]"] {
-  background-color: hsl(var(--muted) / 0.58);
-}
-
-.admin-workspace .bg-slate-200,
-.admin-workspace .bg-gray-200,
-.admin-workspace .bg-zinc-200,
-.admin-workspace .bg-neutral-200 {
-  background-color: hsl(var(--muted));
-}
-
-.admin-workspace .border-slate-200,
-.admin-workspace .border-slate-300,
-.admin-workspace .border-gray-200,
-.admin-workspace .border-gray-300,
-.admin-workspace .border-zinc-200,
-.admin-workspace .border-zinc-300,
-.admin-workspace .border-neutral-200,
-.admin-workspace .border-neutral-300 {
-  border-color: hsl(var(--border));
-}
-
-.admin-workspace .border-slate-800,
-.admin-workspace .border-slate-900,
-.admin-workspace .border-gray-800,
-.admin-workspace .border-gray-900,
-.admin-workspace .border-zinc-800,
-.admin-workspace .border-zinc-900,
-.admin-workspace .border-neutral-800,
-.admin-workspace .border-neutral-900 {
-  border-color: hsl(var(--foreground));
-}
-
-.admin-workspace .text-slate-950,
-.admin-workspace .text-slate-900,
-.admin-workspace .text-slate-800,
-.admin-workspace .text-slate-700,
-.admin-workspace .text-gray-950,
-.admin-workspace .text-gray-900,
-.admin-workspace .text-gray-800,
-.admin-workspace .text-gray-700,
-.admin-workspace .text-zinc-950,
-.admin-workspace .text-zinc-900,
-.admin-workspace .text-zinc-800,
-.admin-workspace .text-zinc-700,
-.admin-workspace .text-neutral-950,
-.admin-workspace .text-neutral-900,
-.admin-workspace .text-neutral-800,
-.admin-workspace .text-neutral-700 {
-  color: hsl(var(--foreground));
-}
-
-.admin-workspace .text-slate-600,
-.admin-workspace .text-slate-500,
-.admin-workspace .text-slate-400,
-.admin-workspace .text-gray-600,
-.admin-workspace .text-gray-500,
-.admin-workspace .text-gray-400,
-.admin-workspace .text-zinc-600,
-.admin-workspace .text-zinc-500,
-.admin-workspace .text-zinc-400,
-.admin-workspace .text-neutral-600,
-.admin-workspace .text-neutral-500,
-.admin-workspace .text-neutral-400 {
-  color: hsl(var(--muted-foreground));
-}
-
-.admin-workspace .hover\:bg-white:hover,
-.admin-workspace .hover\:bg-slate-50:hover,
-.admin-workspace .hover\:bg-gray-50:hover,
-.admin-workspace .hover\:bg-zinc-50:hover,
-.admin-workspace .hover\:bg-neutral-50:hover {
-  background-color: hsl(var(--muted));
-}
-
-.admin-workspace .hover\:border-slate-900:hover,
-.admin-workspace .hover\:border-gray-900:hover,
-.admin-workspace .hover\:border-zinc-900:hover,
-.admin-workspace .hover\:border-neutral-900:hover {
-  border-color: hsl(var(--foreground));
-}
-
-.admin-workspace .hover\:text-slate-900:hover,
-.admin-workspace .hover\:text-slate-800:hover,
-.admin-workspace .hover\:text-gray-900:hover,
-.admin-workspace .hover\:text-gray-800:hover,
-.admin-workspace .hover\:text-zinc-900:hover,
-.admin-workspace .hover\:text-zinc-800:hover,
-.admin-workspace .hover\:text-neutral-900:hover,
-.admin-workspace .hover\:text-neutral-800:hover {
-  color: hsl(var(--foreground));
-}
-
-.dark .admin-workspace .bg-amber-50 {
-  background-color: rgb(120 53 15 / 0.32);
-}
-
-.dark .admin-workspace .border-amber-200,
-.dark .admin-workspace .border-amber-300,
-.dark .admin-workspace .border-amber-500 {
-  border-color: rgb(245 158 11 / 0.48);
-}
-
-.dark .admin-workspace .text-amber-700,
-.dark .admin-workspace .text-amber-800,
-.dark .admin-workspace .hover\:text-amber-800:hover {
-  color: rgb(252 211 77);
-}
-
-.dark .admin-workspace .hover\:text-amber-950:hover {
-  color: rgb(255 251 235);
-}
-
-.dark .admin-workspace .decoration-amber-400 {
-  text-decoration-color: rgb(252 211 77 / 0.6);
-}
-
-.dark .admin-workspace .bg-emerald-50 {
-  background-color: rgb(6 78 59 / 0.34);
-}
-
-.dark .admin-workspace .border-emerald-200,
-.dark .admin-workspace .border-emerald-300 {
-  border-color: rgb(16 185 129 / 0.48);
-}
-
-.dark .admin-workspace .text-emerald-700,
-.dark .admin-workspace .text-emerald-800,
-.dark .admin-workspace .hover\:text-emerald-800:hover {
-  color: rgb(110 231 183);
-}
-
-.dark .admin-workspace .bg-cyan-50,
-.dark .admin-workspace .bg-teal-50 {
-  background-color: rgb(21 94 117 / 0.32);
-}
-
-.dark .admin-workspace .border-cyan-200,
-.dark .admin-workspace .border-cyan-300,
-.dark .admin-workspace .border-cyan-500,
-.dark .admin-workspace .border-teal-200 {
-  border-color: rgb(34 211 238 / 0.44);
-}
-
-.dark .admin-workspace .text-cyan-700,
-.dark .admin-workspace .text-cyan-800,
-.dark .admin-workspace .text-teal-700,
-.dark .admin-workspace .hover\:text-cyan-800:hover {
-  color: rgb(103 232 249);
-}
-
-.dark .admin-workspace .bg-red-50,
-.dark .admin-workspace .bg-rose-50 {
-  background-color: rgb(127 29 29 / 0.32);
-}
-
-.dark .admin-workspace .border-red-200,
-.dark .admin-workspace .border-rose-200 {
-  border-color: rgb(248 113 113 / 0.44);
-}
-
-.dark .admin-workspace .text-red-700,
-.dark .admin-workspace .text-red-800,
-.dark .admin-workspace .text-rose-700,
-.dark .admin-workspace .text-rose-800,
-.dark .admin-workspace .hover\:text-red-800:hover,
-.dark .admin-workspace .hover\:text-rose-800:hover {
-  color: rgb(252 165 165);
-}
-
-.dark .admin-workspace .bg-blue-50 {
-  background-color: rgb(30 64 175 / 0.28);
-}
-
-.dark .admin-workspace .border-blue-200 {
-  border-color: rgb(96 165 250 / 0.42);
-}
-
-.dark .admin-workspace .text-blue-700,
-.dark .admin-workspace .text-blue-800 {
-  color: rgb(147 197 253);
-}
-
-.dark .admin-workspace .bg-green-50 {
-  background-color: rgb(20 83 45 / 0.32);
-}
-
-.dark .admin-workspace .border-green-200,
-.dark .admin-workspace .border-green-300,
-.dark .admin-workspace .border-green-500 {
-  border-color: rgb(74 222 128 / 0.46);
-}
-
-.dark .admin-workspace .text-green-700,
-.dark .admin-workspace .text-green-800,
-.dark .admin-workspace .hover\:text-green-800:hover {
-  color: rgb(134 239 172);
-}
-
-.dark .admin-workspace .bg-yellow-50 {
-  background-color: rgb(113 63 18 / 0.32);
-}
-
-.dark .admin-workspace .border-yellow-200,
-.dark .admin-workspace .border-yellow-300,
-.dark .admin-workspace .border-yellow-500 {
-  border-color: rgb(250 204 21 / 0.46);
-}
-
-.dark .admin-workspace .text-yellow-700,
-.dark .admin-workspace .text-yellow-800,
-.dark .admin-workspace .hover\:text-yellow-800:hover {
-  color: rgb(253 224 71);
-}
-
-.dark .admin-workspace .bg-orange-50 {
-  background-color: rgb(124 45 18 / 0.32);
-}
-
-.dark .admin-workspace .border-orange-200,
-.dark .admin-workspace .border-orange-300,
-.dark .admin-workspace .border-orange-500 {
-  border-color: rgb(251 146 60 / 0.46);
-}
-
-.dark .admin-workspace .text-orange-700,
-.dark .admin-workspace .text-orange-800,
-.dark .admin-workspace .hover\:text-orange-800:hover {
-  color: rgb(253 186 116);
-}
-
-.dark .admin-workspace .bg-purple-50 {
-  background-color: rgb(88 28 135 / 0.32);
-}
-
-.dark .admin-workspace .border-purple-200,
-.dark .admin-workspace .border-purple-300,
-.dark .admin-workspace .border-purple-500 {
-  border-color: rgb(192 132 252 / 0.46);
-}
-
-.dark .admin-workspace .text-purple-700,
-.dark .admin-workspace .text-purple-800,
-.dark .admin-workspace .hover\:text-purple-800:hover {
-  color: rgb(216 180 254);
-}
-
-.dark .admin-workspace .bg-indigo-50 {
-  background-color: rgb(49 46 129 / 0.32);
-}
-
-.dark .admin-workspace .border-indigo-200,
-.dark .admin-workspace .border-indigo-300,
-.dark .admin-workspace .border-indigo-500 {
-  border-color: rgb(129 140 248 / 0.46);
-}
-
-.dark .admin-workspace .text-indigo-700,
-.dark .admin-workspace .text-indigo-800,
-.dark .admin-workspace .hover\:text-indigo-800:hover {
-  color: rgb(165 180 252);
-}
-
-.dark .admin-workspace .bg-violet-50 {
-  background-color: rgb(76 29 149 / 0.32);
-}
-
-.dark .admin-workspace .border-violet-200,
-.dark .admin-workspace .border-violet-300,
-.dark .admin-workspace .border-violet-500 {
-  border-color: rgb(167 139 250 / 0.46);
-}
-
-.dark .admin-workspace .text-violet-700,
-.dark .admin-workspace .text-violet-800,
-.dark .admin-workspace .hover\:text-violet-800:hover {
-  color: rgb(196 181 253);
-}
-
-.dark .admin-workspace .bg-fuchsia-50 {
-  background-color: rgb(112 26 117 / 0.32);
-}
-
-.dark .admin-workspace .border-fuchsia-200,
-.dark .admin-workspace .border-fuchsia-300,
-.dark .admin-workspace .border-fuchsia-500 {
-  border-color: rgb(232 121 249 / 0.46);
-}
-
-.dark .admin-workspace .text-fuchsia-700,
-.dark .admin-workspace .text-fuchsia-800,
-.dark .admin-workspace .hover\:text-fuchsia-800:hover {
-  color: rgb(240 171 252);
-}
-
-/* Fondos de "hover" en tono claro (bg-*-100/200) que se usan junto a los
-   bg-*-50 de arriba — en modo oscuro se recolorean al mismo tinte, un poco
-   más opaco para que se note el estado interactivo. */
-.dark .admin-workspace .hover\:bg-amber-200:hover {
-  background-color: rgb(120 53 15 / 0.42);
-}
-
-.dark .admin-workspace .hover\:bg-emerald-100:hover {
-  background-color: rgb(6 78 59 / 0.42);
-}
-
-.dark .admin-workspace .hover\:bg-red-100:hover {
-  background-color: rgb(127 29 29 / 0.42);
-}
-
-.dark .admin-workspace .hover\:bg-orange-100:hover {
-  background-color: rgb(124 45 18 / 0.42);
-}
-
-.dark .admin-workspace .hover\:bg-blue-100:hover {
-  background-color: rgb(30 64 175 / 0.38);
-}
-
-.dark .admin-workspace .hover\:bg-violet-100:hover {
-  background-color: rgb(76 29 149 / 0.42);
 }
 
 /* ── Flow carousel (#flujo) ─────────────────────────────────── */

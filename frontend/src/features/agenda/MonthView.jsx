@@ -41,7 +41,7 @@ function DiaCell({
         'relative flex min-h-[76px] flex-col gap-0.5 border-b border-r border-border p-1 sm:min-h-[92px]',
         !delMes && 'bg-muted/30',
         esHoy && 'bg-primary/5',
-        bloqueo && 'bg-amber-50 dark:bg-amber-950/30',
+        bloqueo && 'bg-warning-soft',
         clickeable && 'cursor-pointer transition-colors hover:bg-accent/30'
       )}
       onClick={() => {
@@ -75,7 +75,7 @@ function DiaCell({
       </button>
 
       {bloqueo ? (
-        <p className="truncate rounded-sm bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+        <p className="truncate rounded-sm bg-warning-soft px-1 py-px text-[10px] font-semibold text-warning">
           {bloqueo.motivo}
         </p>
       ) : null}

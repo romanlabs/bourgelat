@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { formatearEdad } from '@/lib/utils'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
@@ -86,9 +87,9 @@ export function usePacientesMascotas({ enabled }) {
   })
 
   function invalidarMascotas() {
-    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
-    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas-resumen'] })
-    queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+    // Todo el dominio: perfil del paciente, selectores de agenda y busqueda global
+    // muestran la misma mascota con claves propias.
+    invalidarDominios(queryClient, 'pacientes')
   }
 
   const crearMascotaMutation = useMutation({
@@ -118,12 +119,12 @@ export function usePacientesMascotas({ enabled }) {
       (mascotasQuery.data?.mascotas || []).map((mascota) => {
         const fichaInfo =
           historiasDisponibles && antecedentesDisponibles
-            ? { label: 'Lista para historia y antecedentes', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700' }
+            ? { label: 'Lista para historia y antecedentes', tone: 'border-success/30 bg-success-soft text-success' }
             : historiasDisponibles
-              ? { label: 'Lista para historia clinica', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700' }
+              ? { label: 'Lista para historia clinica', tone: 'border-info/30 bg-info-soft text-info' }
               : antecedentesDisponibles
-                ? { label: 'Lista para antecedentes', tone: 'border-amber-200 bg-amber-50 text-amber-700' }
-                : { label: 'Ficha clinica no incluida', tone: 'border-slate-200 bg-slate-100 text-slate-700' }
+                ? { label: 'Lista para antecedentes', tone: 'border-warning/30 bg-warning-soft text-warning' }
+                : { label: 'Ficha clinica no incluida', tone: 'border-border bg-muted text-foreground' }
 
         return {
           id: mascota.id,

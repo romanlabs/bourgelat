@@ -7,28 +7,28 @@ import { es } from 'date-fns/locale'
 export const ESTADOS_TICKET = {
   abierto: {
     label: 'Abierto',
-    tone: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-900/30 dark:text-sky-200',
-    dot: 'bg-sky-500',
+    tone: 'border-foreground/20 bg-card text-foreground',
+    dot: 'bg-foreground',
   },
   en_progreso: {
     label: 'En progreso',
-    tone: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-600/50 dark:bg-violet-900/30 dark:text-violet-200',
-    dot: 'bg-violet-500',
+    tone: 'border-info/30 bg-info-soft text-info',
+    dot: 'bg-info',
   },
   esperando_usuario: {
     label: 'Esperando tu respuesta',
-    tone: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-600/50 dark:bg-amber-900/30 dark:text-amber-200',
-    dot: 'bg-amber-500',
+    tone: 'border-warning/30 bg-warning-soft text-warning',
+    dot: 'bg-warning',
   },
   resuelto: {
     label: 'Resuelto',
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-600/50 dark:bg-emerald-900/30 dark:text-emerald-200',
-    dot: 'bg-emerald-500',
+    tone: 'border-success/30 bg-success-soft text-success',
+    dot: 'bg-success',
   },
   cerrado: {
     label: 'Cerrado',
     tone: 'border-border bg-muted text-muted-foreground',
-    dot: 'bg-slate-400',
+    dot: 'bg-muted-foreground',
   },
 }
 
@@ -41,9 +41,9 @@ export const CATEGORIAS_TICKET = [
 ]
 
 export const PRIORIDADES_TICKET = [
-  { value: 'baja', label: 'Puedo seguir trabajando', dot: 'bg-slate-400' },
-  { value: 'media', label: 'Me retrasa', dot: 'bg-amber-400' },
-  { value: 'alta', label: 'No puedo trabajar', dot: 'bg-red-500' },
+  { value: 'baja', label: 'Puedo seguir trabajando', dot: 'bg-muted-foreground' },
+  { value: 'media', label: 'Me retrasa', dot: 'bg-warning' },
+  { value: 'alta', label: 'No puedo trabajar', dot: 'bg-danger' },
 ]
 
 export const FILTROS_ESTADO = [

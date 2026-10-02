@@ -121,18 +121,18 @@ function StockBadge({ stock, stockMinimo }) {
   const min = Number(stockMinimo ?? 0)
   if (num === 0)
     return (
-      <span className="inline-flex items-center gap-1 border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
+      <span className="inline-flex items-center gap-1 border border-danger/30 bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
         0 / {min}
       </span>
     )
   if (num <= min)
     return (
-      <span className="inline-flex items-center gap-1 border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1 border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">
         {num} / {min}
       </span>
     )
   return (
-    <span className="inline-flex items-center gap-1 border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+    <span className="inline-flex items-center gap-1 border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
       {num} / {min}
     </span>
   )
@@ -353,12 +353,12 @@ export default function InventarioPage() {
           {(reporteQuery.isError || productosQuery.isError) && (
             <div className="grid gap-3">
               {reporteQuery.isError && (
-                <div className="border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-4 text-sm leading-7 text-amber-800 dark:text-amber-300">
+                <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                   No fue posible cargar el resumen de inventario.
                 </div>
               )}
               {productosQuery.isError && (
-                <div className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-4 py-4 text-sm leading-7 text-red-700 dark:text-red-300">
+                <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                   No fue posible cargar la tabla de productos.
                 </div>
               )}
@@ -398,21 +398,21 @@ export default function InventarioPage() {
                   label="Valor inventariado"
                   value={formatCurrency(resumen.valorTotalInventario || 0)}
                   helper="Valor estimado a precio de venta del inventario cargado."
-                  tone="text-emerald-700 dark:text-emerald-400"
+                  tone="text-success"
                 />
                 <KpiCard
                   icon={CircleAlert}
                   label="Cantidad baja"
                   value={formatNumber(resumen.bajoStock || 0)}
                   helper="Productos por debajo del mínimo definido."
-                  tone="text-amber-700 dark:text-amber-400"
+                  tone="text-warning"
                 />
                 <KpiCard
                   icon={Sparkles}
                   label="Alertas totales"
                   value={formatNumber(alertsRows.length)}
                   helper="Cantidad baja, próximos a vencer y vencidos, de ventas y clínico."
-                  tone="text-rose-700 dark:text-rose-400"
+                  tone="text-danger"
                 />
               </div>
 
@@ -439,10 +439,10 @@ export default function InventarioPage() {
                         <StatusPill
                           tone={
                             row.tipo === 'Vencido'
-                              ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                              ? 'border-danger/30 bg-danger-soft text-danger'
                               : row.tipo === 'Proximo a vencer'
-                                ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
+                                ? 'border-warning/30 bg-warning-soft text-warning'
+                                : 'border-info/30 bg-info-soft text-info'
                           }
                         >
                           {row.tipo}
@@ -485,7 +485,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={() => setSelectorOpen(true)}
-                  className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                  className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
                 >
                   <ArrowLeftRight className="h-4 w-4" />
                   Elegir inventario
@@ -532,7 +532,7 @@ export default function InventarioPage() {
                   <button
                     type="button"
                     onClick={openCreateDrawer}
-                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                    className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
                   >
                     <PackagePlus className="h-4 w-4" />
                     Nuevo producto
@@ -569,10 +569,10 @@ export default function InventarioPage() {
                                 key={`${row.id}-${alerta}`}
                                 tone={
                                   alerta === 'vencido'
-                                    ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                    ? 'border-danger/30 bg-danger-soft text-danger'
                                     : alerta === 'proximo_vencimiento'
-                                      ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                      : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
+                                      ? 'border-warning/30 bg-warning-soft text-warning'
+                                      : 'border-info/30 bg-info-soft text-info'
                                 }
                               >
                                 {alerta.replaceAll('_', ' ')}
@@ -580,7 +580,7 @@ export default function InventarioPage() {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-400">Sin alertas</span>
+                          <span className="text-muted-foreground">Sin alertas</span>
                         ),
                     },
                     {
@@ -598,7 +598,7 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => openEditDrawer(row.raw)}
-                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                            className="text-sm font-semibold text-foreground hover:text-foreground"
                           >
                             Editar
                           </button>
@@ -606,7 +606,7 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => openConfirmDelete(row.raw)}
-                            className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            className="text-sm font-semibold text-danger hover:text-danger"
                           >
                             Desactivar
                           </button>
@@ -657,7 +657,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={insumosClinicosHook.openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
                 >
                   <FlaskConical className="h-4 w-4" />
                   Nuevo insumo clínico
@@ -706,10 +706,10 @@ export default function InventarioPage() {
                                 key={`${row.id}-${alerta}`}
                                 tone={
                                   alerta === 'vencido'
-                                    ? 'border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                    ? 'border-danger/30 bg-danger-soft text-danger'
                                     : alerta === 'proximo_vencimiento'
-                                      ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-                                      : 'border-cyan-200 dark:border-cyan-700/50 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
+                                      ? 'border-warning/30 bg-warning-soft text-warning'
+                                      : 'border-info/30 bg-info-soft text-info'
                                 }
                               >
                                 {alerta.replaceAll('_', ' ')}
@@ -717,7 +717,7 @@ export default function InventarioPage() {
                             ))}
                           </div>
                         ) : (
-                          <span className="text-slate-400">Sin alertas</span>
+                          <span className="text-muted-foreground">Sin alertas</span>
                         ),
                     },
                     {
@@ -728,14 +728,14 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => insumosClinicosHook.openEditDrawer(row.raw)}
-                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                            className="text-sm font-semibold text-foreground hover:text-foreground"
                           >
                             Editar / Comprar
                           </button>
                           <button
                             type="button"
                             onClick={() => insumosClinicosHook.openConfirmDelete(row.raw)}
-                            className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                            className="text-sm font-semibold text-danger hover:text-danger"
                           >
                             Desactivar
                           </button>
@@ -789,7 +789,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={serviciosHook.openCreateDrawer}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
                 >
                   <Plus className="h-4 w-4" />
                   Nuevo servicio
@@ -814,14 +814,14 @@ export default function InventarioPage() {
                         <button
                           type="button"
                           onClick={() => serviciosHook.openEditDrawer(row.raw)}
-                          className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                          className="text-sm font-semibold text-foreground hover:text-foreground"
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => serviciosHook.openConfirmDelete(row.raw)}
-                          className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                          className="text-sm font-semibold text-danger hover:text-danger"
                         >
                           Desactivar
                         </button>
@@ -947,7 +947,7 @@ export default function InventarioPage() {
                     <button
                       type="submit"
                       disabled={isPendingMovement}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingMovement ? 'Registrando...' : 'Registrar movimiento'}
                     </button>
@@ -1042,14 +1042,14 @@ export default function InventarioPage() {
 
               {/* Banner de alertas de pago */}
               {(facturaCompraHook.alertasCompra.totalVencidas > 0 || facturaCompraHook.alertasCompra.totalProximas > 0) && (
-                <div className="flex flex-wrap items-center gap-3 border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                <div className="flex flex-wrap items-center gap-3 border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
                   <CircleAlert className="h-4 w-4 shrink-0" />
                   <span>
                     {facturaCompraHook.alertasCompra.totalVencidas > 0 && (
                       <button
                         type="button"
                         onClick={() => { facturaCompraHook.setFiltroEstado('confirmada'); facturaCompraHook.setPagina(1) }}
-                        className="font-semibold text-red-700 dark:text-red-400 hover:underline mr-2"
+                        className="font-semibold text-danger hover:underline mr-2"
                       >
                         {facturaCompraHook.alertasCompra.totalVencidas} {facturaCompraHook.alertasCompra.totalVencidas === 1 ? 'factura vencida' : 'facturas vencidas'}
                       </button>
@@ -1088,7 +1088,7 @@ export default function InventarioPage() {
                 <button
                   type="button"
                   onClick={facturaCompraHook.abrirNueva}
-                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+                  className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   Nueva factura de compra
@@ -1109,12 +1109,12 @@ export default function InventarioPage() {
                     const enSieteDias = new Date(); enSieteDias.setDate(hoy.getDate() + 7)
                     let plazoBadge = null
                     if (f.pagada) {
-                      plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Pagada · {f.fechaPago}</span>
+                      plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-success-soft text-success">Pagada · {f.fechaPago}</span>
                     } else if (plazo) {
                       if (plazo < hoy) {
-                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Vencida · {f.fechaPagoFinal}</span>
+                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-danger-soft text-danger">Vencida · {f.fechaPagoFinal}</span>
                       } else if (plazo <= enSieteDias) {
-                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">Vence {f.fechaPagoFinal}</span>
+                        plazoBadge = <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-warning-soft text-warning">Vence {f.fechaPagoFinal}</span>
                       } else {
                         plazoBadge = <span className="text-sm text-muted-foreground">{f.fechaPagoFinal}</span>
                       }
@@ -1155,7 +1155,7 @@ export default function InventarioPage() {
                           <button
                             type="button"
                             onClick={() => facturaCompraHook.abrirDetalle(row.raw)}
-                            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                            className="text-sm font-semibold text-foreground hover:text-foreground"
                           >
                             Ver
                           </button>
@@ -1164,7 +1164,7 @@ export default function InventarioPage() {
                               <button
                                 type="button"
                                 onClick={() => facturaCompraHook.abrirEditar(row.raw)}
-                                className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                className="text-sm font-semibold text-foreground hover:text-foreground"
                               >
                                 Editar
                               </button>
@@ -1181,7 +1181,7 @@ export default function InventarioPage() {
                             <button
                               type="button"
                               onClick={() => facturaCompraHook.pedirPagar(row.raw.id)}
-                              className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300"
+                              className="text-sm font-semibold text-success hover:text-success"
                             >
                               Confirmar pago
                             </button>
@@ -1190,7 +1190,7 @@ export default function InventarioPage() {
                             <button
                               type="button"
                               onClick={() => facturaCompraHook.pedirAnular(row.raw.id)}
-                              className="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                              className="text-sm font-semibold text-danger hover:text-danger"
                             >
                               Anular
                             </button>
@@ -1281,7 +1281,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={serviciosHook.confirmDelete}
                 disabled={serviciosHook.isPendingDelete}
-                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
+                className="flex-1 border border-danger/30 bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-danger disabled:opacity-60"
               >
                 {serviciosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>
@@ -1352,8 +1352,8 @@ export default function InventarioPage() {
                 disabled={facturaCompraHook.isActuando}
                 className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
                   facturaCompraHook.confirmDialog.tipo === 'anular'
-                    ? 'border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600'
-                    : 'border border-emerald-300 dark:border-emerald-800 bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600'
+                    ? 'border border-danger/30 bg-danger hover:bg-danger'
+                    : 'border border-success/30 bg-success hover:bg-success'
                 }`}
               >
                 {facturaCompraHook.isActuando
@@ -1396,7 +1396,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={insumosClinicosHook.confirmDelete}
                 disabled={insumosClinicosHook.isPendingDelete}
-                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
+                className="flex-1 border border-danger/30 bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-danger disabled:opacity-60"
               >
                 {insumosClinicosHook.isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>
@@ -1433,7 +1433,7 @@ export default function InventarioPage() {
                 type="button"
                 onClick={confirmDelete}
                 disabled={isPendingDelete}
-                className="flex-1 border border-red-300 dark:border-red-800 bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-60"
+                className="flex-1 border border-danger/30 bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-danger disabled:opacity-60"
               >
                 {isPendingDelete ? 'Desactivando...' : 'Desactivar'}
               </button>

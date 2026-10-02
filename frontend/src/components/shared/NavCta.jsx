@@ -10,7 +10,7 @@ const navCtaVariants = cva(
       tone: {
         primary: 'border-border hover:border-primary/30 hover:shadow-sm',
         destructive:
-          'border-destructive/20 hover:border-destructive/40 hover:shadow-sm dark:border-red-800/60 dark:hover:border-red-600',
+          'border-danger/20 hover:border-danger/40 hover:shadow-sm',
       },
       variant: {
         solid: '',
@@ -33,7 +33,7 @@ const navCtaIconVariants = cva(
       tone: {
         primary: 'bg-primary/10 text-primary group-hover:bg-primary/15',
         destructive:
-          'bg-destructive/10 text-destructive group-hover:bg-destructive/15 dark:bg-red-500/15 dark:text-red-300 dark:group-hover:bg-red-500/25',
+          'bg-danger-soft text-danger group-hover:bg-danger/15',
       },
       size: {
         sm: 'h-6 w-6 [&_svg]:h-3.5 [&_svg]:w-3.5',
@@ -51,7 +51,7 @@ const navCtaLinkVariants = cva(
     variants: {
       tone: {
         primary: 'text-primary',
-        destructive: 'text-destructive dark:text-red-300',
+        destructive: 'text-danger',
       },
       size: {
         sm: 'text-xs',

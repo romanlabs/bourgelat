@@ -47,19 +47,19 @@ const ALMACENAMIENTO_LOCAL = [
 
 function Tabla({ filas, conDuracion }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#d7e4ee]">
+    <div className="overflow-x-auto rounded-xl border border-papel-300">
       <table className="w-full min-w-[520px] text-left text-sm">
-        <thead className="bg-[#f4f7fb] text-[#10263a]">
+        <thead className="bg-papel-100 text-tinta-800">
           <tr>
             <th className="px-4 py-3 font-semibold">Nombre</th>
             <th className="px-4 py-3 font-semibold">Finalidad</th>
             {conDuracion && <th className="px-4 py-3 font-semibold">Duración</th>}
           </tr>
         </thead>
-        <tbody className="text-[#51697d]">
+        <tbody className="text-tinta-500">
           {filas.map((fila) => (
-            <tr key={fila.nombre} className="border-t border-[#d7e4ee] align-top">
-              <td className="px-4 py-3 font-mono text-xs text-[#10263a]">{fila.nombre}</td>
+            <tr key={fila.nombre} className="border-t border-papel-300 align-top">
+              <td className="px-4 py-3 font-mono text-xs text-tinta-800">{fila.nombre}</td>
               <td className="px-4 py-3 leading-6">{fila.finalidad}</td>
               {conDuracion && <td className="whitespace-nowrap px-4 py-3">{fila.duracion}</td>}
             </tr>
@@ -84,7 +84,7 @@ export default function CookiesPage() {
       <div className="grid gap-6">
         <LegalSection numero={1} titulo="Resumen">
           <p className={legalP}>
-            Bourgelat solo usa cookies y almacenamiento local <strong className="text-[#10263a]">estrictamente
+            Bourgelat solo usa cookies y almacenamiento local <strong className="text-tinta-800">estrictamente
             necesarios</strong> para que puedas iniciar sesión y usar la plataforma de forma segura, y para
             recordar algunas preferencias de visualización. No usamos cookies de publicidad, no hacemos
             seguimiento entre sitios y actualmente no usamos herramientas de analítica.

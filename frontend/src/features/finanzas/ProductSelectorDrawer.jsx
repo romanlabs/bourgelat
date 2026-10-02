@@ -221,7 +221,7 @@ export default function ProductSelectorDrawer({
                 type="button"
                 onClick={onBarcodeScan}
                 disabled={buscarProductoPorBarcodeMutation.isPending}
-                className="inline-flex items-center justify-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ScanLine className="h-4 w-4" />
                 {buscarProductoPorBarcodeMutation.isPending ? 'Buscando...' : 'Agregar por codigo'}
@@ -234,7 +234,7 @@ export default function ProductSelectorDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="w-full border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="w-full border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90"
           >
             {addedCount > 0
               ? `Listo · ${addedCount} producto${addedCount !== 1 ? 's' : ''} agregado${addedCount !== 1 ? 's' : ''}`

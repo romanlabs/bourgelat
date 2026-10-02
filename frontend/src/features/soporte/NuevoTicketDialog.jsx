@@ -145,7 +145,7 @@ export default function NuevoTicketDialog({ open, onOpenChange, moduloInicial = 
               type="text"
               autoComplete="off"
               placeholder="Ej: No me deja cerrar la caja"
-              className={cn(fieldClass, 'h-10', errors.asunto && 'border-red-400 dark:border-red-500')}
+              className={cn(fieldClass, 'h-10', errors.asunto && 'border-danger')}
               {...register('asunto')}
             />
             <FieldError message={errors.asunto?.message} className="mt-0" />
@@ -220,7 +220,7 @@ export default function NuevoTicketDialog({ open, onOpenChange, moduloInicial = 
               id="ticket-descripcion"
               rows={5}
               placeholder="Qué intentabas hacer, qué esperabas y qué pasó. Si apareció un mensaje de error, cópialo aquí."
-              className={cn(fieldClass, 'resize-y py-2.5', errors.descripcion && 'border-red-400 dark:border-red-500')}
+              className={cn(fieldClass, 'resize-y py-2.5', errors.descripcion && 'border-danger')}
               {...register('descripcion')}
             />
             <FieldError message={errors.descripcion?.message} className="mt-0" />

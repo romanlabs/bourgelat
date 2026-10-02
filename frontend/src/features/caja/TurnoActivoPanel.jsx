@@ -51,7 +51,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
               <button
                 type="button"
                 onClick={() => setAperturaOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
               >
                 <Wallet className="h-4 w-4" />
                 Abrir turno
@@ -75,16 +75,16 @@ export default function TurnoActivoPanel({ cajaHook }) {
         subtitle="Resumen en vivo del efectivo del turno. El sistema recalcula el efectivo esperado con cada venta y movimiento."
         action={
           turnoActivo.vencido ? (
-            <StatusPill tone="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+            <StatusPill tone="border-warning/30 bg-warning-soft text-warning ">
               Turno vencido
             </StatusPill>
           ) : (
-            <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">Turno abierto</StatusPill>
+            <StatusPill tone="border-success/30 bg-success-soft text-success ">Turno abierto</StatusPill>
           )
         }
       >
         {!turnoActivo.vencido && turnoActivo.fueraDeHorario ? (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm leading-6 text-cyan-800 dark:border-cyan-700/60 dark:bg-cyan-900/30 dark:text-cyan-200">
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-info/30 bg-info-soft px-4 py-3 text-sm leading-6 text-info">
             <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>
               La clinica ya cerro{turnoActivo.horaCierre ? ` (${turnoActivo.horaCierre})` : ''} y tu turno sigue abierto.
@@ -94,7 +94,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
         ) : null}
 
         {turnoActivo.vencido ? (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>
               Este turno se abrio el {new Date(turnoActivo.fechaApertura).toLocaleDateString('es-CO')} y quedo abierto de un dia anterior. No puedes seguir vendiendo ni registrar movimientos hasta cerrarlo.
@@ -144,7 +144,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
           <button
             type="button"
             onClick={() => setCierreOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
           >
             <Banknote className="h-4 w-4" />
             Cerrar turno
@@ -176,9 +176,9 @@ export default function TurnoActivoPanel({ cajaHook }) {
                 <div key={movimiento.id} className="flex items-center justify-between gap-3 py-2">
                   <div className="flex items-center gap-3">
                     {movimiento.tipo === 'ingreso' ? (
-                      <ArrowUpCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <ArrowUpCircle className="h-4 w-4 text-success" />
                     ) : (
-                      <ArrowDownCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <ArrowDownCircle className="h-4 w-4 text-danger" />
                     )}
                     <div>
                       <p className="text-sm font-semibold text-foreground">{motivoLabel(movimiento.motivo)}</p>
@@ -189,7 +189,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
                   </div>
                   <p
                     className={`text-sm font-bold tabular-nums ${
-                      movimiento.tipo === 'ingreso' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                      movimiento.tipo === 'ingreso' ? 'text-success' : 'text-danger'
                     }`}
                   >
                     {movimiento.tipo === 'ingreso' ? '+' : '-'}

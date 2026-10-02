@@ -35,8 +35,8 @@ const getErrorMessage = (error, fallback) =>
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
-    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300'
-    : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300'
+    ? 'border-warning/30 bg-warning-soft text-warning '
+    : 'border-success/30 bg-success-soft text-success '
 
 const getCurrentMonthRange = () => {
   const now = new Date()
@@ -196,7 +196,7 @@ export default function HistoriasPage() {
       title="Historias clinicas"
       description="Bandeja de trabajo clínico: consultas sin cerrar, controles pendientes y búsqueda por diagnóstico."
       headerBadge={
-        <StatusPill tone="border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/30 dark:text-rose-300">
+        <StatusPill tone="border-danger/30 bg-danger-soft text-danger ">
           Consulta documentada
         </StatusPill>
       }
@@ -209,7 +209,7 @@ export default function HistoriasPage() {
             label="Sin cerrar"
             value={formatNumber(resumen.pendientesPorCerrar)}
             helper="Consultas que siguen editables: su inventario no se ha descontado y no se pueden facturar."
-            tone="text-amber-700 dark:text-amber-300"
+            tone="text-warning"
             activo={filtro === 'pendientes'}
             onClick={() => aplicarFiltro('pendientes')}
           />
@@ -218,7 +218,7 @@ export default function HistoriasPage() {
             label="Controles vencidos"
             value={formatNumber(resumen.controlesPendientes)}
             helper="Pacientes con próxima consulta ya cumplida que aún no han vuelto."
-            tone="text-rose-700 dark:text-rose-300"
+            tone="text-danger"
             activo={filtro === 'controles'}
             onClick={() => aplicarFiltro('controles')}
           />
@@ -227,7 +227,7 @@ export default function HistoriasPage() {
             label="Del mes"
             value={formatNumber(resumen.totalMes)}
             helper="Consultas documentadas en el mes actual."
-            tone="text-cyan-700 dark:text-cyan-300"
+            tone="text-info"
             activo={filtro === 'mes'}
             onClick={() => aplicarFiltro('mes')}
           />
@@ -236,19 +236,19 @@ export default function HistoriasPage() {
             label="Profesionales"
             value={formatNumber(resumen.profesionalesActivos)}
             helper="Medicos con consultas registradas este mes."
-            tone="text-violet-700 dark:text-violet-300"
+            tone="text-info"
           />
         </div>
 
         {historiasQuery.isError || veterinariosQuery.isError ? (
           <div className="grid gap-4">
             {historiasQuery.isError && (
-              <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
+              <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                 {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
               </div>
             )}
             {veterinariosQuery.isError && (
-              <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                 {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
               </div>
             )}
@@ -280,7 +280,7 @@ export default function HistoriasPage() {
                   onChange={(e) => { setBuscar(e.target.value); setPagina(1) }}
                   placeholder="Motivo o diagnóstico"
                   aria-label="Buscar por motivo o diagnóstico"
-                  className="h-10 border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                  className="h-10 border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-info"
                 />
               </label>
               <input
@@ -288,14 +288,14 @@ export default function HistoriasPage() {
                 value={fechaInicio}
                 onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
                 aria-label="Desde"
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
               />
               <input
                 type="date"
                 value={fechaFin}
                 onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
                 aria-label="Hasta"
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
               />
               <Select
                 aria-label="Filtrar por médico"

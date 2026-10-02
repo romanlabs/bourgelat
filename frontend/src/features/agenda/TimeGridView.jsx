@@ -66,8 +66,8 @@ function NowLine({ slotHeight, gridInicio }) {
       style={{ top: `${top}px` }}
     >
       <div className="flex items-center">
-        <div className="h-3 w-3 flex-shrink-0 -translate-x-1.5 rounded-full bg-[#db372d]" />
-        <div className="h-[2px] flex-1 bg-[#db372d]" />
+        <div className="h-3 w-3 flex-shrink-0 -translate-x-1.5 rounded-full bg-danger" />
+        <div className="h-[2px] flex-1 bg-danger" />
       </div>
     </div>
   )
@@ -133,7 +133,7 @@ export function TimeGridView({
               className={cn(
                 'border-r border-border py-2 text-center last:border-r-0',
                 esHoy && 'bg-primary/5',
-                bloqueo && 'bg-amber-50 dark:bg-amber-950/30'
+                bloqueo && 'bg-warning-soft'
               )}
             >
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -164,7 +164,7 @@ export function TimeGridView({
               {bloqueo ? (
                 <p
                   title={bloqueo.motivo}
-                  className="mx-1 mt-1 truncate rounded-sm bg-amber-100 px-1 py-px text-[10px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200"
+                  className="mx-1 mt-1 truncate rounded-sm bg-warning-soft px-1 py-px text-[10px] font-semibold text-warning"
                 >
                   {bloqueo.motivo}
                 </p>

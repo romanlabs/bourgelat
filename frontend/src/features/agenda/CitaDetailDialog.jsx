@@ -108,9 +108,9 @@ export function CitaDetailDialog({
 
   return (
     <DialogRoot open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-sm sm:max-w-md dark:bg-slate-900 dark:border-slate-700">
+      <DialogContent className="max-w-sm sm:max-w-md">
         <DialogHeader className="mb-4">
-          <DialogTitle className="dark:text-slate-100">
+          <DialogTitle className="">
             {cita.mascota?.nombre || 'Cita'}
           </DialogTitle>
           <DialogDescription asChild>
@@ -163,8 +163,8 @@ export function CitaDetailDialog({
         </DialogHeader>
 
         {cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id && (
-          <div className="mb-4 flex items-center justify-between gap-3 border border-red-300 bg-red-50 px-3 py-2.5 text-sm dark:border-red-700 dark:bg-red-900/30">
-            <p className="leading-tight text-red-800 dark:text-red-200">
+          <div className="mb-4 flex items-center justify-between gap-3 border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm">
+            <p className="leading-tight text-danger">
               Esta urgencia aún no tiene historia clínica. El proceso no queda cerrado hasta documentarla.
             </p>
             <NavCta
@@ -231,7 +231,7 @@ export function CitaDetailDialog({
                   setStatusForm((prev) => ({ ...prev, motivoCancelacion: e.target.value }))
                 }
                 placeholder="Motivo de cancelación (obligatorio)"
-                className="min-h-[80px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
+                className="min-h-[80px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
                 required
               />
             )}
@@ -239,7 +239,7 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isUpdating || (statusForm.estado === 'cancelada' && !statusForm.motivoCancelacion.trim())}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {isUpdating ? 'Guardando...' : 'Actualizar estado'}
@@ -256,7 +256,7 @@ export function CitaDetailDialog({
               onChange={(e) =>
                 setRescheduleForm((prev) => ({ ...prev, fecha: e.target.value }))
               }
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary dark:bg-slate-800 dark:text-slate-100"
+              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
               required
             />
             <div className="grid gap-2">
@@ -273,7 +273,7 @@ export function CitaDetailDialog({
             </div>
 
             {!ventana.valido ? (
-              <div className="border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-6 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+              <div className="border border-warning/30 bg-warning-soft px-3 py-2.5 text-xs leading-6 text-warning">
                 <p className="flex items-start gap-2 font-semibold">
                   <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {ventana.codigo === 'bloqueado'
@@ -307,7 +307,7 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isRescheduling || (!ventana.valido && !forzar)}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRescheduling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {isRescheduling ? 'Guardando...' : 'Reprogramar cita'}

@@ -92,19 +92,19 @@ const minutosDesde = (hora, ahoraMinutos) => {
 const tiempoDeFila = (cita, ahoraMinutos) => {
   if (cita.estado === 'en_atencion') {
     const texto = formatDuracion(minutosDesde(cita.horaInicioAtencion || cita.horaLlegada, ahoraMinutos))
-    return texto ? { texto: `${texto} en consulta`, tone: 'text-violet-700 dark:text-violet-300' } : null
+    return texto ? { texto: `${texto} en consulta`, tone: 'text-info' } : null
   }
 
   if (cita.estado === 'en_espera') {
     const texto = formatDuracion(minutosDesde(cita.horaLlegada || cita.horaInicio, ahoraMinutos))
-    return texto ? { texto: `${texto} esperando`, tone: 'text-blue-700 dark:text-blue-300' } : null
+    return texto ? { texto: `${texto} esperando`, tone: 'text-info' } : null
   }
 
   if (cita.estado === 'programada') {
     const diferencia = minutosDesde(cita.horaInicio, ahoraMinutos)
     if (diferencia === null) return null
     if (diferencia >= MINUTOS_ATRASO) {
-      return { texto: `${formatDuracion(diferencia)} de atraso`, tone: 'text-red-600 dark:text-red-400' }
+      return { texto: `${formatDuracion(diferencia)} de atraso`, tone: 'text-danger' }
     }
     if (diferencia >= 0) return { texto: 'A esta hora', tone: 'text-muted-foreground' }
     return { texto: `En ${formatDuracion(Math.abs(diferencia))}`, tone: 'text-muted-foreground' }
@@ -115,19 +115,19 @@ const tiempoDeFila = (cita, ahoraMinutos) => {
 
 const AVATAR_TONE = {
   programada: 'bg-warm-100 text-warm-700',
-  en_espera: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
-  en_atencion: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200',
+  en_espera: 'bg-info-soft text-info ',
+  en_atencion: 'bg-info-soft text-info ',
   completada: 'bg-warm-100 text-warm-600',
-  cancelada: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300',
-  no_asistio: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300',
+  cancelada: 'bg-danger-soft text-danger ',
+  no_asistio: 'bg-warning-soft text-warning ',
 }
 
 const ACTION_TONE = {
-  en_espera: 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50',
-  en_atencion: 'border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-200 dark:hover:bg-violet-900/50',
-  completada: 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50',
-  cancelada: 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-600 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50',
-  no_asistio: 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-orange-900/50',
+  en_espera: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
+  en_atencion: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
+  completada: 'border-success/30 bg-success-soft text-success hover:bg-success/15 ',
+  cancelada: 'border-danger/30 bg-danger-soft text-danger hover:bg-danger/15 ',
+  no_asistio: 'border-warning/30 bg-warning-soft text-warning hover:bg-warning/15 ',
 }
 
 function AccionesMenu({ acciones, disabled, onSelect }) {
@@ -197,7 +197,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
       }}
       className={`flex w-full items-center gap-4 border-b border-border px-4 py-3 text-left transition hover:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 ${
         seleccionada ? 'bg-muted/60' : ''
-      } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_#ef4444]' : ''}`}
+      } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_hsl(var(--danger))]' : ''}`}
     >
       <span className="w-12 shrink-0 text-sm font-semibold tabular-nums text-foreground">
         {formatTime(cita.horaLlegada || cita.horaInicio)}
@@ -225,7 +225,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
           {atrasada ? <StatusBadge variant="atrasada" size="sm" /> : null}
           {resuelta ? <StatusBadge variant={cita.estado} size="sm" /> : null}
           {cruce ? (
-            <TriangleAlert className="h-4 w-4 shrink-0 text-amber-500" aria-label={cruce} title={cruce} />
+            <TriangleAlert className="h-4 w-4 shrink-0 text-warning" aria-label={cruce} title={cruce} />
           ) : null}
         </div>
         <p className="truncate text-xs text-muted-foreground">{cita.propietario?.nombre || 'Sin tutor'}</p>
@@ -359,12 +359,12 @@ export function SalaEsperaPanel({
       <div className="-m-5">
         <div className="flex flex-wrap items-center gap-5 border-b border-border px-5 py-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-bold leading-none tabular-nums text-violet-700 dark:text-violet-300">{resumen.enAtencion}</span>
+            <span className="text-[22px] font-bold leading-none tabular-nums text-info">{resumen.enAtencion}</span>
             <span className="text-xs text-muted-foreground">en atencion</span>
           </div>
           <span className="h-6 w-px bg-border" aria-hidden="true" />
           <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-bold leading-none tabular-nums text-blue-700 dark:text-blue-300">{resumen.enEspera}</span>
+            <span className="text-[22px] font-bold leading-none tabular-nums text-info">{resumen.enEspera}</span>
             <span className="text-xs text-muted-foreground">en espera</span>
           </div>
           <span className="h-6 w-px bg-border" aria-hidden="true" />
@@ -380,7 +380,7 @@ export function SalaEsperaPanel({
         </div>
 
         {isError ? (
-          <div className="border-b border-red-200 bg-red-50 px-5 py-4 text-sm leading-7 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+          <div className="border-b border-danger/30 bg-danger-soft px-5 py-4 text-sm leading-7 text-danger">
             {errorMessage}
           </div>
         ) : null}

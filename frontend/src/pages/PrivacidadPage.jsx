@@ -65,12 +65,12 @@ export default function PrivacidadPage() {
           </p>
           <ul className={ulClass}>
             <li>
-              <strong className="text-[#10263a]">Como responsable</strong>, respecto de los datos de las
+              <strong className="text-tinta-800">Como responsable</strong>, respecto de los datos de las
               clínicas que contratan el servicio y de las personas que usan la plataforma (el equipo de cada
               clínica). Bourgelat decide sobre su tratamiento según esta política.
             </li>
             <li>
-              <strong className="text-[#10263a]">Como encargado</strong>, respecto de los datos que cada
+              <strong className="text-tinta-800">Como encargado</strong>, respecto de los datos que cada
               clínica registra sobre sus propios clientes (propietarios de mascotas) y sus pacientes. En ese caso
               la clínica es la responsable del tratamiento y Bourgelat solo trata esos datos por cuenta de ella y
               según sus instrucciones (ver sección 5).
@@ -141,7 +141,7 @@ export default function PrivacidadPage() {
             </li>
             <li>
               Enviar novedades, promociones y actualizaciones de Bourgelat por correo electrónico,{' '}
-              <strong className="text-[#10263a]">solo si el usuario lo autorizó</strong> de forma independiente
+              <strong className="text-tinta-800">solo si el usuario lo autorizó</strong> de forma independiente
               al registrarse. Esta autorización es opcional, no condiciona el servicio y puede retirarse en
               cualquier momento.
             </li>
@@ -211,27 +211,27 @@ export default function PrivacidadPage() {
           </p>
           <ul className={ulClass}>
             <li>
-              <strong className="text-[#10263a]">Render</strong> — alojamiento de la aplicación, base de datos
+              <strong className="text-tinta-800">Render</strong> — alojamiento de la aplicación, base de datos
               y archivos. Servidores ubicados en Estados Unidos (Oregón).
             </li>
             <li>
-              <strong className="text-[#10263a]">Cloudflare</strong> — DNS, certificados de seguridad y
+              <strong className="text-tinta-800">Cloudflare</strong> — DNS, certificados de seguridad y
               protección contra ataques.
             </li>
             <li>
-              <strong className="text-[#10263a]">Factus</strong> — proveedor tecnológico de facturación
+              <strong className="text-tinta-800">Factus</strong> — proveedor tecnológico de facturación
               electrónica, que transmite las facturas a la DIAN.
             </li>
             <li>
-              <strong className="text-[#10263a]">Google y Microsoft</strong> — solo si el usuario elige iniciar
+              <strong className="text-tinta-800">Google y Microsoft</strong> — solo si el usuario elige iniciar
               sesión con su cuenta de esos servicios.
             </li>
             <li>
-              <strong className="text-[#10263a]">Proveedor de correo electrónico</strong> — envío de correos
+              <strong className="text-tinta-800">Proveedor de correo electrónico</strong> — envío de correos
               transaccionales (verificación, recuperación de contraseña, soporte).
             </li>
             <li>
-              <strong className="text-[#10263a]">Pasarela de pagos</strong> — cuando se habilite el pago en
+              <strong className="text-tinta-800">Pasarela de pagos</strong> — cuando se habilite el pago en
               línea de la suscripción. Bourgelat no almacena datos de tarjetas.
             </li>
           </ul>
@@ -314,11 +314,11 @@ export default function PrivacidadPage() {
           </p>
           <ul className={ulClass}>
             <li>
-              <strong className="text-[#10263a]">Consultas</strong>: se responden en un máximo de 10 días
+              <strong className="text-tinta-800">Consultas</strong>: se responden en un máximo de 10 días
               hábiles, prorrogables por 5 días hábiles más, informando el motivo de la demora.
             </li>
             <li>
-              <strong className="text-[#10263a]">Reclamos</strong> (corrección, actualización, supresión o
+              <strong className="text-tinta-800">Reclamos</strong> (corrección, actualización, supresión o
               incumplimiento): se responden en un máximo de 15 días hábiles, prorrogables por 8 días hábiles más.
               Si el reclamo está incompleto, te pediremos completarlo dentro de los 5 días siguientes; si pasan 2
               meses sin respuesta, se entenderá desistido.

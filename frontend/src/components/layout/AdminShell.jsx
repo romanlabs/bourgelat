@@ -92,17 +92,17 @@ function NavDrawerLink({ item, active, onNavigate }) {
       className={cn(
         'relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
         active
-          ? 'bg-[#91e7e0]/10 text-white'
-          : 'text-[#91e7e0]/45 hover:bg-[#081827] hover:text-white'
+          ? 'bg-sidebar-primary/10 text-sidebar-accent-foreground'
+          : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
       )}
     >
       {active ? (
-        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#91e7e0]" />
+        <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-sidebar-primary" />
       ) : null}
       <Icon
         className={cn(
           'h-4 w-4 shrink-0 transition-colors',
-          active ? 'text-[#91e7e0]' : 'text-[#91e7e0]/40'
+          active ? 'text-sidebar-primary' : 'text-sidebar-foreground/70'
         )}
       />
       <span className="truncate">{item.label}</span>
@@ -217,7 +217,7 @@ export default function AdminShell({
     <AdminSearchContext.Provider value={openSearch}>
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-white px-3 text-foreground sm:px-4">
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-card px-3 text-foreground sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <SimpleTooltip label="Menú principal">
             <button
@@ -278,7 +278,7 @@ export default function AdminShell({
                 className="z-50 w-64 rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
               >
                 <div className="flex items-center gap-2.5 px-2.5 py-2">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar text-sm font-semibold text-[#91e7e0]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar text-sm font-semibold text-sidebar-primary">
                     {usuario?.foto ? (
                       <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -350,7 +350,7 @@ export default function AdminShell({
       </header>
 
       {usuario?.proveedorAuth === 'local' && usuario?.emailVerificado === false && !bannerVerificacionOculto ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-warning/30 bg-warning-soft px-4 py-2 text-sm text-warning">
           <span>
             Verifica tu correo (<span className="font-semibold">{usuario?.email}</span>) para poder cambiar tu
             contraseña más adelante.
@@ -360,7 +360,7 @@ export default function AdminShell({
               type="button"
               disabled={reenviandoVerificacion}
               onClick={() => reenviarVerificacion({ email: usuario.email })}
-              className="font-semibold underline decoration-amber-400 underline-offset-2 hover:text-amber-950 disabled:opacity-60"
+              className="font-semibold underline decoration-warning/50 underline-offset-2 hover:text-foreground disabled:opacity-60"
             >
               {reenviandoVerificacion ? 'Enviando...' : 'Reenviar verificación'}
             </button>
@@ -368,7 +368,7 @@ export default function AdminShell({
               type="button"
               onClick={() => setBannerVerificacionOculto(true)}
               title="Ocultar por ahora"
-              className="text-amber-700 hover:text-amber-950"
+              className="text-warning hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -380,23 +380,23 @@ export default function AdminShell({
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:[animation:admin-drawer-overlay-in_250ms_ease-out] data-[state=closed]:[animation:admin-drawer-overlay-out_200ms_ease-in]" />
           <Dialog.Content
-            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col rounded-r-2xl border-r border-white/15 bg-[#06111c] text-white shadow-[10px_0_40px_rgba(2,8,14,0.65)] data-[state=open]:[animation:admin-drawer-in_300ms_ease-out] data-[state=closed]:[animation:admin-drawer-out_200ms_ease-in]"
+            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col rounded-r-2xl border-r border-sidebar-border bg-sidebar text-sidebar-accent-foreground shadow-[10px_0_40px_rgba(2,8,14,0.65)] data-[state=open]:[animation:admin-drawer-in_300ms_ease-out] data-[state=closed]:[animation:admin-drawer-out_200ms_ease-in]"
             aria-describedby={undefined}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+            <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
               <div className="flex min-w-0 items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#91e7e0]/10 text-[#91e7e0]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary">
                   <Stethoscope className="h-4 w-4" />
                 </span>
                 <Dialog.Title asChild>
-                  <span className="truncate text-sm font-semibold text-white">{nombreClinica}</span>
+                  <span className="truncate text-sm font-semibold text-sidebar-accent-foreground">{nombreClinica}</span>
                 </Dialog.Title>
               </div>
               <Dialog.Close asChild>
                 <button
                   type="button"
                   title="Cerrar menu"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#91e7e0]/60 transition hover:bg-[#081827] hover:text-[#91e7e0]"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/75 transition hover:bg-sidebar-accent hover:text-sidebar-primary"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -411,7 +411,7 @@ export default function AdminShell({
 
                 return (
                   <section key={section.key}>
-                    <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#91e7e0]/30">
+                    <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/70">
                       {section.label}
                     </p>
                     <div className="space-y-0.5">
@@ -447,33 +447,33 @@ export default function AdminShell({
               event.preventDefault()
               searchInputRef.current?.focus()
             }}
-            className="fixed left-1/2 top-4 z-50 w-full max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-white/10 bg-[#0d1520] text-white shadow-2xl"
+            className="fixed left-1/2 top-4 z-50 w-full max-w-2xl -translate-x-1/2 overflow-hidden rounded-xl border border-sidebar-border bg-sidebar text-sidebar-accent-foreground shadow-2xl"
             aria-describedby={undefined}
           >
             <Dialog.Title className="sr-only">Buscar en Bourgelat</Dialog.Title>
 
             <div className="p-3">
-              <div className="flex items-center gap-2.5 rounded-lg border border-primary bg-[#06111c] px-3.5 py-2.5 ring-2 ring-primary/30">
-                <Search className="h-[18px] w-[18px] shrink-0 text-[#91e7e0]/60" />
+              <div className="flex items-center gap-2.5 rounded-lg border border-sidebar-primary bg-sidebar-accent px-3.5 py-2.5 ring-2 ring-sidebar-primary/30">
+                <Search className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/70" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Buscar un modulo..."
-                  className="flex-1 bg-transparent text-base text-white outline-none placeholder:text-[#91e7e0]/40"
+                  className="flex-1 bg-transparent text-base text-sidebar-accent-foreground outline-none placeholder:text-sidebar-foreground/70"
                 />
               </div>
             </div>
 
             <div className="max-h-96 space-y-3 overflow-y-auto px-3 pb-3">
               {buscandoContenido ? (
-                <p className="px-2.5 py-1 text-sm text-[#91e7e0]/40">Buscando...</p>
+                <p className="px-2.5 py-1 text-sm text-sidebar-foreground/70">Buscando...</p>
               ) : null}
 
               {mascotasEncontradas.length > 0 ? (
                 <section>
-                  <p className="mb-1 px-2 text-xs font-semibold text-[#91e7e0]/40">Pacientes</p>
+                  <p className="mb-1 px-2 text-xs font-semibold text-sidebar-foreground/70">Pacientes</p>
                   <div className="space-y-0.5">
                     {mascotasEncontradas.map((mascota) => (
                       <button
@@ -482,16 +482,16 @@ export default function AdminShell({
                         onClick={() =>
                           goToResult(`/pacientes?tab=pacientes&buscar=${encodeURIComponent(mascota.nombre)}`)
                         }
-                        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white transition hover:bg-[#161f2b]"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-sidebar-accent-foreground transition hover:bg-sidebar-accent"
                       >
-                        <PawPrint className="h-4 w-4 shrink-0 text-[#91e7e0]/60" />
+                        <PawPrint className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate">{mascota.nombre}</span>
-                          <span className="block truncate text-xs text-[#91e7e0]/40">
+                          <span className="block truncate text-xs text-sidebar-foreground/70">
                             {[etiquetaEspecie(mascota.especie), mascota.Propietario?.nombre].filter(Boolean).join(' · ')}
                           </span>
                         </span>
-                        <span className="shrink-0 text-xs text-[#91e7e0]/30 group-hover:text-[#91e7e0]/60">
+                        <span className="shrink-0 text-xs text-sidebar-foreground/70 group-hover:text-sidebar-foreground">
                           Ver paciente
                         </span>
                       </button>
@@ -502,7 +502,7 @@ export default function AdminShell({
 
               {propietariosEncontrados.length > 0 ? (
                 <section>
-                  <p className="mb-1 px-2 text-xs font-semibold text-[#91e7e0]/40">Tutores</p>
+                  <p className="mb-1 px-2 text-xs font-semibold text-sidebar-foreground/70">Tutores</p>
                   <div className="space-y-0.5">
                     {propietariosEncontrados.map((propietario) => (
                       <button
@@ -511,16 +511,16 @@ export default function AdminShell({
                         onClick={() =>
                           goToResult(`/pacientes?tab=tutores&buscar=${encodeURIComponent(propietario.nombre)}`)
                         }
-                        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white transition hover:bg-[#161f2b]"
+                        className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-sidebar-accent-foreground transition hover:bg-sidebar-accent"
                       >
-                        <Users className="h-4 w-4 shrink-0 text-[#91e7e0]/60" />
+                        <Users className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate">{propietario.nombre}</span>
-                          <span className="block truncate text-xs text-[#91e7e0]/40">
+                          <span className="block truncate text-xs text-sidebar-foreground/70">
                             {propietario.telefono || propietario.email || 'Sin contacto'}
                           </span>
                         </span>
-                        <span className="shrink-0 text-xs text-[#91e7e0]/30 group-hover:text-[#91e7e0]/60">
+                        <span className="shrink-0 text-xs text-sidebar-foreground/70 group-hover:text-sidebar-foreground">
                           Ver tutor
                         </span>
                       </button>
@@ -533,14 +533,14 @@ export default function AdminShell({
               !buscandoContenido &&
               mascotasEncontradas.length === 0 &&
               propietariosEncontrados.length === 0 ? (
-                <p className="px-2.5 py-1 text-sm text-[#91e7e0]/40">
+                <p className="px-2.5 py-1 text-sm text-sidebar-foreground/70">
                   Sin pacientes ni tutores para "{busquedaDiferida}".
                 </p>
               ) : null}
 
               {modulosFiltrados.length > 0 ? (
                 <section>
-                  <p className="mb-1 px-2 text-xs font-semibold text-[#91e7e0]/40">Ir a la sección</p>
+                  <p className="mb-1 px-2 text-xs font-semibold text-sidebar-foreground/70">Ir a la sección</p>
                   <div className="space-y-0.5">
                     {modulosFiltrados.map((item) => {
                       const Icon = item.icon
@@ -549,11 +549,11 @@ export default function AdminShell({
                           key={item.key}
                           type="button"
                           onClick={() => goToResult(item.to)}
-                          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white transition hover:bg-[#161f2b]"
+                          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-sidebar-accent-foreground transition hover:bg-sidebar-accent"
                         >
-                          <Icon className="h-4 w-4 shrink-0 text-[#91e7e0]/60" />
+                          <Icon className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
                           <span className="flex-1 truncate">{item.label}</span>
-                          <span className="shrink-0 text-xs text-[#91e7e0]/30 group-hover:text-[#91e7e0]/60">
+                          <span className="shrink-0 text-xs text-sidebar-foreground/70 group-hover:text-sidebar-foreground">
                             Abrir
                           </span>
                         </button>
@@ -564,7 +564,7 @@ export default function AdminShell({
               ) : null}
             </div>
 
-            <div className="flex items-center justify-between border-t border-white/10 px-4 py-2.5 text-xs text-[#91e7e0]/30">
+            <div className="flex items-center justify-between border-t border-sidebar-border px-4 py-2.5 text-xs text-sidebar-foreground/70">
               <span>Escribe el nombre de un paciente o tutor</span>
               <span>Presiona / para abrir la búsqueda</span>
             </div>

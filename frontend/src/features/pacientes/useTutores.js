@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
@@ -64,10 +65,7 @@ export function useTutores({ enabled }) {
   // La tabla de pacientes muestra nombre y telefono del tutor embebidos, por eso
   // cualquier mutacion de tutores tambien invalida 'pacientes-mascotas'.
   function invalidarTutores() {
-    queryClient.invalidateQueries({ queryKey: ['pacientes-tutores'] })
-    queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-resumen'] })
-    queryClient.invalidateQueries({ queryKey: ['pacientes-propietarios-selector'] })
-    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
+    invalidarDominios(queryClient, 'pacientes')
   }
 
   const crearPropietarioMutation = useMutation({

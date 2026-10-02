@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
 
-const ACCENT = '#b07645'
+// Caramelo de marca para texto (eyebrows y enlaces); sigue el tema.
+const ACCENT = 'hsl(var(--brand-foreground))'
 
 const esquema = z.object({
   nombreClinica: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
@@ -57,18 +58,18 @@ export default function CompletarRegistroPage() {
   }
 
   const inputClass =
-    'h-14 w-full rounded-none border-0 border-b border-[#2b2018]/20 bg-transparent px-1 text-[15px] text-[#2b2018] outline-none transition placeholder:text-[#2b2018]/35 focus:border-[#b07645]'
+    'h-14 w-full rounded-none border-0 border-b border-input bg-transparent px-1 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-brand'
 
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-white text-[#2b2018]">
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
       <Motion.header
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4 sm:px-8"
       >
-        <Link to="/" className="group inline-flex items-center gap-3 text-[#2b2018] no-underline">
-          <span className="flex h-9 w-9 items-center justify-center bg-[#2b2018] text-white transition-colors duration-200 group-hover:bg-[#b07645]">
+        <Link to="/" className="group inline-flex items-center gap-3 text-foreground no-underline">
+          <span className="flex h-9 w-9 items-center justify-center bg-foreground text-background transition-colors duration-200 group-hover:bg-brand">
             <Stethoscope className="h-4 w-4" />
           </span>
           <span>
@@ -83,7 +84,7 @@ export default function CompletarRegistroPage() {
       <main className="relative z-10 flex flex-1 items-center overflow-hidden pb-24 lg:pb-4">
         <div className="w-full px-5 sm:px-8 lg:pl-[15%] lg:pr-8">
           <div
-            className="w-full max-w-[400px] border border-[#2b2018]/8 bg-white/95 px-8 py-8 backdrop-blur-sm"
+            className="w-full max-w-[400px] border border-foreground/10 bg-card/95 px-8 py-8 backdrop-blur-sm"
             style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
           >
             <p
@@ -94,14 +95,14 @@ export default function CompletarRegistroPage() {
             </p>
 
             <h1
-              className="mt-3 text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-[#2b2018]"
+              className="mt-3 text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-foreground"
               style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
             >
               ¿Cómo se llama tu clínica?
             </h1>
 
             {tokenExpirado ? (
-              <p className="mt-6 text-sm text-red-600">
+              <p className="mt-6 text-sm text-danger">
                 El enlace expiró, vuelve a intentarlo.{' '}
                 <Link to="/login" className="font-semibold underline" style={{ color: ACCENT }}>
                   Volver al inicio de sesión
@@ -110,7 +111,7 @@ export default function CompletarRegistroPage() {
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" autoComplete="off">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2b2018]/55">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Nombre de la clínica
                   </label>
                   <input
@@ -118,10 +119,10 @@ export default function CompletarRegistroPage() {
                     type="text"
                     autoComplete="organization"
                     placeholder="Clínica Veterinaria Bourgelat"
-                    className={`${inputClass} ${errors.nombreClinica ? 'border-red-500' : ''}`}
+                    className={`${inputClass} ${errors.nombreClinica ? 'border-danger' : ''}`}
                   />
                   {errors.nombreClinica ? (
-                    <p className="mt-1 text-sm text-red-600">{errors.nombreClinica.message}</p>
+                    <p className="mt-1 text-sm text-danger">{errors.nombreClinica.message}</p>
                   ) : null}
                 </div>
 
@@ -129,13 +130,13 @@ export default function CompletarRegistroPage() {
                   terminosProps={register('aceptaTerminos')}
                   comunicacionesProps={register('aceptaComunicaciones')}
                   error={errors.aceptaTerminos?.message}
-                  textoClassName="text-[#2b2018]/70"
-                  linkClassName="font-semibold text-[#2b2018] underline underline-offset-2"
-                  checkboxClassName="accent-[#b07645]"
+                  textoClassName="text-foreground/70"
+                  linkClassName="font-semibold text-foreground underline underline-offset-2"
+                  checkboxClassName="accent-brand"
                 />
 
                 {isError && !tokenExpirado ? (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-danger">
                     No pudimos completar el registro. Inténtalo de nuevo.
                   </p>
                 ) : null}
@@ -143,7 +144,7 @@ export default function CompletarRegistroPage() {
                 <Button
                   type="submit"
                   disabled={isPending || !aceptaTerminos}
-                  className="group h-14 w-full rounded-none bg-[#2b2018] px-6 text-sm font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#3d2f24]"
+                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
                 >
                   {isPending ? 'Creando clínica...' : 'Entrar a la plataforma'}
                   {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}

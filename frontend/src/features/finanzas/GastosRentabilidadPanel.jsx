@@ -138,13 +138,13 @@ function GastoForm() {
         <button
           type="submit"
           disabled={crearGasto.isPending}
-          className="h-10 w-full border border-border bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-10 w-full border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {crearGasto.isPending ? 'Registrando…' : 'Registrar gasto'}
         </button>
       </div>
       {mensaje ? (
-        <p className={`sm:col-span-2 lg:col-span-5 text-sm ${mensaje.tipo === 'ok' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+        <p className={`sm:col-span-2 lg:col-span-5 text-sm ${mensaje.tipo === 'ok' ? 'text-success' : 'text-danger'}`}>
           {mensaje.texto}
         </p>
       ) : null}
@@ -206,10 +206,10 @@ function GastosTable({ periodo, mes, onMesChange }) {
                 {row.gasto.descripcion ? <span className="text-muted-foreground"> — {row.gasto.descripcion}</span> : null}
                 {/* Lo generó el sistema al cerrar una historia, no un usuario. */}
                 {row.gasto.origen === 'consumo_insumos' ? (
-                  <span className="ml-2"><StatusPill tone="border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-900/30 dark:text-sky-200">Automático</StatusPill></span>
+                  <span className="ml-2"><StatusPill tone="border-info/30 bg-info-soft text-info ">Automático</StatusPill></span>
                 ) : null}
                 {row.gasto.anulado ? (
-                  <span className="ml-2"><StatusPill tone="border-red-200 bg-red-50 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">Anulado</StatusPill></span>
+                  <span className="ml-2"><StatusPill tone="border-danger/30 bg-danger-soft text-danger ">Anulado</StatusPill></span>
                 ) : null}
               </span>
             ),
@@ -223,7 +223,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
             key: 'monto',
             label: 'Monto',
             render: (row) => (
-              <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">
+              <span className="font-semibold tabular-nums text-danger">
                 {formatCurrency(row.gasto.monto)}
               </span>
             ),
@@ -284,7 +284,7 @@ function FilaDeudor({ cliente }) {
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-3">
-          <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">{formatCurrency(cliente.totalDeuda)}</span>
+          <span className="font-semibold tabular-nums text-danger">{formatCurrency(cliente.totalDeuda)}</span>
           <span aria-hidden className="text-xs text-muted-foreground">{abierto ? '▲' : '▼'}</span>
         </span>
       </button>
@@ -295,7 +295,7 @@ function FilaDeudor({ cliente }) {
             <div key={f.id} className="flex flex-wrap items-center gap-3 border-t border-border pt-3 text-sm">
               <span className="text-muted-foreground">#{f.numero} · {f.fecha}</span>
               <span className="text-muted-foreground">de {formatCurrency(f.total)} quedan</span>
-              <span className="font-semibold tabular-nums text-red-700 dark:text-red-300">{formatCurrency(f.saldoPendiente)}</span>
+              <span className="font-semibold tabular-nums text-danger">{formatCurrency(f.saldoPendiente)}</span>
               {facturaAbono === f.id ? (
                 <span className="flex flex-wrap items-center gap-2">
                   <MoneyInput
@@ -340,7 +340,7 @@ function FilaDeudor({ cliente }) {
               )}
             </div>
           ))}
-          {error ? <p className="text-xs text-red-700 dark:text-red-300">{error}</p> : null}
+          {error ? <p className="text-xs text-danger">{error}</p> : null}
         </div>
       ) : null}
     </div>
@@ -394,28 +394,28 @@ export default function GastosRentabilidadPanel() {
           label="Ingresos del mes"
           value={rentabilidad.isLoading ? '—' : formatCurrency(rentabilidad.data?.totalIngresos || 0)}
           helper="Suma de ingresos del periodo seleccionado."
-          tone="text-emerald-700 dark:text-emerald-400"
+          tone="text-success"
         />
         <KpiCard
           icon={TrendingDown}
           label="Gastos del mes"
           value={rentabilidad.isLoading ? '—' : formatCurrency(rentabilidad.data?.totalGastos || 0)}
           helper="Suma de gastos registrados en el periodo."
-          tone="text-red-700 dark:text-red-400"
+          tone="text-danger"
         />
         <KpiCard
           icon={positiva ? TrendingUp : TrendingDown}
           label={positiva ? 'Ganancia del mes' : 'Pérdida del mes'}
           value={rentabilidad.isLoading ? '—' : formatCurrency(ganancia)}
           helper={rentabilidad.data?.margen ? `Margen ${rentabilidad.data.margen} sobre ingresos.` : 'Ingresos menos gastos del periodo.'}
-          tone={positiva ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}
+          tone={positiva ? 'text-success' : 'text-danger'}
         />
         <KpiCard
           icon={HandCoins}
           label="Total por cobrar"
           value={cuentasPorCobrar.isLoading ? '—' : formatCurrency(cuentasPorCobrar.data?.totalPorCobrar || 0)}
           helper="Saldo de fiado pendiente de todos los clientes."
-          tone="text-amber-700 dark:text-amber-400"
+          tone="text-warning"
         />
       </div>
 
