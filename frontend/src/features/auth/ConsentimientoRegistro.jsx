@@ -38,7 +38,7 @@ export default function ConsentimientoRegistro({
           mis datos personales según la {enlace('/privacidad', 'Política de tratamiento de datos')}.
         </span>
       </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
 
       <label className={`flex cursor-pointer items-start gap-2.5 text-[13px] leading-5 ${textoClassName}`}>
         <input

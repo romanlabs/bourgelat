@@ -114,9 +114,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
               type="text"
               autoComplete="organization"
               placeholder="Clínica Veterinaria Bourgelat"
-              className={`${inputClass} ${errors.nombre ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${errors.nombre ? 'border-danger' : ''}`}
             />
-            {errors.nombre ? <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p> : null}
+            {errors.nombre ? <p className="mt-1 text-sm text-danger">{errors.nombre.message}</p> : null}
           </div>
 
           <div>
@@ -126,10 +126,10 @@ export default function RegistroDialog({ open, onOpenChange }) {
               type="text"
               autoComplete="name"
               placeholder="Nombre y apellido"
-              className={`${inputClass} ${errors.nombreAdministrador ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${errors.nombreAdministrador ? 'border-danger' : ''}`}
             />
             {errors.nombreAdministrador ? (
-              <p className="mt-1 text-sm text-red-600">{errors.nombreAdministrador.message}</p>
+              <p className="mt-1 text-sm text-danger">{errors.nombreAdministrador.message}</p>
             ) : null}
           </div>
 
@@ -143,9 +143,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
               inputMode="email"
               spellCheck={false}
               placeholder="tucorreo@ejemplo.com"
-              className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${errors.email ? 'border-danger' : ''}`}
             />
-            {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
+            {errors.email ? <p className="mt-1 text-sm text-danger">{errors.email.message}</p> : null}
           </div>
 
           <div>
@@ -155,9 +155,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
               type="password"
               autoComplete="new-password"
               placeholder="Crea una contraseña segura"
-              className={`${inputClass} ${errors.password ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${errors.password ? 'border-danger' : ''}`}
             />
-            {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
+            {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
           </div>
 
           <ConsentimientoRegistro
@@ -167,7 +167,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
             error={errors.aceptaTerminos?.message}
           />
 
-          {isError ? <p className="text-sm text-red-600">{obtenerMensajeError(error)}</p> : null}
+          {isError ? <p className="text-sm text-danger">{obtenerMensajeError(error)}</p> : null}
 
           <button
             type="submit"
