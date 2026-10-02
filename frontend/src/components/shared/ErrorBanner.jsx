@@ -3,16 +3,18 @@ import { cn } from '@/lib/utils'
 
 /**
  * Banner de error inline con botón reintentar.
+ * `red` = error (danger), `amber` = aviso (warning). Los nombres se conservan
+ * por compatibilidad; los colores salen de los tokens del tema.
  * @param {{ message: string, onRetry?: () => void, variant?: 'red' | 'amber' }} props
  */
 export function ErrorBanner({ message, onRetry, variant = 'red' }) {
   const styles = {
-    red:   'border-red-200 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-900/30 dark:text-red-200',
-    amber: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
+    red:   'border-danger/30 bg-danger-soft text-danger',
+    amber: 'border-warning/30 bg-warning-soft text-warning',
   }
   const btnStyles = {
-    red:   'text-red-700 hover:text-red-900 dark:text-red-200 dark:hover:text-red-100',
-    amber: 'text-amber-800 hover:text-amber-950 dark:text-amber-200 dark:hover:text-amber-100',
+    red:   'text-danger',
+    amber: 'text-warning',
   }
 
   return (
