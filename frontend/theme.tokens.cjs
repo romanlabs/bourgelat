@@ -5,11 +5,23 @@
  *   - tailwind.config.cjs  → genera clases utilitarias
  *   - src/lib/theme.js     → disponible en componentes React
  *
+ * Identidad «Papel y pulso». Los colores de tema viven como variables HSL en
+ * src/index.css (:root y .dark); aquí están las escalas fijas y la referencia.
+ *
+ * Roles (no mezclarlos):
+ *   tinta     → estructura: texto, sidebar, botón secundario
+ *   brand     → firma (caramelo): pulso, eyebrows, foco. Nunca un botón
+ *   primary   → acción (pino) y estado "saludable / confirmada"
+ *   success · warning · danger · info → estados, con su fondo -soft
+ *
  * Convención de uso en JSX:
- *   bg-clinical-500   en vez de   bg-teal-500 / bg-emerald-500
- *   bg-warm-100       en vez de   bg-slate-100 / bg-gray-100
- *   shadow-card       en vez de   shadow-[0_18px_55px_rgba(...)]
- *   text-blue-600     en vez de   text-cyan-700 / text-sky-600
+ *   bg-primary / bg-card / text-muted-foreground   tokens del tema
+ *   bg-danger-soft text-danger                      en vez de bg-red-50 text-red-600
+ *   bg-warning-soft text-warning                    en vez de bg-amber-50 text-amber-700
+ *   bg-success-soft text-success                    en vez de bg-emerald-50 text-emerald-700
+ *   bg-info-soft text-info                          en vez de bg-cyan-50 / bg-sky-50 / bg-blue-50
+ *   text-brand-foreground                           eyebrows y detalles de marca
+ *   shadow-panel                                    en vez de shadow-[0_18px_55px_rgba(...)]
  */
 
 // ─────────────────────────────────────────────
@@ -18,26 +30,56 @@
 
 const colors = {
   /**
-   * Verde clínico — identidad de marca
-   * Base: emerald-teal médico. Usar en:
+   * Pino — color de acción (= --primary en modo claro)
+   * Usar en:
    *   - Botón primario / CTA
    *   - Estado "confirmada" / "saludable"
-   *   - Ítem activo del nav
    *   - Iconos de acción positiva
    * NO usar como fondo de página ni en bloques grandes.
+   * Se llama `clinical` por compatibilidad con las clases existentes.
    */
   clinical: {
-    50:  '#ecfdf5',
-    100: '#d1fae5',
-    200: '#a7f3d0',
-    300: '#6ee7b7',
-    400: '#34d399',
-    500: '#10b981', // ← brand principal
-    600: '#059669',
-    700: '#047857',
-    800: '#065f46',
-    900: '#064e3b',
-    950: '#022c22',
+    50:  '#edf6f2',
+    100: '#d3eadf',
+    200: '#a8d5c0',
+    300: '#74b99c',
+    400: '#45997a',
+    500: '#1f7a5c', // ← pino, acción principal (5,3:1 con texto blanco)
+    600: '#19664d',
+    700: '#14523e',
+    800: '#103f30',
+    900: '#0b2d22',
+    950: '#061a14',
+  },
+
+  /**
+   * Tinta — estructura: texto, sidebar, encabezados de tabla.
+   * 800 = --foreground, 900 = --sidebar.
+   */
+  tinta: {
+    50:  '#f2f5f8',
+    100: '#e1e8ee',
+    200: '#c3d0db',
+    300: '#9cb0c1',
+    400: '#6f879c',
+    500: '#4d6378',
+    600: '#34495d',
+    700: '#213649',
+    800: '#10263a', // ← tinta principal
+    900: '#0b1a26',
+    950: '#06111a',
+  },
+
+  /**
+   * Papel — fondos y bordes cálidos.
+   * 50 = --card, 100 = --background, 300 = --border, 400 = --input.
+   */
+  papel: {
+    50:  '#fffdf9',
+    100: '#f8f4ee',
+    200: '#efe9e0',
+    300: '#e4dccf',
+    400: '#d6ccbd',
   },
 
   /**
@@ -62,13 +104,12 @@ const colors = {
   },
 
   /**
-   * Caramelo — acento cálido, puente con la identidad del login
+   * Caramelo — firma de marca (= --brand)
    * Usar en:
-   *   - Badges de alerta amigable (vacunas pendientes, citas próximas)
-   *   - Detalles decorativos del sidebar (borde del logo/avatar de clínica)
-   *   - Empty states con contexto de acción pendiente
-   *   - Texto de "eyebrow" en módulos con contexto emocional
-   * NO usar como color de acción primaria ni en tablas de datos.
+   *   - Pulso ECG, eyebrows, ítem activo del sidebar, anillo de foco
+   *   - Detalles decorativos (lengüeta de ficha, numerales en itálica)
+   *   - Texto pequeño: usar 700 o text-brand-foreground (500 no pasa AA)
+   * NO usar como color de acción ni en tablas de datos.
    */
   caramel: {
     50:  '#fdf6ee',
@@ -104,25 +145,15 @@ const colors = {
   },
 
   /**
-   * Colores de estado — semánticos para citas/pacientes
-   * Usar como referencia para construir badges y chips.
-   * Ver también: src/lib/theme.js → status
+   * Colores de estado — semánticos para citas, facturas, inventario.
+   * Siguen el tema (claro/oscuro) vía variables CSS de src/index.css:
+   *   DEFAULT → texto, borde, punto      soft → fondo del chip o aviso
+   * Ver también: src/lib/theme.js → statusColors
    */
-  success: {
-    light: '#d1fae5',
-    DEFAULT: '#10b981',
-    dark:  '#065f46',
-  },
-  warning: {
-    light: '#fef3c7',
-    DEFAULT: '#f59e0b',
-    dark:  '#92400e',
-  },
-  danger: {
-    light: '#fee2e2',
-    DEFAULT: '#ef4444',
-    dark:  '#991b1b',
-  },
+  success: { DEFAULT: 'hsl(var(--success) / <alpha-value>)', soft: 'hsl(var(--success-soft) / <alpha-value>)' }, // pino
+  warning: { DEFAULT: 'hsl(var(--warning) / <alpha-value>)', soft: 'hsl(var(--warning-soft) / <alpha-value>)' }, // miel
+  danger:  { DEFAULT: 'hsl(var(--danger) / <alpha-value>)',  soft: 'hsl(var(--danger-soft) / <alpha-value>)' },  // ladrillo
+  info:    { DEFAULT: 'hsl(var(--info) / <alpha-value>)',    soft: 'hsl(var(--info-soft) / <alpha-value>)' },    // petróleo
 }
 
 // ─────────────────────────────────────────────
@@ -132,7 +163,7 @@ const colors = {
 const typography = {
   fontFamily: {
     sans:  '"Geist Variable", system-ui, -apple-system, sans-serif',
-    serif: '"Cormorant Garamond", Georgia, serif',
+    serif: '"Spectral", "Spectral Fallback", Georgia, serif', // = fontFamily.display de Tailwind
     mono:  '"Geist Mono", "Fira Code", "Cascadia Code", monospace',
   },
   /**

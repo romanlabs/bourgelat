@@ -27,14 +27,15 @@ export const animation = tokens.animation
 
 /**
  * Colores semánticos de estado para citas/pacientes.
- * Uso: statusColors.confirmed.bg → 'clinical-100'
+ * Siguen el modo claro/oscuro vía los tokens de src/index.css.
+ * Uso: statusColors.confirmed.bg → 'bg-success-soft'
  */
 export const statusColors = {
-  confirmed:  { bg: 'bg-clinical-100', border: 'border-clinical-300', text: 'text-clinical-700' },
-  inProgress: { bg: 'bg-blue-100',     border: 'border-blue-300',     text: 'text-blue-700'     },
-  completed:  { bg: 'bg-warm-100',     border: 'border-warm-300',     text: 'text-warm-600'     },
-  cancelled:  { bg: 'bg-danger-light', border: 'border-red-200',      text: 'text-danger-dark'  },
-  pending:    { bg: 'bg-warning-light',border: 'border-amber-200',    text: 'text-warning-dark' },
+  confirmed:  { bg: 'bg-success-soft', border: 'border-success/30', text: 'text-success'          },
+  inProgress: { bg: 'bg-info-soft',    border: 'border-info/30',    text: 'text-info'             },
+  completed:  { bg: 'bg-muted',        border: 'border-border',     text: 'text-muted-foreground' },
+  cancelled:  { bg: 'bg-danger-soft',  border: 'border-danger/30',  text: 'text-danger'           },
+  pending:    { bg: 'bg-warning-soft', border: 'border-warning/30', text: 'text-warning'          },
 }
 
 export default tokens
