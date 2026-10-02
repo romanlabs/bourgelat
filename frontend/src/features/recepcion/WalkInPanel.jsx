@@ -145,7 +145,7 @@ export function WalkInPanel({
           <button
             type="submit"
             disabled={crearWalkInMutation.isPending}
-            className="border border-red-500 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-danger bg-danger px-4 py-3 text-sm font-semibold text-white transition hover:bg-danger disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearWalkInMutation.isPending ? 'Registrando...' : 'Registrar en sala de espera'}
           </button>

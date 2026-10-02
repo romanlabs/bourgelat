@@ -150,6 +150,37 @@ const colors = {
    *   DEFAULT → texto, borde, punto      soft → fondo del chip o aviso
    * Ver también: src/lib/theme.js → statusColors
    */
+  /**
+   * Gráficas (Recharts). Hex fijos porque van como atributos SVG, donde var()
+   * no es confiable. Tonos medios que se leen sobre papel y sobre la noche.
+   *   estados   → mismos significados que los tokens de estado
+   *   categorica → series sin significado (tipos de cita, métodos de pago…),
+   *                en orden de uso: las primeras son las más distinguibles
+   */
+  chart: {
+    estados: {
+      neutro:  '#7d8c98', // programada
+      warning: '#d49a2a', // en espera
+      info:    '#2f6f8f', // en atención
+      success: '#1f7a5c', // completada
+      danger:  '#b4412f', // cancelada
+      dangerSuave: '#d9826f', // no asistió
+    },
+    vacio: '#d6ccbd', // parte "libre" de medidores y donas (uso vs. límite)
+    categorica: [
+      '#1f7a5c', // pino
+      '#2f6f8f', // petróleo
+      '#b07645', // caramelo
+      '#d49a2a', // miel
+      '#b4412f', // ladrillo
+      '#5a6b78', // tinta suave
+      '#7fa88f', // salvia
+      '#34495d', // tinta
+      '#c98b6b', // arcilla
+      '#8a8f3c', // oliva
+    ],
+  },
+
   success: { DEFAULT: 'hsl(var(--success) / <alpha-value>)', soft: 'hsl(var(--success-soft) / <alpha-value>)' }, // pino
   warning: { DEFAULT: 'hsl(var(--warning) / <alpha-value>)', soft: 'hsl(var(--warning-soft) / <alpha-value>)' }, // miel
   danger:  { DEFAULT: 'hsl(var(--danger) / <alpha-value>)',  soft: 'hsl(var(--danger-soft) / <alpha-value>)' },  // ladrillo

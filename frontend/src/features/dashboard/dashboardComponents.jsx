@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { createElement, useId } from 'react'
 import {
   Area,
@@ -331,7 +332,7 @@ export function LinePanel({
   subtitle,
   data,
   dataKey,
-  color = '#0f4c81',
+  color = chartColors.categorica[1],
   formatter,
   emptyMessage,
   action,
@@ -411,7 +412,7 @@ function GradientBar({ fill, x, y, width, height }) {
   return <rect x={x} y={y} width={width} height={height} fill={fill} rx={4} ry={4} />
 }
 
-export function BarPanel({ title, subtitle, data, dataKey, color = '#0f766e', formatter, emptyMessage, height = 'h-[300px]' }) {
+export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.categorica[0], formatter, emptyMessage, height = 'h-[300px]' }) {
   const gradientId = useId().replaceAll(':', '')
   const hasData = data.some((item) => Number(item[dataKey] || 0) > 0)
 

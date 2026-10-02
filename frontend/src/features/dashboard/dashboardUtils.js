@@ -1,42 +1,30 @@
+import { chartColors } from '@/lib/theme'
+
+const TONO_LEGADO = 'bg-muted text-muted-foreground border-border'
+
 // Las cuatro primeras son la oferta vigente. Las tres ultimas son legado: no se
 // ofrecen, pero el historial de suscripciones todavia las contiene y sin su
 // etiqueta las filas viejas se verian con la llave cruda.
 export const PLAN_META = {
   prueba: {
     nombre: 'Prueba',
-    tone: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-200 dark:border-sky-700',
-    accent: '#0369a1',
+    tone: 'bg-info-soft text-info border-info/30',
   },
   activo: {
     nombre: 'Bourgelat',
-    tone: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    accent: '#0f766e',
+    tone: 'bg-success-soft text-success border-success/30',
   },
   cortesia: {
     nombre: 'Cortesía',
-    tone: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-200 dark:border-violet-700',
-    accent: '#6d28d9',
+    tone: 'bg-brand-muted text-brand-foreground border-brand/30',
   },
   personalizado: {
     nombre: 'Personalizado',
-    tone: 'bg-amber-50 text-amber-700 border-amber-200',
-    accent: '#92400e',
+    tone: 'bg-card text-foreground border-foreground/20',
   },
-  inicio: {
-    nombre: 'Esencial (legado)',
-    tone: 'bg-slate-100 text-slate-700 border-slate-200',
-    accent: '#0f172a',
-  },
-  clinica: {
-    nombre: 'Clinica (legado)',
-    tone: 'bg-slate-100 text-slate-700 border-slate-200',
-    accent: '#0f172a',
-  },
-  profesional: {
-    nombre: 'Profesional (legado)',
-    tone: 'bg-slate-100 text-slate-700 border-slate-200',
-    accent: '#0f172a',
-  },
+  inicio: { nombre: 'Esencial (legado)', tone: TONO_LEGADO },
+  clinica: { nombre: 'Clinica (legado)', tone: TONO_LEGADO },
+  profesional: { nombre: 'Profesional (legado)', tone: TONO_LEGADO },
 }
 
 // Bajo el modelo de plan único todos los planes traen agenda, historias,
@@ -82,31 +70,34 @@ export const CITA_TIPO_LABELS = {
   otro: 'Otro',
 }
 
-export const CHART_COLORS = ['#0f4c81', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626', '#64748b']
+export const CHART_COLORS = chartColors.categorica
 
 // Color por estado, alineado con `getAccentColor` del calendario: sin esto el
 // color lo asignaba el indice de iteracion, de modo que "cancelada" cambiaba de
 // color segun cuantos estados trajera el periodo y nunca coincidia con la grilla.
 export const CITA_ESTADO_COLORS = {
-  programada: '#93c5fd',
-  en_espera: '#a78bfa',
-  en_atencion: '#e879f9',
-  completada: '#34d399',
-  cancelada: '#f87171',
-  no_asistio: '#fbbf24',
+  programada: chartColors.estados.neutro,
+  en_espera: chartColors.estados.warning,
+  en_atencion: chartColors.estados.info,
+  completada: chartColors.estados.success,
+  cancelada: chartColors.estados.danger,
+  no_asistio: chartColors.estados.dangerSuave,
 }
 
+// Urgencia y cirugía conservan los tonos de alerta; el resto toma la paleta
+// categórica en orden.
+const [pino, petroleo, caramelo, miel, ladrillo, tintaSuave, salvia, tinta, arcilla, oliva] = chartColors.categorica
 export const CITA_TIPO_COLORS = {
-  consulta_general: '#0f766e',
-  vacunacion: '#0f4c81',
-  cirugia: '#dc2626',
-  desparasitacion: '#7c3aed',
-  control: '#f59e0b',
-  urgencia: '#e11d48',
-  peluqueria: '#0ea5e9',
-  laboratorio: '#65a30d',
-  radiografia: '#475569',
-  otro: '#64748b',
+  consulta_general: pino,
+  vacunacion: petroleo,
+  cirugia: arcilla,
+  desparasitacion: caramelo,
+  control: miel,
+  urgencia: ladrillo,
+  peluqueria: salvia,
+  laboratorio: oliva,
+  radiografia: tinta,
+  otro: tintaSuave,
 }
 
 export const CITA_ORIGEN_LABELS = {

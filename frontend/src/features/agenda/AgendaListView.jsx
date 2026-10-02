@@ -1,7 +1,7 @@
 import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { getAccentColor, TIPO_SHORT, especieToEmoji, STATUS_OPTIONS } from './calendarConstants'
+import { getAccentColor, URGENCIA_ACCENT, TIPO_SHORT, especieToEmoji, STATUS_OPTIONS } from './calendarConstants'
 
 const ESTADO_LABEL = Object.fromEntries(STATUS_OPTIONS.map((opt) => [opt.value, opt.label]))
 
@@ -25,7 +25,7 @@ function CitaFila({ cita, onCitaClick, esProxima }) {
 
       <span
         className="h-2.5 w-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: esUrgencia ? '#ef4444' : getAccentColor(cita.estado) }}
+        style={{ backgroundColor: esUrgencia ? URGENCIA_ACCENT : getAccentColor(cita.estado) }}
       />
 
       <span className="min-w-0 flex-1 truncate text-sm text-foreground">

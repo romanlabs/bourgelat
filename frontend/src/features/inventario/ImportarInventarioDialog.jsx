@@ -77,7 +77,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         {!resultado && step === 'seleccion' && (
           <div className="mt-4 grid gap-4">
             {parseResult.globalError && (
-              <div className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs font-semibold text-red-700 dark:text-red-300">
+              <div className="border border-danger/30 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
                 {parseResult.globalError}
               </div>
             )}
@@ -138,18 +138,18 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         {!resultado && step === 'preview' && (
           <div className="mt-4 grid gap-4">
             {parseResult.globalError ? (
-              <div className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs font-semibold text-red-700 dark:text-red-300">
+              <div className="border border-danger/30 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
                 {parseResult.globalError}
               </div>
             ) : (
               <>
                 <div className="flex flex-wrap items-center gap-3 text-xs">
                   <span className="font-semibold text-foreground">{fileName}</span>
-                  <span className="border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 font-semibold text-emerald-700 dark:text-emerald-300">
+                  <span className="border border-success/30 bg-success-soft px-2 py-1 font-semibold text-success">
                     {parseResult.validRows.length} validas
                   </span>
                   {parseResult.invalidRows.length > 0 && (
-                    <span className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-2 py-1 font-semibold text-red-700 dark:text-red-300">
+                    <span className="border border-danger/30 bg-danger-soft px-2 py-1 font-semibold text-danger">
                       {parseResult.invalidRows.length} con errores
                     </span>
                   )}
@@ -176,7 +176,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                           <td className="px-3 py-2 text-foreground">{data.stock}</td>
                           <td className="px-3 py-2 text-foreground">{formatCurrency(data.precioVenta)}</td>
                           <td className="px-3 py-2">
-                            <span className="border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 font-semibold text-emerald-700 dark:text-emerald-300">
+                            <span className="border border-success/30 bg-success-soft px-2 py-0.5 font-semibold text-success">
                               Valido
                             </span>
                           </td>
@@ -191,7 +191,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                           <td className="px-3 py-2 text-foreground">-</td>
                           <td className="px-3 py-2">
                             <span
-                              className="border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 font-semibold text-red-700 dark:text-red-300"
+                              className="border border-danger/30 bg-danger-soft px-2 py-0.5 font-semibold text-danger"
                               title={errors.join(' | ')}
                             >
                               {errors[0]}
@@ -210,7 +210,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                 type="button"
                 onClick={handleConfirm}
                 disabled={isPending || parseResult.validRows.length === 0}
-                className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Upload className="h-4 w-4" />
                 {isPending ? 'Importando...' : `Importar ${parseResult.validRows.length} productos`}
@@ -229,11 +229,11 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         {resultado && (
           <div className="mt-4 grid gap-4">
             <div className="flex flex-wrap items-center gap-3 text-xs">
-              <span className="border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 font-semibold text-emerald-700 dark:text-emerald-300">
+              <span className="border border-success/30 bg-success-soft px-2 py-1 font-semibold text-success">
                 {resultado.creados?.length || 0} creados
               </span>
               {resultado.omitidos?.length > 0 && (
-                <span className="border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 font-semibold text-amber-700 dark:text-amber-300">
+                <span className="border border-warning/30 bg-warning-soft px-2 py-1 font-semibold text-warning">
                   {resultado.omitidos.length} omitidos
                 </span>
               )}
@@ -265,7 +265,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
             <button
               type="button"
               onClick={handleClose}
-              className="w-fit border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+              className="w-fit border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
             >
               Cerrar
             </button>

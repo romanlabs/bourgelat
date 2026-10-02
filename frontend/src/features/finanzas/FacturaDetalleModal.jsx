@@ -63,7 +63,7 @@ export default function FacturaDetalleModal({ historialHook }) {
 
         <div className="mt-4 max-h-[75vh] overflow-y-auto pr-1">
           {facturaDetalleQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
+            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
               No fue posible cargar el detalle de la factura seleccionada.
             </div>
           ) : facturaDetalleQuery.isLoading || facturaDetalleQuery.isPlaceholderData ? (
@@ -76,7 +76,7 @@ export default function FacturaDetalleModal({ historialHook }) {
             <div className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-semibold text-slate-950">
+                  <p className="text-lg font-semibold text-foreground">
                     {facturaSeleccionada.numero}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -106,7 +106,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Total facturado
                 </p>
-                <p className="text-2xl font-bold tabular-nums text-slate-950">
+                <p className="text-2xl font-bold tabular-nums text-foreground">
                   {formatCurrency(facturaSeleccionada.total)}
                 </p>
               </div>
@@ -116,7 +116,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Fecha
                   </dt>
-                  <dd className="mt-1 text-sm font-semibold text-slate-950">
+                  <dd className="mt-1 text-sm font-semibold text-foreground">
                     {formatLongDate(facturaSeleccionada.fecha)}
                   </dd>
                 </div>
@@ -124,7 +124,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Pago
                   </dt>
-                  <dd className="mt-1 text-sm font-semibold text-slate-950">
+                  <dd className="mt-1 text-sm font-semibold text-foreground">
                     {PAYMENT_METHOD_LABELS[facturaSeleccionada.metodoPago] || 'Sin definir'}
                   </dd>
                 </div>
@@ -132,7 +132,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Responsable
                   </dt>
-                  <dd className="mt-1 truncate text-sm font-semibold text-slate-950">
+                  <dd className="mt-1 truncate text-sm font-semibold text-foreground">
                     {facturaSeleccionada.usuario?.nombre || 'Sin usuario asignado'}
                   </dd>
                 </div>
@@ -171,7 +171,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                       <td className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" colSpan={2}>
                         Total
                       </td>
-                      <td className="px-3 py-3 text-right font-bold tabular-nums text-slate-950">
+                      <td className="px-3 py-3 text-right font-bold tabular-nums text-foreground">
                         {formatCurrency(facturaSeleccionada.total)}
                       </td>
                     </tr>
@@ -192,13 +192,13 @@ export default function FacturaDetalleModal({ historialHook }) {
                 <div className="grid gap-3">
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     CUFE:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {facturaSeleccionada.cufe || 'Pendiente'}
                     </span>
                   </div>
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Validada en:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {facturaSeleccionada.fechaValidacionElectronica
                         ? formatDateTime(facturaSeleccionada.fechaValidacionElectronica)
                         : 'Sin validacion'}
@@ -210,7 +210,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     </div>
                   ) : null}
                   {facturaSeleccionada.motivoAnulacion ? (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
+                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                       Motivo de anulacion: {facturaSeleccionada.motivoAnulacion}
                     </div>
                   ) : null}
@@ -221,7 +221,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                 <div className="space-y-4 border-t border-border pt-4">
                   <div className="flex items-center gap-2">
                     <SendHorizontal className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold text-slate-950">
+                    <p className="text-sm font-semibold text-foreground">
                       Reintentar emision electronica
                     </p>
                   </div>
@@ -286,7 +286,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     type="button"
                     onClick={handleEmitirFactura}
                     disabled={emitirFacturaMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <SendHorizontal className="h-4 w-4" />
                     {emitirFacturaMutation.isPending ? 'Emitiendo...' : 'Reintentar emision'}
@@ -298,7 +298,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                 <div className="space-y-4 border-t border-border pt-4">
                   <div className="flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold text-slate-950">Registrar pago</p>
+                    <p className="text-sm font-semibold text-foreground">Registrar pago</p>
                   </div>
                   <Select
                     variant="field"
@@ -331,8 +331,8 @@ export default function FacturaDetalleModal({ historialHook }) {
               {canVoidInvoice ? (
                 <div className="space-y-4 border-t border-border pt-4">
                   <div className="flex items-center gap-2">
-                    <Ban className="h-4 w-4 text-red-700 dark:text-red-400" />
-                    <p className="text-sm font-semibold text-slate-950">Anular factura</p>
+                    <Ban className="h-4 w-4 text-danger" />
+                    <p className="text-sm font-semibold text-foreground">Anular factura</p>
                   </div>
                   <textarea
                     value={motivoAnulacion}
@@ -344,7 +344,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     type="button"
                     onClick={handleAnularFactura}
                     disabled={anularFacturaMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-red-200 bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 border border-danger/30 bg-danger px-4 py-3 text-sm font-semibold text-white transition hover:bg-danger disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Ban className="h-4 w-4" />
                     {anularFacturaMutation.isPending ? 'Anulando...' : 'Anular factura'}
@@ -352,7 +352,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : facturaSeleccionada?.estadoElectronico === 'validada' &&
                 facturaSeleccionada?.cufe ? (
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+                <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                   Esta factura ya fue validada electronicamente. No se puede anular desde
                   caja: requiere un flujo tributario controlado como nota credito.
                 </div>

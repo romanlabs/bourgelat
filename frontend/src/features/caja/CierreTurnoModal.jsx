@@ -107,7 +107,7 @@ export default function CierreTurnoModal({
           </label>
 
           {tieneMontoValido && diferenciaAbs === 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">
+            <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
               <CheckCircle2 className="h-4 w-4" />
               Cierre cuadrado, sin diferencias.
             </div>
@@ -117,8 +117,8 @@ export default function CierreTurnoModal({
             <div
               className={`rounded-xl border px-4 py-3 text-sm ${
                 diferencia > 0
-                  ? 'border-cyan-200 bg-cyan-50 text-cyan-800 dark:border-cyan-700/60 dark:bg-cyan-900/30 dark:text-cyan-200'
-                  : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200'
+                  ? 'border-info/30 bg-info-soft text-info '
+                  : 'border-warning/30 bg-warning-soft text-warning '
               }`}
             >
               {diferencia > 0 ? 'Sobrante' : 'Faltante'} de {formatCurrency(diferenciaAbs)}
@@ -126,7 +126,7 @@ export default function CierreTurnoModal({
           )}
 
           {requiereRevisionAdmin && (
-            <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
+            <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               La diferencia supera $30.000. Se notificara automaticamente al administrador de la clinica.
             </div>
@@ -161,7 +161,7 @@ export default function CierreTurnoModal({
                 onChange={(event) => setForm((curr) => ({ ...curr, observacionesCierre: event.target.value }))}
                 placeholder="Explica que pudo causar la diferencia"
                 className={`min-h-20 w-full rounded-xl border bg-card px-3 py-2.5 text-sm leading-6 text-foreground outline-none transition focus:border-primary ${
-                  requiereJustificacion && !comentarioValido ? 'border-red-300 dark:border-red-700' : 'border-border'
+                  requiereJustificacion && !comentarioValido ? 'border-danger/30' : 'border-border'
                 }`}
               />
             </label>
@@ -175,7 +175,7 @@ export default function CierreTurnoModal({
               <Select
                 variant="field"
                 aria-label="Categoria de la diferencia"
-                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-red-300 dark:border-red-700' : ''}`}
+                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-danger/30' : ''}`}
                 placeholder="Selecciona una categoria"
                 value={form.categoriaDiferencia}
                 onValueChange={(value) => setForm((curr) => ({ ...curr, categoriaDiferencia: value }))}

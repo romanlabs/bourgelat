@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -110,27 +111,27 @@ const formatTime = (value) => {
 }
 
 const getAppointmentTone = (estado) => {
-  if (estado === 'completada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'en_espera') return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-200'
+  if (estado === 'completada') return 'border-success/30 bg-success-soft text-success'
+  if (estado === 'en_espera') return 'border-info/30 bg-info-soft text-info '
   if (estado === 'cancelada' || estado === 'no_asistio') {
-    return 'border-red-200 bg-red-50 text-red-700'
+    return 'border-danger/30 bg-danger-soft text-danger'
   }
-  return 'border-amber-200 bg-amber-50 text-amber-700'
+  return 'border-warning/30 bg-warning-soft text-warning'
 }
 
 const buildCapacityChart = (used, limit, label) => {
   if (limit === null || limit === undefined) {
     return {
       centerValue: 'Sin limite',
-      rows: [{ key: 'abierto', name: label, value: 1, color: '#0d9488' }],
+      rows: [{ key: 'abierto', name: label, value: 1, color: chartColors.categorica[0] }],
     }
   }
 
   return {
     centerValue: `${getUsagePercentage(used, limit)}%`,
     rows: [
-      { key: 'en_uso', name: 'En uso', value: used, color: '#0f766e' },
-      { key: 'disponible', name: 'Disponible', value: Math.max(limit - used, 0), color: '#cbd5e1' },
+      { key: 'en_uso', name: 'En uso', value: used, color: chartColors.categorica[0] },
+      { key: 'disponible', name: 'Disponible', value: Math.max(limit - used, 0), color: chartColors.vacio },
     ],
   }
 }
@@ -434,7 +435,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Panel de control
             </p>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-950">{nombreClinica}</h1>
+            <h1 className="mt-3 text-3xl font-semibold text-foreground">{nombreClinica}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
               Este panel de control está reservado para administración. Tu perfil puede seguir
               trabajando en las secciones permitidas, pero el seguimiento financiero, los reportes y
@@ -447,7 +448,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Acceso actual
               </p>
-              <p className="mt-3 text-base font-semibold text-slate-950">{usuarioEmail || 'Sin correo principal'}</p>
+              <p className="mt-3 text-base font-semibold text-foreground">{usuarioEmail || 'Sin correo principal'}</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Si necesitas ver reportes o controles de plan, solicita acceso al administrador.
               </p>
@@ -457,7 +458,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Siguiente modulo
               </p>
-              <p className="mt-3 text-base font-semibold text-slate-950">Pacientes y tutores</p>
+              <p className="mt-3 text-base font-semibold text-foreground">Pacientes y tutores</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 La base clínica publicada ya puede usarse desde el equipo operativo.
               </p>
@@ -611,7 +612,7 @@ export default function DashboardPage() {
         total: Number(value?.total || 0),
         valor: Number(value?.valor || 0),
         value: Number(value?.total || 0),
-        color: ['#0f4c81', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626', '#64748b'][index % 6],
+        color: chartColors.categorica[index % chartColors.categorica.length],
       })),
     [inventarioQuery.data?.porCategoria]
   )
@@ -878,7 +879,7 @@ export default function DashboardPage() {
               label: 'Asistencia',
               value: citasQuery.data?.tasaAsistencia || '0%',
               helper: 'Relación de citas completadas sobre el total del período.',
-              tone: 'text-emerald-700',
+              tone: 'text-success',
             },
             {
               id: 'canceladas',
@@ -886,7 +887,7 @@ export default function DashboardPage() {
               label: 'Canceladas',
               value: formatNumber(citasQuery.data?.citasPorEstado?.cancelada || 0),
               helper: 'Citas anuladas dentro del período actual.',
-              tone: 'text-rose-700',
+              tone: 'text-danger',
             },
             {
               id: 'no-asistio',
@@ -894,7 +895,7 @@ export default function DashboardPage() {
               label: 'No asistio',
               value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
               helper: 'Pacientes que no se presentaron a su cita en el período.',
-              tone: 'text-amber-700',
+              tone: 'text-warning',
             },
           ]}
         />
@@ -914,7 +915,7 @@ export default function DashboardPage() {
             subtitle="Qué tipo de atención se está moviendo más durante el mes."
             data={tiposCita}
             dataKey="value"
-            color="#0f766e"
+            color={chartColors.categorica[0]}
             formatter={formatNumber}
             emptyMessage="Todavía no hay datos por tipo de cita."
           />
@@ -950,7 +951,7 @@ export default function DashboardPage() {
               label: 'Ingresos del período',
               value: formatCurrency(ingresosQuery.data?.totalIngresos || 0),
               helper: 'Suma total entre facturas emitidas y pagadas dentro del mes.',
-              tone: 'text-emerald-700',
+              tone: 'text-success',
             },
             {
               id: 'facturas',
@@ -973,7 +974,7 @@ export default function DashboardPage() {
               label: 'Control DIAN',
               value: formatNumber(dianErrores),
               helper: `Facturas rechazadas o que no se pudieron enviar. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
-              tone: 'text-violet-700 dark:text-violet-300',
+              tone: 'text-info',
             },
           ]}
         />
@@ -984,7 +985,7 @@ export default function DashboardPage() {
             subtitle="Movimiento día a día del período seleccionado."
             data={ingresosPorDia}
             dataKey="total"
-            color="#0f4c81"
+            color={chartColors.categorica[1]}
             formatter={formatCurrency}
             emptyMessage="Todavía no hay movimiento financiero en este período."
           />
@@ -1054,7 +1055,7 @@ export default function DashboardPage() {
               label: 'Valor inventariado',
               value: formatCurrency(resumenInventario.valorTotalInventario || 0),
               helper: 'Valor de venta estimado del inventario registrado.',
-              tone: 'text-emerald-700',
+              tone: 'text-success',
             },
             {
               id: 'bajo-stock',
@@ -1062,7 +1063,7 @@ export default function DashboardPage() {
               label: 'Cantidad baja',
               value: formatNumber(resumenInventario.bajoStock || 0),
               helper: 'Productos con cantidad por debajo del mínimo definido.',
-              tone: 'text-amber-700',
+              tone: 'text-warning',
             },
             {
               id: 'vencimientos',
@@ -1070,7 +1071,7 @@ export default function DashboardPage() {
               label: 'Vencimientos',
               value: formatNumber(vencimientosVentas + vencimientosClinico),
               helper: `Vencidos y próximos a vencer. Ventas: ${formatNumber(vencimientosVentas)} · Clínico: ${formatNumber(vencimientosClinico)}.`,
-              tone: 'text-rose-700',
+              tone: 'text-danger',
             },
           ]}
         />
@@ -1090,7 +1091,7 @@ export default function DashboardPage() {
             subtitle="Lectura financiera del inventario según su categoría."
             data={categoriasInventario}
             dataKey="valor"
-            color="#0f4c81"
+            color={chartColors.categorica[1]}
             formatter={formatCurrency}
             emptyMessage="No hay valor inventariado por categoría disponible."
           />
@@ -1143,7 +1144,7 @@ export default function DashboardPage() {
             label: 'Usuarios activos',
             value: formatNumber(usuariosActivos),
             helper: 'Equipo actualmente activo en la clínica.',
-            tone: 'text-violet-700 dark:text-violet-300',
+            tone: 'text-info',
           },
         ]}
       />
@@ -1180,7 +1181,7 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-2">
             <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
             {typeof diasRestantes === 'number' ? (
-              <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
+              <StatusPill tone="border-warning/30 bg-warning-soft text-warning">
                 {diasRestantes} dias restantes
               </StatusPill>
             ) : null}
@@ -1192,14 +1193,14 @@ export default function DashboardPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Clinica
             </p>
-            <p className="mt-3 text-base font-semibold text-slate-950">{nombreClinica}</p>
+            <p className="mt-3 text-base font-semibold text-foreground">{nombreClinica}</p>
             <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicación pendiente'}</p>
           </div>
           <div className="border border-border bg-muted px-4 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Vigencia
             </p>
-            <p className="mt-3 text-base font-semibold text-slate-950">
+            <p className="mt-3 text-base font-semibold text-foreground">
               {suscripcion?.fechaFin ? formatLongDate(suscripcion.fechaFin) : 'Sin fecha de cierre'}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -1210,7 +1211,7 @@ export default function DashboardPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Acción recomendada
             </p>
-            <p className="mt-3 text-base font-semibold text-slate-950">Gestion comercial</p>
+            <p className="mt-3 text-base font-semibold text-foreground">Gestion comercial</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>
@@ -1234,8 +1235,8 @@ export default function DashboardPage() {
               <StatusPill
                 tone={
                   row.enabled
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    : 'border-border bg-slate-100 text-muted-foreground'
+                    ? 'border-success/30 bg-success-soft text-success'
+                    : 'border-border bg-muted text-muted-foreground'
                 }
               >
                 {row.enabled ? 'Incluido' : 'No incluido'}
@@ -1312,7 +1313,7 @@ export default function DashboardPage() {
       title="Panel de control"
       description="Todo lo importante del día en un solo lugar: operación, caja, inventario y continuidad, sin perder tiempo en pantallas saturadas."
       headerBadge={
-        <StatusPill tone="border-border bg-slate-100 text-foreground">
+        <StatusPill tone="border-border bg-muted text-foreground">
           Corte {formatShortDate(rangoMes.fechaFin)}
         </StatusPill>
       }
@@ -1333,7 +1334,7 @@ export default function DashboardPage() {
           {queryErrors.map((message) => (
             <div
               key={message}
-              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 shadow-sm"
+              className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger shadow-sm"
             >
               {message}
             </div>

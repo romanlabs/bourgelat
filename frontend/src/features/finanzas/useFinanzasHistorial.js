@@ -42,16 +42,16 @@ export const ESTADO_ELECTRONICO_LABELS = {
 }
 
 export const getEstadoTone = (estado) => {
-  if (estado === 'pagada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'anulada') return 'border-red-200 bg-red-50 text-red-700'
+  if (estado === 'pagada') return 'border-success/30 bg-success-soft text-success'
+  if (estado === 'anulada') return 'border-danger/30 bg-danger-soft text-danger'
   if (estado === 'borrador') return 'border-border bg-muted text-foreground'
   return 'border-primary/30 bg-primary/10 text-primary'
 }
 
 export const getEstadoElectronicoTone = (estado) => {
-  if (estado === 'validada') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
-  if (estado === 'rechazada' || estado === 'error') return 'border-red-200 bg-red-50 text-red-700'
-  if (estado === 'pendiente' || estado === 'enviada') return 'border-amber-200 bg-amber-50 text-amber-700'
+  if (estado === 'validada') return 'border-success/30 bg-success-soft text-success'
+  if (estado === 'rechazada' || estado === 'error') return 'border-danger/30 bg-danger-soft text-danger'
+  if (estado === 'pendiente' || estado === 'enviada') return 'border-warning/30 bg-warning-soft text-warning'
   return 'border-border bg-muted text-foreground'
 }
 

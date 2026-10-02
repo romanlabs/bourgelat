@@ -25,6 +25,9 @@ export const radius    = tokens.radius
 export const spacing   = tokens.spacing
 export const animation = tokens.animation
 
+/** Paleta de gráficas (hex fijos para atributos SVG de Recharts). */
+export const chartColors = tokens.colors.chart
+
 /**
  * Colores semánticos de estado para citas/pacientes.
  * Siguen el modo claro/oscuro vía los tokens de src/index.css.

@@ -217,7 +217,7 @@ export default function AdminShell({
     <AdminSearchContext.Provider value={openSearch}>
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-white px-3 text-foreground sm:px-4">
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-card px-3 text-foreground sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <SimpleTooltip label="Menú principal">
             <button

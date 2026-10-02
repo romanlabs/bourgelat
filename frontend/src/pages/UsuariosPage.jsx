@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -152,7 +153,7 @@ function RoleBadges({ user }) {
           key={`${user.id}-${role}-${index}`}
           tone={
             role === 'admin'
-              ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-200'
+              ? 'border-info/30 bg-info-soft text-info '
               : role === 'veterinario'
                 ? 'border-primary/30 bg-primary/10 text-primary'
                 : 'border-border bg-muted text-foreground'
@@ -185,7 +186,7 @@ function PasswordChecklist({ password, visible }) {
         {rules.map((rule) => (
           <div key={rule.id} className="flex items-center justify-between gap-3 text-sm">
             <span className="text-muted-foreground">{rule.label}</span>
-            <span className={rule.valid ? 'text-emerald-700' : 'text-muted-foreground'}>
+            <span className={rule.valid ? 'text-success' : 'text-muted-foreground'}>
               {rule.valid ? 'Cumple' : 'Pendiente'}
             </span>
           </div>
@@ -353,12 +354,12 @@ export default function UsuariosPage() {
 
   const statusDistribution = useMemo(
     () => [
-      { key: 'activos', name: 'Activos', value: activos.length, color: '#0f766e' },
+      { key: 'activos', name: 'Activos', value: activos.length, color: chartColors.categorica[0] },
       {
         key: 'inactivos',
         name: 'Inactivos',
         value: Math.max(usuarios.length - activos.length, 0),
-        color: '#cbd5e1',
+        color: chartColors.vacio,
       },
     ],
     [activos.length, usuarios.length]
@@ -495,7 +496,7 @@ export default function UsuariosPage() {
       ) : (
         <div className="space-y-5">
           {usuariosQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
               {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clinica.')}
             </div>
           ) : null}
@@ -634,7 +635,7 @@ export default function UsuariosPage() {
                       <StatusPill
                         tone={
                           row.activo
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            ? 'border-success/30 bg-success-soft text-success'
                             : 'border-border bg-muted text-muted-foreground'
                         }
                       >
@@ -777,7 +778,7 @@ export default function UsuariosPage() {
                 <button
                   type="submit"
                   disabled={crearUsuarioMutation.isPending}
-                  className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {crearUsuarioMutation.isPending ? 'Guardando...' : 'Guardar usuario'}
                 </button>
@@ -927,7 +928,7 @@ export default function UsuariosPage() {
                   </div>
 
                   {esUsuarioActualSeleccionado ? (
-                    <div className="border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-7 text-amber-800">
+                    <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
                       Tu sesion actual puede actualizar nombre, correo y celular, pero los permisos se cambian desde otra cuenta administrativa para evitar inconsistencias.
                     </div>
                   ) : null}
@@ -944,7 +945,7 @@ export default function UsuariosPage() {
                     <button
                       type="submit"
                       disabled={editarUsuarioMutation.isPending}
-                      className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {editarUsuarioMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                     </button>
@@ -985,14 +986,14 @@ export default function UsuariosPage() {
                   label="Acceso administrativo"
                   value={formatNumber(totalAdministrativos)}
                   helper="Usuarios activos con capacidad de administracion."
-                  tone="text-violet-700 dark:text-violet-300"
+                  tone="text-info"
                 />
                 <KpiCard
                   icon={Stethoscope}
                   label="Equipo clinico"
                   value={formatNumber(totalVeterinarios)}
                   helper="Profesionales que pueden operar consulta y agenda medica."
-                  tone="text-emerald-700"
+                  tone="text-success"
                 />
                 <KpiCard
                   icon={CircleAlert}
@@ -1003,7 +1004,7 @@ export default function UsuariosPage() {
                       ? 'La suscripcion actual no limita usuarios activos.'
                       : `${formatNumber(activos.length)} de ${formatNumber(limiteUsuarios)} usuarios en uso.`
                   }
-                  tone="text-amber-700"
+                  tone="text-warning"
                 />
               </div>
 

@@ -140,34 +140,38 @@ export function calcCitaHeight(
   return Math.max((effectiveDuration / SLOT_MINUTOS) * slotHeight, 24)
 }
 
+// Estados de cita con los mismos tonos que StatusBadge: neutral → programada,
+// warning → en espera, info → en atención, success → completada, danger →
+// cancelada / no asistió. Siguen el modo oscuro vía los tokens de index.css.
 export function buildStateTone(estado) {
   switch (estado) {
-    case 'programada':
-      return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
     case 'en_espera':
-      return 'border-violet-400 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200 dark:border-violet-600'
+      return 'border-warning/30 bg-warning-soft text-warning'
     case 'en_atencion':
-      return 'border-fuchsia-400 bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-200 dark:border-fuchsia-600'
+      return 'border-info/30 bg-info-soft text-info'
     case 'completada':
-      return 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-600'
+      return 'border-success/30 bg-success-soft text-success'
     case 'cancelada':
-      return 'border-red-400 bg-red-100 text-red-700 opacity-75 dark:bg-red-900/40 dark:text-red-200 dark:border-red-600'
     case 'no_asistio':
-      return 'border-amber-400 bg-amber-100 text-amber-700 opacity-75 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-600'
+      return 'border-danger/30 bg-danger-soft text-danger opacity-75'
+    case 'programada':
     default:
-      return 'border-blue-300 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
+      return 'border-border bg-card text-foreground'
   }
 }
 
+/** Color de la barra lateral del chip (se usa en style, por eso es CSS y no clase). */
+export const URGENCIA_ACCENT = 'hsl(var(--danger))'
+
 export function getAccentColor(estado) {
   switch (estado) {
-    case 'programada':  return '#93c5fd'
-    case 'en_espera':   return '#a78bfa'
-    case 'en_atencion': return '#e879f9'
-    case 'completada':  return '#34d399'
-    case 'cancelada':   return '#f87171'
-    case 'no_asistio':  return '#fbbf24'
-    default:            return '#93c5fd'
+    case 'en_espera':   return 'hsl(var(--warning))'
+    case 'en_atencion': return 'hsl(var(--info))'
+    case 'completada':  return 'hsl(var(--success))'
+    case 'cancelada':
+    case 'no_asistio':  return 'hsl(var(--danger))'
+    case 'programada':
+    default:            return 'hsl(var(--muted-foreground))'
   }
 }
 

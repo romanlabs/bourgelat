@@ -158,7 +158,7 @@ function FormField({ label, helper, required = false, children }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className={LABEL_CLASS}>{label}</span>
         {required ? (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-warning">
             Requerido
           </span>
         ) : null}
@@ -443,7 +443,7 @@ function ConfiguracionContent({
               className={`border px-4 py-4 text-left transition ${
                 activeSection === section.id
                   ? 'border-primary bg-primary/10'
-                  : 'border-border bg-muted hover:border-border hover:bg-white'
+                  : 'border-border bg-muted hover:border-border hover:bg-muted'
               }`}
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -468,16 +468,16 @@ function ConfiguracionContent({
           label="Contacto principal"
           value={clinicForm.email ? 'Listo' : 'Pendiente'}
           helper={clinicForm.email || 'Define un correo institucional para respuestas y documentos.'}
-          tone={clinicForm.email ? 'text-emerald-700' : 'text-amber-700'}
-          borderTone={clinicForm.email ? 'border-border' : 'border-amber-300'}
+          tone={clinicForm.email ? 'text-success' : 'text-warning'}
+          borderTone={clinicForm.email ? 'border-border' : 'border-warning/30'}
         />
         <KpiCard
           icon={Phone}
           label="Linea administrativa"
           value={clinicForm.telefono ? 'Activa' : 'Pendiente'}
           helper={clinicForm.telefono || 'Agrega un celular colombiano válido para el contacto principal.'}
-          tone={clinicForm.telefono ? 'text-emerald-700' : 'text-amber-700'}
-          borderTone={clinicForm.telefono ? 'border-border' : 'border-amber-300'}
+          tone={clinicForm.telefono ? 'text-success' : 'text-warning'}
+          borderTone={clinicForm.telefono ? 'border-border' : 'border-warning/30'}
         />
         <KpiCard
           icon={ShieldCheck}
@@ -488,8 +488,8 @@ function ConfiguracionContent({
               ? 'La clínica ya tiene base institucional y fiscal para una operación más formal.'
               : 'Completa la ficha para habilitar una salida tributaria más ordenada.'
           }
-          tone={perfilFiscal?.listoParaFacturacion ? 'text-emerald-700' : 'text-amber-700'}
-          borderTone={perfilFiscal?.listoParaFacturacion ? 'border-border' : 'border-amber-300'}
+          tone={perfilFiscal?.listoParaFacturacion ? 'text-success' : 'text-warning'}
+          borderTone={perfilFiscal?.listoParaFacturacion ? 'border-border' : 'border-warning/30'}
         />
       </div>
 
@@ -516,25 +516,25 @@ function ConfiguracionContent({
               <div className="grid gap-3 xl:grid-cols-2">
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Nombre visible:{' '}
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-foreground">
                     {clinicForm.nombreComercial || clinicForm.nombre || 'Pendiente'}
                   </span>
                 </div>
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Logo institucional:{' '}
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-foreground">
                     {clinicForm.logo ? 'Disponible' : 'Pendiente'}
                   </span>
                 </div>
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Contacto principal:{' '}
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-foreground">
                     {clinicForm.email ? 'Listo' : 'Pendiente'}
                   </span>
                 </div>
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Perfil fiscal:{' '}
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-foreground">
                     {perfilFiscal?.listoParaFacturacion ? 'Listo' : 'En ajuste'}
                   </span>
                 </div>
@@ -544,7 +544,7 @@ function ConfiguracionContent({
                 <button
                   type="button"
                   onClick={() => setActiveSection('ficha')}
-                  className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90"
                 >
                   Editar ficha institucional
                 </button>
@@ -568,20 +568,20 @@ function ConfiguracionContent({
             >
               {camposPendientes.length ? (
                 <div className="space-y-3">
-                  <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                  <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                     Todavia faltan datos fiscales base. Completa esta lista antes de formalizar la
                     facturacion electronica.
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {camposPendientes.map((item) => (
-                      <StatusPill key={item} tone="border-amber-200 bg-white text-amber-700">
+                      <StatusPill key={item} tone="border-warning/30 bg-card text-warning">
                         {item}
                       </StatusPill>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm leading-7 text-emerald-700">
+                <div className="border border-success/30 bg-success-soft px-4 py-4 text-sm leading-7 text-success">
                   La ficha fiscal ya tiene la informacion base para una operacion mas profesional.
                 </div>
               )}
@@ -614,8 +614,8 @@ function ConfiguracionContent({
             <StatusPill
               tone={
                 perfilFiscal?.listoParaFacturacion
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-amber-200 bg-amber-50 text-amber-700'
+                  ? 'border-success/30 bg-success-soft text-success'
+                  : 'border-warning/30 bg-warning-soft text-warning'
               }
             >
               {perfilFiscal?.listoParaFacturacion ? 'Perfil fiscal listo' : 'Perfil fiscal pendiente'}
@@ -896,7 +896,7 @@ function ConfiguracionContent({
               <button
                 type="submit"
                 disabled={actualizarClinicaMutation.isPending}
-                className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
@@ -932,11 +932,11 @@ function ConfiguracionContent({
 
               <div className="grid gap-3">
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
-                  NIT: <span className="font-semibold text-slate-950">{clinicForm.nit || 'Pendiente'}</span>
+                  NIT: <span className="font-semibold text-foreground">{clinicForm.nit || 'Pendiente'}</span>
                 </div>
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Documento fiscal:{' '}
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-foreground">
                     {FISCAL_DOCUMENT_OPTIONS.find(
                       (option) => option.value === clinicForm.tipoDocumentoFacturacionId
                     )?.label || 'Pendiente'}
@@ -944,7 +944,7 @@ function ConfiguracionContent({
                 </div>
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   Logo institucional:{' '}
-                  <span className="font-semibold text-slate-950">{clinicForm.logo ? 'Disponible' : 'Pendiente'}</span>
+                  <span className="font-semibold text-foreground">{clinicForm.logo ? 'Disponible' : 'Pendiente'}</span>
                 </div>
               </div>
             </div>
@@ -956,20 +956,20 @@ function ConfiguracionContent({
           >
             {camposPendientes.length ? (
               <div className="space-y-3">
-                <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                   Todavia faltan datos fiscales base. Completa esta lista antes de formalizar la
                   facturacion electronica.
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {camposPendientes.map((item) => (
-                    <StatusPill key={item} tone="border-amber-200 bg-white text-amber-700">
+                    <StatusPill key={item} tone="border-warning/30 bg-card text-warning">
                       {item}
                     </StatusPill>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm leading-7 text-emerald-700">
+              <div className="border border-success/30 bg-success-soft px-4 py-4 text-sm leading-7 text-success">
                 La ficha fiscal ya tiene la informacion base para una operacion mas profesional.
               </div>
             )}
@@ -1003,7 +1003,7 @@ function ConfiguracionContent({
                   <StatusPill
                     tone={
                       factusForm.activa
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        ? 'border-success/30 bg-success-soft text-success'
                         : 'border-border bg-muted text-foreground'
                     }
                   >
@@ -1013,7 +1013,7 @@ function ConfiguracionContent({
                     tone={
                       credencialesCompletas
                         ? 'border-primary/30 bg-primary/10 text-primary'
-                        : 'border-amber-200 bg-amber-50 text-amber-700'
+                        : 'border-warning/30 bg-warning-soft text-warning'
                     }
                   >
                     {credencialesCompletas ? 'Credenciales listas' : 'Credenciales pendientes'}
@@ -1176,7 +1176,7 @@ function ConfiguracionContent({
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
-                    className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {guardarFactusMutation.isPending ? 'Guardando...' : 'Guardar Factus'}
                   </button>
@@ -1218,14 +1218,14 @@ function ConfiguracionContent({
                 <div className="grid gap-4 xl:grid-cols-2">
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Ambiente</p>
-                    <p className="mt-3 font-semibold text-slate-950">
+                    <p className="mt-3 font-semibold text-foreground">
                       {FACTUS_ENV_OPTIONS.find((option) => option.value === factusForm.ambiente)?.label ||
                         'Sin definir'}
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Estado de la conexión</p>
-                    <p className="mt-3 font-semibold text-slate-950">
+                    <p className="mt-3 font-semibold text-foreground">
                       {factusForm.activa ? 'Activa para emitir' : 'Pendiente de activación'}
                     </p>
                   </div>
@@ -1233,19 +1233,19 @@ function ConfiguracionContent({
                 <div className="grid gap-4 2xl:grid-cols-3">
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Origen de las claves</p>
-                    <p className="mt-3 font-semibold text-slate-950">
+                    <p className="mt-3 font-semibold text-foreground">
                       {formatCredentialSource(configuracionEfectiva?.fuenteCredenciales)}
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Rango de numeración</p>
-                    <p className="mt-3 font-semibold text-slate-950">
+                    <p className="mt-3 font-semibold text-foreground">
                       {integracionFactus?.rangoNumeracionId || 'Pendiente'}
                     </p>
                   </div>
                   <div className="border border-border bg-card px-4 py-4 text-sm text-foreground">
                     <p className={LABEL_CLASS}>Última revisión</p>
-                    <p className="mt-3 font-semibold text-slate-950">
+                    <p className="mt-3 font-semibold text-foreground">
                       {formatDateTime(integracionFactus?.ultimoChequeo)}
                     </p>
                   </div>
@@ -1264,8 +1264,8 @@ function ConfiguracionContent({
                   <StatusPill
                     tone={
                       credencialesCompletas
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-amber-200 bg-amber-50 text-amber-700'
+                        ? 'border-success/30 bg-success-soft text-success'
+                        : 'border-warning/30 bg-warning-soft text-warning'
                     }
                   >
                     {credencialesCompletas ? 'Credenciales completas' : 'Credenciales incompletas'}
@@ -1278,26 +1278,26 @@ function ConfiguracionContent({
                 <div className="grid gap-3">
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Ambiente:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {FACTUS_ENV_OPTIONS.find((option) => option.value === factusForm.ambiente)?.label ||
                         'Sin definir'}
                     </span>
                   </div>
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Ultimo chequeo:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {formatDateTime(integracionFactus?.ultimoChequeo)}
                     </span>
                   </div>
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     Rango activo:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {integracionFactus?.rangoNumeracionId || 'Pendiente'}
                     </span>
                   </div>
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                     URL base:{' '}
-                    <span className="font-semibold text-slate-950">
+                    <span className="font-semibold text-foreground">
                       {configuracionEfectiva?.baseUrl || 'Pendiente'}
                     </span>
                   </div>
@@ -1307,8 +1307,8 @@ function ConfiguracionContent({
                   <div
                     className={`px-4 py-4 text-sm leading-7 ${
                       estadoFactus === 'exitoso'
-                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border border-amber-200 bg-amber-50 text-amber-800'
+                        ? 'border border-success/30 bg-success-soft text-success'
+                        : 'border border-warning/30 bg-warning-soft text-warning'
                     }`}
                   >
                     {integracionFactus.ultimoMensajeChequeo}
@@ -1330,13 +1330,13 @@ function ConfiguracionContent({
                 subtitle="Antes de emitir documentos, completa estos puntos institucionales."
               >
                 <div className="space-y-3">
-                  <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                  <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                     Factus puede quedar configurado, pero la clinica aun necesita completar datos
                     para una salida fiscal mas ordenada.
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {camposPendientes.map((item) => (
-                      <StatusPill key={item} tone="border-amber-200 bg-white text-amber-700">
+                      <StatusPill key={item} tone="border-warning/30 bg-card text-warning">
                         {item}
                       </StatusPill>
                     ))}
@@ -1523,7 +1523,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
                           type="button"
                           aria-label={`Eliminar franja de ${label.toLowerCase()}`}
                           onClick={() => eliminarFranja(clave, indice)}
-                          className="border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400"
+                          className="border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-danger"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -1542,7 +1542,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
           type="button"
           onClick={onGuardar}
           disabled={guardando}
-          className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {guardando ? 'Guardando...' : 'Guardar horario'}
         </button>
@@ -1586,7 +1586,7 @@ function ImpactoBloqueoDialog({ impacto, onCancelar, onConfirmar, guardando }) {
                 </p>
               </div>
               {cita.cancelable ? null : (
-                <StatusPill tone="border-amber-200 bg-amber-50 text-amber-700">
+                <StatusPill tone="border-warning/30 bg-warning-soft text-warning">
                   No cancelable
                 </StatusPill>
               )}
@@ -1790,7 +1790,7 @@ function HorariosSection({ horarioAtencion }) {
                     aria-label="Eliminar bloqueo"
                     disabled={eliminarBloqueoMutation.isPending}
                     onClick={() => eliminarBloqueoMutation.mutate(bloqueo.id)}
-                    className="shrink-0 border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-red-600 dark:hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="shrink-0 border border-border bg-card p-2 text-muted-foreground transition hover:bg-muted hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1877,7 +1877,7 @@ function HorariosSection({ horarioAtencion }) {
             <button
               type="submit"
               disabled={impactoMutation.isPending || crearBloqueoMutation.isPending}
-              className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {impactoMutation.isPending
                 ? 'Revisando citas...'
@@ -1986,8 +1986,8 @@ function ConsultoriosSection() {
                   }
                   className={`shrink-0 border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     consultorio.activo
-                      ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50'
+                      ? 'border-danger/30 bg-danger-soft text-danger hover:bg-danger/15 '
+                      : 'border-success/30 bg-success-soft text-success hover:bg-success/15 '
                   }`}
                 >
                   {consultorio.activo ? 'Desactivar' : 'Activar'}
@@ -2019,7 +2019,7 @@ function ConsultoriosSection() {
           <button
             type="submit"
             disabled={crearMutation.isPending}
-            className="border border-border bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearMutation.isPending ? 'Guardando...' : 'Crear consultorio'}
           </button>
@@ -2081,8 +2081,8 @@ export default function ConfiguracionPage() {
         <StatusPill
           tone={
             perfilFiscal.listoParaFacturacion
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-amber-200 bg-amber-50 text-amber-700'
+              ? 'border-success/30 bg-success-soft text-success'
+              : 'border-warning/30 bg-warning-soft text-warning'
           }
         >
           {perfilFiscal.listoParaFacturacion ? 'Perfil fiscal listo' : 'Perfil fiscal en ajuste'}
@@ -2098,7 +2098,7 @@ export default function ConfiguracionPage() {
       {clinicaQuery.isError || factusQuery.isError ? (
         <div className="grid gap-4">
           {clinicaQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
               {getErrorMessage(
                 clinicaQuery.error,
                 'No fue posible cargar la ficha institucional de la clínica.'
@@ -2106,7 +2106,7 @@ export default function ConfiguracionPage() {
             </div>
           ) : null}
           {factusQuery.isError ? (
-            <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+            <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
               {getErrorMessage(
                 factusQuery.error,
                 'No fue posible cargar el estado de la facturación electrónica.'

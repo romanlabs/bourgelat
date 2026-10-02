@@ -222,7 +222,7 @@ export default function PacienteDrawer({
                   </p>
                 </div>
               ) : selectedOwner ? (
-                <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                <div className="border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
                   <p className="font-semibold">{selectedOwner.nombre}</p>
                   <p className="mt-1 text-xs">
                     {selectedOwner.telefono || 'Sin telefono'}
@@ -231,7 +231,7 @@ export default function PacienteDrawer({
                   <button
                     type="button"
                     onClick={() => { setSelectedOwner(null); onOwnerSearch('') }}
-                    className="mt-2 text-xs font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100"
+                    className="mt-2 text-xs font-semibold text-success hover:text-success"
                   >
                     Cambiar tutor
                   </button>
@@ -290,7 +290,7 @@ export default function PacienteDrawer({
                   }
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-9 cursor-pointer items-center gap-2 border border-border bg-foreground px-3 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-9 cursor-pointer items-center gap-2 border border-border bg-foreground px-3 text-xs font-semibold text-background transition hover:bg-foreground/90">
                     <Upload className="h-3.5 w-3.5" />
                     {photoFile ? 'Cambiar foto' : 'Seleccionar foto'}
                   </label>
@@ -323,7 +323,7 @@ export default function PacienteDrawer({
                       {selectedOwner ? ` · ${selectedOwner.nombre}` : ''}
                     </p>
                   </div>
-                  <StatusPill tone={selectedOwner ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300' : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300'}>
+                  <StatusPill tone={selectedOwner ? 'border-success/30 bg-success-soft text-success ' : 'border-warning/30 bg-warning-soft text-warning '}>
                     {selectedOwner ? 'Tutor listo' : 'Falta tutor'}
                   </StatusPill>
                 </div>
@@ -332,8 +332,8 @@ export default function PacienteDrawer({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <label htmlFor="p-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nombre *</label>
-                  <input id="p-nombre" type="text" placeholder="Nombre del paciente" className={`${fieldClass} ${errors.nombre ? 'border-red-400 dark:border-red-500' : ''}`} {...register('nombre')} />
-                  {errors.nombre && <p className="text-xs text-red-600 dark:text-red-400">{errors.nombre.message}</p>}
+                  <input id="p-nombre" type="text" placeholder="Nombre del paciente" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
+                  {errors.nombre && <p className="text-xs text-danger">{errors.nombre.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-especie" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Especie *</label>
@@ -383,13 +383,13 @@ export default function PacienteDrawer({
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>
-                  <input id="p-nacimiento" type="date" max={hoyISO()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-red-400 dark:border-red-500' : ''}`} {...register('fechaNacimiento')} />
-                  {errors.fechaNacimiento && <p className="text-xs text-red-600 dark:text-red-400">{errors.fechaNacimiento.message}</p>}
+                  <input id="p-nacimiento" type="date" max={hoyISO()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-danger' : ''}`} {...register('fechaNacimiento')} />
+                  {errors.fechaNacimiento && <p className="text-xs text-danger">{errors.fechaNacimiento.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-peso" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Peso actual (kg)</label>
-                  <input id="p-peso" type="number" min="0" step="0.1" placeholder="0.0" className={`${fieldClass} ${errors.peso ? 'border-red-400 dark:border-red-500' : ''}`} {...register('peso')} />
-                  {errors.peso && <p className="text-xs text-red-600 dark:text-red-400">{errors.peso.message}</p>}
+                  <input id="p-peso" type="number" min="0" step="0.1" placeholder="0.0" className={`${fieldClass} ${errors.peso ? 'border-danger' : ''}`} {...register('peso')} />
+                  {errors.peso && <p className="text-xs text-danger">{errors.peso.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-color" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Color principal</label>
@@ -415,7 +415,7 @@ export default function PacienteDrawer({
             type="submit"
             form="paciente-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar paciente' : 'Guardar paciente'}
           </button>

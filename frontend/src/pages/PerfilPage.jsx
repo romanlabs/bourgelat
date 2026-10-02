@@ -136,7 +136,7 @@ function CardIdentidad({ usuario }) {
                 className="h-24 w-24 rounded-full border border-border object-cover"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-sidebar text-xl font-semibold text-[#91e7e0]">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-sidebar text-xl font-semibold text-sidebar-primary">
                 {inicialesDe(usuario)}
               </div>
             )}
