@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { estilosApi } from './estilosApi'
 
@@ -17,10 +18,9 @@ export function useEstilosMascota({ mascotaId, enabled = true }) {
   })
 
   const invalidar = () => {
-    queryClient.invalidateQueries({ queryKey: ['paciente-estilos', mascotaId] })
     // Crear un registro desde una cita la marca completada: la agenda debe
     // reflejarlo sin que el usuario recargue.
-    queryClient.invalidateQueries({ queryKey: ['agenda-citas'] })
+    invalidarDominios(queryClient, 'historias', 'agenda')
   }
 
   const crearRegistroMutation = useMutation({

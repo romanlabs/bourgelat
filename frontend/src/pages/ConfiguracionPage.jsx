@@ -253,8 +253,7 @@ function ConfiguracionContent({
         setClinica(data.clinica)
         setClinicForm(buildClinicForm(data.clinica))
       }
-      queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
-      queryClient.invalidateQueries({ queryKey: ['suscripcion-activa'] })
+      invalidarDominios(queryClient, 'configuracion')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar la configuración de la clínica.'))
@@ -317,8 +316,7 @@ function ConfiguracionContent({
     mutationFn: configuracionApi.sincronizarFactus,
     onSuccess: (data) => {
       toast.success(data?.message || 'Sincronización con Factus exitosa')
-      queryClient.invalidateQueries({ queryKey: ['configuracion-factus'] })
-      queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
+      invalidarDominios(queryClient, 'configuracion')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible sincronizar Factus.'))
@@ -1641,8 +1639,7 @@ function HorariosSection({ horarioAtencion }) {
     onSuccess: (data) => {
       toast.success(data?.message || 'Horario de atención actualizado')
       // La pagina re-sincroniza el store con la ficha al refrescar esta query.
-      queryClient.invalidateQueries({ queryKey: ['configuracion-clinica'] })
-      queryClient.invalidateQueries({ queryKey: ['agenda-horario'] })
+      invalidarDominios(queryClient, 'configuracion', 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible guardar el horario de atención.'))
@@ -1917,7 +1914,7 @@ function ConsultoriosSection() {
       toast.success('Consultorio creado')
       setNombre('')
       setDescripcion('')
-      queryClient.invalidateQueries({ queryKey: ['recepcion-consultorios'] })
+      invalidarDominios(queryClient, 'configuracion', 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible crear el consultorio.'))
@@ -1927,7 +1924,7 @@ function ConsultoriosSection() {
   const actualizarMutation = useMutation({
     mutationFn: ({ id, payload }) => recepcionApi.actualizarConsultorio(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recepcion-consultorios'] })
+      invalidarDominios(queryClient, 'configuracion', 'agenda')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar el consultorio.'))

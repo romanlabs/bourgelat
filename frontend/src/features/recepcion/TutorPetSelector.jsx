@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { Search, UserPlus } from 'lucide-react'
 import { NavCtaLink } from '@/components/shared/NavCta'
@@ -45,7 +46,7 @@ export function TutorPetSelector({
     mutationFn: pacientesApi.crearPropietario,
     onSuccess: (data) => {
       toast.success(data?.message || 'Tutor registrado exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['agenda-propietarios'] })
+      invalidarDominios(queryClient, 'pacientes')
       setDrawerOpen(false)
       if (data?.propietario) {
         onSelectOwner(data.propietario)

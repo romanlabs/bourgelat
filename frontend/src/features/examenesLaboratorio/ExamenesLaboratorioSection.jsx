@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { FlaskConical, Paperclip, Plus, X } from 'lucide-react'
 import { examenesLaboratorioApi } from '@/features/examenesLaboratorio/examenesLaboratorioApi'
@@ -61,7 +62,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
         : examenesLaboratorioApi.crearExamen(mascotaId, form, archivo),
     onSuccess: (data) => {
       toast.success(data?.message || 'Examen guardado exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['examenes-laboratorio', mascotaId] })
+      invalidarDominios(queryClient, 'historias')
       onClose()
     },
     onError: (error) => {
@@ -227,7 +228,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
     mutationFn: examenesLaboratorioApi.eliminarExamen,
     onSuccess: (data) => {
       toast.success(data?.message || 'Examen eliminado exitosamente')
-      queryClient.invalidateQueries({ queryKey: ['examenes-laboratorio', mascotaId] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible eliminar el examen.'))

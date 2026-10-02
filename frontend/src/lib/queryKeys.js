@@ -100,6 +100,8 @@ export const DOMINIOS = {
     'antecedentes-mascotas-selector',
     'busqueda-global-mascotas',
     'busqueda-global-propietarios',
+    // El dashboard cuenta pacientes registrados.
+    'dashboard-general',
   ],
 
   historias: [

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AlertCircle, Bug, CalendarClock, ChevronDown, ClipboardList, HeartPulse, PawPrint, Plus, Search, ShieldCheck, Sparkles, Stethoscope, X } from 'lucide-react'
@@ -308,7 +309,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Antecedentes generales actualizados exitosamente')
       setGeneralDraft(null)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar los antecedentes generales.'))
@@ -321,7 +322,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Alergia agregada exitosamente')
       setAlergiaForm(DEFAULT_ALERGIA_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la alergia.'))
@@ -334,7 +335,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Cirugia agregada exitosamente')
       setCirugiaForm(DEFAULT_CIRUGIA_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la cirugia.'))
@@ -347,7 +348,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Vacuna agregada exitosamente')
       setVacunaForm(DEFAULT_VACUNA_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la vacuna.'))
@@ -360,7 +361,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Desparasitacion agregada exitosamente')
       setDesparasitacionForm(DEFAULT_DESPARASITACION_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la desparasitacion.'))
@@ -373,7 +374,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Planificacion agregada exitosamente')
       setPlanificacionForm(DEFAULT_PLANIFICACION_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la planificacion.'))
@@ -386,7 +387,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Condicion cronica agregada exitosamente')
       setCondicionForm(DEFAULT_CONDICION_FORM)
       setAntDrawerOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['antecedentes-detalle'] })
+      invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible agregar la condicion cronica.'))
