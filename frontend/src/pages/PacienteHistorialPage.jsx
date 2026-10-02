@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import {
   ChevronLeft, PawPrint, Phone, User, Weight,
@@ -188,7 +189,7 @@ export default function PacienteHistorialPage() {
   }
 
   const handleDrawerSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['paciente-historial', mascotaId] })
+    invalidarDominios(queryClient, 'historias')
     // Solo cerrar al crear nueva historia; al editar/bloquear se deja el drawer abierto
     if (!historiaToEdit) {
       setDrawerOpen(false)

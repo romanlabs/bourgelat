@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { formatearEdad } from '@/lib/utils'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
@@ -86,9 +87,9 @@ export function usePacientesMascotas({ enabled }) {
   })
 
   function invalidarMascotas() {
-    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas'] })
-    queryClient.invalidateQueries({ queryKey: ['pacientes-mascotas-resumen'] })
-    queryClient.invalidateQueries({ queryKey: ['dashboard-general'] })
+    // Todo el dominio: perfil del paciente, selectores de agenda y busqueda global
+    // muestran la misma mascota con claves propias.
+    invalidarDominios(queryClient, 'pacientes')
   }
 
   const crearMascotaMutation = useMutation({

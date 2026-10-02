@@ -25,6 +25,10 @@ const queryClient = new QueryClient({
       refetchOnMount: true,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      // Lo que registra otra persona (recepcion agenda, caja cobra) aparece solo,
+      // sin F5 ni el boton de refrescar. Solo corre con la pestaña visible.
+      refetchInterval: 1000 * 60,
+      refetchIntervalInBackground: false,
     },
     mutations: {
       retry: false,
