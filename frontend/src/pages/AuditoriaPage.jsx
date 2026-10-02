@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, CircleAlert, ScanSearch, ShieldCheck, UserRoundCog } from 'lucide-react'
@@ -134,13 +135,13 @@ export default function AuditoriaPage() {
         key: 'exitoso',
         name: 'Exitosos',
         value: Number(auditoriaQuery.data?.resumen?.totalExitosos || 0),
-        color: '#0f766e',
+        color: chartColors.categorica[0],
       },
       {
         key: 'fallido',
         name: 'Fallidos',
         value: Number(auditoriaQuery.data?.resumen?.totalFallidos || 0),
-        color: '#dc2626',
+        color: chartColors.estados.danger,
       },
     ],
     [auditoriaQuery.data?.resumen?.totalExitosos, auditoriaQuery.data?.resumen?.totalFallidos]
@@ -188,7 +189,7 @@ export default function AuditoriaPage() {
       asideNote="Usa esta vista para seguir cambios de acceso, caja, historias e inventario sin depender de memoria o revisiones manuales."
     >
       {auditoriaQuery.isError ? (
-        <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700">
+        <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
           {getErrorMessage(auditoriaQuery.error, 'No fue posible cargar la auditoría de la clínica.')}
         </div>
       ) : null}
@@ -207,21 +208,21 @@ export default function AuditoriaPage() {
             label="Exitosos"
             value={formatNumber(auditoriaQuery.data?.resumen?.totalExitosos || 0)}
             helper="Cambios o accesos registrados sin error."
-            tone="text-emerald-700"
+            tone="text-success"
           />
           <KpiCard
             icon={CircleAlert}
             label="Fallidos"
             value={formatNumber(auditoriaQuery.data?.resumen?.totalFallidos || 0)}
             helper="Intentos con error o resultado no exitoso."
-            tone="text-rose-700"
+            tone="text-danger"
           />
           <KpiCard
             icon={UserRoundCog}
             label="Usuarios involucrados"
             value={formatNumber(auditoriaQuery.data?.resumen?.usuariosInvolucrados || 0)}
             helper="Cantidad de cuentas distintas presentes en el corte."
-            tone="text-violet-700 dark:text-violet-300"
+            tone="text-info"
           />
         </div>
 
@@ -368,8 +369,8 @@ export default function AuditoriaPage() {
                   <StatusPill
                     tone={
                       row.resultado === 'fallido'
-                        ? 'border-red-200 bg-red-50 text-red-700'
-                        : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        ? 'border-danger/30 bg-danger-soft text-danger'
+                        : 'border-success/30 bg-success-soft text-success'
                     }
                   >
                     {row.resultado}
@@ -385,7 +386,7 @@ export default function AuditoriaPage() {
             emptyTitle="No hay eventos para este filtro"
             emptyBody="Ajusta fechas o filtros para revisar otra parte del historial."
             action={
-              <StatusPill tone="border-border bg-slate-100 text-foreground">
+              <StatusPill tone="border-border bg-muted text-foreground">
                 Página {auditoriaQuery.data?.paginaActual || 1}
               </StatusPill>
             }

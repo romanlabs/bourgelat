@@ -8,7 +8,7 @@ export const CATEGORIAS_CON_VENCIMIENTO = [
 export const requiereVencimiento = (categoria) => CATEGORIAS_CON_VENCIMIENTO.includes(categoria)
 
 export const DESTINO_BADGE = {
-  clinico: { label: 'Clínico', className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  clinico: { label: 'Clínico', className: 'bg-info-soft text-info ' },
   ventas: { label: 'Ventas', className: 'bg-muted text-muted-foreground' },
 }
 

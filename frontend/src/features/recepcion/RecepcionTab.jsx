@@ -68,7 +68,7 @@ export function RecepcionTab({ fecha, prefill, usuario, puedeProgramar, puedeGes
               <button
                 type="button"
                 onClick={() => setDrawer('walk-in')}
-                className="flex h-10 items-center gap-2 border border-red-500 bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700"
+                className="flex h-10 items-center gap-2 border border-danger bg-danger px-4 text-sm font-semibold text-white transition hover:bg-danger"
               >
                 <UserPlus className="h-4 w-4" />
                 Ingreso directo

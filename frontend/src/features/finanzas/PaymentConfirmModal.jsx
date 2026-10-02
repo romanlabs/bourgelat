@@ -96,7 +96,7 @@ export default function PaymentConfirmModal({
                 {montoRecibido && (
                   <span
                     className={`text-xs font-bold tabular-nums ${
-                      vueltoPositivo ? 'text-primary' : 'text-red-600'
+                      vueltoPositivo ? 'text-primary' : 'text-danger'
                     }`}
                   >
                     {vueltoPositivo
@@ -113,7 +113,7 @@ export default function PaymentConfirmModal({
                 autoFocus
                 className={`w-full rounded-xl border-2 bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none ${
                   montoRecibido && !vueltoPositivo
-                    ? 'border-red-300 focus:border-red-400'
+                    ? 'border-danger/30 focus:border-danger'
                     : 'border-border focus:border-primary'
                 }`}
               />

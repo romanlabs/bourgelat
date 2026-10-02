@@ -169,7 +169,7 @@ export default function RegistroEstiloFormDrawer({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {bloqueado && (
-            <div className="mb-4 flex items-start gap-2 border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+            <div className="mb-4 flex items-start gap-2 border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
               <Lock className="mt-0.5 h-4 w-4 shrink-0" />
               <p>Este registro ya fue facturado y no se puede modificar.</p>
             </div>
@@ -189,10 +189,10 @@ export default function RegistroEstiloFormDrawer({
                 type="text"
                 placeholder="Ej. Baño y corte de raza"
                 disabled={bloqueado}
-                className={`${fieldClass} ${errors.tipoCorte ? 'border-red-400 dark:border-red-500' : ''}`}
+                className={`${fieldClass} ${errors.tipoCorte ? 'border-danger' : ''}`}
                 {...register('tipoCorte')}
               />
-              {errors.tipoCorte && <p className="text-xs text-red-600 dark:text-red-400">{errors.tipoCorte.message}</p>}
+              {errors.tipoCorte && <p className="text-xs text-danger">{errors.tipoCorte.message}</p>}
             </div>
 
             <div className="grid gap-1.5">
@@ -216,7 +216,7 @@ export default function RegistroEstiloFormDrawer({
                   />
                 )}
               />
-              {errors.estilistaId && <p className="text-xs text-red-600 dark:text-red-400">{errors.estilistaId.message}</p>}
+              {errors.estilistaId && <p className="text-xs text-danger">{errors.estilistaId.message}</p>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -228,10 +228,10 @@ export default function RegistroEstiloFormDrawer({
                   id="re-fechaServicio"
                   type="date"
                   disabled={bloqueado || Boolean(registroToEdit)}
-                  className={`${fieldClass} ${errors.fechaServicio ? 'border-red-400 dark:border-red-500' : ''}`}
+                  className={`${fieldClass} ${errors.fechaServicio ? 'border-danger' : ''}`}
                   {...register('fechaServicio')}
                 />
-                {errors.fechaServicio && <p className="text-xs text-red-600 dark:text-red-400">{errors.fechaServicio.message}</p>}
+                {errors.fechaServicio && <p className="text-xs text-danger">{errors.fechaServicio.message}</p>}
               </div>
 
               <div className="grid gap-1.5">
@@ -271,7 +271,7 @@ export default function RegistroEstiloFormDrawer({
               type="submit"
               form="registro-estilo-drawer-form"
               disabled={isPending}
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Scissors className="h-3.5 w-3.5" />
               {isPending ? 'Guardando...' : registroToEdit ? 'Guardar cambios' : 'Registrar servicio'}

@@ -39,7 +39,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
             key: 'esperado',
             label: 'Efectivo esperado',
             render: (row) => (
-              <StatusPill tone="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+              <StatusPill tone="border-warning/30 bg-warning-soft text-warning ">
                 {formatCurrency(montoEsperado(row.esperado))}
               </StatusPill>
             ),

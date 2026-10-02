@@ -30,11 +30,11 @@ import {
 const AVISOS_ESTADO = {
   esperando_usuario: {
     texto: 'El equipo de Bourgelat te respondió y espera tu respuesta.',
-    tone: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200',
+    tone: 'border-warning/30 bg-warning-soft text-warning ',
   },
   resuelto: {
     texto: 'El equipo lo marcó como resuelto. Si todo quedó bien, ciérralo; si no, respóndenos y lo reabrimos.',
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-200',
+    tone: 'border-success/30 bg-success-soft text-success ',
   },
   cerrado: {
     texto: 'Este ticket está cerrado. Si el problema vuelve, abre un ticket nuevo.',

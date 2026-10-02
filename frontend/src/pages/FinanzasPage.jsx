@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -232,7 +233,7 @@ export default function FinanzasPage() {
       title="Caja y facturacion"
       description="Operacion diaria de ventas, servicios, productos y control de facturas con una lectura mas natural para recepcion, auxiliares, medicos y facturacion."
       headerBadge={
-        <StatusPill tone="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200">
+        <StatusPill tone="border-success/30 bg-success-soft text-success ">
           Corte mensual activo
         </StatusPill>
       }
@@ -285,12 +286,12 @@ export default function FinanzasPage() {
               {resumenHook.ingresosQuery.isError || resumenHook.resumenQuery.isError ? (
                 <div className="grid gap-4">
                   {resumenHook.ingresosQuery.isError ? (
-                    <div className="border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200">
+                    <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
                       No fue posible cargar el reporte de ingresos del periodo.
                     </div>
                   ) : null}
                   {resumenHook.resumenQuery.isError ? (
-                    <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
+                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                       No fue posible cargar el resumen de facturas.
                     </div>
                   ) : null}
@@ -303,28 +304,28 @@ export default function FinanzasPage() {
                   label="Ingresos del mes"
                   value={formatCurrency(resumenHook.totalIngresos)}
                   helper="Suma total del periodo en curso para el cierre administrativo."
-                  tone="text-emerald-700 dark:text-emerald-400"
+                  tone="text-success"
                 />
                 <KpiCard
                   icon={Receipt}
                   label="Facturas emitidas"
                   value={formatNumber(resumenHook.resumenEstados.emitida?.cantidad || 0)}
                   helper="Documentos listos para cobro o seguimiento financiero."
-                  tone="text-cyan-700 dark:text-cyan-400"
+                  tone="text-info"
                 />
                 <KpiCard
                   icon={ShieldCheck}
                   label="Facturas pagadas"
                   value={formatNumber(resumenHook.resumenEstados.pagada?.cantidad || 0)}
                   helper="Documentos ya cerrados dentro del periodo actual."
-                  tone="text-emerald-700 dark:text-emerald-400"
+                  tone="text-success"
                 />
                 <KpiCard
                   icon={CircleAlert}
                   label="Pendientes electronicos"
                   value={formatNumber(resumenHook.pendientesElectronicos)}
                   helper="Facturas con emision pendiente, rechazada o con error tecnico."
-                  tone="text-amber-700 dark:text-amber-400"
+                  tone="text-warning"
                 />
               </div>
 
@@ -334,7 +335,7 @@ export default function FinanzasPage() {
                   subtitle={`Lectura del ${formatShortDate(resumenHook.rangoMes.fechaInicio)} al ${formatShortDate(resumenHook.rangoMes.fechaFin)}.`}
                   data={resumenHook.ingresosPorDia}
                   dataKey="total"
-                  color="#0f4c81"
+                  color={chartColors.categorica[1]}
                   formatter={formatCurrency}
                   emptyMessage="Aun no hay ingresos registrados para el periodo actual."
                 />
@@ -370,7 +371,7 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : cajaHook.turnoActivo.vencido ? (
-              <div className="overflow-hidden rounded-[28px] border border-amber-300 bg-amber-50 shadow-panel dark:border-amber-700/60 dark:bg-amber-900/20">
+              <div className="overflow-hidden rounded-[28px] border border-warning/30 bg-warning-soft shadow-panel">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
@@ -427,7 +428,7 @@ export default function FinanzasPage() {
           {activeTab === 'historial' && (
             <div className="space-y-5">
               {historialHook.facturasQuery.isError ? (
-                <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200">
+                <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                   No fue posible cargar la tabla administrativa de facturas.
                 </div>
               ) : null}
@@ -510,7 +511,7 @@ export default function FinanzasPage() {
                     />
                     <button
                       type="submit"
-                      className="border border-border bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      className="border border-border bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-foreground/90"
                     >
                       Buscar
                     </button>

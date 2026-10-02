@@ -660,7 +660,7 @@ export default function AntecedentesPage() {
           ) : (
           <>
           {antecedentesQuery.isError ? (
-            <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
+            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
               {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
             </div>
           ) : null}
@@ -671,14 +671,14 @@ export default function AntecedentesPage() {
               label="Alergias"
               value={formatNumber(alergiasRows.length)}
               helper="Alertas clinicas visibles para la atencion."
-              tone="text-rose-700 dark:text-rose-300"
+              tone="text-danger"
             />
             <KpiCard
               icon={ShieldCheck}
               label="Vacunas"
               value={formatNumber(vacunasRows.length)}
               helper="Vacunas registradas dentro del expediente."
-              tone="text-emerald-700 dark:text-emerald-300"
+              tone="text-success"
             />
             <KpiCard
               icon={Stethoscope}
@@ -692,21 +692,21 @@ export default function AntecedentesPage() {
               label="Condiciones cronicas"
               value={formatNumber(condicionesRows.length)}
               helper="Problemas permanentes o de seguimiento."
-              tone="text-amber-700 dark:text-amber-300"
+              tone="text-warning"
             />
             <KpiCard
               icon={Bug}
               label="Desparasitaciones"
               value={formatNumber(desparasitacionesRows.length)}
               helper="Control antiparasitario interno y externo."
-              tone="text-orange-700 dark:text-orange-300"
+              tone="text-warning"
             />
             <KpiCard
               icon={CalendarClock}
               label="Planificacion"
               value={formatNumber(planificacionesRows.length)}
               helper="Metodos de planificacion aplicados."
-              tone="text-sky-700 dark:text-sky-300"
+              tone="text-info"
             />
           </div>
           </>
@@ -718,25 +718,25 @@ export default function AntecedentesPage() {
           {activeTab === 'antecedentes' && (
           <div className="space-y-4 pt-5">
             {antecedentesQuery.isError && (
-              <div className="border border-red-200 bg-red-50 px-4 py-4 text-sm leading-7 text-red-700 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
+              <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
                 {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
               </div>
             )}
 
             {/* ── Selector de mascota compacto ── */}
             {selectedPet ? (
-              <div className="flex items-center justify-between border border-emerald-200 bg-emerald-50 px-4 py-2.5 dark:border-emerald-800 dark:bg-emerald-900/20">
+              <div className="flex items-center justify-between border border-success/30 bg-success-soft px-4 py-2.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="flex-shrink-0 text-lg">🐾</span>
                   <div className="min-w-0">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{selectedPet.nombre}</span>
+                    <span className="text-sm font-bold text-foreground">{selectedPet.nombre}</span>
                     <span className="text-sm text-muted-foreground"> · {etiquetaEspecie(selectedPet.especie)}{selectedPet.Propietario?.nombre ? ` · ${selectedPet.Propietario.nombre}` : ''}</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => { setSelectedPet(null); setGeneralDraft(null) }}
-                  className="ml-4 flex-shrink-0 text-sm font-semibold text-emerald-700 transition hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-100"
+                  className="ml-4 flex-shrink-0 text-sm font-semibold text-success transition hover:text-success"
                 >
                   Cambiar
                 </button>
@@ -781,7 +781,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<ClipboardList className="h-4 w-4" />}
                 title="Datos generales"
-                accentColor="hsl(160 84% 39%)"
+                accentColor="hsl(var(--primary))"
                 badgeCount={null}
                 addLabel="Editar"
                 onAdd={puedeEditar ? () => openAntDrawer('generales') : null}
@@ -792,7 +792,7 @@ export default function AntecedentesPage() {
                 <div className="space-y-2 text-sm">
                   {selectedAntecedentes ? (
                     <>
-                      <p className={selectedAntecedentes.esterilizado ? 'font-semibold text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'}>
+                      <p className={selectedAntecedentes.esterilizado ? 'font-semibold text-success' : 'text-muted-foreground'}>
                         {selectedAntecedentes.esterilizado
                           ? `Esterilizado${selectedAntecedentes.fechaEsterilizacion ? ` · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}` : ''}`
                           : 'No esterilizado'}
@@ -820,7 +820,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<HeartPulse className="h-4 w-4" />}
                 title="Alergias"
-                accentColor="#f43f5e"
+                accentColor="hsl(var(--danger))"
                 badgeCount={alergiasRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('alergia') : null}
@@ -851,7 +851,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<ShieldCheck className="h-4 w-4" />}
                 title="Vacunas"
-                accentColor="#059669"
+                accentColor="hsl(var(--success))"
                 badgeCount={vacunasRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('vacuna') : null}
@@ -886,7 +886,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<Bug className="h-4 w-4" />}
                 title="Desparasitación"
-                accentColor="#ea580c"
+                accentColor="hsl(var(--warning))"
                 badgeCount={desparasitacionesRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('desparasitacion') : null}
@@ -921,7 +921,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<CalendarClock className="h-4 w-4" />}
                 title="Planificación"
-                accentColor="#0284c7"
+                accentColor="hsl(var(--info))"
                 badgeCount={planificacionesRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('planificacion') : null}
@@ -953,7 +953,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<Stethoscope className="h-4 w-4" />}
                 title="Cirugías"
-                accentColor="#3b82f6"
+                accentColor="hsl(var(--brand))"
                 badgeCount={cirugiasRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('cirugia') : null}
@@ -985,7 +985,7 @@ export default function AntecedentesPage() {
               <AccordionSection
                 icon={<AlertCircle className="h-4 w-4" />}
                 title="Condiciones crónicas"
-                accentColor="#d97706"
+                accentColor="hsl(var(--muted-foreground))"
                 badgeCount={condicionesRows.length}
                 addLabel="+ Agregar"
                 onAdd={puedeEditar ? () => openAntDrawer('condicion') : null}
@@ -1173,7 +1173,7 @@ export default function AntecedentesPage() {
               agregarCirugiaMutation.isPending ||
               agregarCondicionMutation.isPending
             }
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Guardar
           </button>

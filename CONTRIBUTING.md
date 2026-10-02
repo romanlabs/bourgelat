@@ -102,6 +102,22 @@ El scope entre parentesis es opcional y nombra el modulo:
 - El flujo del modulo funciona de punta a punta en local.
 - No quedan `console.log` de depuracion.
 - `npm test` (backend) y `npm run build` (frontend) pasan.
+- `npm run lint:colores` (frontend) pasa: sin colores sueltos fuera de los tokens.
+
+## Colores del frontend
+La paleta vive en tokens (ver «Paleta de colores» en `CLAUDE.md`). No se escriben
+colores de Tailwind sueltos (`bg-red-50`, `text-slate-700`) ni hex (`#10263a`,
+`bg-[#f4f7fb]`):
+
+- Estados → `bg-danger-soft text-danger`, `warning`, `success`, `info`
+- Estructura → `bg-card`, `text-foreground`, `text-muted-foreground`, `border-border`
+- Acción → `bg-primary`; firma de marca → `brand`
+- Gráficas → `chartColors` de `@/lib/theme`
+- Páginas públicas fijas en claro → escalas `papel-*`, `tinta-*`, `caramel-*`
+
+`npm run lint:colores` lo revisa, y el workflow **Frontend** lo corre en cada PR a
+`develop` y `main` junto con el build y las pruebas unitarias. Para una excepción
+justificada, comentar `lint-colores-ignorar: <motivo>` en esa línea.
 - Las variables nuevas existen en Render (o en `render.yaml` si son del Blueprint).
 - Las migraciones nuevas son seguras sobre datos reales de la clinica piloto.
 

@@ -20,6 +20,22 @@ module.exports = {
         clinical: tokens.colors.clinical,
         warm: tokens.colors.warm,
         blue: tokens.colors.blue,
+        tinta: tokens.colors.tinta,
+        papel: tokens.colors.papel,
+
+        // Estados semánticos (bg-danger-soft, text-success, border-info/40…).
+        // Siguen el modo claro/oscuro: los valores viven en src/index.css.
+        success: tokens.colors.success,
+        warning: tokens.colors.warning,
+        danger: tokens.colors.danger,
+        info: tokens.colors.info,
+
+        // Firma de marca (caramelo). `foreground` es la variante para texto.
+        brand: {
+          DEFAULT: 'hsl(var(--brand) / <alpha-value>)',
+          foreground: 'hsl(var(--brand-foreground) / <alpha-value>)',
+          muted: 'hsl(var(--brand-muted) / <alpha-value>)',
+        },
 
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

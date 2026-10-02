@@ -40,14 +40,14 @@ export function ConfirmDialog({
     <DialogRoot open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30">
-            <TriangleAlert className="h-5 w-5 text-red-500 dark:text-red-300" />
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-soft">
+            <TriangleAlert className="h-5 w-5 text-danger" />
           </div>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
 
-        {children ? <div className="py-2 text-sm text-slate-600 dark:text-slate-400">{children}</div> : null}
+        {children ? <div className="py-2 text-sm text-muted-foreground">{children}</div> : null}
 
         <DialogFooter className="mt-4">
           <DialogClose asChild>

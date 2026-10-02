@@ -3,6 +3,7 @@ import { formatHora12 } from '@/lib/hora'
 import {
   buildStateTone,
   getAccentColor,
+  URGENCIA_ACCENT,
   TIPO_SHORT,
   especieToEmoji,
   timeToTop,
@@ -30,7 +31,7 @@ export function CitaChip({ cita, onClick, esProxima, slotHeight, gridInicio, gri
       className={cn(
         'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-sm border-y border-r px-1.5 py-1 text-left shadow-sm transition-all hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
         buildStateTone(cita.estado),
-        esUrgencia && 'border-dashed !border-red-500',
+        esUrgencia && 'border-dashed !border-danger',
         esProxima && 'ring-2 ring-primary ring-offset-1'
       )}
       style={{
@@ -38,12 +39,12 @@ export function CitaChip({ cita, onClick, esProxima, slotHeight, gridInicio, gri
         height: `${height}px`,
         minHeight: '24px',
         borderLeftWidth: '3px',
-        borderLeftColor: esUrgencia ? '#ef4444' : getAccentColor(cita.estado),
+        borderLeftColor: esUrgencia ? URGENCIA_ACCENT : getAccentColor(cita.estado),
       }}
     >
       {sinHistoria && (
         <span
-          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-600 ring-1 ring-white dark:ring-slate-900"
+          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-danger ring-1 ring-white"
           title="Pendiente de historia clínica"
         />
       )}
@@ -88,12 +89,12 @@ export function CitaChipMini({ cita, onClick, esProxima }) {
       className={cn(
         'relative flex w-full items-center gap-1 overflow-hidden rounded-sm border-y border-r px-1 py-px text-left transition hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-primary',
         buildStateTone(cita.estado),
-        esUrgencia && 'border-dashed !border-red-500',
+        esUrgencia && 'border-dashed !border-danger',
         esProxima && 'ring-1 ring-primary'
       )}
       style={{
         borderLeftWidth: '3px',
-        borderLeftColor: esUrgencia ? '#ef4444' : getAccentColor(cita.estado),
+        borderLeftColor: esUrgencia ? URGENCIA_ACCENT : getAccentColor(cita.estado),
       }}
     >
       <span className="text-[9px] font-semibold tabular-nums opacity-75">{horaLabel}</span>
@@ -102,7 +103,7 @@ export function CitaChipMini({ cita, onClick, esProxima }) {
         {cita.mascota?.nombre || 'Paciente'}
       </span>
       {sinHistoria && (
-        <span className="ml-auto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-600" />
+        <span className="ml-auto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-danger" />
       )}
     </button>
   )

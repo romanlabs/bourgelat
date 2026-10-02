@@ -110,7 +110,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
               value={form.tipo}
               onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}
               placeholder="Tipo de examen"
-              className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+              className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
             />
             <div className="flex flex-wrap gap-1">
               {TIPOS_EXAMEN_SUGERIDOS.map((tipo) => (
@@ -121,7 +121,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
                   className={cn(
                     'border px-1.5 py-0.5 text-[10px] font-semibold transition',
                     form.tipo === tipo
-                      ? 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/30 dark:text-cyan-300'
+                      ? 'border-info/30 bg-info-soft text-info '
                       : 'border-border bg-muted text-muted-foreground hover:text-foreground'
                   )}
                 >
@@ -138,7 +138,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
                 type="date"
                 value={form.fecha}
                 onChange={(e) => setForm((c) => ({ ...c, fecha: e.target.value }))}
-                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
               />
             </div>
             <div>
@@ -148,7 +148,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
                 value={form.laboratorio}
                 onChange={(e) => setForm((c) => ({ ...c, laboratorio: e.target.value }))}
                 placeholder="Laboratorio externo"
-                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
               />
             </div>
           </div>
@@ -157,13 +157,13 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
             value={form.resultados}
             onChange={(e) => setForm((c) => ({ ...c, resultados: e.target.value }))}
             placeholder="Resultados del examen"
-            className="min-h-[100px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+            className="min-h-[100px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info"
           />
           <textarea
             value={form.interpretacion}
             onChange={(e) => setForm((c) => ({ ...c, interpretacion: e.target.value }))}
             placeholder="Interpretación clínica (opcional)"
-            className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-cyan-500"
+            className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info"
           />
 
           <div>
@@ -191,7 +191,7 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
             type="button"
             onClick={handleSubmit}
             disabled={guardarMutation.isPending}
-            className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardarMutation.isPending ? 'Guardando...' : examen ? 'Guardar cambios' : 'Registrar examen'}
           </button>
@@ -259,7 +259,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
       {examenesQuery.isPending ? (
         <p className="text-xs text-muted-foreground">Cargando exámenes...</p>
       ) : examenesQuery.isError ? (
-        <p className="text-xs text-rose-600 dark:text-rose-400">No fue posible cargar los exámenes.</p>
+        <p className="text-xs text-danger">No fue posible cargar los exámenes.</p>
       ) : examenes.length === 0 ? (
         <div className="border border-dashed border-border bg-muted/40 px-4 py-4 text-center">
           <FlaskConical className="mx-auto mb-1 h-5 w-5 text-muted-foreground/50" />
@@ -283,7 +283,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                     <button
                       type="button"
                       onClick={() => abrirEditar(examen)}
-                      className="text-xs font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-100"
+                      className="text-xs font-semibold text-info hover:text-info"
                     >
                       Editar
                     </button>
@@ -297,7 +297,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                         }
                       }}
                       disabled={eliminarMutation.isPending}
-                      className="text-xs font-semibold text-rose-700 hover:text-rose-800 disabled:opacity-60 dark:text-rose-300 dark:hover:text-rose-100"
+                      className="text-xs font-semibold text-danger hover:text-danger disabled:opacity-60"
                     >
                       Eliminar
                     </button>
@@ -317,7 +317,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                   href={examen.archivoUrlPublica}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800 dark:text-cyan-300 dark:hover:text-cyan-100"
+                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-info hover:text-info"
                 >
                   <Paperclip className="h-3 w-3" />
                   {examen.archivoNombre || 'Ver adjunto'}

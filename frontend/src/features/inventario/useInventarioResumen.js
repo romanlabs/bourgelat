@@ -1,3 +1,4 @@
+import { chartColors } from '@/lib/theme'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
@@ -5,7 +6,7 @@ import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
 
-const DONUT_COLORS = ['#0f4c81', '#0f766e', '#f59e0b', '#7c3aed', '#dc2626', '#64748b']
+const DONUT_COLORS = chartColors.categorica
 
 export function useInventarioResumen({ enabled }) {
   const reporteQuery = useQuery({

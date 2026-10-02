@@ -98,7 +98,7 @@ export default function LoginPage() {
 
       <div className="mt-8 w-full max-w-[420px] text-left">
         {searchParams.get('error') === 'oauth' ? (
-          <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="mt-4 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
           </p>
         ) : null}
@@ -119,9 +119,9 @@ export default function LoginPage() {
               inputMode="email"
               spellCheck={false}
               placeholder="tu@correo.com"
-              className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
+              className={`${inputClass} ${errors.email ? 'border-danger' : ''}`}
             />
-            {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
+            {errors.email ? <p className="mt-1 text-sm text-danger">{errors.email.message}</p> : null}
           </div>
 
           <div>
@@ -137,7 +137,7 @@ export default function LoginPage() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="off"
                 placeholder="Ingresa tu contraseña"
-                className={`${inputClass} pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                className={`${inputClass} pr-10 ${errors.password ? 'border-danger' : ''}`}
               />
               <button
                 type="button"
@@ -148,7 +148,7 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
+            {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
           </div>
 
           <Button

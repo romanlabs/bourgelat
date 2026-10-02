@@ -14,7 +14,7 @@ export function CalendarLegend() {
         </div>
       ))}
       <div className="flex items-center gap-1.5">
-        <div className="h-3 w-3 rounded-sm border-y border-r border-dashed border-red-500 bg-red-50 dark:bg-red-900/20" />
+        <div className="h-3 w-3 rounded-sm border-y border-r border-dashed border-danger bg-danger-soft" />
         <span className="text-[11px] text-muted-foreground">Urgencia</span>
       </div>
     </div>

@@ -20,7 +20,7 @@ const sectionCardVariants = cva(
  * Contenedor base para paneles, secciones y formularios.
  *
  * Reemplaza el patrón manual:
- *   rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)]
+ *   rounded-[28px] border border-border bg-card shadow-[0_18px_55px_rgba(15,23,42,0.06)]
  *
  * Uso:
  *   <SectionCard title="Productos" action={<Button>Agregar</Button>}>
