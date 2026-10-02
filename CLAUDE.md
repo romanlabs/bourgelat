@@ -132,13 +132,16 @@ Es la misma marca de noche: los mismos roles con valores más claros.
 | `--brand` | `29 59% 64%` |
 | `--success` · `--warning` · `--danger` · `--info` | `156 47% 57%` · `38 80% 62%` · `8 75% 68%` · `200 55% 65%` |
 
-### Pendiente de migrar
-La unificación avanza por pasos (ver el lienzo de diseño «Identidad Bourgelat»).
-Todavía usan colores propios: la landing (hex en `LandingPage.jsx` y en las
-clases `.flow-*`/`.plat-tab` de `index.css`), `AuthShell` (azul), `AdminShell`
-(menta `#91e7e0`), `StatusBadge`, las gráficas (`dashboardUtils.js`) y las clases
-`red-*`/`amber-*`/`emerald-*` sueltas que hoy cubre `.admin-workspace` en modo
-oscuro. Código nuevo: solo tokens.
+### Dónde se usa cada cosa
+- **App y páginas de cuenta**: tokens del tema (siguen el modo oscuro).
+- **Páginas públicas y de error** (legales, `/nosotros`): escalas fijas `papel-*`,
+  `tinta-*`, `caramel-*`, `clinical-*`. Siempre en claro, como la landing.
+- **Gráficas**: `chartColors` de `@/lib/theme` (hex fijos de `theme.tokens.cjs`,
+  porque Recharts los pone como atributos SVG).
+- **Landing y `/planes`**: todavía con hex propios (en la paleta, pero sin tokens).
+
+`npm run lint:colores` (frontend) falla con colores sueltos fuera de los archivos
+exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
 
 ### Tipografía
 - **Sans**: `Geist Variable` — UI y cuerpo
