@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bourgelat — backend Express 5 en Render",
+    "output": "backend-arquitectura.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/romanlabs/bourgelat",
+      "revision": "601e7576b180c07bda6f118be53f9c7aa06784a1"
+    },
+    "views": [
+      {
+        "id": "ruta-peticion",
+        "label": "Ruta de la peticion",
+        "focus": [
+          "spa",
+          "cloudflare",
+          "edge",
+          "routes",
+          "controllers",
+          "models",
+          "db"
+        ],
+        "note": "Camino principal desde el navegador hasta PostgreSQL."
+      },
+      {
+        "id": "seguridad",
+        "label": "Seguridad y multi-tenant",
+        "focus": [
+          "edge",
+          "auth",
+          "auditoria",
+          "models"
+        ],
+        "note": "Borde, sesion JWT, auditoria y aislamiento por clinicaId."
+      },
+      {
+        "id": "integracion",
+        "label": "Facturacion electronica",
+        "focus": [
+          "controllers",
+          "services",
+          "factus"
+        ],
+        "note": "Emision DIAN a traves de factusService."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "SPA React 19",
+      "sublabel": "cliente web",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth JWT",
+      "sublabel": "JWT en cookie",
+      "tag": "15 min / 7 d",
+      "pos": [
+        580,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/middlewares/authMiddleware.js",
+          "label": "verificarToken"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "type": "backend",
+      "label": "Services",
+      "sublabel": "factus, planes",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/services/factusService.js",
+          "label": "factusService"
+        },
+        {
+          "path": "backend/src/services/suscripcionService.js",
+          "label": "suscripcionService"
+        }
+      ]
+    },
+    {
+      "id": "factus",
+      "type": "external",
+      "label": "Factus.com.co",
+      "sublabel": "factura DIAN",
+      "pos": [
+        1120,
+        40
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/services/factusService.js",
+          "label": "cliente HTTP"
+        }
+      ]
+    },
+    {
+      "id": "cloudflare",
+      "type": "cloud",
+      "label": "Cloudflare",
+      "sublabel": "SSL · WAF",
+      "brand": "cloudflare",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ]
+    },
+    {
+      "id": "edge",
+      "type": "security",
+      "label": "Capa de borde",
+      "sublabel": "helmet · CORS",
+      "tag": "rate limit",
+      "pos": [
+        310,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/index.js",
+          "line": 72,
+          "end_line": 121,
+          "label": "cadena de middlewares"
+        }
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Routers Express",
+      "sublabel": "23 × /api/*",
+      "tag": "validator",
+      "pos": [
+        580,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/index.js",
+          "line": 159,
+          "end_line": 182,
+          "label": "montaje de rutas"
+        }
+      ]
+    },
+    {
+      "id": "controllers",
+      "type": "backend",
+      "label": "Controladores",
+      "sublabel": "27 modulos",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/controllers/facturaController.js",
+          "label": "facturaController"
+        },
+        {
+          "path": "backend/src/controllers/citaController.js",
+          "label": "citaController"
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "backend",
+      "label": "Sequelize 6",
+      "sublabel": "tenantGuard",
+      "tag": "clinicaId",
+      "pos": [
+        1120,
+        200
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/config/tenantGuard.js",
+          "label": "hooks globales"
+        }
+      ]
+    },
+    {
+      "id": "uploads",
+      "type": "database",
+      "label": "Disco uploads",
+      "sublabel": "archivos",
+      "pos": [
+        580,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/config/uploads.js",
+          "label": "rutas de archivos"
+        }
+      ]
+    },
+    {
+      "id": "auditoria",
+      "type": "security",
+      "label": "Auditoria",
+      "sublabel": "log_auditoria",
+      "pos": [
+        850,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ],
+      "sources": [
+        {
+          "path": "backend/src/middlewares/auditoriaMiddleware.js",
+          "label": "registrarAuditoria"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL 16",
+      "sublabel": "UUID como PK",
+      "brand": "postgresql",
+      "pos": [
+        1120,
+        360
+      ],
+      "size": [
+        190,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Aislamiento por clinicaId",
+      "wraps": [
+        "models",
+        "db"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "spa-cloudflare",
+      "from": "spa",
+      "to": "cloudflare",
+      "label": "HTTPS",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "cloudflare-edge",
+      "from": "cloudflare",
+      "to": "edge",
+      "label": "TLS a Render"
+    },
+    {
+      "id": "edge-routes",
+      "from": "edge",
+      "to": "routes",
+      "label": "idempotencia"
+    },
+    {
+      "id": "routes-controllers",
+      "from": "routes",
+      "to": "controllers",
+      "label": "req validado"
+    },
+    {
+      "id": "auth-routes",
+      "from": "auth",
+      "to": "routes",
+      "label": "JWT + rol",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "controllers-services",
+      "from": "controllers",
+      "to": "services",
+      "label": "logica pesada",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "services-factus",
+      "from": "services",
+      "to": "factus",
+      "label": "emision DIAN"
+    },
+    {
+      "id": "controllers-models",
+      "from": "controllers",
+      "to": "models",
+      "label": "consultas ORM",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controllers-auditoria",
+      "from": "controllers",
+      "to": "auditoria",
+      "label": "mutaciones",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "auditoria-models",
+      "from": "auditoria",
+      "to": "models",
+      "label": "registro"
+    },
+    {
+      "id": "models-db",
+      "from": "models",
+      "to": "db",
+      "label": "SQL",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "routes-uploads",
+      "from": "routes",
+      "to": "uploads",
+      "label": "multer",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Borde y sesion",
+      "items": [
+        "Cloudflare (DNS · SSL · WAF) delante de Render; trustProxy = 2 por los dos saltos",
+        "helmet, hpp, CORS por lista blanca, rate limit 1500/15 min y 20/15 min en auth",
+        "JWT access 15 min + refresh 7 d en cookies httpOnly firmadas"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Aplicacion",
+      "items": [
+        "Express 5 con 23 routers bajo /api/* y validacion express-validator en las rutas",
+        "Controladores delgados; los services concentran Factus, suscripciones, OAuth y email"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Multi-tenant y datos",
+      "items": [
+        "tenantGuard rechaza por hooks toda query sin filtro por clinicaId; excepciones con sinTenant: true",
+        "PostgreSQL 16, UUID como PK y campos sensibles cifrados con keyring versionado",
+        "Migraciones al arranque y jobs de limpieza de tokens y logs cada 24 h"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Los HTML de Archify se entregan con un sha256 verificable: sin conversion
+# de finales de linea para que el archivo del repo sea byte a byte el entregado.
+*.html -text
