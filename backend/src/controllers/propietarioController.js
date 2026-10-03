@@ -73,7 +73,7 @@ const crearPropietario = async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Propietario registrado exitosamente',
+      message: 'Tutor registrado exitosamente',
       propietario,
     });
   } catch (error) {
@@ -222,7 +222,7 @@ const editarPropietario = async (req, res) => {
     });
 
     res.json({
-      message: 'Propietario actualizado exitosamente',
+      message: 'Tutor actualizado exitosamente',
       propietario,
     });
   } catch (error) {

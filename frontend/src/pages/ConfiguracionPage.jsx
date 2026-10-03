@@ -428,7 +428,7 @@ function ConfiguracionContent({
         subtitle="Primero revisa el resumen, luego edita la ficha institucional y deja la facturación electrónica en una vista separada."
         action={
           <StatusPill tone="border-border bg-muted text-foreground">
-            Configuracion guiada
+            Configuración guiada
           </StatusPill>
         }
       >

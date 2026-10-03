@@ -69,7 +69,7 @@ const FORM_INICIAL = {
   items: ITEMS_VACIO(),
 }
 
-export function useFacturaCompra() {
+export function useFacturaCompra({ enabled = true } = {}) {
   const queryClient = useQueryClient()
   const [pagina, setPagina] = useState(1)
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -82,12 +82,14 @@ export function useFacturaCompra() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['facturas-compra', filtroEstado, pagina],
     queryFn: () => obtenerFacturasCompra({ estado: filtroEstado || undefined, pagina, limite: 15 }),
+    enabled,
   })
 
   const { data: alertasData } = useQuery({
     queryKey: ['facturas-compra-alertas'],
     queryFn: obtenerAlertasCompra,
     staleTime: 60_000,
+    enabled,
   })
 
   const invalidar = useCallback(() => {

@@ -70,7 +70,7 @@ export default function PacientesPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
 
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(() =>
     TABS.some((tab) => tab.id === tabParam) ? tabParam : 'resumen'
@@ -93,6 +93,16 @@ export default function PacientesPage() {
   const resumenHook = usePacientesResumen({ enabled })
   const mascotasHook = usePacientesMascotas({ enabled })
   const tutoresHook = useTutores({ enabled })
+
+  // "Nuevo paciente" del menu rapido llega con ?nuevo=paciente: abre el
+  // formulario directo y limpia el parametro para no reabrirlo al volver.
+  const abrirNuevoPaciente = mascotasHook.openCreateDrawer
+  const pideNuevoPaciente = searchParams.get('nuevo') === 'paciente'
+  useEffect(() => {
+    if (!pideNuevoPaciente) return
+    if (puedeGestionarPaciente && !propsAccion.disabled) abrirNuevoPaciente()
+    setSearchParams({ tab: 'pacientes' }, { replace: true })
+  }, [pideNuevoPaciente, puedeGestionarPaciente, propsAccion.disabled, abrirNuevoPaciente, setSearchParams])
 
   const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
 

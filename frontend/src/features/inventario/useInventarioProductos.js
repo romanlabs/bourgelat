@@ -100,7 +100,7 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
       (productosQuery.data?.productos || []).map((p) => ({
         id: p.id,
         nombre: p.nombre,
-        categoria: p.categoria,
+        categoria: CATEGORY_OPTIONS.find((opcion) => opcion.value === p.categoria)?.label || p.categoria,
         stock: p.stock,
         stockMinimo: p.stockMinimo,
         valor: formatCurrency(Number(p.precioVenta || 0) * Number(p.stock || 0)),

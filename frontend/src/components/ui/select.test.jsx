@@ -10,9 +10,8 @@ beforeAll(() => {
   Element.prototype.scrollIntoView ??= () => {}
 })
 
-function Campo({ registro }) {
+function Campo() {
   const [valor, setValor] = useState('')
-  registro.valor = valor
   return (
     <form>
       <Select
@@ -22,6 +21,7 @@ function Campo({ registro }) {
         onValueChange={setValor}
         options={[{ value: 'toby', label: 'Toby' }]}
       />
+      <output aria-label="valor">{valor}</output>
     </form>
   )
 }
@@ -30,12 +30,11 @@ describe('Select', () => {
   // Caso real de la agenda: el selector de paciente arranca vacio (Radix queda
   // sin controlar) y la eleccion con el mouse debe llegar al formulario.
   it('entrega al formulario la opcion elegida con el mouse desde vacio', async () => {
-    const registro = {}
-    render(<Campo registro={registro} />)
+    render(<Campo />)
 
     fireEvent.pointerDown(screen.getByLabelText('Paciente'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
     fireEvent.click(await screen.findByRole('option', { name: 'Toby' }))
 
-    await waitFor(() => expect(registro.valor).toBe('toby'))
+    await waitFor(() => expect(screen.getByLabelText('valor')).toHaveTextContent('toby'))
   })
 })

@@ -5,6 +5,12 @@ import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
+import { CATEGORY_OPTIONS } from './useInventarioProductos'
+import { CATEGORY_OPTIONS as CLINICO_CATEGORY_OPTIONS } from '@/features/inventarioClinico/useInsumosClinicos'
+
+// El reporte agrupa por la clave guardada ('medicamento'); la grafica muestra la etiqueta.
+const etiquetaCategoria = (clave) =>
+  [...CATEGORY_OPTIONS, ...CLINICO_CATEGORY_OPTIONS].find((opcion) => opcion.value === clave)?.label || clave
 
 const DONUT_COLORS = chartColors.categorica
 
@@ -29,7 +35,7 @@ export function useInventarioResumen({ enabled }) {
     () =>
       Object.entries(reporteQuery.data?.porCategoria || {}).map(([key, value], index) => ({
         key,
-        name: key,
+        name: etiquetaCategoria(key),
         value: Number(value?.total || 0),
         valor: Number(value?.valor || 0),
         color: DONUT_COLORS[index % DONUT_COLORS.length],
