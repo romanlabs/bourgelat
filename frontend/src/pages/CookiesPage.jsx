@@ -25,7 +25,7 @@ const COOKIES = [
   },
   {
     nombre: 'bourgelat_oauth_flujo',
-    finalidad: 'Protege el inicio de sesión con Google o Microsoft mientras se completa.',
+    finalidad: 'Protege el inicio de sesión con Google mientras se completa.',
     duracion: '10 minutos',
   },
 ]
@@ -112,7 +112,7 @@ export default function CookiesPage() {
             tráfico legítimo de ataques automatizados. No se usan para identificarte ni con fines publicitarios.
           </p>
           <p className={legalP}>
-            Si inicias sesión con Google o Microsoft, esos servicios aplican sus propias políticas de cookies
+            Si inicias sesión con Google, ese servicio aplica sus propias políticas de cookies
             mientras estás en sus páginas.
           </p>
         </LegalSection>

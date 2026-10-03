@@ -125,7 +125,7 @@ const PLAN_MATCH = [
     momento: 'Tus datos, siempre tuyos',
     title: 'Si dejas de pagar, no pierdes nada',
     body:
-      'La cuenta pasa a solo lectura: puedes consultar y exportar todas tus historias clínicas cuando quieras. Nunca borramos la información de un paciente.',
+      'La cuenta pasa a solo lectura: puedes consultar tus historias clínicas y descargarlas en PDF cuando quieras. Antes de borrar cualquier dato te avisamos por correo.',
   },
 ]
 
