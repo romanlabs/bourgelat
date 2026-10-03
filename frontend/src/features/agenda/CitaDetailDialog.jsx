@@ -4,7 +4,6 @@ import { FileWarning, Loader2, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NavCta } from '@/components/shared/NavCta'
 import {
-  CITA_ESTADO_LABELS,
   CITA_TIPO_LABELS,
 } from '@/features/dashboard/dashboardUtils'
 import {
@@ -17,7 +16,7 @@ import {
 import { buildStateTone, STATUS_OPTIONS, evaluarIntervalo } from './calendarConstants'
 import { Select } from '@/components/ui/select'
 import { HoraPicker } from '@/components/shared/HoraPicker'
-import { formatHora12, formatFranja12 } from '@/lib/hora'
+import { formatHora12, formatFranja12, moverFin } from '@/lib/hora'
 import { agendaApi } from './agendaApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
@@ -145,7 +144,7 @@ export function CitaDetailDialog({
                     buildStateTone(cita.estado)
                   )}
                 >
-                  {CITA_ESTADO_LABELS[cita.estado] || cita.estado}
+                  {STATUS_OPTIONS.find((opcion) => opcion.value === cita.estado)?.label || cita.estado}
                 </span>
                 {puedeGestionarEstado && cita.estado === 'programada' && (
                   <button
@@ -263,13 +262,22 @@ export function CitaDetailDialog({
               <HoraPicker
                 aria-label="Nueva hora de inicio"
                 value={rescheduleForm.horaInicio}
-                onChange={(valor) => setRescheduleForm((prev) => ({ ...prev, horaInicio: valor }))}
+                onChange={(valor) =>
+                  setRescheduleForm((prev) => ({
+                    ...prev,
+                    horaInicio: valor,
+                    horaFin: moverFin(prev.horaInicio, prev.horaFin, valor),
+                  }))
+                }
               />
               <HoraPicker
                 aria-label="Nueva hora de fin"
                 value={rescheduleForm.horaFin}
                 onChange={(valor) => setRescheduleForm((prev) => ({ ...prev, horaFin: valor }))}
               />
+              {rescheduleForm.horaFin && rescheduleForm.horaFin <= rescheduleForm.horaInicio ? (
+                <p className="text-xs text-danger">La hora de fin debe ser posterior a la de inicio.</p>
+              ) : null}
             </div>
 
             {!ventana.valido ? (

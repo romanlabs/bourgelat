@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,7 +11,7 @@ import { TutorPetSelector } from './TutorPetSelector'
 import { TYPE_OPTIONS } from './recepcionConstants'
 import { Select } from '@/components/ui/select'
 import { HoraPicker } from '@/components/shared/HoraPicker'
-import { formatFranja12 } from '@/lib/hora'
+import { formatFranja12, moverFin } from '@/lib/hora'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { evaluarIntervalo } from '@/features/agenda/calendarConstants'
 import { hasAnyRole } from '@/lib/permissions'
@@ -60,6 +61,7 @@ const fieldClass =
 export function ProgramarCitaPanel({
   prefill,
   veterinarios,
+  veterinariosCargando = false,
   consultorios,
   mascotas,
   usuario,
@@ -78,6 +80,7 @@ export function ProgramarCitaPanel({
     handleSubmit,
     reset,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = useForm({ resolver: zodResolver(citaSchema), defaultValues: DEFAULT_VALUES })
@@ -199,7 +202,9 @@ export function ProgramarCitaPanel({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Una hora por fila: el drawer tiene ancho fijo y en dos columnas el
+              selector a. m./p. m. se salia del borde. */}
+          <div className="grid gap-4">
             <div>
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Desde
@@ -211,7 +216,10 @@ export function ProgramarCitaPanel({
                   <HoraPicker
                     aria-label="Hora de inicio"
                     value={field.value}
-                    onChange={field.onChange}
+                    onChange={(valor) => {
+                      setValue('horaFin', moverFin(field.value, getValues('horaFin'), valor))
+                      field.onChange(valor)
+                    }}
                   />
                 )}
               />
@@ -295,6 +303,21 @@ export function ProgramarCitaPanel({
               )}
             />
             {errors.veterinarioId ? <p className="mt-1 text-xs text-danger">{errors.veterinarioId.message}</p> : null}
+            {/* Una clinica recien creada solo tiene al administrador, que no es
+                profesional hasta que se le asigna el rol: sin este aviso el
+                desplegable sale vacio y no hay forma de agendar. */}
+            {!veterinariosCargando && veterinarios.length === 0 ? (
+              <div className="mt-2 border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
+                <p className="font-semibold">Aún no hay profesionales para atender citas.</p>
+                <p>
+                  Si tú atiendes pacientes, en Usuarios edita tu cuenta y marca el rol adicional Veterinario. También puedes
+                  invitar a otro profesional.
+                </p>
+                <Link to="/usuarios" className="mt-1 inline-block font-semibold underline underline-offset-2">
+                  Ir a Usuarios
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <div>
