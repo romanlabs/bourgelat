@@ -43,7 +43,7 @@ const SelectContent = React.forwardRef(({ className, children, ...props }, ref) 
       position="popper"
       sideOffset={6}
       className={cn(
-        'z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        'z-[100] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className
       )}
       {...props}
@@ -101,10 +101,22 @@ function Select({
     esVacio(typeof opt === 'string' ? opt : opt?.value)
   )
 
+  // Dentro de un <form>, Radix monta un <select> nativo oculto. Cuando el valor
+  // llega desde fuera (p. ej. la agenda precargando la hora del hueco clicado)
+  // ese select dispara un "change" propio y, si sus <option> aun no estan
+  // montadas, informa "" como si el usuario lo hubiera elegido. Un clic real
+  // siempre elige una opcion de la lista: lo que no este en ella se descarta.
+  const valoresValidos = children
+    ? null
+    : new Set(options.map((opt) => toRadix(typeof opt === 'string' ? opt : opt?.value)))
+
   return (
     <SelectPrimitive.Root
       value={valorRaiz(value, hayOpcionVacia)}
-      onValueChange={(next) => onValueChange?.(fromRadix(next))}
+      onValueChange={(next) => {
+        if (valoresValidos && !valoresValidos.has(next)) return
+        onValueChange?.(fromRadix(next))
+      }}
       disabled={disabled}
       required={required}
       name={name}

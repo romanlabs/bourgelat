@@ -51,6 +51,25 @@ const TABS = [
 // Menú de filtros (categoría + solo cantidad baja) para las tablas de inventario.
 // Reemplaza la fila de pills por un ícono junto al buscador, con el mismo
 // estilo de dropdown (radix-ui) usado en el selector de vista de Agenda.
+const CLAVE_INVENTARIO = 'bourgelat:inventario-elegido'
+
+function leerInventarioGuardado() {
+  try {
+    const valor = localStorage.getItem(CLAVE_INVENTARIO)
+    return valor === 'ventas' || valor === 'clinica' ? valor : null
+  } catch {
+    return null
+  }
+}
+
+function guardarInventario(valor) {
+  try {
+    localStorage.setItem(CLAVE_INVENTARIO, valor)
+  } catch {
+    // Sin almacenamiento (modo privado): se vuelve a preguntar la proxima vez.
+  }
+}
+
 function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, bajoStock, onBajoStockChange }) {
   const filtroActivo = categoria !== 'todas' || bajoStock
 
@@ -234,7 +253,9 @@ export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
 
   const [activeTab, setActiveTab] = useState('resumen')
-  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(null) // null | 'ventas' | 'clinica'
+  // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
+  // de mas. 'Cambiar de inventario' sigue a mano para alternar.
+  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
@@ -285,6 +306,10 @@ export default function InventarioPage() {
     setActiveTab('movimientos')
   }
 
+  // Antes del return por rol: un hook despues de un return condicional rompe
+  // el orden de hooks si el rol cambia entre renders (p. ej. al refrescar /me).
+  const facturaCompraHook = useFacturaCompra({ enabled: rolPermitido })
+
   if (!rolPermitido) return <RestrictedInventoryPage />
 
   const { resumen, categoriasData, alertsRows, reporteQuery, alertasQuery } = resumenHook
@@ -322,8 +347,6 @@ export default function InventarioPage() {
     selectProduct,
   } = movimientosHook
 
-  const facturaCompraHook = useFacturaCompra()
-
   return (
     <AdminShell
       currentKey="inventario"
@@ -334,7 +357,7 @@ export default function InventarioPage() {
       }
       actions={
         <NavCta to="/finanzas" icon={Wallet}>
-          Abrir caja
+          Ir a caja
         </NavCta>
       }
       asideNote="Aquí se concentran alertas, productos y movimientos. Lo importante es cuidar el inventario antes de afectar la caja o la consulta."
@@ -614,7 +637,11 @@ export default function InventarioPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay productos para este filtro"
+                  emptyTitle={
+                    buscar.trim() || categoria !== 'todas' || bajoStock
+                      ? 'No hay productos para este filtro'
+                      : 'Aún no hay productos'
+                  }
                   emptyBody="Ajusta la búsqueda o crea el primer producto con el botón Nuevo producto."
                 />
               )}
@@ -1221,6 +1248,7 @@ export default function InventarioPage() {
         seleccionActual={inventarioSeleccionado}
         onSelect={(inv) => {
           setInventarioSeleccionado(inv)
+          guardarInventario(inv)
           setSelectorOpen(false)
         }}
       />

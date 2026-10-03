@@ -15,15 +15,17 @@ export const ALL_QUICK_ACTIONS = {
   paciente: {
     key: 'paciente',
     label: 'Nuevo paciente',
-    to: '/pacientes',
+    // Abre el formulario directamente, no el resumen del modulo.
+    to: '/pacientes?tab=pacientes&nuevo=paciente',
     icon: PawPrint,
     accent: 'bg-brand-muted text-brand-foreground group-hover:bg-brand/20',
     cardHover: 'hover:border-brand/30 hover:bg-brand-muted/50',
   },
   historia: {
     key: 'historia',
-    label: 'Historia clinica',
-    to: '/pacientes',
+    label: 'Historia clínica',
+    // La historia se abre desde el paciente: se llega a la lista con la accion.
+    to: '/pacientes?tab=pacientes',
     icon: FileText,
     accent: 'bg-brand-muted text-brand-foreground group-hover:bg-brand/20',
     cardHover: 'hover:border-brand/30 hover:bg-brand-muted/50',

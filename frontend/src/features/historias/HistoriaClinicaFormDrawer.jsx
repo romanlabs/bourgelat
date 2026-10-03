@@ -587,8 +587,15 @@ export default function HistoriaClinicaFormDrawer({
 
     const payload = buildPayload()
 
-    if (!payload.motivoConsulta || !payload.diagnostico || !payload.tratamiento || !payload.veterinarioId) {
-      toast.error('Completa motivo de consulta, diagnostico, tratamiento y profesional responsable.')
+    // Nombrar solo lo que falta: el aviso con los cuatro campos no decia cual era.
+    const faltantes = [
+      !payload.veterinarioId && 'profesional responsable',
+      !payload.motivoConsulta && 'motivo de consulta',
+      !payload.diagnostico && 'diagnóstico principal',
+      !payload.tratamiento && 'tratamiento instaurado',
+    ].filter(Boolean)
+    if (faltantes.length) {
+      toast.error(`Falta completar: ${faltantes.join(', ')}.`)
       setFormSections(new Set(['contexto', 'anamnesis', 'diagnostico']))
       return
     }
@@ -880,9 +887,9 @@ export default function HistoriaClinicaFormDrawer({
                 open={formSections.has('diagnostico')}
                 onToggle={() => toggleFormSection('diagnostico')}
               >
-                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info" />
+                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal (obligatorio)" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info" />
                 <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnóstico presuntivo o diferencial" className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info" />
-                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info" />
+                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado (obligatorio)" className="min-h-[80px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info" />
               </FormSection>
 
               {/* ── Tratamiento intrahospitalario ── */}

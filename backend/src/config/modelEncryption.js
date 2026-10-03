@@ -138,6 +138,13 @@ const registrarHooksCifrado = (Model, opciones) => {
     aplicarCifrado({ instance, ...opciones, soloModificados: true })
   )
 
+  // Tras guardar, la instancia en memoria conserva lo que se escribio (cifrado)
+  // y los controladores responden con ella: se descifra para que el cliente
+  // no reciba el texto cifrado de la base.
+  Model.addHook('afterSave', (instance) =>
+    aplicarDescifrado({ instance, ...opciones })
+  )
+
   Model.addHook('afterFind', (resultado) => {
     if (!resultado) return
     const descifrar = (inst) => aplicarDescifrado({ instance: inst, ...opciones })

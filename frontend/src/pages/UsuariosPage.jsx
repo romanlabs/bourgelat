@@ -25,6 +25,13 @@ import {
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/dashboardUtils'
+
+/** '1 cupo disponible' / '2 cupos disponibles' */
+const textoCupos = (cantidad, singular = '', plural = '') => {
+  const n = Math.max(cantidad, 0)
+  const sufijo = n === 1 ? singular : plural
+  return `${formatNumber(n)} ${n === 1 ? 'cupo' : 'cupos'}${sufijo ? ` ${sufijo}` : ''}`
+}
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
@@ -280,6 +287,7 @@ export default function UsuariosPage() {
               nombre: data.usuario.nombre,
               email: data.usuario.email,
               telefono: data.usuario.telefono,
+              rolesAdicionales: data.usuario.rolesAdicionales,
             },
           }))
         }
@@ -436,10 +444,10 @@ export default function UsuariosPage() {
       telefono: normalizePhone(editForm.telefono),
     }
 
-    if (!esUsuarioActualSeleccionado) {
-      payload.rol = editForm.rol
-      payload.rolesAdicionales = normalizeRoles(editForm.rolesAdicionales, editForm.rol)
-    }
+    // Sobre la propia cuenta solo viajan los roles adicionales: el rol
+    // principal lo cambia otra cuenta administrativa.
+    if (!esUsuarioActualSeleccionado) payload.rol = editForm.rol
+    payload.rolesAdicionales = normalizeRoles(editForm.rolesAdicionales, editForm.rol)
 
     if (payload.nombre.length < 3) {
       toast.error('El nombre del colaborador debe tener al menos 3 caracteres.')
@@ -508,7 +516,7 @@ export default function UsuariosPage() {
               <StatusPill tone="border-border bg-muted text-foreground">
                 {limiteUsuarios === null
                   ? 'Sin limite de usuarios'
-                  : `${formatNumber(Math.max(cupoDisponible, 0))} cupos disponibles`}
+                  : textoCupos(cupoDisponible, 'disponible', 'disponibles')}
               </StatusPill>
             }
           >
@@ -831,7 +839,7 @@ export default function UsuariosPage() {
                     detalle:
                       limiteUsuarios === null
                         ? 'La suscripcion no limita usuarios activos.'
-                        : `Quedan ${formatNumber(Math.max(cupoDisponible, 0))} cupos antes de exigir gestion comercial.`,
+                        : `${Math.max(cupoDisponible, 0) === 1 ? 'Queda' : 'Quedan'} ${textoCupos(cupoDisponible)} antes de exigir gestion comercial.`,
                   },
                 ]}
                 columns={[
@@ -920,7 +928,6 @@ export default function UsuariosPage() {
                     <RoleChecklist
                       primaryRole={editForm.rol}
                       value={editForm.rolesAdicionales}
-                      disabled={esUsuarioActualSeleccionado}
                       onChange={(rolesAdicionales) =>
                         setEditForm((current) => ({ ...current, rolesAdicionales }))
                       }
@@ -929,7 +936,7 @@ export default function UsuariosPage() {
 
                   {esUsuarioActualSeleccionado ? (
                     <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
-                      Tu sesion actual puede actualizar nombre, correo y celular, pero los permisos se cambian desde otra cuenta administrativa para evitar inconsistencias.
+                      En tu propia cuenta puedes agregar roles adicionales, por ejemplo Veterinario si atiendes pacientes. El rol principal y el permiso de administrador los cambia otra cuenta administrativa.
                     </div>
                   ) : null}
 

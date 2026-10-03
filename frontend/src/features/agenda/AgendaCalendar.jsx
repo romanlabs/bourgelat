@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DropdownMenu } from 'radix-ui'
-import { CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
@@ -120,44 +119,20 @@ export default function AgendaCalendar({
     return () => onToolbarChange(null)
   }, [toolbarNode, isMobile, onToolbarChange])
 
+  // Boton directo: el menu desplegable solo tenia "Nueva cita" y costaba un clic de mas.
   const crearMenu = puedeProgramar && (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Crear"
-          className={cn(
-            'flex shrink-0 items-center rounded-2xl border border-border bg-card font-medium text-foreground shadow-[0_1px_2px_rgba(8,25,39,0.15),0_1px_3px_1px_rgba(8,25,39,0.1)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-            sidebarOpen ? 'h-14 min-w-0 flex-1 gap-3 py-0 pl-3 pr-2 text-sm' : 'h-14 w-14 justify-center'
-          )}
-        >
-          <Plus className="h-6 w-6 shrink-0 text-primary" />
-          {sidebarOpen && (
-            <>
-              <span className="flex-1 text-left">Crear</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-            </>
-          )}
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="start"
-          sideOffset={4}
-          className="z-50 w-56 rounded-lg border border-border bg-card p-1.5 shadow-lg"
-        >
-          {puedeProgramar && (
-            <DropdownMenu.Item
-              onSelect={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
-              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
-            >
-              <CalendarClock className="h-4 w-4 text-muted-foreground" />
-              Nueva cita
-            </DropdownMenu.Item>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <button
+      type="button"
+      aria-label="Nueva cita"
+      onClick={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
+      className={cn(
+        'flex shrink-0 items-center rounded-2xl border border-border bg-card font-medium text-foreground shadow-[0_1px_2px_rgba(8,25,39,0.15),0_1px_3px_1px_rgba(8,25,39,0.1)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        sidebarOpen ? 'h-14 min-w-0 flex-1 gap-3 py-0 pl-3 pr-2 text-sm' : 'h-14 w-14 justify-center'
+      )}
+    >
+      <Plus className="h-6 w-6 shrink-0 text-primary" />
+      {sidebarOpen && <span className="flex-1 text-left">Nueva cita</span>}
+    </button>
   )
 
   return (

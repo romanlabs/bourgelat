@@ -20,8 +20,8 @@ const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
       >
         <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
         <p className="flex-1">
-          Tu suscripción venció. Puedes consultar y exportar toda tu información, pero no crear ni
-          editar registros.
+          Tu suscripción venció. Puedes consultar tu información y descargar tus documentos, pero no
+          crear ni editar registros.
         </p>
         <Link
           to="/configuracion"

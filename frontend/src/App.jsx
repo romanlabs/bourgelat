@@ -125,7 +125,9 @@ export default function App() {
           <AppRouter />
         </AuthBootstrap>
         <Toaster
-          position="bottom-right"
+          // Arriba al centro: abajo a la derecha tapaban el boton principal de
+          // los drawers y del punto de venta justo despues de cada accion.
+          position="top-center"
           richColors
           closeButton
           theme={dark ? 'dark' : 'light'}

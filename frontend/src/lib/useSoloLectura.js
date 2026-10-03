@@ -17,7 +17,7 @@ export const useSoloLectura = () => {
     propsAccion: soloLectura
       ? {
           disabled: true,
-          title: 'Tu suscripción venció. Puedes consultar y exportar, pero no editar.',
+          title: 'Tu suscripción venció. Puedes consultar y descargar tus documentos, pero no editar.',
         }
       : {},
   }

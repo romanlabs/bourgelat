@@ -30,7 +30,7 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+  'h-11 w-full min-w-0 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
 
 // editingTutor es opcional: el drawer tambien se usa en alta rapida desde recepcion.
 export default function TutorDrawer({ open, onClose, onSubmit, isPending, editingTutor = null }) {
@@ -72,7 +72,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
   return createPortal(
     <>
       <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-[55] bg-black/30 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -80,7 +80,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
         role="dialog"
         aria-modal="true"
         aria-label={modoEdicion ? 'Editar tutor' : 'Nuevo tutor'}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-[60] flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
@@ -102,7 +102,17 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          <form id="tutor-drawer-form" className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
+          {/* El drawer va en un portal, pero React propaga el submit por el arbol
+              de componentes: abierto desde "Programar cita" o "Ingreso directo",
+              tambien enviaria ese formulario y mostraria sus errores. */}
+          <form
+            id="tutor-drawer-form"
+            className="grid gap-4"
+            onSubmit={(event) => {
+              event.stopPropagation()
+              handleSubmit(onSubmit)(event)
+            }}
+          >
             <div className="grid gap-1.5">
               <label htmlFor="t-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Nombre completo *
