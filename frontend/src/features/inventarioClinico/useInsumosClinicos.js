@@ -115,7 +115,7 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
       (insumosQuery.data?.insumos || []).map((i) => ({
         id: i.id,
         nombre: i.nombre,
-        categoria: i.categoria,
+        categoria: CATEGORY_OPTIONS.find((opcion) => opcion.value === i.categoria)?.label || i.categoria,
         stock: i.stock,
         stockMinimo: i.stockMinimo,
         unidadBase: i.unidadBase,

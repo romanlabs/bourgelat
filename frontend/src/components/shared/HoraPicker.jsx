@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { Select } from '@/components/ui/select'
 import { to12h, to24h, HORAS_12, MINUTOS_15, PERIODOS } from '@/lib/hora'
 
@@ -18,8 +19,17 @@ import { to12h, to24h, HORAS_12, MINUTOS_15, PERIODOS } from '@/lib/hora'
 export function HoraPicker({ value, onChange, disabled = false, 'aria-label': ariaLabel }) {
   const { hora, minuto, periodo } = to12h(value)
 
+  // Se compone siempre sobre el valor mas reciente: Radix puede invocar un
+  // manejador de un render anterior (al sincronizar su <select> oculto) y, con
+  // el valor capturado en el cierre, una cita de las 4 p. m. quedaba a las 4 a. m.
+  // useLayoutEffect corre antes que el efecto de Radix que dispara ese evento.
+  const valorRef = useRef(value)
+  useLayoutEffect(() => {
+    valorRef.current = value
+  }, [value])
+
   const emitir = (cambios) =>
-    onChange(to24h({ hora, minuto, periodo, ...cambios }))
+    onChange(to24h({ ...to12h(valorRef.current), ...cambios }))
 
   // Un valor que no cae en la rejilla de 15 minutos (p. ej. una cita creada
   // antes) igual debe poder mostrarse en vez de dejar el campo en blanco.
@@ -53,7 +63,7 @@ export function HoraPicker({ value, onChange, disabled = false, 'aria-label': ar
       />
       <Select
         variant="field"
-        className="w-[72px] shrink-0"
+        className="w-[88px] shrink-0 whitespace-nowrap"
         aria-label={ariaLabel ? `${ariaLabel}: AM o PM` : 'AM o PM'}
         disabled={disabled}
         value={periodo}

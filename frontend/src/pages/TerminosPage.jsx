@@ -117,8 +117,7 @@ export default function TerminosPage() {
               <Link to="/planes" className={legalLink}>
                 bourgelat.co/planes
               </Link>{' '}
-              al momento de contratar. Los precios están expresados en pesos colombianos. [Indicar si los precios
-              incluyen o no impuestos, según el régimen tributario de los responsables.]
+              al momento de contratar. Los precios están expresados en pesos colombianos.
             </li>
             <li>
               La suscripción se paga por periodos anticipados (mensual o anual). La Clínica puede cancelarla en
@@ -139,8 +138,8 @@ export default function TerminosPage() {
         <LegalSection numero={6} titulo="Vencimiento de la suscripción">
           <p className={legalP}>
             Si la prueba o la suscripción vencen sin renovarse, la cuenta pasa a <Strong>modo de solo
-            lectura</Strong>: la Clínica conserva el acceso para consultar y exportar su información, pero no
-            puede crear ni modificar registros. El acceso completo se restablece al renovar.
+            lectura</Strong>: la Clínica conserva el acceso para consultar su información y descargar sus documentos, pero
+            no puede crear ni modificar registros. El acceso completo se restablece al renovar.
           </p>
           <p className={legalP}>
             Si la cuenta permanece en solo lectura o cancelada por más de [90] días, Bourgelat avisará a la
@@ -180,7 +179,8 @@ export default function TerminosPage() {
             </li>
             <li>
               La Clínica es responsable de conservar sus documentos contables y tributarios durante los plazos
-              que exija la ley, para lo cual puede usar las funciones de exportación del Servicio.
+              que exija la ley, para lo cual puede descargar sus facturas y el reporte de finanzas desde el
+              Servicio.
             </li>
           </ul>
         </LegalSection>
@@ -192,8 +192,9 @@ export default function TerminosPage() {
               derecho sobre ellos, salvo el necesario para prestar el Servicio.
             </li>
             <li>
-              La Clínica puede exportar su información en cualquier momento mientras tenga acceso al Servicio,
-              incluido el modo de solo lectura.
+              Mientras tenga acceso al Servicio, incluido el modo de solo lectura, la Clínica puede consultar su
+              información, descargar en PDF sus historias clínicas y facturas, y exportar el reporte de finanzas.
+              Además puede solicitar a Bourgelat una copia completa de sus datos escribiendo a soporte@bourgelat.co.
             </li>
             <li>
               Al terminar la relación, la Clínica tendrá [30] días para solicitar la exportación de sus datos.

@@ -11,7 +11,14 @@ import { RecepcionDrawer } from './RecepcionDrawer'
  * único permanente. Programar cita e ingreso directo dejaron de ser columnas
  * fijas y se abren bajo demanda en un panel lateral.
  */
-export function RecepcionTab({ fecha, prefill, usuario, puedeProgramar, puedeGestionarEstado }) {
+export function RecepcionTab({
+  fecha,
+  prefill,
+  usuario,
+  puedeProgramar,
+  puedeGestionarEstado,
+  onCitaProgramada,
+}) {
   const tienePrefill = Boolean(prefill?.fecha || prefill?.horaInicio)
   const [drawer, setDrawer] = useState(() => (tienePrefill ? 'programar' : null))
   const [prefillVisto, setPrefillVisto] = useState(prefill)
@@ -33,6 +40,7 @@ export function RecepcionTab({ fecha, prefill, usuario, puedeProgramar, puedeGes
     veterinariosDisponibilidad,
     consultorios,
     veterinarios,
+    veterinariosQuery,
     mascotas,
     crearCitaMutation,
     crearWalkInMutation,
@@ -88,12 +96,16 @@ export function RecepcionTab({ fecha, prefill, usuario, puedeProgramar, puedeGes
           bare
           prefill={prefill}
           veterinarios={veterinarios}
+          veterinariosCargando={veterinariosQuery.isPending}
           consultorios={consultorios}
           mascotas={mascotas}
           usuario={usuario}
           puedeProgramar={puedeProgramar}
           crearCitaMutation={crearCitaMutation}
-          onSuccess={cerrarDrawer}
+          onSuccess={() => {
+            cerrarDrawer()
+            onCitaProgramada?.()
+          }}
         />
       </RecepcionDrawer>
 

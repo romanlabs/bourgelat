@@ -279,13 +279,14 @@ const editarUsuario = async (req, res) => {
       })
     }
 
-    if (
-      String(usuario.id) === String(usuarioActualId) &&
-      (rol !== undefined || rolesAdicionales !== undefined)
-    ) {
+    // Sobre la propia cuenta: el rol principal no se toca, pero si los roles
+    // adicionales. Asi el dueno de una clinica con una sola cuenta puede
+    // marcarse Veterinario y agendar; sin esto no habia profesional posible.
+    const esPropiaCuenta = String(usuario.id) === String(usuarioActualId)
+    if (esPropiaCuenta && rolNormalizado && rolNormalizado !== usuario.rol) {
       return res.status(400).json({
         message:
-          'No puedes cambiar tus propios permisos desde este modulo. Solicita apoyo de otro administrador.',
+          'No puedes cambiar tu propio rol principal. Solicita apoyo de otro administrador.',
       })
     }
 
@@ -302,6 +303,15 @@ const editarUsuario = async (req, res) => {
       rolesAdicionales: siguientesRolesAdicionales,
       activo: usuario.activo,
     })
+
+    // Quitarse a uno mismo el permiso de administrador deja la sesion sin acceso
+    // a esta pantalla a mitad de la edicion: eso lo hace otro administrador.
+    if (esPropiaCuenta && tienePermisoAdmin(usuario) && !conservariaAdmin) {
+      return res.status(400).json({
+        message:
+          'No puedes quitarte el permiso de administrador. Solicita apoyo de otro administrador.',
+      })
+    }
 
     if (tienePermisoAdmin(usuario) && !conservariaAdmin) {
       const adminsRestantes = await contarAdminsActivos({

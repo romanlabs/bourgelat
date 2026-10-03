@@ -348,11 +348,11 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </button>
               <a
-                href="mailto:hola@bourgelat.co"
+                href="mailto:soporte@bourgelat.co"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#fdf6ee]/25 px-7 py-3.5 text-sm font-semibold text-[#fdf6ee] no-underline transition-colors hover:border-[#e9c089] hover:text-[#e9c089] sm:w-auto"
               >
                 <Mail className="h-4 w-4" />
-                hola@bourgelat.co
+                soporte@bourgelat.co
               </a>
             </div>
           </div>
@@ -381,11 +381,11 @@ export default function LandingPage() {
                 calma y más confianza, de la recepción al cierre.
               </p>
               <a
-                href="mailto:hola@bourgelat.co"
+                href="mailto:soporte@bourgelat.co"
                 className="mt-2 inline-flex items-center gap-2 py-3 text-sm font-semibold text-[#fdf6ee] no-underline lg:mt-5 lg:py-0 transition-colors hover:text-[#e9c089]"
               >
                 <Mail className="h-4 w-4" />
-                hola@bourgelat.co
+                soporte@bourgelat.co
               </a>
               <p className="mt-6 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[#fdf6ee]/55">
                 <MapPin className="h-3.5 w-3.5 text-[#e9c089]" />

@@ -68,7 +68,7 @@ function RestrictedFinancePage() {
     <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
-          title="Caja y facturacion"
+          title="Caja y facturación"
           subtitle="Esta sección se muestra a perfiles operativos y administrativos autorizados."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
@@ -110,7 +110,7 @@ export default function FinanzasPage() {
   }
 
   useEffect(() => {
-    document.title = 'Caja y facturacion | Bourgelat'
+    document.title = 'Caja y facturación | Bourgelat'
   }, [])
 
   const rolPermitido = hasAnyRole(usuario, [
@@ -230,8 +230,8 @@ export default function FinanzasPage() {
   return (
     <AdminShell
       currentKey="finanzas"
-      title="Caja y facturacion"
-      description="Operacion diaria de ventas, servicios, productos y control de facturas con una lectura mas natural para recepcion, auxiliares, medicos y facturacion."
+      title="Caja y facturación"
+      description="Operación diaria de ventas, servicios, productos y control de facturas con una lectura más natural para recepción, auxiliares, médicos y facturación."
       headerBadge={
         <StatusPill tone="border-success/30 bg-success-soft text-success ">
           Corte mensual activo

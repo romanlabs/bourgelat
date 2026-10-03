@@ -96,7 +96,7 @@ export default function PrivacidadPage() {
               conocerla.
             </li>
             <li>
-              Si el usuario inicia sesión con Google o Microsoft, el identificador de su cuenta en ese proveedor.
+              Si el usuario inicia sesión con Google, el identificador de su cuenta en ese proveedor.
             </li>
             <li>
               Respuestas del cuestionario inicial (onboarding): cargo, WhatsApp de contacto, tipo y tamaño de la
@@ -223,8 +223,8 @@ export default function PrivacidadPage() {
               electrónica, que transmite las facturas a la DIAN.
             </li>
             <li>
-              <strong className="text-tinta-800">Google y Microsoft</strong> — solo si el usuario elige iniciar
-              sesión con su cuenta de esos servicios.
+              <strong className="text-tinta-800">Google</strong> — solo si el usuario elige iniciar sesión con su
+              cuenta de ese servicio.
             </li>
             <li>
               <strong className="text-tinta-800">Proveedor de correo electrónico</strong> — envío de correos

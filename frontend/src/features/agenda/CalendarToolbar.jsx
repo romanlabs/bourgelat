@@ -59,7 +59,7 @@ export function CalendarToolbar({
 
       <p
         className={cn(
-          'text-sm font-semibold capitalize',
+          'text-sm font-semibold first-letter:uppercase',
           compact ? 'hidden text-foreground md:block' : 'text-foreground'
         )}
         aria-live="polite"
