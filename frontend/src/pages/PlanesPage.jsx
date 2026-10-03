@@ -203,7 +203,7 @@ function AvisameField() {
     if (!valid) return
     const asunto = encodeURIComponent('Avísame: facturación electrónica DIAN')
     const cuerpo = encodeURIComponent(`Quiero que me avisen cuando salga la facturación electrónica.\nCorreo: ${email.trim()}`)
-    window.location.href = `mailto:hola@bourgelat.co?subject=${asunto}&body=${cuerpo}`
+    window.location.href = `mailto:soporte@bourgelat.co?subject=${asunto}&body=${cuerpo}`
     setSent(true)
   }
 
@@ -744,7 +744,7 @@ export default function PlanesPage() {
                   Crear cuenta
                   <ArrowRight className="h-4 w-4" />
                 </button>
-                <a href="mailto:hola@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat" className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/15">
+                <a href="mailto:soporte@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat" className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/15">
                   Hablar con el equipo
                 </a>
               </div>

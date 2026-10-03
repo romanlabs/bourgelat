@@ -194,7 +194,7 @@ export default function TerminosPage() {
             <li>
               Mientras tenga acceso al Servicio, incluido el modo de solo lectura, la Clínica puede consultar su
               información, descargar en PDF sus historias clínicas y facturas, y exportar el reporte de finanzas.
-              Además puede solicitar a Bourgelat una copia completa de sus datos escribiendo a hola@bourgelat.co.
+              Además puede solicitar a Bourgelat una copia completa de sus datos escribiendo a soporte@bourgelat.co.
             </li>
             <li>
               Al terminar la relación, la Clínica tendrá [30] días para solicitar la exportación de sus datos.
