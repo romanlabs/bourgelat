@@ -10,7 +10,7 @@ export const NOMBRES_RESPONSABLES = RESPONSABLES.map((r) => r.nombre).join(' y '
 
 export const DOMICILIO = '[Ciudad de domicilio], Colombia'
 export const CIUDAD_JURISDICCION = '[Ciudad de domicilio]'
-export const CORREO_LEGAL = 'hola@bourgelat.co'
+export const CORREO_LEGAL = 'soporte@bourgelat.co'
 export const TELEFONO_LEGAL = '[Número de contacto]'
 
 export const VERSIONES_LEGALES = {

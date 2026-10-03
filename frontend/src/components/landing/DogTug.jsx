@@ -165,11 +165,11 @@ export default function DogTug() {
         pts[0].x += dragging ? DOG_PULL * 0.35 : DOG_PULL * 1.6
         if (pts[0].x >= LOSE_X) {
           gameState = 'dogWins'; winTimer = 150
-          if (msgEl) msgEl.textContent = 'Ganó él. Pero nosotros respondemos rápido → hola@bourgelat.co'
+          if (msgEl) msgEl.textContent = 'Ganó él. Pero nosotros respondemos rápido → soporte@bourgelat.co'
         }
         if (pts[0].x <= WIN_X) {
           gameState = 'userWins'; winTimer = 150
-          if (msgEl) msgEl.textContent = 'Se la arrebataste. Cuéntanos qué está fallando → hola@bourgelat.co'
+          if (msgEl) msgEl.textContent = 'Se la arrebataste. Cuéntanos qué está fallando → soporte@bourgelat.co'
         }
       } else {
         dogLean += (0 - dogLean) * 0.05
