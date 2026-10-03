@@ -51,6 +51,28 @@ export const to24h = ({ hora, minuto, periodo }) => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
+const aMinutos = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + m
+}
+
+/**
+ * Nueva hora de fin al mover el inicio: conserva la duracion, como Google
+ * Calendar. Sin esto, pasar el inicio de 5:00 a 6:00 dejaba el fin en 5:30 y
+ * la cita no se podia guardar. Si la franja no cabe en el dia, se topa en 23:45.
+ * '17:00','17:30','18:00' → '18:30'
+ */
+export const moverFin = (inicioAnterior, finAnterior, inicioNuevo) => {
+  const ini = normalizarHora(inicioAnterior)
+  const fin = normalizarHora(finAnterior)
+  const nuevo = normalizarHora(inicioNuevo)
+  if (!nuevo) return finAnterior
+
+  const duracion = ini && fin && aMinutos(fin) > aMinutos(ini) ? aMinutos(fin) - aMinutos(ini) : 30
+  const total = Math.min(aMinutos(nuevo) + duracion, 23 * 60 + 45)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 /** Etiqueta de una franja completa: '8:00 a. m. – 12:00 p. m.' */
 export const formatFranja12 = (inicio, fin) => `${formatHora12(inicio)} – ${formatHora12(fin)}`
 

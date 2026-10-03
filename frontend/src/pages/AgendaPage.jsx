@@ -573,6 +573,16 @@ export default function AgendaPage() {
               usuario={usuario}
               puedeProgramar={puedeProgramar}
               puedeGestionarEstado={puedeGestionarEstado}
+              // Si la cita salio de un hueco del calendario, se vuelve a el para
+              // verla: la sala de espera solo muestra el dia de hoy.
+              onCitaProgramada={
+                recepcionPrefill
+                  ? () => {
+                      setRecepcionPrefill(null)
+                      setActiveTab('agenda')
+                    }
+                  : undefined
+              }
             />
           )}
 
