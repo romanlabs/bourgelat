@@ -2,16 +2,19 @@
 
 Las clínicas reportan problemas de uso desde **Soporte** (`/soporte`, o "Ayuda y
 soporte" en el menú del avatar). El equipo de Bourgelat recibe un correo y
-responde **desde el servidor** con `npm run soporte:*`. No hay panel web del
-equipo todavía; ver [Proyección](#proyección-panel-web-del-equipo).
+responde **contestando ese mismo correo** (ver
+[Responder desde el correo](#responder-desde-el-correo)) o desde el servidor con
+`npm run soporte:*`. No hay panel web del equipo todavía; ver
+[Proyección](#proyección-panel-web-del-equipo).
 
 ## Arquitectura: una lógica, varias puertas
 
 ```
- Clínica (app web)          Equipo HOY                Equipo FUTURO
- /api/soporte/*             scripts/soporte.js        /api/soporte-equipo/* + panel
-       │                          │                          │
-       └──────────── services/soporteService.js ─────────────┘
+ Clínica (app web)     Equipo: correo                 Equipo: script       FUTURO
+ /api/soporte/*        Gmail → Cloudflare Worker →    scripts/soporte.js   panel web
+       │               POST /api/soporte-equipo/correo       │                 │
+       │               (soporteCorreoService.js)             │                 │
+       └──────────────────────── services/soporteService.js ─┴─────────────────┘
                  actor = { tipo: 'usuario' | 'soporte', id, nombre, ... }
                                   │
                  tickets_soporte · mensajes_ticket_soporte
@@ -76,11 +79,71 @@ Bandeja: `npm run soporte:listar` (activos por defecto; `--estado todos`,
 `--firma` es obligatoria en todo lo que escribe: la clínica ve
 "Equipo Bourgelat (Sergio)" y queda en `asignadoA`.
 
+## Responder desde el correo
+
+El aviso de cada ticket nuevo o respuesta de la clínica llega con un `Reply-To`
+propio del ticket: `respuestas+t42.<token>@bourgelat.co`. Basta con **contestar
+el correo desde Gmail**: la respuesta entra al hilo firmada como
+"Equipo Bourgelat (Roman)" y la clínica recibe su correo de siempre.
+
+**Primera línea opcional** para cambiar el estado (se quita del mensaje):
+
+| Primera línea | Resultado |
+|---------------|-----------|
+| *(nada)* | Responde; el ticket queda en "Esperando usuario" |
+| `#resuelto` + texto | Responde y lo da por resuelto |
+| `#en-progreso` sola | Solo avisa que se está revisando |
+| `#cerrado` sola | Lo cierra sin escribir nada |
+
+Se toma solo lo escrito arriba del texto citado ("El jue, … escribió:") y antes
+de una firma `--`. Si algo no cuadra (palabra clave mal escrita, ticket cerrado,
+respuesta vacía) **el correo rebota** con el motivo y nada llega a la clínica.
+
+### Cómo viaja
+
+```
+Gmail ──► Cloudflare Email Routing (respuestas@, subaddressing)
+      ──► Email Worker `bourgelat-soporte-correo` (cloudflare/soporte-correo-worker)
+            firma HMAC(hora + destinatario + correo crudo)
+      ──► POST api.bourgelat.co/api/soporte-equipo/correo
+            (montado antes de express.json: la firma cubre los bytes exactos)
+      ──► soporteCorreoService → soporteService.agregarMensaje / cambiarEstado
+```
+
+### Por qué no se puede falsificar
+
+El `From` de un correo se falsifica fácil, así que se exigen **cuatro** cosas:
+
+1. **Firma del Worker** (`SOPORTE_CORREO_SECRETO`, ventana de 5 min): nadie más
+   puede llamar el endpoint.
+2. **Token del ticket** en la dirección (HMAC del número): solo viaja en los
+   avisos que recibe el equipo; el de un ticket no sirve para otro.
+3. **Remitente** en `SOPORTE_RESPONDEDORES`, que además define la firma.
+4. **DKIM válido del dominio del remitente** (`mailauth`), así un `From:
+   roman…@gmail.com` falsificado no pasa.
+
+Un mismo correo (mismo `Message-ID`) no se aplica dos veces. Toda la lógica
+pura está en `services/soporteCorreoReglas.js` con sus tests.
+
+### Puesta en marcha (una sola vez)
+
+1. Render → `bourgelat-api` → Environment: `SOPORTE_CORREO_RESPUESTAS=respuestas@bourgelat.co`,
+   `SOPORTE_CORREO_SECRETO=<32+ caracteres>`, `SOPORTE_RESPONDEDORES=roman.bolanos.va@gmail.com=Roman`.
+2. Worker: `cd cloudflare/soporte-correo-worker && npx wrangler deploy` y
+   `npx wrangler secret put SOPORTE_CORREO_SECRETO` (el mismo valor).
+3. Cloudflare → Email Routing: activar **subaddressing** y crear la ruta
+   `respuestas@bourgelat.co` → *Send to a Worker* → `bourgelat-soporte-correo`.
+
+Sin las tres variables la función queda apagada: los avisos salen sin
+`Reply-To` y el script sigue funcionando igual.
+
 ## Configuración
 
 - `SOPORTE_EMAIL`: buzón del equipo. Vacío = el ticket se guarda igual y el
   aviso queda solo en el log (warning al arrancar en producción).
 - Los correos salen por el SMTP de `emailService` (`SMTP_HOST`, `EMAIL_FROM`).
+- `SOPORTE_CORREO_RESPUESTAS`, `SOPORTE_CORREO_SECRETO`, `SOPORTE_RESPONDEDORES`:
+  responder desde el correo (ver arriba).
 - Las capturas se normalizan a webp (máx. 1600 px, sin EXIF) en
   `uploads/soporte/` y **no** descuentan del cupo de almacenamiento del plan.
 
@@ -105,8 +168,9 @@ Fuera de alcance por ahora (ver `docs/roadmap.md`). Al construirlo:
 1. Rol nuevo `soporte` en el ENUM de `Usuario` (migración) para cuentas sin
    `clinicaId`, con alcance **solo** sobre tickets. No es superadmin.
 2. Login separado del público y 2FA o lista de IPs permitidas.
-3. `routes/soporteEquipoRoutes.js` en `/api/soporte-equipo/*` (namespace ya
-   reservado) → `soporteEquipoController.js`, que arma
+3. `routes/soporteEquipoRoutes.js` en `/api/soporte-equipo/*` (ya existe para
+   el correo; ojo, se monta antes de `express.json`, así que las rutas JSON del
+   panel necesitan su propio `express.json()`) → `soporteEquipoController.js`, que arma
    `construirActorSoporte({ id: req.usuario.id, nombre })` y llama a **las mismas**
    funciones de `soporteService.js`.
 4. Bandeja en el frontend reutilizando `TicketHilo` (`perspectiva="soporte"`),

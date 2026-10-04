@@ -57,6 +57,9 @@ assert.deepStrictEqual(analizarArchivoRutas(multilineaProtegida, 'multi-ok.js'),
 assert.ok(ARCHIVOS_EXENTOS.includes('authRoutes.js'), 'auth debe seguir operando vencido')
 assert.ok(ARCHIVOS_EXENTOS.includes('suscripcionRoutes.js'), 'debe poder pagar para reactivarse')
 assert.ok(ARCHIVOS_EXENTOS.includes('soporteRoutes.js'), 'debe poder pedir ayuda con la suscripcion vencida')
+// Sin sesion de clinica (la llama el Email Worker con firma HMAC): el guard no
+// tiene suscripcion que revisar y el equipo debe responder tambien a vencidas.
+assert.ok(ARCHIVOS_EXENTOS.includes('soporteEquipoRoutes.js'), 'el equipo debe poder responder por correo')
 
 // La lista de exentos se congela a proposito. Cuando este test falle porque una
 // ruta nueva no esta protegida, la salida correcta es agregarle el guard, NO
@@ -65,7 +68,7 @@ assert.ok(ARCHIVOS_EXENTOS.includes('soporteRoutes.js'), 'debe poder pedir ayuda
 // pensarlo y deja rastro en el diff.
 assert.deepStrictEqual(
   [...ARCHIVOS_EXENTOS].sort(),
-  ['authRoutes.js', 'soporteRoutes.js', 'suscripcionRoutes.js'],
+  ['authRoutes.js', 'soporteEquipoRoutes.js', 'soporteRoutes.js', 'suscripcionRoutes.js'],
   'ARCHIVOS_EXENTOS cambio: agregar exenciones desprotege rutas en bloque'
 )
 

@@ -9,7 +9,11 @@ const path = require('path')
 // `soporteRoutes.js` es exento a proposito: una clinica vencida queda en solo
 // lectura, y "no puedo reactivar mi plan" es justo un motivo tipico para abrir
 // un ticket. Sus mutaciones solo tocan tickets de soporte, no datos clinicos.
-const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js', 'soporteRoutes.js']
+//
+// `soporteEquipoRoutes.js` no es una ruta de clinica: la llama el Email Worker
+// cuando el EQUIPO responde un ticket por correo, y debe poder contestarle
+// tambien a una clinica vencida. Se autentica con firma HMAC, no con sesion.
+const ARCHIVOS_EXENTOS = ['authRoutes.js', 'suscripcionRoutes.js', 'soporteRoutes.js', 'soporteEquipoRoutes.js']
 
 const METODOS_MUTACION = ['post', 'put', 'patch', 'delete']
 const GUARD = 'requerirEscritura'

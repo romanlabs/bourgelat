@@ -1,4 +1,5 @@
 const { appConfig } = require('./app')
+const { configuracionCorreo } = require('../services/soporteCorreoReglas')
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0'])
 const PLACEHOLDER_MARKERS = [
@@ -232,6 +233,14 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
   if (!String(env.SOPORTE_EMAIL || '').trim()) {
     warnings.push(
       'SOPORTE_EMAIL no esta definido: los tickets de soporte se guardan, pero el equipo no recibe el aviso por correo.'
+    )
+  }
+
+  const variablesCorreoSoporte = ['SOPORTE_CORREO_RESPUESTAS', 'SOPORTE_CORREO_SECRETO', 'SOPORTE_RESPONDEDORES']
+  const algunaCorreoSoporte = variablesCorreoSoporte.some((clave) => String(env[clave] || '').trim())
+  if (algunaCorreoSoporte && !configuracionCorreo(env).activo) {
+    warnings.push(
+      `Responder tickets por correo quedo apagado: revisa ${variablesCorreoSoporte.join(', ')} (secreto de al menos 32 caracteres).`
     )
   }
 

@@ -114,6 +114,15 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: Bourgelat <no-reply@bourgelat.co>
+      # Soporte: avisos al equipo y respuestas por correo (docs/soporte.md).
+      - key: SOPORTE_EMAIL
+        sync: false
+      - key: SOPORTE_CORREO_RESPUESTAS
+        sync: false
+      - key: SOPORTE_CORREO_SECRETO
+        sync: false
+      - key: SOPORTE_RESPONDEDORES
+        sync: false
       - key: ENABLE_XSS_CLEAN
         value: "false"
       - key: EXPOSE_INTERNAL_ERRORS
