@@ -92,6 +92,10 @@ app.use(cors({
 // ── Rate limiting ──────────────────────────────────────────
 app.use(limitadorGeneral)
 
+// Respuestas del equipo por correo (Email Worker de Cloudflare). Va antes del
+// body parsing porque necesita el cuerpo crudo para verificar la firma.
+app.use('/api/soporte-equipo', require('./routes/soporteEquipoRoutes'))
+
 // ── Body parsing ───────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -179,8 +183,8 @@ app.use('/api/antecedentes', antecedenteRoutes)
 app.use('/api/examenes-laboratorio', examenLaboratorioRoutes)
 app.use('/api/auditoria', auditoriaRoutes)
 app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
-// Soporte de la clinica. `/api/soporte-equipo` queda reservado para el panel
-// web del equipo de Bourgelat (ver docs/soporte.md).
+// Soporte de la clinica. Las puertas del equipo viven en `/api/soporte-equipo`
+// (montado arriba, antes del body parsing; ver docs/soporte.md).
 app.use('/api/soporte', soporteRoutes)
 
 // Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin

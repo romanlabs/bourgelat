@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/config/tablasCifradas.test.js && node src/config/modelEncryption.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/services/aceptacionLegalService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/utils/vencimiento.test.js && node src/controllers/facturaCompraReferencias.test.js && node src/services/soporteReglas.test.js",
+    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/config/tablasCifradas.test.js && node src/config/modelEncryption.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/services/aceptacionLegalService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/utils/vencimiento.test.js && node src/controllers/facturaCompraReferencias.test.js && node src/services/soporteReglas.test.js && node src/services/soporteCorreoReglas.test.js",
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
@@ -35,6 +35,8 @@
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
+    "mailauth": "^7.1.1",
+    "mailparser": "^3.9.35",
     "multer": "^2.1.1",
     "nodemailer": "^9.0.3",
     "openid-client": "^6.8.4",

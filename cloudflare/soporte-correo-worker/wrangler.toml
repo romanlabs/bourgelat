@@ -1,0 +1,8 @@
+# Email Worker de respuestas de soporte (ver docs/soporte.md).
+# Desplegar: cd cloudflare/soporte-correo-worker && npx wrangler deploy
+name = "bourgelat-soporte-correo"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+BACKEND_URL = "https://api.bourgelat.co"

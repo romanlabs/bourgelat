@@ -18,6 +18,7 @@ const { enviarEmail, escaparHtml } = require('./emailService')
 const { parsePaginacion } = require('../utils/paginacion')
 const logger = require('../utils/logger')
 const reglas = require('./soporteReglas')
+const { direccionRespuestaTicket, PALABRAS_CLAVE } = require('./soporteCorreoReglas')
 
 class ErrorSoporte extends Error {
   constructor(codigo, mensaje) {
@@ -435,6 +436,13 @@ const avisarAlEquipo = async ({ ticket, actor, mensaje, esNuevo }) => {
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Clínica sin nombre'
   const comandoVer = `npm run soporte:ver -- --ticket ${ticket.numero}`
 
+  // Con la respuesta por correo activa, contestar este aviso responde el ticket.
+  const responderA = direccionRespuestaTicket(process.env, ticket.numero)
+  const palabrasClave = Object.keys(PALABRAS_CLAVE).map((p) => `#${p}`).join(' · ')
+  const ayudaRespuesta = responderA
+    ? `Responde este correo para contestarle a la clínica. Primera línea opcional para cambiar el estado: ${palabrasClave}.`
+    : null
+
   const detalles = [
     ['Clínica', nombreClinica],
     ['Reporta', `${actor.nombre}${actor.email ? ` <${actor.email}>` : ''} (${(actor.roles || []).join(', ')})`],
@@ -461,6 +469,7 @@ const avisarAlEquipo = async ({ ticket, actor, mensaje, esNuevo }) => {
     'Mensaje:',
     mensaje,
     '',
+    ...(ayudaRespuesta ? [ayudaRespuesta] : []),
     `Hilo completo: ${comandoVer}`,
   ].join('\n')
 
@@ -478,11 +487,12 @@ const avisarAlEquipo = async ({ ticket, actor, mensaje, esNuevo }) => {
       ${ticket.capturaUrl ? `<p><a href="${escaparHtml(ticket.capturaUrl)}" style="color: #10b981;">Ver captura de pantalla</a></p>` : ''}
       <p style="margin-bottom: 6px;"><strong>Mensaje</strong></p>
       ${bloqueMensajeHtml(mensaje)}
+      ${ayudaRespuesta ? `<p style="font-size: 13px; margin-top: 20px;"><strong>${escaparHtml(ayudaRespuesta)}</strong></p>` : ''}
       <p style="font-size: 13px; color: #51697d; margin-top: 20px;">Hilo completo desde el servidor: <code>${escaparHtml(comandoVer)}</code></p>
     `
   )
 
-  await enviarEmail({ para, asunto, html, texto })
+  await enviarEmail({ para, asunto, html, texto, responderA })
 }
 
 const avisarAlCreador = async ({ ticket, actor, mensaje = null, estadoNuevo = null }) => {
