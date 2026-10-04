@@ -22,7 +22,7 @@ const obtenerTransporter = () => {
   return transporterCache
 }
 
-const enviarEmail = async ({ para, asunto, html, texto }) => {
+const enviarEmail = async ({ para, asunto, html, texto, responderA = null }) => {
   if (!smtpConfigurado()) {
     logger.warn({
       contexto: 'email',
@@ -32,7 +32,14 @@ const enviarEmail = async ({ para, asunto, html, texto }) => {
   }
 
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER
-  await obtenerTransporter().sendMail({ from, to: para, subject: asunto, html, text: texto })
+  await obtenerTransporter().sendMail({
+    from,
+    to: para,
+    subject: asunto,
+    html,
+    text: texto,
+    ...(responderA ? { replyTo: responderA } : {}),
+  })
   return { enviado: true }
 }
 
