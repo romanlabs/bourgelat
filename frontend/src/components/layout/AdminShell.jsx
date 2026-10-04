@@ -31,7 +31,6 @@ import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
-import { RefrescarDatosButton } from '@/components/shared/RefrescarDatosButton'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
@@ -243,8 +242,6 @@ export default function AdminShell({
         <div className="hidden min-w-0 flex-1 justify-center sm:flex">{headerCenter}</div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <RefrescarDatosButton />
-
           <SimpleTooltip label="Buscar  /">
             <button
               type="button"
