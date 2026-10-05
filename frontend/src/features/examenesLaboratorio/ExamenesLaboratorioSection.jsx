@@ -33,6 +33,29 @@ const createDefaultForm = () => ({
 
 // ─── Modal de registro/edición ────────────────────────────────────────────────
 
+// El adjunto ya no tiene URL publica: se descarga con la sesion y se abre en
+// una pestaña nueva. La pestaña se abre dentro del clic, antes de la descarga,
+// para que el navegador no la bloquee como ventana emergente.
+async function abrirAdjunto(examen) {
+  const ventana = window.open('', '_blank')
+  try {
+    const blob = await examenesLaboratorioApi.obtenerArchivo(examen.id)
+    const url = URL.createObjectURL(blob)
+    if (ventana) {
+      ventana.location.href = url
+    } else {
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = examen.archivoNombre || 'adjunto'
+      enlace.click()
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch {
+    ventana?.close()
+    toast.error('No se pudo abrir el adjunto. Intenta de nuevo.')
+  }
+}
+
 function ExamenFormModal({ open, examen, mascotaId, onClose }) {
   const queryClient = useQueryClient()
   const [form, setForm] = useState(createDefaultForm)
@@ -313,16 +336,15 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                   {examen.interpretacion}
                 </p>
               )}
-              {examen.archivoUrlPublica && (
-                <a
-                  href={examen.archivoUrlPublica}
-                  target="_blank"
-                  rel="noreferrer"
+              {examen.tieneArchivo && (
+                <button
+                  type="button"
+                  onClick={() => abrirAdjunto(examen)}
                   className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-info hover:text-info"
                 >
                   <Paperclip className="h-3 w-3" />
                   {examen.archivoNombre || 'Ver adjunto'}
-                </a>
+                </button>
               )}
             </div>
           ))}
