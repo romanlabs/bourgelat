@@ -13,6 +13,7 @@ import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { getErrorMessage, requiereVencimiento } from './inventarioUtils'
+import { hoyLocal } from '@/lib/fecha'
 
 export const ESTADO_FACTURA_COMPRA = [
   { value: '', label: 'Todos' },
@@ -61,7 +62,7 @@ const ITEMS_VACIO = () => [ITEM_VACIO()]
 
 const FORM_INICIAL = {
   proveedor: '',
-  fecha: new Date().toISOString().slice(0, 10),
+  fecha: hoyLocal(),
   numero: '',
   observaciones: '',
   tipoPago: 'contado',

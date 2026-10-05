@@ -8,6 +8,7 @@ import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM, ESPECIE_VALORES, etiquetaEspecie } from '@/lib/especies'
+import { hoyLocal } from '@/lib/fecha'
 
 const SEX_OPTIONS = [
   { value: 'desconocido', label: 'Sin especificar' },
@@ -18,7 +19,6 @@ const SEX_OPTIONS = [
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-const hoyISO = () => new Date().toISOString().slice(0, 10)
 
 const pacienteSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -28,7 +28,7 @@ const pacienteSchema = z.object({
   fechaNacimiento: z
     .string()
     .optional()
-    .refine((v) => !v || v <= hoyISO(), 'La fecha de nacimiento no puede ser futura'),
+    .refine((v) => !v || v <= hoyLocal(), 'La fecha de nacimiento no puede ser futura'),
   peso: z.coerce.number().positive('El peso debe ser positivo').optional().or(z.literal('')),
   color: z.string().optional(),
   observaciones: z.string().optional(),
@@ -383,7 +383,7 @@ export default function PacienteDrawer({
                 </div>
                 <div className="grid gap-1.5">
                   <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>
-                  <input id="p-nacimiento" type="date" max={hoyISO()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-danger' : ''}`} {...register('fechaNacimiento')} />
+                  <input id="p-nacimiento" type="date" max={hoyLocal()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-danger' : ''}`} {...register('fechaNacimiento')} />
                   {errors.fechaNacimiento && <p className="text-xs text-danger">{errors.fechaNacimiento.message}</p>}
                 </div>
                 <div className="grid gap-1.5">

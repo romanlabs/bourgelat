@@ -17,6 +17,7 @@ import {
   useRegistrarAbono,
   useRentabilidad,
 } from '@/features/finanzas/useAdministracion'
+import { mesLocal } from '@/lib/fecha'
 
 const CATEGORIAS = [
   { value: 'nomina', label: 'Nómina' },
@@ -378,7 +379,7 @@ function CuentasPorCobrarPanel() {
 }
 
 export default function GastosRentabilidadPanel() {
-  const [mes, setMes] = useState(() => new Date().toISOString().slice(0, 7))
+  const [mes, setMes] = useState(() => mesLocal())
   const periodo = useMemo(() => rangoDelMes(mes), [mes])
   const rentabilidad = useRentabilidad(periodo)
   const cuentasPorCobrar = useCuentasPorCobrar()
