@@ -78,7 +78,7 @@ const crearUsuario = async (req, res) => {
     if (!passwordFuerteRegex.test(password)) {
       return res.status(400).json({
         message:
-          'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial',
+          'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial',
       })
     }
 
@@ -94,7 +94,7 @@ const crearUsuario = async (req, res) => {
 
     const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado }, sinTenant: true })
     if (usuarioExiste) {
-      return res.status(400).json({ message: 'El email ya esta registrado' })
+      return res.status(400).json({ message: 'El email ya está registrado' })
     }
 
     const cupoUsuarios = await validarCupoSuscripcion({
@@ -338,7 +338,7 @@ const editarUsuario = async (req, res) => {
       })
 
       if (emailEnUso) {
-        return res.status(400).json({ message: 'El email ya esta registrado por otro usuario' })
+        return res.status(400).json({ message: 'El email ya está registrado por otro usuario' })
       }
     }
 

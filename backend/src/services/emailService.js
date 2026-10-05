@@ -116,7 +116,7 @@ const enviarEmailBienvenida = async ({ para, nombre, urlFrontend }) => {
 const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFrontend }) => {
   const asunto = 'Verifica tu correo en Bourgelat'
   const pie = pieLegal(urlFrontend)
-  const texto = `Hola ${nombre},\n\nConfirma que este correo es tuyo abriendo este enlace (valido por 24 horas):\n\n${urlVerificacion}\n\nSi no creaste una cuenta en Bourgelat, ignora este correo.${pie.texto}`
+  const texto = `Hola ${nombre},\n\nConfirma que este correo es tuyo abriendo este enlace (válido por 24 horas):\n\n${urlVerificacion}\n\nSi no creaste una cuenta en Bourgelat, ignora este correo.${pie.texto}`
   const html = `
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
       <h2 style="color: #112739;">Verifica tu correo</h2>
@@ -128,7 +128,7 @@ const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFront
           Verificar mi correo
         </a>
       </p>
-      <p style="font-size: 13px; color: #51697d;">El enlace es valido por 24 horas y solo puede usarse una vez.</p>
+      <p style="font-size: 13px; color: #51697d;">El enlace es válido por 24 horas y solo puede usarse una vez.</p>
       <p style="font-size: 13px; color: #51697d;">Si no creaste una cuenta en Bourgelat, ignora este correo.</p>
       ${pie.html}
     </div>

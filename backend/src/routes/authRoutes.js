@@ -55,7 +55,7 @@ router.post(
     body('password')
       .matches(passwordFuerteRegex)
       .withMessage(
-        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
+        'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial'
       ),
     body('emailClinica')
       .optional({ values: 'falsy' })
@@ -68,7 +68,7 @@ router.post(
       .trim()
       .customSanitizer(normalizarTelefonoColombiano)
       .custom((valor) => /^3\d{9}$/.test(valor))
-      .withMessage('El telefono debe ser un celular colombiano valido de 10 digitos'),
+      .withMessage('El teléfono debe ser un celular colombiano válido de 10 dígitos'),
     body('departamento').optional({ values: 'falsy' }).trim(),
     body('ciudad').optional({ values: 'falsy' }).trim(),
     body('nit').optional({ values: 'falsy' }).trim(),
@@ -133,7 +133,7 @@ router.post(
     body('password')
       .matches(passwordFuerteRegex)
       .withMessage(
-        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
+        'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial'
       ),
     validar,
   ],
@@ -169,7 +169,7 @@ router.post(
     body('passwordNueva')
       .matches(passwordFuerteRegex)
       .withMessage(
-        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
+        'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial'
       ),
     validar,
   ],
