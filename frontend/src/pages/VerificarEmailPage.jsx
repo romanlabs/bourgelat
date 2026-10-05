@@ -62,7 +62,7 @@ export default function VerificarEmailPage() {
             style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.26em]" style={{ color: ACCENT }}>
-              Verificacion de correo
+              Verificación de correo
             </p>
 
             <h1
@@ -93,7 +93,7 @@ export default function VerificarEmailPage() {
 
                 {reenviado ? (
                   <p className="text-sm text-foreground/75">
-                    Si el correo esta registrado y aun no ha sido verificado, recibiras un nuevo enlace.
+                    Si el correo está registrado y aún no ha sido verificado, recibirás un nuevo enlace.
                   </p>
                 ) : (
                   <div className="space-y-4">

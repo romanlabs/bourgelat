@@ -152,7 +152,7 @@ const registro = async (req, res) => {
     if (!passwordFuerteRegex.test(password)) {
       return res.status(400).json({
         message:
-          'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial',
+          'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial',
       })
     }
 
@@ -174,7 +174,7 @@ const registro = async (req, res) => {
 
     if (telefonoNormalizado && !esTelefonoColombianoValido(telefonoNormalizado)) {
       return res.status(400).json({
-        message: 'El telefono debe ser un celular colombiano valido de 10 digitos',
+        message: 'El teléfono debe ser un celular colombiano válido de 10 dígitos',
       })
     }
 
@@ -188,19 +188,19 @@ const registro = async (req, res) => {
 
     if (clinicaPorEmail) {
       return res.status(400).json({
-        message: 'El email de la clinica ya esta registrado',
+        message: 'El email de la clínica ya está registrado',
       })
     }
 
     if (usuarioPorEmail) {
       return res.status(400).json({
-        message: 'El email del administrador ya esta registrado',
+        message: 'El email del administrador ya está registrado',
       })
     }
 
     if (clinicaPorNit) {
       return res.status(400).json({
-        message: 'El NIT ya esta registrado para otra clinica',
+        message: 'El NIT ya está registrado para otra clínica',
       })
     }
 
@@ -717,7 +717,7 @@ const urlFrontend = () =>
 // no revelar qué correos están registrados (user enumeration).
 const forgotPassword = async (req, res) => {
   const mensajeGenerico =
-    'Si el correo esta registrado, recibiras un enlace para restablecer tu contrasena.'
+    'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.'
 
   try {
     const email = normalizarEmail(req.body.email)
@@ -778,7 +778,7 @@ const resetPassword = async (req, res) => {
 
     if (!registro) {
       return res.status(401).json({
-        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
       })
     }
 
@@ -789,7 +789,7 @@ const resetPassword = async (req, res) => {
 
     if (!usuario || !usuario.activo) {
       return res.status(401).json({
-        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
       })
     }
 
@@ -839,7 +839,7 @@ const verificarEmail = async (req, res) => {
 
     if (!registro) {
       return res.status(401).json({
-        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
       })
     }
 
@@ -850,7 +850,7 @@ const verificarEmail = async (req, res) => {
 
     if (!usuario || !usuario.activo) {
       return res.status(401).json({
-        message: 'El enlace no es valido o ya expiro. Solicita uno nuevo.',
+        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
       })
     }
 
@@ -882,7 +882,7 @@ const verificarEmail = async (req, res) => {
 // mensaje genérico, exista o no la cuenta, ya esté verificada o sea OAuth.
 const reenviarVerificacion = async (req, res) => {
   const mensajeGenerico =
-    'Si el correo esta registrado y aun no ha sido verificado, recibiras un nuevo enlace.'
+    'Si el correo está registrado y aún no ha sido verificado, recibirás un nuevo enlace.'
 
   try {
     const email = normalizarEmail(req.body.email)

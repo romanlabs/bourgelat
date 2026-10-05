@@ -117,7 +117,7 @@ const completarRegistro = async (req, res) => {
 
     const existente = await Usuario.findOne({ where: { email: datos.email }, sinTenant: true })
     if (existente) {
-      return res.status(409).json({ message: 'Este correo ya esta registrado, inicia sesion' })
+      return res.status(409).json({ message: 'Este correo ya está registrado, inicia sesión' })
     }
 
     const resultado = await sequelize.transaction(async (transaction) => {
