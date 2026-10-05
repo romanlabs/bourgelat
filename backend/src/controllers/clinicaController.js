@@ -140,7 +140,7 @@ const actualizarClinicaActual = async (req, res) => {
 
     if (telefono !== undefined && telefono && !telefonoColombiaRegex.test(telefono)) {
       return res.status(400).json({
-        message: 'El telefono debe ser un celular colombiano valido de 10 digitos',
+        message: 'El teléfono debe ser un celular colombiano válido de 10 dígitos',
       })
     }
 
@@ -157,7 +157,7 @@ const actualizarClinicaActual = async (req, res) => {
       })
 
       if (emailEnUso) {
-        return res.status(400).json({ message: 'El email institucional ya esta registrado' })
+        return res.status(400).json({ message: 'El email institucional ya está registrado' })
       }
     }
 
@@ -170,7 +170,7 @@ const actualizarClinicaActual = async (req, res) => {
       })
 
       if (nitEnUso) {
-        return res.status(400).json({ message: 'El NIT ya esta registrado por otra clinica' })
+        return res.status(400).json({ message: 'El NIT ya está registrado por otra clínica' })
       }
     }
 
