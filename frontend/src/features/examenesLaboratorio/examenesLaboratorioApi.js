@@ -37,6 +37,15 @@ export const examenesLaboratorioApi = {
     return data
   },
 
+  // El adjunto se pide con la sesion (y el refresco de token de api.js); ya no
+  // hay URL publica. Devuelve un Blob listo para abrir con URL.createObjectURL.
+  async obtenerArchivo(examenId) {
+    const { data } = await api.get(`/examenes-laboratorio/archivo/${examenId}`, {
+      responseType: 'blob',
+    })
+    return data
+  },
+
   async eliminarExamen(examenId) {
     const { data } = await api.delete(`/examenes-laboratorio/${examenId}`)
     return data
