@@ -2,11 +2,12 @@ const rateLimit = require('express-rate-limit')
 const { ipKeyGenerator } = require('express-rate-limit')
 const { appConfig } = require('../config/app')
 const logger = require('../utils/logger')
+const { rutaSinQuery } = require('../utils/rutaLog')
 
 const crearHandlerBloqueo = (mensaje) => (req, res) => {
   logger.warn('Rate limit alcanzado', {
     ip: req.ip,
-    ruta: req.originalUrl,
+    ruta: rutaSinQuery(req),
     metodo: req.method,
   })
   res.status(429).json({ message: mensaje })
@@ -26,6 +27,20 @@ const limitadorAuth = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: crearHandlerBloqueo('Demasiados intentos de acceso, intenta de nuevo en 15 minutos'),
+})
+
+// Refresco y cierre de sesion: aparte del limite de login. Cada pestana
+// abierta refresca la sesion al menos cada 15 min, y toda una clinica suele
+// salir por la misma IP: con el limite de login (20 en 15 min) compartido, los
+// refrescos de varios equipos agotaban el cupo y la app sacaba a todos al
+// login. Probar refresh tokens a ciegas no sirve (son JWT firmados), asi que el
+// cupo puede ser amplio.
+const limitadorSesion = rateLimit({
+  windowMs: appConfig.rateLimit.authWindowMs,
+  max: appConfig.rateLimit.sessionMaxRequests,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: crearHandlerBloqueo('Demasiadas renovaciones de sesion, intenta de nuevo en unos minutos'),
 })
 
 // Soporte: por usuario autenticado y no por IP. Toda una clinica suele salir
@@ -54,6 +69,7 @@ const limitadorMensajesSoporte = rateLimit({
 })
 
 module.exports = {
+  limitadorSesion,
   limitadorGeneral,
   limitadorAuth,
   limitadorCreacionTickets,

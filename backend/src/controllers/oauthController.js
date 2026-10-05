@@ -1,4 +1,5 @@
 const Usuario = require('../models/Usuario')
+const RefreshToken = require('../models/RefreshToken')
 const { oauthConfig, proveedorSoportado } = require('../config/oauth')
 const oauthService = require('../services/oauthService')
 const { generarAccessToken, generarRefreshToken, guardarRefreshToken } = require('../services/sesionService')
@@ -60,6 +61,30 @@ const callback = async (req, res) => {
 
     if (usuario) {
       if (!usuario.activo || !usuario.clinicaId) return irALoginConError()
+
+      // Pre-hijacking: alguien pudo registrar una cuenta local con este correo
+      // (sin verificarlo) y conservar la contraseña. Google acaba de probar que
+      // el correo es de quien entra ahora, así que esa contraseña se anula y se
+      // cierran las sesiones abiertas antes de dar acceso. Desde ahí la cuenta
+      // entra con Google, como cualquier cuenta creada con login social.
+      if (!usuario.emailVerificado && usuario.password) {
+        await sequelize.transaction(async (transaction) => {
+          await usuario.update({ password: null, emailVerificado: true }, { transaction })
+          await RefreshToken.update(
+            { revocado: true },
+            { where: { usuarioId: usuario.id, revocado: false }, sinTenant: true, transaction }
+          )
+        })
+        await registrarAuditoria({
+          accion: 'ANULAR_PASSWORD_NO_VERIFICADA',
+          entidad: 'Usuario',
+          entidadId: usuario.id,
+          descripcion: `Ingreso con ${proveedor}: se anuló la contraseña de una cuenta con correo sin verificar`,
+          req,
+          resultado: 'exitoso',
+        })
+      }
+
       const payload = {
         id: usuario.id,
         clinicaId: usuario.clinicaId,

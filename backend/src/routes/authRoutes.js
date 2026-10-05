@@ -21,7 +21,7 @@ const {
 } = require('../controllers/oauthController')
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { limitadorAuth } = require('../middlewares/rateLimitMiddleware')
+const { limitadorAuth, limitadorSesion } = require('../middlewares/rateLimitMiddleware')
 const { permitirOpenerEnPopupOauth } = require('../middlewares/oauthPopupMiddleware')
 const { normalizarTelefonoColombiano } = require('../utils/normalizar')
 
@@ -108,9 +108,9 @@ router.post(
   login
 )
 
-router.post('/refresh', limitadorAuth, refresh)
+router.post('/refresh', limitadorSesion, refresh)
 
-router.post('/logout', limitadorAuth, logout)
+router.post('/logout', limitadorSesion, logout)
 
 router.post('/logout-all', verificarToken, logoutAll)
 router.get('/me', verificarToken, me)
