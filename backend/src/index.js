@@ -19,6 +19,7 @@ const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMidd
 const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
 const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR, EXAMENES_SUBDIR } = require('./config/uploads')
+const { rutaSinQuery } = require('./utils/rutaLog')
 const logger = require('./utils/logger')
 
 dotenv.config()
@@ -133,7 +134,7 @@ app.use(protegerOrigenCookieAuth)
 app.use((req, res, next) => {
   logger.info({
     metodo: req.method,
-    ruta: req.originalUrl,
+    ruta: rutaSinQuery(req),
     ip: req.ip,
   })
   next()
@@ -214,7 +215,7 @@ app.use((err, req, res, next) => {
   logger.error({
     mensaje: err.message,
     stack: err.stack,
-    ruta: req.originalUrl,
+    ruta: rutaSinQuery(req),
   })
   res.status(500).json({ message: 'Error interno del servidor' })
 })
