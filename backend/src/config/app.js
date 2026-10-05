@@ -88,6 +88,7 @@ const appConfig = {
     maxRequests: parseNumber(process.env.RATE_LIMIT_MAX, 1500),
     authWindowMs: parseNumber(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     authMaxRequests: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 20),
+    sessionMaxRequests: parseNumber(process.env.SESSION_RATE_LIMIT_MAX, 300),
   },
   security: {
     requireOriginForCookieAuth: parseBoolean(

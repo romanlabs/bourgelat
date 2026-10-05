@@ -10,6 +10,7 @@ import { Select } from '@/components/ui/select'
 import { estilosApi } from './estilosApi'
 import { useEstilosMascota } from './useEstilos'
 import { etiquetaEspecie } from '@/lib/especies'
+import { hoyLocal } from '@/lib/fecha'
 
 const registroEstiloSchema = z.object({
   tipoCorte: z.string().trim().min(1, 'El tipo de corte es obligatorio').max(240),
@@ -19,21 +20,11 @@ const registroEstiloSchema = z.object({
   observaciones: z.string().max(4000).optional().or(z.literal('')),
 })
 
-// No usar toISOString(): convierte a UTC y en Bogota (UTC-5), desde las
-// 19:00 en adelante, ya es el dia siguiente en UTC — el campo se
-// prellenaria con manana en vez de hoy. Se arma el string con partes
-// locales para que coincida con el dia calendario del usuario.
-const hoyISO = () => {
-  const d = new Date()
-  const mes = String(d.getMonth() + 1).padStart(2, '0')
-  const dia = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${mes}-${dia}`
-}
 
 const DEFAULT_VALUES = {
   tipoCorte: '',
   estilistaId: '',
-  fechaServicio: hoyISO(),
+  fechaServicio: hoyLocal(),
   proximaCitaSugerida: '',
   observaciones: '',
 }
@@ -44,7 +35,7 @@ const fieldClass =
 const mapRegistroToForm = (registro) => ({
   tipoCorte: registro?.tipoCorte || '',
   estilistaId: registro?.estilistaId || registro?.estilista?.id || '',
-  fechaServicio: registro?.fechaServicio ? String(registro.fechaServicio).slice(0, 10) : hoyISO(),
+  fechaServicio: registro?.fechaServicio ? String(registro.fechaServicio).slice(0, 10) : hoyLocal(),
   proximaCitaSugerida: registro?.proximaCitaSugerida
     ? String(registro.proximaCitaSugerida).slice(0, 10)
     : '',

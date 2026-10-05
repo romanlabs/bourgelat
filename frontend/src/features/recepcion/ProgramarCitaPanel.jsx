@@ -15,15 +15,7 @@ import { formatFranja12, moverFin } from '@/lib/hora'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { evaluarIntervalo } from '@/features/agenda/calendarConstants'
 import { hasAnyRole } from '@/lib/permissions'
-
-// Hora local, no UTC: con toISOString() despues de las 19:00 en Colombia el
-// formulario abriria en el dia siguiente.
-const getToday = () => {
-  const ahora = new Date()
-  return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(
-    ahora.getDate()
-  ).padStart(2, '0')}`
-}
+import { hoyLocal } from '@/lib/fecha'
 
 const citaSchema = z.object({
   fecha: z.string().min(1, 'La fecha es obligatoria'),
@@ -40,7 +32,7 @@ const citaSchema = z.object({
 })
 
 const DEFAULT_VALUES = {
-  fecha: getToday(),
+  fecha: hoyLocal(),
   horaInicio: '09:00',
   horaFin: '09:30',
   tipoCita: 'consulta_general',
