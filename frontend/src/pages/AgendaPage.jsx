@@ -33,6 +33,7 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
+import { hoyLocal } from '@/lib/fecha'
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -51,14 +52,6 @@ const TABS = [
 ]
 
 const AGENDA_REFETCH_INTERVAL = 60000
-
-// Hora local, no UTC: toISOString() adelanta el dia despues de las 19:00 en Colombia.
-const getToday = () => {
-  const ahora = new Date()
-  return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(
-    ahora.getDate()
-  ).padStart(2, '0')}`
-}
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -128,7 +121,7 @@ export default function AgendaPage() {
 
   const [activeTab, setActiveTab] = useState('agenda')
   const [vistaAgenda, setVistaAgenda] = useState('calendario')
-  const [fecha, setFecha] = useState(getToday())
+  const [fecha, setFecha] = useState(hoyLocal())
   const [estado, setEstado] = useState('todos')
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)

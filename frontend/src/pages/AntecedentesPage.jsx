@@ -21,13 +21,13 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
+import { hoyLocal } from '@/lib/fecha'
 
 const TABS = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'antecedentes', label: 'Antecedentes' },
 ]
 
-const TODAY = new Date().toISOString().slice(0, 10)
 
 const DEFAULT_GENERAL_VALUES = {
   esterilizado: false,
@@ -40,7 +40,7 @@ const DEFAULT_ALERGIA_FORM = {
   tipo: '',
   descripcion: '',
   reaccion: '',
-  fecha: TODAY,
+  fecha: hoyLocal(),
 }
 
 const DEFAULT_CIRUGIA_FORM = {

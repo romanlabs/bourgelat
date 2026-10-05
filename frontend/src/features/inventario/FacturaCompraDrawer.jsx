@@ -14,6 +14,7 @@ import { CATEGORY_OPTIONS, UNIT_OPTIONS } from './useInventarioProductos'
 import { DESTINO_INVENTARIO_OPTIONS, categoriaDeItem } from './useFacturaCompra'
 import { requiereVencimiento } from './inventarioUtils'
 import { Select } from '@/components/ui/select'
+import { hoyLocal } from '@/lib/fecha'
 
 const sinOpcionTodas = (opciones) => opciones.filter((o) => o.value !== 'todas')
 
@@ -61,7 +62,7 @@ function AvisoProductoDuplicado({ nombre, origen }) {
 }
 
 function CamposVencimiento({ item, fechaCompra, onChange }) {
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyLocal()
   const fecha = item.fechaVencimiento
   let aviso = null
   if (!fecha) aviso = { tono: 'muted', texto: 'Obligatoria para confirmar la factura. Si hay varios lotes, registra el que vence primero.' }
@@ -284,7 +285,7 @@ export default function FacturaCompraDrawer({
                     type="date"
                     className={fieldClass(!form.fechaPagoFinal)}
                     value={form.fechaPagoFinal}
-                    min={new Date().toISOString().slice(0, 10)}
+                    min={hoyLocal()}
                     onChange={(e) => setForm((f) => ({ ...f, fechaPagoFinal: e.target.value }))}
                   />
                   {!form.fechaPagoFinal && (
