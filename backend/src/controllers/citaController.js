@@ -128,7 +128,7 @@ const validarVentanaAtencion = async ({ req, clinicaId, fecha, horaInicio, horaF
  * consultorio. Solo las citas de origen 'programada' bloquean agenda: los
  * walk-in tienen una horaFin estimada y no deben impedir programar citas reales.
  */
-const buscarSolapamiento = async ({ clinicaId, fecha, horaInicio, horaFin, veterinarioId, consultorioId, excluirId }) => {
+const buscarSolapamiento = async ({ clinicaId, fecha, horaInicio, horaFin, veterinarioId, consultorioId, excluirId, transaction }) => {
   const recursoOr = [{ veterinarioId }];
   if (consultorioId) recursoOr.push({ consultorioId });
 
@@ -148,8 +148,21 @@ const buscarSolapamiento = async ({ clinicaId, fecha, horaInicio, horaFin, veter
     where.id = { [Op.ne]: excluirId };
   }
 
-  return Cita.findOne({ where });
+  return Cita.findOne({ where, transaction });
 };
+
+/**
+ * Serializa las escrituras de agenda de una clinica en un mismo dia. Sin esto,
+ * dos solicitudes simultaneas (dos recepcionistas o un doble clic) pasan ambas
+ * la revision de solapamiento y se crean dos citas en el mismo hueco. El lock
+ * se libera solo al terminar la transaccion. Mismo patron que la numeracion de
+ * facturas (facturaController.generarNumeroFactura).
+ */
+const bloquearAgendaDelDia = (clinicaId, fecha, transaction) =>
+  sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+    replacements: { lockKey: `agenda:${clinicaId}:${fecha}` },
+    transaction,
+  });
 
 /**
  * Busca, sin bloquear la creacion, una cita del origen contrario (programada
@@ -233,8 +246,23 @@ const crearCita = async (req, res) => {
       return res.status(ventana.status).json({ message: ventana.error, codigo: ventana.codigo });
     }
 
-    const solapamiento = await buscarSolapamiento({
-      clinicaId, fecha, horaInicio, horaFin, veterinarioId, consultorioId,
+    // Revisar el hueco y crear la cita bajo el mismo lock: la segunda solicitud
+    // simultanea espera y entonces si ve la primera cita.
+    const { cita, solapamiento } = await sequelize.transaction(async (transaction) => {
+      await bloquearAgendaDelDia(clinicaId, fecha, transaction);
+
+      const choque = await buscarSolapamiento({
+        clinicaId, fecha, horaInicio, horaFin, veterinarioId, consultorioId, transaction,
+      });
+      if (choque) return { solapamiento: choque };
+
+      const creada = await Cita.create({
+        fecha, horaInicio, horaFin, motivo, tipoCita,
+        observaciones, mascotaId, propietarioId,
+        veterinarioId, clinicaId, consultorioId: consultorioId || null,
+        origen: 'programada',
+      }, { transaction });
+      return { cita: creada };
     });
 
     if (solapamiento) {
@@ -245,13 +273,6 @@ const crearCita = async (req, res) => {
           : 'El veterinario ya tiene una cita programada en ese horario'
       });
     }
-
-    const cita = await Cita.create({
-      fecha, horaInicio, horaFin, motivo, tipoCita,
-      observaciones, mascotaId, propietarioId,
-      veterinarioId, clinicaId, consultorioId: consultorioId || null,
-      origen: 'programada',
-    });
 
     const citaCompleta = await incluirRelacionesCita(cita, clinicaId);
 
@@ -606,11 +627,20 @@ const reprogramarCita = async (req, res) => {
       return res.status(ventana.status).json({ message: ventana.error, codigo: ventana.codigo });
     }
 
-    const solapamiento = await buscarSolapamiento({
-      clinicaId, fecha, horaInicio, horaFin,
-      veterinarioId: cita.veterinarioId,
-      consultorioId: cita.consultorioId,
-      excluirId: id,
+    const solapamiento = await sequelize.transaction(async (transaction) => {
+      await bloquearAgendaDelDia(clinicaId, fecha, transaction);
+
+      const choque = await buscarSolapamiento({
+        clinicaId, fecha, horaInicio, horaFin,
+        veterinarioId: cita.veterinarioId,
+        consultorioId: cita.consultorioId,
+        excluirId: id,
+        transaction,
+      });
+      if (choque) return choque;
+
+      await cita.update({ fecha, horaInicio, horaFin, estado: 'programada' }, { transaction });
+      return null;
     });
 
     if (solapamiento) {
@@ -618,8 +648,6 @@ const reprogramarCita = async (req, res) => {
         message: 'El veterinario o el consultorio ya tienen una cita en ese horario'
       });
     }
-
-    await cita.update({ fecha, horaInicio, horaFin, estado: 'programada' });
 
     res.json({
       message: 'Cita reprogramada exitosamente',
