@@ -15,6 +15,17 @@ const HOY = '2026-08-12'
 // ── Sin suscripcion: se crea una prueba ───────────────────────────────────
 assert.strictEqual(resolverEstadoSuscripcion({ suscripcion: null, hoy: HOY }).accion, 'crear')
 
+// ── Sin suscripcion vigente pero ya tuvo una: una sola prueba por clinica ─
+assert.strictEqual(
+  resolverEstadoSuscripcion({ suscripcion: null, tuvoSuscripcion: true, hoy: HOY }).accion,
+  'crear_solo_lectura',
+  'cancelar o vencer no debe regalar otra prueba de 30 dias'
+)
+assert.strictEqual(
+  resolverEstadoSuscripcion({ suscripcion: null, tuvoSuscripcion: false, hoy: HOY }).accion,
+  'crear'
+)
+
 // ── Vigente: no se toca ───────────────────────────────────────────────────
 assert.strictEqual(
   resolverEstadoSuscripcion({

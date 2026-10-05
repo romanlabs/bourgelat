@@ -1,9 +1,11 @@
 const { Op } = require('sequelize')
 
+const sequelize = require('../config/database')
 const Suscripcion = require('../models/Suscripcion')
 const {
   PLANES_PUBLICOS,
   CORTESIA_END_DATE,
+  construirSuscripcion,
   crearSuscripcionPrueba,
   formatDateOnly,
 } = require('../config/planes')
@@ -31,14 +33,37 @@ const asegurarSuscripcionPrueba = async (clinicaId, transaction) =>
 
 const esSoloLectura = (suscripcion) => suscripcion?.estado === 'solo_lectura'
 
+// Registro para una clinica que ya uso su prueba y no tiene nada vigente:
+// conserva el plan de la ultima suscripcion y entra directo en solo lectura.
+const crearSuscripcionSoloLectura = (clinicaId, ultima, transaction) =>
+  Suscripcion.create(
+    construirSuscripcion({
+      clinicaId,
+      plan: ultima?.plan || 'prueba',
+      estado: 'solo_lectura',
+      fechaInicio: formatDateOnly(),
+      fechaFin: formatDateOnly(),
+      precio: 0,
+    }),
+    { transaction }
+  )
+
 // Decision pura de vigencia, separada del acceso a datos para poder probarla
 // sin base de datos.
-const resolverEstadoSuscripcion = ({ suscripcion, hoy }) => {
+// `tuvoSuscripcion`: la clinica ya tuvo alguna (cancelada, vencida...). La
+// prueba gratis es una sola por clinica: sin esto, cancelar regalaba otros 30
+// dias en la siguiente peticion.
+const resolverEstadoSuscripcion = ({ suscripcion, tuvoSuscripcion = false, hoy }) => {
   if (!suscripcion) {
-    return {
-      accion: 'crear',
-      advertencia: 'No existia una suscripcion vigente y se activo una prueba de 30 dias.',
-    }
+    return tuvoSuscripcion
+      ? {
+          accion: 'crear_solo_lectura',
+          advertencia: 'La clinica no tiene una suscripcion vigente y ya uso su prueba: queda en solo lectura.',
+        }
+      : {
+          accion: 'crear',
+          advertencia: 'No existia una suscripcion vigente y se activo una prueba de 30 dias.',
+        }
   }
 
   if (esSoloLectura(suscripcion)) {
@@ -70,18 +95,15 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
   }
 
   const suscripcion = await obtenerSuscripcionVigenteRegistrada(clinicaId, transaction)
+
+  if (!suscripcion) {
+    return crearSuscripcionInicial(clinicaId, transaction)
+  }
+
   const { accion, advertencia } = resolverEstadoSuscripcion({
     suscripcion,
     hoy: formatDateOnly(),
   })
-
-  if (accion === 'crear') {
-    return {
-      suscripcion: await asegurarSuscripcionPrueba(clinicaId, transaction),
-      downgraded: false,
-      advertencia,
-    }
-  }
 
   if (accion === 'a_solo_lectura') {
     // La clinica conserva su plan y sus datos; solo pierde la escritura.
@@ -90,6 +112,46 @@ const obtenerSuscripcionActivaClinica = async (clinicaId, { transaction } = {}) 
   }
 
   return { suscripcion, downgraded: false, advertencia }
+}
+
+/**
+ * La clinica no tiene suscripcion vigente: le crea la prueba si nunca tuvo
+ * ninguna, o la deja en solo lectura si ya tuvo. Va bajo un lock por clinica
+ * (y se revisa de nuevo dentro) para que dos peticiones simultaneas no creen
+ * dos registros. Usa la transaccion del llamador si viene una.
+ */
+const crearSuscripcionInicial = async (clinicaId, transaccionExterna) => {
+  const crear = async (transaction) => {
+    await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+      replacements: { lockKey: `suscripcion:${clinicaId}` },
+      transaction,
+    })
+
+    const yaCreada = await obtenerSuscripcionVigenteRegistrada(clinicaId, transaction)
+    if (yaCreada) {
+      return { suscripcion: yaCreada, downgraded: false, advertencia: null }
+    }
+
+    const ultima = await Suscripcion.findOne({
+      where: { clinicaId },
+      order: [['createdAt', 'DESC']],
+      transaction,
+    })
+    const { accion, advertencia } = resolverEstadoSuscripcion({
+      suscripcion: null,
+      tuvoSuscripcion: Boolean(ultima),
+      hoy: formatDateOnly(),
+    })
+
+    const suscripcion =
+      accion === 'crear_solo_lectura'
+        ? await crearSuscripcionSoloLectura(clinicaId, ultima, transaction)
+        : await asegurarSuscripcionPrueba(clinicaId, transaction)
+
+    return { suscripcion, downgraded: accion === 'crear_solo_lectura', advertencia }
+  }
+
+  return transaccionExterna ? crear(transaccionExterna) : sequelize.transaction(crear)
 }
 
 // Decision pura sobre cuantos dias le quedan a una suscripcion, para mostrar
