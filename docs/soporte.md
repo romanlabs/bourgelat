@@ -158,8 +158,9 @@ Sin las tres variables la función queda apagada: los avisos salen sin
 - Las acciones del equipo se auditan en la clínica del ticket (`usuarioId` nulo),
   así el admin las ve en su Auditoría.
 - Pendiente conocido: las capturas se sirven desde `/uploads` público con nombre
-  no adivinable (igual que exámenes y fotos). Migrar a URLs firmadas junto con el
-  resto de uploads.
+  no adivinable (igual que las fotos). Los adjuntos de exámenes ya no: van por
+  `GET /api/examenes-laboratorio/archivo/:id` con sesión. Las capturas siguen
+  públicas porque el enlace viaja en el correo al equipo, que no tiene sesión.
 
 ## Proyección: panel web del equipo
 

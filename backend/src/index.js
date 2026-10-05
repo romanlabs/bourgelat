@@ -18,7 +18,7 @@ const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
 const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
-const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR } = require('./config/uploads')
+const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR, EXAMENES_SUBDIR } = require('./config/uploads')
 const logger = require('./utils/logger')
 
 dotenv.config()
@@ -102,6 +102,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 // Solo para cookies firmadas (ej: flujo OAuth). Las cookies de sesion
 // existentes se siguen leyendo manualmente via req.headers.cookie.
 app.use(cookieParser(process.env.JWT_SECRET))
+// Los adjuntos de examenes de laboratorio son datos clinicos: se sirven solo
+// por /api/examenes-laboratorio/archivo/:id (con sesion), nunca por /uploads.
+app.use(`${UPLOADS_PUBLIC_PATH}/${EXAMENES_SUBDIR}`, (req, res) => {
+  res.status(404).json({ message: 'Recurso no encontrado' })
+})
 app.use(
   UPLOADS_PUBLIC_PATH,
   express.static(UPLOADS_ROOT_DIR, {

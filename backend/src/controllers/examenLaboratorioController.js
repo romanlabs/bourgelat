@@ -4,16 +4,26 @@ const ExamenLaboratorio = require('../models/ExamenLaboratorio');
 const Mascota = require('../models/Mascota');
 const Usuario = require('../models/Usuario');
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
-const { EXAMENES_SUBDIR, UPLOADS_ROOT_DIR, buildPublicUploadUrl } = require('../config/uploads');
+const contentDisposition = require('content-disposition');
+const { EXAMENES_SUBDIR, UPLOADS_ROOT_DIR } = require('../config/uploads');
 const logger = require('../utils/logger');
 
-const eliminarArchivoFisico = (archivoUrl) => {
-  if (!archivoUrl) return;
+// Los adjuntos de examenes son datos clinicos: no se sirven por /uploads
+// (publico) sino por GET /api/examenes-laboratorio/archivo/:id, con sesion y
+// filtro por clinica. En la BD queda la ruta relativa `examenes/<archivo>`.
+const rutaAbsolutaAdjunto = (archivoUrl) => {
+  if (!archivoUrl) return null;
   const relativePath = String(archivoUrl).replace(/^\/+/, '');
-  if (!relativePath.startsWith(`${EXAMENES_SUBDIR}/`)) return;
+  if (!relativePath.startsWith(`${EXAMENES_SUBDIR}/`)) return null;
 
+  const carpeta = path.resolve(UPLOADS_ROOT_DIR, EXAMENES_SUBDIR);
   const absolutePath = path.resolve(UPLOADS_ROOT_DIR, relativePath);
-  if (!absolutePath.startsWith(path.resolve(UPLOADS_ROOT_DIR))) return;
+  return absolutePath.startsWith(`${carpeta}${path.sep}`) ? absolutePath : null;
+};
+
+const eliminarArchivoFisico = (archivoUrl) => {
+  const absolutePath = rutaAbsolutaAdjunto(archivoUrl);
+  if (!absolutePath) return;
 
   fs.unlink(absolutePath, (error) => {
     if (error && error.code !== 'ENOENT') {
@@ -22,12 +32,11 @@ const eliminarArchivoFisico = (archivoUrl) => {
   });
 };
 
+// La ruta en disco no sale de la API: el cliente solo sabe si hay adjunto y
+// lo pide por la ruta autenticada.
 const serializarExamen = (req, examen) => {
-  const plain = typeof examen.toJSON === 'function' ? examen.toJSON() : examen;
-  return {
-    ...plain,
-    archivoUrlPublica: plain.archivoUrl ? buildPublicUploadUrl(req, plain.archivoUrl) : null,
-  };
+  const { archivoUrl, ...plain } = typeof examen.toJSON === 'function' ? examen.toJSON() : examen;
+  return { ...plain, tieneArchivo: Boolean(archivoUrl) };
 };
 
 const buscarMascota = async ({ mascotaId, clinicaId }) =>
@@ -190,9 +199,34 @@ const eliminarExamen = async (req, res) => {
   }
 };
 
+const descargarArchivoExamen = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clinicaId } = req.usuario;
+
+    const examen = await ExamenLaboratorio.findOne({
+      where: { id, clinicaId },
+      attributes: ['id', 'archivoUrl', 'archivoNombre'],
+    });
+    const absolutePath = rutaAbsolutaAdjunto(examen?.archivoUrl);
+
+    if (!absolutePath || !fs.existsSync(absolutePath)) {
+      return res.status(404).json({ message: 'Archivo no encontrado' });
+    }
+
+    const nombre = examen.archivoNombre || path.basename(absolutePath);
+    res.setHeader('Content-Disposition', contentDisposition(nombre, { type: 'inline' }));
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.sendFile(absolutePath);
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
 module.exports = {
   listarExamenes,
   crearExamen,
   editarExamen,
   eliminarExamen,
+  descargarArchivoExamen,
 };

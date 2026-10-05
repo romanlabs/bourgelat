@@ -11,6 +11,7 @@ const {
   crearExamen,
   editarExamen,
   eliminarExamen,
+  descargarArchivoExamen,
 } = require('../controllers/examenLaboratorioController');
 
 const validateDateOnly = (value) => {
@@ -73,6 +74,16 @@ const validarEditarExamen = [
     .withMessage('El laboratorio no puede exceder 180 caracteres'),
   validar,
 ];
+
+// Adjunto del examen (PDF o imagen), solo con sesion y de la propia clinica.
+// Reemplaza el enlace publico a /uploads/examenes, que ya no se sirve.
+router.get(
+  '/archivo/:id',
+  verificarToken,
+  verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'recepcionista'),
+  [param('id').isUUID().withMessage('Examen no valido'), validar],
+  descargarArchivoExamen
+);
 
 router.get(
   '/:mascotaId',
