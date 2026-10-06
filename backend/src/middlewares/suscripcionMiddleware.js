@@ -8,6 +8,7 @@ const {
 // Unica funcionalidad que se compra aparte. El resto lo tienen todos los planes.
 const FEATURE_LABELS = {
   facturacion_electronica: 'facturacion electronica',
+  reportes_completos: 'la analitica de agenda y la rentabilidad',
 }
 
 const obtenerNombrePlan = (plan) => PLANES_PUBLICOS[plan]?.nombre || plan
