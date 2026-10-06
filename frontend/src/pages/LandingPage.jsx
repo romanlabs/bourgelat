@@ -17,14 +17,14 @@ import RegistroDialog from "@/features/auth/RegistroDialog"
 
 const FAQS = [
   {
-    pregunta: '¿Puedo empezar con Esencial y subir después?',
+    pregunta: '¿Puedo empezar con Esencial y subir a Clínica después?',
     respuesta:
-      'Sí. La idea es empezar con orden y subir de plan cuando la operación diaria pida más control.',
+      'Sí. Subes cuando tu equipo necesite más usuarios o almacenamiento, o cuando quieras la analítica de agenda y la rentabilidad del mes.',
   },
   {
-    pregunta: '¿Qué plan elige una clínica que ya cobra y controla inventario?',
+    pregunta: '¿Qué plan elige una clínica con varios usuarios?',
     respuesta:
-      'Normalmente Clínica: cubre agenda, consulta, inventario, caja y reportes en el mismo flujo.',
+      'Clínica: incluye tres usuarios, 20 GB, el flujo completo de agenda, consulta, inventario y caja, y la analítica con rentabilidad.',
   },
   {
     pregunta: '¿La facturación electrónica DIAN está disponible?',
@@ -204,8 +204,8 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
           <SectionHeading
             eyebrow="Planes"
-            title="Planes para entrar sin miedo y crecer sin rearmar todo."
-            body="Empieza con el orden clínico y suma caja, inventario y reportes cuando tu clínica lo pida. Sin costos ocultos ni configuraciones complejas."
+            title="Dos planes. Elige según el tamaño de tu equipo."
+            body="Esencial para un consultorio que empieza, Clínica para un equipo completo. Prueba 30 días gratis, sin costos ocultos ni configuraciones complejas."
             center
           />
 

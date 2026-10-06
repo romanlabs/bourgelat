@@ -36,21 +36,21 @@ export const PLAN_PREVIEW = [
   {
     name: 'Esencial',
     subtitle: 'Para empezar con orden',
-    price: 'Gratis',
-    note: 'Agenda, pacientes e historia clínica para poner la consulta en orden desde el primer día.',
+    price: 'COP 49.000/mes',
+    note: 'Todo el sistema para un consultorio que empieza: un usuario, 5 GB y reportes operativos.',
   },
   {
     name: 'Clínica',
     subtitle: 'Para el día completo',
-    price: 'COP 99.000/mes',
-    note: 'Suma inventario, caja y reportes cuando la clínica necesita control sobre cada turno.',
+    price: 'COP 89.000/mes',
+    note: 'Para el equipo completo: tres usuarios incluidos, 20 GB, analítica de agenda y rentabilidad del mes.',
     featured: true,
   },
   {
-    name: 'Profesional',
-    subtitle: 'Próximamente',
+    name: 'Facturación electrónica',
+    subtitle: 'Complemento DIAN',
     price: null,
-    note: 'Reportes avanzados y facturación electrónica DIAN. En desarrollo para la v2.',
+    note: 'Emisión validada ante la DIAN, notas crédito y envío automático. En desarrollo.',
     comingSoon: true,
   },
 ]
