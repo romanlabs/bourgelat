@@ -639,7 +639,13 @@ const reprogramarCita = async (req, res) => {
       });
       if (choque) return choque;
 
-      await cita.update({ fecha, horaInicio, horaFin, estado: 'programada' }, { transaction });
+      // Vuelve a 'programada': la llegada registrada (si estaba en espera) era
+      // de la visita anterior. Sin limpiarla, la sala de espera la ordena por
+      // esa hora y al volver a marcar la llegada se conserva la vieja.
+      await cita.update(
+        { fecha, horaInicio, horaFin, estado: 'programada', horaLlegada: null },
+        { transaction }
+      );
       return null;
     });
 
