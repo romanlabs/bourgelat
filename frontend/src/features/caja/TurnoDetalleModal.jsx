@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { formatCurrency, formatLongDate } from '@/features/dashboard/dashboardUtils'
 import { cajaApi } from './cajaApi'
-import { CATEGORIA_DIFERENCIA_LABELS } from './cajaConstants'
+import { CATEGORIA_DIFERENCIA_LABELS, motivoMovimientoLabel } from './cajaConstants'
 
 export default function TurnoDetalleModal({ turnoId, onClose }) {
   const detalleQuery = useQuery({
@@ -66,7 +66,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
                 <div className="divide-y divide-border text-sm">
                   {detalle.movimientos.map((movimiento) => (
                     <div key={movimiento.id} className="flex items-center justify-between py-2">
-                      <span className="text-foreground">{movimiento.motivo}</span>
+                      <span className="text-foreground">{motivoMovimientoLabel(movimiento.motivo)}</span>
                       <span className={movimiento.tipo === 'ingreso' ? 'text-success' : 'text-danger'}>
                         {movimiento.tipo === 'ingreso' ? '+' : '-'}
                         {formatCurrency(movimiento.monto)}

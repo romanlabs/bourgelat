@@ -6,9 +6,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import AperturaTurnoModal from './AperturaTurnoModal'
 import MovimientoCajaModal from './MovimientoCajaModal'
 import CierreTurnoModal from './CierreTurnoModal'
-import { MOVIMIENTO_CAJA_ICONS, MOVIMIENTO_CAJA_MOTIVOS } from './cajaConstants'
-
-const motivoLabel = (motivo) => MOVIMIENTO_CAJA_MOTIVOS.find((m) => m.value === motivo)?.label || motivo
+import { MOVIMIENTO_CAJA_ICONS, motivoMovimientoLabel as motivoLabel } from './cajaConstants'
 
 export default function TurnoActivoPanel({ cajaHook }) {
   const [aperturaOpen, setAperturaOpen] = useState(false)
