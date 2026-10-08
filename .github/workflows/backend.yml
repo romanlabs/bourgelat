@@ -1,0 +1,61 @@
+# Controles del backend en cada PR a develop y main.
+# No despliega nada: Render sigue construyendo por su cuenta desde render.yaml.
+#
+# Sin filtro de rutas a propósito: el job `pruebas` corre en ~1 min y así puede
+# marcarse como check obligatorio (un workflow filtrado por rutas no reporta en
+# los PR que no tocan backend y los deja esperando).
+name: Backend
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22 # igual que el Dockerfile (node:22-alpine)
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+
+      # Pruebas unitarias sin base de datos ni .env.
+      - name: Pruebas
+        run: npm test
+
+  # Informativo mientras se actualizan multer, sharp y nodemailer (ver
+  # PENDIENTES): deja un aviso en el PR pero no lo pone en rojo. Cuando
+  # `npm audit --omit=dev --audit-level=high` quede limpio, quitar
+  # `continue-on-error` para que bloquee. NUNCA `npm audit fix --force`.
+  auditoria:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Dependencias con vulnerabilidades altas
+        id: audit
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Avisar si hay vulnerabilidades
+        if: steps.audit.outcome == 'failure'
+        run: echo "::warning title=npm audit::El backend tiene dependencias con vulnerabilidades altas o críticas. Ver el paso anterior."
