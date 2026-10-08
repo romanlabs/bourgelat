@@ -32,6 +32,9 @@ const MovimientoCaja = sequelize.define('MovimientoCaja', {
       // efectivo con turno abierto. No se acepta desde la API de movimientos
       // manuales (ver MOTIVOS_MOVIMIENTO_CAJA en cajaRoutes).
       'gasto_negocio',
+      // Generado por el sistema al anular una venta en efectivo cuyo turno ya
+      // cerró: la devolución sale del turno abierto de quien anula.
+      'devolucion_venta',
       'otro'
     ),
     allowNull: false,

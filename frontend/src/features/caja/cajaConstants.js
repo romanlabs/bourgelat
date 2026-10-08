@@ -9,6 +9,17 @@ export const MOVIMIENTO_CAJA_MOTIVOS = [
   { value: 'otro', label: 'Otro' },
 ]
 
+// Motivos que solo genera el sistema (no se ofrecen en el formulario manual).
+const MOTIVOS_SISTEMA_LABELS = {
+  gasto_negocio: 'Gasto del negocio',
+  devolucion_venta: 'Devolución de venta anulada',
+}
+
+export const motivoMovimientoLabel = (motivo) =>
+  MOVIMIENTO_CAJA_MOTIVOS.find((m) => m.value === motivo)?.label ||
+  MOTIVOS_SISTEMA_LABELS[motivo] ||
+  motivo
+
 export const MOVIMIENTO_CAJA_ICONS = {
   fondo_adicional: Banknote,
   retiro_domicilio: Truck,

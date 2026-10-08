@@ -13,6 +13,7 @@ const RegistroEstilo = require('../models/RegistroEstilo')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
+const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
@@ -1368,7 +1369,9 @@ const anularFactura = async (req, res) => {
       where: { id, clinicaId },
       include: [{ model: FacturaItem, as: 'items' }],
       transaction,
-      lock: transaction.LOCK.UPDATE,
+      // Solo la fila de la factura: Postgres rechaza FOR UPDATE sobre el lado
+      // nulable del LEFT JOIN de items, y sin `of` la anulacion respondia 500.
+      lock: { level: transaction.LOCK.UPDATE, of: Factura },
     })
 
     if (!factura) {
@@ -1482,13 +1485,15 @@ const anularFactura = async (req, res) => {
       }
     }
 
-    // Revertir el efecto en la caja: si la venta fue en efectivo y el turno
-    // sigue abierto, descontar el total de totalVentasEfectivo para que el
-    // cajero no cargue con un descuadre falso al cierre. Si el turno ya
-    // cerró, no se toca (el arqueo histórico es inmutable); queda constancia
-    // en la auditoría de la anulación.
+    // Revertir el efecto en la caja. Si el turno de la venta sigue abierto, se
+    // descuenta de totalVentasEfectivo para que el cajero no cargue con un
+    // descuadre falso al cierre. Si ya cerró, su arqueo es inmutable: la
+    // devolución sale como egreso del turno abierto de quien anula, porque es
+    // de esa caja de donde se le entrega el efectivo al cliente.
     let cajaAjustada = false
+    let movimientoDevolucionId = null
     if (factura.cajaTurnoId && factura.metodoPago === 'efectivo') {
+      const totalVenta = convertirANumero(factura.total)
       const turnoVenta = await CajaTurno.findOne({
         where: { id: factura.cajaTurnoId, clinicaId, estado: 'abierto' },
         transaction,
@@ -1496,11 +1501,37 @@ const anularFactura = async (req, res) => {
       })
 
       if (turnoVenta) {
-        await turnoVenta.decrement('totalVentasEfectivo', {
-          by: convertirANumero(factura.total),
-          transaction,
-        })
+        await turnoVenta.decrement('totalVentasEfectivo', { by: totalVenta, transaction })
         cajaAjustada = true
+      } else {
+        const turnoActual = await CajaTurno.findOne({
+          where: { usuarioId: req.usuario.id, clinicaId, estado: 'abierto' },
+          transaction,
+          lock: transaction.LOCK.UPDATE,
+        })
+
+        if (!turnoActual || esTurnoVencido(turnoActual)) {
+          await transaction.rollback()
+          return res.status(409).json({
+            code: turnoActual ? 'TURNO_VENCIDO' : 'TURNO_REQUERIDO',
+            message: turnoActual
+              ? 'Tu turno de caja quedo abierto desde un dia anterior. Cierralo y abre uno nuevo para registrar la devolucion en efectivo.'
+              : 'El turno de esta venta ya se cerro. Abre tu turno de caja para registrar la devolucion en efectivo y anular la venta.',
+          })
+        }
+
+        const movimiento = await MovimientoCaja.create({
+          tipo: 'egreso',
+          monto: totalVenta,
+          motivo: 'devolucion_venta',
+          observaciones: `Anulacion de la venta ${factura.numero}`,
+          cajaTurnoId: turnoActual.id,
+          usuarioId: req.usuario.id,
+          clinicaId,
+        }, { transaction })
+        await turnoActual.increment('totalEgresosManuales', { by: totalVenta, transaction })
+        cajaAjustada = true
+        movimientoDevolucionId = movimiento.id
       }
     }
 
@@ -1525,7 +1556,7 @@ const anularFactura = async (req, res) => {
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} anulada. Motivo: ${motivoAnulacion}`,
       datosAnteriores: { estado: 'emitida' },
-      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada },
+      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada, movimientoDevolucionId },
       req,
       resultado: 'exitoso',
     })
