@@ -216,6 +216,31 @@ const validarCupoSuscripcion = async ({
   }
 }
 
+/**
+ * Revisa el cupo y ejecuta `accion` bajo un mismo lock por clinica y recurso.
+ * Sin esto, dos altas simultaneas cuentan el mismo uso, ambas pasan el tope y
+ * la clinica queda con un usuario de mas. `accion(transaction)` solo corre si
+ * hay cupo y debe hacer su escritura con esa transaccion.
+ */
+const ejecutarConCupo = ({ clinicaId, campoLimite, modelo, where }, accion) =>
+  sequelize.transaction(async (transaction) => {
+    await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+      replacements: { lockKey: `cupo:${campoLimite}:${clinicaId}` },
+      transaction,
+    })
+
+    const cupo = await validarCupoSuscripcion({
+      clinicaId,
+      campoLimite,
+      modelo,
+      where,
+      transaction,
+    })
+    if (!cupo.permitido) return { cupo, resultado: null }
+
+    return { cupo, resultado: await accion(transaction) }
+  })
+
 module.exports = {
   ESTADOS_VIGENTES,
   obtenerNombrePlan,
@@ -228,4 +253,5 @@ module.exports = {
   suscripcionTieneFuncionalidad,
   obtenerLimiteNumerico,
   validarCupoSuscripcion,
+  ejecutarConCupo,
 }

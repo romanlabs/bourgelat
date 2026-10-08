@@ -2,7 +2,23 @@ const bcrypt = require('bcryptjs')
 const { Op } = require('sequelize')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
-const { validarCupoSuscripcion } = require('../services/suscripcionService')
+const { ejecutarConCupo } = require('../services/suscripcionService')
+
+const cupoUsuariosActivos = (clinicaId) => ({
+  clinicaId,
+  campoLimite: 'limiteUsuarios',
+  modelo: Usuario,
+  where: { clinicaId, activo: true },
+})
+
+const respuestaLimiteUsuarios = (cupo) => ({
+  message: `Tu plan ${cupo.nombrePlan} permite hasta ${cupo.limite} usuarios activos. Desactiva uno o cambia de plan para continuar.`,
+  code: 'PLAN_LIMIT_REACHED',
+  plan: cupo.suscripcion.plan,
+  recurso: 'usuarios',
+  limite: cupo.limite,
+  usoActual: cupo.usoActual,
+})
 
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
@@ -97,36 +113,26 @@ const crearUsuario = async (req, res) => {
       return res.status(400).json({ message: 'El email ya está registrado' })
     }
 
-    const cupoUsuarios = await validarCupoSuscripcion({
-      clinicaId,
-      campoLimite: 'limiteUsuarios',
-      modelo: Usuario,
-      where: { clinicaId, activo: true },
-    })
-
-    if (!cupoUsuarios.permitido) {
-      return res.status(403).json({
-        message: `Tu plan ${cupoUsuarios.nombrePlan} permite hasta ${cupoUsuarios.limite} usuarios activos. Desactiva uno o cambia de plan para continuar.`,
-        code: 'PLAN_LIMIT_REACHED',
-        plan: cupoUsuarios.suscripcion.plan,
-        recurso: 'usuarios',
-        limite: cupoUsuarios.limite,
-        usoActual: cupoUsuarios.usoActual,
-      })
-    }
-
+    // El hash va antes del lock para no retener a las demas altas de la clinica.
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    const usuario = await Usuario.create({
-      nombre: nombreNormalizado,
-      email: emailNormalizado,
-      password: passwordHash,
-      rol: rolNormalizado,
-      rolesAdicionales: rolesAdicionalesNormalizados,
-      telefono: telefonoNormalizado || null,
-      clinicaId,
-    })
+    const { cupo: cupoUsuarios, resultado: usuario } = await ejecutarConCupo(
+      cupoUsuariosActivos(clinicaId),
+      (transaction) => Usuario.create({
+        nombre: nombreNormalizado,
+        email: emailNormalizado,
+        password: passwordHash,
+        rol: rolNormalizado,
+        rolesAdicionales: rolesAdicionalesNormalizados,
+        telefono: telefonoNormalizado || null,
+        clinicaId,
+      }, { transaction })
+    )
+
+    if (!cupoUsuarios.permitido) {
+      return res.status(403).json(respuestaLimiteUsuarios(cupoUsuarios))
+    }
 
     await registrarAuditoria({
       accion: 'CREAR_USUARIO',
@@ -428,28 +434,21 @@ const toggleUsuario = async (req, res) => {
       }
     }
 
+    const estadoAnterior = usuario.activo
+
     if (!usuario.activo) {
-      const cupoUsuarios = await validarCupoSuscripcion({
-        clinicaId,
-        campoLimite: 'limiteUsuarios',
-        modelo: Usuario,
-        where: { clinicaId, activo: true },
-      })
+      // Reactivar ocupa cupo: misma revision bajo lock que crearUsuario.
+      const { cupo: cupoUsuarios } = await ejecutarConCupo(
+        cupoUsuariosActivos(clinicaId),
+        (transaction) => usuario.update({ activo: true }, { transaction })
+      )
 
       if (!cupoUsuarios.permitido) {
-        return res.status(403).json({
-          message: `Tu plan ${cupoUsuarios.nombrePlan} permite hasta ${cupoUsuarios.limite} usuarios activos. Desactiva uno o cambia de plan para continuar.`,
-          code: 'PLAN_LIMIT_REACHED',
-          plan: cupoUsuarios.suscripcion.plan,
-          recurso: 'usuarios',
-          limite: cupoUsuarios.limite,
-          usoActual: cupoUsuarios.usoActual,
-        })
+        return res.status(403).json(respuestaLimiteUsuarios(cupoUsuarios))
       }
+    } else {
+      await usuario.update({ activo: false })
     }
-
-    const estadoAnterior = usuario.activo
-    await usuario.update({ activo: !usuario.activo })
 
     await registrarAuditoria({
       accion: usuario.activo ? 'ACTIVAR_USUARIO' : 'DESACTIVAR_USUARIO',
