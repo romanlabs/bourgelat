@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'l
 
 import BrandMark from '@/components/landing/BrandMark'
 import RegistroDialog from '@/features/auth/RegistroDialog'
+import { calcularPrecioPlan, maxAhorroPct } from '@/lib/precios'
 
 // ── Paleta cálida (misma identidad de landing, login y registro) ──
 //   INK      espresso — títulos, texto, botón sólido y card-ancla
@@ -32,12 +33,33 @@ const GRAD_SOON = 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)'
 const DIM_FILTER = 'blur(1.4px) brightness(0.97) saturate(0.92)'
 const GLOW_ACTIVE = '0 18px 50px -18px rgba(176,118,69,0.45)'
 
-// Refleja backend/src/config/planes.js. Un solo plan pago; la DIAN es el único
-// complemento que se compra aparte y todavía no está disponible.
+// Refleja backend/src/config/planes.js. Dos planes pagos (Esencial y Clínica); la
+// DIAN es el único complemento que se compra aparte y todavía no está disponible.
 const PLANES = [
   {
+    key: 'esencial',
+    nombre: 'Esencial',
+    subtitulo: 'Para empezar ordenado',
+    resumen:
+      'Lo necesario para un consultorio pequeño: agenda, historia clínica, inventario, caja y reportes operativos con un usuario.',
+    precioMensual: 49000,
+    precioAnual: 41000,
+    cta: 'Probar 30 días gratis',
+    nota: 'Sin tarjeta · 30 días de prueba',
+    registro: true,
+    limites: ['1 usuario incluido', 'Pacientes ilimitados', '5 GB'],
+    incluye: [
+      'Agenda con contexto del paciente',
+      'Historia clínica y antecedentes',
+      'Inventario y control de insumos',
+      'Caja y facturación interna',
+      'Reportes operativos del día a día',
+      'Roles y auditoría del equipo',
+    ],
+  },
+  {
     key: 'activo',
-    nombre: 'Bourgelat',
+    nombre: 'Clínica',
     subtitulo: 'Toda la clínica en un sistema',
     popular: true,
     resumen:
@@ -53,7 +75,7 @@ const PLANES = [
       'Historia clínica y antecedentes',
       'Inventario y control de insumos',
       'Caja y facturación interna',
-      'Reportes completos y exportables',
+      'Reportes operativos, analítica de agenda y rentabilidad',
       'Roles y auditoría del equipo',
     ],
   },
@@ -79,31 +101,31 @@ const COMPARISON_GROUPS = [
   {
     grupo: 'Operación clínica',
     filas: [
-      { label: 'Agenda con contexto del paciente', values: { activo: true, dian: false } },
-      { label: 'Historia clínica y antecedentes', values: { activo: true, dian: false } },
-      { label: 'Pacientes activos', values: { activo: 'Ilimitados', dian: false } },
-      { label: 'Usuarios del equipo', values: { activo: '3 incluidos', dian: false } },
+      { label: 'Agenda con contexto del paciente', values: { esencial: true, activo: true, dian: false } },
+      { label: 'Historia clínica y antecedentes', values: { esencial: true, activo: true, dian: false } },
+      { label: 'Pacientes activos', values: { esencial: 'Ilimitados', activo: 'Ilimitados', dian: false } },
+      { label: 'Usuarios del equipo', values: { esencial: '1 incluido', activo: '3 incluidos', dian: false } },
     ],
   },
   {
     grupo: 'Caja y facturación',
     filas: [
-      { label: 'Inventario operativo', values: { activo: true, dian: false } },
-      { label: 'Caja y facturación interna', values: { activo: true, dian: false } },
+      { label: 'Inventario operativo', values: { esencial: true, activo: true, dian: false } },
+      { label: 'Caja y facturación interna', values: { esencial: true, activo: true, dian: false } },
       {
         label: 'Facturación electrónica DIAN',
         hint: 'Emisión validada ante la DIAN a través de Factus. Disponible en la próxima versión.',
         soon: { dian: true },
-        values: { activo: false, dian: 'soon' },
+        values: { esencial: false, activo: false, dian: 'soon' },
       },
     ],
   },
   {
     grupo: 'Reportes y datos',
     filas: [
-      { label: 'Reportes operativos', values: { activo: true, dian: false } },
-      { label: 'Reportes completos y exportables', values: { activo: true, dian: false } },
-      { label: 'Almacenamiento de archivos', values: { activo: '20 GB', dian: false } },
+      { label: 'Reportes operativos', values: { esencial: true, activo: true, dian: false } },
+      { label: 'Analítica de agenda y rentabilidad', values: { esencial: false, activo: true, dian: false } },
+      { label: 'Almacenamiento de archivos', values: { esencial: '5 GB', activo: '20 GB', dian: false } },
     ],
   },
 ]
@@ -116,10 +138,10 @@ const PLAN_MATCH = [
       'Treinta días con todo abierto y sin tarjeta. Alcanzan para vivir un cierre de mes completo: caja cuadrada, inventario al día y el reporte del mes.',
   },
   {
-    momento: 'Un solo plan',
-    title: 'Sin escoger entre versiones',
+    momento: 'Dos planes, mismos módulos',
+    title: 'Escoge según el tamaño de tu equipo',
     body:
-      'Todas las clínicas tienen todos los módulos. Lo único que crece con tu equipo son los usuarios: tres vienen incluidos y cada uno adicional cuesta $25.000 al mes.',
+      'Esencial trae lo necesario para operar: agenda, historias, inventario, caja y reportes operativos. Clínica suma la analítica de agenda y la rentabilidad, tres usuarios en vez de uno y 20 GB. Cada usuario adicional en Clínica cuesta $25.000 al mes.',
   },
   {
     momento: 'Tus datos, siempre tuyos',
@@ -148,6 +170,30 @@ function formatPrice(value) {
   return pesos.format(value)
 }
 
+// Detalle del precio anual: el descuento va destacado y debajo el equivalente por mes.
+function DetalleAnual({ calc, onInk }) {
+  const sub = { color: onInk ? 'rgba(255,255,255,0.7)' : BODY }
+  const chip = onInk
+    ? { backgroundColor: ACCENT_ON_INK, color: INK }
+    : { backgroundColor: CHIP, color: EYEBROW }
+  return (
+    <div className="min-h-[52px] pt-2 text-xs leading-5">
+      {calc.totalAnual ? (
+        <>
+          {calc.ahorroTotal ? (
+            <span className="inline-block rounded-full px-2.5 py-1 text-xs font-bold" style={chip}>
+              Ahorras {pesos.format(calc.ahorroTotal)} al año · {calc.ahorroPct}% menos
+            </span>
+          ) : null}
+          <p className="mt-1.5" style={sub}>
+            Equivale a <span className="font-semibold">{pesos.format(calc.porMes)}</span> al mes
+          </p>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 function PlanCTA({ plan, className, style, onRegistro }) {
   const content = (
     <>
@@ -168,7 +214,7 @@ function PlanCTA({ plan, className, style, onRegistro }) {
   return <Link to={plan.to} className={className} style={style}>{content}</Link>
 }
 
-function AnimatedPrice({ price, reduce, onInk }) {
+function AnimatedPrice({ price, reduce, onInk, suffix = '/mes' }) {
   const sub = onInk ? 'text-white/70' : ''
   const subStyle = onInk ? undefined : { color: BODY }
   return (
@@ -185,7 +231,7 @@ function AnimatedPrice({ price, reduce, onInk }) {
           {formatPrice(price)}
         </Motion.span>
       </AnimatePresence>
-      {price ? <span className={`text-sm ${sub}`} style={subStyle}>/mes</span> : null}
+      {price ? <span className={`text-sm ${sub}`} style={subStyle}>{suffix}</span> : null}
     </div>
   )
 }
@@ -313,11 +359,9 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
   if (plan.comingSoon) {
     return <ComingSoonCard plan={plan} index={index} reduce={reduce} hovered={hovered} setHovered={setHovered} />
   }
-  const price = anual ? plan.precioAnual : plan.precioMensual
-  const ahorro =
-    anual && plan.precioMensual && plan.precioAnual && plan.precioMensual > plan.precioAnual
-      ? plan.precioMensual - plan.precioAnual
-      : 0
+  const calc = calcularPrecioPlan(plan, anual)
+  const price = anual && calc.totalAnual ? calc.totalAnual : calc.porMes
+  const suffix = anual && calc.totalAnual ? '/año' : '/mes'
   const anchor = plan.popular
   const dim = hovered && hovered !== plan.key
   const active = hovered === plan.key
@@ -361,14 +405,8 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
         <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}>
           {plan.nombre}
         </h3>
-        <AnimatedPrice price={price} reduce={reduce} onInk />
-        <div className="min-h-[20px]">
-          {ahorro ? (
-            <span className="text-xs font-semibold" style={{ color: ACCENT_ON_INK }}>
-              Ahorras {pesos.format(ahorro)}/mes
-            </span>
-          ) : null}
-        </div>
+        <AnimatedPrice price={price} reduce={reduce} onInk suffix={suffix} />
+        <DetalleAnual calc={calc} onInk />
         <p className="mt-3 text-sm leading-7 text-white/75">{plan.resumen}</p>
 
         <div className="mt-6 space-y-3">
@@ -418,14 +456,8 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
       <h3 className="mt-3 text-4xl leading-none tracking-[-0.04em]" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
         {plan.nombre}
       </h3>
-      <AnimatedPrice price={price} reduce={reduce} />
-      <div className="min-h-[20px]">
-        {ahorro ? (
-          <span className="text-xs font-semibold" style={{ color: ACCENT }}>
-            Ahorras {pesos.format(ahorro)}/mes
-          </span>
-        ) : null}
-      </div>
+      <AnimatedPrice price={price} reduce={reduce} suffix={suffix} />
+      <DetalleAnual calc={calc} />
       <p className="mt-3 text-sm leading-7" style={{ color: BODY }}>{plan.resumen}</p>
 
       <div className="mt-6 space-y-3">
@@ -476,6 +508,8 @@ function CompareCell({ value }) {
 
 export default function PlanesPage() {
   const [anual, setAnual] = useState(false)
+  const ahorroMax = maxAhorroPct(PLANES)
+  const ahorroMaxTotal = Math.max(...PLANES.map((p) => calcularPrecioPlan(p, true).ahorroTotal))
   const [hovered, setHovered] = useState(null)
   const [registroAbierto, setRegistroAbierto] = useState(false)
   const reduce = useReducedMotion()
@@ -516,14 +550,14 @@ export default function PlanesPage() {
                 Planes Bourgelat
               </p>
               <h1 className="mt-4 text-[2.8rem] leading-[0.95] tracking-[-0.045em] sm:text-6xl" style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700, color: INK }}>
-                Un plan por cada
+                Dos planes,
                 <br />
-                momento de la clínica.
+                según tu equipo.
               </h1>
               <p className="mt-5 max-w-xl text-base leading-8 sm:text-lg" style={{ color: BODY }}>
-                No es una tabla infinita. Es elegir según dónde está hoy la operación:
-                ordenando lo esencial, atendiendo el día completo o cerrando el círculo
-                clínico, administrativo y fiscal.
+                Esencial para un consultorio que empieza, Clínica para un equipo que
+                atiende el día completo y quiere medir su operación: analítica de
+                agenda y rentabilidad. La facturación electrónica DIAN llega como complemento.
               </p>
             </div>
 
@@ -551,12 +585,12 @@ export default function PlanesPage() {
                     className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
                     style={anual ? { backgroundColor: ACCENT_ON_INK, color: INK } : { backgroundColor: CHIP, color: EYEBROW }}
                   >
-                    −20%
+                    −{ahorroMax}%
                   </span>
                 </button>
               </div>
               <p className="mt-2 max-w-[210px] text-right text-xs leading-5" style={{ color: BODY }}>
-                Plan anual: hasta dos meses gratis frente al mensual.
+                Pago anual por adelantado: ahorras hasta {pesos.format(ahorroMaxTotal)} al año frente al pago mensual.
               </p>
             </div>
           </div>

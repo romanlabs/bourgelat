@@ -56,10 +56,10 @@ export function useRegistrarAbono() {
   })
 }
 
-export function useRentabilidad(periodo) {
+export function useRentabilidad(periodo, { enabled = true } = {}) {
   return useQuery({
     queryKey: KEYS.rentabilidad(periodo),
     queryFn: () => administracionApi.obtenerRentabilidad(periodo),
-    enabled: Boolean(periodo?.fechaInicio && periodo?.fechaFin),
+    enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
   })
 }
