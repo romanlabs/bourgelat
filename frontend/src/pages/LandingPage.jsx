@@ -205,7 +205,7 @@ export default function LandingPage() {
           <SectionHeading
             eyebrow="Planes"
             title="Dos planes. Elige según el tamaño de tu equipo."
-            body="Esencial para un consultorio que empieza, Clínica para un equipo completo. Prueba 30 días gratis, sin costos ocultos ni configuraciones complejas."
+            body="Esencial para un consultorio que quiere empezar a mejorar su flujo de trabajo, Clínica para un equipo completo. Prueba 30 días gratis, sin costos ocultos ni configuraciones complejas."
             center
           />
 

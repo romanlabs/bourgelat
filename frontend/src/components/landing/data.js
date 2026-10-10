@@ -37,7 +37,7 @@ export const PLAN_PREVIEW = [
     name: 'Esencial',
     subtitle: 'Para empezar con orden',
     price: 'COP 49.000/mes',
-    note: 'Todo el sistema para un consultorio que empieza: un usuario, 5 GB y reportes operativos.',
+    note: 'Todo lo que un consultorio pequeño necesita: un usuario, 5 GB y reportes operativos.',
   },
   {
     name: 'Clínica',
