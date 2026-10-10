@@ -5,6 +5,9 @@ const MovimientoInventarioClinico = require('../models/MovimientoInventarioClini
 const ServicioClinicoInsumo = require('../models/ServicioClinicoInsumo');
 const { parsePaginacion } = require('../utils/paginacion');
 const { tenantWhere } = require('../utils/tenant');
+const { clasificarVencimiento, hoyISO, sumarDiasISO, DIAS_ALERTA_VENCIMIENTO } = require('../utils/vencimiento');
+const { actualizarVencimiento } = require('../services/vencimientoService');
+const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
 
 const redondear = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 
@@ -145,19 +148,14 @@ const obtenerInsumos = async (req, res) => {
       order: [['nombre', 'ASC']],
     });
 
-    const hoy = new Date();
-    const en30dias = new Date();
-    en30dias.setDate(en30dias.getDate() + 30);
+    const hoy = hoyISO();
 
     const insumosConAlertas = rows.map((i) => {
       const alertas = [];
       if (Number(i.stock) <= Number(i.stockMinimo)) alertas.push('bajo_stock');
-      if (i.fechaVencimiento && new Date(i.fechaVencimiento) <= en30dias) {
-        alertas.push('proximo_vencimiento');
-      }
-      if (i.fechaVencimiento && new Date(i.fechaVencimiento) < hoy) {
-        alertas.push('vencido');
-      }
+      const estadoVencimiento = clasificarVencimiento(i, hoy);
+      if (estadoVencimiento === 'vencido') alertas.push('vencido');
+      if (estadoVencimiento === 'proximo') alertas.push('proximo_vencimiento');
       return { ...i.toJSON(), alertas };
     });
 
@@ -411,6 +409,60 @@ const registrarMovimientoClinico = async (req, res) => {
   }
 };
 
+const relevarVencimientoClinico = async (req, res) => {
+  try {
+    const { id: insumoClinicoId } = req.params;
+    const { cantidadVencida, nuevaFechaVencimiento, observaciones } = req.body;
+
+    const respuesta = await sequelize.transaction(async (transaction) => {
+      const insumo = await InsumoClinico.findOne({
+        where: tenantWhere(req, { id: insumoClinicoId, activo: true }),
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+
+      if (!insumo) {
+        return { status: 404, body: { message: 'Insumo clinico no encontrado' } };
+      }
+
+      const datosAnteriores = { stock: insumo.stock, fechaVencimiento: insumo.fechaVencimiento };
+
+      const resultado = await actualizarVencimiento({
+        item: insumo,
+        MovimientoModelo: MovimientoInventarioClinico,
+        camposMovimiento: {
+          insumoClinicoId,
+          usuarioId: req.usuario.id,
+          clinicaId: req.usuario.clinicaId,
+        },
+        precioUnitario: Number(insumo.precioUnitarioBase) || 0,
+        cantidadVencida,
+        nuevaFechaVencimiento,
+        observaciones,
+        transaction,
+      });
+
+      return { ...resultado, datosAnteriores };
+    });
+
+    if (respuesta.status === 200) {
+      await registrarAuditoria({
+        accion: 'RELEVAR_VENCIMIENTO_INSUMO',
+        entidad: 'InsumoClinico',
+        entidadId: insumoClinicoId,
+        descripcion: `Vencimiento actualizado: ${redondear(respuesta.body.stockAnterior - respuesta.body.stockNuevo)} unidades retiradas`,
+        datosAnteriores: respuesta.datosAnteriores,
+        datosNuevos: { stock: respuesta.body.stockNuevo, fechaVencimiento: respuesta.body.fechaVencimiento },
+        req,
+      });
+    }
+
+    return res.status(respuesta.status).json(respuesta.body);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const eliminarInsumo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -449,9 +501,8 @@ const eliminarInsumo = async (req, res) => {
 
 const obtenerAlertas = async (req, res) => {
   try {
-    const hoy = new Date();
-    const en30dias = new Date();
-    en30dias.setDate(en30dias.getDate() + 30);
+    const hoy = hoyISO();
+    const en30dias = sumarDiasISO(hoy, DIAS_ALERTA_VENCIMIENTO);
 
     const bajoStock = await InsumoClinico.findAll({
       where: tenantWhere(req, {
@@ -464,6 +515,7 @@ const obtenerAlertas = async (req, res) => {
     const proximosVencer = await InsumoClinico.findAll({
       where: tenantWhere(req, {
         activo: true,
+        stock: { [Op.gt]: 0 },
         fechaVencimiento: { [Op.between]: [hoy, en30dias] },
       }),
       attributes: ['id', 'nombre', 'stock', 'unidadBase', 'fechaVencimiento', 'categoria'],
@@ -472,6 +524,7 @@ const obtenerAlertas = async (req, res) => {
     const vencidos = await InsumoClinico.findAll({
       where: tenantWhere(req, {
         activo: true,
+        stock: { [Op.gt]: 0 },
         fechaVencimiento: { [Op.lt]: hoy },
       }),
       attributes: ['id', 'nombre', 'stock', 'unidadBase', 'fechaVencimiento', 'categoria'],
@@ -528,6 +581,7 @@ module.exports = {
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,
+  relevarVencimientoClinico,
   obtenerAlertas,
   obtenerMovimientosClinicos,
 };
