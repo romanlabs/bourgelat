@@ -57,4 +57,9 @@ export const inventarioClinicoApi = {
     const { data } = await api.post(`/inventario-clinico/${insumoId}/movimiento`, payload)
     return data
   },
+
+  async relevarVencimiento(insumoId, payload) {
+    const { data } = await api.post(`/inventario-clinico/${insumoId}/vencimiento`, payload)
+    return data
+  },
 }

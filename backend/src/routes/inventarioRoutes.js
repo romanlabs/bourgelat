@@ -10,6 +10,7 @@ const {
   editarProducto,
   eliminarProducto,
   registrarMovimiento,
+  relevarVencimiento,
   obtenerAlertas,
   obtenerProductoPorBarcode,
   obtenerCatalogoMedicamentos,
@@ -317,6 +318,24 @@ const validarMovimiento = [
   validar,
 ]
 
+const validarRelevoVencimiento = [
+  param('id').isUUID().withMessage('Producto no valido'),
+  body('cantidadVencida')
+    .optional({ values: 'falsy' })
+    .isInt({ min: 0 })
+    .withMessage('Las unidades vencidas deben ser un entero mayor o igual a 0'),
+  body('nuevaFechaVencimiento')
+    .optional({ values: 'falsy' })
+    .isISO8601({ strict: true })
+    .withMessage('La nueva fecha de vencimiento no es valida'),
+  body('observaciones')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 280 })
+    .withMessage('Las observaciones no pueden exceder 280 caracteres'),
+  validar,
+]
+
 const validarConsultaMovimientos = [
   query('productoId')
     .optional()
@@ -452,6 +471,15 @@ router.delete(
   requerirEscritura,
   validarIdProducto,
   eliminarProducto
+)
+
+router.post(
+  '/:id/vencimiento',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarRelevoVencimiento,
+  relevarVencimiento
 )
 
 router.post(

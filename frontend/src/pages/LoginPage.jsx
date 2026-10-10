@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
 import { useLogin, useCompletarRegistroOauth } from '@/features/auth/useAuth'
@@ -84,7 +84,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-10">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-10">
+      <Link
+        to="/"
+        className="group absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-brand-foreground no-underline shadow-sm transition-colors hover:border-brand/50 hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
+        Volver al inicio
+      </Link>
+
       <div className="w-full max-w-[420px] text-center">
         <Logo className="justify-center" />
 

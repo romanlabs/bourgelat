@@ -9,6 +9,7 @@ const {
   editarInsumo,
   eliminarInsumo,
   registrarMovimientoClinico,
+  relevarVencimientoClinico,
   obtenerAlertas,
   obtenerMovimientosClinicos,
 } = require('../controllers/insumoClinicoController')
@@ -173,6 +174,33 @@ router.post(
   requerirEscritura,
   validarMovimiento,
   registrarMovimientoClinico
+)
+
+const validarRelevoVencimiento = [
+  param('id').isUUID().withMessage('Insumo no valido'),
+  body('cantidadVencida')
+    .optional({ values: 'falsy' })
+    .isFloat({ min: 0 })
+    .withMessage('Las unidades vencidas deben ser mayores o iguales a 0'),
+  body('nuevaFechaVencimiento')
+    .optional({ values: 'falsy' })
+    .isISO8601({ strict: true })
+    .withMessage('La nueva fecha de vencimiento no es valida'),
+  body('observaciones')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ max: 280 })
+    .withMessage('Las observaciones no pueden exceder 280 caracteres'),
+  validar,
+]
+
+router.post(
+  '/:id/vencimiento',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarRelevoVencimiento,
+  relevarVencimientoClinico
 )
 
 module.exports = router

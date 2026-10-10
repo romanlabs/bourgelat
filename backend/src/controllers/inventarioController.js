@@ -4,6 +4,9 @@ const Producto = require('../models/Producto');
 const MovimientoInventario = require('../models/MovimientoInventario');
 const { parsePaginacion } = require('../utils/paginacion');
 const { PRODUCTOS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads');
+const { clasificarVencimiento, hoyISO, sumarDiasISO, DIAS_ALERTA_VENCIMIENTO } = require('../utils/vencimiento');
+const { actualizarVencimiento } = require('../services/vencimientoService');
+const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
 
 const MEDICATION_CATEGORIES = ['medicamento', 'vacuna', 'antiparasitario', 'suplemento'];
 const MOVEMENT_REASON_ALIASES = {
@@ -320,19 +323,14 @@ const obtenerProductos = async (req, res) => {
     });
 
     // Alertas de bajo stock y vencimiento
-    const hoy = new Date();
-    const en30dias = new Date();
-    en30dias.setDate(en30dias.getDate() + 30);
+    const hoy = hoyISO();
 
     const productosConAlertas = rows.map(p => {
       const alertas = [];
       if (p.stock <= p.stockMinimo) alertas.push('bajo_stock');
-      if (p.fechaVencimiento && new Date(p.fechaVencimiento) <= en30dias) {
-        alertas.push('proximo_vencimiento');
-      }
-      if (p.fechaVencimiento && new Date(p.fechaVencimiento) < hoy) {
-        alertas.push('vencido');
-      }
+      const estadoVencimiento = clasificarVencimiento(p, hoy);
+      if (estadoVencimiento === 'vencido') alertas.push('vencido');
+      if (estadoVencimiento === 'proximo') alertas.push('proximo_vencimiento');
       return { ...p.toJSON(), alertas };
     });
 
@@ -517,6 +515,57 @@ const registrarMovimiento = async (req, res) => {
   }
 };
 
+const relevarVencimiento = async (req, res) => {
+  try {
+    const { id: productoId } = req.params;
+    const { clinicaId } = req.usuario;
+    const { cantidadVencida, nuevaFechaVencimiento, observaciones } = req.body;
+
+    const respuesta = await sequelize.transaction(async (transaction) => {
+      const producto = await Producto.findOne({
+        where: { id: productoId, clinicaId, activo: true },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+
+      if (!producto) {
+        return { status: 404, body: { message: 'Producto no encontrado' } };
+      }
+
+      const datosAnteriores = { stock: producto.stock, fechaVencimiento: producto.fechaVencimiento };
+
+      const resultado = await actualizarVencimiento({
+        item: producto,
+        MovimientoModelo: MovimientoInventario,
+        camposMovimiento: { productoId, usuarioId: req.usuario.id, clinicaId },
+        precioUnitario: Number(producto.precioCompra) || 0,
+        cantidadVencida,
+        nuevaFechaVencimiento,
+        observaciones,
+        transaction,
+      });
+
+      return { ...resultado, datosAnteriores };
+    });
+
+    if (respuesta.status === 200) {
+      await registrarAuditoria({
+        accion: 'RELEVAR_VENCIMIENTO_PRODUCTO',
+        entidad: 'Producto',
+        entidadId: productoId,
+        descripcion: `Vencimiento actualizado: ${respuesta.body.stockAnterior - respuesta.body.stockNuevo} unidades retiradas`,
+        datosAnteriores: respuesta.datosAnteriores,
+        datosNuevos: { stock: respuesta.body.stockNuevo, fechaVencimiento: respuesta.body.fechaVencimiento },
+        req,
+      });
+    }
+
+    return res.status(respuesta.status).json(respuesta.body);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const eliminarProducto = async (req, res) => {
   try {
     const { id } = req.params;
@@ -542,9 +591,8 @@ const eliminarProducto = async (req, res) => {
 const obtenerAlertas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
-    const hoy = new Date();
-    const en30dias = new Date();
-    en30dias.setDate(en30dias.getDate() + 30);
+    const hoy = hoyISO();
+    const en30dias = sumarDiasISO(hoy, DIAS_ALERTA_VENCIMIENTO);
 
     const bajoStock = await Producto.findAll({
       where: {
@@ -559,6 +607,7 @@ const obtenerAlertas = async (req, res) => {
       where: {
         clinicaId,
         activo: true,
+        stock: { [Op.gt]: 0 },
         fechaVencimiento: { [Op.between]: [hoy, en30dias] },
       },
       attributes: ['id', 'nombre', 'stock', 'fechaVencimiento', 'categoria'],
@@ -568,6 +617,7 @@ const obtenerAlertas = async (req, res) => {
       where: {
         clinicaId,
         activo: true,
+        stock: { [Op.gt]: 0 },
         fechaVencimiento: { [Op.lt]: hoy },
       },
       attributes: ['id', 'nombre', 'stock', 'fechaVencimiento', 'categoria'],
@@ -735,6 +785,7 @@ module.exports = {
   editarProducto,
   eliminarProducto,
   registrarMovimiento,
+  relevarVencimiento,
   obtenerAlertas,
   obtenerProductoPorBarcode,
   obtenerCatalogoMedicamentos,

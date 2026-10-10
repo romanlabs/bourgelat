@@ -11,6 +11,7 @@ const InsumoClinico = require('../models/InsumoClinico');
 const Gasto = require('../models/Gasto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 const { tenantWhere } = require('../utils/tenant');
+const { clasificarVencimiento, hoyISO } = require('../utils/vencimiento');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -113,16 +114,14 @@ const reporteInventario = async (req, res) => {
       order: [['categoria', 'ASC'], ['nombre', 'ASC']],
     });
 
-    const hoy = new Date();
-    const en30dias = new Date();
-    en30dias.setDate(en30dias.getDate() + 30);
+    const hoy = hoyISO();
 
     const resumen = {
       totalProductos: productos.length,
       valorTotalInventario: productos.reduce((sum, p) => sum + (parseFloat(p.precioVenta) * p.stock), 0),
       bajoStock: productos.filter(p => p.stock <= p.stockMinimo).length,
-      vencidos: productos.filter(p => p.fechaVencimiento && new Date(p.fechaVencimiento) < hoy).length,
-      proximosVencer: productos.filter(p => p.fechaVencimiento && new Date(p.fechaVencimiento) <= en30dias && new Date(p.fechaVencimiento) >= hoy).length,
+      vencidos: productos.filter(p => clasificarVencimiento(p, hoy) === 'vencido').length,
+      proximosVencer: productos.filter(p => clasificarVencimiento(p, hoy) === 'proximo').length,
     };
 
     const porCategoria = productos.reduce((acc, p) => {
@@ -144,8 +143,8 @@ const reporteInventario = async (req, res) => {
       totalInsumos: insumos.length,
       valorTotalInventario: insumos.reduce((sum, i) => sum + (parseFloat(i.precioUnitarioBase) * parseFloat(i.stock)), 0),
       bajoStock: insumos.filter(i => parseFloat(i.stock) <= parseFloat(i.stockMinimo)).length,
-      vencidos: insumos.filter(i => i.fechaVencimiento && new Date(i.fechaVencimiento) < hoy).length,
-      proximosVencer: insumos.filter(i => i.fechaVencimiento && new Date(i.fechaVencimiento) <= en30dias && new Date(i.fechaVencimiento) >= hoy).length,
+      vencidos: insumos.filter(i => clasificarVencimiento(i, hoy) === 'vencido').length,
+      proximosVencer: insumos.filter(i => clasificarVencimiento(i, hoy) === 'proximo').length,
     };
 
     res.json({ resumen, porCategoria, productos, resumenClinico, insumos });
