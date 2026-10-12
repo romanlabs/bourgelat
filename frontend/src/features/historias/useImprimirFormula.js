@@ -12,11 +12,13 @@ import { descargarHistoriaPdf } from './historiaPdf'
  */
 function useImprimirDocumento(descargar, mensajeError) {
   const clinica = useAuthStore((state) => state.clinica)
+  // La historia impresa dice quien la imprimio.
+  const usuario = useAuthStore((state) => state.usuario)
 
   const mutation = useMutation({
     mutationFn: async (historiaId) => {
       const { historia } = await historiasApi.obtenerHistoria(historiaId)
-      await descargar({ historia, clinica })
+      await descargar({ historia, clinica, usuario })
     },
     onError: () => toast.error(mensajeError),
   })
