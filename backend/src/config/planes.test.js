@@ -27,10 +27,10 @@ for (const legado of ['inicio', 'clinica', 'profesional']) {
   assert.strictEqual(PLANES[legado], undefined, `'${legado}' no debe tener configuracion`)
 }
 
-// ── Los cuatro planes ofrecidos ───────────────────────────────────────────
+// ── Los cinco planes ofrecidos ───────────────────────────────────────────
 assert.deepStrictEqual(
   PLAN_KEYS_ACTIVOS,
-  ['prueba', 'activo', 'cortesia', 'personalizado'],
+  ['prueba', 'esencial', 'activo', 'cortesia', 'personalizado'],
   'planes ofrecidos'
 )
 assert.deepStrictEqual(Object.keys(PLANES).sort(), [...PLAN_KEYS_ACTIVOS].sort())
@@ -52,6 +52,16 @@ assert.strictEqual(PLANES.activo.precioAnual, 75000)
 assert.strictEqual(PLANES.activo.limiteUsuarios, USUARIOS_BASE)
 assert.strictEqual(USUARIOS_BASE, 3)
 assert.strictEqual(PLANES.activo.almacenamientoMB, 20480)
+
+assert.strictEqual(PLANES.esencial.precioMensual, 49000)
+assert.strictEqual(PLANES.esencial.precioAnual, 41000)
+assert.strictEqual(PLANES.esencial.limiteUsuarios, 1)
+assert.strictEqual(PLANES.esencial.almacenamientoMB, 5120)
+assert.ok(PLANES.esencial.precioMensual < PLANES.activo.precioMensual)
+assert.ok(!PLANES.esencial.funcionalidades.includes('reportes_completos'))
+assert.ok(!PLANES.esencial.funcionalidades.includes('exportables'))
+assert.ok(PLANES.esencial.funcionalidades.includes('reportes_operativos'))
+assert.ok(PLANES.activo.funcionalidades.includes('reportes_completos'))
 
 assert.strictEqual(PLANES.prueba.limiteUsuarios, 2)
 assert.strictEqual(PLANES.prueba.almacenamientoMB, 2048)
@@ -90,6 +100,14 @@ assert.strictEqual(cortesia.fechaFin, CORTESIA_END_DATE)
 // ── PLANES_PUBLICOS solo expone lo ofrecido ───────────────────────────────
 assert.deepStrictEqual(Object.keys(PLANES_PUBLICOS).sort(), [...PLAN_KEYS_ACTIVOS].sort())
 assert.strictEqual(PLANES_PUBLICOS.activo.key, 'activo')
-assert.strictEqual(PLANES_PUBLICOS.activo.nombre, 'Bourgelat')
+assert.strictEqual(PLANES_PUBLICOS.activo.nombre, 'Clinica')
+assert.strictEqual(PLANES_PUBLICOS.esencial.nombre, 'Esencial')
+
+// ── Totales anuales derivados ─────────────────────────────────────────────
+assert.strictEqual(PLANES_PUBLICOS.activo.precioAnualTotal, 900000)
+assert.strictEqual(PLANES_PUBLICOS.activo.ahorroAnual, 168000)
+assert.strictEqual(PLANES_PUBLICOS.esencial.precioAnualTotal, 492000)
+assert.strictEqual(PLANES_PUBLICOS.esencial.ahorroAnual, 96000)
+assert.strictEqual(PLANES_PUBLICOS.prueba.ahorroAnual, 0)
 
 console.log('planes.test.js: todos los tests pasaron ✔')

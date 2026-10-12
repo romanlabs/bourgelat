@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { obtenerVencimientosSiguientes } from './facturaCompraApi'
 
-export default function VencimientosSiguientes({ productoId, insumoClinicoId, onUsar }) {
+// `desde` (YYYY-MM-DD) oculta fechas anteriores: al relevar un vencimiento solo
+// sirve una fecha que todavia no haya pasado.
+export default function VencimientosSiguientes({ productoId, insumoClinicoId, onUsar, desde }) {
   const id = productoId || insumoClinicoId
   const { data } = useQuery({
     queryKey: ['vencimientos-siguientes', id],
@@ -11,7 +13,9 @@ export default function VencimientosSiguientes({ productoId, insumoClinicoId, on
     retry: false,
   })
 
-  const vencimientos = data?.vencimientos ?? []
+  const vencimientos = (data?.vencimientos ?? []).filter(
+    (v) => !desde || String(v.fechaVencimiento) >= desde
+  )
   if (!vencimientos.length) return null
 
   return (

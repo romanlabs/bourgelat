@@ -2,7 +2,7 @@
 // Suscripcion.plan es un ENUM de Postgres y sus valores no se pueden eliminar
 // sin recrear el tipo. Hay filas historicas apuntando aqui.
 const PLAN_KEYS_LEGADO = ['inicio', 'clinica', 'profesional']
-const PLAN_KEYS_ACTIVOS = ['prueba', 'activo', 'cortesia', 'personalizado']
+const PLAN_KEYS_ACTIVOS = ['prueba', 'esencial', 'activo', 'cortesia', 'personalizado']
 const PLAN_KEYS = [...PLAN_KEYS_LEGADO, ...PLAN_KEYS_ACTIVOS]
 
 const DEFAULT_INITIAL_PLAN = 'prueba'
@@ -17,6 +17,10 @@ const FUNCIONALIDAD_DIAN = 'facturacion_electronica'
 const DOCUMENTOS_DIAN_INCLUIDOS = 200
 const PRECIO_DIAN_MENSUAL = 49000
 const PRECIO_DIAN_DOCUMENTO_EXCEDENTE = 250
+
+// Lo que Clinica agrega sobre Esencial: analitica de agenda y rentabilidad
+// (`reportes_completos`) y exportables. Esencial conserva los reportes operativos.
+const FUNCIONALIDADES_SOLO_CLINICA = ['reportes_completos', 'exportables']
 
 const FUNCIONALIDADES_COMPLETAS = [
   'citas',
@@ -64,8 +68,21 @@ const PLANES = {
     almacenamientoMB: 2048,
     funcionalidades: funcionalidadesCompletas(),
   },
+  esencial: {
+    nombre: 'Esencial',
+    descripcion:
+      'Para consultorios pequenos que empiezan: todo el sistema con un usuario, menos almacenamiento y reportes operativos.',
+    precioMensual: 49000,
+    precioAnual: 41000,
+    limiteUsuarios: 1,
+    limiteMascotas: null,
+    almacenamientoMB: 5120,
+    funcionalidades: funcionalidadesCompletas().filter(
+      (funcionalidad) => !FUNCIONALIDADES_SOLO_CLINICA.includes(funcionalidad)
+    ),
+  },
   activo: {
-    nombre: 'Bourgelat',
+    nombre: 'Clinica',
     descripcion:
       'Toda la operacion de la clinica en un solo sistema, sin limites de pacientes, historias ni facturas.',
     precioMensual: 89000,
@@ -179,6 +196,8 @@ const PLANES_PUBLICOS = Object.entries(PLANES).reduce((acc, [key, value]) => {
     descripcion: value.descripcion,
     precioMensual: value.precioMensual,
     precioAnual: value.precioAnual,
+    precioAnualTotal: value.precioAnual * 12,
+    ahorroAnual: Math.max(0, (value.precioMensual - value.precioAnual) * 12),
     limiteUsuarios: value.limiteUsuarios,
     limiteMascotas: value.limiteMascotas,
     almacenamientoMB: value.almacenamientoMB,

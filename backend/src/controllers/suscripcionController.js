@@ -54,7 +54,7 @@ const obtenerHistorialSuscripciones = async (req, res) => {
 const obtenerPlanes = async (req, res) => {
   res.json({
     defaultPlan: DEFAULT_INITIAL_PLAN,
-    recommendedPlan: 'profesional',
+    recommendedPlan: 'activo',
     planes: PLANES_PUBLICOS,
   })
 }

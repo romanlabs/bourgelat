@@ -1,6 +1,6 @@
 # Roadmap Bourgelat
 
-> Plan de suscripcion vigente: plan unico (`activo`), sin capa gratuita, prueba de
+> Plan de suscripcion vigente: dos planes pagos (`esencial` y `activo`/Clinica), sin capa gratuita, prueba de
 > 30 dias y facturacion electronica DIAN como add-on opcional (no incluido de
 > fabrica). Fuente de verdad: `backend/src/config/planes.js`, no duplicar valores aqui.
 
@@ -34,7 +34,7 @@
 - Hosting productivo con HTTPS, despliegue repetible y base de datos gestionada — hecho (Render).
 - Backups automaticos, restauracion y politicas de secretos.
 - Monitoreo de salud, errores y alertas basicas.
-- Plan unico con precio y periodo de prueba claros, comunicacion comercial consistente.
+- Dos planes (Esencial y Clinica) con precio, total anual y periodo de prueba claros, comunicacion comercial consistente.
 - Facturacion electronica (DIAN) ofrecida como add-on opcional, presentada al
   usuario como beneficio de plan y no como complejidad tecnica; el plan base
   (v1) no la incluye por defecto.

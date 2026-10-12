@@ -23,6 +23,7 @@ import ProductoDrawer from '@/features/inventario/ProductoDrawer'
 import FacturaCompraDrawer from '@/features/inventario/FacturaCompraDrawer'
 import FacturaCompraDetalleModal from '@/features/inventario/FacturaCompraDetalleModal'
 import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
+import ActualizarVencimientoDialog from '@/features/inventario/ActualizarVencimientoDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { DESTINO_BADGE } from '@/features/inventario/inventarioUtils'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
@@ -257,6 +258,7 @@ export default function InventarioPage() {
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
+  const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   // Todos los planes incluyen inventario y reportes operativos.
@@ -299,6 +301,19 @@ export default function InventarioPage() {
     if (tabId === 'productos' && inventarioSeleccionado === null) {
       setSelectorOpen(true)
     }
+  }
+
+  function abrirRelevoVencimiento(item, tipo) {
+    setRelevoVencimiento({
+      tipo,
+      item: {
+        id: item.id,
+        nombre: item.nombre,
+        stock: item.stock,
+        fechaVencimiento: item.fechaVencimiento,
+        unidad: tipo === 'insumo' ? item.unidadBase : undefined,
+      },
+    })
   }
 
   function handleMovimientoClick(producto) {
@@ -486,6 +501,20 @@ export default function InventarioPage() {
                     { key: 'nombre', label: 'Producto / insumo' },
                     { key: 'categoria', label: 'Categoría' },
                     { key: 'detalle', label: 'Detalle' },
+                    {
+                      key: 'accion',
+                      label: 'Acciones',
+                      render: (row) =>
+                        row.tipo === 'Vencido' || row.tipo === 'Proximo a vencer' ? (
+                          <button
+                            type="button"
+                            onClick={() => abrirRelevoVencimiento(row.raw, row.inventario === 'clinico' ? 'insumo' : 'producto')}
+                            className="text-sm font-semibold text-warning hover:underline"
+                          >
+                            Actualizar vencimiento
+                          </button>
+                        ) : null,
+                    },
                   ]}
                   emptyTitle="No hay alertas activas"
                   emptyBody="Cuando las cantidades o los vencimientos requieran atención, aparecerán aquí."
@@ -611,6 +640,15 @@ export default function InventarioPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-3">
+                          {(row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && (
+                            <button
+                              type="button"
+                              onClick={() => abrirRelevoVencimiento(row.raw, 'producto')}
+                              className="text-sm font-semibold text-warning hover:underline"
+                            >
+                              Actualizar vencimiento
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleMovimientoClick(row.raw)}
@@ -752,6 +790,15 @@ export default function InventarioPage() {
                       label: 'Acciones',
                       render: (row) => (
                         <div className="flex flex-wrap gap-3">
+                          {(row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && (
+                            <button
+                              type="button"
+                              onClick={() => abrirRelevoVencimiento(row.raw, 'insumo')}
+                              className="text-sm font-semibold text-warning hover:underline"
+                            >
+                              Actualizar vencimiento
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => insumosClinicosHook.openEditDrawer(row.raw)}
@@ -1251,6 +1298,12 @@ export default function InventarioPage() {
           guardarInventario(inv)
           setSelectorOpen(false)
         }}
+      />
+
+      <ActualizarVencimientoDialog
+        item={relevoVencimiento?.item ?? null}
+        tipo={relevoVencimiento?.tipo}
+        onClose={() => setRelevoVencimiento(null)}
       />
 
       {/* Drawer de producto (Fase 3a+3b) */}

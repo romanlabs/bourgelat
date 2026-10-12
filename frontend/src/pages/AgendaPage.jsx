@@ -30,6 +30,8 @@ import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
 import { useAuthStore } from '@/store/authStore'
+import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
+import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
 import { hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
@@ -116,6 +118,8 @@ function RestrictedAgendaPage() {
 
 export default function AgendaPage() {
   const usuario = useAuthStore((state) => state.usuario)
+  const suscripcion = useAuthStore((state) => state.suscripcion)
+  const incluyeAnalitica = tieneFuncionalidad(suscripcion, FUNCIONALIDAD_REPORTES_COMPLETOS)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
@@ -582,9 +586,17 @@ export default function AgendaPage() {
           {/* ══════════════════════════════
               Tab: Analítica
           ══════════════════════════════ */}
-          {activeTab === 'analitica' && (
-            <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
-          )}
+          {activeTab === 'analitica' &&
+            (incluyeAnalitica ? (
+              <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
+            ) : (
+              <div className="pt-5">
+                <FuncionNoIncluida
+                  titulo="La analítica de agenda es del plan Clínica"
+                  descripcion="Tu plan Esencial incluye la agenda completa. La analítica con tendencias, franjas horarias y carga del equipo está en el plan Clínica."
+                />
+              </div>
+            ))}
         </div>
       )}
 

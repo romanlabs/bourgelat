@@ -12,7 +12,7 @@ const crearMascota = async (req, res) => {
   try {
     const {
       nombre, especie, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones, propietarioId, fotoPerfil
+      peso, color, esterilizado, observaciones, propietarioId, fotoPerfil
     } = req.body;
     const { clinicaId } = req.usuario;
 
@@ -27,7 +27,7 @@ const crearMascota = async (req, res) => {
 
     const mascota = await Mascota.create({
       nombre, especie, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones, fotoPerfil,
+      peso, color, esterilizado, observaciones, fotoPerfil,
       propietarioId, clinicaId,
     });
 
@@ -81,7 +81,6 @@ const obtenerMascotas = async (req, res) => {
     if (buscar) {
       const condiciones = [
         iLikeSinTildes('Mascota.nombre', buscar),
-        iLikeSinTildes('Mascota.microchip', buscar),
         iLikeSinTildes('Mascota.raza', buscar),
         iLikeSinTildes('Mascota.especieDetalle', buscar),
       ];
@@ -157,7 +156,6 @@ const editarMascota = async (req, res) => {
       peso,
       color,
       esterilizado,
-      microchip,
       observaciones,
       fotoPerfil,
     } = req.body;
@@ -170,7 +168,7 @@ const editarMascota = async (req, res) => {
 
     const cambios = {
       nombre, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, microchip, observaciones, fotoPerfil,
+      peso, color, esterilizado, observaciones, fotoPerfil,
     };
 
     await mascota.update(cambios);

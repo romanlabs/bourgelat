@@ -79,4 +79,9 @@ export const inventarioApi = {
     const { data } = await api.post(`/inventario/${productoId}/movimiento`, payload)
     return data
   },
+
+  async relevarVencimiento(productoId, payload) {
+    const { data } = await api.post(`/inventario/${productoId}/vencimiento`, payload)
+    return data
+  },
 }

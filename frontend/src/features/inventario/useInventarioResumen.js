@@ -62,6 +62,7 @@ export function useInventarioResumen({ enabled }) {
       nombre: item.nombre,
       categoria: item.categoria,
       detalle,
+      raw: item,
     })
     const porVencimiento = (tipo, clave) => [
       ...(ventas?.[clave]?.productos || []).map((p) => fila(tipo, 'ventas', p, formatLongDate(p.fechaVencimiento))),

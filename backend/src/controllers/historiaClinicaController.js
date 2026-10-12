@@ -3,6 +3,8 @@ const Mascota = require('../models/Mascota')
 const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const Cita = require('../models/Cita')
+const AntecedentesMascota = require('../models/AntecedentesMascota')
+const ExamenLaboratorio = require('../models/ExamenLaboratorio')
 const Producto = require('../models/Producto')
 const InsumoClinico = require('../models/InsumoClinico')
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico')
@@ -638,10 +640,16 @@ const obtenerHistoria = async (req, res) => {
     const historia = await HistoriaClinica.findOne({
       where: { id, clinicaId },
       include: [
-        // sexo y especieDetalle alimentan la formula impresa para el tutor.
-        { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil'] },
-        { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        // Lo que lleva la historia impresa: identificacion completa del paciente
+        // (createdAt es la fecha de apertura) y sus antecedentes.
+        {
+          model: Mascota,
+          as: 'mascota',
+          attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil', 'color', 'esterilizado', 'createdAt'],
+          include: [{ model: AntecedentesMascota, as: 'antecedentes', required: false }],
+        },
+        { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email', 'tipoDocumento', 'numeroDocumento', 'direccion', 'ciudad'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'tarjetaProfesional'] },
         { model: Cita, as: 'cita', attributes: ['id', 'fecha', 'tipoCita'] },
       ],
     })
@@ -650,7 +658,15 @@ const obtenerHistoria = async (req, res) => {
       return res.status(404).json({ message: 'Historia clinica no encontrada' })
     }
 
-    res.json({ historia })
+    // Anexos: los examenes no se ligan a la historia sino al paciente y la
+    // fecha; se toman los registrados el mismo dia de la atencion.
+    const examenesDelDia = await ExamenLaboratorio.findAll({
+      where: { clinicaId, mascotaId: historia.mascotaId, fecha: formatDateOnlyLocal(historia.fechaConsulta) },
+      attributes: ['id', 'tipo', 'fecha', 'laboratorio', 'archivoNombre'],
+      order: [['createdAt', 'ASC']],
+    })
+
+    res.json({ historia: { ...historia.toJSON(), examenesDelDia } })
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }

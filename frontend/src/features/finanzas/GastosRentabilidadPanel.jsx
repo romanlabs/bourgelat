@@ -18,6 +18,9 @@ import {
   useRentabilidad,
 } from '@/features/finanzas/useAdministracion'
 import { mesLocal } from '@/lib/fecha'
+import { useAuthStore } from '@/store/authStore'
+import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
+import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
 
 const CATEGORIAS = [
   { value: 'nomina', label: 'Nómina' },
@@ -381,7 +384,9 @@ function CuentasPorCobrarPanel() {
 export default function GastosRentabilidadPanel() {
   const [mes, setMes] = useState(() => mesLocal())
   const periodo = useMemo(() => rangoDelMes(mes), [mes])
-  const rentabilidad = useRentabilidad(periodo)
+  const suscripcion = useAuthStore((state) => state.suscripcion)
+  const incluyeRentabilidad = tieneFuncionalidad(suscripcion, FUNCIONALIDAD_REPORTES_COMPLETOS)
+  const rentabilidad = useRentabilidad(periodo, { enabled: incluyeRentabilidad })
   const cuentasPorCobrar = useCuentasPorCobrar()
 
   const ganancia = Number(rentabilidad.data?.ganancia || 0)
@@ -389,7 +394,16 @@ export default function GastosRentabilidadPanel() {
 
   return (
     <div className="space-y-5">
+      {!incluyeRentabilidad && (
+        <FuncionNoIncluida
+          size="sm"
+          titulo="La rentabilidad del mes es del plan Clínica"
+          descripcion="Tu plan Esencial incluye gastos y cuentas por cobrar. El cálculo de ingresos, gastos y ganancia del mes está en el plan Clínica."
+        />
+      )}
       <div className="grid gap-4 xl:grid-cols-4">
+        {incluyeRentabilidad && (
+          <>
         <KpiCard
           icon={Wallet}
           label="Ingresos del mes"
@@ -411,6 +425,8 @@ export default function GastosRentabilidadPanel() {
           helper={rentabilidad.data?.margen ? `Margen ${rentabilidad.data.margen} sobre ingresos.` : 'Ingresos menos gastos del periodo.'}
           tone={positiva ? 'text-success' : 'text-danger'}
         />
+          </>
+        )}
         <KpiCard
           icon={HandCoins}
           label="Total por cobrar"

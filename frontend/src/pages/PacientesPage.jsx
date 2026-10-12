@@ -272,7 +272,7 @@ export default function PacientesPage() {
                   <SearchInput
                     value={mascotasHook.buscar}
                     onChange={mascotasHook.setBuscar}
-                    placeholder="Nombre, raza, microchip o tutor"
+                    placeholder="Nombre, raza o tutor"
                     ariaLabel="Buscar paciente"
                     cargando={mascotasHook.mascotasQuery.isFetching}
                     className="w-72 max-w-full"
@@ -383,7 +383,7 @@ export default function PacientesPage() {
                   }
                   emptyBody={
                     mascotasHook.buscarAplicado
-                      ? 'Puedes buscar por nombre, raza, microchip o por los datos del tutor.'
+                      ? 'Puedes buscar por nombre, raza o por los datos del tutor.'
                       : 'Registra el primer paciente con el boton Nuevo paciente.'
                   }
                 />

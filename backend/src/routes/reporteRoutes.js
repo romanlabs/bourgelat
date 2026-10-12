@@ -11,6 +11,9 @@ const {
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
+const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+
+const requiereReportesCompletos = requerirFuncionalidades('reportes_completos')
 
 const router = express.Router()
 
@@ -28,6 +31,7 @@ router.get(
   '/rentabilidad',
   verificarToken,
   verificarRol('admin', 'superadmin'),
+  requiereReportesCompletos,
   reporteRentabilidad
 )
 
@@ -43,6 +47,7 @@ router.get(
   '/agenda',
   verificarToken,
   verificarRol('admin', 'superadmin', 'veterinario'),
+  requiereReportesCompletos,
   [
     query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
     query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
