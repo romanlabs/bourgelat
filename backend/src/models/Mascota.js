@@ -48,10 +48,6 @@ const Mascota = sequelize.define('Mascota', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  microchip: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
   observaciones: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -86,7 +82,6 @@ const Mascota = sequelize.define('Mascota', {
   indexes: [
   { fields: ['propietarioId'] },
   { fields: ['clinicaId', 'activo'] },
-  { fields: ['microchip'] },
   { fields: ['clinicaId', 'especie'] },
 ]
 });
