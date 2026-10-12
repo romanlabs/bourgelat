@@ -2,6 +2,7 @@
 // compró; el estado dice si la clínica puede escribir.
 
 export const FUNCIONALIDAD_DIAN = 'facturacion_electronica'
+export const FUNCIONALIDAD_REPORTES_COMPLETOS = 'reportes_completos'
 
 export const esSoloLectura = (suscripcion) => suscripcion?.estado === 'solo_lectura'
 

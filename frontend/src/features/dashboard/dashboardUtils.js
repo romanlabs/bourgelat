@@ -2,7 +2,7 @@ import { chartColors } from '@/lib/theme'
 
 const TONO_LEGADO = 'bg-muted text-muted-foreground border-border'
 
-// Las cuatro primeras son la oferta vigente. Las tres ultimas son legado: no se
+// Las cinco primeras son la oferta vigente. Las tres ultimas son legado: no se
 // ofrecen, pero el historial de suscripciones todavia las contiene y sin su
 // etiqueta las filas viejas se verian con la llave cruda.
 export const PLAN_META = {
@@ -10,8 +10,12 @@ export const PLAN_META = {
     nombre: 'Prueba',
     tone: 'bg-info-soft text-info border-info/30',
   },
+  esencial: {
+    nombre: 'Esencial',
+    tone: 'bg-info-soft text-info border-info/30',
+  },
   activo: {
-    nombre: 'Bourgelat',
+    nombre: 'Clínica',
     tone: 'bg-success-soft text-success border-success/30',
   },
   cortesia: {
@@ -22,7 +26,7 @@ export const PLAN_META = {
     nombre: 'Personalizado',
     tone: 'bg-card text-foreground border-foreground/20',
   },
-  inicio: { nombre: 'Esencial (legado)', tone: TONO_LEGADO },
+  inicio: { nombre: 'Inicio (legado)', tone: TONO_LEGADO },
   clinica: { nombre: 'Clinica (legado)', tone: TONO_LEGADO },
   profesional: { nombre: 'Profesional (legado)', tone: TONO_LEGADO },
 }
