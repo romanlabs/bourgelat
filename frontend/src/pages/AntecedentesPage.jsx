@@ -750,7 +750,7 @@ export default function AntecedentesPage() {
                     type="text"
                     value={petSearch}
                     onChange={(e) => setPetSearch(e.target.value)}
-                    placeholder="Buscar paciente por nombre o microchip"
+                    placeholder="Buscar paciente por nombre"
                     className="h-11 w-full border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                 </div>
