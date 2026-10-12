@@ -1,29 +1,26 @@
 import { toast } from 'sonner'
+import { cargarLogo, nombreClinica } from '@/lib/pdfComun'
 import {
-  BRAND,
-  MARGIN,
-  MUTED,
-  TEXT,
-  cargarLogo,
-  dibujarEncabezado,
-  dibujarPie,
-} from '@/lib/pdfComun'
+  altoPie,
+  crearCompositor,
+  dibujarEncabezadoFormal,
+  dibujarFirma,
+  dibujarPieFormal,
+  formatFechaNumerica,
+  lineaImpreso,
+} from '@/lib/pdfFormal'
 import {
   SEXO_LABELS,
-  alturaLinea,
   calcularEdad,
+  capitalizar,
   describirEspecie,
-  dibujarCajasPacienteTutor,
   dibujarMedicamentos,
-  dibujarProximoControl,
-  dibujarTituloSeccion,
   formatFechaCorta,
   formatNumero,
   nombreArchivo,
   normalizarMedicamentos,
   parseFecha,
   parseFechaLocal,
-  saltarSiNoCabe,
   texto,
 } from './historiaPdfComun'
 
@@ -31,124 +28,87 @@ import {
 // posologia de cada medicamento, las indicaciones generales y el proximo
 // control. Media carta, como una formula medica tradicional, para imprimirla o
 // mandarla por WhatsApp. El diagnostico no va: se queda en la historia clinica.
+// Mismo estilo formal de la historia, con la firma del veterinario.
 
 const MEDIA_CARTA = [139.7, 215.9]
-// El pie ocupa los ultimos 14mm; se deja aire para que nada se le monte.
-const LIMITE_INFERIOR = 20
 
 export const tienePlanFarmacologico = (historia) =>
   normalizarMedicamentos(historia?.medicamentos).length > 0 || texto(historia?.indicaciones).length > 0
 
-export const buildFormulaPdf = async ({ historia, clinica }) => {
+export const buildFormulaPdf = async ({ historia, clinica, usuario }) => {
   const { jsPDF } = await import('jspdf')
 
   const doc = new jsPDF({ unit: 'mm', format: MEDIA_CARTA, compress: true })
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const anchoUtil = pageWidth - MARGIN * 2
-  const altoCuerpo = alturaLinea(9)
+  const lineasPie = [lineaImpreso(usuario)]
+  const c = crearCompositor(doc, { limiteInferior: altoPie(doc, { lineas: lineasPie }), cuerpo: 9 })
 
-  const logo = await cargarLogo(clinica?.logo)
-  let y = dibujarEncabezado(doc, { clinica, logo }) + 2
-
-  const reservar = (alto) => {
-    y = saltarSiNoCabe(doc, { y, alto, limiteInferior: LIMITE_INFERIOR })
-  }
-
-  // ── Franja del documento ──
-  const fechaConsulta = parseFecha(historia?.fechaConsulta)
-  doc.setFillColor(...BRAND)
-  doc.rect(MARGIN, y, anchoUtil, 8, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.setTextColor(255, 255, 255)
-  doc.text('FÓRMULA MÉDICA VETERINARIA', MARGIN + 3, y + 5.4)
-  if (fechaConsulta) {
-    doc.setFont('helvetica', 'normal')
-    doc.text(formatFechaCorta(fechaConsulta), pageWidth - MARGIN - 3, y + 5.4, { align: 'right' })
-  }
-  y += 12
-
-  // ── Paciente y tutor ──
   const mascota = historia?.mascota || {}
   const propietario = historia?.propietario || {}
-  const edad = calcularEdad(mascota.fechaNacimiento, fechaConsulta || new Date())
+  const fechaConsulta = parseFecha(historia?.fechaConsulta)
 
-  y = dibujarCajasPacienteTutor(doc, {
-    y,
-    anchoUtil,
-    paciente: {
-      titulo: texto(mascota.nombre) || 'Paciente',
-      lineas: [
-        [describirEspecie(mascota), texto(mascota.raza), SEXO_LABELS[mascota.sexo]].filter(Boolean).join(' · '),
-        [edad && `Edad: ${edad}`, historia?.peso ? `Peso: ${formatNumero(historia.peso)} kg` : null]
-          .filter(Boolean)
-          .join(' · '),
-      ].filter(Boolean),
-    },
-    tutor: {
-      titulo: texto(propietario.nombre) || 'Sin tutor registrado',
-      lineas: [texto(propietario.telefono) && `Tel. ${texto(propietario.telefono)}`].filter(Boolean),
-    },
+  dibujarEncabezadoFormal(doc, c, {
+    clinica,
+    logo: await cargarLogo(clinica?.logo),
+    titulo: 'FÓRMULA MÉDICA',
+    lineasDerecha: fechaConsulta ? [`Fecha: ${formatFechaNumerica(fechaConsulta)}`] : [],
   })
-  y += 7
+
+  // ── Paciente y propietario ──
+  const edad = calcularEdad(mascota.fechaNacimiento, fechaConsulta || new Date())
+  c.titulo('Paciente', 10)
+  c.campos(
+    [
+      ['Nombre', capitalizar(mascota.nombre)],
+      ['Especie', describirEspecie(mascota), 'No registrada'],
+      ['Raza', capitalizar(mascota.raza), 'No registrada'],
+      ['Sexo', SEXO_LABELS[mascota.sexo]],
+      ['Edad', edad, 'No registrada'],
+      ['Peso', historia?.peso ? `${formatNumero(historia.peso)} kg` : ''],
+    ],
+    3
+  )
+
+  c.titulo('Propietario o responsable', 10)
+  c.campos(
+    [
+      ['Nombre', propietario.nombre, 'No registrado', 2],
+      ['Teléfono', propietario.telefono],
+    ],
+    3
+  )
 
   // ── Medicamentos ──
   const medicamentos = normalizarMedicamentos(historia?.medicamentos)
+  c.titulo('Medicamentos', 14)
   if (medicamentos.length) {
-    reservar(20)
-    dibujarTituloSeccion(doc, 'MEDICAMENTOS', { y, pageWidth })
-    y += 8
-    y = dibujarMedicamentos(doc, { medicamentos, y, limiteInferior: LIMITE_INFERIOR })
-    y += 4
+    c.y = dibujarMedicamentos(doc, { medicamentos, y: c.y - 1, limiteInferior: c.limiteInferior })
+  } else {
+    c.parrafo('', 'No registrados.')
   }
 
-  // ── Indicaciones generales ──
-  const indicaciones = texto(historia?.indicaciones)
-  if (indicaciones) {
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    const lineas = doc.splitTextToSize(indicaciones, anchoUtil)
+  // ── Indicaciones y proximo control ──
+  c.titulo('Indicaciones generales')
+  c.parrafo(historia?.indicaciones, 'No registradas.')
 
-    // El titulo no se queda solo al final de una pagina.
-    reservar(8 + Math.min(lineas.length, 3) * altoCuerpo)
-    dibujarTituloSeccion(doc, 'INDICACIONES GENERALES', { y, pageWidth })
-    y += 8
-
-    for (const linea of lineas) {
-      reservar(altoCuerpo)
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9)
-      doc.setTextColor(...TEXT)
-      doc.text(linea, MARGIN, y + 3)
-      y += altoCuerpo
-    }
-
-    y += 4
-  }
-
-  // ── Proximo control ──
   const proximaConsulta = parseFechaLocal(historia?.proximaConsulta)
-  if (proximaConsulta) {
-    reservar(12)
-    y = dibujarProximoControl(doc, { fecha: proximaConsulta, y })
-  }
+  c.titulo('Próximo control', 6)
+  c.parrafo(proximaConsulta && formatFechaCorta(proximaConsulta), 'No registrado.')
 
-  // ── Profesional ──
-  if (texto(historia?.veterinario?.nombre)) {
-    reservar(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    doc.setTextColor(...MUTED)
-    doc.text(`Médico veterinario: ${texto(historia.veterinario.nombre)}`, MARGIN, y + 3)
-  }
+  // ── Firma ──
+  dibujarFirma(doc, c, {
+    nombre: texto(historia?.veterinario?.nombre) || 'Médico veterinario',
+    cargo: `Médico veterinario · Tarjeta profesional N.º ${texto(historia?.veterinario?.tarjetaProfesional) || 'no registrada'}`,
+  })
 
-  dibujarPie(doc, { clinica, pageWidth, pageHeight })
+  dibujarPieFormal(doc, c, {
+    identificacion: `${capitalizar(mascota.nombre) || 'Paciente'} · Fórmula médica · ${nombreClinica(clinica)}`,
+    lineas: lineasPie,
+  })
 
   return doc
 }
 
-export const descargarFormulaPdf = async ({ historia, clinica }) => {
+export const descargarFormulaPdf = async ({ historia, clinica, usuario }) => {
   if (!historia) {
     toast.error('No hay historia para imprimir.')
     return
@@ -160,7 +120,7 @@ export const descargarFormulaPdf = async ({ historia, clinica }) => {
   }
 
   try {
-    const doc = await buildFormulaPdf({ historia, clinica })
+    const doc = await buildFormulaPdf({ historia, clinica, usuario })
     doc.save(`Formula-${nombreArchivo(historia)}.pdf`)
   } catch (error) {
     console.error('No se pudo generar el PDF de la formula', error)

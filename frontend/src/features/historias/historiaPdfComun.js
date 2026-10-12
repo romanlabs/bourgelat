@@ -1,20 +1,29 @@
-import { BRAND, LINE, MARGIN, MUTED, TEXT } from '@/lib/pdfComun'
+import { LINE, MARGIN, MUTED, TEXT } from '@/lib/pdfComun'
+import { NEGRO, alturaLinea, saltarSiNoCabe, texto } from '@/lib/pdfFormal'
 import { VIA_LABELS } from './historiaConstants'
 import { ESPECIE_LABELS } from '@/lib/especies'
 
-// Piezas que comparten los PDFs que salen de una historia clinica (formula
-// para el tutor, historia completa): formato de datos del paciente, cajas,
-// titulos de seccion y el bloque de medicamentos.
+// Piezas que comparten los PDFs que salen de una historia clinica (historia
+// completa y formula para el tutor): formato de los datos del paciente y el
+// bloque de medicamentos. Lo de composicion vive en lib/pdfFormal.
 
-export const FONDO_SUAVE = [248, 250, 252]
-export const FONDO_CONTROL = [236, 244, 250]
+export { alturaLinea, saltarSiNoCabe, texto }
 
 export const SEXO_LABELS = { macho: 'Macho', hembra: 'Hembra' }
 
-// Alto de linea en mm para un tamano de fuente en puntos.
-export const alturaLinea = (fontSize) => fontSize * 0.3528 * 1.25
+export const TIPO_DOCUMENTO_LABELS = {
+  CC: 'Cédula de ciudadanía',
+  CE: 'Cédula de extranjería',
+  NIT: 'NIT',
+  PP: 'Pasaporte',
+}
 
-export const texto = (value) => String(value ?? '').trim()
+// Los campos cortos (nombre, raza, color) van con mayuscula inicial; los textos
+// clinicos quedan tal como los escribio el veterinario.
+export const capitalizar = (value) => {
+  const valor = texto(value)
+  return valor ? valor.charAt(0).toUpperCase() + valor.slice(1) : ''
+}
 
 // Las historias antiguas guardaban cada medicamento como texto plano.
 export const normalizarMedicamentos = (medicamentos) =>
@@ -95,78 +104,6 @@ export const nombreArchivo = (historia) => {
   return `${mascota}-${fecha.getFullYear()}-${mes}-${dia}`
 }
 
-// Si el siguiente bloque no cabe, pasa entero a una pagina nueva en vez de
-// partirse o montarse sobre el pie. Devuelve la `y` donde dibujar.
-export const saltarSiNoCabe = (doc, { y, alto, limiteInferior }) => {
-  if (y + alto > doc.internal.pageSize.getHeight() - limiteInferior) {
-    doc.addPage()
-    return MARGIN
-  }
-  return y
-}
-
-// Las cajas de paciente y tutor van lado a lado; se miden antes de dibujar
-// para que ambas queden del mismo alto aunque una envuelva mas lineas.
-export const medirCaja = (doc, { etiqueta, titulo, lineas, ancho }) => {
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  const tituloLineas = doc.splitTextToSize(titulo, ancho - 6)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  const detalle = lineas.flatMap((linea) => doc.splitTextToSize(linea, ancho - 6))
-  const ultimaLinea =
-    10 + (tituloLineas.length - 1) * 4.4 + (detalle.length ? 4.4 + (detalle.length - 1) * 3.6 : 0)
-  return { etiqueta, tituloLineas, detalle, alto: ultimaLinea + 3.5 }
-}
-
-export const dibujarCaja = (doc, caja, { x, y, ancho, alto }) => {
-  doc.setDrawColor(...LINE)
-  doc.setFillColor(...FONDO_SUAVE)
-  doc.rect(x, y, ancho, alto, 'FD')
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
-  doc.setTextColor(...MUTED)
-  doc.text(caja.etiqueta, x + 3, y + 5)
-
-  let cursor = y + 10
-  doc.setFontSize(10)
-  doc.setTextColor(...TEXT)
-  for (const linea of caja.tituloLineas) {
-    doc.text(linea, x + 3, cursor)
-    cursor += 4.4
-  }
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(...MUTED)
-  for (const linea of caja.detalle) {
-    doc.text(linea, x + 3, cursor)
-    cursor += 3.6
-  }
-}
-
-// Paciente y tutor lado a lado, del mismo alto. Devuelve la `y` siguiente.
-export const dibujarCajasPacienteTutor = (doc, { y, anchoUtil, paciente, tutor }) => {
-  const separacion = 4
-  const ancho = (anchoUtil - separacion) / 2
-  const cajaPaciente = medirCaja(doc, { etiqueta: 'PACIENTE', ...paciente, ancho })
-  const cajaTutor = medirCaja(doc, { etiqueta: 'TUTOR', ...tutor, ancho })
-  const alto = Math.max(cajaPaciente.alto, cajaTutor.alto)
-  dibujarCaja(doc, cajaPaciente, { x: MARGIN, y, ancho, alto })
-  dibujarCaja(doc, cajaTutor, { x: MARGIN + ancho + separacion, y, ancho, alto })
-  return y + alto
-}
-
-export const dibujarTituloSeccion = (doc, titulo, { y, pageWidth }) => {
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.setTextColor(...MUTED)
-  doc.text(titulo, MARGIN, y + 3)
-  doc.setDrawColor(...LINE)
-  doc.line(MARGIN, y + 4.8, pageWidth - MARGIN, y + 4.8)
-}
-
 // Lista numerada de medicamentos con su posologia. Cada medicamento se mueve
 // entero a la pagina siguiente si no cabe. Devuelve la `y` siguiente.
 export const dibujarMedicamentos = (doc, { medicamentos, y: yInicial, limiteInferior }) => {
@@ -205,7 +142,7 @@ export const dibujarMedicamentos = (doc, { medicamentos, y: yInicial, limiteInfe
     let cursor = y + 4
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10.5)
-    doc.setTextColor(...BRAND)
+    doc.setTextColor(...NEGRO)
     doc.text(`${indice + 1}.`, MARGIN, cursor)
     doc.setTextColor(...TEXT)
     for (const linea of nombreLineas) {
@@ -239,24 +176,3 @@ export const dibujarMedicamentos = (doc, { medicamentos, y: yInicial, limiteInfe
   return y
 }
 
-// Recuadro destacado con la fecha del proximo control. Devuelve la `y` siguiente.
-export const dibujarProximoControl = (doc, { fecha, y }) => {
-  const anchoUtil = doc.internal.pageSize.getWidth() - MARGIN * 2
-  doc.setDrawColor(...BRAND)
-  doc.setFillColor(...FONDO_CONTROL)
-  doc.setLineWidth(0.4)
-  doc.rect(MARGIN, y, anchoUtil, 10, 'FD')
-  doc.setLineWidth(0.2)
-
-  const etiqueta = 'Próximo control: '
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9.5)
-  doc.setTextColor(...BRAND)
-  doc.text(etiqueta, MARGIN + 3, y + 6.3)
-  const anchoEtiqueta = doc.getTextWidth(etiqueta)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(...TEXT)
-  doc.text(formatFechaLarga(fecha), MARGIN + 3 + anchoEtiqueta, y + 6.3)
-
-  return y + 14
-}

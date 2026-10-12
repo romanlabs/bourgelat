@@ -1,21 +1,23 @@
 import { toast } from 'sonner'
 import { PAYMENT_METHOD_LABELS, formatCurrency } from '@/features/dashboard/dashboardUtils'
+import { LINE, MARGIN, MUTED, TEXT, cargarLogo, nombreClinica } from '@/lib/pdfComun'
 import {
-  BRAND,
-  LINE,
-  MARGIN,
-  MUTED,
-  TEXT,
-  cargarLogo,
-  dibujarEncabezado,
-  dibujarPie,
-} from '@/lib/pdfComun'
+  NEGRO,
+  altoPie,
+  crearCompositor,
+  dibujarEncabezadoFormal,
+  dibujarPieFormal,
+  lineaImpreso,
+  texto,
+} from '@/lib/pdfFormal'
+import { TIPO_DOCUMENTO_LABELS } from '@/features/historias/historiaPdfComun'
 import { formatDateTime } from './reciboTermico'
 
 // Segundo formato de salida de una venta, al lado de la tirilla termica de 80mm:
 // una factura tamano carta como archivo PDF descargable, pensada para entregarle
 // al cliente o enviarsela por correo/WhatsApp. La tirilla sigue siendo la del
-// mostrador; esta es la copia presentable.
+// mostrador; esta es la copia presentable, con el mismo estilo formal de la
+// historia clinica y la formula: blanco y negro, sin cajas de color.
 
 // Intl mete un espacio duro entre el simbolo y el numero; en las fuentes base de
 // jsPDF ese caracter no siempre cae en un glifo util, asi que lo normalizamos.
@@ -24,86 +26,19 @@ const money = (value) => formatCurrency(value).replace(/\u00a0/g, ' ')
 const formatCantidad = (value) =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value || 0))
 
-const dibujarBloqueDocumento = (doc, { factura, pageWidth }) => {
-  const ancho = 62
-  const alto = 24
-  const x = pageWidth - MARGIN - ancho
-  const y = MARGIN
-
-  doc.setFillColor(...BRAND)
-  doc.rect(x, y, ancho, 8, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.setTextColor(255, 255, 255)
-  doc.text('FACTURA DE VENTA', x + ancho / 2, y + 5.5, { align: 'center' })
-
-  doc.setDrawColor(...LINE)
-  doc.rect(x, y + 8, ancho, alto - 8)
-
-  doc.setFontSize(12)
-  doc.setTextColor(...TEXT)
-  doc.text(String(factura?.numero || '-'), x + ancho / 2, y + 15, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(...MUTED)
-  doc.text(formatDateTime(factura?.createdAt || factura?.fecha), x + ancho / 2, y + 20.5, {
-    align: 'center',
-  })
-
-  return y + alto
-}
-
 const dibujarSelloAnulada = (doc, { pageWidth, pageHeight }) => {
   doc.saveGraphicsState()
-  doc.setGState(new doc.GState({ opacity: 0.15 }))
+  doc.setGState(new doc.GState({ opacity: 0.12 }))
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(72)
-  doc.setTextColor(220, 38, 38)
+  doc.setTextColor(...NEGRO)
   doc.text('ANULADA', pageWidth / 2, pageHeight / 2, { align: 'center', angle: 30 })
   doc.restoreGraphicsState()
 }
 
-const dibujarDatosCliente = (doc, { factura, pageWidth, y }) => {
-  const propietario = factura?.propietario
-  const documento = [propietario?.tipoDocumento, propietario?.numeroDocumento]
-    .filter(Boolean)
-    .join(' ')
-
-  doc.setDrawColor(...LINE)
-  doc.setFillColor(248, 250, 252)
-  const alto = 22
-  doc.rect(MARGIN, y, pageWidth - MARGIN * 2, alto, 'FD')
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.setTextColor(...MUTED)
-  doc.text('CLIENTE', MARGIN + 4, y + 5.5)
-
-  doc.setFontSize(10)
-  doc.setTextColor(...TEXT)
-  // Venta de mostrador: `propietarioId` es opcional, no hay tutor asociado.
-  doc.text(propietario?.nombre || 'Consumidor final', MARGIN + 4, y + 11)
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.setTextColor(...MUTED)
-  const detalle = [
-    documento || null,
-    propietario?.telefono || null,
-    propietario?.email || null,
-    [propietario?.direccion, propietario?.ciudad].filter(Boolean).join(', ') || null,
-  ].filter(Boolean)
-  if (detalle.length) {
-    doc.text(detalle.join('  ·  '), MARGIN + 4, y + 17, {
-      maxWidth: pageWidth - MARGIN * 2 - 8,
-    })
-  }
-
-  return y + alto
-}
-
-const dibujarTotales = (doc, { factura, pageWidth, y }) => {
+// Subtotal, descuento, impuesto y total alineados a la derecha; el total en
+// negrita sobre una linea negra.
+const dibujarTotales = (doc, c, factura) => {
   const descuento = Number(factura?.descuento || 0)
   const impuesto = Number(factura?.impuesto || 0)
   const saldo = Number(factura?.saldoPendiente || 0)
@@ -112,35 +47,32 @@ const dibujarTotales = (doc, { factura, pageWidth, y }) => {
     ['Subtotal', money(factura?.subtotal || 0), false],
     descuento > 0 ? ['Descuento', `-${money(descuento)}`, false] : null,
     impuesto > 0 ? ['Impuesto', money(impuesto), false] : null,
-    ['TOTAL', money(factura?.total || 0), true],
+    ['Total', money(factura?.total || 0), true],
     factura?.estado === 'parcial' && saldo > 0 ? ['Saldo pendiente', money(saldo), false] : null,
   ].filter(Boolean)
 
   const ancho = 72
-  const x = pageWidth - MARGIN - ancho
-  let cursor = y
+  const x = c.derecha - ancho
+  c.reservar(filas.length * 5.5 + 4)
 
-  for (const [label, valor, destacado] of filas) {
+  for (const [etiqueta, valor, destacado] of filas) {
     if (destacado) {
-      doc.setDrawColor(...BRAND)
+      c.y += 2.5
+      doc.setDrawColor(...NEGRO)
       doc.setLineWidth(0.5)
-      doc.line(x, cursor, x + ancho, cursor)
+      doc.line(x, c.y, c.derecha, c.y)
       doc.setLineWidth(0.2)
-      cursor += 5.5
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.setTextColor(...BRAND)
+      c.y += 5.5
+      c.fuente('bold', 11, NEGRO)
+      doc.text(etiqueta.toUpperCase(), x, c.y)
     } else {
-      cursor += 5.5
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9.5)
-      doc.setTextColor(...TEXT)
+      c.y += 5.5
+      c.fuente('normal', 9.5, TEXT)
+      doc.text(etiqueta, x, c.y)
     }
-    doc.text(label, x, cursor)
-    doc.text(valor, x + ancho, cursor, { align: 'right' })
+    doc.text(valor, c.derecha, c.y, { align: 'right' })
   }
-
-  return cursor
+  c.y += 3
 }
 
 /**
@@ -148,32 +80,52 @@ const dibujarTotales = (doc, { factura, pageWidth, y }) => {
  * reusarlo mas adelante (previsualizar, adjuntar a un correo) sin duplicar el
  * layout.
  */
-export const buildFacturaPdf = async ({ factura, clinica }) => {
+export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
   ])
 
   const doc = new jsPDF({ unit: 'mm', format: 'letter', compress: true })
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
+  const lineasPie = [lineaImpreso(usuario)]
+  const c = crearCompositor(doc, { limiteInferior: altoPie(doc, { lineas: lineasPie }) })
 
-  const logo = await cargarLogo(clinica?.logo)
+  dibujarEncabezadoFormal(doc, c, {
+    clinica,
+    logo: await cargarLogo(clinica?.logo),
+    titulo: 'FACTURA DE VENTA',
+    lineasDerecha: [
+      `N.º ${texto(factura?.numero) || '-'}`,
+      formatDateTime(factura?.createdAt || factura?.fecha),
+    ],
+  })
 
-  const finEncabezado = dibujarEncabezado(doc, { clinica, logo })
-  const finDocumento = dibujarBloqueDocumento(doc, { factura, pageWidth })
-  let y = Math.max(finEncabezado, finDocumento) + 6
-
-  if (factura?.estado === 'anulada') {
-    dibujarSelloAnulada(doc, { pageWidth, pageHeight })
+  // ── Cliente ──
+  // Venta de mostrador: `propietarioId` es opcional, no hay tutor asociado.
+  const propietario = factura?.propietario
+  const documento = texto(propietario?.numeroDocumento)
+    ? `${TIPO_DOCUMENTO_LABELS[propietario.tipoDocumento] || texto(propietario.tipoDocumento)} ${texto(propietario.numeroDocumento)}`
+    : ''
+  c.titulo('Cliente', 10)
+  if (propietario) {
+    c.campos([
+      ['Nombre', propietario.nombre, 'No registrado', 2],
+      ['Documento', documento, 'No registrado', 2],
+      ['Teléfono', propietario.telefono],
+      ['Correo', propietario.email],
+      ['Dirección', [texto(propietario.direccion), texto(propietario.ciudad)].filter(Boolean).join(', '), 'No registrada', 2],
+    ])
+  } else {
+    // Venta de mostrador: basta con el nombre, sin una fila de constancias.
+    c.campos([['Nombre', 'Consumidor final', '', 4]])
   }
 
-  y = dibujarDatosCliente(doc, { factura, pageWidth, y }) + 6
-
+  // ── Detalle ──
+  c.titulo('Detalle de la venta', 10)
   const items = factura?.items || []
   autoTable(doc, {
-    startY: y,
-    margin: { left: MARGIN, right: MARGIN, bottom: 20 },
+    startY: c.y,
+    margin: { left: MARGIN, right: MARGIN, bottom: c.limiteInferior },
     head: [['#', 'Descripción', 'Cant.', 'Vr. unitario', 'Descuento', 'Subtotal']],
     body: items.length
       ? items.map((item, indice) => [
@@ -184,11 +136,24 @@ export const buildFacturaPdf = async ({ factura, clinica }) => {
           Number(item.descuento || 0) > 0 ? `-${money(item.descuento)}` : '-',
           money(item.subtotal || 0),
         ])
-      : [[{ content: 'Sin ítems registrados.', colSpan: 6, styles: { halign: 'center' } }]],
-    theme: 'grid',
-    styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.2, textColor: TEXT, lineColor: LINE },
-    headStyles: { fillColor: BRAND, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5 },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
+      : [[{ content: 'Sin ítems registrados.', colSpan: 6, styles: { halign: 'center', fontStyle: 'italic' } }]],
+    theme: 'plain',
+    // Solo lineas horizontales finas, como un formulario impreso.
+    styles: {
+      font: 'helvetica',
+      fontSize: 9,
+      cellPadding: { top: 2, bottom: 2, left: 1.5, right: 1.5 },
+      textColor: TEXT,
+      lineColor: LINE,
+      lineWidth: { bottom: 0.2 },
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fontSize: 7,
+      textColor: MUTED,
+      lineColor: NEGRO,
+      lineWidth: { bottom: 0.4 },
+    },
     columnStyles: {
       0: { cellWidth: 9, halign: 'center' },
       2: { cellWidth: 16, halign: 'right' },
@@ -196,70 +161,60 @@ export const buildFacturaPdf = async ({ factura, clinica }) => {
       4: { cellWidth: 25, halign: 'right' },
       5: { cellWidth: 29, halign: 'right' },
     },
+    didParseCell: ({ section, column, cell }) => {
+      // Los encabezados de las columnas de valores se alinean con sus cifras.
+      if (section === 'head' && column.index >= 2) cell.styles.halign = 'right'
+      if (section === 'head' && column.index === 0) cell.styles.halign = 'center'
+    },
   })
+  c.y = (doc.lastAutoTable?.finalY ?? c.y) + 2
 
-  y = (doc.lastAutoTable?.finalY ?? y) + 4
+  // ── Totales y datos de pago ──
+  dibujarTotales(doc, c, factura)
 
-  // Si los totales no caben bajo la tabla, empiezan pagina nueva en vez de
-  // montarse sobre el pie.
-  if (y > pageHeight - 60) {
-    doc.addPage()
-    y = MARGIN
-  }
+  c.titulo('Datos del pago', 10)
+  c.campos([
+    ['Forma de pago', PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago, 'No registrada', 2],
+    ['Atendido por', factura?.usuario?.nombre, 'No registrado', 2],
+  ])
 
-  const finTotales = dibujarTotales(doc, { factura, pageWidth, y })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.setTextColor(...MUTED)
-  let infoY = y + 5.5
-  doc.text(
-    `Forma de pago: ${PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago || '-'}`,
-    MARGIN,
-    infoY
-  )
-  infoY += 5
-  doc.text(`Atendido por: ${factura?.usuario?.nombre || '-'}`, MARGIN, infoY)
-
-  if (factura?.observaciones) {
-    infoY += 7
-    doc.setFont('helvetica', 'bold')
-    doc.text('Observaciones', MARGIN, infoY)
-    doc.setFont('helvetica', 'normal')
-    infoY += 4.5
-    const texto = doc.splitTextToSize(factura.observaciones, pageWidth - MARGIN * 2 - 80)
-    doc.text(texto, MARGIN, infoY)
-    infoY += texto.length * 4.2
+  if (texto(factura?.observaciones)) {
+    c.titulo('Observaciones')
+    c.parrafo(factura.observaciones)
   }
 
   if (factura?.estadoElectronico === 'validada' && factura?.cufe) {
-    let cufeY = Math.max(finTotales, infoY) + 8
-    if (cufeY > pageHeight - 30) {
-      doc.addPage()
-      cufeY = MARGIN
-    }
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
-    doc.setTextColor(...TEXT)
-    doc.text('CUFE', MARGIN, cufeY)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(...MUTED)
-    doc.text(doc.splitTextToSize(factura.cufe, pageWidth - MARGIN * 2), MARGIN, cufeY + 4)
+    c.titulo('Código único de factura electrónica (CUFE)')
+    c.fuente('normal', 8, MUTED)
+    const lineas = doc.splitTextToSize(factura.cufe, c.anchoUtil)
+    c.reservar(lineas.length * 3.6)
+    doc.text(lineas, MARGIN, c.y + 3)
+    c.y += lineas.length * 3.6
   }
 
-  dibujarPie(doc, { clinica, pageWidth, pageHeight })
+  if (factura?.estado === 'anulada') {
+    for (let pagina = 1; pagina <= doc.getNumberOfPages(); pagina += 1) {
+      doc.setPage(pagina)
+      dibujarSelloAnulada(doc, { pageWidth: c.pageWidth, pageHeight: c.pageHeight })
+    }
+  }
+
+  dibujarPieFormal(doc, c, {
+    identificacion: `Factura de venta N.º ${texto(factura?.numero) || '-'} · ${nombreClinica(clinica)}`,
+    lineas: lineasPie,
+  })
 
   return doc
 }
 
-export const descargarFacturaPdf = async ({ factura, clinica }) => {
+export const descargarFacturaPdf = async ({ factura, clinica, usuario }) => {
   if (!factura) {
     toast.error('No hay factura para descargar.')
     return
   }
 
   try {
-    const doc = await buildFacturaPdf({ factura, clinica })
+    const doc = await buildFacturaPdf({ factura, clinica, usuario })
     // El numero puede traer prefijo y separadores del rango DIAN.
     const nombre = String(factura.numero || 'venta').replace(/[^\w.-]+/g, '-')
     doc.save(`Factura-${nombre}.pdf`)

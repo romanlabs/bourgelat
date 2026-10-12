@@ -51,6 +51,8 @@ export default function PosModal({
   const [generandoPdf, setGenerandoPdf] = useState(false)
   const searchInputRef = useRef(null)
   const clinica = useAuthStore((state) => state.clinica)
+  // La factura impresa dice quien la imprimio.
+  const usuario = useAuthStore((state) => state.usuario)
 
   const {
     ownerSearch, setOwnerSearch,
@@ -135,7 +137,7 @@ export default function PosModal({
   const descargarPdf = async () => {
     setGenerandoPdf(true)
     try {
-      await descargarFacturaPdf({ factura: facturaEmitida, clinica })
+      await descargarFacturaPdf({ factura: facturaEmitida, clinica, usuario })
     } finally {
       setGenerandoPdf(false)
     }
