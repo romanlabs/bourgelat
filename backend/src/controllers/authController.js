@@ -1,4 +1,12 @@
 const bcrypt = require('bcryptjs')
+
+// Hash de una clave que nadie tiene: con un email inexistente se compara contra
+// él para que la respuesta tarde lo mismo y no delate qué correos existen.
+let hashFicticio = null
+const compararConHashFicticio = async (password) => {
+  if (!hashFicticio) hashFicticio = await bcrypt.hash('bourgelat-cuenta-inexistente', 12)
+  await bcrypt.compare(String(password || ''), hashFicticio)
+}
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
@@ -376,6 +384,7 @@ const login = async (req, res) => {
     })
 
     if (!usuario) {
+      await compararConHashFicticio(password)
       await registrarAuditoria({
         accion: 'LOGIN_FALLIDO',
         entidad: 'Usuario',
@@ -389,21 +398,9 @@ const login = async (req, res) => {
       })
     }
 
-    if (!usuario.activo) {
-      return res.status(401).json({
-        message: 'Usuario desactivado',
-      })
-    }
-
-    if (usuario.clinicaId && usuario.Clinica && !usuario.Clinica.activo) {
-      return res.status(403).json({
-        message: 'La clinica esta desactivada',
-      })
-    }
-
     if (estaTemporalmenteBloqueado(usuario)) {
       return res.status(423).json({
-        message: `Usuario bloqueado temporalmente hasta ${new Date(usuario.bloqueadoHasta).toISOString()}`,
+        message: 'Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.',
       })
     }
 
@@ -430,6 +427,19 @@ const login = async (req, res) => {
 
       return res.status(401).json({
         message: 'Credenciales incorrectas',
+      })
+    }
+
+    // El estado de la cuenta solo se revela a quien ya demostró tener la clave.
+    if (!usuario.activo) {
+      return res.status(401).json({
+        message: 'Tu usuario está desactivado. Pide al administrador de la clínica que lo active.',
+      })
+    }
+
+    if (usuario.clinicaId && usuario.Clinica && !usuario.Clinica.activo) {
+      return res.status(403).json({
+        message: 'La clínica está desactivada. Escríbenos a soporte@bourgelat.co.',
       })
     }
 
