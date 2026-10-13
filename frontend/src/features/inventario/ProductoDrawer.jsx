@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { toast } from 'sonner'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -103,12 +104,12 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
     const file = e.target.files?.[0]
     if (!file) return
     if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      alert('La foto debe estar en formato JPG, PNG o WEBP.')
+      toast.error('La foto debe estar en formato JPG, PNG o WEBP.')
       e.target.value = ''
       return
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      alert('La foto supera el maximo permitido de 4 MB.')
+      toast.error('La foto supera el maximo permitido de 4 MB.')
       e.target.value = ''
       return
     }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { HandCoins, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import {
   DashboardPanel,
@@ -168,7 +169,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
     try {
       await anularGasto.mutateAsync({ gastoId: gasto.id, motivoAnulacion: motivo.trim() })
     } catch (err) {
-      window.alert(err.response?.data?.message || 'No se pudo anular el gasto')
+      toast.error(err.response?.data?.message || 'No se pudo anular el gasto')
     }
   }
 

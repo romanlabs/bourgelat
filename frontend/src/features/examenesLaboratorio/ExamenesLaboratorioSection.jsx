@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { FlaskConical, Paperclip, Plus, X } from 'lucide-react'
 import { examenesLaboratorioApi } from '@/features/examenesLaboratorio/examenesLaboratorioApi'
 import { cn } from '@/lib/utils'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 const TIPOS_EXAMEN_SUGERIDOS = [
   'Hemograma', 'Perfil renal', 'Perfil hepático', 'Uroanálisis',
@@ -239,6 +240,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [examenEnEdicion, setExamenEnEdicion] = useState(null)
+  const [examenAEliminar, setExamenAEliminar] = useState(null)
 
   const examenesQuery = useQuery({
     queryKey: ['examenes-laboratorio', mascotaId],
@@ -315,11 +317,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                   {puedeEliminar && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm(`¿Eliminar el examen "${examen.tipo}"? Esta acción no se puede deshacer.`)) {
-                          eliminarMutation.mutate(examen.id)
-                        }
-                      }}
+                      onClick={() => setExamenAEliminar(examen)}
                       disabled={eliminarMutation.isPending}
                       className="text-xs font-semibold text-danger hover:text-danger disabled:opacity-60"
                     >
@@ -356,6 +354,19 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
         examen={examenEnEdicion}
         mascotaId={mascotaId}
         onClose={() => setModalOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(examenAEliminar)}
+        onOpenChange={(open) => { if (!open) setExamenAEliminar(null) }}
+        title="Eliminar examen"
+        description={`¿Eliminar el examen "${examenAEliminar?.tipo ?? ''}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        loading={eliminarMutation.isPending}
+        onConfirm={() => {
+          eliminarMutation.mutate(examenAEliminar.id)
+          setExamenAEliminar(null)
+        }}
       />
     </div>
   )
