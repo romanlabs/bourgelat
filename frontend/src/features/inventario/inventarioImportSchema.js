@@ -6,14 +6,14 @@ export const MAX_IMPORT_ROWS = 500
 // Fuente unica de verdad: valor exacto que espera el backend, label en espanol
 // y una descripcion corta para que el usuario elija la categoria correcta.
 export const CATEGORY_INFO = [
-  { value: 'medicamento', label: 'Medicamento', descripcion: 'Farmacos y tratamientos que requieren formula o dosificacion.' },
-  { value: 'vacuna', label: 'Vacuna', descripcion: 'Biologicos preventivos aplicados en consulta.' },
-  { value: 'insumo', label: 'Insumo', descripcion: 'Material medico o de consumo general: gasas, jeringas, guantes.' },
+  { value: 'medicamento', label: 'Medicamento', descripcion: 'Fármacos y tratamientos que requieren fórmula o dosificación.' },
+  { value: 'vacuna', label: 'Vacuna', descripcion: 'Biológicos preventivos aplicados en consulta.' },
+  { value: 'insumo', label: 'Insumo', descripcion: 'Material médico o de consumo general: gasas, jeringas, guantes.' },
   { value: 'alimento', label: 'Alimento', descripcion: 'Concentrados, snacks y dietas para mascotas.' },
-  { value: 'antiparasitario', label: 'Antiparasitario', descripcion: 'Productos contra pulgas, garrapatas y parasitos internos.' },
+  { value: 'antiparasitario', label: 'Antiparasitario', descripcion: 'Productos contra pulgas, garrapatas y parásitos internos.' },
   { value: 'suplemento', label: 'Suplemento', descripcion: 'Vitaminas y complementos nutricionales.' },
-  { value: 'accesorio', label: 'Accesorio', descripcion: 'Collares, correas, juguetes y otros articulos.' },
-  { value: 'otro', label: 'Otro', descripcion: 'Cualquier producto que no encaje en las categorias anteriores.' },
+  { value: 'accesorio', label: 'Accesorio', descripcion: 'Collares, correas, juguetes y otros artículos.' },
+  { value: 'otro', label: 'Otro', descripcion: 'Cualquier producto que no encaje en las categorías anteriores.' },
 ]
 
 export const CATEGORY_LABELS = Object.fromEntries(CATEGORY_INFO.map((c) => [c.value, c.label]))
@@ -46,23 +46,23 @@ export const EXCEL_COLUMN_MAP = {
 
 const TEMPLATE_HEADERS = [
   'Nombre',
-  'Categoria',
+  'Categoría',
   'Unidad de Medida',
   'Stock',
-  'Stock Minimo',
+  'Stock Mínimo',
   'Precio Compra',
   'Precio Venta',
-  'Codigo de Barras',
-  'Descripcion',
-  'Subcategoria',
+  'Código de Barras',
+  'Descripción',
+  'Subcategoría',
   'Fecha Vencimiento',
   'Lote',
   'Laboratorio',
-  'Requiere Formula',
+  'Requiere Fórmula',
 ]
 
 const TEMPLATE_EXAMPLE_ROWS = [
-  ['Meloxicam suspension oral', 'medicamento', 'frasco', 10, 5, 15000, 25000, '7701234567890', 'Antiinflamatorio para uso veterinario', '', '2027-01-31', 'LOT-2024-001', 'Bayer', 'no'],
+  ['Meloxicam suspensión oral', 'medicamento', 'frasco', 10, 5, 15000, 25000, '7701234567890', 'Antiinflamatorio para uso veterinario', '', '2027-01-31', 'LOT-2024-001', 'Bayer', 'no'],
   ['Vacuna Quintuple', 'vacuna', 'dosis', 20, 5, 18000, 32000, '', 'Vacuna preventiva canina', '', '2026-11-30', 'LOT-VAC-2024', 'Zoetis', 'no'],
   ['Jeringa 5ml', 'insumo', 'unidad', 100, 20, 400, 900, '', '', '', '', '', '', 'no'],
   ['Concentrado adulto raza pequeña 3kg', 'alimento', 'bolsa', 15, 3, 32000, 48000, '', 'Alimento seco para perro adulto', '', '', '', '', 'no'],
@@ -85,15 +85,15 @@ const normalizeMoney = (valor) => {
 }
 
 export const importRowSchema = z.object({
-  nombre: z.string().trim().min(1, 'El nombre es requerido').max(160, 'Maximo 160 caracteres'),
+  nombre: z.string().trim().min(1, 'El nombre es requerido').max(160, 'Máximo 160 caracteres'),
   categoria: z
     .string()
     .trim()
     .toLowerCase()
     .refine((value) => IMPORT_CATEGORY_VALUES.includes(value), {
-      message: `Categoria invalida. Usa: ${IMPORT_CATEGORY_VALUES.join(', ')}`,
+      message: `Categoría inválida. Usa: ${IMPORT_CATEGORY_VALUES.join(', ')}`,
     }),
-  unidadMedida: z.string().trim().min(1, 'La unidad de medida es requerida').max(40, 'Maximo 40 caracteres'),
+  unidadMedida: z.string().trim().min(1, 'La unidad de medida es requerida').max(40, 'Máximo 40 caracteres'),
   stock: z.coerce.number().int('Debe ser un entero').min(0, 'No puede ser negativo').default(0),
   stockMinimo: z.coerce.number().int('Debe ser un entero').min(0, 'No puede ser negativo').default(5),
   precioCompra: z.coerce.number().min(0, 'No puede ser negativo').default(0),
@@ -137,7 +137,7 @@ export function validateImportRows(rawRows) {
     return {
       validRows: [],
       invalidRows: [],
-      globalError: `El archivo tiene ${filasConDatos.length} filas. El maximo permitido por importacion es ${MAX_IMPORT_ROWS}.`,
+      globalError: `El archivo tiene ${filasConDatos.length} filas. El máximo permitido por importación es ${MAX_IMPORT_ROWS}.`,
     }
   }
 
@@ -171,7 +171,7 @@ export function downloadImportTemplate() {
 
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, hojaInventario, 'Inventario')
-  XLSX.utils.book_append_sheet(workbook, hojaCategorias, 'Categorias validas')
+  XLSX.utils.book_append_sheet(workbook, hojaCategorias, 'Categorías válidas')
   XLSX.writeFile(workbook, 'plantilla-inventario-bourgelat.xlsx')
 }
 

@@ -124,7 +124,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           <div>
             <h2 className="text-base font-semibold text-foreground">{titulo}</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Define el precio de venta y los insumos clinicos que consume cada vez que se factura.
+              Define el precio de venta y los insumos clínicos que consume cada vez que se factura.
             </p>
           </div>
           <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition" aria-label="Cerrar">
@@ -138,7 +138,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
               <label className={labelClass}>Nombre del servicio *</label>
               <input
                 className={fieldClass(!form.nombre.trim())}
-                placeholder="Ej. Consulta general, Esterilizacion canina"
+                placeholder="Ej. Consulta general, Esterilización canina"
                 value={form.nombre}
                 onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
                 maxLength={160}
@@ -146,10 +146,10 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className={labelClass}>Categoria</label>
+              <label className={labelClass}>Categoría</label>
               <input
                 className={fieldClass(false)}
-                placeholder="Ej. Consulta, Cirugia"
+                placeholder="Ej. Consulta, Cirugía"
                 value={form.categoria}
                 onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value }))}
                 maxLength={80}
@@ -168,7 +168,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             </div>
 
             <div className="col-span-2 flex flex-col gap-1">
-              <label className={labelClass}>Descripcion</label>
+              <label className={labelClass}>Descripción</label>
               <textarea
                 className="min-h-[70px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
                 value={form.descripcion}

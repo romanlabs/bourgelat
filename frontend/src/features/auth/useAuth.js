@@ -28,7 +28,7 @@ export const useLogin = () => {
       })
     },
     onError: (error) => {
-      toast.error(obtenerMensajeError(error, 'Error al iniciar sesion'))
+      toast.error(obtenerMensajeError(error, 'Error al iniciar sesión'))
     },
   })
 }
@@ -45,11 +45,11 @@ export const useRegistro = () => {
         clinica: data.clinica,
         suscripcion: data.suscripcion || null,
       })
-      toast.success('Clinica registrada exitosamente')
+      toast.success('Clínica registrada exitosamente')
       navigate(data.usuario?.onboarding ? '/dashboard' : '/onboarding', { replace: true })
     },
     onError: (error) => {
-      toast.error(obtenerMensajeError(error, 'Error al registrar la clinica'))
+      toast.error(obtenerMensajeError(error, 'Error al registrar la clínica'))
     },
   })
 }
@@ -66,7 +66,7 @@ export const useCompletarRegistroOauth = () => {
         clinica: data.clinica,
         suscripcion: data.suscripcion || null,
       })
-      toast.success('Clinica registrada exitosamente')
+      toast.success('Clínica registrada exitosamente')
       navigate(data.usuario?.onboarding ? '/dashboard' : '/onboarding', { replace: true })
     },
   })
@@ -101,10 +101,10 @@ export const useReenviarVerificacion = () =>
   useMutation({
     mutationFn: authApi.reenviarVerificacion,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Si el correo esta registrado, recibiras un nuevo enlace.')
+      toast.success(data?.message || 'Si el correo está registrado, recibirás un nuevo enlace.')
     },
     onError: (error) => {
-      toast.error(obtenerMensajeError(error, 'No pudimos reenviar la verificacion'))
+      toast.error(obtenerMensajeError(error, 'No pudimos reenviar la verificación'))
     },
   })
 
@@ -119,7 +119,7 @@ export const useLogout = () => {
       // Limpiar igual aunque falle el cierre remoto.
     } finally {
       clearAuth()
-      toast.info('Sesion cerrada')
+      toast.info('Sesión cerrada')
       navigate('/login', {
         replace: true,
         state: { clearedAt: Date.now() },

@@ -1,7 +1,7 @@
 // Compartido entre el formulario de la historia y la formula impresa, para que
 // el tutor lea en papel la misma via que el veterinario eligio en pantalla.
 export const MEDICATION_ROUTE_OPTIONS = [
-  { value: '', label: 'Via de administracion' },
+  { value: '', label: 'Vía de administración' },
   { value: 'oral', label: 'Oral' },
   { value: 'subcutanea', label: 'Subcutánea' },
   { value: 'intramuscular', label: 'Intramuscular' },
@@ -21,7 +21,7 @@ export const VIA_LABELS = Object.fromEntries(
 
 // Igual que la via: la historia impresa dice lo mismo que el selector.
 export const HYDRATION_OPTIONS = [
-  { value: '', label: 'Estado de hidratacion' },
+  { value: '', label: 'Estado de hidratación' },
   { value: 'normal', label: 'Normal' },
   { value: 'deshidratacion_leve', label: 'Deshidratación leve' },
   { value: 'deshidratacion_moderada', label: 'Deshidratación moderada' },

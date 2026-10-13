@@ -15,7 +15,7 @@ export function useImportarInventario() {
       setResultado(data)
       const creados = data?.creados?.length || 0
       const omitidos = data?.omitidos?.length || 0
-      toast.success(`Importacion completada: ${creados} creados${omitidos > 0 ? `, ${omitidos} omitidos` : ''}`)
+      toast.success(`Importación completada: ${creados} creados${omitidos > 0 ? `, ${omitidos} omitidos` : ''}`)
       invalidateInventarioQueries(queryClient)
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible importar el inventario.')),

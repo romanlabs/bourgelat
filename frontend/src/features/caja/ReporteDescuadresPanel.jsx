@@ -18,7 +18,7 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
     <DataTable
       collapsed={!expandido}
       title="Reporte de descuadres por cajero"
-      subtitle="Conteo de diferencias de caja agrupadas por cajero y categoria en el periodo. Util para detectar patrones recurrentes."
+      subtitle="Conteo de diferencias de caja agrupadas por cajero y categoría en el periodo. Util para detectar patrones recurrentes."
       rows={filasOrdenadas.map((fila, index) => ({
         id: `${fila.usuarioId}-${fila.categoriaDiferencia}-${index}`,
         cajero: fila.usuarioNombre || 'Sin nombre',

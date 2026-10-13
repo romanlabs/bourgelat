@@ -119,7 +119,7 @@ export function TutorPetSelector({
           type="text"
           value={ownerSearch}
           onChange={(event) => onOwnerSearchChange(event.target.value)}
-          placeholder="Nombre, documento o telefono"
+          placeholder="Nombre, documento o teléfono"
           className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
         />
 
@@ -127,7 +127,7 @@ export function TutorPetSelector({
           {selectedOwner ? (
             <div className="border border-success/30 bg-success-soft px-3 py-3 text-sm text-foreground">
               <p className="font-semibold text-foreground">{selectedOwner.nombre}</p>
-              <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
+              <p className="mt-1">{selectedOwner.telefono || 'Sin teléfono principal'}</p>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
@@ -149,7 +149,7 @@ export function TutorPetSelector({
                   <div>
                     <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {owner.telefono || 'Sin telefono principal'}
+                      {owner.telefono || 'Sin teléfono principal'}
                     </p>
                   </div>
                   <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">

@@ -28,10 +28,10 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
 const MEDICATION_FREQUENCY_SUGGESTIONS = [
-  'Cada 8 horas', 'Cada 12 horas', 'Cada 24 horas', 'Dosis unica', 'Segun necesidad',
+  'Cada 8 horas', 'Cada 12 horas', 'Cada 24 horas', 'Dosis única', 'Según necesidad',
 ]
 
-const MEDICATION_DURATION_SUGGESTIONS = ['3 dias', '5 dias', '7 dias', '10 dias', '14 dias']
+const MEDICATION_DURATION_SUGGESTIONS = ['3 días', '5 días', '7 días', '10 días', '14 días']
 
 const PROGRESS_STEPS = [
   { id: 'contexto', label: 'Contexto' },
@@ -354,41 +354,41 @@ export default function HistoriaClinicaFormDrawer({
   const crearHistoriaMutation = useMutation({
     mutationFn: historiasApi.crearHistoria,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica registrada exitosamente')
+      toast.success(data?.message || 'Historia clínica registrada exitosamente')
       invalidarDominios(queryClient, 'historias')
       setFormBase(form)
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible registrar la historia clínica.'))
     },
   })
 
   const editarHistoriaMutation = useMutation({
     mutationFn: ({ historiaId, payload }) => historiasApi.editarHistoria(historiaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica actualizada exitosamente')
+      toast.success(data?.message || 'Historia clínica actualizada exitosamente')
       if (data?.historia) setLocalHistoria(data.historia)
       setFormBase(form)
       invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible actualizar la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible actualizar la historia clínica.'))
     },
   })
 
   const bloquearHistoriaMutation = useMutation({
     mutationFn: historiasApi.bloquearHistoria,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica bloqueada exitosamente')
+      toast.success(data?.message || 'Historia clínica bloqueada exitosamente')
       setLocalHistoria((prev) => (prev ? { ...prev, bloqueada: true } : prev))
       // Bloquear descuenta el tratamiento intrahospitalario del inventario clinico.
       invalidarDominios(queryClient, 'historias', 'insumosClinicos')
       onSuccess?.(null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clínica.'))
     },
   })
 
@@ -488,7 +488,7 @@ export default function HistoriaClinicaFormDrawer({
       nombre: producto.nombre || '',
       concentracion: producto.presentacionReferencia || '',
       cantidad: '1',
-      indicacion: producto.requiereFormula ? 'Dispensar segun indicacion medica registrada en la historia.' : '',
+      indicacion: producto.requiereFormula ? 'Dispensar según indicacion médica registrada en la historia.' : '',
     })
     setForm((c) => {
       const firstEmptyIndex = c.medicamentos.findIndex((item) => !medicationHasAnyValue(item))
@@ -650,7 +650,7 @@ export default function HistoriaClinicaFormDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={historiaActual ? 'Editar historia clinica' : 'Nueva historia clinica'}
+        aria-label={historiaActual ? 'Editar historia clínica' : 'Nueva historia clínica'}
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
@@ -780,7 +780,7 @@ export default function HistoriaClinicaFormDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {!puedeEditarHistorias ? (
             <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
+              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clínicas.
             </div>
           ) : (
             <form id="historia-drawer-form" className="space-y-2" onSubmit={handleSubmit}>

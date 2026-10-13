@@ -73,7 +73,7 @@ function RestrictedFinancePage() {
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad financiera completa. Si necesitas revisar ingresos
-            o facturas, solicita permisos al administrador principal o al facturador de la clinica.
+            o facturas, solicita permisos al administrador principal o al facturador de la clínica.
           </div>
         </DashboardPanel>
       </div>
@@ -324,29 +324,29 @@ export default function FinanzasPage() {
                   icon={CircleAlert}
                   label="Pendientes electronicos"
                   value={formatNumber(resumenHook.pendientesElectronicos)}
-                  helper="Facturas con emision pendiente, rechazada o con error tecnico."
+                  helper="Facturas con emisión pendiente, rechazada o con error técnico."
                   tone="text-warning"
                 />
               </div>
 
               <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.45fr)_380px]">
                 <LinePanel
-                  title="Evolucion diaria del ingreso"
+                  title="Evolución diaria del ingreso"
                   subtitle={`Lectura del ${formatShortDate(resumenHook.rangoMes.fechaInicio)} al ${formatShortDate(resumenHook.rangoMes.fechaFin)}.`}
                   data={resumenHook.ingresosPorDia}
                   dataKey="total"
                   color={chartColors.categorica[1]}
                   formatter={formatCurrency}
-                  emptyMessage="Aun no hay ingresos registrados para el periodo actual."
+                  emptyMessage="Aún no hay ingresos registrados para el periodo actual."
                 />
                 <DonutCard
-                  title="Metodos de pago"
-                  subtitle="Distribucion del ingreso segun la forma de pago registrada."
+                  title="Métodos de pago"
+                  subtitle="Distribución del ingreso según la forma de pago registrada."
                   data={resumenHook.metodosPago}
                   centerLabel="Ingreso total"
                   centerValue={formatCurrency(resumenHook.totalIngresos)}
                   formatter={formatCurrency}
-                  emptyMessage="No hay metodos de pago disponibles para mostrar."
+                  emptyMessage="No hay métodos de pago disponibles para mostrar."
                 />
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function FinanzasPage() {
                   icon={<Wallet />}
                   variant="primary"
                   title="Necesitas abrir un turno de caja para facturar"
-                  description="Abre tu turno registrando el fondo inicial en efectivo desde la pestana Turnos de caja."
+                  description="Abre tu turno registrando el fondo inicial en efectivo desde la pestaña Turnos de caja."
                   action={
                     <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
                       Ir a turnos de caja
@@ -375,7 +375,7 @@ export default function FinanzasPage() {
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
-                  title="Tu turno de caja quedo abierto desde un dia anterior"
+                  title="Tu turno de caja quedó abierto desde un dia anterior"
                   description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo — asi el corte del dia queda correcto."
                   action={
                     <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
@@ -435,7 +435,7 @@ export default function FinanzasPage() {
 
               <DataTable
                 title="Facturas del periodo"
-                subtitle="Busca por numero, cliente o responsable y abre el detalle para operar."
+                subtitle="Busca por número, cliente o responsable y abre el detalle para operar."
                 rows={historialHook.facturasRows}
                 columns={[
                   { key: 'numero', label: 'Factura' },
@@ -466,8 +466,8 @@ export default function FinanzasPage() {
                     ),
                   },
                 ]}
-                emptyTitle="Aun no hay facturas para este filtro"
-                emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenara automaticamente."
+                emptyTitle="Aún no hay facturas para este filtro"
+                emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenará automáticamente."
                 action={
                   <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap items-center gap-3">
                     <label className="relative">
@@ -562,8 +562,8 @@ export default function FinanzasPage() {
                   <div className="flex items-start gap-3">
                     <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
                     <div className="text-sm leading-7 text-muted-foreground">
-                      La configuracion tecnica de DIAN y Factus ya no se modifica desde la clinica.
-                      Si necesitas activar o corregir la integracion, se hace desde soporte central
+                      La configuración técnica de DIAN y Factus ya no se modifica desde la clínica.
+                      Si necesitas activar o corregir la integración, se hace desde soporte central
                       con un perfil superadmin.
                     </div>
                   </div>

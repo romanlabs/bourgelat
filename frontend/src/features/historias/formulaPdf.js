@@ -127,7 +127,7 @@ export const descargarFormulaPdf = async ({ historia, clinica, usuario }) => {
     const doc = await buildFormulaPdf({ historia, clinica, usuario })
     doc.save(`Formula-${nombreArchivo(historia)}.pdf`)
   } catch (error) {
-    console.error('No se pudo generar el PDF de la formula', error)
+    console.error('No se pudo generar el PDF de la fórmula', error)
     toast.error('No se pudo generar el PDF de la fórmula.')
   }
 }

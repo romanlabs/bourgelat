@@ -146,7 +146,7 @@ export const imprimirTirilla = ({ factura, clinica }) => {
   const doc = iframe.contentDocument || iframe.contentWindow?.document
   if (!doc) {
     document.body.removeChild(iframe)
-    toast.error('No se pudo preparar la tirilla para impresion.')
+    toast.error('No se pudo preparar la tirilla para impresión.')
     return
   }
 

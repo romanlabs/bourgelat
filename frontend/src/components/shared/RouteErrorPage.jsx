@@ -5,9 +5,9 @@ import { AlertTriangle, RefreshCw, Stethoscope } from 'lucide-react'
 const CHUNK_RELOAD_KEY = 'bourgelat-chunk-reload-attempted'
 
 const getErrorMessage = (error) => {
-  if (!error) return 'Ocurrio un problema inesperado al cargar esta pantalla.'
+  if (!error) return 'Ocurrió un problema inesperado al cargar esta pantalla.'
   if (typeof error === 'string') return error
-  return error.message || error.statusText || 'Ocurrio un problema inesperado al cargar esta pantalla.'
+  return error.message || error.statusText || 'Ocurrió un problema inesperado al cargar esta pantalla.'
 }
 
 const isChunkLoadError = (message) => {

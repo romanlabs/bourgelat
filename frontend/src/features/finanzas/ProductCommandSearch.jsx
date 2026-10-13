@@ -337,7 +337,7 @@ export default function ProductCommandSearch({
                 type="text"
                 value={servicioSearch}
                 onChange={(e) => setServicioSearch(e.target.value)}
-                placeholder="Buscar servicio del catalogo..."
+                placeholder="Buscar servicio del catálogo..."
                 className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               {servicioSearch && (
@@ -359,7 +359,7 @@ export default function ProductCommandSearch({
               <div className="flex h-full flex-col items-center justify-center gap-2 py-12 text-center">
                 <ClipboardList className="h-8 w-8 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">
-                  {servicioSearch ? 'Sin resultados para ese filtro.' : 'Aun no hay servicios en el catalogo.'}
+                  {servicioSearch ? 'Sin resultados para ese filtro.' : 'Aún no hay servicios en el catálogo.'}
                 </p>
               </div>
             ) : (

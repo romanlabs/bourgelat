@@ -49,7 +49,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
       setParseResult(result)
       setStep('preview')
     } catch (error) {
-      setParseResult({ validRows: [], invalidRows: [], globalError: 'No fue posible leer el archivo. Verifica que sea un .xlsx valido.' })
+      setParseResult({ validRows: [], invalidRows: [], globalError: 'No fue posible leer el archivo. Verifica que sea un .xlsx válido.' })
       setStep('preview')
     } finally {
       setParsing(false)
@@ -70,7 +70,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         <DialogHeader>
           <DialogTitle>Importar inventario desde Excel</DialogTitle>
           <DialogDescription>
-            Carga un archivo .xlsx con tus productos. Vas a poder revisar los datos antes de confirmar la importacion.
+            Carga un archivo .xlsx con tus productos. Vas a poder revisar los datos antes de confirmar la importación.
           </DialogDescription>
         </DialogHeader>
 
@@ -109,7 +109,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
               </div>
               <p className="text-[11px] leading-4 text-muted-foreground">
                 Escribe el valor exacto (en minusculas) en la columna Categoria. La plantilla descargable incluye
-                estas mismas categorias en filas de ejemplo y en la hoja "Categorias validas".
+                estas mismas categorias en filas de ejemplo y en la hoja "Categorías válidas".
               </p>
             </div>
 
@@ -121,7 +121,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
               <span className="text-sm font-semibold text-foreground">
                 {parsing ? 'Leyendo archivo...' : 'Selecciona un archivo .xlsx'}
               </span>
-              <span className="text-xs text-muted-foreground">O arrastralo aqui</span>
+              <span className="text-xs text-muted-foreground">O arrastralo aquí</span>
             </label>
             <input
               id="import-inventario-file"
@@ -161,7 +161,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                       <tr>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Fila</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Nombre</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Categoria</th>
+                        <th className="px-3 py-2 font-semibold text-muted-foreground">Categoría</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Cantidad</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Precio venta</th>
                         <th className="px-3 py-2 font-semibold text-muted-foreground">Estado</th>

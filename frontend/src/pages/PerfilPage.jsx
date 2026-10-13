@@ -56,7 +56,7 @@ const esquemaPassword = z.object({
     .string()
     .regex(
       passwordFuerteRegex,
-      'Mínimo 8 caracteres con mayúscula, minúscula, número y caracter especial'
+      'Mínimo 8 caracteres con mayúscula, minúscula, número y carácter especial'
     ),
 })
 

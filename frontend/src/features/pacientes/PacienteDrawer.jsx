@@ -133,7 +133,7 @@ export default function PacienteDrawer({
       return
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      toast.error('La foto supera el maximo permitido de 4 MB.')
+      toast.error('La foto supera el máximo permitido de 4 MB.')
       e.target.value = ''
       return
     }
@@ -214,7 +214,7 @@ export default function PacienteDrawer({
                 <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
                   <p className="font-semibold">{selectedOwner?.nombre || 'Sin tutor'}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {selectedOwner?.telefono || 'Sin telefono'}
+                    {selectedOwner?.telefono || 'Sin teléfono'}
                     {selectedOwner?.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
                   <p className="mt-2 text-[11px] text-muted-foreground">
@@ -226,7 +226,7 @@ export default function PacienteDrawer({
                 <div className="border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
                   <p className="font-semibold">{selectedOwner.nombre}</p>
                   <p className="mt-1 text-xs">
-                    {selectedOwner.telefono || 'Sin telefono'}
+                    {selectedOwner.telefono || 'Sin teléfono'}
                     {selectedOwner.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
                   <button
@@ -245,7 +245,7 @@ export default function PacienteDrawer({
                       type="text"
                       value={ownerSearch}
                       onChange={(e) => onOwnerSearch(e.target.value)}
-                      placeholder="Nombre, telefono o documento"
+                      placeholder="Nombre, teléfono o documento"
                       className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                     />
                   </div>
@@ -271,7 +271,7 @@ export default function PacienteDrawer({
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{owner.telefono || 'Sin telefono'}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{owner.telefono || 'Sin teléfono'}</p>
                       </div>
                       <span className="shrink-0 text-xs font-semibold text-primary">Seleccionar</span>
                     </button>
@@ -356,7 +356,7 @@ export default function PacienteDrawer({
                   />
                   {modoEdicion && (
                     <p className="text-[11px] text-muted-foreground">
-                      La especie no se puede cambiar despues del registro.
+                      La especie no se puede cambiar después del registro.
                     </p>
                   )}
                 </div>
@@ -405,7 +405,7 @@ export default function PacienteDrawer({
 
               <div className="grid gap-1.5">
                 <label htmlFor="p-obs" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observaciones</label>
-                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepcion y consulta" className="border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" {...register('observaciones')} />
+                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" {...register('observaciones')} />
               </div>
             </div>
           </form>

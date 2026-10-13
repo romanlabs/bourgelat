@@ -138,7 +138,7 @@ export default function AdminShell({
   const [headerCenter, setHeaderCenter] = useState(null)
   const searchInputRef = useRef(null)
 
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clinica'
+  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clínica'
 
   const busquedaDiferida = useDebouncedValue(searchQuery.trim())
   const puedeBuscarContenido = isSearchOpen && busquedaDiferida.length >= 2
@@ -392,7 +392,7 @@ export default function AdminShell({
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  title="Cerrar menu"
+                  title="Cerrar menú"
                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/75 transition hover:bg-sidebar-accent hover:text-sidebar-primary"
                 >
                   <X className="h-4 w-4" />
@@ -457,7 +457,7 @@ export default function AdminShell({
                   type="text"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Buscar un modulo..."
+                  placeholder="Buscar un módulo..."
                   className="flex-1 bg-transparent text-base text-sidebar-accent-foreground outline-none placeholder:text-sidebar-foreground/70"
                 />
               </div>

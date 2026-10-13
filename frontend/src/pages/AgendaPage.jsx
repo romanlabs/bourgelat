@@ -42,10 +42,10 @@ const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
   { value: 'programada', label: 'Programada' },
   { value: 'en_espera', label: 'En espera' },
-  { value: 'en_atencion', label: 'En atencion' },
+  { value: 'en_atencion', label: 'En atención' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
-  { value: 'no_asistio', label: 'No asistio' },
+  { value: 'no_asistio', label: 'No asistió' },
 ]
 
 const TABS = [
@@ -108,7 +108,7 @@ function RestrictedAgendaPage() {
           subtitle="Esta sección se muestra a recepción, veterinarios o perfiles administrativos."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad sobre la agenda clinica. Solicita permisos al
+            Tu acceso actual no tiene visibilidad sobre la agenda clínica. Solicita permisos al
             administrador principal si necesitas programar, confirmar o reprogramar citas.
           </div>
         </DashboardPanel>
@@ -279,7 +279,7 @@ export default function AgendaPage() {
         <EmptyState
           icon={<Sparkles />}
           title="Agenda no disponible en el plan actual"
-          description="La agenda de citas hace parte del producto base. Si esta clinica no la tiene activa, revisa la configuracion comercial antes de continuar."
+          description="La agenda de citas hace parte del producto base. Si esta clínica no la tiene activa, revisa la configuración comercial antes de continuar."
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
@@ -347,7 +347,7 @@ export default function AgendaPage() {
                     icon={Clock3}
                     label="Pendientes"
                     value={formatNumber(pendientes)}
-                    helper="Programadas o en espera, aun sin cierre definitivo."
+                    helper="Programadas o en espera, aún sin cierre definitivo."
                     tone="text-warning"
                   />
                   <KpiCard
@@ -428,7 +428,7 @@ export default function AgendaPage() {
                 return (
                   <DashboardPanel
                     title="Agenda del dia"
-                    subtitle="Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional."
+                    subtitle="Tabla operativa para recepción, confirmación y seguimiento rápido por profesional."
                     action={
                       <div className="flex flex-wrap items-center gap-3">
                         {vistaToggle}
@@ -469,7 +469,7 @@ export default function AgendaPage() {
                   >
                     <DataTable
                       title="Citas programadas"
-                      subtitle="Lectura diaria con accion rapida sobre cada caso."
+                      subtitle="Lectura diaria con acción rápida sobre cada caso."
                       rows={citasRows}
                       columns={[
                         { key: 'horario', label: 'Horario' },
@@ -515,7 +515,7 @@ export default function AgendaPage() {
                         },
                       ]}
                       emptyTitle="No hay citas para este filtro"
-                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestana Recepcion."
+                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestaña Recepción."
                       action={
                         <StatusPill tone="border-border bg-muted text-foreground">
                           {formatLongDate(fecha)}

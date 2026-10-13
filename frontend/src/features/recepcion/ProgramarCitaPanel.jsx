@@ -324,7 +324,7 @@ export function ProgramarCitaPanel({
 
           <textarea
             {...register('observaciones')}
-            placeholder="Observaciones operativas para recepcion o consulta"
+            placeholder="Observaciones operativas para recepción o consulta"
             className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
           />
 

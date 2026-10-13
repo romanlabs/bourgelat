@@ -19,7 +19,7 @@ export const FLOW_STEPS = [
     step: '02',
     title: 'El caso se atiende con memoria',
     body:
-      'El veterinario registra la evolucion sobre el historial real del paciente, no sobre una nota aislada.',
+      'El veterinario registra la evolución sobre el historial real del paciente, no sobre una nota aislada.',
     image: '/images/flujo/slide-2.webp',
   },
   {

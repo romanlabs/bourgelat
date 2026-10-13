@@ -14,10 +14,10 @@ export const TYPE_OPTIONS = [
 export const ESTADO_LABELS = {
   programada: 'Programada',
   en_espera: 'En espera',
-  en_atencion: 'En atencion',
+  en_atencion: 'En atención',
   completada: 'Completada',
   cancelada: 'Cancelada',
-  no_asistio: 'No asistio',
+  no_asistio: 'No asistió',
 }
 
 export const ORIGEN_LABELS = {
@@ -37,10 +37,10 @@ export const TRANSICIONES = {
 
 export const ACCION_LABELS = {
   en_espera: 'Marcar llegada',
-  en_atencion: 'Iniciar atencion',
+  en_atencion: 'Iniciar atención',
   completada: 'Completar',
   cancelada: 'Cancelar',
-  no_asistio: 'No asistio',
+  no_asistio: 'No asistió',
 }
 
 /**
@@ -57,7 +57,7 @@ export const ACCION_PRIMARIA = {
 
 /** Orden de lectura de la sala de espera: lo que esta pasando primero. */
 export const GRUPOS = [
-  { estado: 'en_atencion', label: 'En atencion', dot: 'bg-info', text: 'text-info' },
+  { estado: 'en_atencion', label: 'En atención', dot: 'bg-info', text: 'text-info' },
   { estado: 'en_espera', label: 'En espera', dot: 'bg-warning', text: 'text-warning' },
   { estado: 'programada', label: 'Por llegar', dot: 'bg-muted-foreground', text: 'text-muted-foreground' },
 ]

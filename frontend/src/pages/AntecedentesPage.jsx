@@ -176,7 +176,7 @@ function RestrictedAntecedentesPage() {
           subtitle="Esta sección se muestra a veterinarios, auxiliares o administración autorizada."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad sobre los antecedentes clinicos del paciente.
+            Tu acceso actual no tiene visibilidad sobre los antecedentes clínicos del paciente.
           </div>
         </DashboardPanel>
       </div>
@@ -332,13 +332,13 @@ export default function AntecedentesPage() {
   const agregarCirugiaMutation = useMutation({
     mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarCirugia(mascotaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Cirugia agregada exitosamente')
+      toast.success(data?.message || 'Cirugía agregada exitosamente')
       setCirugiaForm(DEFAULT_CIRUGIA_FORM)
       setAntDrawerOpen(false)
       invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible agregar la cirugia.'))
+      toast.error(getErrorMessage(error, 'No fue posible agregar la cirugía.'))
     },
   })
 
@@ -358,47 +358,47 @@ export default function AntecedentesPage() {
   const agregarDesparasitacionMutation = useMutation({
     mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarDesparasitacion(mascotaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Desparasitacion agregada exitosamente')
+      toast.success(data?.message || 'Desparasitación agregada exitosamente')
       setDesparasitacionForm(DEFAULT_DESPARASITACION_FORM)
       setAntDrawerOpen(false)
       invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible agregar la desparasitacion.'))
+      toast.error(getErrorMessage(error, 'No fue posible agregar la desparasitación.'))
     },
   })
 
   const agregarPlanificacionMutation = useMutation({
     mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarPlanificacion(mascotaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Planificacion agregada exitosamente')
+      toast.success(data?.message || 'Planificación agregada exitosamente')
       setPlanificacionForm(DEFAULT_PLANIFICACION_FORM)
       setAntDrawerOpen(false)
       invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible agregar la planificacion.'))
+      toast.error(getErrorMessage(error, 'No fue posible agregar la planificación.'))
     },
   })
 
   const agregarCondicionMutation = useMutation({
     mutationFn: ({ mascotaId, payload }) => antecedentesApi.agregarCondicion(mascotaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Condicion cronica agregada exitosamente')
+      toast.success(data?.message || 'Condición cronica agregada exitosamente')
       setCondicionForm(DEFAULT_CONDICION_FORM)
       setAntDrawerOpen(false)
       invalidarDominios(queryClient, 'historias')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible agregar la condicion cronica.'))
+      toast.error(getErrorMessage(error, 'No fue posible agregar la condición cronica.'))
     },
   })
 
   const mascotas = mascotasQuery.data?.mascotas || []
   const alergiasRows = buildRows(selectedAntecedentes?.alergias, (item) => ({
     tipo: item.tipo || 'Sin tipo',
-    descripcion: item.descripcion || 'Sin descripcion',
-    reaccion: item.reaccion || 'Sin reaccion',
+    descripcion: item.descripcion || 'Sin descripción',
+    reaccion: item.reaccion || 'Sin reacción',
     fecha: item.fecha ? formatLongDate(item.fecha) : 'Sin fecha',
   }))
   const cirugiasRows = buildRows(selectedAntecedentes?.cirugias, (item) => ({
@@ -487,7 +487,7 @@ export default function AntecedentesPage() {
 
     if (!requireSelectedPet()) return
     if (!alergiaForm.tipo.trim() || !alergiaForm.descripcion.trim()) {
-      toast.error('Completa tipo y descripcion de la alergia.')
+      toast.error('Completa tipo y descripción de la alergia.')
       return
     }
 
@@ -507,7 +507,7 @@ export default function AntecedentesPage() {
 
     if (!requireSelectedPet()) return
     if (!cirugiaForm.nombre.trim() || !cirugiaForm.fecha) {
-      toast.error('Completa nombre y fecha de la cirugia.')
+      toast.error('Completa nombre y fecha de la cirugía.')
       return
     }
 
@@ -548,7 +548,7 @@ export default function AntecedentesPage() {
 
     if (!requireSelectedPet()) return
     if (!desparasitacionForm.tipo || !desparasitacionForm.fecha) {
-      toast.error('Completa el tipo y la fecha de la desparasitacion.')
+      toast.error('Completa el tipo y la fecha de la desparasitación.')
       return
     }
 
@@ -568,7 +568,7 @@ export default function AntecedentesPage() {
 
     if (!requireSelectedPet()) return
     if (!planificacionForm.nombre.trim() || !planificacionForm.fecha) {
-      toast.error('Completa nombre y fecha de la planificacion.')
+      toast.error('Completa nombre y fecha de la planificación.')
       return
     }
 
@@ -587,7 +587,7 @@ export default function AntecedentesPage() {
 
     if (!requireSelectedPet()) return
     if (!condicionForm.nombre.trim()) {
-      toast.error('Completa el nombre de la condicion cronica.')
+      toast.error('Completa el nombre de la condición cronica.')
       return
     }
 
@@ -609,10 +609,10 @@ export default function AntecedentesPage() {
     <AdminShell
       currentKey="antecedentes"
       title="Antecedentes del paciente"
-      description="Modulo clinico para dejar visible el contexto permanente del paciente antes de consultar: alergias, vacunas, cirugias, condiciones cronicas y notas generales."
+      description="Módulo clínico para dejar visible el contexto permanente del paciente antes de consultar: alergias, vacunas, cirugías, condiciones crónicas y notas generales."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Contexto clinico
+          Contexto clínico
         </StatusPill>
       }
       actions={
@@ -622,7 +622,7 @@ export default function AntecedentesPage() {
           </NavCta>
         </div>
       }
-      asideNote="La idea aqui no es repetir toda la consulta, sino dejar a mano lo que el medico necesita saber antes de atender al paciente."
+      asideNote="La idea aquí no es repetir toda la consulta, sino dejar a mano lo que el médico necesita saber antes de atender al paciente."
     >
       {!puedeVerAntecedentes ? (
         <EmptyState
@@ -671,7 +671,7 @@ export default function AntecedentesPage() {
               icon={HeartPulse}
               label="Alergias"
               value={formatNumber(alergiasRows.length)}
-              helper="Alertas clinicas visibles para la atencion."
+              helper="Alertas clínicas visibles para la atención."
               tone="text-danger"
             />
             <KpiCard
@@ -690,7 +690,7 @@ export default function AntecedentesPage() {
             />
             <KpiCard
               icon={HeartPulse}
-              label="Condiciones cronicas"
+              label="Condiciones crónicas"
               value={formatNumber(condicionesRows.length)}
               helper="Problemas permanentes o de seguimiento."
               tone="text-warning"
@@ -706,7 +706,7 @@ export default function AntecedentesPage() {
               icon={CalendarClock}
               label="Planificacion"
               value={formatNumber(planificacionesRows.length)}
-              helper="Metodos de planificacion aplicados."
+              helper="Métodos de planificación aplicados."
               tone="text-info"
             />
           </div>
@@ -837,7 +837,7 @@ export default function AntecedentesPage() {
                       <div key={row.id} className="py-2 text-sm">
                         <span className="font-semibold text-foreground">{row.tipo}</span>
                         <span className="text-muted-foreground"> · {row.descripcion}</span>
-                        {row.reaccion !== 'Sin reaccion' && <span className="text-muted-foreground"> · {row.reaccion}</span>}
+                        {row.reaccion !== 'Sin reacción' && <span className="text-muted-foreground"> · {row.reaccion}</span>}
                         <span className="ml-2 text-xs text-muted-foreground">{row.fecha}</span>
                       </div>
                     ))}
@@ -1043,8 +1043,8 @@ export default function AntecedentesPage() {
               {antDrawerType === 'vacuna' && 'Agregar vacuna'}
               {antDrawerType === 'desparasitacion' && 'Agregar desparasitación'}
               {antDrawerType === 'planificacion' && 'Agregar planificación'}
-              {antDrawerType === 'cirugia' && 'Agregar cirugia'}
-              {antDrawerType === 'condicion' && 'Agregar condicion cronica'}
+              {antDrawerType === 'cirugia' && 'Agregar cirugía'}
+              {antDrawerType === 'condicion' && 'Agregar condición cronica'}
               {antDrawerType === 'generales' && 'Datos generales'}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1075,7 +1075,7 @@ export default function AntecedentesPage() {
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarAlergia}>
               <input type="text" value={alergiaForm.tipo} onChange={(e) => setAlergiaForm((c) => ({ ...c, tipo: e.target.value }))} placeholder="Tipo de alergia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <input type="text" value={alergiaForm.descripcion} onChange={(e) => setAlergiaForm((c) => ({ ...c, descripcion: e.target.value }))} placeholder="Descripcion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
-              <input type="text" value={alergiaForm.reaccion} onChange={(e) => setAlergiaForm((c) => ({ ...c, reaccion: e.target.value }))} placeholder="Reaccion observada" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={alergiaForm.reaccion} onChange={(e) => setAlergiaForm((c) => ({ ...c, reaccion: e.target.value }))} placeholder="Reacción observada" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <input type="date" value={alergiaForm.fecha} onChange={(e) => setAlergiaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
             </form>
           )}
@@ -1085,8 +1085,8 @@ export default function AntecedentesPage() {
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarVacuna}>
               <input type="text" value={vacunaForm.nombre} onChange={(e) => setVacunaForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la vacuna" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={vacunaForm.fecha} onChange={(e) => setVacunaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
-                <div><p className="mb-1 text-xs text-muted-foreground">Proxima dosis</p><input type="date" value={vacunaForm.proximaDosis} onChange={(e) => setVacunaForm((c) => ({ ...c, proximaDosis: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicación</p><input type="date" value={vacunaForm.fecha} onChange={(e) => setVacunaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Próxima dosis</p><input type="date" value={vacunaForm.proximaDosis} onChange={(e) => setVacunaForm((c) => ({ ...c, proximaDosis: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <input type="text" value={vacunaForm.lote} onChange={(e) => setVacunaForm((c) => ({ ...c, lote: e.target.value }))} placeholder="Lote" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
@@ -1124,8 +1124,8 @@ export default function AntecedentesPage() {
               </div>
               <input type="text" value={desparasitacionForm.producto} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, producto: e.target.value }))} placeholder="Producto (opcional)" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={desparasitacionForm.fecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
-                <div><p className="mb-1 text-xs text-muted-foreground">Proxima fecha</p><input type="date" value={desparasitacionForm.proximaFecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicación</p><input type="date" value={desparasitacionForm.fecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Próxima fecha</p><input type="date" value={desparasitacionForm.proximaFecha} onChange={(e) => setDesparasitacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
               </div>
             </form>
           )}
@@ -1133,10 +1133,10 @@ export default function AntecedentesPage() {
           {/* Planificación */}
           {antDrawerType === 'planificacion' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarPlanificacion}>
-              <input type="text" value={planificacionForm.nombre} onChange={(e) => setPlanificacionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Metodo de planificacion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={planificacionForm.nombre} onChange={(e) => setPlanificacionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Método de planificación" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicacion</p><input type="date" value={planificacionForm.fecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
-                <div><p className="mb-1 text-xs text-muted-foreground">Proxima fecha</p><input type="date" value={planificacionForm.proximaFecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Fecha de aplicación</p><input type="date" value={planificacionForm.fecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+                <div><p className="mb-1 text-xs text-muted-foreground">Próxima fecha</p><input type="date" value={planificacionForm.proximaFecha} onChange={(e) => setPlanificacionForm((c) => ({ ...c, proximaFecha: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
               </div>
             </form>
           )}
@@ -1144,7 +1144,7 @@ export default function AntecedentesPage() {
           {/* Cirugia */}
           {antDrawerType === 'cirugia' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarCirugia}>
-              <input type="text" value={cirugiaForm.nombre} onChange={(e) => setCirugiaForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la cirugia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <input type="text" value={cirugiaForm.nombre} onChange={(e) => setCirugiaForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la cirugía" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <input type="date" value={cirugiaForm.fecha} onChange={(e) => setCirugiaForm((c) => ({ ...c, fecha: e.target.value }))} className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <input type="text" value={cirugiaForm.veterinario} onChange={(e) => setCirugiaForm((c) => ({ ...c, veterinario: e.target.value }))} placeholder="Profesional o referencia" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
               <textarea value={cirugiaForm.observaciones} onChange={(e) => setCirugiaForm((c) => ({ ...c, observaciones: e.target.value }))} placeholder="Observaciones relevantes" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
@@ -1154,8 +1154,8 @@ export default function AntecedentesPage() {
           {/* Condicion */}
           {antDrawerType === 'condicion' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleAgregarCondicion}>
-              <input type="text" value={condicionForm.nombre} onChange={(e) => setCondicionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la condicion" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
-              <div><p className="mb-1 text-xs text-muted-foreground">Fecha de diagnostico</p><input type="date" value={condicionForm.fechaDiagnostico} onChange={(e) => setCondicionForm((c) => ({ ...c, fechaDiagnostico: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
+              <input type="text" value={condicionForm.nombre} onChange={(e) => setCondicionForm((c) => ({ ...c, nombre: e.target.value }))} placeholder="Nombre de la condición" className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" />
+              <div><p className="mb-1 text-xs text-muted-foreground">Fecha de diagnóstico</p><input type="date" value={condicionForm.fechaDiagnostico} onChange={(e) => setCondicionForm((c) => ({ ...c, fechaDiagnostico: e.target.value }))} className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary" /></div>
               <textarea value={condicionForm.tratamientoActual} onChange={(e) => setCondicionForm((c) => ({ ...c, tratamientoActual: e.target.value }))} placeholder="Tratamiento actual o seguimiento" className="min-h-[110px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" />
             </form>
           )}

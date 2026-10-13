@@ -16,7 +16,7 @@ const esquema = z.object({
     .string()
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/,
-      'Mínimo 8 caracteres con mayúscula, minúscula, número y caracter especial'
+      'Mínimo 8 caracteres con mayúscula, minúscula, número y carácter especial'
     ),
 })
 

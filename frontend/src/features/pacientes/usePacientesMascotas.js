@@ -121,10 +121,10 @@ export function usePacientesMascotas({ enabled }) {
           historiasDisponibles && antecedentesDisponibles
             ? { label: 'Lista para historia y antecedentes', tone: 'border-success/30 bg-success-soft text-success' }
             : historiasDisponibles
-              ? { label: 'Lista para historia clinica', tone: 'border-info/30 bg-info-soft text-info' }
+              ? { label: 'Lista para historia clínica', tone: 'border-info/30 bg-info-soft text-info' }
               : antecedentesDisponibles
                 ? { label: 'Lista para antecedentes', tone: 'border-warning/30 bg-warning-soft text-warning' }
-                : { label: 'Ficha clinica no incluida', tone: 'border-border bg-muted text-foreground' }
+                : { label: 'Ficha clínica no incluida', tone: 'border-border bg-muted text-foreground' }
 
         return {
           id: mascota.id,
@@ -133,7 +133,7 @@ export function usePacientesMascotas({ enabled }) {
           especie: etiquetaEspecie(mascota.especie),
           raza: mascota.raza || '',
           tutor: mascota.Propietario?.nombre || 'Sin tutor',
-          contacto: mascota.Propietario?.telefono || 'Sin telefono',
+          contacto: mascota.Propietario?.telefono || 'Sin teléfono',
           color: mascota.color || 'Sin color',
           edad: formatearEdad(mascota.fechaNacimiento) || 'Sin edad',
           peso: mascota.peso ? `${mascota.peso} kg` : 'Sin peso',

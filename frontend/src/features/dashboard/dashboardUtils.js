@@ -27,7 +27,7 @@ export const PLAN_META = {
     tone: 'bg-card text-foreground border-foreground/20',
   },
   inicio: { nombre: 'Inicio (legado)', tone: TONO_LEGADO },
-  clinica: { nombre: 'Clinica (legado)', tone: TONO_LEGADO },
+  clinica: { nombre: 'Clínica (legado)', tone: TONO_LEGADO },
   profesional: { nombre: 'Profesional (legado)', tone: TONO_LEGADO },
 }
 

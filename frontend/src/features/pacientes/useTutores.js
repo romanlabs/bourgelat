@@ -10,8 +10,8 @@ const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 export const DOCUMENT_OPTIONS = [
-  { value: 'CC', label: 'Cedula de ciudadania' },
-  { value: 'CE', label: 'Cedula de extranjeria' },
+  { value: 'CC', label: 'Cédula de ciudadanía' },
+  { value: 'CE', label: 'Cédula de extranjería' },
   { value: 'PP', label: 'Pasaporte' },
   { value: 'NIT', label: 'NIT' },
 ]
@@ -92,7 +92,7 @@ export function useTutores({ enabled }) {
         id: t.id,
         nombre: t.nombre,
         documento: t.numeroDocumento ? `${t.tipoDocumento || ''} ${t.numeroDocumento}`.trim() : 'Sin documento',
-        telefono: t.telefono || 'Sin telefono',
+        telefono: t.telefono || 'Sin teléfono',
         email: t.email || '—',
         ciudad: t.ciudad || '—',
         raw: t,

@@ -211,7 +211,7 @@ export default function CartSidebar({
       {/* ── Pie fijo compacto ── */}
       <div className="shrink-0 border-t border-border bg-muted/40">
         {/* Metodo de pago en grilla: la fila deslizable cortaba "Transferencia"
-            a media palabra y escondia los metodos de la derecha. Cuando entre
+            a media palabra y escondia los métodos de la derecha. Cuando entre
             una pasarela (Wompi), su metodo aparece aqui como una celda mas. */}
         <div className="px-3 pt-3">
           <div className="mb-1.5 flex items-center justify-between">

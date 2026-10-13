@@ -97,10 +97,10 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
               {cita.horaLlegada ? (
                 <span className="tabular-nums">{formatTime(cita.horaLlegada)}</span>
               ) : (
-                <span className="text-muted-foreground">Aun no llega</span>
+                <span className="text-muted-foreground">Aún no llega</span>
               )}
             </Dato>
-            <Dato label="Inicio de atencion">
+            <Dato label="Inicio de atención">
               {cita.horaInicioAtencion ? (
                 <span className="tabular-nums">{formatTime(cita.horaInicioAtencion)}</span>
               ) : (
@@ -125,7 +125,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
 
           {cita.motivoCancelacion ? (
             <div className="border-t border-border pt-4">
-              <p className="mb-1.5 text-xs text-muted-foreground">Motivo de cancelacion</p>
+              <p className="mb-1.5 text-xs text-muted-foreground">Motivo de cancelación</p>
               <p className="text-sm leading-6 text-foreground">{cita.motivoCancelacion}</p>
             </div>
           ) : null}
@@ -135,7 +135,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
               to={`/pacientes/${cita.mascotaId}/historial?citaId=${cita.id}`}
               className="border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-foreground transition hover:bg-muted"
             >
-              Abrir historia clinica
+              Abrir historia clínica
             </Link>
           ) : null}
         </div>
