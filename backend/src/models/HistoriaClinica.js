@@ -109,6 +109,11 @@ const HistoriaClinica = sequelize.define('HistoriaClinica', {
     defaultValue: false,
     comment: 'Una vez bloqueada no se puede editar - RF-31',
   },
+  // Cuando se firmo y cerro. La historia impresa lo muestra junto a la firma.
+  bloqueadaEn: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   // Marca que la consulta ya se cobro. Impide facturar dos veces la misma historia.
   // Sin `references` para no acoplar este modelo a Factura (mismo criterio que
   // MovimientoInventarioClinico.facturaId); la FK real la crea la migracion.

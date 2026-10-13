@@ -52,6 +52,12 @@ const Mascota = sequelize.define('Mascota', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // Numero de historia clinica: consecutivo por clinica, asignado al crear el
+  // paciente y para siempre (no se reutiliza aunque el paciente se desactive).
+  numeroHistoria: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   fotoPerfil: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -83,6 +89,7 @@ const Mascota = sequelize.define('Mascota', {
   { fields: ['propietarioId'] },
   { fields: ['clinicaId', 'activo'] },
   { fields: ['clinicaId', 'especie'] },
+  { fields: ['clinicaId', 'numeroHistoria'], unique: true, name: 'mascotas_clinica_numero_historia_unique' },
 ]
 });
 
