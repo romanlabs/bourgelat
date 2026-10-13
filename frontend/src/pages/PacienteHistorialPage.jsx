@@ -21,6 +21,7 @@ import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawe
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
 import { etiquetaEspecie } from '@/lib/especies'
+import AdminShell from '@/components/layout/AdminShell'
 
 const TABS = [
   { id: 'historia', label: 'Historia Clínica' },
@@ -219,7 +220,11 @@ export default function PacienteHistorialPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminShell
+      currentKey="pacientes"
+      title={mascota?.nombre ? `Historial de ${mascota.nombre}` : 'Historial clínico'}
+      hidePageHeader
+    >
       {/* Barra de navegación contextual */}
       <div className="border-b border-border bg-card px-6 py-3">
         <Link
@@ -409,6 +414,6 @@ export default function PacienteHistorialPage() {
           onSuccess={handleEstiloDrawerSuccess}
         />
       )}
-    </div>
+    </AdminShell>
   )
 }
