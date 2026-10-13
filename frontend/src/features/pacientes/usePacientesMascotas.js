@@ -185,6 +185,7 @@ export function usePacientesMascotas({ enabled }) {
         await crearMascotaMutation.mutateAsync(payload)
       }
       onDone?.()
+      closeDrawer()
     } catch {
       // errors handled in mutation callbacks
     }

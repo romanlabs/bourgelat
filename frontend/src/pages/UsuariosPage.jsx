@@ -100,7 +100,8 @@ const buildEditForm = (user) => ({
   activo: Boolean(user?.activo),
 })
 
-const formatLastAccess = (value) => {
+const formatLastAccess = (value, esSesionActual = false) => {
+  if (esSesionActual) return 'Sesión actual'
   if (!value) return 'Sin acceso registrado'
 
   return new Intl.DateTimeFormat('es-CO', {
@@ -235,6 +236,12 @@ export default function UsuariosPage() {
     operationalSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   const [selectedUserId, setSelectedUserId] = useState(null)
+  const editPanelRef = useRef(null)
+  // Al elegir un usuario el formulario queda fuera de la vista: lo llevamos ahi.
+  useEffect(() => {
+    if (activeSection !== 'editar' || !selectedUserId) return
+    editPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activeSection, selectedUserId])
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
@@ -633,7 +640,7 @@ export default function UsuariosPage() {
                     key: 'ultimoAcceso',
                     label: 'Último acceso',
                     render: (row) => (
-                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso)}</span>
+                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso, row.raw.id === usuario?.id)}</span>
                     ),
                   },
                   {
@@ -852,6 +859,7 @@ export default function UsuariosPage() {
               />
             </DashboardPanel>
 
+            <div ref={editPanelRef}>
             <DashboardPanel
               title="Editar usuario"
               subtitle={
@@ -942,7 +950,7 @@ export default function UsuariosPage() {
 
                   <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
                     <p className="font-semibold text-foreground">{selectedUser.nombre}</p>
-                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso)}</p>
+                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)}</p>
                     <p className="mt-1">
                       Estado actual: {selectedUser.activo ? 'Activo' : 'Inactivo'}
                     </p>
@@ -970,6 +978,7 @@ export default function UsuariosPage() {
                 </form>
               )}
             </DashboardPanel>
+            </div>
           </div>
           ) : null}
 
