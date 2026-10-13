@@ -17,6 +17,7 @@ import {
   dibujarMedicamentos,
   formatFechaCorta,
   formatNumero,
+  formatNumeroHistoria,
   nombreArchivo,
   normalizarMedicamentos,
   parseFecha,
@@ -50,7 +51,10 @@ export const buildFormulaPdf = async ({ historia, clinica, usuario }) => {
     clinica,
     logo: await cargarLogo(clinica?.logo),
     titulo: 'FÓRMULA MÉDICA',
-    lineasDerecha: fechaConsulta ? [`Fecha: ${formatFechaNumerica(fechaConsulta)}`] : [],
+    lineasDerecha: [
+      formatNumeroHistoria(mascota.numeroHistoria) && `Historia N.º ${formatNumeroHistoria(mascota.numeroHistoria)}`,
+      fechaConsulta && `Fecha: ${formatFechaNumerica(fechaConsulta)}`,
+    ].filter(Boolean),
   })
 
   // ── Paciente y propietario ──

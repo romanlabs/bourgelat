@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const Mascota = require('../models/Mascota');
 const Propietario = require('../models/Propietario');
+const sequelize = require('../config/database')
 const { MASCOTAS_SUBDIR, buildPublicUploadUrl } = require('../config/uploads')
 const { parsePaginacion } = require('../utils/paginacion')
 const { iLikeSinTildes } = require('../utils/busqueda')
@@ -25,10 +26,21 @@ const crearMascota = async (req, res) => {
       return res.status(404).json({ message: 'Propietario no encontrado' });
     }
 
-    const mascota = await Mascota.create({
-      nombre, especie, raza, sexo, fechaNacimiento,
-      peso, color, esterilizado, observaciones, fotoPerfil,
-      propietarioId, clinicaId,
+    // El numero de historia es el siguiente de la clinica. El lock por clinica
+    // evita que dos altas simultaneas tomen el mismo numero (el indice unico es
+    // la ultima defensa).
+    const mascota = await sequelize.transaction(async (transaction) => {
+      await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+        replacements: { lockKey: `numero-historia:${clinicaId}` },
+        transaction,
+      })
+      const ultimo = await Mascota.max('numeroHistoria', { where: { clinicaId }, transaction })
+      return Mascota.create({
+        nombre, especie, raza, sexo, fechaNacimiento,
+        peso, color, esterilizado, observaciones, fotoPerfil,
+        propietarioId, clinicaId,
+        numeroHistoria: (Number(ultimo) || 0) + 1,
+      }, { transaction })
     });
 
     await registrarAuditoria({

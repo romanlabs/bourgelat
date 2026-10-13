@@ -23,6 +23,7 @@ import {
   dibujarMedicamentos,
   formatFechaCorta,
   formatFechaLarga,
+  formatNumeroHistoria,
   formatNumero,
   nombreArchivo,
   normalizarMedicamentos,
@@ -90,12 +91,17 @@ export const buildHistoriaPdf = async ({ historia, clinica, usuario }) => {
   const propietario = historia?.propietario || {}
   const fechaConsulta = parseFecha(historia?.fechaConsulta)
   const fechaApertura = parseFecha(mascota.createdAt)
+  const numeroHistoria = formatNumeroHistoria(mascota.numeroHistoria)
+  const bloqueadaEn = parseFecha(historia?.bloqueadaEn)
 
   dibujarEncabezadoFormal(doc, c, {
     clinica,
     logo: await cargarLogo(clinica?.logo),
     titulo: 'HISTORIA CLÍNICA',
-    lineasDerecha: fechaApertura ? [`Fecha de apertura: ${formatFechaNumerica(fechaApertura)}`] : [],
+    lineasDerecha: [
+      numeroHistoria && `N.º ${numeroHistoria}`,
+      fechaApertura && `Fecha de apertura: ${formatFechaNumerica(fechaApertura)}`,
+    ].filter(Boolean),
   })
 
   // ── Identificacion del paciente ──
@@ -260,12 +266,22 @@ export const buildHistoriaPdf = async ({ historia, clinica, usuario }) => {
     nombre: texto(historia?.veterinario?.nombre) || 'Médico veterinario',
     cargo: `Médico veterinario · Tarjeta profesional N.º ${texto(historia?.veterinario?.tarjetaProfesional) || 'no registrada'}`,
     notaDerecha: historia?.bloqueada
-      ? ['Registro firmado y cerrado.', 'No admite modificaciones posteriores.']
+      ? [
+          bloqueadaEn
+            ? // La hora ya termina en punto ("p. m."): no se agrega otro.
+              `Firmado y cerrado el ${formatFechaNumerica(bloqueadaEn)} a las ${formatHora(bloqueadaEn)}`.replace(/\.?$/, '.')
+            : 'Registro firmado y cerrado.',
+          'No admite modificaciones posteriores.',
+        ]
       : ['Registro abierto: puede tener', 'cambios posteriores a esta copia.'],
   })
 
   dibujarPieFormal(doc, c, {
-    identificacion: `${capitalizar(mascota.nombre) || 'Paciente'} · Historia clínica · ${nombreClinica(clinica)}`,
+    identificacion: [
+      capitalizar(mascota.nombre) || 'Paciente',
+      numeroHistoria ? `Historia clínica N.º ${numeroHistoria}` : 'Historia clínica',
+      nombreClinica(clinica),
+    ].join(' · '),
     lineas: lineasPie,
   })
 

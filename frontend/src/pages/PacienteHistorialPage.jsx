@@ -15,6 +15,7 @@ import { hasAnyRole } from '@/lib/permissions'
 import HistoriaClinicaFormDrawer from '@/features/historias/HistoriaClinicaFormDrawer'
 import HistoriaClinicaTimeline from '@/features/historias/HistoriaClinicaTimeline'
 import { useImprimirFormula, useImprimirHistoria } from '@/features/historias/useImprimirFormula'
+import { formatNumeroHistoria } from '@/features/historias/historiaPdfComun'
 import EstilosTimeline from '@/features/estilos/EstilosTimeline'
 import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
@@ -256,6 +257,7 @@ export default function PacienteHistorialPage() {
                   {etiquetaEspecie(mascota.especie)}
                   {mascota.raza ? ` · ${mascota.raza}` : ''}
                   {mascota.sexo && mascota.sexo !== 'desconocido' ? ` · ${mascota.sexo === 'macho' ? 'Macho' : 'Hembra'}` : ''}
+                  {formatNumeroHistoria(mascota.numeroHistoria) ? ` · Historia N.º ${formatNumeroHistoria(mascota.numeroHistoria)}` : ''}
                 </p>
                 <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   {mascota.Propietario?.nombre && (

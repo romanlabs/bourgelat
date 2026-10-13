@@ -9,6 +9,10 @@ import { ESPECIE_LABELS } from '@/lib/especies'
 
 export { alturaLinea, saltarSiNoCabe, texto }
 
+// N.º de historia clinica con cuatro digitos: 4 -> '0004'.
+export const formatNumeroHistoria = (numero) =>
+  Number.isInteger(Number(numero)) && Number(numero) > 0 ? String(numero).padStart(4, '0') : ''
+
 export const SEXO_LABELS = { macho: 'Macho', hembra: 'Hembra' }
 
 export const TIPO_DOCUMENTO_LABELS = {
