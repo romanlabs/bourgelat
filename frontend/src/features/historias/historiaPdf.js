@@ -298,7 +298,7 @@ export const descargarHistoriaPdf = async ({ historia, clinica, usuario }) => {
     const doc = await buildHistoriaPdf({ historia, clinica, usuario })
     doc.save(`Historia-${nombreArchivo(historia)}.pdf`)
   } catch (error) {
-    console.error('No se pudo generar el PDF de la historia clinica', error)
+    console.error('No se pudo generar el PDF de la historia clínica', error)
     toast.error('No se pudo generar el PDF de la historia clínica.')
   }
 }

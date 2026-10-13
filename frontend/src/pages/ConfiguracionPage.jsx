@@ -304,11 +304,11 @@ function ConfiguracionContent({
   const probarFactusMutation = useMutation({
     mutationFn: configuracionApi.probarFactus,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Conexion con Factus exitosa')
+      toast.success(data?.message || 'Conexión con Factus exitosa')
       queryClient.invalidateQueries({ queryKey: ['configuracion-factus'] })
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible probar la conexion con Factus.'))
+      toast.error(getErrorMessage(error, 'No fue posible probar la conexión con Factus.'))
     },
   })
 
@@ -500,9 +500,9 @@ function ConfiguracionContent({
             <div className="space-y-4">
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 <p className="font-semibold text-foreground">
-                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clinica sin nombre visible'}
+                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clínica sin nombre visible'}
                 </p>
-                <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
+                <p>{clinicForm.razonSocial || 'Razón social pendiente'}</p>
                 <p>
                   {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
                     'Ubicación pendiente'}
@@ -552,7 +552,7 @@ function ConfiguracionContent({
                     onClick={() => setActiveSection('facturacion')}
                     className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                   >
-                    Ver facturacion electronica
+                    Ver facturación electrónica
                   </button>
                 ) : null}
               </div>
@@ -562,13 +562,13 @@ function ConfiguracionContent({
           <div className="space-y-5">
             <DashboardPanel
               title="Pendientes fiscales"
-              subtitle="Lo que aun falta para dejar la salida tributaria mas completa."
+              subtitle="Lo que aún falta para dejar la salida tributaria mas completa."
             >
               {camposPendientes.length ? (
                 <div className="space-y-3">
                   <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
-                    Todavia faltan datos fiscales base. Completa esta lista antes de formalizar la
-                    facturacion electronica.
+                    Todavía faltan datos fiscales base. Completa esta lista antes de formalizar la
+                    facturación electrónica.
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {camposPendientes.map((item) => (
@@ -580,7 +580,7 @@ function ConfiguracionContent({
                 </div>
               ) : (
                 <div className="border border-success/30 bg-success-soft px-4 py-4 text-sm leading-7 text-success">
-                  La ficha fiscal ya tiene la informacion base para una operacion mas profesional.
+                  La ficha fiscal ya tiene la información base para una operación mas profesional.
                 </div>
               )}
             </DashboardPanel>
@@ -591,7 +591,7 @@ function ConfiguracionContent({
             >
               <div className="space-y-3">
                 <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                  Esta separacion reduce errores y evita que el cliente mezcle configuracion visible
+                  Esta separación reduce errores y evita que el cliente mezcle configuración visible
                   con claves de acceso o cambios delicados de integración.
                 </div>
                 <NavCta to="/finanzas" icon={Wallet} variant="outline" className="w-full justify-center">
@@ -627,7 +627,7 @@ function ConfiguracionContent({
                   type="text"
                   value={clinicForm.nombre}
                   onChange={(event) => setClinicForm((current) => ({ ...current, nombre: event.target.value }))}
-                  placeholder="Clinica Veterinaria Bourgelat"
+                  placeholder="Clínica Veterinaria Bourgelat"
                   className={INPUT_CLASS}
                 />
               </FormField>
@@ -648,14 +648,14 @@ function ConfiguracionContent({
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <FormField label="Razon social">
+              <FormField label="Razón social">
                 <input
                   type="text"
                   value={clinicForm.razonSocial}
                   onChange={(event) =>
                     setClinicForm((current) => ({ ...current, razonSocial: event.target.value }))
                   }
-                  placeholder="Clinica Veterinaria Bourgelat SAS"
+                  placeholder="Clínica Veterinaria Bourgelat SAS"
                   className={INPUT_CLASS}
                 />
               </FormField>
@@ -684,7 +684,7 @@ function ConfiguracionContent({
               </FormField>
               <FormField
                 label="Celular principal"
-                helper="Solo celulares colombianos de 10 digitos, por ejemplo 3001234567."
+                helper="Solo celulares colombianos de 10 dígitos, por ejemplo 3001234567."
               >
                 <input
                   type="text"
@@ -739,7 +739,7 @@ function ConfiguracionContent({
                   options={ciudadesDisponibles.map((city) => ({ value: city, label: city }))}
                 />
               </FormField>
-              <FormField label="Codigo postal">
+              <FormField label="Código postal">
                 <input
                   type="text"
                   value={clinicForm.codigoPostal}
@@ -917,9 +917,9 @@ function ConfiguracionContent({
             <div className="space-y-4">
               <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 <p className="font-semibold text-foreground">
-                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clinica sin nombre visible'}
+                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clínica sin nombre visible'}
                 </p>
-                <p>{clinicForm.razonSocial || 'Razon social pendiente'}</p>
+                <p>{clinicForm.razonSocial || 'Razón social pendiente'}</p>
                 <p>
                   {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
                     'Ubicación pendiente'}
@@ -950,13 +950,13 @@ function ConfiguracionContent({
 
           <DashboardPanel
             title="Pendientes fiscales"
-            subtitle="Lo que aun falta para dejar la salida tributaria mas completa."
+            subtitle="Lo que aún falta para dejar la salida tributaria mas completa."
           >
             {camposPendientes.length ? (
               <div className="space-y-3">
                 <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
-                  Todavia faltan datos fiscales base. Completa esta lista antes de formalizar la
-                  facturacion electronica.
+                  Todavía faltan datos fiscales base. Completa esta lista antes de formalizar la
+                  facturación electrónica.
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {camposPendientes.map((item) => (
@@ -968,7 +968,7 @@ function ConfiguracionContent({
               </div>
             ) : (
               <div className="border border-success/30 bg-success-soft px-4 py-4 text-sm leading-7 text-success">
-                La ficha fiscal ya tiene la informacion base para una operacion mas profesional.
+                La ficha fiscal ya tiene la información base para una operación mas profesional.
               </div>
             )}
           </DashboardPanel>
@@ -1145,7 +1145,7 @@ function ConfiguracionContent({
                       className={INPUT_CLASS}
                     />
                   </FormField>
-                  <FormField label="Metodo de pago">
+                  <FormField label="Método de pago">
                     <input
                       type="text"
                       value={factusForm.metodoPagoCodigo}
@@ -1184,7 +1184,7 @@ function ConfiguracionContent({
                     disabled={probarFactusMutation.isPending}
                     className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {probarFactusMutation.isPending ? 'Probando...' : 'Probar conexion'}
+                    {probarFactusMutation.isPending ? 'Probando...' : 'Probar conexión'}
                   </button>
                   <button
                     type="button"
@@ -1315,8 +1315,8 @@ function ConfiguracionContent({
 
                 {configuracionLocal ? (
                   <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                    Hay configuracion local disponible. Si no guardas credenciales propias, la
-                    clinica puede apoyarse en las variables del entorno del despliegue.
+                    Hay configuración local disponible. Si no guardas credenciales propias, la
+                    clínica puede apoyarse en las variables del entorno del despliegue.
                   </div>
                 ) : null}
               </div>
@@ -1329,7 +1329,7 @@ function ConfiguracionContent({
               >
                 <div className="space-y-3">
                   <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
-                    Factus puede quedar configurado, pero la clinica aun necesita completar datos
+                    Factus puede quedar configurado, pero la clínica aún necesita completar datos
                     para una salida fiscal mas ordenada.
                   </div>
                   <div className="flex flex-wrap gap-2">

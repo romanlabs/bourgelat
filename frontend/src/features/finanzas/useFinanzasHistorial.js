@@ -137,11 +137,11 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const emitirFacturaMutation = useMutation({
     mutationFn: ({ facturaId, payload }) => finanzasApi.emitirFacturaElectronica(facturaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Factura emitida electronicamente')
+      toast.success(data?.message || 'Factura emitida electrónicamente')
       invalidarDominios(queryClient, 'facturacion')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible emitir la factura electronicamente.'))
+      toast.error(getErrorMessage(error, 'No fue posible emitir la factura electrónicamente.'))
     },
   })
 
@@ -197,7 +197,7 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const handleEmitirFactura = () => {
     if (!facturaSeleccionada) return
     if (emisionForm.formaPagoCodigo === '2' && !emisionForm.fechaVencimientoPago) {
-      toast.error('La fecha de vencimiento es obligatoria para facturas a credito.')
+      toast.error('La fecha de vencimiento es obligatoria para facturas a crédito.')
       return
     }
     emitirFacturaMutation.mutate({
@@ -222,7 +222,7 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const handleAnularFactura = () => {
     if (!facturaSeleccionada) return
     if (motivoAnulacion.trim().length < 8) {
-      toast.error('Escribe un motivo claro de anulacion para dejar trazabilidad.')
+      toast.error('Escribe un motivo claro de anulación para dejar trazabilidad.')
       return
     }
     anularFacturaMutation.mutate({

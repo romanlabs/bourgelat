@@ -104,7 +104,7 @@ function GastoForm() {
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
         <Select
           variant="field"
-          aria-label="Categoria del gasto"
+          aria-label="Categoría del gasto"
           value={form.categoria}
           onValueChange={setValor('categoria')}
           options={CATEGORIAS}
@@ -133,7 +133,7 @@ function GastoForm() {
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pago</span>
         <Select
           variant="field"
-          aria-label="Metodo de pago"
+          aria-label="Método de pago"
           value={form.metodoPago}
           onValueChange={setValor('metodoPago')}
           options={METODOS_GASTO}
@@ -312,7 +312,7 @@ function FilaDeudor({ cliente }) {
                   />
                   <Select
                     variant="field"
-                    aria-label="Metodo del abono"
+                    aria-label="Método del abono"
                     className="h-9"
                     value={metodoPago}
                     onValueChange={setMetodoPago}

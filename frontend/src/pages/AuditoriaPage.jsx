@@ -94,7 +94,7 @@ export default function AuditoriaPage() {
   const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
 
   useEffect(() => {
-    document.title = 'Auditoria | Bourgelat'
+    document.title = 'Auditoría | Bourgelat'
   }, [])
 
   const auditoriaQuery = useQuery({
@@ -234,7 +234,7 @@ export default function AuditoriaPage() {
             centerLabel="Eventos"
             centerValue={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
             formatter={formatNumber}
-            emptyMessage="Aun no hay datos para mostrar."
+            emptyMessage="Aún no hay datos para mostrar."
             chartSize={140}
           />
           <DonutCard
@@ -255,13 +255,13 @@ export default function AuditoriaPage() {
         >
           <div className="grid gap-3 lg:grid-cols-3">
             <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticacion, cambios de usuarios, anulaciones y bloqueos clinicos.
+              Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticación, cambios de usuarios, anulaciones y bloqueos clínicos.
             </div>
             <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Cuando una accion afecte caja, historias o permisos, esta vista te da responsable, momento y descripcion en un solo lugar.
+              Cuando una acción afecte caja, historias o permisos, esta vista te da responsable, momento y descripción en un solo lugar.
             </div>
             <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operacion sin depender de capturas o recuerdos.
+              Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operación sin depender de capturas o recuerdos.
             </div>
           </div>
         </DashboardPanel>

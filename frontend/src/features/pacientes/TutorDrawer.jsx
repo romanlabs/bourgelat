@@ -13,9 +13,9 @@ const tutorSchema = z.object({
   numeroDocumento: z.string().min(1, 'El documento es requerido'),
   telefono: z
     .string()
-    .min(1, 'El telefono es requerido')
+    .min(1, 'El teléfono es requerido')
     .transform((v) => v.replace(/\D/g, ''))
-    .refine((v) => v.length >= 7 && v.length <= 10, 'Usa un telefono valido entre 7 y 10 digitos'),
+    .refine((v) => v.length >= 7 && v.length <= 10, 'Usa un teléfono válido entre 7 y 10 dígitos'),
   email: z.string().email('Correo inválido').optional().or(z.literal('')),
   ciudad: z.string().optional(),
 })
@@ -88,7 +88,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             <p className="mt-0.5 text-xs text-muted-foreground">
               {modoEdicion
                 ? 'Corrige los datos del responsable del paciente.'
-                : 'Alta rapida del responsable del paciente.'}
+                : 'Alta rápida del responsable del paciente.'}
             </p>
           </div>
           <button
@@ -156,7 +156,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 <label htmlFor="t-tel" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Telefono o celular *
                 </label>
-                <input id="t-tel" type="text" inputMode="numeric" placeholder="Numero principal" className={`${fieldClass} ${errors.telefono ? 'border-danger' : ''}`} {...register('telefono')} />
+                <input id="t-tel" type="text" inputMode="numeric" placeholder="Número principal" className={`${fieldClass} ${errors.telefono ? 'border-danger' : ''}`} {...register('telefono')} />
                 {errors.telefono && <p className="text-xs text-danger">{errors.telefono.message}</p>}
               </div>
               <div className="grid gap-1.5">

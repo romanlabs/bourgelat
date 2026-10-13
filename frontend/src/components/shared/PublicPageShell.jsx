@@ -56,7 +56,7 @@ export default function PublicPageShell({
                 to="/login"
                 className="inline-flex items-center gap-2 rounded-full border border-papel-300 px-4 py-2 text-sm font-medium text-tinta-600 no-underline transition hover:border-papel-400 hover:text-tinta-800"
               >
-                Iniciar sesion
+                Iniciar sesión
               </Link>
               <button
                 type="button"
@@ -90,8 +90,8 @@ export default function PublicPageShell({
         <footer className="border-t border-papel-300 bg-papel-50 px-5 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <p className="max-w-2xl text-sm leading-7 text-tinta-500">
-              Bourgelat construye una experiencia mas clara para recepcion, consulta, caja y
-              seguimiento dentro de la operacion veterinaria en Colombia.
+              Bourgelat construye una experiencia mas clara para recepción, consulta, caja y
+              seguimiento dentro de la operación veterinaria en Colombia.
             </p>
             <div className="flex flex-wrap gap-4 text-sm text-tinta-500">
               {footerLinks.map((link) => (

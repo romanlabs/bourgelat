@@ -122,7 +122,7 @@ const getAppointmentTone = (estado) => {
 const buildCapacityChart = (used, limit, label) => {
   if (limit === null || limit === undefined) {
     return {
-      centerValue: 'Sin limite',
+      centerValue: 'Sin límite',
       rows: [{ key: 'abierto', name: label, value: 1, color: chartColors.categorica[0] }],
     }
   }
@@ -456,14 +456,14 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
 
             <div className="border border-border bg-muted px-4 py-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Siguiente modulo
+                Siguiente módulo
               </p>
               <p className="mt-3 text-base font-semibold text-foreground">Pacientes y tutores</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 La base clínica publicada ya puede usarse desde el equipo operativo.
               </p>
               <NavCta to="/pacientes" icon={PawPrint} className="mt-4">
-                Abrir modulo
+                Abrir módulo
               </NavCta>
             </div>
           </div>
@@ -892,7 +892,7 @@ export default function DashboardPage() {
             {
               id: 'no-asistio',
               icon: UserX,
-              label: 'No asistio',
+              label: 'No asistió',
               value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
               helper: 'Pacientes que no se presentaron a su cita en el período.',
               tone: 'text-warning',
@@ -990,7 +990,7 @@ export default function DashboardPage() {
             emptyMessage="Todavía no hay movimiento financiero en este período."
           />
           <DonutCard
-            title="Metodos de pago"
+            title="Métodos de pago"
             subtitle="Distribución de ingresos según el método usado por la clínica."
             data={metodosPago}
             centerLabel="Total"
@@ -1013,7 +1013,7 @@ export default function DashboardPage() {
           emptyTitle="No hay facturas registradas"
           emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
           action={
-            <NavCtaLink to="/finanzas">Abrir modulo</NavCtaLink>
+            <NavCtaLink to="/finanzas">Abrir módulo</NavCtaLink>
           }
         />
       </div>
@@ -1111,7 +1111,7 @@ export default function DashboardPage() {
           emptyTitle="No hay alertas de inventario"
           emptyBody="Cuando un producto quede con cantidad baja o tenga fecha próxima a vencer, aparecerá aquí."
           action={
-            <NavCtaLink to="/inventario">Abrir modulo</NavCtaLink>
+            <NavCtaLink to="/inventario">Abrir módulo</NavCtaLink>
           }
         />
       </div>
@@ -1211,7 +1211,7 @@ export default function DashboardPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Acción recomendada
             </p>
-            <p className="mt-3 text-base font-semibold text-foreground">Gestion comercial</p>
+            <p className="mt-3 text-base font-semibold text-foreground">Gestión comercial</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>

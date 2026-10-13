@@ -109,7 +109,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
       return
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      toast.error('La foto supera el maximo permitido de 4 MB.')
+      toast.error('La foto supera el máximo permitido de 4 MB.')
       e.target.value = ''
       return
     }

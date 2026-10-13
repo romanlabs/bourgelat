@@ -86,7 +86,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
             <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>
               La clinica ya cerro{turnoActivo.horaCierre ? ` (${turnoActivo.horaCierre})` : ''} y tu turno sigue abierto.
-              Puedes seguir cobrando si lo necesitas, pero cierralo antes de irte para dejar el corte del dia listo.
+              Puedes seguir cobrando si lo necesitas, pero ciérralo antes de irte para dejar el corte del dia listo.
             </p>
           </div>
         ) : null}
@@ -166,7 +166,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
         {movimientosExpandido ? (
           movimientos.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
-              Aun no hay movimientos manuales registrados en este turno.
+              Aún no hay movimientos manuales registrados en este turno.
             </div>
           ) : (
             <div className="divide-y divide-border">

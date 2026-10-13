@@ -51,8 +51,8 @@ const buildInitialForm = () => ({
 // duplicada en los validadores de backend/src/routes/facturaRoutes.js (3 sitios).
 export const PAYMENT_METHOD_OPTIONS = [
   { value: 'efectivo', label: 'Efectivo', tipo: 'manual' },
-  { value: 'tarjeta_debito', label: 'Tarjeta debito', tipo: 'manual' },
-  { value: 'tarjeta_credito', label: 'Tarjeta credito', tipo: 'manual' },
+  { value: 'tarjeta_debito', label: 'Tarjeta débito', tipo: 'manual' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito', tipo: 'manual' },
   { value: 'transferencia', label: 'Transferencia', tipo: 'manual' },
   { value: 'nequi', label: 'Nequi', tipo: 'manual' },
   { value: 'daviplata', label: 'Daviplata', tipo: 'manual' },
@@ -152,7 +152,7 @@ export function useFinanzasFacturacion({
       }
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible leer el codigo de barras.'))
+      toast.error(getErrorMessage(error, 'No fue posible leer el código de barras.'))
     },
   })
 
@@ -290,7 +290,7 @@ export function useFinanzasFacturacion({
   const handleBarcodeScan = () => {
     const codigo = barcodeInput.trim()
     if (!codigo) {
-      toast.error('Ingresa o escanea un codigo de barras valido.')
+      toast.error('Ingresa o escanea un código de barras válido.')
       return
     }
     buscarProductoPorBarcodeMutation.mutate(codigo)

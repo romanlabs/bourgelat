@@ -115,7 +115,7 @@ export default function PacientesPage() {
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad sobre la base clinica de pacientes y tutores.
+            Tu acceso actual no tiene visibilidad sobre la base clínica de pacientes y tutores.
           </div>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function PacientesPage() {
     <AdminShell
       currentKey="pacientes"
       title="Pacientes y tutores"
-      description="Consulta y registra tutores y pacientes activos para agenda, antecedentes e historias clinicas."
+      description="Consulta y registra tutores y pacientes activos para agenda, antecedentes e historias clínicas."
       headerBadge={<StatusPill tone="border-primary/30 bg-primary/10 text-primary">Base activa</StatusPill>}
       actions={
         <div className="flex flex-wrap items-center gap-2">
@@ -135,7 +135,7 @@ export default function PacientesPage() {
           <NavCta to="/dashboard" icon={LayoutDashboard} variant="outline" size="sm">Dashboard</NavCta>
         </div>
       }
-      asideNote="La recepcion crea tutores y pacientes desde esta pantalla. El equipo medico usa esta misma base para agenda e historias clinicas."
+      asideNote="La recepción crea tutores y pacientes desde esta pantalla. El equipo médico usa esta misma base para agenda e historias clínicas."
     >
       {!puedeVerModulo ? (
         <EmptyState
@@ -172,14 +172,14 @@ export default function PacientesPage() {
                   icon={PawPrint}
                   label="Pacientes activos"
                   value={formatNumber(resumenHook.totalMascotas)}
-                  helper="Total de pacientes registrados en la clinica."
+                  helper="Total de pacientes registrados en la clínica."
                   tone="text-info"
                 />
                 <KpiCard
                   icon={Users}
                   label="Tutores"
                   value={formatNumber(resumenHook.totalPropietarios)}
-                  helper="Total de tutores registrados en la clinica."
+                  helper="Total de tutores registrados en la clínica."
                   tone="text-success"
                 />
                 <KpiCard
@@ -187,21 +187,21 @@ export default function PacientesPage() {
                   label="Cupo del plan"
                   value={
                     limiteMascotas === null
-                      ? 'Sin limite'
+                      ? 'Sin límite'
                       : formatNumber(Math.max(limiteMascotas - resumenHook.totalMascotas, 0))
                   }
                   helper={
                     limiteMascotas === null
-                      ? 'La suscripcion actual no tiene tope de pacientes.'
+                      ? 'La suscripción actual no tiene tope de pacientes.'
                       : `${formatNumber(resumenHook.totalMascotas)} de ${formatNumber(limiteMascotas)} en uso.`
                   }
                   tone="text-info"
                 />
                 <KpiCard
                   icon={HeartPulse}
-                  label="Historia clinica"
+                  label="Historia clínica"
                   value="Activa"
-                  helper="Define si esta base ya puede pasar directo a evolucion clinica."
+                  helper="Define si esta base ya puede pasar directo a evolución clínica."
                   tone="text-danger"
                 />
               </div>
@@ -210,12 +210,12 @@ export default function PacientesPage() {
                 <DonutCard
                   className="lg:col-span-3"
                   title="Especies registradas"
-                  subtitle="Distribucion por especie de los pacientes."
+                  subtitle="Distribución por especie de los pacientes."
                   data={resumenHook.speciesData}
                   centerLabel="Pacientes"
                   centerValue={formatNumber(resumenHook.mascotasResumen.length)}
                   formatter={formatNumber}
-                  emptyMessage="Aun no hay pacientes para mostrar."
+                  emptyMessage="Aún no hay pacientes para mostrar."
                   contentClassName="sm:grid-cols-1 justify-items-center text-center"
                   chartSize={140}
                 />
@@ -223,10 +223,10 @@ export default function PacientesPage() {
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-panel lg:col-span-9">
                   <div className="border-b border-border px-4 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Ultimos pacientes registrados
+                      Últimos pacientes registrados
                     </p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      Acceso rapido a los pacientes agregados recientemente.
+                      Acceso rápido a los pacientes agregados recientemente.
                     </p>
                   </div>
                   {resumenHook.mascotasResumen.length > 0 ? (
@@ -256,7 +256,7 @@ export default function PacientesPage() {
                     </div>
                   ) : (
                     <p className="px-4 py-6 text-sm text-muted-foreground">
-                      Cuando registres pacientes apareceran aqui.
+                      Cuando registres pacientes aparecerán aquí.
                     </p>
                   )}
                 </div>
@@ -302,7 +302,7 @@ export default function PacientesPage() {
               ) : (
                 <DataTable
                   title="Base activa de pacientes"
-                  subtitle="Busqueda rapida con tutor, contacto y disponibilidad para ficha clinica."
+                  subtitle="Búsqueda rápida con tutor, contacto y disponibilidad para ficha clínica."
                   rows={mascotasHook.mascotasRows}
                   columns={[
                     {
@@ -379,12 +379,12 @@ export default function PacientesPage() {
                   emptyTitle={
                     mascotasHook.buscarAplicado
                       ? `Sin resultados para "${mascotasHook.buscarAplicado}"`
-                      : 'Aun no hay pacientes registrados'
+                      : 'Aún no hay pacientes registrados'
                   }
                   emptyBody={
                     mascotasHook.buscarAplicado
                       ? 'Puedes buscar por nombre, raza o por los datos del tutor.'
-                      : 'Registra el primer paciente con el boton Nuevo paciente.'
+                      : 'Registra el primer paciente con el botón Nuevo paciente.'
                   }
                 />
               )}
@@ -404,7 +404,7 @@ export default function PacientesPage() {
                 <SearchInput
                   value={tutoresHook.buscar}
                   onChange={tutoresHook.setBuscar}
-                  placeholder="Nombre, documento o telefono"
+                  placeholder="Nombre, documento o teléfono"
                   ariaLabel="Buscar tutor"
                   cargando={tutoresHook.tutoresQuery.isFetching}
                   className="w-72 max-w-full"
@@ -427,7 +427,7 @@ export default function PacientesPage() {
               ) : (
                 <DataTable
                   title="Tutores registrados"
-                  subtitle="Responsables vinculados a los pacientes activos de la clinica."
+                  subtitle="Responsables vinculados a los pacientes activos de la clínica."
                   rows={tutoresHook.tutoresRows}
                   columns={[
                     {
@@ -467,12 +467,12 @@ export default function PacientesPage() {
                   emptyTitle={
                     tutoresHook.buscarAplicado
                       ? `Sin resultados para "${tutoresHook.buscarAplicado}"`
-                      : 'Aun no hay tutores registrados'
+                      : 'Aún no hay tutores registrados'
                   }
                   emptyBody={
                     tutoresHook.buscarAplicado
-                      ? 'Puedes buscar por nombre, numero de documento o telefono.'
-                      : 'Registra un nuevo tutor con el boton Nuevo tutor.'
+                      ? 'Puedes buscar por nombre, número de documento o teléfono.'
+                      : 'Registra un nuevo tutor con el botón Nuevo tutor.'
                   }
                 />
               )}

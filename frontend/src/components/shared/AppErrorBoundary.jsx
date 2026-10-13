@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { AlertTriangle, RefreshCw, Stethoscope } from 'lucide-react'
 
 const getErrorMessage = (error) => {
-  if (!error) return 'Ocurrio un problema inesperado al renderizar esta pantalla.'
+  if (!error) return 'Ocurrió un problema inesperado al renderizar esta pantalla.'
   if (typeof error === 'string') return error
-  return error.message || 'Ocurrio un problema inesperado al renderizar esta pantalla.'
+  return error.message || 'Ocurrió un problema inesperado al renderizar esta pantalla.'
 }
 
 export default class AppErrorBoundary extends Component {
@@ -45,7 +45,7 @@ export default class AppErrorBoundary extends Component {
             <div>
               <p className="text-lg font-semibold tracking-[-0.02em]">Bourgelat</p>
               <p className="mt-1 hidden text-xs uppercase tracking-[0.22em] text-white/48 sm:block">
-                continuidad operativa para clinicas veterinarias
+                continuidad operativa para clínicas veterinarias
               </p>
             </div>
           </Link>

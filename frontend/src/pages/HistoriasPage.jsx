@@ -70,12 +70,12 @@ function RestrictedHistoriasPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
-          title="Historias clinicas"
+          title="Historias clínicas"
           subtitle="Esta sección se muestra a veterinarios, auxiliares o administración autorizada."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad sobre la historia clinica. Solicita permisos al
-            administrador o al medico responsable.
+            Tu acceso actual no tiene visibilidad sobre la historia clínica. Solicita permisos al
+            administrador o al médico responsable.
           </div>
         </DashboardPanel>
       </div>
@@ -104,7 +104,7 @@ export default function HistoriasPage() {
   const puedeVerHistorias = true
 
   useEffect(() => {
-    document.title = 'Historias clinicas | Bourgelat'
+    document.title = 'Historias clínicas | Bourgelat'
   }, [])
 
   const aplicarFiltro = (siguiente) => {
@@ -193,7 +193,7 @@ export default function HistoriasPage() {
   return (
     <AdminShell
       currentKey="historias"
-      title="Historias clinicas"
+      title="Historias clínicas"
       description="Bandeja de trabajo clínico: consultas sin cerrar, controles pendientes y búsqueda por diagnóstico."
       headerBadge={
         <StatusPill tone="border-danger/30 bg-danger-soft text-danger ">
@@ -244,7 +244,7 @@ export default function HistoriasPage() {
           <div className="grid gap-4">
             {historiasQuery.isError && (
               <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-                {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clinicas.')}
+                {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clínicas.')}
               </div>
             )}
             {veterinariosQuery.isError && (
@@ -261,7 +261,7 @@ export default function HistoriasPage() {
               ? 'Consultas sin cerrar'
               : filtro === 'controles'
                 ? 'Controles pendientes'
-                : 'Listado clinico'
+                : 'Listado clínico'
           }
           subtitle={
             filtro === 'pendientes'

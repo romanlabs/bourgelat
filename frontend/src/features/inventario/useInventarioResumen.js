@@ -70,7 +70,7 @@ export function useInventarioResumen({ enabled }) {
     ]
     return [
       ...porVencimiento('Vencido', 'vencidos'),
-      ...porVencimiento('Proximo a vencer', 'proximosVencer'),
+      ...porVencimiento('Próximo a vencer', 'proximosVencer'),
       ...(ventas?.bajoStock?.productos || []).map((p) =>
         fila('Cantidad baja', 'ventas', p, `${p.stock}/${p.stockMinimo}`)),
       ...(clinico?.bajoStock?.insumos || []).map((i) =>

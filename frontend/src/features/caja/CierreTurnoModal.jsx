@@ -27,7 +27,7 @@ export default function CierreTurnoModal({
   cerrarTurnoMutation,
   turnoId = null,
   titulo = 'Cerrar turno de caja',
-  descripcion = 'Cuenta el efectivo fisico en caja para comparar con lo esperado por el sistema.',
+  descripcion = 'Cuenta el efectivo físico en caja para comparar con lo esperado por el sistema.',
 }) {
   const [form, setForm] = useState(buildInitialForm)
 
@@ -154,7 +154,7 @@ export default function CierreTurnoModal({
           {tieneMontoValido && diferenciaAbs > 0 && (
             <label className="grid gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Comentario {requiereJustificacion ? '(obligatorio, minimo 20 caracteres)' : '(opcional)'}
+                Comentario {requiereJustificacion ? '(obligatorio, mínimo 20 caracteres)' : '(opcional)'}
               </span>
               <textarea
                 value={form.observacionesCierre}
@@ -174,9 +174,9 @@ export default function CierreTurnoModal({
               </span>
               <Select
                 variant="field"
-                aria-label="Categoria de la diferencia"
+                aria-label="Categoría de la diferencia"
                 className={`rounded-xl ${!form.categoriaDiferencia ? 'border-danger/30' : ''}`}
-                placeholder="Selecciona una categoria"
+                placeholder="Selecciona una categoría"
                 value={form.categoriaDiferencia}
                 onValueChange={(value) => setForm((curr) => ({ ...curr, categoriaDiferencia: value }))}
                 options={CATEGORIA_DIFERENCIA_OPCIONES}
