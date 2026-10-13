@@ -645,7 +645,7 @@ const obtenerHistoria = async (req, res) => {
         {
           model: Mascota,
           as: 'mascota',
-          attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil', 'color', 'esterilizado', 'createdAt'],
+          attributes: ['id', 'nombre', 'especie', 'especieDetalle', 'raza', 'sexo', 'fechaNacimiento', 'fotoPerfil', 'color', 'esterilizado', 'numeroHistoria', 'createdAt'],
           include: [{ model: AntecedentesMascota, as: 'antecedentes', required: false }],
         },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email', 'tipoDocumento', 'numeroDocumento', 'direccion', 'ciudad'] },
@@ -1081,7 +1081,8 @@ const bloquearHistoria = async (req, res) => {
         }, { transaction })
       }
 
-      await historia.update({ bloqueada: true }, { transaction })
+      // La hora de cierre va junto a la firma en la historia impresa.
+      await historia.update({ bloqueada: true, bloqueadaEn: new Date() }, { transaction })
 
       return { consumos: aplicados, gastoInsumos: gasto }
     })
