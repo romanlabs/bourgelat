@@ -4,7 +4,7 @@
 const ESPECIES = [
   { value: 'perro', label: 'Canino', plural: 'Caninos', comun: 'perro' },
   { value: 'gato', label: 'Felino', plural: 'Felinos', comun: 'gato' },
-  { value: 'ave', label: 'Aviar', plural: 'Aves', comun: 'ave' },
+  { value: 'ave', label: 'Ave', plural: 'Aves' },
   { value: 'conejo', label: 'Lagomorfo', plural: 'Lagomorfos', comun: 'conejo' },
   { value: 'reptil', label: 'Reptil', plural: 'Reptiles' },
   { value: 'otro', label: 'Otro', plural: 'Otros' },

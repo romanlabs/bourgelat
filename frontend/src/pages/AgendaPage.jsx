@@ -29,6 +29,7 @@ import { agendaApi } from '@/features/agenda/agendaApi'
 import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
+import { ProgramarCitaDrawer } from '@/features/recepcion/ProgramarCitaDrawer'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
@@ -247,13 +248,12 @@ export default function AgendaPage() {
     [citas]
   )
 
-  /** Pre-rellena el panel de programar y cambia al tab de Recepción al hacer clic en un slot del calendario. */
+  /** Un clic en un hueco del calendario abre el panel de programar encima de la agenda, sin cambiar de pestaña. */
   const handleCalendarSlotClick = useCallback((fechaSlot, horaInicio) => {
     const [h, m] = horaInicio.split(':').map(Number)
     const finMins = h * 60 + m + 30
     const horaFin = `${String(Math.floor(finMins / 60)).padStart(2, '0')}:${String(finMins % 60).padStart(2, '0')}`
     setRecepcionPrefill({ fecha: fechaSlot, horaInicio, horaFin })
-    setActiveTab('recepcion')
   }, [])
 
   const handleCalendarUpdateStatus = useCallback(
@@ -566,20 +566,18 @@ export default function AgendaPage() {
           {activeTab === 'recepcion' && (
             <RecepcionTab
               fecha={fecha}
-              prefill={recepcionPrefill}
               usuario={usuario}
               puedeProgramar={puedeProgramar}
               puedeGestionarEstado={puedeGestionarEstado}
-              // Si la cita salio de un hueco del calendario, se vuelve a el para
-              // verla: la sala de espera solo muestra el dia de hoy.
-              onCitaProgramada={
-                recepcionPrefill
-                  ? () => {
-                      setRecepcionPrefill(null)
-                      setActiveTab('agenda')
-                    }
-                  : undefined
-              }
+            />
+          )}
+
+          {recepcionPrefill && (
+            <ProgramarCitaDrawer
+              prefill={recepcionPrefill}
+              usuario={usuario}
+              puedeProgramar={puedeProgramar}
+              onClose={() => setRecepcionPrefill(null)}
             />
           )}
 

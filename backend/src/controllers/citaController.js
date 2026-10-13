@@ -18,6 +18,24 @@ const ESTADOS_ACTIVOS_AGENDA = ['programada', 'en_espera', 'en_atencion'];
 // Transiciones de estado permitidas. Los estados terminales (completada,
 // cancelada, no_asistio) no tienen salida: reabrir una cita cerrada exige
 // reprogramarla o crear una nueva.
+const ESTADO_TEXTO = {
+  programada: 'programada',
+  en_espera: 'en espera',
+  en_atencion: 'en atención',
+  completada: 'completada',
+  cancelada: 'cancelada',
+  no_asistio: 'no asistió',
+};
+
+const MENSAJE_CAMBIO_ESTADO = {
+  programada: 'Cita programada',
+  en_espera: 'Llegada registrada',
+  en_atencion: 'Atención iniciada',
+  completada: 'Cita completada',
+  cancelada: 'Cita cancelada',
+  no_asistio: 'Cita marcada como no asistió',
+};
+
 const TRANSICIONES_ESTADO = {
   programada: ['en_espera', 'en_atencion', 'cancelada', 'no_asistio'],
   en_espera: ['en_atencion', 'cancelada', 'no_asistio'],
@@ -553,7 +571,7 @@ const actualizarEstadoCita = async (req, res) => {
     const transicionesPermitidas = TRANSICIONES_ESTADO[cita.estado] || [];
     if (!transicionesPermitidas.includes(estado)) {
       return res.status(400).json({
-        message: `No se puede pasar una cita de "${cita.estado}" a "${estado}"`
+        message: `Una cita ${ESTADO_TEXTO[cita.estado] || cita.estado} no se puede marcar como ${ESTADO_TEXTO[estado] || estado}`
       });
     }
 
@@ -577,7 +595,7 @@ const actualizarEstadoCita = async (req, res) => {
     await cita.update(cambios);
 
     res.json({
-      message: `Cita ${estado} exitosamente`,
+      message: MENSAJE_CAMBIO_ESTADO[estado] || 'Estado de la cita actualizado',
       cita,
     });
   } catch (error) {
