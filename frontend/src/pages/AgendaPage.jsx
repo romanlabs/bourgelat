@@ -29,6 +29,7 @@ import { agendaApi } from '@/features/agenda/agendaApi'
 import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
+import { ProgramarCitaDrawer } from '@/features/recepcion/ProgramarCitaDrawer'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
@@ -41,10 +42,10 @@ const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
   { value: 'programada', label: 'Programada' },
   { value: 'en_espera', label: 'En espera' },
-  { value: 'en_atencion', label: 'En atencion' },
+  { value: 'en_atencion', label: 'En atención' },
   { value: 'completada', label: 'Completada' },
   { value: 'cancelada', label: 'Cancelada' },
-  { value: 'no_asistio', label: 'No asistio' },
+  { value: 'no_asistio', label: 'No asistió' },
 ]
 
 const TABS = [
@@ -107,7 +108,7 @@ function RestrictedAgendaPage() {
           subtitle="Esta sección se muestra a recepción, veterinarios o perfiles administrativos."
         >
           <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene visibilidad sobre la agenda clinica. Solicita permisos al
+            Tu acceso actual no tiene visibilidad sobre la agenda clínica. Solicita permisos al
             administrador principal si necesitas programar, confirmar o reprogramar citas.
           </div>
         </DashboardPanel>
@@ -247,13 +248,12 @@ export default function AgendaPage() {
     [citas]
   )
 
-  /** Pre-rellena el panel de programar y cambia al tab de Recepción al hacer clic en un slot del calendario. */
+  /** Un clic en un hueco del calendario abre el panel de programar encima de la agenda, sin cambiar de pestaña. */
   const handleCalendarSlotClick = useCallback((fechaSlot, horaInicio) => {
     const [h, m] = horaInicio.split(':').map(Number)
     const finMins = h * 60 + m + 30
     const horaFin = `${String(Math.floor(finMins / 60)).padStart(2, '0')}:${String(finMins % 60).padStart(2, '0')}`
     setRecepcionPrefill({ fecha: fechaSlot, horaInicio, horaFin })
-    setActiveTab('recepcion')
   }, [])
 
   const handleCalendarUpdateStatus = useCallback(
@@ -279,7 +279,7 @@ export default function AgendaPage() {
         <EmptyState
           icon={<Sparkles />}
           title="Agenda no disponible en el plan actual"
-          description="La agenda de citas hace parte del producto base. Si esta clinica no la tiene activa, revisa la configuracion comercial antes de continuar."
+          description="La agenda de citas hace parte del producto base. Si esta clínica no la tiene activa, revisa la configuración comercial antes de continuar."
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
@@ -347,7 +347,7 @@ export default function AgendaPage() {
                     icon={Clock3}
                     label="Pendientes"
                     value={formatNumber(pendientes)}
-                    helper="Programadas o en espera, aun sin cierre definitivo."
+                    helper="Programadas o en espera, aún sin cierre definitivo."
                     tone="text-warning"
                   />
                   <KpiCard
@@ -428,7 +428,7 @@ export default function AgendaPage() {
                 return (
                   <DashboardPanel
                     title="Agenda del dia"
-                    subtitle="Tabla operativa para recepcion, confirmacion y seguimiento rapido por profesional."
+                    subtitle="Tabla operativa para recepción, confirmación y seguimiento rápido por profesional."
                     action={
                       <div className="flex flex-wrap items-center gap-3">
                         {vistaToggle}
@@ -469,7 +469,7 @@ export default function AgendaPage() {
                   >
                     <DataTable
                       title="Citas programadas"
-                      subtitle="Lectura diaria con accion rapida sobre cada caso."
+                      subtitle="Lectura diaria con acción rápida sobre cada caso."
                       rows={citasRows}
                       columns={[
                         { key: 'horario', label: 'Horario' },
@@ -515,7 +515,7 @@ export default function AgendaPage() {
                         },
                       ]}
                       emptyTitle="No hay citas para este filtro"
-                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestana Recepcion."
+                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestaña Recepción."
                       action={
                         <StatusPill tone="border-border bg-muted text-foreground">
                           {formatLongDate(fecha)}
@@ -566,20 +566,18 @@ export default function AgendaPage() {
           {activeTab === 'recepcion' && (
             <RecepcionTab
               fecha={fecha}
-              prefill={recepcionPrefill}
               usuario={usuario}
               puedeProgramar={puedeProgramar}
               puedeGestionarEstado={puedeGestionarEstado}
-              // Si la cita salio de un hueco del calendario, se vuelve a el para
-              // verla: la sala de espera solo muestra el dia de hoy.
-              onCitaProgramada={
-                recepcionPrefill
-                  ? () => {
-                      setRecepcionPrefill(null)
-                      setActiveTab('agenda')
-                    }
-                  : undefined
-              }
+            />
+          )}
+
+          {recepcionPrefill && (
+            <ProgramarCitaDrawer
+              prefill={recepcionPrefill}
+              usuario={usuario}
+              puedeProgramar={puedeProgramar}
+              onClose={() => setRecepcionPrefill(null)}
             />
           )}
 

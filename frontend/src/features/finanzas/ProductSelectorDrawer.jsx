@@ -79,7 +79,7 @@ export default function ProductSelectorDrawer({
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Busca por nombre o escanea el codigo de barras
+                Busca por nombre o escanea el código de barras
               </p>
             )}
           </div>
@@ -196,7 +196,7 @@ export default function ProductSelectorDrawer({
 
               <label className="grid gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Codigo de barras
+                  Código de barras
                 </span>
                 <div className="relative">
                   <ScanLine className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -210,7 +210,7 @@ export default function ProductSelectorDrawer({
                         onBarcodeScan()
                       }
                     }}
-                    placeholder="Escanea o escribe el codigo"
+                    placeholder="Escanea o escribe el código"
                     autoFocus={activeTab === 'escaner' && open}
                     className="h-10 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
@@ -224,7 +224,7 @@ export default function ProductSelectorDrawer({
                 className="inline-flex items-center justify-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <ScanLine className="h-4 w-4" />
-                {buscarProductoPorBarcodeMutation.isPending ? 'Buscando...' : 'Agregar por codigo'}
+                {buscarProductoPorBarcodeMutation.isPending ? 'Buscando...' : 'Agregar por código'}
               </button>
             </div>
           )}

@@ -8,7 +8,7 @@ export default function NosotrosPage() {
   return (
     <PublicPageShell
       eyebrow="Empresa"
-      title="Bourgelat no es solo agenda: es operacion veterinaria."
+      title="Bourgelat no es solo agenda: es operación veterinaria."
       description={brandProfile.oneLiner}
     >
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -81,7 +81,7 @@ export default function NosotrosPage() {
         </section>
 
         <section className="rounded-3xl border border-papel-300 bg-papel-50 p-8">
-          <h2 className={sectionTitle}>Lo que no vamos a prometer aun</h2>
+          <h2 className={sectionTitle}>Lo que no vamos a prometer aún</h2>
           <ul className="space-y-3 text-sm leading-7 text-tinta-600">
             {brandProfile.notYet.map((item) => (
               <li key={item} className="rounded-2xl border border-caramel-200 bg-caramel-50 px-4 py-3">

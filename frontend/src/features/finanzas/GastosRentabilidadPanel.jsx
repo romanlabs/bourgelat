@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { HandCoins, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import {
   DashboardPanel,
@@ -103,7 +104,7 @@ function GastoForm() {
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
         <Select
           variant="field"
-          aria-label="Categoria del gasto"
+          aria-label="Categoría del gasto"
           value={form.categoria}
           onValueChange={setValor('categoria')}
           options={CATEGORIAS}
@@ -132,7 +133,7 @@ function GastoForm() {
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pago</span>
         <Select
           variant="field"
-          aria-label="Metodo de pago"
+          aria-label="Método de pago"
           value={form.metodoPago}
           onValueChange={setValor('metodoPago')}
           options={METODOS_GASTO}
@@ -168,7 +169,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
     try {
       await anularGasto.mutateAsync({ gastoId: gasto.id, motivoAnulacion: motivo.trim() })
     } catch (err) {
-      window.alert(err.response?.data?.message || 'No se pudo anular el gasto')
+      toast.error(err.response?.data?.message || 'No se pudo anular el gasto')
     }
   }
 
@@ -311,7 +312,7 @@ function FilaDeudor({ cliente }) {
                   />
                   <Select
                     variant="field"
-                    aria-label="Metodo del abono"
+                    aria-label="Método del abono"
                     className="h-9"
                     value={metodoPago}
                     onValueChange={setMetodoPago}

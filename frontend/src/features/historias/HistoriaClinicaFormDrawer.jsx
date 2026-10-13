@@ -23,14 +23,15 @@ import AntecedentesResumen from '@/features/pacientes/AntecedentesResumen'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
 import { Select } from '@/components/ui/select'
 import { etiquetaEspecie } from '@/lib/especies'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
 const MEDICATION_FREQUENCY_SUGGESTIONS = [
-  'Cada 8 horas', 'Cada 12 horas', 'Cada 24 horas', 'Dosis unica', 'Segun necesidad',
+  'Cada 8 horas', 'Cada 12 horas', 'Cada 24 horas', 'Dosis única', 'Según necesidad',
 ]
 
-const MEDICATION_DURATION_SUGGESTIONS = ['3 dias', '5 dias', '7 dias', '10 dias', '14 dias']
+const MEDICATION_DURATION_SUGGESTIONS = ['3 días', '5 días', '7 días', '10 días', '14 días']
 
 const PROGRESS_STEPS = [
   { id: 'contexto', label: 'Contexto' },
@@ -241,6 +242,9 @@ export default function HistoriaClinicaFormDrawer({
 
   // ── Estado interno ──────────────────────────────────────────────────────────
   const [form, setForm] = useState(() => createDefaultForm(citaIdInicial))
+  // Lo último cargado o guardado: si el form difiere, cerrar pide confirmación.
+  const [formBase, setFormBase] = useState(form)
+  const [confirmarCierre, setConfirmarCierre] = useState(false)
   const [formSections, setFormSections] = useState(new Set(['contexto', 'anamnesis']))
   const [medicationSearch, setMedicationSearch] = useState('')
   const [insumoSearch, setInsumoSearch] = useState('')
@@ -258,11 +262,15 @@ export default function HistoriaClinicaFormDrawer({
   useEffect(() => {
     if (!open) return
     if (historiaToEdit) {
-      setForm(mapHistoriaToForm(historiaToEdit))
+      const base = mapHistoriaToForm(historiaToEdit)
+      setForm(base)
+      setFormBase(base)
       setLocalHistoria(historiaToEdit)
       setFormSections(new Set(['contexto', 'anamnesis', 'examen', 'diagnostico', 'plan']))
     } else {
-      setForm(createDefaultForm(citaIdInicial))
+      const base = createDefaultForm(citaIdInicial)
+      setForm(base)
+      setFormBase(base)
       setLocalHistoria(null)
       setFormSections(new Set(['contexto', 'anamnesis']))
       setMedicationSearch('')
@@ -271,13 +279,19 @@ export default function HistoriaClinicaFormDrawer({
     }
   }, [open, historiaToEdit, citaIdInicial])
 
-  // Cerrar con Escape
+  const hayCambios = JSON.stringify(form) !== JSON.stringify(formBase)
+  const solicitarCierre = () => {
+    if (hayCambios) setConfirmarCierre(true)
+    else onClose()
+  }
+
+  // Cerrar con Escape (con el diálogo de confirmación abierto, Escape lo cierra a él)
   useEffect(() => {
-    if (!open) return
-    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    if (!open || confirmarCierre) return
+    const handler = (e) => { if (e.key === 'Escape') solicitarCierre() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
+  })
 
   const toggleFormSection = (id) =>
     setFormSections((prev) => {
@@ -340,39 +354,41 @@ export default function HistoriaClinicaFormDrawer({
   const crearHistoriaMutation = useMutation({
     mutationFn: historiasApi.crearHistoria,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica registrada exitosamente')
+      toast.success(data?.message || 'Historia clínica registrada exitosamente')
       invalidarDominios(queryClient, 'historias')
+      setFormBase(form)
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible registrar la historia clínica.'))
     },
   })
 
   const editarHistoriaMutation = useMutation({
     mutationFn: ({ historiaId, payload }) => historiasApi.editarHistoria(historiaId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica actualizada exitosamente')
+      toast.success(data?.message || 'Historia clínica actualizada exitosamente')
       if (data?.historia) setLocalHistoria(data.historia)
+      setFormBase(form)
       invalidarDominios(queryClient, 'historias')
       onSuccess?.(data?.historia || null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible actualizar la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible actualizar la historia clínica.'))
     },
   })
 
   const bloquearHistoriaMutation = useMutation({
     mutationFn: historiasApi.bloquearHistoria,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Historia clinica bloqueada exitosamente')
+      toast.success(data?.message || 'Historia clínica bloqueada exitosamente')
       setLocalHistoria((prev) => (prev ? { ...prev, bloqueada: true } : prev))
       // Bloquear descuenta el tratamiento intrahospitalario del inventario clinico.
       invalidarDominios(queryClient, 'historias', 'insumosClinicos')
       onSuccess?.(null)
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clinica.'))
+      toast.error(getErrorMessage(error, 'No fue posible bloquear la historia clínica.'))
     },
   })
 
@@ -472,7 +488,7 @@ export default function HistoriaClinicaFormDrawer({
       nombre: producto.nombre || '',
       concentracion: producto.presentacionReferencia || '',
       cantidad: '1',
-      indicacion: producto.requiereFormula ? 'Dispensar segun indicacion medica registrada en la historia.' : '',
+      indicacion: producto.requiereFormula ? 'Dispensar según indicacion médica registrada en la historia.' : '',
     })
     setForm((c) => {
       const firstEmptyIndex = c.medicamentos.findIndex((item) => !medicationHasAnyValue(item))
@@ -626,7 +642,7 @@ export default function HistoriaClinicaFormDrawer({
       {/* Overlay */}
       <div
         className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
+        onClick={solicitarCierre}
         aria-hidden="true"
       />
 
@@ -634,7 +650,7 @@ export default function HistoriaClinicaFormDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={historiaActual ? 'Editar historia clinica' : 'Nueva historia clinica'}
+        aria-label={historiaActual ? 'Editar historia clínica' : 'Nueva historia clínica'}
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[680px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
@@ -660,7 +676,7 @@ export default function HistoriaClinicaFormDrawer({
               )}
               <button
                 type="button"
-                onClick={onClose}
+                onClick={solicitarCierre}
                 aria-label="Cerrar"
                 className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
               >
@@ -764,7 +780,7 @@ export default function HistoriaClinicaFormDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {!puedeEditarHistorias ? (
             <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clinicas.
+              Tu rol actual puede consultar historias, pero no crear ni modificar consultas clínicas.
             </div>
           ) : (
             <form id="historia-drawer-form" className="space-y-2" onSubmit={handleSubmit}>
@@ -1183,12 +1199,26 @@ export default function HistoriaClinicaFormDrawer({
                 {imprimirHistoria.isPending ? 'Generando...' : 'Imprimir historia'}
               </button>
             )}
-            <button type="button" onClick={onClose} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
+            <button type="button" onClick={solicitarCierre} className="border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted/80">
               Cancelar
             </button>
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmarCierre}
+        onOpenChange={setConfirmarCierre}
+        title="¿Cerrar sin guardar?"
+        description="La historia clínica tiene cambios que no se han guardado. Si cierras, se pierden."
+        confirmLabel="Cerrar sin guardar"
+        cancelLabel="Seguir editando"
+        onConfirm={() => {
+          setConfirmarCierre(false)
+          setForm(formBase)
+          onClose()
+        }}
+      />
     </>,
     document.body
   )

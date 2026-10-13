@@ -88,7 +88,7 @@ export default function VerificarEmailPage() {
             ) : tokenInvalido ? (
               <div className="mt-6 space-y-4">
                 <p className="text-sm text-danger">
-                  El enlace no es valido o ya expiro. Escribe tu correo para recibir uno nuevo.
+                  El enlace no es válido o ya expiró. Escribe tu correo para recibir uno nuevo.
                 </p>
 
                 {reenviado ? (
@@ -118,7 +118,7 @@ export default function VerificarEmailPage() {
               </div>
             ) : isError ? (
               <p className="mt-6 text-sm text-danger">
-                Ocurrio un error al verificar tu correo. Intenta de nuevo mas tarde.
+                Ocurrió un error al verificar tu correo. Intenta de nuevo mas tarde.
               </p>
             ) : null}
           </div>

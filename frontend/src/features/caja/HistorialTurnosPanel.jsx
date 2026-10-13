@@ -23,7 +23,7 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
         title="Historial de turnos cerrados"
         subtitle={
           esAdmin
-            ? 'Historial completo de la clinica. Los turnos con diferencia mayor a $30.000 quedan marcados para revision.'
+            ? 'Historial completo de la clínica. Los turnos con diferencia mayor a $30.000 quedan marcados para revisión.'
             : 'Tu historial de turnos cerrados.'
         }
         rows={turnosHistorial.map((turno) => ({
@@ -65,8 +65,8 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
             ),
           },
         ]}
-        emptyTitle="Aun no hay turnos cerrados"
-        emptyBody="Cuando cierres un turno de caja, aparecera aqui con su diferencia y trazabilidad."
+        emptyTitle="Aún no hay turnos cerrados"
+        emptyBody="Cuando cierres un turno de caja, aparecerá aquí con su diferencia y trazabilidad."
         action={
           <button
             type="button"

@@ -100,7 +100,8 @@ const buildEditForm = (user) => ({
   activo: Boolean(user?.activo),
 })
 
-const formatLastAccess = (value) => {
+const formatLastAccess = (value, esSesionActual = false) => {
+  if (esSesionActual) return 'Sesión actual'
   if (!value) return 'Sin acceso registrado'
 
   return new Intl.DateTimeFormat('es-CO', {
@@ -178,10 +179,10 @@ function PasswordChecklist({ password, visible }) {
 
   const rules = [
     { id: 'length', label: 'Entre 8 y 72 caracteres', valid: /^.{8,72}$/.test(password) },
-    { id: 'upper', label: 'Una mayuscula', valid: /[A-Z]/.test(password) },
-    { id: 'lower', label: 'Una minuscula', valid: /[a-z]/.test(password) },
-    { id: 'number', label: 'Un numero', valid: /\d/.test(password) },
-    { id: 'special', label: 'Un caracter especial', valid: /[^A-Za-z0-9]/.test(password) },
+    { id: 'upper', label: 'Una mayúscula', valid: /[A-Z]/.test(password) },
+    { id: 'lower', label: 'Una minúscula', valid: /[a-z]/.test(password) },
+    { id: 'number', label: 'Un número', valid: /\d/.test(password) },
+    { id: 'special', label: 'Un carácter especial', valid: /[^A-Za-z0-9]/.test(password) },
   ]
 
   return (
@@ -235,6 +236,12 @@ export default function UsuariosPage() {
     operationalSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   const [selectedUserId, setSelectedUserId] = useState(null)
+  const editPanelRef = useRef(null)
+  // Al elegir un usuario el formulario queda fuera de la vista: lo llevamos ahi.
+  useEffect(() => {
+    if (activeSection !== 'editar' || !selectedUserId) return
+    editPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activeSection, selectedUserId])
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
@@ -410,17 +417,17 @@ export default function UsuariosPage() {
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
-      toast.error('Ingresa un correo corporativo valido para el usuario.')
+      toast.error('Ingresa un correo corporativo válido para el usuario.')
       return
     }
 
     if (!createPasswordValid) {
-      toast.error('La contrasena inicial aun no cumple los requisitos de seguridad.')
+      toast.error('La contraseña inicial aún no cumple los requisitos de seguridad.')
       return
     }
 
     if (payload.telefono && !phoneRegex.test(payload.telefono)) {
-      toast.error('El celular laboral debe tener 10 digitos colombianos y comenzar por 3.')
+      toast.error('El celular laboral debe tener 10 dígitos colombianos y comenzar por 3.')
       return
     }
 
@@ -455,12 +462,12 @@ export default function UsuariosPage() {
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
-      toast.error('Ingresa un correo valido para actualizar el usuario.')
+      toast.error('Ingresa un correo válido para actualizar el usuario.')
       return
     }
 
     if (payload.telefono && !phoneRegex.test(payload.telefono)) {
-      toast.error('El celular laboral debe tener 10 digitos colombianos y comenzar por 3.')
+      toast.error('El celular laboral debe tener 10 dígitos colombianos y comenzar por 3.')
       return
     }
 
@@ -481,7 +488,7 @@ export default function UsuariosPage() {
     <AdminShell
       currentKey="usuarios"
       title="Usuarios y roles"
-      description="Centro administrativo para crear equipo, ordenar permisos, revisar cupos del plan y mantener una estructura limpia de acceso por clinica."
+      description="Centro administrativo para crear equipo, ordenar permisos, revisar cupos del plan y mantener una estructura limpia de acceso por clínica."
       headerBadge={
         <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
           Control del equipo
@@ -492,30 +499,30 @@ export default function UsuariosPage() {
           Revisar plan
         </NavCta>
       }
-      asideNote="Aqui se administra el equipo real de la clinica: altas, roles, estado activo y cupo disponible frente a la suscripcion."
+      asideNote="Aquí se administra el equipo real de la clínica: altas, roles, estado activo y cupo disponible frente a la suscripción."
     >
       {!roleFeatureEnabled ? (
         <EmptyState
           icon={<Sparkles />}
           title="Usuarios y roles no disponibles en el plan actual"
-          description="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuracion comercial de la clinica."
+          description="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuración comercial de la clínica."
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">
           {usuariosQuery.isError ? (
             <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-              {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clinica.')}
+              {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
             </div>
           ) : null}
 
           <DashboardPanel
-            title="Organiza la administracion del equipo"
-            subtitle="Separamos lectura, alta y edicion para que cada tarea sea mas clara y no obligue a recorrer toda la pantalla."
+            title="Organiza la administración del equipo"
+            subtitle="Separamos lectura, alta y edición para que cada tarea sea mas clara y no obligue a recorrer toda la pantalla."
             action={
               <StatusPill tone="border-border bg-muted text-foreground">
                 {limiteUsuarios === null
-                  ? 'Sin limite de usuarios'
+                  ? 'Sin límite de usuarios'
                   : textoCupos(cupoDisponible, 'disponible', 'disponibles')}
               </StatusPill>
             }
@@ -525,12 +532,12 @@ export default function UsuariosPage() {
                 {
                   id: 'equipo',
                   label: 'Equipo actual',
-                  helper: 'Tabla, filtros y lectura rapida del estado del equipo.',
+                  helper: 'Tabla, filtros y lectura rápida del estado del equipo.',
                 },
                 {
                   id: 'crear',
                   label: 'Crear usuario',
-                  helper: 'Alta administrativa con rol, celular laboral y contrasena inicial.',
+                  helper: 'Alta administrativa con rol, celular laboral y contraseña inicial.',
                 },
                 {
                   id: 'editar',
@@ -568,7 +575,7 @@ export default function UsuariosPage() {
             }
           >
             <DashboardPanel
-              title="Equipo de la clinica"
+              title="Equipo de la clínica"
               subtitle="Tabla administrativa para buscar, filtrar, editar o activar y desactivar usuarios."
               action={
                 <div className="flex flex-wrap gap-3">
@@ -631,9 +638,9 @@ export default function UsuariosPage() {
                   },
                   {
                     key: 'ultimoAcceso',
-                    label: 'Ultimo acceso',
+                    label: 'Último acceso',
                     render: (row) => (
-                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso)}</span>
+                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso, row.raw.id === usuario?.id)}</span>
                     ),
                   },
                   {
@@ -669,7 +676,7 @@ export default function UsuariosPage() {
                         </button>
                         {row.raw.id === usuario?.id ? (
                           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            Sesion actual
+                            Sesión actual
                           </span>
                         ) : (
                           <button
@@ -686,7 +693,7 @@ export default function UsuariosPage() {
                   },
                 ]}
                 emptyTitle="No hay usuarios para este filtro"
-                emptyBody="Ajusta la busqueda o registra el primer colaborador desde la pestana Crear usuario."
+                emptyBody="Ajusta la búsqueda o registra el primer colaborador desde la pestaña Crear usuario."
                 action={
                   <StatusPill tone="border-border bg-muted text-foreground">
                     {formatNumber(tableRows.length)} visibles
@@ -698,7 +705,7 @@ export default function UsuariosPage() {
             {activeSection === 'crear' ? (
             <DashboardPanel
               title="Crear usuario"
-              subtitle="Alta administrativa del colaborador con rol principal, celular laboral y contrasena inicial."
+              subtitle="Alta administrativa del colaborador con rol principal, celular laboral y contraseña inicial."
               action={<UserPlus className="h-4 w-4 text-primary" />}
             >
               <form className="grid gap-4" onSubmit={handleCreateUser}>
@@ -763,7 +770,7 @@ export default function UsuariosPage() {
                     onChange={(event) =>
                       setCreateForm((current) => ({ ...current, password: event.target.value }))
                     }
-                    placeholder="Contrasena inicial"
+                    placeholder="Contraseña inicial"
                     className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                   />
                 </div>
@@ -814,19 +821,19 @@ export default function UsuariosPage() {
                         : 'Cobertura sensible',
                     detalle:
                       totalAdministrativos > 1
-                        ? 'La clinica tiene mas de un usuario con administracion.'
+                        ? 'La clínica tiene mas de un usuario con administración.'
                         : 'Conviene tener al menos dos administradores para no depender de una sola cuenta.',
                   },
                   {
                     id: 'vets',
-                    criterio: 'Equipo clinico',
+                    criterio: 'Equipo clínico',
                     estado:
                       totalVeterinarios > 0
                         ? 'Listo para agenda'
-                        : 'Falta configuracion',
+                        : 'Falta configuración',
                     detalle:
                       totalVeterinarios > 0
-                        ? 'Ya hay al menos un profesional con acceso clinico.'
+                        ? 'Ya hay al menos un profesional con acceso clínico.'
                         : 'La agenda y las historias necesitan al menos un veterinario activo.',
                   },
                   {
@@ -838,8 +845,8 @@ export default function UsuariosPage() {
                         : 'Cupo bajo',
                     detalle:
                       limiteUsuarios === null
-                        ? 'La suscripcion no limita usuarios activos.'
-                        : `${Math.max(cupoDisponible, 0) === 1 ? 'Queda' : 'Quedan'} ${textoCupos(cupoDisponible)} antes de exigir gestion comercial.`,
+                        ? 'La suscripción no limita usuarios activos.'
+                        : `${Math.max(cupoDisponible, 0) === 1 ? 'Queda' : 'Quedan'} ${textoCupos(cupoDisponible)} antes de exigir gestión comercial.`,
                   },
                 ]}
                 columns={[
@@ -852,6 +859,7 @@ export default function UsuariosPage() {
               />
             </DashboardPanel>
 
+            <div ref={editPanelRef}>
             <DashboardPanel
               title="Editar usuario"
               subtitle={
@@ -942,7 +950,7 @@ export default function UsuariosPage() {
 
                   <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
                     <p className="font-semibold text-foreground">{selectedUser.nombre}</p>
-                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso)}</p>
+                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)}</p>
                     <p className="mt-1">
                       Estado actual: {selectedUser.activo ? 'Activo' : 'Inactivo'}
                     </p>
@@ -964,12 +972,13 @@ export default function UsuariosPage() {
                       }}
                       className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                     >
-                      Limpiar seleccion
+                      Limpiar selección
                     </button>
                   </div>
                 </form>
               )}
             </DashboardPanel>
+            </div>
           </div>
           ) : null}
 
@@ -992,23 +1001,23 @@ export default function UsuariosPage() {
                   icon={ShieldCheck}
                   label="Acceso administrativo"
                   value={formatNumber(totalAdministrativos)}
-                  helper="Usuarios activos con capacidad de administracion."
+                  helper="Usuarios activos con capacidad de administración."
                   tone="text-info"
                 />
                 <KpiCard
                   icon={Stethoscope}
-                  label="Equipo clinico"
+                  label="Equipo clínico"
                   value={formatNumber(totalVeterinarios)}
-                  helper="Profesionales que pueden operar consulta y agenda medica."
+                  helper="Profesionales que pueden operar consulta y agenda médica."
                   tone="text-success"
                 />
                 <KpiCard
                   icon={CircleAlert}
                   label="Cupo disponible"
-                  value={limiteUsuarios === null ? 'Sin limite' : formatNumber(cupoDisponible)}
+                  value={limiteUsuarios === null ? 'Sin límite' : formatNumber(cupoDisponible)}
                   helper={
                     limiteUsuarios === null
-                      ? 'La suscripcion actual no limita usuarios activos.'
+                      ? 'La suscripción actual no limita usuarios activos.'
                       : `${formatNumber(activos.length)} de ${formatNumber(limiteUsuarios)} usuarios en uso.`
                   }
                   tone="text-warning"
@@ -1023,30 +1032,30 @@ export default function UsuariosPage() {
                   centerLabel="Activos"
                   centerValue={formatNumber(activos.length)}
                   formatter={formatNumber}
-                  emptyMessage="Aun no hay roles activos para mostrar."
+                  emptyMessage="Aún no hay roles activos para mostrar."
                 />
                 <DonutCard
                   title="Estado del equipo"
-                  subtitle="Lectura rapida entre usuarios activos e inactivos."
+                  subtitle="Lectura rápida entre usuarios activos e inactivos."
                   data={statusDistribution}
                   centerLabel="Total"
                   centerValue={formatNumber(usuarios.length)}
                   formatter={formatNumber}
-                  emptyMessage="Aun no hay estados para mostrar."
+                  emptyMessage="Aún no hay estados para mostrar."
                 />
                 <DashboardPanel
                   title="Criterio de control"
-                  subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el ultimo admin de la clinica."
+                  subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el último admin de la clínica."
                 >
                   <div className="grid gap-4">
                     <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuracion, suscripcion y equipo.
+                      Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuración, suscripción y equipo.
                     </div>
                     <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                       Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
                     </div>
                     <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      La plataforma ya bloquea desactivar o degradar al ultimo administrador activo para evitar dejar la clinica sin control.
+                      La plataforma ya bloquea desactivar o degradar al último administrador activo para evitar dejar la clínica sin control.
                     </div>
                   </div>
                 </DashboardPanel>

@@ -36,7 +36,7 @@ export default function SearchInput({
         <button
           type="button"
           onClick={() => onChange('')}
-          aria-label="Limpiar busqueda"
+          aria-label="Limpiar búsqueda"
           className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground transition hover:text-foreground"
         >
           <X className="h-4 w-4" />

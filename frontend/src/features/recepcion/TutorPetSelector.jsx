@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
-import { Search, UserPlus } from 'lucide-react'
+import { PawPrint, Search, UserPlus } from 'lucide-react'
 import { NavCtaLink } from '@/components/shared/NavCta'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useBuscarPropietarios } from './useRecepcion'
 import { Select } from '@/components/ui/select'
+import { ESPECIE_OPCIONES_FORM } from '@/lib/especies'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -40,7 +41,38 @@ export function TutorPetSelector({
   const [drawerOpen, setDrawerOpen] = useState(false)
   const propietariosQuery = useBuscarPropietarios(ownerSearch)
   const propietarios = propietariosQuery.data?.propietarios || []
-  const mascotasDelTutor = getOwnerPets(selectedOwner, mascotas)
+  // Mascotas creadas aqui mismo: el tutor seleccionado no las trae hasta recargar.
+  const [mascotasNuevas, setMascotasNuevas] = useState([])
+  const [nuevaMascota, setNuevaMascota] = useState(null)
+  const mascotasDelTutor = [
+    ...getOwnerPets(selectedOwner, mascotas),
+    ...mascotasNuevas.filter((pet) => pet.propietarioId === selectedOwner?.id),
+  ]
+
+  const crearMascotaMutation = useMutation({
+    mutationFn: pacientesApi.crearMascota,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Paciente registrado exitosamente')
+      invalidarDominios(queryClient, 'pacientes')
+      const creada = data?.mascota
+      if (creada?.id) {
+        setMascotasNuevas((prev) => [...prev, { ...creada, propietarioId: selectedOwner.id }])
+        onSelectMascota(creada.id)
+      }
+      setNuevaMascota(null)
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el paciente.')),
+  })
+
+  // Va dentro del formulario de la cita: botones type="button", sin <form> anidado.
+  const handleCreateMascota = () => {
+    const nombre = nuevaMascota?.nombre?.trim()
+    if (!nombre || !nuevaMascota?.especie) {
+      toast.error('Escribe el nombre y elige la especie del paciente.')
+      return
+    }
+    crearMascotaMutation.mutate({ nombre, especie: nuevaMascota.especie, propietarioId: selectedOwner.id })
+  }
 
   const crearPropietarioMutation = useMutation({
     mutationFn: pacientesApi.crearPropietario,
@@ -87,7 +119,7 @@ export function TutorPetSelector({
           type="text"
           value={ownerSearch}
           onChange={(event) => onOwnerSearchChange(event.target.value)}
-          placeholder="Nombre, documento o telefono"
+          placeholder="Nombre, documento o teléfono"
           className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
         />
 
@@ -95,7 +127,7 @@ export function TutorPetSelector({
           {selectedOwner ? (
             <div className="border border-success/30 bg-success-soft px-3 py-3 text-sm text-foreground">
               <p className="font-semibold text-foreground">{selectedOwner.nombre}</p>
-              <p className="mt-1">{selectedOwner.telefono || 'Sin telefono principal'}</p>
+              <p className="mt-1">{selectedOwner.telefono || 'Sin teléfono principal'}</p>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
@@ -117,7 +149,7 @@ export function TutorPetSelector({
                   <div>
                     <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {owner.telefono || 'Sin telefono principal'}
+                      {owner.telefono || 'Sin teléfono principal'}
                     </p>
                   </div>
                   <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -158,9 +190,65 @@ export function TutorPetSelector({
         options={mascotasDelTutor.map((pet) => ({ value: pet.id, label: pet.nombre }))}
       />
 
-      {selectedOwner && mascotasDelTutor.length === 0 ? (
+      {selectedOwner && mascotasDelTutor.length === 0 && !nuevaMascota ? (
         <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
-          Este tutor aún no tiene pacientes activos. Primero registra la mascota en la sección de pacientes.
+          Este tutor aún no tiene pacientes activos. Regístralo aquí mismo.
+        </div>
+      ) : null}
+
+      {selectedOwner && !nuevaMascota ? (
+        <button
+          type="button"
+          onClick={() => setNuevaMascota({ nombre: '', especie: '' })}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+        >
+          <PawPrint className="h-3.5 w-3.5" />
+          Registrar paciente nuevo
+        </button>
+      ) : null}
+
+      {selectedOwner && nuevaMascota ? (
+        <div className="space-y-3 border border-border bg-muted px-4 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Paciente nuevo de {selectedOwner.nombre}
+          </p>
+          <input
+            type="text"
+            value={nuevaMascota.nombre}
+            onChange={(event) => setNuevaMascota((prev) => ({ ...prev, nombre: event.target.value }))}
+            placeholder="Nombre del paciente"
+            aria-label="Nombre del paciente"
+            className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+          />
+          <Select
+            variant="field"
+            aria-label="Especie"
+            className="h-11"
+            placeholder="Especie"
+            value={nuevaMascota.especie}
+            onValueChange={(value) => setNuevaMascota((prev) => ({ ...prev, especie: value }))}
+            options={ESPECIE_OPCIONES_FORM}
+          />
+          <p className="text-xs text-muted-foreground">
+            Los demás datos (raza, sexo, peso, foto) se completan después en Pacientes.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCreateMascota}
+              disabled={crearMascotaMutation.isPending}
+              className="h-10 bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            >
+              {crearMascotaMutation.isPending ? 'Registrando...' : 'Registrar paciente'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setNuevaMascota(null)}
+              className="h-10 border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : null}
 

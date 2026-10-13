@@ -360,7 +360,7 @@ export function SalaEsperaPanel({
         <div className="flex flex-wrap items-center gap-5 border-b border-border px-5 py-3">
           <div className="flex items-baseline gap-2">
             <span className="text-[22px] font-bold leading-none tabular-nums text-info">{resumen.enAtencion}</span>
-            <span className="text-xs text-muted-foreground">en atencion</span>
+            <span className="text-xs text-muted-foreground">en atención</span>
           </div>
           <span className="h-6 w-px bg-border" aria-hidden="true" />
           <div className="flex items-baseline gap-2">
@@ -405,10 +405,10 @@ export function SalaEsperaPanel({
           <div className="p-5">
             <EmptyState
               icon={<Users />}
-              title={citas.length === 0 ? 'Sala de espera vacia' : 'Sin resultados para esa busqueda'}
+              title={citas.length === 0 ? 'Sala de espera vacía' : 'Sin resultados para esa búsqueda'}
               description={
                 citas.length === 0
-                  ? 'Las citas programadas y los ingresos directos apareceran aqui.'
+                  ? 'Las citas programadas y los ingresos directos aparecerán aquí.'
                   : 'Prueba con otro nombre de paciente, tutor o veterinario.'
               }
               bordered
@@ -467,7 +467,7 @@ export function SalaEsperaPanel({
         open={Boolean(cancelTarget)}
         onOpenChange={(open) => !open && setCancelTarget(null)}
         title="Cancelar cita"
-        description={`Indica el motivo de cancelacion para ${cancelTarget?.mascota?.nombre || 'este paciente'}.`}
+        description={`Indica el motivo de cancelación para ${cancelTarget?.mascota?.nombre || 'este paciente'}.`}
         confirmLabel="Cancelar cita"
         variant="destructive"
         loading={actualizarEstadoMutation.isPending}
@@ -476,7 +476,7 @@ export function SalaEsperaPanel({
         <textarea
           value={motivoCancelacion}
           onChange={(event) => setMotivoCancelacion(event.target.value)}
-          placeholder="Motivo de cancelacion"
+          placeholder="Motivo de cancelación"
           className="min-h-[90px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
         />
       </ConfirmDialog>

@@ -20,7 +20,7 @@ export const MOVEMENT_REASON_OPTIONS = {
   ],
   salida: [
     { value: 'venta', label: 'Venta' },
-    { value: 'uso_clinico', label: 'Uso clinico' },
+    { value: 'uso_clinico', label: 'Uso clínico' },
     { value: 'vencimiento', label: 'Vencimiento' },
     { value: 'otro', label: 'Otro' },
   ],

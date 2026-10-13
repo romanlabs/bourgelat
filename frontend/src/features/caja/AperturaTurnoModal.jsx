@@ -21,7 +21,7 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    const monto = parseInt(montoInicial, 10)
+    const monto = montoInicial === '' ? 0 : parseInt(montoInicial, 10)
     if (!Number.isFinite(monto) || monto < 0) return
 
     abrirTurnoMutation.mutate(
@@ -59,7 +59,7 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
 
           <button
             type="submit"
-            disabled={abrirTurnoMutation.isPending || montoInicial === ''}
+            disabled={abrirTurnoMutation.isPending}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {abrirTurnoMutation.isPending ? (

@@ -56,8 +56,8 @@ export default function FacturaDetalleModal({ historialHook }) {
         <DialogHeader>
           <DialogTitle>Detalle de factura</DialogTitle>
           <DialogDescription>
-            Desde aqui revisas la venta, imprimes la tirilla y solo intervienes la emision
-            electronica si hubo pendiente o error.
+            Desde aquí revisas la venta, imprimes la tirilla y solo intervienes la emisión
+            electrónica si hubo pendiente o error.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,7 +187,7 @@ export default function FacturaDetalleModal({ historialHook }) {
 
               <div className="space-y-3 border-t border-border pt-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Estado electronico
+                  Estado electrónico
                 </p>
                 <div className="grid gap-3">
                   <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
@@ -222,12 +222,12 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <div className="flex items-center gap-2">
                     <SendHorizontal className="h-4 w-4 text-primary" />
                     <p className="text-sm font-semibold text-foreground">
-                      Reintentar emision electronica
+                      Reintentar emisión electrónica
                     </p>
                   </div>
                   <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                    La emision electronica normalmente sale automatica al crear la factura
-                    cuando la clinica tiene esta funcionalidad activa. Este bloque solo
+                    La emisión electrónica normalmente sale automática al crear la factura
+                    cuando la clínica tiene esta funcionalidad activa. Este bloque solo
                     sirve para pendientes, rechazos o reintentos controlados.
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -289,7 +289,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <SendHorizontal className="h-4 w-4" />
-                    {emitirFacturaMutation.isPending ? 'Emitiendo...' : 'Reintentar emision'}
+                    {emitirFacturaMutation.isPending ? 'Emitiendo...' : 'Reintentar emisión'}
                   </button>
                 </div>
               ) : null}
@@ -337,7 +337,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <textarea
                     value={motivoAnulacion}
                     onChange={(event) => setMotivoAnulacion(event.target.value)}
-                    placeholder="Describe el motivo de anulacion para auditoria y control interno."
+                    placeholder="Describe el motivo de anulación para auditoría y control interno."
                     className="min-h-24 w-full border border-border bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary"
                   />
                   <button
@@ -353,7 +353,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               ) : facturaSeleccionada?.estadoElectronico === 'validada' &&
                 facturaSeleccionada?.cufe ? (
                 <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
-                  Esta factura ya fue validada electronicamente. No se puede anular desde
+                  Esta factura ya fue validada electrónicamente. No se puede anular desde
                   caja: requiere un flujo tributario controlado como nota credito.
                 </div>
               ) : null}

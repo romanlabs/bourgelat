@@ -18,14 +18,14 @@ import { useRegistro } from './useAuth'
 // desde LoginPage y desde la landing, y debe leerse como la misma superficie.
 
 const esquema = z.object({
-  nombre: z.string().trim().min(1, 'El nombre de la clinica es requerido').max(160),
+  nombre: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
   nombreAdministrador: z.string().trim().min(1, 'Tu nombre es requerido').max(120),
   email: z.string().trim().email('Correo inválido'),
   password: z
     .string()
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/,
-      'Minimo 8 caracteres con mayuscula, minuscula, numero y caracter especial'
+      'Mínimo 8 caracteres con mayúscula, minúscula, número y carácter especial'
     ),
   aceptaTerminos: z
     .boolean()

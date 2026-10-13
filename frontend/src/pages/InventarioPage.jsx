@@ -463,7 +463,7 @@ export default function InventarioPage() {
                   centerLabel="Productos"
                   centerValue={formatNumber(resumen.totalProductos || 0)}
                   formatter={formatNumber}
-                  emptyMessage="Aun no hay categorias para mostrar."
+                  emptyMessage="Aún no hay categorías para mostrar."
                 />
                 <DataTable
                   title="Alertas prioritarias"
@@ -478,7 +478,7 @@ export default function InventarioPage() {
                           tone={
                             row.tipo === 'Vencido'
                               ? 'border-danger/30 bg-danger-soft text-danger'
-                              : row.tipo === 'Proximo a vencer'
+                              : row.tipo === 'Próximo a vencer'
                                 ? 'border-warning/30 bg-warning-soft text-warning'
                                 : 'border-info/30 bg-info-soft text-info'
                           }
@@ -505,7 +505,7 @@ export default function InventarioPage() {
                       key: 'accion',
                       label: 'Acciones',
                       render: (row) =>
-                        row.tipo === 'Vencido' || row.tipo === 'Proximo a vencer' ? (
+                        row.tipo === 'Vencido' || row.tipo === 'Próximo a vencer' ? (
                           <button
                             type="button"
                             onClick={() => abrirRelevoVencimiento(row.raw, row.inventario === 'clinico' ? 'insumo' : 'producto')}
@@ -1070,7 +1070,7 @@ export default function InventarioPage() {
                     </div>
                   ) : (
                     <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                      Selecciona un producto en el selector de arriba para ver su detalle y los ultimos movimientos.
+                      Selecciona un producto en el selector de arriba para ver su detalle y los últimos movimientos.
                     </div>
                   )}
                 </DashboardPanel>

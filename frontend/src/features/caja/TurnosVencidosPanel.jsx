@@ -59,7 +59,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
           },
         ]}
         emptyTitle="Sin turnos vencidos"
-        emptyBody="Ningun turno quedo abierto de un dia anterior."
+        emptyBody="Ningún turno quedó abierto de un dia anterior."
       />
 
       {turnoSeleccionado ? (
@@ -70,7 +70,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
           cerrarTurnoMutation={cerrarTurnoAdminMutation}
           turnoId={turnoSeleccionado.id}
           titulo={`Cerrar turno de ${turnoSeleccionado.usuario?.nombre || 'este cajero'}`}
-          descripcion="Este turno quedo abierto de un dia anterior. Cuenta el efectivo fisico para cerrarlo en nombre del cajero."
+          descripcion="Este turno quedó abierto de un dia anterior. Cuenta el efectivo físico para cerrarlo en nombre del cajero."
         />
       ) : null}
     </>

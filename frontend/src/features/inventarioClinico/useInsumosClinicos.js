@@ -61,33 +61,33 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
   const crearInsumoMutation = useMutation({
     mutationFn: inventarioClinicoApi.crearInsumo,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Insumo clinico creado exitosamente')
+      toast.success(data?.message || 'Insumo clínico creado exitosamente')
       closeDrawer()
       invalidateInventarioClinicoQueries(queryClient)
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible crear el insumo clinico.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible crear el insumo clínico.')),
   })
 
   const editarInsumoMutation = useMutation({
     mutationFn: ({ insumoId, payload }) => inventarioClinicoApi.editarInsumo(insumoId, payload),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Insumo clinico actualizado exitosamente')
+      toast.success(data?.message || 'Insumo clínico actualizado exitosamente')
       closeDrawer()
       invalidateInventarioClinicoQueries(queryClient)
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el insumo clinico.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el insumo clínico.')),
   })
 
   const eliminarInsumoMutation = useMutation({
     mutationFn: inventarioClinicoApi.eliminarInsumo,
     onSuccess: (data, insumoId) => {
-      toast.success(data?.message || 'Insumo clinico desactivado exitosamente')
+      toast.success(data?.message || 'Insumo clínico desactivado exitosamente')
       setConfirmDialog({ open: false, insumo: null })
       if (editingInsumo?.id === insumoId) closeDrawer()
       onInsumoDeleted?.(insumoId)
       invalidateInventarioClinicoQueries(queryClient)
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el insumo clinico.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el insumo clínico.')),
   })
 
   const registrarCompraMutation = useMutation({

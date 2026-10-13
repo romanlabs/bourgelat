@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { buildStateTone, STATUS_OPTIONS, evaluarIntervalo } from './calendarConstants'
+import { TRANSICIONES } from '@/features/recepcion/recepcionConstants'
 import { Select } from '@/components/ui/select'
 import { HoraPicker } from '@/components/shared/HoraPicker'
 import { formatHora12, formatFranja12, moverFin } from '@/lib/hora'
@@ -220,7 +221,9 @@ export function CitaDetailDialog({
               aria-label="Estado de la cita"
               value={statusForm.estado}
               onValueChange={(value) => setStatusForm((prev) => ({ ...prev, estado: value }))}
-              options={STATUS_OPTIONS}
+              options={STATUS_OPTIONS.filter(
+                (opcion) => opcion.value === cita.estado || (TRANSICIONES[cita.estado] || []).includes(opcion.value)
+              )}
             />
 
             {statusForm.estado === 'cancelada' && (
