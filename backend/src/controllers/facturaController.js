@@ -15,6 +15,7 @@ const Usuario = require('../models/Usuario')
 const CajaTurno = require('../models/CajaTurno')
 const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
+const { clasificarVencimiento } = require('../utils/vencimiento')
 const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
@@ -635,6 +636,14 @@ const crearFactura = async (req, res) => {
         if (Number(producto.stock) < cantidad) {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
+        }
+
+        // Un producto vencido no se vende; si la fecha está mal, se corrige en Inventario.
+        if (clasificarVencimiento(producto) === 'vencido') {
+          await transaction.rollback()
+          return res.status(400).json({
+            message: `"${producto.nombre}" está vencido (${String(producto.fechaVencimiento).slice(0, 10)}) y no se puede vender. Si la fecha está mal, corrígela en Inventario.`,
+          })
         }
 
         // Piso de precio: un producto no se puede vender por debajo de su costo.
