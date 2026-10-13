@@ -60,15 +60,16 @@ function NowLine({ slotHeight, gridInicio }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotHeight, gridInicio])
 
+  // La raya se centra sobre `top` (antes colgaba 6 px por debajo, centrada en el
+  // punto) y se baja medio pixel: la linea de la grilla es un border-top de 1 px
+  // que ocupa [y, y+1]. Asi, a la hora en punto queda exactamente encima.
   return (
     <div
       className="pointer-events-none absolute left-0 right-0 z-10"
-      style={{ top: `${top}px` }}
+      style={{ top: `${top + 0.5}px` }}
     >
-      <div className="flex items-center">
-        <div className="h-3 w-3 flex-shrink-0 -translate-x-1.5 rounded-full bg-danger" />
-        <div className="h-[2px] flex-1 bg-danger" />
-      </div>
+      <div className="absolute inset-x-0 h-[2px] -translate-y-1/2 bg-danger" />
+      <div className="absolute left-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-danger" />
     </div>
   )
 }
