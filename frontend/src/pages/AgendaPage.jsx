@@ -33,7 +33,7 @@ import { ProgramarCitaDrawer } from '@/features/recepcion/ProgramarCitaDrawer'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 import { hoyLocal } from '@/lib/fecha'
@@ -134,7 +134,7 @@ export default function AgendaPage() {
   const [recepcionPrefill, setRecepcionPrefill] = useState(null)
   const [calendarToolbar, setCalendarToolbar] = useState(null)
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'])
+  const rolPermitido = canAccessModule(usuario, 'agenda')
   // Todos los planes incluyen citas y reportes operativos.
   const puedeVerAgenda = true
   const puedeProgramar = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'veterinario'])

@@ -10,6 +10,7 @@ import {
   History,
   LayoutDashboard,
   LifeBuoy,
+  Lock,
   LogOut,
   Menu,
   Moon,
@@ -36,6 +37,16 @@ import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './qu
 import QuickCreateMenu from './QuickCreateMenu'
 import { AdminSearchContext, HeaderSlotContext } from './HeaderSlotContext'
 import { etiquetaEspecie } from '@/lib/especies'
+import { useModuleAccess } from '@/lib/useModuleAccess'
+import { canAccessModule, getUserRoles } from '@/lib/permissions'
+
+const QUICK_ACTION_MODULE = {
+  facturar: 'finanzas',
+  paciente: 'pacientes',
+  historia: 'pacientes',
+  agenda: 'agenda',
+  inventario: 'inventario',
+}
 
 const ROL_LABELS_SIDEBAR = {
   admin: 'Administrador',
@@ -81,8 +92,23 @@ const NAV_SECTIONS = [
 
 const NAV_ITEMS_BY_KEY = Object.fromEntries(NAV_ITEMS.map((item) => [item.key, item]))
 
-function NavDrawerLink({ item, active, onNavigate }) {
+function NavDrawerLink({ item, active, onNavigate, bloqueado, onBloqueado }) {
   const Icon = item.icon
+
+  if (bloqueado) {
+    return (
+      <button
+        type="button"
+        aria-disabled="true"
+        onClick={onBloqueado}
+        className="relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-sidebar-foreground/45 transition-colors duration-150 hover:bg-sidebar-accent/50"
+      >
+        <Icon className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
+        <span className="flex-1 truncate">{item.label}</span>
+        <Lock className="h-3.5 w-3.5 shrink-0" />
+      </button>
+    )
+  }
 
   return (
     <Link
@@ -122,6 +148,7 @@ export default function AdminShell({
 }) {
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
+  const { canAccess, guard } = useModuleAccess()
   const dark = useThemeStore((state) => state.dark)
   const toggleDark = useThemeStore((state) => state.toggleDark)
   const { logout } = useLogout()
@@ -141,7 +168,8 @@ export default function AdminShell({
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clínica'
 
   const busquedaDiferida = useDebouncedValue(searchQuery.trim())
-  const puedeBuscarContenido = isSearchOpen && busquedaDiferida.length >= 2
+  const puedeBuscarContenido =
+    isSearchOpen && busquedaDiferida.length >= 2 && canAccess('pacientes')
 
   const mascotasSearchQuery = useQuery({
     queryKey: ['busqueda-global-mascotas', busquedaDiferida],
@@ -197,10 +225,11 @@ export default function AdminShell({
   const visibleQuickActions = useMemo(() => {
     if (!showQuickActions) return []
     if (quickActions) return quickActions
-    const order = ROL_ACTION_ORDER[usuario?.rol]
-    if (!order) return DEFAULT_QUICK_ACTIONS
-    return order.map((key) => ALL_QUICK_ACTIONS[key])
-  }, [showQuickActions, quickActions, usuario?.rol])
+    const order = getUserRoles(usuario).map((rol) => ROL_ACTION_ORDER[rol]).find(Boolean)
+    const actions = order ? order.map((key) => ALL_QUICK_ACTIONS[key]) : DEFAULT_QUICK_ACTIONS
+    // Solo ofrece atajos a módulos a los que el usuario sí puede entrar.
+    return actions.filter((action) => canAccessModule(usuario, QUICK_ACTION_MODULE[action.key]))
+  }, [showQuickActions, quickActions, usuario])
 
   const usuarioIniciales = useMemo(() => {
     const source = usuario?.nombre || usuario?.email || 'BC'
@@ -418,6 +447,8 @@ export default function AdminShell({
                           item={item}
                           active={currentKey === item.key}
                           onNavigate={() => setIsNavOpen(false)}
+                          bloqueado={!canAccess(item.key)}
+                          onBloqueado={() => guard(item.key, item.label)}
                         />
                       ))}
                     </div>
@@ -545,14 +576,30 @@ export default function AdminShell({
                         <button
                           key={item.key}
                           type="button"
-                          onClick={() => goToResult(item.to)}
-                          className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-sidebar-accent-foreground transition hover:bg-sidebar-accent"
+                          onClick={() => {
+                            if (!guard(item.key, item.label)) return
+                            goToResult(item.to)
+                          }}
+                          aria-disabled={!canAccess(item.key) || undefined}
+                          className={cn(
+                            'group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition hover:bg-sidebar-accent',
+                            canAccess(item.key)
+                              ? 'text-sidebar-accent-foreground'
+                              : 'text-sidebar-foreground/45'
+                          )}
                         >
                           <Icon className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
                           <span className="flex-1 truncate">{item.label}</span>
-                          <span className="shrink-0 text-xs text-sidebar-foreground/70 group-hover:text-sidebar-foreground">
-                            Abrir
-                          </span>
+                          {canAccess(item.key) ? (
+                            <span className="shrink-0 text-xs text-sidebar-foreground/70 group-hover:text-sidebar-foreground">
+                              Abrir
+                            </span>
+                          ) : (
+                            <span className="flex shrink-0 items-center gap-1 text-xs">
+                              <Lock className="h-3 w-3" />
+                              Sin acceso
+                            </span>
+                          )}
                         </button>
                       )
                     })}

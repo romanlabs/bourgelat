@@ -41,7 +41,7 @@ import { configuracionApi } from '@/features/configuracion/configuracionApi'
 import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { Select } from '@/components/ui/select'
@@ -2032,7 +2032,7 @@ export default function ConfiguracionPage() {
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const setClinica = useAuthStore((state) => state.setClinica)
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const rolPermitido = canAccessModule(usuario, 'configuracion')
   const puedeVerFacturacionElectronica = tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
   const puedeEditarFacturacionElectronica = hasAnyRole(usuario, ['admin', 'superadmin'])
 

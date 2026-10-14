@@ -18,7 +18,7 @@ import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtil
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
 import { hoyLocal } from '@/lib/fecha'
@@ -212,7 +212,7 @@ export default function AntecedentesPage() {
       return next
     })
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
+  const rolPermitido = canAccessModule(usuario, 'antecedentes')
   const puedeEditar = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
   // Todos los planes incluyen antecedentes.
   const puedeVerAntecedentes = true

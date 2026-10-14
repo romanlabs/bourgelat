@@ -9,3 +9,30 @@ export const hasAnyRole = (usuario, roles = []) => {
   const userRoles = getUserRoles(usuario)
   return roles.some((rol) => userRoles.includes(rol))
 }
+
+// Fuente única de qué roles entran a cada módulo. Un módulo que no aparece
+// aquí es accesible para cualquier usuario autenticado (dashboard, planes).
+// El backend sigue validando con `verificarRol`; esto solo gobierna la UI.
+export const MODULE_ACCESS = {
+  agenda: ['admin', 'superadmin', 'recepcionista', 'veterinario', 'auxiliar'],
+  pacientes: ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'],
+  historias: ['admin', 'superadmin', 'veterinario', 'auxiliar'],
+  antecedentes: ['admin', 'superadmin', 'veterinario', 'auxiliar'],
+  finanzas: ['admin', 'superadmin', 'facturador', 'recepcionista', 'auxiliar', 'veterinario'],
+  inventario: ['admin', 'superadmin', 'auxiliar'],
+  usuarios: ['admin', 'superadmin'],
+  configuracion: ['admin', 'superadmin'],
+  auditoria: ['admin', 'superadmin'],
+  soporte: ['admin'],
+}
+
+export const canAccessModule = (usuario, moduleKey) => {
+  const roles = MODULE_ACCESS[moduleKey]
+  return !roles || hasAnyRole(usuario, roles)
+}
+
+// Módulo → clave, a partir de la ruta (`/inventario`, `/pacientes/:id/historial`).
+export const moduleKeyFromPath = (pathname = '') => {
+  const segment = pathname.split('/')[1]
+  return segment && segment in MODULE_ACCESS ? segment : null
+}

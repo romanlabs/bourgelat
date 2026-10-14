@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } fr
 import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
+import ModuleAccessRoute from './ModuleAccessRoute'
 import { hasRole } from '@/lib/permissions'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
 
@@ -87,6 +88,8 @@ const router = createBrowserRouter([
       },
       {
         element: <ProtectedRoute />,
+        children: [{
+        element: <ModuleAccessRoute />,
         children: [
           { path: '/dashboard', element: <Suspense fallback={<Loader />}><DashboardPage /></Suspense> },
           { path: '/agenda', element: <Suspense fallback={<Loader />}><AgendaPage /></Suspense> },
@@ -103,6 +106,7 @@ const router = createBrowserRouter([
           { path: '/perfil', element: <Suspense fallback={<Loader />}><PerfilPage /></Suspense> },
           { path: '/onboarding', element: <Suspense fallback={<Loader />}><OnboardingWizardPage /></Suspense> },
         ],
+        }],
       },
       { path: '/',       element: <HostAwareHome /> },
       { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },

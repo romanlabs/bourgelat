@@ -15,7 +15,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
@@ -260,7 +260,7 @@ export default function InventarioPage() {
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
+  const rolPermitido = canAccessModule(usuario, 'inventario')
   // Todos los planes incluyen inventario y reportes operativos.
   const puedeVerInventario = rolPermitido
 

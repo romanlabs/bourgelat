@@ -14,7 +14,7 @@ import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtil
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
@@ -99,7 +99,7 @@ export default function HistoriasPage() {
 
   const buscarDiferido = useDebouncedValue(buscar.trim())
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar'])
+  const rolPermitido = canAccessModule(usuario, 'historias')
   // Todos los planes incluyen historias clínicas.
   const puedeVerHistorias = true
 

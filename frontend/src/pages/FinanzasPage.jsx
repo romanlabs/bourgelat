@@ -49,7 +49,7 @@ import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
 import TurnosVencidosPanel from '@/features/caja/TurnosVencidosPanel'
 import ReporteDescuadresPanel from '@/features/caja/ReporteDescuadresPanel'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
 import { Select } from '@/components/ui/select'
@@ -113,14 +113,7 @@ export default function FinanzasPage() {
     document.title = 'Caja y facturación | Bourgelat'
   }, [])
 
-  const rolPermitido = hasAnyRole(usuario, [
-    'admin',
-    'superadmin',
-    'facturador',
-    'recepcionista',
-    'auxiliar',
-    'veterinario',
-  ])
+  const rolPermitido = canAccessModule(usuario, 'finanzas')
   // Todos los planes traen caja, facturación interna, inventario y reportes.
   // La única funcionalidad que se compra aparte es la DIAN.
   const puedeVerFinanzas = rolPermitido

@@ -34,7 +34,7 @@ const textoCupos = (cantidad, singular = '', plural = '') => {
 }
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 
@@ -252,7 +252,7 @@ export default function UsuariosPage() {
   // lineas de JSX y desanidarlo solo para borrar una rama muerta no compensa
   // el riesgo. Limpieza pendiente.
   const roleFeatureEnabled = true
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const rolPermitido = canAccessModule(usuario, 'usuarios')
   const puedeVerModulo = rolPermitido
 
   useEffect(() => {
