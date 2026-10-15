@@ -5,6 +5,8 @@ import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 import ModuleAccessRoute from './ModuleAccessRoute'
 import { hasRole } from '@/lib/permissions'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
+import { APP_HOSTS } from '@/content/seo'
+import { aplicarSeo } from '@/lib/seo'
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
@@ -32,6 +34,7 @@ const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
 const PrivacidadPage = lazy(() => import('@/pages/PrivacidadPage'))
 const TerminosPage   = lazy(() => import('@/pages/TerminosPage'))
 const CookiesPage    = lazy(() => import('@/pages/CookiesPage'))
+const NoEncontradaPage = lazy(() => import('@/pages/NoEncontradaPage'))
 
 const Loader = () => (
   <div className="min-h-screen bg-[var(--color-sidebar)] flex items-center justify-center">
@@ -44,19 +47,18 @@ const ScrollManager = () => {
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
+    aplicarSeo(location.pathname)
   }, [location.pathname])
 
   return <Outlet />
 }
-
-const APP_HOSTS = new Set(['app.bourgelat.co', 'staging.bourgelat.co'])
 
 const HostAwareHome = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const usuario = useAuthStore((state) => state.usuario)
   const hostname = window.location.hostname.toLowerCase()
 
-  if (APP_HOSTS.has(hostname)) {
+  if (APP_HOSTS.includes(hostname)) {
     if (isAuthenticated) {
       return <Navigate to="/dashboard" replace />
     }
@@ -116,7 +118,7 @@ const router = createBrowserRouter([
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
       { path: '/terminos', element: <Suspense fallback={<Loader />}><TerminosPage /></Suspense> },
       { path: '/cookies', element: <Suspense fallback={<Loader />}><CookiesPage /></Suspense> },
-      { path: '*',       element: <Navigate to="/" replace /> },
+      { path: '*',       element: <Suspense fallback={<Loader />}><NoEncontradaPage /></Suspense> },
     ],
   },
 ])

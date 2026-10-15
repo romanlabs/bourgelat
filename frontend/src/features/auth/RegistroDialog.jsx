@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -11,7 +11,10 @@ import {
 } from '@/components/ui/dialog'
 import BotonesSociales, { oauthHabilitado } from './BotonesSociales'
 import ConsentimientoRegistro from './ConsentimientoRegistro'
-import { useRegistro } from './useAuth'
+import TurnstileWidget from '@/components/auth/TurnstileWidget'
+import { turnstileHabilitado } from '@/lib/turnstile'
+import CodigoVerificacionPaso from './CodigoVerificacionPaso'
+import { useRegistro, useSesionVerificada } from './useAuth'
 
 // Misma paleta e identidad tipografica que LoginPage.jsx: los tokens de diseño
 // (primary, foreground, border) reemplazan los colores hardcoded. El modal se abre
@@ -47,6 +50,10 @@ const obtenerMensajeError = (error) =>
 
 export default function RegistroDialog({ open, onOpenChange }) {
   const { mutate: registro, isPending, error, isError } = useRegistro()
+  const sesionVerificada = useSesionVerificada('registro')
+  const [emailPendiente, setEmailPendiente] = useState(null)
+  const [turnstileToken, setTurnstileToken] = useState(null)
+  const [reinicio, setReinicio] = useState(0)
 
   const {
     register,
@@ -78,12 +85,43 @@ export default function RegistroDialog({ open, onOpenChange }) {
   const passwordField = register('password')
 
   const onSubmit = (data) => {
-    registro(data)
+    registro(
+      { ...data, turnstileToken },
+      {
+        onSuccess: (respuesta) => {
+          if (respuesta?.requiereVerificacion) setEmailPendiente(respuesta.email || data.email)
+        },
+        onError: () => setReinicio((n) => n + 1),
+      }
+    )
   }
 
   return (
-    <DialogRoot open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[380px] rounded-2xl border-border shadow-lg">
+    <DialogRoot
+      open={open}
+      onOpenChange={(abierto) => {
+        if (!abierto) setEmailPendiente(null)
+        onOpenChange(abierto)
+      }}
+    >
+      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[380px] overflow-y-auto rounded-2xl border-border shadow-lg">
+        {emailPendiente ? (
+          <>
+            <DialogHeader className="sr-only">
+              <DialogTitle>Revisa tu correo</DialogTitle>
+              <DialogDescription>Confirma tu correo con el código que te enviamos.</DialogDescription>
+            </DialogHeader>
+            <CodigoVerificacionPaso
+              email={emailPendiente}
+              onVerificado={sesionVerificada}
+              onVolver={() => {
+                setEmailPendiente(null)
+                setReinicio((n) => n + 1)
+              }}
+            />
+          </>
+        ) : (
+        <>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-foreground">
             Crea tu cuenta
@@ -167,16 +205,32 @@ export default function RegistroDialog({ open, onOpenChange }) {
             error={errors.aceptaTerminos?.message}
           />
 
-          {isError ? <p className="text-sm text-danger">{obtenerMensajeError(error)}</p> : null}
+          <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
+
+          <div aria-live="polite">
+            {isError ? (
+              <>
+                <p className="text-sm text-danger">{obtenerMensajeError(error)}</p>
+                {/registrad/i.test(obtenerMensajeError(error)) ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Si ya te registraste, inicia sesión con tu correo y contraseña para recibir un
+                    código nuevo.
+                  </p>
+                ) : null}
+              </>
+            ) : null}
+          </div>
 
           <button
             type="submit"
-            disabled={isPending || !aceptaTerminos}
+            disabled={isPending || !aceptaTerminos || (turnstileHabilitado && !turnstileToken)}
             className="mt-4 h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
           >
             {isPending ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
+        </>
+        )}
       </DialogContent>
     </DialogRoot>
   )

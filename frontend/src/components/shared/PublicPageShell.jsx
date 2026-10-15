@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
 import RegistroDialog from '@/features/auth/RegistroDialog'
@@ -17,11 +17,8 @@ export default function PublicPageShell({
   eyebrow = 'Bourgelat',
   children,
 }) {
+  // El <title> y los meta los pone aplicarSeo (lib/seo.js) desde content/seo.js.
   const [registroAbierto, setRegistroAbierto] = useState(false)
-
-  useEffect(() => {
-    document.title = `${title} | Bourgelat`
-  }, [title])
 
   return (
     <div className="min-h-screen bg-papel-100 text-tinta-800">

@@ -126,6 +126,10 @@ const validateRuntimeConfig = (config = appConfig, env = process.env) => {
     return { errors, warnings }
   }
 
+  if (!env.TURNSTILE_SECRET_KEY) {
+    warnings.push('TURNSTILE_SECRET_KEY no esta definido: registro y login quedan sin proteccion anti-bots (Cloudflare Turnstile).')
+  }
+
   if (!config.trustProxy) {
     errors.push('TRUST_PROXY debe estar habilitado en produccion detras de Cloudflare/Render.')
   }

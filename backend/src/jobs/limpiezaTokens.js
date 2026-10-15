@@ -2,6 +2,7 @@ const { Op } = require('sequelize')
 const RefreshToken = require('../models/RefreshToken')
 const PasswordResetToken = require('../models/PasswordResetToken')
 const EmailVerificationToken = require('../models/EmailVerificationToken')
+const CodigoVerificacionEmail = require('../models/CodigoVerificacionEmail')
 const AuditoriaLog = require('../models/AuditoriaLog')
 const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
 const logger = require('../utils/logger')
@@ -50,6 +51,23 @@ const limpiarTokensVencidos = async () => {
       logger.info({
         contexto: 'limpieza',
         mensaje: `${verificacionEliminados} tokens de verificacion de email eliminados`,
+      })
+    }
+
+    // Los codigos se conservan 24 h aunque esten usados o vencidos: el tope
+    // de codigos por cuenta (codigoVerificacionService) cuenta estas filas.
+    // Solo vencen a los 10 min, asi que pasado ese plazo ya no sirven.
+    const codigosEliminados = await CodigoVerificacionEmail.destroy({
+      where: {
+        createdAt: { [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+      sinTenant: true,
+    })
+
+    if (codigosEliminados > 0) {
+      logger.info({
+        contexto: 'limpieza',
+        mensaje: `${codigosEliminados} codigos de verificacion de email eliminados`,
       })
     }
   } catch (error) {
