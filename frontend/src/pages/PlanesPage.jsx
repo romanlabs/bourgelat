@@ -394,6 +394,12 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
             style={{ color: INK }}
           />
           <p className="mt-3 text-center text-xs text-white/55">{plan.nota}</p>
+          <Link
+            to="/pagar"
+            className="mt-2 block text-center text-xs font-semibold text-white/80 underline underline-offset-4 hover:text-white"
+          >
+            ¿Ya tienes cuenta? Paga tu plan
+          </Link>
         </div>
       </Motion.article>
     )
@@ -747,6 +753,9 @@ export default function PlanesPage() {
                 <a href="mailto:soporte@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat" className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/15">
                   Hablar con el equipo
                 </a>
+                <Link to="/pagar" className="text-center text-sm font-semibold text-white/80 underline underline-offset-4 hover:text-white">
+                  Ya tengo cuenta: pagar mi plan
+                </Link>
               </div>
             </div>
           </div>

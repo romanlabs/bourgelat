@@ -27,6 +27,7 @@ const InventarioPage = lazy(() => import('@/pages/InventarioPage'))
 const FinanzasPage = lazy(() => import('@/pages/FinanzasPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
+const PagarPage     = lazy(() => import('@/pages/PagarPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
 const PrivacidadPage = lazy(() => import('@/pages/PrivacidadPage'))
 const TerminosPage   = lazy(() => import('@/pages/TerminosPage'))
@@ -108,6 +109,7 @@ const router = createBrowserRouter([
       { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
+      { path: '/pagar', element: <Suspense fallback={<Loader />}><PagarPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
       { path: '/terminos', element: <Suspense fallback={<Loader />}><TerminosPage /></Suspense> },

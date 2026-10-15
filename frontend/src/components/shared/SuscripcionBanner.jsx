@@ -24,7 +24,7 @@ const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
           crear ni editar registros.
         </p>
         <Link
-          to="/configuracion"
+          to="/pagar"
           className="rounded-md bg-destructive px-3 py-1.5 font-medium text-destructive-foreground"
         >
           Activar plan
@@ -51,7 +51,7 @@ const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
           : `Te ${dias === 1 ? 'queda' : 'quedan'} ${dias} ${dias === 1 ? 'día' : 'días'} de prueba.`}
       </p>
       <Link
-        to="/configuracion"
+        to="/pagar"
         className="rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground"
       >
         Activar plan
