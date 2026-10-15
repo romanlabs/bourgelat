@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
@@ -6,6 +7,8 @@ import { z } from 'zod'
 import { ArrowRight, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useForgotPassword } from '@/features/auth/useAuth'
+import TurnstileWidget from '@/components/auth/TurnstileWidget'
+import { turnstileHabilitado } from '@/lib/turnstile'
 
 // Caramelo de marca para texto (eyebrows y enlaces); sigue el tema.
 const ACCENT = 'hsl(var(--brand-foreground))'
@@ -16,6 +19,8 @@ const esquema = z.object({
 
 export default function RecuperarPasswordPage() {
   const { mutate: solicitar, isPending, isSuccess } = useForgotPassword()
+  const [turnstileToken, setTurnstileToken] = useState(null)
+  const [reinicio, setReinicio] = useState(0)
 
   const {
     register,
@@ -29,7 +34,11 @@ export default function RecuperarPasswordPage() {
 
   const emailField = register('email')
 
-  const onSubmit = (data) => solicitar({ email: data.email })
+  const onSubmit = (data) =>
+    solicitar(
+      { email: data.email, turnstileToken },
+      { onError: () => setReinicio((n) => n + 1) }
+    )
 
   const inputClass =
     'h-14 w-full rounded-none border-0 border-b border-input bg-transparent px-1 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-brand'
@@ -108,9 +117,11 @@ export default function RecuperarPasswordPage() {
                   ) : null}
                 </div>
 
+                <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
+
                 <Button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || (turnstileHabilitado && !turnstileToken)}
                   className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
                 >
                   {isPending ? 'Enviando...' : 'Enviar enlace'}
