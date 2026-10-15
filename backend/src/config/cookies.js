@@ -100,6 +100,7 @@ const obtenerAccessTokenRequest = (req) => {
 
 module.exports = {
   parseCookies,
+  buildCookieOptions,
   setAuthCookies,
   clearAuthCookies,
   obtenerRefreshTokenRequest,
