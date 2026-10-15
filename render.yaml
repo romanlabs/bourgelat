@@ -201,6 +201,8 @@ services:
         value: https://api.bourgelat.co/api
       - key: VITE_OAUTH_ENABLED
         value: "true"
+      - key: VITE_TURNSTILE_SITE_KEY
+        sync: false
 
   - type: web
     name: bourgelat-api-staging
@@ -377,6 +379,8 @@ services:
         value: https://api-staging.bourgelat.co/api
       - key: VITE_OAUTH_ENABLED
         value: "true"
+      - key: VITE_TURNSTILE_SITE_KEY
+        sync: false
 
 databases:
   - name: bourgelat-postgres

@@ -67,7 +67,8 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
       <p className="mt-1.5 text-sm text-muted-foreground">
         Enviamos un código de 6 dígitos a{' '}
         <span className="break-all font-medium text-foreground">{email}</span>. Escríbelo aquí
-        para continuar. Si no lo ves, mira también en spam.
+        para continuar. Si no lo ves, mira también en spam. Si cierras esta ventana, puedes
+        volver a iniciar sesión con tu correo y contraseña para recibir un código nuevo.
       </p>
 
       <form

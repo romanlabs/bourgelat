@@ -104,7 +104,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
         onOpenChange(abierto)
       }}
     >
-      <DialogContent className="max-w-[380px] rounded-2xl border-border shadow-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[380px] overflow-y-auto rounded-2xl border-border shadow-lg">
         {emailPendiente ? (
           <>
             <DialogHeader className="sr-only">
@@ -208,7 +208,17 @@ export default function RegistroDialog({ open, onOpenChange }) {
           <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
 
           <div aria-live="polite">
-            {isError ? <p className="text-sm text-danger">{obtenerMensajeError(error)}</p> : null}
+            {isError ? (
+              <>
+                <p className="text-sm text-danger">{obtenerMensajeError(error)}</p>
+                {/registrad/i.test(obtenerMensajeError(error)) ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Si ya te registraste, inicia sesión con tu correo y contraseña para recibir un
+                    código nuevo.
+                  </p>
+                ) : null}
+              </>
+            ) : null}
           </div>
 
           <button

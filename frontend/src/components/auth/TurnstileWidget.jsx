@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { turnstileHabilitado, turnstileSiteKey } from '@/lib/turnstile'
 
 const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-import { turnstileHabilitado, turnstileSiteKey } from '@/lib/turnstile'
 
 let promesaScript = null
 
@@ -29,12 +29,15 @@ const cargarScript = () => {
 /**
  * Casilla «no soy un robot» de Cloudflare. Entrega el token por `onToken`
  * (null cuando vence o falla). Los tokens son de un solo uso: sube `resetKey`
- * (un contador) tras cada envío para pedir uno nuevo.
+ * (un contador) tras cada envío para pedir uno nuevo. Si el script o el widget
+ * fallan, muestra un aviso con «Reintentar» (el envío sigue bloqueado sin token).
  */
 export default function TurnstileWidget({ onToken, resetKey = 0, className = '' }) {
   const contenedor = useRef(null)
   const widgetId = useRef(null)
   const onTokenRef = useRef(onToken)
+  const [fallo, setFallo] = useState(false)
+  const [intento, setIntento] = useState(0)
 
   useEffect(() => {
     onTokenRef.current = onToken
@@ -62,13 +65,19 @@ export default function TurnstileWidget({ onToken, resetKey = 0, className = '' 
         widgetId.current = turnstile.render(contenedor.current, {
           sitekey: turnstileSiteKey,
           language: 'es',
-          theme: 'light',
+          theme: 'auto',
           callback: (token) => onTokenRef.current?.(token),
           'expired-callback': () => onTokenRef.current?.(null),
-          'error-callback': () => onTokenRef.current?.(null),
+          'error-callback': () => {
+            onTokenRef.current?.(null)
+            if (!cancelado) setFallo(true)
+          },
         })
       })
-      .catch(() => onTokenRef.current?.(null))
+      .catch(() => {
+        onTokenRef.current?.(null)
+        if (!cancelado) setFallo(true)
+      })
 
     return () => {
       cancelado = true
@@ -81,9 +90,34 @@ export default function TurnstileWidget({ onToken, resetKey = 0, className = '' 
       }
       widgetId.current = null
     }
+  }, [intento])
+
+  const reintentar = useCallback(() => {
+    setFallo(false)
+    setIntento((n) => n + 1)
   }, [])
 
   if (!turnstileHabilitado) return null
 
-  return <div ref={contenedor} className={className} aria-label="Verificación de seguridad" />
+  return (
+    <div className={className}>
+      {fallo ? (
+        <div role="alert" className="rounded-lg border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
+          <p>
+            No pudimos cargar la verificación de seguridad. Revisa tu conexión o desactiva el
+            bloqueador de anuncios para este sitio.
+          </p>
+          <button
+            type="button"
+            onClick={reintentar}
+            className="mt-2 font-medium underline underline-offset-2 hover:no-underline"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : (
+        <div ref={contenedor} aria-label="Verificación de seguridad" />
+      )}
+    </div>
+  )
 }
