@@ -137,7 +137,7 @@ const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFront
 }
 
 const enviarEmailCodigoVerificacion = async ({ para, nombre, codigo, urlFrontend }) => {
-  const asunto = `Tu código de Bourgelat: ${codigo}`
+  const asunto = 'Tu código de verificación de Bourgelat'
   const pie = pieLegal(urlFrontend)
   const nombreSeguro = escaparHtml(nombre)
   const texto = `Hola ${nombre},

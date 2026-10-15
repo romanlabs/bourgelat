@@ -5,6 +5,18 @@ const TIMEOUT_MS = 5000
 
 let avisoSinClave = false
 
+// Lista opcional de hostnames permitidos (TURNSTILE_HOSTNAMES, separados por
+// coma). Sin la variable no se valida: las claves de prueba devuelven otro.
+const hostnamesPermitidos = (valor = process.env.TURNSTILE_HOSTNAMES) =>
+  String(valor || '')
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean)
+
+const hostnameValido = (hostname, permitidos = hostnamesPermitidos()) =>
+  permitidos.length === 0 ||
+  (typeof hostname === 'string' && permitidos.includes(hostname.trim().toLowerCase()))
+
 // Devuelve { ok, motivo }. Solo `ok: false` bloquea la petición: sin clave
 // configurada o con Cloudflare caído se deja pasar (y se registra).
 const verificarTurnstile = async ({ token, ip, fetchFn = globalThis.fetch, timeoutMs = TIMEOUT_MS } = {}) => {
@@ -33,7 +45,15 @@ const verificarTurnstile = async ({ token, ip, fetchFn = globalThis.fetch, timeo
       signal: controller.signal,
     })
     const datos = await respuesta.json()
-    return datos?.success === true ? { ok: true } : { ok: false, motivo: 'rechazado' }
+    if (datos?.success !== true) return { ok: false, motivo: 'rechazado' }
+    if (!hostnameValido(datos.hostname)) {
+      logger.warn({
+        contexto: 'turnstile',
+        mensaje: `Token de Turnstile emitido para un hostname no permitido: ${datos.hostname}`,
+      })
+      return { ok: false, motivo: 'hostname' }
+    }
+    return { ok: true }
   } catch (error) {
     logger.error({
       contexto: 'turnstile',
@@ -49,4 +69,10 @@ const _reiniciarAvisoParaPruebas = () => {
   avisoSinClave = false
 }
 
-module.exports = { verificarTurnstile, TIMEOUT_MS, _reiniciarAvisoParaPruebas }
+module.exports = {
+  verificarTurnstile,
+  hostnamesPermitidos,
+  hostnameValido,
+  TIMEOUT_MS,
+  _reiniciarAvisoParaPruebas,
+}

@@ -38,7 +38,18 @@ const {
   enviarEmailVerificacion,
   enviarEmailCodigoVerificacion,
 } = require('../services/emailService')
-const { crearCodigo, esperaRestante, validarCodigo } = require('../services/codigoVerificacionService')
+const {
+  crearCodigo,
+  esperaRestante,
+  validarCodigo,
+  consumirCodigo,
+  puedeCrearOtroCodigo,
+} = require('../services/codigoVerificacionService')
+const {
+  setCookiePendiente,
+  clearCookiePendiente,
+  obtenerUsuarioPendienteRequest,
+} = require('../services/verificacionPendienteService')
 const logger = require('../utils/logger')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const passwordFuerteRegex =
@@ -134,6 +145,8 @@ const responderErrorInterno = (res, mensaje = 'Error interno del servidor') =>
   res.status(500).json({ message: mensaje })
 
 const MENSAJE_CODIGO_ENVIADO = 'Te enviamos un código de 6 dígitos a tu correo.'
+const MENSAJE_TOPE_CODIGOS =
+  'Ya te enviamos varios códigos. Revisa tu correo (también spam) o inténtalo mañana.'
 
 // Crea un codigo nuevo y lo envia. Nunca lanza: un fallo de correo solo se registra.
 const enviarCodigoAlUsuario = async (usuario) => {
@@ -311,6 +324,7 @@ const registro = async (req, res) => {
     // Si el envio falla no se rompe el registro: el usuario puede reenviar el codigo.
     await enviarCodigoAlUsuario(resultado.usuarioAdmin)
 
+    setCookiePendiente(res, resultado.usuarioAdmin.id)
     res.status(201).json({
       requiereVerificacion: true,
       email: resultado.usuarioAdmin.email,
@@ -421,11 +435,17 @@ const login = async (req, res) => {
     // intento fallido) pero no se abre sesion hasta confirmar el codigo.
     if (usuario.requiereVerificacionCodigo && !usuario.emailVerificado) {
       if (usuario.intentosFallidos > 0) await usuario.update({ intentosFallidos: 0 })
-      if ((await esperaRestante(usuario.id)) === 0) await enviarCodigoAlUsuario(usuario)
+      let message = MENSAJE_CODIGO_ENVIADO
+      if ((await esperaRestante(usuario.id)) === 0) {
+        if (await puedeCrearOtroCodigo(usuario.id)) await enviarCodigoAlUsuario(usuario)
+        else message = MENSAJE_TOPE_CODIGOS
+      }
+      // Solo tras la clave correcta: habilita verificar/reenviar el codigo.
+      setCookiePendiente(res, usuario.id)
       return res.status(403).json({
         requiereVerificacion: true,
         email: usuario.email,
-        message: MENSAJE_CODIGO_ENVIADO,
+        message,
       })
     }
 
@@ -991,24 +1011,40 @@ const cambiarPassword = async (req, res) => {
 
 const MENSAJE_CODIGO_INVALIDO = 'Código incorrecto o vencido.'
 
+// Solo responde a quien tiene la cookie de pendiente (emitida al registrarse o
+// tras un login con la clave correcta): el codigo no basta por si solo. El
+// email del body se ignora; manda el `sub` de la cookie.
 const verificarCodigo = async (req, res) => {
   try {
-    const email = normalizarEmail(req.body.email)
-    const { codigo } = req.body
+    const usuarioId = obtenerUsuarioPendienteRequest(req)
+    if (!usuarioId) return res.status(400).json({ message: MENSAJE_CODIGO_INVALIDO })
 
+    const { codigo } = req.body
     const usuario = await Usuario.findOne({
-      where: { email },
+      where: { id: usuarioId },
       sinTenant: true,
       include: [{ model: Clinica }],
     })
 
-    if (
-      !usuario ||
-      !usuario.activo ||
-      !usuario.requiereVerificacionCodigo ||
-      usuario.emailVerificado
-    ) {
+    if (!usuario || !usuario.requiereVerificacionCodigo || usuario.emailVerificado) {
       return res.status(400).json({ message: MENSAJE_CODIGO_INVALIDO })
+    }
+
+    // Mismos chequeos de estado que el login.
+    if (estaTemporalmenteBloqueado(usuario)) {
+      return res.status(423).json({
+        message: 'Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.',
+      })
+    }
+    if (!usuario.activo) {
+      return res.status(401).json({
+        message: 'Tu usuario está desactivado. Pide al administrador de la clínica que lo active.',
+      })
+    }
+    if (usuario.clinicaId && usuario.Clinica && !usuario.Clinica.activo) {
+      return res.status(403).json({
+        message: 'La clínica está desactivada. Escríbenos a soporte@bourgelat.co.',
+      })
     }
 
     const { valido, registro } = await validarCodigo(usuario.id, codigo)
@@ -1025,14 +1061,13 @@ const verificarCodigo = async (req, res) => {
     const accessToken = generarAccessToken(payload)
     const refreshToken = generarRefreshToken(payload)
 
-    await sequelize.transaction(async (transaction) => {
-      await registro.update({ usado: true }, { transaction, sinTenant: true })
+    const consumido = await sequelize.transaction(async (transaction) => {
+      if (!(await consumirCodigo(registro.id, { transaction }))) return false
       await usuario.update(
         {
           emailVerificado: true,
           requiereVerificacionCodigo: false,
           intentosFallidos: 0,
-          bloqueadoHasta: null,
           ultimoAcceso: new Date(),
         },
         { transaction }
@@ -1045,17 +1080,24 @@ const verificarCodigo = async (req, res) => {
         userAgent: req.headers['user-agent'],
         transaction,
       })
+      return true
     })
+    if (!consumido) return res.status(400).json({ message: MENSAJE_CODIGO_INVALIDO })
 
+    // El req no trae auth: clinica y usuario explicitos para que la clinica lo
+    // vea en /auditoria. Misma accion que la verificacion por enlace.
     await registrarAuditoria({
-      accion: 'VERIFICACION_EMAIL',
+      accion: 'EMAIL_VERIFICADO',
       entidad: 'Usuario',
       entidadId: usuario.id,
       descripcion: `Correo verificado por codigo para ${usuario.email}`,
       req,
+      clinicaId: usuario.clinicaId || null,
+      usuarioId: usuario.id,
       resultado: 'exitoso',
     })
 
+    clearCookiePendiente(res)
     setAuthCookies(res, { accessToken, refreshToken })
     const suscripcion = await obtenerSuscripcionSesion(usuario.clinicaId)
 
@@ -1070,20 +1112,31 @@ const verificarCodigo = async (req, res) => {
 }
 
 // Respuesta generica siempre: no revela si la cuenta existe ni su estado.
+// Exige la cookie de pendiente y no espera el envio SMTP, para que cuentas
+// pendientes y no pendientes respondan igual de rapido.
 const reenviarCodigo = async (req, res) => {
   const respuesta = { message: 'Si la cuenta está pendiente, te enviamos un código nuevo.' }
   try {
-    const email = normalizarEmail(req.body.email)
-    const usuario = await Usuario.findOne({ where: { email }, sinTenant: true })
+    const usuarioId = obtenerUsuarioPendienteRequest(req)
+    if (!usuarioId) return res.json(respuesta)
+
+    const usuario = await Usuario.findOne({ where: { id: usuarioId }, sinTenant: true })
 
     if (
       usuario &&
       usuario.activo &&
       usuario.requiereVerificacionCodigo &&
       !usuario.emailVerificado &&
-      (await esperaRestante(usuario.id)) === 0
+      !estaTemporalmenteBloqueado(usuario) &&
+      (await esperaRestante(usuario.id)) === 0 &&
+      (await puedeCrearOtroCodigo(usuario.id))
     ) {
-      await enviarCodigoAlUsuario(usuario)
+      enviarCodigoAlUsuario(usuario).catch((error) => {
+        logger.error({
+          contexto: 'verificacion-codigo',
+          mensaje: `reenviarCodigo (envio): ${error.message}`,
+        })
+      })
     }
   } catch (error) {
     logger.error({ contexto: 'verificacion-codigo', mensaje: `reenviarCodigo: ${error.message}` })

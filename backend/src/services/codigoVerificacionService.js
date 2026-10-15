@@ -1,9 +1,12 @@
 const crypto = require('crypto')
-const { Op } = require('sequelize')
+const { Op, literal } = require('sequelize')
 
 const VENCIMIENTO_MINUTOS = 10
 const MAX_INTENTOS = 5
 const ESPERA_REENVIO_SEGUNDOS = 60
+// Tope de códigos creados por cuenta en una ventana de 24 h.
+const MAX_CODIGOS_POR_DIA = 5
+const VENTANA_TOPE_MS = 24 * 60 * 60 * 1000
 
 // ---------- Funciones puras (sin BD) ----------
 
@@ -39,6 +42,10 @@ const segundosParaReenviar = (creadoEn, ahora = Date.now()) => {
   return Math.max(0, Math.ceil(ESPERA_REENVIO_SEGUNDOS - transcurrido))
 }
 
+const topeCodigosAlcanzado = (cantidad) => cantidad >= MAX_CODIGOS_POR_DIA
+
+const inicioVentanaTope = (ahora = Date.now()) => new Date(ahora - VENTANA_TOPE_MS)
+
 // ---------- Funciones con BD (globales: sinTenant) ----------
 // El modelo se carga perezosamente para poder probar las puras sin BD.
 
@@ -70,31 +77,76 @@ const esperaRestante = async (usuarioId) => {
   return segundosParaReenviar(ultimo?.createdAt)
 }
 
-// Valida un código contra el último activo del usuario. Cuenta el intento y,
-// al llegar al máximo, lo invalida. No consume el código si es correcto:
-// eso lo hace quien llama dentro de su transacción.
+// Cuántos códigos se crearon para el usuario en las últimas 24 h. La limpieza
+// diaria conserva las filas al menos 24 h para que este conteo sea fiable.
+const contarCodigosRecientes = async (usuarioId, ahora = Date.now()) =>
+  modelo().count({
+    where: { usuarioId, createdAt: { [Op.gt]: inicioVentanaTope(ahora) } },
+    sinTenant: true,
+  })
+
+const puedeCrearOtroCodigo = async (usuarioId) =>
+  !topeCodigosAlcanzado(await contarCodigosRecientes(usuarioId))
+
+// Valida un código contra el último activo del usuario. El intento se cuenta
+// ANTES de comparar con un UPDATE condicional atómico: solo se compara si esa
+// fila se actualizó, así ráfagas concurrentes no pasan de MAX_INTENTOS. Al
+// llegar al máximo sin acertar, el código queda invalidado. No consume el
+// código si es correcto: eso lo hace quien llama (consumirCodigo).
 const validarCodigo = async (usuarioId, codigo) => {
-  const registro = await modelo().findOne({
+  const CodigoVerificacionEmail = modelo()
+  const registro = await CodigoVerificacionEmail.findOne({
     where: { usuarioId, usado: false, expiracion: { [Op.gt]: new Date() } },
     order: [['createdAt', 'DESC']],
     sinTenant: true,
   })
-  if (!registro || intentosAgotados(registro.intentos)) return { valido: false, registro: null }
+  if (!registro) return { valido: false, registro: null }
 
+  const [filas, actualizados] = await CodigoVerificacionEmail.update(
+    { intentos: literal('"intentos" + 1') },
+    {
+      where: {
+        id: registro.id,
+        usado: false,
+        intentos: { [Op.lt]: MAX_INTENTOS },
+        expiracion: { [Op.gt]: new Date() },
+      },
+      returning: true,
+      sinTenant: true,
+    }
+  )
+  if (filas !== 1) return { valido: false, registro: null }
+
+  const intentos = actualizados?.[0]?.intentos ?? MAX_INTENTOS
   if (compararCodigo(codigo, registro.codigoHash)) return { valido: true, registro }
 
-  const intentos = registro.intentos + 1
-  await registro.update(
-    { intentos, usado: intentosAgotados(intentos) },
-    { sinTenant: true }
-  )
+  if (intentosAgotados(intentos)) {
+    await CodigoVerificacionEmail.update(
+      { usado: true },
+      { where: { id: registro.id }, sinTenant: true }
+    )
+  }
   return { valido: false, registro: null }
+}
+
+// Marca el código como usado solo si nadie lo consumió antes (dos peticiones
+// concurrentes con el código correcto: solo una gana).
+const consumirCodigo = async (registroId, { transaction } = {}) => {
+  const [filas] = await modelo().update(
+    { usado: true },
+    { where: { id: registroId, usado: false }, transaction, sinTenant: true }
+  )
+  return filas === 1
 }
 
 module.exports = {
   VENCIMIENTO_MINUTOS,
   MAX_INTENTOS,
   ESPERA_REENVIO_SEGUNDOS,
+  MAX_CODIGOS_POR_DIA,
+  VENTANA_TOPE_MS,
+  topeCodigosAlcanzado,
+  inicioVentanaTope,
   generarCodigo,
   hashCodigo,
   compararCodigo,
@@ -105,4 +157,7 @@ module.exports = {
   crearCodigo,
   esperaRestante,
   validarCodigo,
+  consumirCodigo,
+  contarCodigosRecientes,
+  puedeCrearOtroCodigo,
 }

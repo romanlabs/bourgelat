@@ -12,6 +12,9 @@ const {
   intentosAgotados,
   segundosParaReenviar,
   MAX_INTENTOS,
+  MAX_CODIGOS_POR_DIA,
+  topeCodigosAlcanzado,
+  inicioVentanaTope,
 } = require('./codigoVerificacionService')
 
 // Formato: siempre 6 dígitos (con ceros a la izquierda)
@@ -51,5 +54,13 @@ assert.strictEqual(segundosParaReenviar(null, ahora), 0)
 assert.strictEqual(segundosParaReenviar(new Date(ahora), ahora), 60)
 assert.strictEqual(segundosParaReenviar(new Date(ahora - 30000), ahora), 30)
 assert.strictEqual(segundosParaReenviar(new Date(ahora - 61000), ahora), 0)
+
+// Tope por cuenta: 5 códigos en 24 h
+assert.strictEqual(MAX_CODIGOS_POR_DIA, 5)
+assert.strictEqual(topeCodigosAlcanzado(0), false)
+assert.strictEqual(topeCodigosAlcanzado(4), false)
+assert.strictEqual(topeCodigosAlcanzado(5), true)
+assert.strictEqual(topeCodigosAlcanzado(9), true)
+assert.strictEqual(ahora - inicioVentanaTope(ahora).getTime(), 24 * 60 * 60 * 1000)
 
 console.log('codigoVerificacionService.test.js OK')

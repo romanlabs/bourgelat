@@ -166,11 +166,12 @@ router.post(
   reenviarVerificacion
 )
 
+// El email es opcional e informativo: la cuenta sale de la cookie de pendiente.
 router.post(
   '/verificar-codigo',
   limitadorAuth,
   [
-    body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    body('email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Email invalido').normalizeEmail(),
     body('codigo').trim().matches(/^\d{6}$/).withMessage('El código debe tener 6 dígitos'),
     validar,
   ],
@@ -182,7 +183,7 @@ router.post(
   limitadorAuth,
   exigirTurnstile,
   [
-    body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    body('email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Email invalido').normalizeEmail(),
     validar,
   ],
   reenviarCodigo

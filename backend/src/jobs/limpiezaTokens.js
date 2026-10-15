@@ -54,12 +54,12 @@ const limpiarTokensVencidos = async () => {
       })
     }
 
+    // Los codigos se conservan 24 h aunque esten usados o vencidos: el tope
+    // de codigos por cuenta (codigoVerificacionService) cuenta estas filas.
+    // Solo vencen a los 10 min, asi que pasado ese plazo ya no sirven.
     const codigosEliminados = await CodigoVerificacionEmail.destroy({
       where: {
-        [Op.or]: [
-          { expiracion: { [Op.lt]: new Date() } },
-          { usado: true },
-        ],
+        createdAt: { [Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
       sinTenant: true,
     })
