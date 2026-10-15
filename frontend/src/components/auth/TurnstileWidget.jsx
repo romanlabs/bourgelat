@@ -65,7 +65,9 @@ export default function TurnstileWidget({ onToken, resetKey = 0, className = '' 
         widgetId.current = turnstile.render(contenedor.current, {
           sitekey: turnstileSiteKey,
           language: 'es',
-          theme: 'auto',
+          // Sigue el tema de la app (clase `dark` en <html>), no el del sistema
+          // operativo: con 'auto' salía oscuro dentro de un formulario claro.
+          theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
           callback: (token) => onTokenRef.current?.(token),
           'expired-callback': () => onTokenRef.current?.(null),
           'error-callback': () => {
