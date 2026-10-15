@@ -41,6 +41,6 @@ describe('TurnstileWidget', () => {
     window.turnstile = { render: render_, reset: vi.fn(), remove: vi.fn() }
     document.head.querySelector('script[src*="turnstile"]').onload()
     await waitFor(() => expect(render_).toHaveBeenCalled())
-    expect(render_.mock.calls[0][1]).toMatchObject({ sitekey: 'clave-prueba', theme: 'auto' })
+    expect(render_.mock.calls[0][1]).toMatchObject({ sitekey: 'clave-prueba', theme: 'light' })
   })
 })
