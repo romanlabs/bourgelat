@@ -136,8 +136,32 @@ const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFront
   return enviarEmail({ para, asunto, html, texto })
 }
 
+const enviarEmailCodigoVerificacion = async ({ para, nombre, codigo, urlFrontend }) => {
+  const asunto = `Tu código de Bourgelat: ${codigo}`
+  const pie = pieLegal(urlFrontend)
+  const nombreSeguro = escaparHtml(nombre)
+  const texto = `Hola ${nombre},
+
+Tu código de verificación es: ${codigo}
+
+Vence en 10 minutos. Si no fuiste tú, ignora este correo.${pie.texto}`
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">Confirma tu correo</h2>
+      <p>Hola ${nombreSeguro},</p>
+      <p>Escribe este código en Bourgelat para terminar de crear tu cuenta:</p>
+      <p style="margin: 24px 0; font-size: 36px; letter-spacing: 8px; font-weight: bold; text-align: center; color: #112739;">${codigo}</p>
+      <p style="font-size: 13px; color: #51697d;">El código vence en 10 minutos.</p>
+      <p style="font-size: 13px; color: #51697d;">Si no fuiste tú, ignora este correo.</p>
+      ${pie.html}
+    </div>
+  `
+  return enviarEmail({ para, asunto, html, texto })
+}
+
 module.exports = {
   enviarEmail,
+  enviarEmailCodigoVerificacion,
   escaparHtml,
   enviarEmailRecuperacionPassword,
   enviarEmailVerificacion,

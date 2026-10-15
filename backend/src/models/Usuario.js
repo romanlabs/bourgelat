@@ -80,6 +80,12 @@ const Usuario = sequelize.define('Usuario', {
     defaultValue: false,
     comment: 'true para cuentas OAuth (el proveedor ya lo garantiza) y usuarios verificados via email',
   },
+  requiereVerificacionCodigo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'true en registros con correo y contrasena hasta verificar el codigo de 6 digitos',
+  },
   intentosFallidos: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

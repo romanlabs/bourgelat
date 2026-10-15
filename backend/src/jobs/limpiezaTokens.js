@@ -2,6 +2,7 @@ const { Op } = require('sequelize')
 const RefreshToken = require('../models/RefreshToken')
 const PasswordResetToken = require('../models/PasswordResetToken')
 const EmailVerificationToken = require('../models/EmailVerificationToken')
+const CodigoVerificacionEmail = require('../models/CodigoVerificacionEmail')
 const AuditoriaLog = require('../models/AuditoriaLog')
 const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
 const logger = require('../utils/logger')
@@ -50,6 +51,23 @@ const limpiarTokensVencidos = async () => {
       logger.info({
         contexto: 'limpieza',
         mensaje: `${verificacionEliminados} tokens de verificacion de email eliminados`,
+      })
+    }
+
+    const codigosEliminados = await CodigoVerificacionEmail.destroy({
+      where: {
+        [Op.or]: [
+          { expiracion: { [Op.lt]: new Date() } },
+          { usado: true },
+        ],
+      },
+      sinTenant: true,
+    })
+
+    if (codigosEliminados > 0) {
+      logger.info({
+        contexto: 'limpieza',
+        mensaje: `${codigosEliminados} codigos de verificacion de email eliminados`,
       })
     }
   } catch (error) {

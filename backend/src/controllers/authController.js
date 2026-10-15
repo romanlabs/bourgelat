@@ -33,7 +33,13 @@ const {
   guardarRefreshToken,
 } = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
-const { enviarEmailRecuperacionPassword, enviarEmailVerificacion } = require('../services/emailService')
+const {
+  enviarEmailRecuperacionPassword,
+  enviarEmailVerificacion,
+  enviarEmailCodigoVerificacion,
+} = require('../services/emailService')
+const { crearCodigo, esperaRestante, validarCodigo } = require('../services/codigoVerificacionService')
+const logger = require('../utils/logger')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
@@ -126,6 +132,25 @@ const obtenerSuscripcionSesion = async (clinicaId) => {
 
 const responderErrorInterno = (res, mensaje = 'Error interno del servidor') =>
   res.status(500).json({ message: mensaje })
+
+const MENSAJE_CODIGO_ENVIADO = 'Te enviamos un código de 6 dígitos a tu correo.'
+
+// Crea un codigo nuevo y lo envia. Nunca lanza: un fallo de correo solo se registra.
+const enviarCodigoAlUsuario = async (usuario) => {
+  try {
+    const codigo = await crearCodigo(usuario.id)
+    await enviarEmailCodigoVerificacion({
+      para: usuario.email,
+      nombre: usuario.nombre || usuario.email.split('@')[0],
+      codigo,
+      urlFrontend: urlFrontend(),
+    })
+    return true
+  } catch (error) {
+    logger.error({ contexto: 'verificacion-codigo', mensaje: `No se pudo enviar el codigo: ${error.message}` })
+    return false
+  }
+}
 
 const registro = async (req, res) => {
   try {
@@ -251,6 +276,7 @@ const registro = async (req, res) => {
           telefono: telefonoNormalizado,
           activo: true,
           emailVerificado: false,
+          requiereVerificacionCodigo: true,
         },
         { transaction }
       )
@@ -268,32 +294,7 @@ const registro = async (req, res) => {
         transaction,
       })
 
-      const payload = {
-        id: usuarioAdmin.id,
-        clinicaId: clinica.id,
-        rol: usuarioAdmin.rol,
-        rolesAdicionales: usuarioAdmin.rolesAdicionales || [],
-      }
-
-      const accessToken = generarAccessToken(payload)
-      const refreshToken = generarRefreshToken(payload)
-
-      await guardarRefreshToken({
-        token: refreshToken,
-        clinicaId: clinica.id,
-        usuarioId: usuarioAdmin.id,
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        transaction,
-      })
-
-      return {
-        clinica,
-        usuarioAdmin,
-        suscripcion,
-        accessToken,
-        refreshToken,
-      }
+      return { clinica, usuarioAdmin, suscripcion }
     })
 
     await registrarAuditoria({
@@ -307,40 +308,13 @@ const registro = async (req, res) => {
 
     delete resultado.clinica.dataValues.password
 
-    try {
-      const tokenVerificacion = crypto.randomBytes(32).toString('base64url')
-      const expiracionVerificacion = new Date(Date.now() + VERIFICATION_TOKEN_HORAS * 60 * 60 * 1000)
-
-      await EmailVerificationToken.create(
-        {
-          tokenHash: hashToken(tokenVerificacion),
-          expiracion: expiracionVerificacion,
-          usuarioId: resultado.usuarioAdmin.id,
-        },
-        { sinTenant: true }
-      )
-
-      await enviarEmailVerificacion({
-        para: resultado.usuarioAdmin.email,
-        nombre: resultado.usuarioAdmin.nombre || resultado.usuarioAdmin.email.split('@')[0],
-        urlVerificacion: `${urlFrontend()}/verificar-email#token=${tokenVerificacion}`,
-        urlFrontend: urlFrontend(),
-      })
-    } catch {
-      // No bloquea el registro si el envio de verificacion falla; el usuario
-      // puede reenviarla desde el banner una vez logueado.
-    }
-
-    setAuthCookies(res, {
-      accessToken: resultado.accessToken,
-      refreshToken: resultado.refreshToken,
-    })
+    // Si el envio falla no se rompe el registro: el usuario puede reenviar el codigo.
+    await enviarCodigoAlUsuario(resultado.usuarioAdmin)
 
     res.status(201).json({
-      message: 'Clinica registrada exitosamente',
-      usuario: serializarUsuario(resultado.usuarioAdmin),
-      clinica: serializarClinica(resultado.clinica),
-      suscripcion: resultado.suscripcion,
+      requiereVerificacion: true,
+      email: resultado.usuarioAdmin.email,
+      message: MENSAJE_CODIGO_ENVIADO,
     })
   } catch (error) {
     responderErrorInterno(res, 'Error en servidor')
@@ -440,6 +414,18 @@ const login = async (req, res) => {
     if (usuario.clinicaId && usuario.Clinica && !usuario.Clinica.activo) {
       return res.status(403).json({
         message: 'La clínica está desactivada. Escríbenos a soporte@bourgelat.co.',
+      })
+    }
+
+    // Cuenta nueva sin verificar: la contrasena es correcta (no cuenta como
+    // intento fallido) pero no se abre sesion hasta confirmar el codigo.
+    if (usuario.requiereVerificacionCodigo && !usuario.emailVerificado) {
+      if (usuario.intentosFallidos > 0) await usuario.update({ intentosFallidos: 0 })
+      if ((await esperaRestante(usuario.id)) === 0) await enviarCodigoAlUsuario(usuario)
+      return res.status(403).json({
+        requiereVerificacion: true,
+        email: usuario.email,
+        message: MENSAJE_CODIGO_ENVIADO,
       })
     }
 
@@ -1003,7 +989,111 @@ const cambiarPassword = async (req, res) => {
   }
 }
 
+const MENSAJE_CODIGO_INVALIDO = 'Código incorrecto o vencido.'
+
+const verificarCodigo = async (req, res) => {
+  try {
+    const email = normalizarEmail(req.body.email)
+    const { codigo } = req.body
+
+    const usuario = await Usuario.findOne({
+      where: { email },
+      sinTenant: true,
+      include: [{ model: Clinica }],
+    })
+
+    if (
+      !usuario ||
+      !usuario.activo ||
+      !usuario.requiereVerificacionCodigo ||
+      usuario.emailVerificado
+    ) {
+      return res.status(400).json({ message: MENSAJE_CODIGO_INVALIDO })
+    }
+
+    const { valido, registro } = await validarCodigo(usuario.id, codigo)
+    if (!valido) {
+      return res.status(400).json({ message: MENSAJE_CODIGO_INVALIDO })
+    }
+
+    const payload = {
+      id: usuario.id,
+      clinicaId: usuario.clinicaId,
+      rol: usuario.rol,
+      rolesAdicionales: usuario.rolesAdicionales || [],
+    }
+    const accessToken = generarAccessToken(payload)
+    const refreshToken = generarRefreshToken(payload)
+
+    await sequelize.transaction(async (transaction) => {
+      await registro.update({ usado: true }, { transaction, sinTenant: true })
+      await usuario.update(
+        {
+          emailVerificado: true,
+          requiereVerificacionCodigo: false,
+          intentosFallidos: 0,
+          bloqueadoHasta: null,
+          ultimoAcceso: new Date(),
+        },
+        { transaction }
+      )
+      await guardarRefreshToken({
+        token: refreshToken,
+        clinicaId: usuario.clinicaId,
+        usuarioId: usuario.id,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        transaction,
+      })
+    })
+
+    await registrarAuditoria({
+      accion: 'VERIFICACION_EMAIL',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Correo verificado por codigo para ${usuario.email}`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    setAuthCookies(res, { accessToken, refreshToken })
+    const suscripcion = await obtenerSuscripcionSesion(usuario.clinicaId)
+
+    return res.json({
+      usuario: serializarUsuario(usuario),
+      clinica: serializarClinica(usuario.Clinica),
+      suscripcion,
+    })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
+// Respuesta generica siempre: no revela si la cuenta existe ni su estado.
+const reenviarCodigo = async (req, res) => {
+  const respuesta = { message: 'Si la cuenta está pendiente, te enviamos un código nuevo.' }
+  try {
+    const email = normalizarEmail(req.body.email)
+    const usuario = await Usuario.findOne({ where: { email }, sinTenant: true })
+
+    if (
+      usuario &&
+      usuario.activo &&
+      usuario.requiereVerificacionCodigo &&
+      !usuario.emailVerificado &&
+      (await esperaRestante(usuario.id)) === 0
+    ) {
+      await enviarCodigoAlUsuario(usuario)
+    }
+  } catch (error) {
+    logger.error({ contexto: 'verificacion-codigo', mensaje: `reenviarCodigo: ${error.message}` })
+  }
+  return res.json(respuesta)
+}
+
 module.exports = {
+  verificarCodigo,
+  reenviarCodigo,
   registro,
   login,
   refresh,
