@@ -64,7 +64,6 @@ export default function LandingPage() {
   const [registroAbierto, setRegistroAbierto] = useState(false)
 
   useEffect(() => {
-    document.title = 'Bourgelat | Software para clínicas veterinarias'
     window.scrollTo(0, 0)
   }, [])
 
