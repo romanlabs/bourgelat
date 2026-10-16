@@ -257,6 +257,7 @@ operación se hace por CLI en el servidor (`backend/`):
 npm run suscripcion:asignar  -- --email admin@clinica.com --plan activo
 npm run suscripcion:cancelar -- --email admin@clinica.com --confirmar  # deja la clínica en solo lectura
 npm run suscripcion:cortesia -- --email admin@clinica.com   # cortesía sin vencimiento
+npm run cuenta:borrar -- --email prueba@clinica.com   # solo cuentas sin datos; sin --confirmar solo muestra
 npm run create:superadmin
 npm run cifrado:rotar
 ```
