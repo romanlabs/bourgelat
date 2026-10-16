@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { debeIntentarRefresh } from './authFlow'
+import { debeIntentarRefresh, esRutaDeCredenciales } from './authFlow'
 
 const error401 = ({ data = {}, url = '/mascotas', _retry = false } = {}) => ({
   response: { status: 401, data },
@@ -26,6 +26,24 @@ describe('debeIntentarRefresh', () => {
 
   it('NO refresca en registro', () => {
     expect(debeIntentarRefresh(error401({ url: '/auth/registro' }))).toBe(false)
+  })
+
+  it('NO refresca en los demás formularios de acceso', () => {
+    for (const url of ['/auth/verificar-codigo', '/auth/reenviar-codigo', '/auth/forgot-password', '/auth/reset-password']) {
+      expect(debeIntentarRefresh(error401({ url }))).toBe(false)
+    }
+  })
+})
+
+describe('esRutaDeCredenciales', () => {
+  it('reconoce los formularios de acceso (su 401 va al formulario, sin recargar)', () => {
+    expect(esRutaDeCredenciales(error401({ url: '/auth/login' }))).toBe(true)
+    expect(esRutaDeCredenciales(error401({ url: '/auth/verificar-codigo' }))).toBe(true)
+  })
+
+  it('no incluye refresh ni las rutas de la app', () => {
+    expect(esRutaDeCredenciales(error401({ url: '/auth/refresh' }))).toBe(false)
+    expect(esRutaDeCredenciales(error401({ url: '/mascotas' }))).toBe(false)
   })
 
   it('NO reintenta si ya se reintentó (_retry)', () => {

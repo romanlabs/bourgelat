@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
-import { debeIntentarRefresh } from '@/lib/authFlow'
+import { debeIntentarRefresh, esRutaDeCredenciales } from '@/lib/authFlow'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
@@ -61,7 +61,7 @@ api.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !esRutaDeCredenciales(error)) {
       useAuthStore.getState().clearAuth()
       if (!omitirRedireccionAuth) {
         window.location.replace('/login')

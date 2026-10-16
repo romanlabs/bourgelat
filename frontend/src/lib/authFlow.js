@@ -2,11 +2,17 @@
 // no tiene sentido intentar refrescar porque el problema no es el access token.
 const CODES_SIN_REFRESH = new Set(['USER_INACTIVE', 'CLINIC_INACTIVE'])
 
-// Rutas donde un 401 NO debe disparar un refresh:
-//  - /auth/refresh: evita un bucle de refresco sobre sí mismo.
-//  - /auth/login y /auth/registro: un 401 ahí es credencial inválida, debe
-//    propagarse al formulario, no provocar logout+redirect.
-const RUTAS_SIN_REFRESH = /\/auth\/(refresh|login|registro)\b/
+// Formularios de acceso: un 401 ahí es credencial inválida (o cuenta inactiva) y
+// debe llegar al formulario como error, sin refresh, logout ni recarga a /login.
+// Antes la recarga borraba el formulario y el aviso «Credenciales incorrectas».
+const RUTAS_DE_CREDENCIALES =
+  /\/auth\/(login|registro|verificar-codigo|reenviar-codigo|forgot-password|reset-password)\b/
+
+export const esRutaDeCredenciales = (error) =>
+  RUTAS_DE_CREDENCIALES.test(error?.config?.url || '')
+
+// /auth/refresh tampoco refresca: evita un bucle de refresco sobre sí mismo.
+const RUTAS_SIN_REFRESH = /\/auth\/refresh\b/
 
 /**
  * Decide si un error 401 debe intentar un refresh silencioso del token.
@@ -26,7 +32,7 @@ export function debeIntentarRefresh(error) {
   const config = error.config || {}
   if (config._retry) return false
 
-  if (RUTAS_SIN_REFRESH.test(config.url || '')) return false
+  if (RUTAS_SIN_REFRESH.test(config.url || '') || esRutaDeCredenciales(error)) return false
 
   const code = error.response?.data?.code
   if (code && CODES_SIN_REFRESH.has(code)) return false

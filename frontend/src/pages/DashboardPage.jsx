@@ -426,10 +426,12 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
   )
 }
 
+// Dentro de AdminShell como el resto de la app: sin él, los roles no admin
+// entraban a una página sin menú, sin buscador y sin forma de cerrar sesión.
 function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <AdminShell currentKey="dashboard" title="Panel de control">
+      <div className="mx-auto max-w-5xl">
         <section className="border border-border bg-card shadow-sm">
           <div className="border-b border-border px-6 py-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -469,7 +471,7 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
           </div>
         </section>
       </div>
-    </div>
+    </AdminShell>
   )
 }
 
