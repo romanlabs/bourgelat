@@ -23,7 +23,9 @@ export const MODULE_ACCESS = {
   usuarios: ['admin', 'superadmin'],
   configuracion: ['admin', 'superadmin'],
   auditoria: ['admin', 'superadmin'],
-  soporte: ['admin'],
+  // Igual que rolesClinica en backend/src/routes/soporteRoutes.js: todo el equipo
+  // abre tickets (cada quien ve los suyos; el admin, los de toda la clínica).
+  soporte: ['admin', 'superadmin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador'],
 }
 
 export const canAccessModule = (usuario, moduleKey) => {
