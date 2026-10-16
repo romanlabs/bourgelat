@@ -24,7 +24,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useSoloLectura } from '@/lib/useSoloLectura'
 import Paginacion from '@/components/shared/Paginacion'
 import SearchInput from '@/components/shared/SearchInput'
@@ -80,7 +80,7 @@ export default function PacientesPage() {
     if (TABS.some((tab) => tab.id === tabParam)) setActiveTab(tabParam)
   }, [tabParam])
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  const rolPermitido = canAccessModule(usuario, 'pacientes')
   // Todos los planes incluyen pacientes, propietarios e historias.
   const puedeVerModulo = true
   // Mismos roles que aceptan el POST y el PUT del backend en cada entidad.
