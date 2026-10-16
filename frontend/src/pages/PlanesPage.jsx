@@ -515,7 +515,6 @@ export default function PlanesPage() {
   const reduce = useReducedMotion()
 
   useEffect(() => {
-    document.title = 'Planes | Bourgelat'
     window.scrollTo(0, 0)
   }, [])
 

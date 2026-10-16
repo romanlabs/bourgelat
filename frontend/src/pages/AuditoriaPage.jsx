@@ -19,7 +19,7 @@ import {
 import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { useAuthStore } from '@/store/authStore'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 
 const RESULT_OPTIONS = [
   { value: 'todos', label: 'Todos los resultados' },
@@ -91,7 +91,7 @@ export default function AuditoriaPage() {
   const [desde, setDesde] = useState(rangoMes.fechaInicio)
   const [hasta, setHasta] = useState(rangoMes.fechaFin)
 
-  const rolPermitido = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const rolPermitido = canAccessModule(usuario, 'auditoria')
 
   useEffect(() => {
     document.title = 'Auditoría | Bourgelat'

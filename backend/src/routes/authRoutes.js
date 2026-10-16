@@ -13,6 +13,8 @@ const {
   verificarEmail,
   reenviarVerificacion,
   cambiarPassword,
+  verificarCodigo,
+  reenviarCodigo,
 } = require('../controllers/authController')
 const {
   iniciar: oauthIniciar,
@@ -22,6 +24,7 @@ const {
 const { verificarToken } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth, limitadorSesion } = require('../middlewares/rateLimitMiddleware')
+const { exigirTurnstile } = require('../middlewares/turnstileMiddleware')
 const { permitirOpenerEnPopupOauth } = require('../middlewares/oauthPopupMiddleware')
 const { normalizarTelefonoColombiano } = require('../utils/normalizar')
 
@@ -45,6 +48,7 @@ const validarAceptacionesLegales = [
 router.post(
   '/registro',
   limitadorAuth,
+  exigirTurnstile,
   [
     body('nombre').trim().notEmpty().withMessage('El nombre de la clinica es obligatorio'),
     body('nombreAdministrador')
@@ -100,6 +104,7 @@ router.post(
 router.post(
   '/login',
   limitadorAuth,
+  exigirTurnstile,
   [
     body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
     body('password').notEmpty().withMessage('Password requerida'),
@@ -118,6 +123,7 @@ router.get('/me', verificarToken, me)
 router.post(
   '/forgot-password',
   limitadorAuth,
+  exigirTurnstile,
   [
     body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
     validar,
@@ -158,6 +164,29 @@ router.post(
     validar,
   ],
   reenviarVerificacion
+)
+
+// El email es opcional e informativo: la cuenta sale de la cookie de pendiente.
+router.post(
+  '/verificar-codigo',
+  limitadorAuth,
+  [
+    body('email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    body('codigo').trim().matches(/^\d{6}$/).withMessage('El código debe tener 6 dígitos'),
+    validar,
+  ],
+  verificarCodigo
+)
+
+router.post(
+  '/reenviar-codigo',
+  limitadorAuth,
+  exigirTurnstile,
+  [
+    body('email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Email invalido').normalizeEmail(),
+    validar,
+  ],
+  reenviarCodigo
 )
 
 router.post(

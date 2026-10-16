@@ -6,7 +6,10 @@ import { z } from 'zod'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
-import { useLogin, useCompletarRegistroOauth } from '@/features/auth/useAuth'
+import { useLogin, useCompletarRegistroOauth, pideVerificacion, useSesionVerificada } from '@/features/auth/useAuth'
+import TurnstileWidget from '@/components/auth/TurnstileWidget'
+import { turnstileHabilitado } from '@/lib/turnstile'
+import CodigoVerificacionPaso from '@/features/auth/CodigoVerificacionPaso'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
@@ -24,6 +27,10 @@ const inputClass =
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { mutate: login, isPending } = useLogin()
+  const sesionVerificada = useSesionVerificada('login')
+  const [emailPendiente, setEmailPendiente] = useState(null)
+  const [turnstileToken, setTurnstileToken] = useState(null)
+  const [reinicio, setReinicio] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -80,7 +87,16 @@ export default function LoginPage() {
   const passwordField = register('password')
 
   const onSubmit = (data) => {
-    login({ email: normalizarEmail(data.email), password: data.password })
+    const email = normalizarEmail(data.email)
+    login(
+      { email, password: data.password, turnstileToken },
+      {
+        onError: (error) => {
+          if (pideVerificacion(error)) setEmailPendiente(error.response.data.email || email)
+          setReinicio((n) => n + 1)
+        },
+      }
+    )
   }
 
   return (
@@ -111,7 +127,24 @@ export default function LoginPage() {
           </p>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" autoComplete="off">
+        {emailPendiente ? (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+            <CodigoVerificacionPaso
+              email={emailPendiente}
+              onVerificado={sesionVerificada}
+              onVolver={() => {
+                setEmailPendiente(null)
+                setReinicio((n) => n + 1)
+              }}
+            />
+          </div>
+        ) : null}
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={`mt-6 space-y-4 ${emailPendiente ? 'hidden' : ''}`}
+          autoComplete="off"
+        >
           <input type="text" name="login-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
           <input type="password" name="login-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
 
@@ -159,16 +192,18 @@ export default function LoginPage() {
             {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
           </div>
 
+          <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
+
           <Button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || (turnstileHabilitado && !turnstileToken)}
             className="h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {isPending ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>
 
-        {oauthHabilitado ? (
+        {oauthHabilitado && !emailPendiente ? (
           <div className="mt-5">
             <div className="mb-4 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
@@ -179,7 +214,7 @@ export default function LoginPage() {
           </div>
         ) : null}
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className={`mt-6 text-center text-sm text-muted-foreground ${emailPendiente ? 'hidden' : ''}`}>
           ¿Primera vez en Bourgelat?{' '}
           <button
             type="button"

@@ -13,7 +13,7 @@
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "analyze": "vite build"
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",

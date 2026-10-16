@@ -1,12 +1,12 @@
 import api from '@/lib/api'
 
 export const authApi = {
-  login: async ({ email, password }) => {
-    const { data } = await api.post('/auth/login', { email, password })
+  login: async ({ email, password, turnstileToken }) => {
+    const { data } = await api.post('/auth/login', { email, password, turnstileToken })
     return data
   },
 
-  registro: async ({ nombre, nombreAdministrador, email, password, aceptaTerminos, aceptaComunicaciones }) => {
+  registro: async ({ nombre, nombreAdministrador, email, password, aceptaTerminos, aceptaComunicaciones, turnstileToken }) => {
     const { data } = await api.post('/auth/registro', {
       nombre,
       nombreAdministrador,
@@ -14,7 +14,18 @@ export const authApi = {
       password,
       aceptaTerminos,
       aceptaComunicaciones,
+      turnstileToken,
     })
+    return data
+  },
+
+  verificarCodigo: async ({ email, codigo }) => {
+    const { data } = await api.post('/auth/verificar-codigo', { email, codigo })
+    return data
+  },
+
+  reenviarCodigo: async ({ email, turnstileToken }) => {
+    const { data } = await api.post('/auth/reenviar-codigo', { email, turnstileToken })
     return data
   },
 
@@ -45,8 +56,8 @@ export const authApi = {
     return data
   },
 
-  forgotPassword: async ({ email }) => {
-    const { data } = await api.post('/auth/forgot-password', { email })
+  forgotPassword: async ({ email, turnstileToken }) => {
+    const { data } = await api.post('/auth/forgot-password', { email, turnstileToken })
     return data
   },
 
