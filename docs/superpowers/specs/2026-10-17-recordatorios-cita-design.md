@@ -65,6 +65,8 @@ marca: las que caigan en ventana al desplegar reciben su aviso (solo las de las 
 
 ### `services/recordatorioCitaReglas.js` (lógica pura, con test)
 
+(Plan: el HTML se arma en `emailService.armarEmailRecordatorioCita`, como los demás correos; las reglas devuelven los datos en texto plano.)
+
 - `minutosValidos(n)` → entero entre 15 y 2880.
 - `debeAvisar({ inicio, ahora, minutos })` → `inicio - minutos ≤ ahora < inicio`.
 - `inicioCita({ fecha, horaInicio })` → `Date` en hora de Colombia.
