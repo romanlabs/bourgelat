@@ -660,8 +660,9 @@ const reprogramarCita = async (req, res) => {
       // Vuelve a 'programada': la llegada registrada (si estaba en espera) era
       // de la visita anterior. Sin limpiarla, la sala de espera la ordena por
       // esa hora y al volver a marcar la llegada se conserva la vieja.
+      // El aviso al profesional se reprograma para la nueva hora.
       await cita.update(
-        { fecha, horaInicio, horaFin, estado: 'programada', horaLlegada: null },
+        { fecha, horaInicio, horaFin, estado: 'programada', horaLlegada: null, recordatorioProfesionalEnviadoEn: null },
         { transaction }
       );
       return null;
