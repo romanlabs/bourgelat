@@ -38,6 +38,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { configuracionApi } from '@/features/configuracion/configuracionApi'
+import RecordatoriosCitaSection from '@/features/configuracion/RecordatoriosCitaSection'
 import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
@@ -416,6 +417,7 @@ function ConfiguracionContent({
     { id: 'ficha', label: 'Ficha editable', helper: 'Identidad, contacto y fiscal' },
     { id: 'consultorios', label: 'Consultorios', helper: 'Salas usadas por recepción y agenda' },
     { id: 'horarios', label: 'Horarios y cierres', helper: 'Horario de atención y días bloqueados' },
+    { id: 'recordatorios', label: 'Recordatorios', helper: 'Aviso por correo antes de cada cita' },
     ...(puedeVerFacturacionElectronica
       ? [{ id: 'facturacion', label: 'Facturación electrónica', helper: 'Estado e integración' }]
       : []),
@@ -981,6 +983,8 @@ function ConfiguracionContent({
       {activeSection === 'horarios' ? (
         <HorariosSection horarioAtencion={initialClinica?.horarioAtencion} />
       ) : null}
+
+      {activeSection === 'recordatorios' ? <RecordatoriosCitaSection clinica={initialClinica} /> : null}
 
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (

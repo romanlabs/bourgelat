@@ -30,6 +30,11 @@ export const configuracionApi = {
     return data
   },
 
+  async actualizarRecordatoriosCita({ activo, minutos }) {
+    const { data } = await api.put('/clinica/recordatorios-cita', { activo, minutos })
+    return data
+  },
+
   async obtenerBloqueos({ desde, hasta } = {}) {
     const { data } = await api.get('/bloqueos-agenda', { params: cleanParams({ desde, hasta }) })
     return data
