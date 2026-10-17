@@ -10,7 +10,7 @@ const Propietario = require('../models/Propietario')
 const Usuario = require('../models/Usuario')
 const Consultorio = require('../models/Consultorio')
 const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
-const { enviarEmailRecordatorioCita } = require('../services/emailService')
+const { enviarEmailRecordatorioCita, smtpConfigurado } = require('../services/emailService')
 const { hoyISO, sumarDiasISO } = require('../utils/vencimiento')
 const {
   TOPE_DIARIO, inicioCita, inicioDelDia, debeAvisar, datosCorreo,
@@ -22,6 +22,7 @@ const ESTADOS_QUE_AVISAN = ['prueba', 'activa']
 
 let corriendo = false
 let diaTopeAvisado = null
+let diaSmtpAvisado = null
 
 const contarEnviadosHoy = (hoy) =>
   Cita.count({
@@ -48,9 +49,18 @@ const soltarCita = (citaId) =>
 
 const enviarRecordatoriosCita = async ({ ahora = new Date() } = {}) => {
   if (corriendo) return { enviados: 0, fallidos: 0 }
-  corriendo = true
   let enviados = 0
   let fallidos = 0
+  const enProduccion = process.env.NODE_ENV === 'production'
+  if (enProduccion && !smtpConfigurado()) {
+    const dia = hoyISO(ahora)
+    if (diaSmtpAvisado !== dia) {
+      diaSmtpAvisado = dia
+      logger.warn({ contexto: 'recordatorio-cita', mensaje: 'SMTP no configurado: no se envían recordatorios de cita' })
+    }
+    return { enviados, fallidos }
+  }
+  corriendo = true
   try {
     const hoy = hoyISO(ahora)
     const candidatas = await Cita.findAll({
@@ -67,6 +77,7 @@ const enviarRecordatoriosCita = async ({ ahora = new Date() } = {}) => {
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
         { model: Consultorio, as: 'consultorio', attributes: ['id', 'nombre'], required: false },
       ],
+      order: [['fecha', 'ASC'], ['horaInicio', 'ASC']],
       sinTenant: true,
     })
 
@@ -97,15 +108,24 @@ const enviarRecordatoriosCita = async ({ ahora = new Date() } = {}) => {
       }
 
       if (!suscripciones.has(cita.clinicaId)) {
-        const { suscripcion } = await obtenerSuscripcionActivaClinica(cita.clinicaId)
-        suscripciones.set(cita.clinicaId, ESTADOS_QUE_AVISAN.includes(suscripcion?.estado))
+        try {
+          const { suscripcion } = await obtenerSuscripcionActivaClinica(cita.clinicaId)
+          suscripciones.set(cita.clinicaId, ESTADOS_QUE_AVISAN.includes(suscripcion?.estado))
+        } catch (error) {
+          suscripciones.set(cita.clinicaId, false)
+          logger.error({
+            contexto: 'recordatorio-cita',
+            mensaje: `No se pudo consultar la suscripción: ${error.message}`,
+            clinicaId: cita.clinicaId,
+          })
+        }
       }
       if (!suscripciones.get(cita.clinicaId)) continue
 
       if (!(await tomarCita(cita.id))) continue
 
       try {
-        await enviarEmailRecordatorioCita({
+        const resultado = await enviarEmailRecordatorioCita({
           para: cita.veterinario.email,
           nombreProfesional: cita.veterinario.nombre,
           datos: datosCorreo({
@@ -113,14 +133,26 @@ const enviarRecordatoriosCita = async ({ ahora = new Date() } = {}) => {
             consultorio: cita.consultorio, urlFrontend,
           }),
         })
+        if (enProduccion && resultado?.enviado === false) {
+          throw Object.assign(new Error('Correo no enviado'), { code: 'NO_ENVIADO' })
+        }
         enviados += 1
         restantes -= 1
       } catch (error) {
         fallidos += 1
-        await soltarCita(cita.id)
+        try {
+          await soltarCita(cita.id)
+        } catch (errorSoltar) {
+          logger.error({
+            contexto: 'recordatorio-cita',
+            mensaje: 'No se pudo liberar la marca del aviso tras el fallo de envío',
+            citaId: cita.id,
+            clinicaId: cita.clinicaId,
+          })
+        }
         logger.error({
           contexto: 'recordatorio-cita',
-          mensaje: `No se pudo enviar el aviso: ${error.message}`,
+          mensaje: `No se pudo enviar el aviso: ${error.code || error.responseCode || 'desconocido'}`,
           citaId: cita.id,
           clinicaId: cita.clinicaId,
         })

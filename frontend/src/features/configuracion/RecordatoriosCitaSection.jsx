@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { configuracionApi } from './configuracionApi'
-import { aMinutos, desdeMinutos, esquemaRecordatorioCita } from './recordatorioCita'
+import { aMinutos, desdeMinutos, esquemaRecordatorioCita, MINUTOS_POR_DEFECTO } from './recordatorioCita'
 import { invalidarDominios } from '@/lib/queryKeys'
 
 const INPUT_CLASS =
@@ -51,7 +51,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
     guardar.mutate({
       activo: valores.activo,
       // Apagado se conserva la anticipación guardada.
-      minutos: valores.activo ? aMinutos(valores) : clinica?.recordatorioCitaMinutos ?? 60,
+      minutos: valores.activo ? aMinutos(valores) : clinica?.recordatorioCitaMinutos ?? MINUTOS_POR_DEFECTO,
     })
 
   return (
@@ -74,7 +74,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
             <input
               type="number"
               step="any"
-              min="0"
+              min="1"
               disabled={!activo}
               className={INPUT_CLASS}
               aria-label="Cantidad"
@@ -85,6 +85,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
               onValueChange={(valor) => setValue('unidad', valor, { shouldDirty: true, shouldValidate: true })}
               options={[{ value: 'minutos', label: 'minutos' }, { value: 'horas', label: 'horas' }]}
               disabled={!activo}
+              aria-label="Unidad de tiempo"
             />
             <span className="text-sm text-muted-foreground">antes de la cita</span>
           </div>
