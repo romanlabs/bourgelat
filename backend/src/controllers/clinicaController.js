@@ -41,6 +41,8 @@ const serializarClinica = (clinica) => {
     activo: clinica.activo,
     ultimoAcceso: clinica.ultimoAcceso,
     horarioAtencion: clinica.horarioAtencion || null,
+    recordatorioCitaActivo: clinica.recordatorioCitaActivo,
+    recordatorioCitaMinutos: clinica.recordatorioCitaMinutos,
   }
 }
 
@@ -349,10 +351,51 @@ const subirLogoClinica = async (req, res) => {
   }
 }
 
+const actualizarRecordatoriosCita = async (req, res) => {
+  try {
+    const { clinicaId } = req.usuario
+    const clinica = await Clinica.findByPk(clinicaId)
+    if (!clinica) {
+      return res.status(404).json({ message: 'Clinica no encontrada' })
+    }
+
+    const datosAnteriores = {
+      recordatorioCitaActivo: clinica.recordatorioCitaActivo,
+      recordatorioCitaMinutos: clinica.recordatorioCitaMinutos,
+    }
+    const datosNuevos = {
+      recordatorioCitaActivo: req.body.activo,
+      recordatorioCitaMinutos: req.body.minutos,
+    }
+
+    await clinica.update(datosNuevos)
+
+    await registrarAuditoria({
+      accion: 'ACTUALIZAR_RECORDATORIOS_CITA',
+      entidad: 'Clinica',
+      entidadId: clinica.id,
+      descripcion: 'Recordatorios de citas actualizados desde configuracion',
+      datosAnteriores,
+      datosNuevos,
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({
+      message: 'Recordatorios de citas actualizados',
+      recordatorioCitaActivo: clinica.recordatorioCitaActivo,
+      recordatorioCitaMinutos: clinica.recordatorioCitaMinutos,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message })
+  }
+}
+
 module.exports = {
   obtenerClinicaActual,
   actualizarClinicaActual,
   actualizarHorarioAtencion,
+  actualizarRecordatoriosCita,
   subirLogoClinica,
   serializarClinica,
   calcularPerfilFiscal,

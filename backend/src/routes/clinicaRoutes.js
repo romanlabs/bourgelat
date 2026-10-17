@@ -5,12 +5,14 @@ const {
   obtenerClinicaActual,
   actualizarClinicaActual,
   actualizarHorarioAtencion,
+  actualizarRecordatoriosCita,
   subirLogoClinica,
 } = require('../controllers/clinicaController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadClinicaLogoSingle } = require('../middlewares/uploadClinicaLogoMiddleware')
+const { MINUTOS_MIN, MINUTOS_MAX } = require('../services/recordatorioCitaReglas')
 const { esUrlDeUploadPropio, CLINICAS_SUBDIR } = require('../config/uploads')
 
 const esUrlDeLogoPropia = (valor) => esUrlDeUploadPropio(valor, CLINICAS_SUBDIR)
@@ -101,6 +103,22 @@ router.put(
     validar,
   ],
   actualizarHorarioAtencion
+)
+
+router.put(
+  '/recordatorios-cita',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  [
+    body('activo').isBoolean({ strict: true }).withMessage('Indica si los recordatorios están activos'),
+    body('minutos')
+      .isInt({ min: MINUTOS_MIN, max: MINUTOS_MAX })
+      .withMessage('Elige entre 15 minutos y 48 horas')
+      .toInt(),
+    validar,
+  ],
+  actualizarRecordatoriosCita
 )
 
 module.exports = router
