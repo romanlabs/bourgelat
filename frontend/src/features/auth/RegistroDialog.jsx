@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff } from 'lucide-react'
 import {
   DialogRoot,
   DialogContent,
@@ -54,6 +55,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
   const [emailPendiente, setEmailPendiente] = useState(null)
   const [turnstileToken, setTurnstileToken] = useState(null)
   const [reinicio, setReinicio] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -188,13 +190,23 @@ export default function RegistroDialog({ open, onOpenChange }) {
 
           <div>
             <label className={labelClass}>Contraseña</label>
-            <input
-              {...passwordField}
-              type="password"
-              autoComplete="new-password"
-              placeholder="Crea una contraseña segura"
-              className={`${inputClass} ${errors.password ? 'border-danger' : ''}`}
-            />
+            <div className="relative">
+              <input
+                {...passwordField}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="Crea una contraseña segura"
+                className={`${inputClass} pr-10 ${errors.password ? 'border-danger' : ''}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
           </div>
 
