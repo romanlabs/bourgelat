@@ -1,13 +1,12 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { origenesDestinoOauth } from '@/lib/oauthPopup'
 
 export default function OAuthPopupCallbackPage() {
   const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const estado = searchParams.get('estado')
-    const origen = window.location.origin
-
     if (!window.opener) {
       // No se abrió como popup (ej. el navegador bloqueó window.open y se usó
       // el fallback de redirect completo): navegar directo en esta misma pestaña.
@@ -19,11 +18,15 @@ export default function OAuthPopupCallbackPage() {
       return
     }
 
-    if (estado === 'nuevo') {
-      const token = new URLSearchParams(window.location.hash.replace('#', '?')).get('token')
-      window.opener.postMessage({ tipo: 'oauth-nuevo', token }, origen)
-    } else {
-      window.opener.postMessage({ tipo: 'oauth-exito' }, origen)
+    const mensaje =
+      estado === 'nuevo'
+        ? {
+            tipo: 'oauth-nuevo',
+            token: new URLSearchParams(window.location.hash.replace('#', '?')).get('token'),
+          }
+        : { tipo: 'oauth-exito' }
+    for (const origen of origenesDestinoOauth()) {
+      window.opener.postMessage(mensaje, origen)
     }
     window.close()
   }, [searchParams])
