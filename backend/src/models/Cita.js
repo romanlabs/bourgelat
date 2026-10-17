@@ -82,6 +82,11 @@ const Cita = sequelize.define('Cita', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  // Aviso por correo al profesional asignado (job recordatoriosCita).
+  recordatorioProfesionalEnviadoEn: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   mascotaId: {
     type: DataTypes.UUID,
     allowNull: false,

@@ -117,6 +117,17 @@ const Clinica = sequelize.define('Clinica', {
     allowNull: true,
     comment: 'Horario semanal { "0".."6": [{ inicio: "HH:MM", fin: "HH:MM" }] }; null = sin restriccion',
   },
+  recordatorioCitaActivo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
+  recordatorioCitaMinutos: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 60,
+    validate: { min: 15, max: 2880 },
+  },
 }, {
   tableName: 'clinicas',
   timestamps: true,
