@@ -9,6 +9,7 @@ import Logo from '@/components/shared/Logo'
 import { useLogin, useCompletarRegistroOauth, pideVerificacion, useSesionVerificada } from '@/features/auth/useAuth'
 import TurnstileWidget from '@/components/auth/TurnstileWidget'
 import { turnstileHabilitado } from '@/lib/turnstile'
+import { esOrigenOauthValido } from '@/lib/oauthPopup'
 import CodigoVerificacionPaso from '@/features/auth/CodigoVerificacionPaso'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
@@ -43,14 +44,16 @@ export default function LoginPage() {
 
   useEffect(() => {
     const handler = (event) => {
-      if (event.origin !== window.location.origin) return
+      if (!esOrigenOauthValido(event.origin)) return
       if (event.data?.tipo === 'oauth-exito') {
         // Hard redirect (no navigate()): la sesión OAuth solo dejó cookies
         // httpOnly, y el authStore (Zustand) sigue vacío en esta pestaña. Un
         // navigate() de react-router no remonta App ni vuelve a correr el
         // AuthBootstrap de App.jsx que llama a authApi.me(). Necesitamos una
         // carga completa para poblar el store, igual que useLogout/useLogin.
-        window.location.assign('/dashboard')
+        // Va al origen del popup (app.bourgelat.co aunque el login esté en
+        // bourgelat.co), que es donde vive la app.
+        window.location.assign(`${event.origin}/dashboard`)
       } else if (event.data?.tipo === 'oauth-nuevo' && event.data.token) {
         setTokenOnboardingOauth(event.data.token)
       }

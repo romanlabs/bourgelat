@@ -78,12 +78,14 @@ const router = createBrowserRouter([
     element: <ScrollManager />,
     errorElement: <RouteErrorPage />,
     children: [
+      // Fuera de PublicOnlyRoute: el popup de OAuth llega aquí ya con sesión
+      // iniciada, y la redirección a /dashboard le ganaba al aviso y al cierre.
+      { path: '/oauth/popup-callback', element: <Suspense fallback={<Loader />}><OAuthPopupCallbackPage /></Suspense> },
       {
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
           { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
-          { path: '/oauth/popup-callback', element: <Suspense fallback={<Loader />}><OAuthPopupCallbackPage /></Suspense> },
           { path: '/recuperar-password', element: <Suspense fallback={<Loader />}><RecuperarPasswordPage /></Suspense> },
           { path: '/restablecer-password', element: <Suspense fallback={<Loader />}><RestablecerPasswordPage /></Suspense> },
         ],
