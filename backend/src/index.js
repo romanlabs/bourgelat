@@ -18,6 +18,7 @@ const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
 const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
+const { enviarRecordatoriosCita, INTERVALO_MS: INTERVALO_RECORDATORIOS_CITA } = require('./jobs/recordatoriosCita')
 const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR, EXAMENES_SUBDIR } = require('./config/uploads')
 const { rutaSinQuery } = require('./utils/rutaLog')
 const logger = require('./utils/logger')
@@ -268,6 +269,10 @@ sequelize.authenticate()
     setInterval(limpiarTokensVencidos, 24 * 60 * 60 * 1000)
     setInterval(limpiarLogsAntiguos, 24 * 60 * 60 * 1000)
     setInterval(limpiarIdempotencia, 24 * 60 * 60 * 1000)
+
+    // ── Recordatorio de citas al profesional ────────────
+    enviarRecordatoriosCita()
+    setInterval(enviarRecordatoriosCita, INTERVALO_RECORDATORIOS_CITA)
   })
   .catch((error) => {
     logger.error('Error conectando a la base de datos:', error)

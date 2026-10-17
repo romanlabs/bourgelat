@@ -159,9 +159,55 @@ Vence en 10 minutos. Si no fuiste tú, ignora este correo.${pie.texto}`
   return enviarEmail({ para, asunto, html, texto })
 }
 
+// Aviso al profesional asignado antes de su cita (job recordatoriosCita).
+// Solo datos de agenda: nada de la historia clínica.
+const armarEmailRecordatorioCita = ({ nombreProfesional, datos }) => {
+  const e = escaparHtml
+  const filas = [
+    ['Hora', datos.hora],
+    ['Paciente', `${datos.paciente}${datos.especie ? ` (${datos.especie})` : ''}`],
+    ['Tutor', datos.tutor],
+    ['Celular', datos.celularTutor],
+    ['Motivo', datos.motivo],
+    ['Tipo', datos.tipo],
+    ['Consultorio', datos.consultorio],
+  ].filter(([, valor]) => valor)
+
+  const texto = `Hola ${nombreProfesional},
+
+Tienes una cita:
+${filas.map(([etiqueta, valor]) => `${etiqueta}: ${valor}`).join('\n')}
+
+Ver en la agenda: ${datos.urlAgenda}`
+
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">Tienes una cita a las ${e(datos.hora)}</h2>
+      <p>Hola ${e(nombreProfesional)},</p>
+      <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+        ${filas.map(([etiqueta, valor]) => `
+        <tr>
+          <td style="padding: 6px 12px 6px 0; font-size: 13px; color: #51697d; white-space: nowrap;">${etiqueta}</td>
+          <td style="padding: 6px 0; font-size: 15px;">${e(valor)}</td>
+        </tr>`).join('')}
+      </table>
+      <p style="margin: 24px 0;">
+        <a href="${e(datos.urlAgenda)}" style="background: #112739; color: #ffffff; padding: 12px 20px; text-decoration: none; display: inline-block;">Ver en la agenda</a>
+      </p>
+      <p style="font-size: 12px; color: #51697d;">Recibes este aviso porque tu clínica tiene activos los recordatorios de citas en Configuración.</p>
+    </div>
+  `
+  return { asunto: datos.asunto, html, texto }
+}
+
+const enviarEmailRecordatorioCita = ({ para, nombreProfesional, datos }) =>
+  enviarEmail({ para, ...armarEmailRecordatorioCita({ nombreProfesional, datos }) })
+
 module.exports = {
   enviarEmail,
   enviarEmailCodigoVerificacion,
+  armarEmailRecordatorioCita,
+  enviarEmailRecordatorioCita,
   escaparHtml,
   enviarEmailRecuperacionPassword,
   enviarEmailVerificacion,
