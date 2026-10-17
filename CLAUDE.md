@@ -62,7 +62,7 @@ bourgelat/
 │       ├── services/        # factus, suscripcion, email, oauth, almacenamiento...
 │       ├── scripts/         # Operación por CLI: superadmin, suscripciones, secretos
 │       ├── utils/           # tenant.js, paginacion, busqueda, turnoCaja...
-│       └── jobs/            # Limpieza de tokens y logs; recordatorio de citas (cada 5 min, tope 150/día)
+│       └── jobs/            # Limpieza de tokens y logs; recordatorio de citas (cada minuto, tope 150/día)
 │
 ├── frontend/
 │   └── src/
