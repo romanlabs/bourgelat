@@ -98,7 +98,7 @@ router.put(
   [
     param('id').isUUID().withMessage('Mascota no valida'),
     body('nombre').optional().notEmpty().withMessage('El nombre no puede estar vacio').trim(),
-    body('peso').optional().isFloat({ min: 0 }).withMessage('El peso debe ser un numero positivo'),
+    body('peso').optional({ values: 'null' }).isFloat({ min: 0 }).withMessage('El peso debe ser un numero positivo'),
     body('sexo')
       .optional()
       .isIn(['macho', 'hembra', 'desconocido'])

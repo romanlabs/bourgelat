@@ -81,7 +81,7 @@ export default function CookiesPage() {
     >
       <LegalHeader version={version} vigencia={vigencia} />
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <LegalSection numero={1} titulo="Resumen">
           <p className={legalP}>
             Bourgelat solo usa cookies y almacenamiento local <strong className="text-tinta-800">estrictamente
