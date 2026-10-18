@@ -19,7 +19,7 @@ import {
 import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { canAccessModule } from '@/lib/permissions'
 
 const RESULT_OPTIONS = [
   { value: 'todos', label: 'Todos los resultados' },

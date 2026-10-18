@@ -76,9 +76,12 @@ export default function PacientesPage() {
     TABS.some((tab) => tab.id === tabParam) ? tabParam : 'resumen'
   )
 
-  useEffect(() => {
+  // La pestaña sigue al ?tab= cuando cambia (ajuste en render, no en efecto).
+  const [tabParamPrevio, setTabParamPrevio] = useState(tabParam)
+  if (tabParam !== tabParamPrevio) {
+    setTabParamPrevio(tabParam)
     if (TABS.some((tab) => tab.id === tabParam)) setActiveTab(tabParam)
-  }, [tabParam])
+  }
 
   const rolPermitido = canAccessModule(usuario, 'pacientes')
   // Todos los planes incluyen pacientes, propietarios e historias.

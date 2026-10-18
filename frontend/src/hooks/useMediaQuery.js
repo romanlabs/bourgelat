@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 /** Suscripción reactiva a un media query CSS, ej: useMediaQuery('(max-width: 640px)') */
 export function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
+  const suscribir = useCallback(
+    (avisar) => {
+      const mql = window.matchMedia(query)
+      mql.addEventListener('change', avisar)
+      return () => mql.removeEventListener('change', avisar)
+    },
+    [query]
   )
 
-  useEffect(() => {
-    const mql = window.matchMedia(query)
-    const onChange = (e) => setMatches(e.matches)
-    setMatches(mql.matches)
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [query])
-
-  return matches
+  return useSyncExternalStore(
+    suscribir,
+    () => window.matchMedia(query).matches,
+    () => false
+  )
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global process */
 // Control de la identidad «Papel y pulso»: falla si aparece un color suelto en
 // src/ en vez de un token. Ver la sección de paleta en CLAUDE.md.
 //
@@ -37,7 +38,7 @@ const UTILIDADES =
   'bg|text|border|ring|ring-offset|divide|outline|decoration|fill|stroke|from|via|to|placeholder|accent|caret|shadow'
 const PALETA_CRUDA = new RegExp(String.raw`(?<![\w-])(?:${UTILIDADES})-(?:${FAMILIAS})-\d{2,3}(?:\/[\d.]+)?(?![\w-])`, 'g')
 // '#abc', "#aabbcc", [#aabbcc], `#aabbcc80`… sin atrapar anclas como "#faq".
-const HEX = /(?<=["'`\[(,\s])#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?=["'`\]),;\s_])/g
+const HEX = /(?<=["'`[(,\s])#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?=["'`\]),;\s_])/g
 const IGNORAR = 'lint-colores-ignorar'
 
 const relativo = (ruta) => relative(SRC, ruta).split(sep).join('/')

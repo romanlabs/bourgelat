@@ -48,7 +48,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
       const result = validateImportRows(rawRows)
       setParseResult(result)
       setStep('preview')
-    } catch (error) {
+    } catch {
       setParseResult({ validRows: [], invalidRows: [], globalError: 'No fue posible leer el archivo. Verifica que sea un .xlsx válido.' })
       setStep('preview')
     } finally {

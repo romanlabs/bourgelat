@@ -141,7 +141,7 @@ export default function ProductCommandSearch({
             { id: 'productos', label: 'Productos', icon: Package },
             { id: 'servicios', label: 'Servicios', icon: ClipboardList },
             { id: 'servicio', label: 'Servicio libre', icon: Stethoscope },
-          ].map(({ id, label, icon: Icon }) => (
+          ].map(({ id, label }) => (
             <button
               key={id}
               type="button"

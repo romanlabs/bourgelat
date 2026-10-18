@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   startOfMonth,
   endOfMonth,
@@ -25,11 +25,14 @@ const DIAS_HEADER = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
  */
 export function MiniCalendar({ fechaBase, onSelectDay }) {
   const [mesVisible, setMesVisible] = useState(() => startOfMonth(fechaBase))
+  const [fechaPrevia, setFechaPrevia] = useState(() => +fechaBase)
 
-  // Si la fecha activa cambia de mes (navegacion desde la toolbar), sincroniza el mes mostrado
-  useEffect(() => {
-    setMesVisible((prev) => (isSameMonth(prev, fechaBase) ? prev : startOfMonth(fechaBase)))
-  }, [fechaBase])
+  // Si la fecha activa cambia de mes (navegacion desde la toolbar), sincroniza el
+  // mes mostrado. Se compara por valor: fechaBase puede ser un Date nuevo en cada render.
+  if (+fechaBase !== fechaPrevia) {
+    setFechaPrevia(+fechaBase)
+    if (!isSameMonth(mesVisible, fechaBase)) setMesVisible(startOfMonth(fechaBase))
+  }
 
   const dias = eachDayOfInterval({
     start: startOfWeek(startOfMonth(mesVisible), WEEK_OPTS),

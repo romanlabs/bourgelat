@@ -15,7 +15,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { canAccessModule } from '@/lib/permissions'
 import Paginacion from '@/components/shared/Paginacion'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
@@ -327,14 +327,14 @@ export default function InventarioPage() {
 
   if (!rolPermitido) return <RestrictedInventoryPage />
 
-  const { resumen, categoriasData, alertsRows, reporteQuery, alertasQuery } = resumenHook
+  const { resumen, categoriasData, alertsRows, reporteQuery } = resumenHook
   const {
     productosQuery,
     productosRows,
     buscar, setBuscar,
     categoria, setCategoria,
     bajoStock, setBajoStock,
-    pagina: paginaProductos, setPagina: setPaginaProductos,
+    setPagina: setPaginaProductos,
     editingProduct,
     drawerOpen,
     confirmDialog, setConfirmDialog,
@@ -356,7 +356,7 @@ export default function InventarioPage() {
     motivosDisponibles,
     movementForm, setMovementForm,
     selectedProduct,
-    pagina: paginaMovimientos, setPagina: setPaginaMovimientos,
+    setPagina: setPaginaMovimientos,
     isPendingMovement,
     submitMovementForm,
     selectProduct,

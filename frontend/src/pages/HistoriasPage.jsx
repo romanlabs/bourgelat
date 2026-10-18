@@ -14,7 +14,7 @@ import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtil
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { canAccessModule } from '@/lib/permissions'
 import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
