@@ -85,7 +85,7 @@ const guardarConfiguracionFactus = async (req, res) => {
 
     if (baseUrl !== undefined && baseUrl !== '' && !esBaseUrlFactusPermitida(baseUrl)) {
       return res.status(400).json({
-        message: 'La baseUrl de Factus no es valida. Debe ser un dominio oficial de Factus por https.',
+        message: 'La dirección del proveedor de facturación electrónica no es válida.',
       })
     }
 
@@ -126,12 +126,12 @@ const guardarConfiguracionFactus = async (req, res) => {
     })
 
     res.json({
-      message: 'Configuracion de Factus guardada exitosamente',
+      message: 'Configuracion de facturacion electronica guardada exitosamente',
       integracion: serializarIntegracionFactus(integracion),
     })
   } catch (error) {
     res.status(500).json({
-      message: 'Error al guardar la configuracion de Factus',
+      message: 'Error al guardar la configuracion de facturacion electronica',
       error: error.message,
     })
   }
@@ -150,13 +150,13 @@ const sincronizarFactus = async (req, res) => {
 
     if (!integracionExistente && !configuracionLocal) {
       return res.status(404).json({
-        message: 'No hay configuracion de Factus guardada ni variables locales disponibles',
+        message: 'No hay configuracion de facturacion electronica guardada ni variables locales disponibles',
       })
     }
 
     if (!configuracionEfectiva.credencialesCompletas) {
       return res.status(400).json({
-        message: 'Faltan credenciales para sincronizar Factus',
+        message: 'Faltan credenciales para sincronizar la facturacion electronica',
       })
     }
 
@@ -209,7 +209,7 @@ const sincronizarFactus = async (req, res) => {
       },
       ultimoChequeo: new Date(),
       ultimoEstadoChequeo: 'exitoso',
-      ultimoMensajeChequeo: 'Sincronizacion con Factus exitosa',
+      ultimoMensajeChequeo: 'Sincronizacion con la facturacion electronica exitosa',
     })
 
     if (clinica && empresa.data) {
@@ -241,7 +241,7 @@ const sincronizarFactus = async (req, res) => {
     })
 
     res.json({
-      message: 'Sincronizacion con Factus exitosa',
+      message: 'Sincronizacion con la facturacion electronica exitosa',
       integracion: serializarIntegracionFactus(integracion),
       configuracionLocal: serializarConfiguracionLocalFactus(configuracionLocal),
       sincronizacion: {
@@ -252,7 +252,7 @@ const sincronizarFactus = async (req, res) => {
     })
   } catch (error) {
     res.status(400).json({
-      message: 'No fue posible sincronizar Factus',
+      message: 'No fue posible sincronizar la facturacion electronica',
       error: error.message,
       payload: error.payload || null,
     })
@@ -268,13 +268,13 @@ const probarConexionFactus = async (req, res) => {
 
     if (!integracion && !configuracionLocal) {
       return res.status(404).json({
-        message: 'No hay configuracion de Factus guardada ni variables locales disponibles',
+        message: 'No hay configuracion de facturacion electronica guardada ni variables locales disponibles',
       })
     }
 
     if (!configuracionEfectiva.credencialesCompletas) {
       return res.status(400).json({
-        message: 'Faltan credenciales para probar la conexion con Factus',
+        message: 'Faltan credenciales para probar la conexion con la facturacion electronica',
       })
     }
 
@@ -290,7 +290,7 @@ const probarConexionFactus = async (req, res) => {
       await integracion.update({
         ultimoChequeo: new Date(),
         ultimoEstadoChequeo: 'exitoso',
-        ultimoMensajeChequeo: 'Autenticacion con Factus exitosa',
+        ultimoMensajeChequeo: 'Autenticacion con la facturacion electronica exitosa',
       })
     }
 
@@ -304,7 +304,7 @@ const probarConexionFactus = async (req, res) => {
     })
 
     res.json({
-      message: 'Conexion con Factus exitosa',
+      message: 'Conexion con la facturacion electronica exitosa',
       expiracionToken: tokenFactus.expires_in || null,
       integracion: serializarIntegracionFactus(integracion),
       configuracionLocal: serializarConfiguracionLocalFactus(configuracionLocal),
@@ -334,7 +334,7 @@ const probarConexionFactus = async (req, res) => {
     })
 
     res.status(400).json({
-      message: 'No fue posible autenticarse con Factus',
+      message: 'No fue posible autenticarse con la facturacion electronica',
       error: error.message,
       payload: error.payload || null,
     })

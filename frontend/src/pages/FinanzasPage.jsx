@@ -556,7 +556,7 @@ export default function FinanzasPage() {
                   <div className="flex items-start gap-3">
                     <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
                     <div className="text-sm leading-7 text-muted-foreground">
-                      La configuración técnica de DIAN y Factus ya no se modifica desde la clínica.
+                      La configuración técnica de la facturación electrónica ya no se modifica desde la clínica.
                       Si necesitas activar o corregir la integración, se hace desde soporte central
                       con un perfil superadmin.
                     </div>
