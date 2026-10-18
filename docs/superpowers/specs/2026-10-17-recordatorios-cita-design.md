@@ -84,8 +84,8 @@ con el mismo diseño que el correo del código de verificación.
 ### `jobs/recordatoriosCita.js`
 
 `enviarRecordatoriosCita()`, registrado en `index.js` junto a la limpieza de tokens:
-corre al arrancar y luego `setInterval` cada 5 minutos. Un flag en memoria evita que dos
-corridas se solapen si una tarda más de 5 minutos. (La API corre en una sola instancia
+corre al arrancar y luego `setInterval` cada minuto (era cada 5; se bajó el 17-oct para que el aviso no llegue tarde). Un flag en memoria evita que dos
+corridas se solapen si una tarda más de un minuto. (La API corre en una sola instancia
 en Render; la marca atómica del paso 3 protege igual si algún día son varias.)
 
 1. **Buscar** (query con `sinTenant: true`, es un job global): citas que cumplen los
@@ -103,7 +103,7 @@ en Render; la marca atómica del paso 3 protege igual si algún día son varias.
    WHERE id = :id AND "recordatorioProfesionalEnviadoEn" IS NULL AND estado = 'programada'`.
    Si no actualizó ninguna fila, otra corrida ya la tomó (o cambió de estado): se salta.
 4. **Enviar** con `enviarEmailRecordatorioCita`. Si falla: se pone la marca otra vez en
-   `NULL` para reintentar en la siguiente corrida (5 min después) y se registra
+   `NULL` para reintentar en la siguiente corrida (1 min después) y se registra
    `logger.error` sin datos del paciente (solo `citaId` y `clinicaId`). Cuando la cita
    empieza, deja de estar en ventana y no se reintenta más.
 
@@ -136,7 +136,7 @@ Tarjeta «Recordatorios de citas» en `ConfiguracionPage`, visible solo para adm
 
 ## Errores
 
-- Brevo caído o sin clave: el envío falla, la marca se revierte, se reintenta cada 5 min
+- Brevo caído o sin clave: el envío falla, la marca se revierte, se reintenta cada minuto
   hasta que la cita empieza. `emailService` ya registra el error.
 - Una excepción en la corrida no tumba la API: el job envuelve todo en `try/catch` y
   registra `logger.error`.

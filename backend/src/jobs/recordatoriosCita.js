@@ -1,5 +1,5 @@
 // Envía por correo el aviso de cada cita al profesional asignado, con la
-// anticipación que eligió la clínica. Corre cada 5 minutos desde index.js.
+// anticipación que eligió la clínica. Corre cada minuto desde index.js.
 // Diseño: docs/superpowers/specs/2026-10-17-recordatorios-cita-design.md
 const { Op } = require('sequelize')
 const sequelize = require('../config/database')
@@ -17,7 +17,7 @@ const {
 } = require('../services/recordatorioCitaReglas')
 const logger = require('../utils/logger')
 
-const INTERVALO_MS = 5 * 60 * 1000
+const INTERVALO_MS = 60 * 1000
 const ESTADOS_QUE_AVISAN = ['prueba', 'activa']
 
 let corriendo = false
