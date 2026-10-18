@@ -252,6 +252,22 @@ const crearFacturaCompra = async (req, res) => {
   }
 };
 
+// Bloquea la factura dentro de la transacción y revisa que siga en el estado
+// esperado. Sin esto, dos «Confirmar» simultáneos sumaban el stock dos veces y
+// editar, confirmar y anular podían pisarse entre sí.
+const bloquearFacturaCompra = async ({ id, clinicaId, estadosPermitidos, mensaje, transaction }) => {
+  const factura = await FacturaCompra.findOne({
+    where: { id, clinicaId },
+    transaction,
+    lock: transaction.LOCK.UPDATE,
+  });
+  if (!factura || !estadosPermitidos.includes(factura.estado)) {
+    throw errorDeDetalle(mensaje);
+  }
+  const items = await FacturaCompraItem.findAll({ where: { facturaCompraId: id }, transaction });
+  return { factura, items };
+};
+
 const editarFacturaCompra = async (req, res) => {
   try {
     const { id } = req.params;
@@ -265,7 +281,15 @@ const editarFacturaCompra = async (req, res) => {
     }
 
     await sequelize.transaction(async (transaction) => {
-      await factura.update({
+      const { factura: facturaBloqueada } = await bloquearFacturaCompra({
+        id,
+        clinicaId,
+        estadosPermitidos: ['borrador'],
+        mensaje: 'Solo se pueden editar facturas en estado borrador',
+        transaction,
+      });
+
+      await facturaBloqueada.update({
         ...(proveedor && { proveedor: String(proveedor).trim() }),
         ...(fecha && { fecha }),
         ...(numero !== undefined && { numero: numero ? String(numero).trim() : null }),
@@ -352,9 +376,17 @@ const confirmarFacturaCompra = async (req, res) => {
     }
 
     await sequelize.transaction(async (transaction) => {
+      // Ítems releídos tras el bloqueo: son los que de verdad mueven stock.
+      const { factura: facturaBloqueada, items: itemsBloqueados } = await bloquearFacturaCompra({
+        id,
+        clinicaId,
+        estadosPermitidos: ['borrador'],
+        mensaje: 'Esta factura de compra ya fue confirmada o anulada',
+        transaction,
+      });
       let total = 0;
 
-      for (const item of factura.items) {
+      for (const item of itemsBloqueados) {
         if (item.destinoInventario === 'clinico') {
           // Sin filtro por `activo`: confirmar registra una compra que ya
           // ocurrio. Si el insumo se desactivo despues, la entrada sigue
@@ -432,7 +464,7 @@ const confirmarFacturaCompra = async (req, res) => {
         total += Number(item.subtotal);
       }
 
-      await factura.update({ estado: 'confirmada', total }, { transaction });
+      await facturaBloqueada.update({ estado: 'confirmada', total }, { transaction });
     });
 
     res.json({ message: 'Factura de compra confirmada exitosamente' });
@@ -462,10 +494,18 @@ const anularFacturaCompra = async (req, res) => {
     // El vencimiento del producto no se revierte: la reversion de stock puede ser
     // parcial y no hay forma fiable de saber que lote quedo en bodega.
     await sequelize.transaction(async (transaction) => {
-      if (factura.estado === 'confirmada') {
-        const referenciaFactura = factura.numero || factura.id.slice(0, 8);
+      const { factura: facturaBloqueada, items: itemsBloqueados } = await bloquearFacturaCompra({
+        id,
+        clinicaId,
+        estadosPermitidos: ['borrador', 'confirmada'],
+        mensaje: 'La factura ya está anulada',
+        transaction,
+      });
 
-        for (const item of factura.items) {
+      if (facturaBloqueada.estado === 'confirmada') {
+        const referenciaFactura = facturaBloqueada.numero || facturaBloqueada.id.slice(0, 8);
+
+        for (const item of itemsBloqueados) {
           if (item.destinoInventario === 'clinico') {
             const insumo = await InsumoClinico.findOne({
               where: { id: item.insumoClinicoId, clinicaId },
@@ -517,11 +557,14 @@ const anularFacturaCompra = async (req, res) => {
         }
       }
 
-      await factura.update({ estado: 'anulada' }, { transaction });
+      await facturaBloqueada.update({ estado: 'anulada' }, { transaction });
     });
 
     res.json({ message: 'Factura de compra anulada' });
   } catch (error) {
+    if (error.esDetalleInvalido) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };

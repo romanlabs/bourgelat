@@ -554,6 +554,14 @@ const crearFactura = async (req, res) => {
 
     let subtotal = 0
     const itemsCalculados = []
+    // El mismo producto o insumo puede venir en varias líneas (cada clic en el
+    // POS agrega una). Se usa una sola instancia bloqueada por id y se valida
+    // el stock contra lo pedido en total: con instancias separadas cada línea
+    // partía del stock viejo y la venta descontaba solo la última.
+    const productosBloqueados = new Map()
+    const cantidadPorProducto = new Map()
+    const insumosBloqueados = new Map()
+    const cantidadPorInsumo = new Map()
 
     for (const item of items) {
       const cantidad = convertirANumero(item.cantidad, NaN)
@@ -601,7 +609,7 @@ const crearFactura = async (req, res) => {
         for (const receta of servicioClinico.insumos) {
           const cantidadRequerida = Number(receta.cantidadConsumida) * cantidad
 
-          const insumoClinico = await InsumoClinico.findOne({
+          const insumoClinico = insumosBloqueados.get(receta.insumoClinicoId) || await InsumoClinico.findOne({
             where: { id: receta.insumoClinicoId, clinicaId },
             transaction,
             lock: transaction.LOCK.UPDATE,
@@ -611,8 +619,11 @@ const crearFactura = async (req, res) => {
             await transaction.rollback()
             return res.status(404).json({ message: `Insumo clinico no encontrado para el servicio: ${item.descripcion}` })
           }
+          insumosBloqueados.set(insumoClinico.id, insumoClinico)
 
-          if (Number(insumoClinico.stock) < cantidadRequerida) {
+          const requeridoInsumo = (cantidadPorInsumo.get(insumoClinico.id) || 0) + cantidadRequerida
+          cantidadPorInsumo.set(insumoClinico.id, requeridoInsumo)
+          if (Number(insumoClinico.stock) < requeridoInsumo) {
             await transaction.rollback()
             return res.status(400).json({ message: `Stock insuficiente de "${insumoClinico.nombre}" para: ${item.descripcion}` })
           }
@@ -629,7 +640,7 @@ const crearFactura = async (req, res) => {
           })
         }
 
-        producto = await Producto.findOne({
+        producto = productosBloqueados.get(item.productoId) || await Producto.findOne({
           where: { id: item.productoId, clinicaId },
           transaction,
           lock: transaction.LOCK.UPDATE,
@@ -639,8 +650,11 @@ const crearFactura = async (req, res) => {
           await transaction.rollback()
           return res.status(404).json({ message: `Producto no encontrado: ${item.descripcion}` })
         }
+        productosBloqueados.set(producto.id, producto)
 
-        if (Number(producto.stock) < cantidad) {
+        const requeridoProducto = (cantidadPorProducto.get(producto.id) || 0) + cantidad
+        cantidadPorProducto.set(producto.id, requeridoProducto)
+        if (Number(producto.stock) < requeridoProducto) {
           await transaction.rollback()
           return res.status(400).json({ message: `Stock insuficiente para: ${producto.nombre}` })
         }
@@ -1147,18 +1161,28 @@ const emitirFacturaElectronica = async (req, res) => {
 }
 
 const registrarPago = async (req, res) => {
+  // Transacción con lock: sin ella, un pago simultáneo con una anulación podía
+  // dejar como «pagada» una factura ya anulada.
+  const transaction = await sequelize.transaction()
+
   try {
     const { id } = req.params
     const { clinicaId } = req.usuario
     const { metodoPago, observaciones } = req.body
 
-    const factura = await Factura.findOne({ where: { id, clinicaId } })
+    const factura = await Factura.findOne({
+      where: { id, clinicaId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    })
 
     if (!factura) {
+      await transaction.rollback()
       return res.status(404).json({ message: 'Factura no encontrada' })
     }
 
     if (factura.estado !== 'emitida') {
+      await transaction.rollback()
       return res.status(400).json({
         message: `Solo se pueden marcar como pagadas facturas en estado "emitida". Estado actual: ${factura.estado}`,
       })
@@ -1167,6 +1191,7 @@ const registrarPago = async (req, res) => {
     // Ventas a crédito se saldan con abonos (que actualizan saldo y caja),
     // no con un marcado directo que dejaría el cobro sin rastro.
     if (convertirANumero(factura.saldoPendiente) > 0) {
+      await transaction.rollback()
       return res.status(409).json({
         message: 'Esta factura tiene saldo pendiente. Registra el cobro como abono.',
         code: 'USAR_ABONOS',
@@ -1176,11 +1201,25 @@ const registrarPago = async (req, res) => {
     const estadoAnterior = factura.estado
     const metodoPagoAnterior = factura.metodoPago
 
+    // El efectivo de la venta ya se sumó (o no) a la caja al crearla. Cambiar
+    // desde o hacia efectivo aquí descuadraba el turno, y al anular se restaba
+    // efectivo que nunca entró. Ese cambio se hace anulando y volviendo a vender.
+    const cambiaEfectivo = metodoPago && metodoPago !== metodoPagoAnterior &&
+      (metodoPago === 'efectivo' || metodoPagoAnterior === 'efectivo')
+    if (cambiaEfectivo) {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'No se puede cambiar el pago desde o hacia efectivo porque afectaría la caja. Anula la venta y regístrala de nuevo con el método correcto.',
+        code: 'CAMBIO_EFECTIVO_NO_PERMITIDO',
+      })
+    }
+
     await factura.update({
       estado: 'pagada',
       ...(metodoPago ? { metodoPago } : {}),
       ...(observaciones ? { observaciones } : {}),
-    })
+    }, { transaction })
+    await transaction.commit()
 
     await registrarAuditoria({
       accion: 'REGISTRAR_PAGO_FACTURA',
@@ -1193,13 +1232,20 @@ const registrarPago = async (req, res) => {
       resultado: 'exitoso',
     })
 
-    const facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+    let facturaActualizada
+    try {
+      facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+    } catch (error) {
+      logger.error({ contexto: 'registrar-pago', mensaje: 'Pago guardado pero falló la relectura', facturaId: factura.id, error: error.message })
+      facturaActualizada = factura.toJSON()
+    }
 
     res.json({
       message: 'Pago registrado exitosamente',
       factura: facturaActualizada,
     })
   } catch (error) {
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -1273,10 +1319,18 @@ const registrarAbono = async (req, res) => {
         })
       }
 
-      if (turno) {
-        await turno.increment('totalVentasEfectivo', { by: montoNumero, transaction })
-        cajaTurnoId = turno.id
+      // Sin turno, el efectivo quedaba fuera de toda caja: se exige uno, igual
+      // que en la venta de contado.
+      if (!turno) {
+        await transaction.rollback()
+        return res.status(409).json({
+          message: 'Debes abrir un turno de caja para recibir un abono en efectivo',
+          code: 'TURNO_CAJA_REQUERIDO',
+        })
       }
+
+      await turno.increment('totalVentasEfectivo', { by: montoNumero, transaction })
+      cajaTurnoId = turno.id
     }
 
     const abono = await AbonoFactura.create({
