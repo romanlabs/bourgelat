@@ -957,14 +957,22 @@ const obtenerPreliquidacion = async (req, res) => {
     }
 
     const items = []
+    // Lo que no se puede cobrar se informa a la UI en vez de desaparecer en
+    // silencio: la cajera debe saber que falta algo del plan.
+    const medicamentosOmitidos = []
 
     // ── Plan farmacologico: se dispensa y descuenta al facturar ──────────────
     const cantidadesPorProducto = new Map()
+    const nombrePorProducto = new Map()
     for (const item of Array.isArray(historia.medicamentos) ? historia.medicamentos : []) {
       if (!item?.productoId) continue
 
       const cantidad = Number(item.cantidad)
-      if (!Number.isFinite(cantidad) || cantidad <= 0) continue
+      if (!Number.isFinite(cantidad) || cantidad <= 0) {
+        medicamentosOmitidos.push(`${item.nombre || 'Medicamento'} (sin cantidad válida)`)
+        continue
+      }
+      nombrePorProducto.set(item.productoId, item.nombre || 'Medicamento')
 
       cantidadesPorProducto.set(
         item.productoId,
@@ -975,10 +983,21 @@ const obtenerPreliquidacion = async (req, res) => {
     if (cantidadesPorProducto.size > 0) {
       const productos = await Producto.findAll({
         where: { id: { [Op.in]: [...cantidadesPorProducto.keys()] }, clinicaId },
-        attributes: ['id', 'nombre', 'unidadMedida', 'precioVenta', 'precioCompra', 'stock'],
+        attributes: ['id', 'nombre', 'unidadMedida', 'precioVenta', 'precioCompra', 'stock', 'activo'],
       })
 
+      const encontrados = new Set(productos.map((p) => p.id))
+      for (const productoId of cantidadesPorProducto.keys()) {
+        if (!encontrados.has(productoId)) {
+          medicamentosOmitidos.push(`${nombrePorProducto.get(productoId)} (ya no está en el inventario)`)
+        }
+      }
+
       for (const producto of productos) {
+        if (producto.activo === false) {
+          medicamentosOmitidos.push(`${producto.nombre} (producto desactivado)`)
+          continue
+        }
         // El inventario de ventas solo maneja enteros.
         const cantidad = Math.max(Math.round(cantidadesPorProducto.get(producto.id)), 1)
         const precioUnitario = Number(producto.precioVenta)
@@ -1001,6 +1020,7 @@ const obtenerPreliquidacion = async (req, res) => {
       mascota: historia.mascota,
       propietario: historia.propietario,
       items,
+      medicamentosOmitidos,
       // Aviso para la UI: sin stock la factura sera rechazada al intentar
       // descontar el producto.
       productosSinStock: items
