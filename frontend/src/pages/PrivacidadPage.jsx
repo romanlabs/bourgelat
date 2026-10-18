@@ -26,7 +26,7 @@ export default function PrivacidadPage() {
     >
       <LegalHeader version={version} vigencia={vigencia} />
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <Seccion numero={1} titulo="Quiénes somos">
           <p className={pClass}>
             Bourgelat es una plataforma de software para la gestión de clínicas veterinarias en Colombia,

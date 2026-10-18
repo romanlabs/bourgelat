@@ -236,7 +236,7 @@ docker compose up
 ```
 
 Variables de entorno:
-- `frontend/.env` → `VITE_API_URL=http://localhost:3000`
+- `frontend/.env` → `VITE_API_URL=http://localhost:3000/api`
 - `backend/.env` → copiar de `.env.production.example`
 
 ---
@@ -258,6 +258,7 @@ npm run suscripcion:asignar  -- --email admin@clinica.com --plan activo
 npm run suscripcion:cancelar -- --email admin@clinica.com --confirmar  # deja la clínica en solo lectura
 npm run suscripcion:cortesia -- --email admin@clinica.com   # cortesía sin vencimiento
 npm run cuenta:borrar -- --email prueba@clinica.com   # solo cuentas sin datos; sin --confirmar solo muestra
+npm run cuenta:limpiar-no-verificadas -- --dias 7   # registros sin verificar y sin datos; sin --confirmar solo lista
 npm run create:superadmin
 npm run cifrado:rotar
 ```

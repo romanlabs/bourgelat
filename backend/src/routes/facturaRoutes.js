@@ -47,6 +47,12 @@ router.post(
       .optional({ values: 'falsy' })
       .isUUID()
       .withMessage('Registro de estilos no valido'),
+    // Idempotencia del POS: un reintento con la misma clave devuelve la venta
+    // ya guardada (ver utils/ventaIdempotente.js).
+    body('claveIdempotencia')
+      .optional({ values: 'falsy' })
+      .isUUID()
+      .withMessage('Clave de idempotencia no valida'),
     body('metodoPago')
       .optional()
       .isIn([

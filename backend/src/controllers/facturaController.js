@@ -17,6 +17,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
+const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
 const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
@@ -415,10 +416,50 @@ const extraerMensajeFactus = (respuesta) => {
   return ''
 }
 
+// Reintento de una venta que ya quedó guardada: se responde con la misma forma
+// que la creación (200 en vez de 201) y no se toca stock ni caja.
+const responderVentaExistente = async (res, facturaId, clinicaId) => {
+  const factura = await obtenerFacturaDetallada(facturaId, clinicaId)
+  return res.status(200).json({
+    message: 'Esta venta ya estaba registrada; no se cobró de nuevo',
+    factura,
+  })
+}
+
 const crearFactura = async (req, res) => {
   const transaction = await sequelize.transaction()
+  let claveIdempotencia = null
 
   try {
+    claveIdempotencia = leerClaveIdempotencia(req.body.claveIdempotencia)
+    if (claveIdempotencia === false) {
+      await transaction.rollback()
+      return res.status(400).json({ message: 'Clave de idempotencia no valida' })
+    }
+
+    if (claveIdempotencia) {
+      // El lock serializa los reintentos de la misma venta: el segundo espera
+      // a que el primero confirme y entonces ya ve la factura guardada. Sin él
+      // podía chocar antes con otro lock (p. ej. la historia) y responder un
+      // 409 engañoso en vez de la venta.
+      await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:lockKey))', {
+        replacements: { lockKey: `venta-idempotente:${req.usuario.clinicaId}:${claveIdempotencia}` },
+        transaction,
+      })
+
+      const existente = await Factura.findOne({
+        where: { clinicaId: req.usuario.clinicaId, claveIdempotencia },
+        attributes: ['id'],
+        transaction,
+      })
+
+      if (existente) {
+        await transaction.rollback()
+        logger.info({ contexto: 'crear-factura', mensaje: 'Reintento de venta ya registrada', facturaId: existente.id })
+        return responderVentaExistente(res, existente.id, req.usuario.clinicaId)
+      }
+    }
+
     const {
       propietarioId,
       items,
@@ -747,6 +788,7 @@ const crearFactura = async (req, res) => {
       usuarioId: req.usuario.id,
       clinicaId,
       cajaTurnoId: turnoActivo.id,
+      claveIdempotencia: claveIdempotencia || null,
     }, { transaction })
 
     for (const item of itemsCalculados) {
@@ -859,6 +901,21 @@ const crearFactura = async (req, res) => {
     // Si el error llega después del commit, la operación ya quedó guardada:
     // rollback sobre una transacción cerrada lanzaría otra excepción.
     if (!transaction.finished) await transaction.rollback()
+
+    // Red de seguridad si dos reintentos se cruzan pese al lock: el índice
+    // único frena el segundo y se responde con la venta del primero.
+    if (claveIdempotencia && esConflictoClaveIdempotencia(error)) {
+      try {
+        const existente = await Factura.findOne({
+          where: { clinicaId: req.usuario.clinicaId, claveIdempotencia },
+          attributes: ['id'],
+        })
+        if (existente) return responderVentaExistente(res, existente.id, req.usuario.clinicaId)
+      } catch (errorRelectura) {
+        logger.error({ contexto: 'crear-factura', mensaje: 'Falló la relectura de la venta idempotente', error: errorRelectura.message })
+      }
+    }
+
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }

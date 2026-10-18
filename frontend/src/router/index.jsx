@@ -3,7 +3,6 @@ import { lazy, Suspense, useLayoutEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 import ModuleAccessRoute from './ModuleAccessRoute'
-import { hasRole } from '@/lib/permissions'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
 import { APP_HOSTS } from '@/content/seo'
 import { aplicarSeo } from '@/lib/seo'
@@ -55,7 +54,6 @@ const ScrollManager = () => {
 
 const HostAwareHome = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const usuario = useAuthStore((state) => state.usuario)
   const hostname = window.location.hostname.toLowerCase()
 
   if (APP_HOSTS.includes(hostname)) {

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
+import { evaluarCambioSesion, recargarPorCambio } from '@/lib/sesionPestanas'
 import { debeIntentarRefresh, esRutaDeCredenciales } from '@/lib/authFlow'
 
 const api = axios.create({
@@ -46,6 +47,21 @@ api.interceptors.response.use(
           {},
           { withCredentials: true }
         )
+
+        // Respaldo: si otra pestaña inició sesión con otra cuenta, la cookie ya es de
+        // esa cuenta. Se recarga en vez de seguir actuando como ella con la UI vieja.
+        // Un fallo de /auth/me aquí no debe tumbar el flujo normal de refresh.
+        const sesionActual = await axios
+          .get(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/me`, {
+            withCredentials: true,
+          })
+          .then((r) => r.data)
+          .catch(() => null)
+        if (sesionActual && evaluarCambioSesion(useAuthStore.getState(), sesionActual) === 'cambio') {
+          recargarPorCambio('cambio')
+          procesarCola(new Error('Sesión cambiada'))
+          return new Promise(() => {})
+        }
 
         procesarCola(null)
         return api(solicitudOriginal)

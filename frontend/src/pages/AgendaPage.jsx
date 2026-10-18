@@ -27,7 +27,6 @@ import {
 import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { AgendaAnaliticaPanel } from '@/features/agenda/AgendaAnaliticaPanel'
-import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { RecepcionTab } from '@/features/recepcion/RecepcionTab'
 import { ProgramarCitaDrawer } from '@/features/recepcion/ProgramarCitaDrawer'
 import { useAuthStore } from '@/store/authStore'
@@ -174,17 +173,6 @@ export default function AgendaPage() {
     placeholderData: (previousData) => previousData,
   })
 
-  const mascotasQuery = useQuery({
-    queryKey: ['agenda-mascotas-base'],
-    queryFn: () =>
-      pacientesApi.obtenerMascotas({
-        pagina: 1,
-        limite: 200,
-      }),
-    enabled: rolPermitido && puedeVerAgenda && puedeProgramar,
-    placeholderData: (previousData) => previousData,
-  })
-
   const actualizarEstadoMutation = useMutation({
     mutationFn: ({ citaId, payload }) => agendaApi.actualizarEstadoCita(citaId, payload),
     onSuccess: (data, { payload, cita }) => {
@@ -222,7 +210,6 @@ export default function AgendaPage() {
     () => veterinariosQuery.data?.usuarios || [],
     [veterinariosQuery.data?.usuarios]
   )
-  const mascotas = useMemo(() => mascotasQuery.data?.mascotas || [], [mascotasQuery.data?.mascotas])
   const citas = useMemo(() => citasQuery.data?.citas || [], [citasQuery.data?.citas])
 
   const citasDelDia = citas.length
