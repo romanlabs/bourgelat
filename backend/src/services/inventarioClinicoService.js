@@ -1,5 +1,6 @@
 const MovimientoInventarioClinico = require('../models/MovimientoInventarioClinico');
 const { resolverVencimiento } = require('../utils/vencimiento');
+const { costoAntesDeCompra } = require('../utils/costoInsumo');
 
 const redondear = (valor) => Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 
@@ -70,6 +71,7 @@ const aplicarEntradaCompraClinica = async ({
 const revertirEntradaCompraClinica = async ({
   insumo,
   presentaciones,
+  precioPorPresentacion,
   referenciaFactura,
   usuarioId,
   clinicaId,
@@ -82,7 +84,35 @@ const revertirEntradaCompraClinica = async ({
   const stockNuevo = redondear(stockAnterior - revertirReal);
   const revertidoParcial = revertirReal < unidadesBase;
 
-  await insumo.update({ stock: stockNuevo }, { transaction });
+  // El costo vuelve al de antes de la compra solo si sigue siendo el que dejo
+  // esta (ver `costoAntesDeCompra`); si no, el valor vigente es de una compra
+  // o edicion posterior y se respeta. Se necesita el movimiento de entrada
+  // para conocer el costo que quedo tras la compra.
+  const entrada = await MovimientoInventarioClinico.findOne({
+    where: {
+      insumoClinicoId: insumo.id,
+      clinicaId,
+      facturaCompraId,
+      tipo: 'entrada',
+      motivo: 'compra',
+    },
+    order: [['createdAt', 'DESC']],
+    transaction,
+  });
+  const costoRevertido = entrada
+    ? costoAntesDeCompra({
+      costoActual: Number(insumo.precioUnitarioBase),
+      stockActual: stockAnterior,
+      unidadesCompra: unidadesBase,
+      costoCompraTotal: Number(presentaciones) * Number(precioPorPresentacion),
+      costoTrasCompra: Number(entrada.precioUnitario),
+    })
+    : null;
+
+  await insumo.update({
+    stock: stockNuevo,
+    ...(costoRevertido !== null && { precioUnitarioBase: costoRevertido }),
+  }, { transaction });
 
   await MovimientoInventarioClinico.create({
     tipo: 'ajuste',
@@ -90,7 +120,7 @@ const revertirEntradaCompraClinica = async ({
     cantidad: redondear(revertirReal),
     stockAnterior,
     stockNuevo,
-    precioUnitario: Number(insumo.precioUnitarioBase),
+    precioUnitario: costoRevertido ?? Number(insumo.precioUnitarioBase),
     observaciones: `Anulación factura de compra #${referenciaFactura}${
       revertidoParcial
         ? ` (reversión parcial: stock insuficiente para revertir ${unidadesBase} ${insumo.unidadBase})`

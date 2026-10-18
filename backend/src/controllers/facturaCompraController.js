@@ -544,6 +544,7 @@ const anularFacturaCompra = async (req, res) => {
               await revertirEntradaCompraClinica({
                 insumo,
                 presentaciones: Number(item.cantidad),
+                precioPorPresentacion: Number(item.precioUnitario),
                 referenciaFactura,
                 usuarioId,
                 clinicaId,
