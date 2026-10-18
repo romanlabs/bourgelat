@@ -169,6 +169,13 @@ const Factura = sequelize.define('Factura', {
       key: 'id',
     },
   },
+  // Clave que manda el POS para que un reintento no duplique la venta. Única
+  // por clínica cuando existe: el índice parcial vive en la migración
+  // 20261018_000001_factura_clave_idempotencia (ver utils/ventaIdempotente.js).
+  claveIdempotencia: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
 }, {
   tableName: 'facturas',
   timestamps: true,

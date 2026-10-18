@@ -7,6 +7,7 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { serviciosApi } from '@/features/servicios/serviciosApi'
 import { finanzasApi } from './finanzasApi'
 import { mensajeDeError } from '@/lib/errores'
+import { crearGestorClaveVenta } from './claveIdempotenciaVenta'
 
 const createBlankInvoiceItem = () => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -74,6 +75,9 @@ export function useFinanzasFacturacion({
   const [selectedOwnerData, setSelectedOwnerData] = useState(null)
   const [tutorDrawerOpen, setTutorDrawerOpen] = useState(false)
   const [productDrawerOpen, setProductDrawerOpen] = useState(false)
+  // Clave de idempotencia del carrito actual: se repite en los reintentos para
+  // que un corte de red no duplique la venta (ver claveIdempotenciaVenta.js).
+  const [claveVenta] = useState(() => crearGestorClaveVenta())
 
   const deferredOwnerSearch = useDeferredValue(ownerSearch)
   const deferredProductSearch = useDeferredValue(productSearch)
@@ -114,6 +118,7 @@ export function useFinanzasFacturacion({
     mutationFn: (payload) => finanzasApi.crearFactura(payload),
     onSuccess: (data) => {
       toast.success(data?.message || 'Factura creada exitosamente')
+      claveVenta.reiniciar()
       setInvoiceForm(buildInitialForm)
       setSelectedOwnerData(null)
       setOwnerSearch('')
@@ -258,6 +263,7 @@ export function useFinanzasFacturacion({
 
     // Reemplaza el carrito: anexar duplicaba los ítems al repetir «Facturar
     // consulta» y mezclaba la consulta con una venta a medias.
+    claveVenta.reiniciar()
     setInvoiceForm(() => ({
       ...buildInitialForm(),
       propietarioId: preliquidacion?.propietario?.id || '',
@@ -285,6 +291,7 @@ export function useFinanzasFacturacion({
    * servicio de peluqueria desde el catalogo. El aviso ayuda a no olvidarlo.
    */
   const loadPreliquidacionEstilo = (preliquidacion) => {
+    claveVenta.reiniciar()
     setInvoiceForm(() => ({
       ...buildInitialForm(),
       propietarioId: preliquidacion?.propietario?.id || '',
@@ -301,6 +308,7 @@ export function useFinanzasFacturacion({
   // de otra cosa) quedaba ligada a esa consulta y la marcaba como cobrada.
   const descartarCobroVinculado = () => {
     if (!invoiceForm.historiaClinicaId && !invoiceForm.registroEstiloId) return
+    claveVenta.reiniciar()
     setInvoiceForm(buildInitialForm)
     setSelectedOwnerData(null)
     setOwnerSearch('')
@@ -374,6 +382,7 @@ export function useFinanzasFacturacion({
       historiaClinicaId: invoiceForm.historiaClinicaId || undefined,
       registroEstiloId: invoiceForm.registroEstiloId || undefined,
       items: itemsValidos,
+      claveIdempotencia: claveVenta.obtener(),
     })
   }
 
