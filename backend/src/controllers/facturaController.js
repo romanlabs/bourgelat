@@ -17,7 +17,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
-const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta } = require('../utils/emisionElectronica')
+const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta, validarRangoNumeracion } = require('../utils/emisionElectronica')
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
 const AbonoFactura = require('../models/AbonoFactura')
@@ -1109,6 +1109,14 @@ const emitirFacturaElectronica = async (req, res) => {
       return res.status(400).json({
         message: 'No hay un rango de numeracion configurado para la facturación electrónica',
       })
+    }
+
+    const validacionRango = validarRangoNumeracion(
+      integracion?.configuracionAdicional?.catalogosFactus?.rangosNumeracion,
+      rangoEfectivo
+    )
+    if (!validacionRango.ok) {
+      return res.status(400).json({ message: validacionRango.mensaje })
     }
 
     if (formaPagoEfectiva === '2' && !fechaVencimientoPago) {

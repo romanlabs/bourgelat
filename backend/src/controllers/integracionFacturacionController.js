@@ -1,4 +1,5 @@
 const IntegracionFacturacion = require('../models/IntegracionFacturacion')
+const { validarRangoNumeracion } = require('../utils/emisionElectronica')
 const Clinica = require('../models/Clinica')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { cifrarTexto } = require('../config/crypto')
@@ -95,6 +96,17 @@ const guardarConfiguracionFactus = async (req, res) => {
       clinicaId,
       proveedor: 'factus',
     })
+
+    // Si ya hay rangos sincronizados, el elegido debe ser uno de ellos y estar
+    // vigente. Antes de la primera sincronización no hay contra qué validar;
+    // la emisión vuelve a revisarlo.
+    const rangosSincronizados = integracion.configuracionAdicional?.catalogosFactus?.rangosNumeracion
+    if (rangoNumeracionId && Array.isArray(rangosSincronizados) && rangosSincronizados.length > 0) {
+      const validacionRango = validarRangoNumeracion(rangosSincronizados, rangoNumeracionId)
+      if (!validacionRango.ok) {
+        return res.status(400).json({ message: validacionRango.mensaje })
+      }
+    }
 
     integracion.ambiente = ambiente || integracion.ambiente || 'sandbox'
     if (typeof activa === 'boolean') integracion.activa = activa
