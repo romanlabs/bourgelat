@@ -224,7 +224,7 @@ export function DonutCard({
         <div className="relative mx-auto" style={{ width: `${chartSize}px`, height: `${chartSize}px` }}>
           {hasData ? (
             <>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
                 <PieChart>
                   <Pie
                     data={data}
@@ -292,7 +292,7 @@ export function MiniDonutChart({
     <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
       {hasData ? (
         <>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
             <PieChart>
               <Pie
                 data={data}
@@ -356,7 +356,7 @@ export function LinePanel({
       </div>
       <div className={`${height} px-2 py-4`}>
         {hasData ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
             <AreaChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -424,7 +424,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
       </div>
       <div className={`flex-1 ${height} px-2 py-4`}>
         {hasData ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
             <BarChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barCategoryGap="38%">
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
