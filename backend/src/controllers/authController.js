@@ -31,6 +31,7 @@ const {
   generarAccessToken,
   generarRefreshToken,
   guardarRefreshToken,
+  huellaRefreshToken,
 } = require('../services/sesionService')
 const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
 const {
@@ -517,7 +518,7 @@ const refresh = async (req, res) => {
       { revocado: true },
       {
         where: {
-          token: refreshToken,
+          token: huellaRefreshToken(refreshToken),
           revocado: false,
           expiracion: { [Op.gt]: new Date() },
         },
@@ -530,7 +531,7 @@ const refresh = async (req, res) => {
       // reutilizacion: senal canonica de robo (la victima y el atacante tienen
       // la misma cadena). Revocamos toda la familia de sesiones del usuario.
       const tokenReutilizado = await RefreshToken.findOne({
-        where: { token: refreshToken },
+        where: { token: huellaRefreshToken(refreshToken) },
         sinTenant: true,
       })
 
@@ -556,7 +557,7 @@ const refresh = async (req, res) => {
     }
 
     const tokenDB = await RefreshToken.findOne({
-      where: { token: refreshToken },
+      where: { token: huellaRefreshToken(refreshToken) },
       sinTenant: true,
     })
 
@@ -634,7 +635,7 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await RefreshToken.update(
         { revocado: true },
-        { where: { token: refreshToken }, sinTenant: true }
+        { where: { token: huellaRefreshToken(refreshToken) }, sinTenant: true }
       )
     }
 
@@ -993,7 +994,7 @@ const cambiarPassword = async (req, res) => {
           where: {
             usuarioId: usuario.id,
             revocado: false,
-            ...(refreshTokenActual ? { token: { [Op.ne]: refreshTokenActual } } : {}),
+            ...(refreshTokenActual ? { token: { [Op.ne]: huellaRefreshToken(refreshTokenActual) } } : {}),
           },
           transaction,
           sinTenant: true,
