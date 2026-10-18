@@ -265,6 +265,12 @@ export function useFinanzasFacturacion({
       items,
     }))
 
+    if (preliquidacion?.medicamentosOmitidos?.length) {
+      toast.warning(
+        `No se cargaron del plan: ${preliquidacion.medicamentosOmitidos.join(', ')}. Agrégalos a mano si se los llevó.`
+      )
+    }
+
     if (preliquidacion?.productosSinStock?.length) {
       toast.warning(
         `Sin stock suficiente: ${preliquidacion.productosSinStock.join(', ')}. Ajusta la cantidad antes de facturar.`

@@ -75,7 +75,11 @@ const abrirTurno = async (req, res) => {
 
     res.status(201).json({ message: 'Turno de caja abierto', turno })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
+    // Dos aperturas simultáneas: el índice único parcial frena la segunda.
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ message: 'Ya tienes un turno de caja abierto' })
+    }
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -197,7 +201,7 @@ const registrarMovimientoCaja = async (req, res) => {
 
     res.status(201).json({ message: 'Movimiento registrado', movimiento })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -256,7 +260,7 @@ const cerrarTurno = async (req, res) => {
       turno,
     })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -353,7 +357,7 @@ const cerrarTurnoAdmin = async (req, res) => {
       turno,
     })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }

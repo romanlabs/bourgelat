@@ -8,6 +8,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { parsePaginacion } = require('../utils/paginacion')
+const { esTurnoVencido } = require('../utils/turnoCaja')
 
 const convertirANumero = (valor, valorPorDefecto = 0) => {
   if (valor === undefined || valor === null || valor === '') {
@@ -42,6 +43,16 @@ const crearGasto = async (req, res) => {
         transaction,
         lock: transaction.LOCK.UPDATE,
       })
+
+      // Un turno vencido no recibe más movimientos, igual que en ventas y
+      // abonos: el egreso quedaría en un arqueo que ya debió cerrarse.
+      if (turno && esTurnoVencido(turno)) {
+        await transaction.rollback()
+        return res.status(409).json({
+          message: 'Tu turno de caja quedo abierto desde un dia anterior. Debes cerrarlo antes de registrar gastos en efectivo.',
+          code: 'TURNO_VENCIDO',
+        })
+      }
 
       // Con turno abierto el efectivo sale de la caja: se registra el egreso
       // y se descuenta del esperado. Sin turno, el gasto igual se guarda
@@ -95,7 +106,7 @@ const crearGasto = async (req, res) => {
       gasto,
     })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -226,7 +237,7 @@ const anularGasto = async (req, res) => {
 
     res.json({ message: 'Gasto anulado exitosamente', cajaCompensada })
   } catch (error) {
-    await transaction.rollback()
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }

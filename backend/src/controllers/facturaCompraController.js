@@ -252,6 +252,33 @@ const crearFacturaCompra = async (req, res) => {
   }
 };
 
+// Precio de compra que tenía el producto antes de una compra: el de la entrada
+// por compra más reciente que no sea de esa factura y cuya factura siga
+// confirmada (o una entrada manual sin factura). null si no hay ninguna.
+const precioCompraAnterior = async ({ productoId, clinicaId, excluirFacturaId, transaction }) => {
+  const entradas = await MovimientoInventario.findAll({
+    where: {
+      productoId,
+      clinicaId,
+      motivo: 'compra',
+      [Op.or]: [{ facturaCompraId: null }, { facturaCompraId: { [Op.ne]: excluirFacturaId } }],
+    },
+    order: [['createdAt', 'DESC']],
+    limit: 20,
+    transaction,
+  });
+  const idsFactura = [...new Set(entradas.map((m) => m.facturaCompraId).filter(Boolean))];
+  const confirmadas = idsFactura.length
+    ? new Set((await FacturaCompra.findAll({
+      where: { id: idsFactura, clinicaId, estado: 'confirmada' },
+      attributes: ['id'],
+      transaction,
+    })).map((f) => f.id))
+    : new Set();
+  const vigente = entradas.find((m) => !m.facturaCompraId || confirmadas.has(m.facturaCompraId));
+  return vigente ? Number(vigente.precioUnitario) : null;
+};
+
 // Bloquea la factura dentro de la transacción y revisa que siga en el estado
 // esperado. Sin esto, dos «Confirmar» simultáneos sumaban el stock dos veces y
 // editar, confirmar y anular podían pisarse entre sí.
@@ -540,7 +567,23 @@ const anularFacturaCompra = async (req, res) => {
             const stockNuevo = stockAnterior - revertirReal;
             const revertidoParcial = revertirReal < cantidadRevertir;
 
-            await producto.update({ stock: stockNuevo }, { transaction });
+            // El costo vuelve al de la compra anterior solo si sigue siendo el
+            // que puso esta compra: si después hubo otra compra o una edición
+            // manual, ese valor es el vigente. El costo es el piso de venta.
+            let precioRevertido = null;
+            if (Number(producto.precioCompra) === Number(item.precioUnitario)) {
+              precioRevertido = await precioCompraAnterior({
+                productoId: producto.id,
+                clinicaId,
+                excluirFacturaId: id,
+                transaction,
+              });
+            }
+
+            await producto.update({
+              stock: stockNuevo,
+              ...(precioRevertido !== null && { precioCompra: precioRevertido }),
+            }, { transaction });
 
             await MovimientoInventario.create({
               tipo: 'ajuste',
