@@ -8,12 +8,15 @@ import {
   PawPrint,
   Pencil,
   Plus,
+  PowerOff,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   UserRound,
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import {
@@ -89,6 +92,9 @@ export default function PacientesPage() {
   // Mismos roles que aceptan el POST y el PUT del backend en cada entidad.
   const puedeGestionarTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
   const puedeGestionarPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  // Desactivar/reactivar pacientes: solo administración (igual que el backend).
+  const puedeDesactivarPaciente = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const [pacienteADesactivar, setPacienteADesactivar] = useState(null)
   const { propsAccion } = useSoloLectura()
 
   const enabled = rolPermitido && puedeVerModulo
@@ -286,6 +292,17 @@ export default function PacientesPage() {
                     onValueChange={mascotasHook.setEspecie}
                     options={SPECIES_OPTIONS}
                   />
+                  {puedeDesactivarPaciente && (
+                    <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={mascotasHook.verDesactivados}
+                        onChange={(e) => mascotasHook.setVerDesactivados(e.target.checked)}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Ver desactivados
+                    </label>
+                  )}
                 </div>
                 {puedeGestionarPaciente && (
                   <button
@@ -373,6 +390,33 @@ export default function PacientesPage() {
                                 <Pencil />
                                 Editar
                               </NavCtaLink>
+                            </>
+                          )}
+                          {puedeDesactivarPaciente && (
+                            <>
+                              <span className="h-3.5 w-px bg-border" aria-hidden="true" />
+                              {mascotasHook.verDesactivados ? (
+                                <NavCtaLink
+                                  size="sm"
+                                  onClick={() =>
+                                    mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
+                                  }
+                                  disabled={mascotasHook.cambiarEstadoMascotaMutation.isPending}
+                                  aria-label={`Reactivar ${row.paciente}`}
+                                >
+                                  <RotateCcw />
+                                  Reactivar
+                                </NavCtaLink>
+                              ) : (
+                                <NavCtaLink
+                                  size="sm"
+                                  onClick={() => setPacienteADesactivar(row)}
+                                  aria-label={`Desactivar ${row.paciente}`}
+                                >
+                                  <PowerOff />
+                                  Desactivar
+                                </NavCtaLink>
+                              )}
                             </>
                           )}
                         </div>
@@ -489,6 +533,22 @@ export default function PacientesPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pacienteADesactivar)}
+        onOpenChange={(abierto) => { if (!abierto) setPacienteADesactivar(null) }}
+        title={`¿Desactivar a ${pacienteADesactivar?.paciente || 'este paciente'}?`}
+        description="Dejará de aparecer en las listas y al agendar. Su historia clínica se conserva y puedes reactivarlo desde «Ver desactivados»."
+        confirmLabel="Desactivar"
+        variant="destructive"
+        loading={mascotasHook.cambiarEstadoMascotaMutation.isPending}
+        onConfirm={() =>
+          mascotasHook.cambiarEstadoMascotaMutation.mutate(
+            { mascotaId: pacienteADesactivar.id, activar: false },
+            { onSuccess: () => setPacienteADesactivar(null) }
+          )
+        }
+      />
 
       {/* Drawer: alta y edicion de paciente */}
       <PacienteDrawer
