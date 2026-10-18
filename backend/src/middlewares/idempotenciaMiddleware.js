@@ -91,6 +91,13 @@ const idempotencia = async (req, res, next) => {
     // Interceptar la respuesta para guardarla
     const jsonOriginal = res.json.bind(res)
     res.json = async (data) => {
+      // Solo se repite un éxito. Guardar errores hacía que un reintento, ya
+      // resuelta la causa (p. ej. abrir el turno de caja), recibiera el mismo
+      // error durante 24 h. Nota: no protege dos peticiones simultáneas; la
+      // venta tiene su propia clave (claveIdempotencia, ver facturaController).
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        return jsonOriginal(data)
+      }
       try {
         const expiracion = new Date()
         expiracion.setHours(expiracion.getHours() + 24)
