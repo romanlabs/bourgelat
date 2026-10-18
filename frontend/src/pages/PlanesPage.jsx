@@ -237,8 +237,8 @@ function AnimatedPrice({ price, reduce, onInk, suffix = '/mes' }) {
 }
 
 // Captura de interesados en la facturación electrónica (lista de espera v2).
-// Sin backend aún: dispara un mailto para que el lead llegue a la bandeja y
-// muestra confirmación. TODO v2: reemplazar por endpoint de waitlist.
+// Sin backend aún: dispara un mailto para que el lead llegue a la bandeja.
+// TODO v2: reemplazar por endpoint de waitlist (con Turnstile).
 function AvisameField() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -257,7 +257,12 @@ function AvisameField() {
     return (
       <div className="flex items-start gap-2 rounded-lg border px-3 py-3 text-sm" style={{ borderColor: LINE, backgroundColor: '#f3efe6', color: '#3f342a' }}>
         <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ACCENT }} />
-        <span>Listo. Te escribimos a <strong>{email.trim()}</strong> en cuanto esté disponible.</span>
+        {/* El mailto solo abre el correo del visitante: no se puede saber si lo
+            envió, así que no se confirma como hecho. */}
+        <span>
+          Abrimos tu correo con el mensaje listo: envíalo y te avisamos a <strong>{email.trim()}</strong>. Si no
+          se abrió, escríbenos a <strong>soporte@bourgelat.co</strong>.
+        </span>
       </div>
     )
   }

@@ -41,7 +41,7 @@
     "mailauth": "^7.1.1",
     "mailparser": "^3.9.35",
     "multer": "^2.1.1",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.0.12",
     "openid-client": "^6.8.4",
     "pg": "^8.20.0",
     "pg-hstore": "^2.3.4",
