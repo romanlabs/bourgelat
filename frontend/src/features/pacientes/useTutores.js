@@ -23,6 +23,8 @@ export function useTutores({ enabled }) {
 
   const [buscar, setBuscar] = useState(() => (esTabActivo && searchParams.get('buscar')) || '')
   const [pagina, setPagina] = useState(1)
+  // Solo admin: lista los tutores desactivados para poder reactivarlos.
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingTutor, setEditingTutor] = useState(null)
 
@@ -50,11 +52,17 @@ export function useTutores({ enabled }) {
     setPagina(1)
   }
 
+  function cambiarVerDesactivados(valor) {
+    setVerDesactivados(valor)
+    setPagina(1)
+  }
+
   const tutoresQuery = useQuery({
-    queryKey: ['pacientes-tutores', buscarDiferido, pagina],
+    queryKey: ['pacientes-tutores', buscarDiferido, pagina, verDesactivados],
     queryFn: () =>
       pacientesApi.obtenerPropietarios({
         buscar: buscarDiferido || undefined,
+        estado: verDesactivados ? 'inactivos' : undefined,
         pagina,
         limite: 12,
       }),
@@ -75,6 +83,18 @@ export function useTutores({ enabled }) {
       invalidarTutores()
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el tutor.')),
+  })
+
+  // Desactivar oculta al tutor de listas y selectores; sus pacientes,
+  // historias y ventas se conservan. Reactivar lo revierte.
+  const cambiarEstadoTutorMutation = useMutation({
+    mutationFn: ({ propietarioId, activar }) =>
+      activar ? pacientesApi.activarPropietario(propietarioId) : pacientesApi.desactivarPropietario(propietarioId),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Tutor actualizado')
+      invalidarTutores()
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cambiar el estado del tutor.')),
   })
 
   const editarPropietarioMutation = useMutation({
@@ -146,6 +166,8 @@ export function useTutores({ enabled }) {
     buscar, setBuscar: cambiarBuscar,
     buscarAplicado: buscarDiferido,
     pagina, setPagina,
+    verDesactivados, setVerDesactivados: cambiarVerDesactivados,
+    cambiarEstadoTutorMutation,
     drawerOpen,
     editingTutor,
     isPending: crearPropietarioMutation.isPending || editarPropietarioMutation.isPending,

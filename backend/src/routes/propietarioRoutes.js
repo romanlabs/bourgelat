@@ -7,6 +7,7 @@ const { validar } = require('../middlewares/validacionMiddleware')
 const {
   crearPropietario, obtenerPropietarios,
   obtenerPropietario, editarPropietario,
+  desactivarPropietario, activarPropietario,
 } = require('../controllers/propietarioController')
 
 router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), requerirEscritura, [
@@ -19,6 +20,10 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
 ], crearPropietario)
 
 const validarConsultaPropietarios = [
+  query('estado')
+    .optional()
+    .isIn(['activos', 'inactivos'])
+    .withMessage('Estado no valido'),
   query('buscar')
     .optional()
     .trim()
@@ -48,5 +53,15 @@ router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcio
   body('tipoPersona').optional().isIn(['persona_natural', 'persona_juridica']).withMessage('Tipo de persona no válido'),
   validar,
 ], editarPropietario)
+
+router.patch('/:id/desactivar', verificarToken, verificarRol('admin', 'superadmin'), requerirEscritura, [
+  param('id').isUUID().withMessage('Tutor no valido'),
+  validar,
+], desactivarPropietario)
+
+router.patch('/:id/activar', verificarToken, verificarRol('admin', 'superadmin'), requerirEscritura, [
+  param('id').isUUID().withMessage('Tutor no valido'),
+  validar,
+], activarPropietario)
 
 module.exports = router

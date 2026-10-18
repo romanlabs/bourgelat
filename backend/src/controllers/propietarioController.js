@@ -86,6 +86,17 @@ const crearPropietario = async (req, res) => {
   }
 };
 
+// Tutores desactivados ordenados por nombre (se descifra en memoria).
+const listarIdsInactivos = async (req) => {
+  const filas = await Propietario.findAll({
+    where: tenantWhere(req, { activo: false }),
+    attributes: ['id', 'nombre'],
+  });
+  return filas
+    .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es'))
+    .map((fila) => fila.id);
+};
+
 const obtenerPropietarios = async (req, res) => {
   try {
     const { buscar } = req.query;
@@ -94,9 +105,12 @@ const obtenerPropietarios = async (req, res) => {
     // Nombre, documento y teléfono están cifrados: ni el filtrado ni el orden
     // alfabético pueden resolverse en SQL. El servicio devuelve los ids ya
     // ordenados y aquí se pagina sobre esa lista.
-    const idsOrdenados = buscar
-      ? await busquedaPropietario.buscarIds(req, buscar)
-      : await busquedaPropietario.listarIdsOrdenados(req);
+    // ?estado=inactivos lista los desactivados (pocos) para poder reactivarlos.
+    const idsOrdenados = req.query.estado === 'inactivos'
+      ? await listarIdsInactivos(req)
+      : buscar
+        ? await busquedaPropietario.buscarIds(req, buscar)
+        : await busquedaPropietario.listarIdsOrdenados(req);
 
     const total = idsOrdenados.length;
     const idsPagina = idsOrdenados.slice(offset, offset + limite);
@@ -235,4 +249,40 @@ const editarPropietario = async (req, res) => {
   }
 };
 
-module.exports = { crearPropietario, obtenerPropietarios, obtenerPropietario, editarPropietario };
+// Desactivar oculta al tutor de listas y selectores (duplicado, ya no viene);
+// sus pacientes, historias y ventas se conservan. Reactivar lo revierte.
+const cambiarEstadoPropietario = (activo) => async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clinicaId } = req.usuario;
+
+    const propietario = await Propietario.findOne({ where: { id, clinicaId } });
+    if (!propietario) {
+      return res.status(404).json({ message: 'Tutor no encontrado' });
+    }
+
+    await propietario.update({ activo });
+    busquedaPropietario.invalidarCache(clinicaId);
+
+    await registrarAuditoria({
+      accion: activo ? 'ACTIVAR_PROPIETARIO' : 'DESACTIVAR_PROPIETARIO',
+      entidad: 'Propietario',
+      entidadId: propietario.id,
+      descripcion: activo ? 'Tutor reactivado' : 'Tutor desactivado',
+      req,
+      resultado: 'exitoso',
+    });
+
+    res.json({ message: activo ? 'Tutor reactivado' : 'Tutor desactivado' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
+const desactivarPropietario = cambiarEstadoPropietario(false);
+const activarPropietario = cambiarEstadoPropietario(true);
+
+module.exports = {
+  crearPropietario, obtenerPropietarios, obtenerPropietario, editarPropietario,
+  desactivarPropietario, activarPropietario,
+};
