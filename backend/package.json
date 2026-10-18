@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/config/tablasCifradas.test.js && node src/config/modelEncryption.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/services/aceptacionLegalService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/utils/descuentoVenta.test.js && node src/utils/costoInsumo.test.js && node src/utils/vencimiento.test.js && node src/controllers/facturaCompraReferencias.test.js && node src/services/soporteReglas.test.js && node src/services/soporteCorreoReglas.test.js && node src/services/codigoVerificacionService.test.js && node src/services/turnstileService.test.js && node src/services/verificacionPendienteService.test.js && node src/scripts/borrarCuentaReglas.test.js && node src/services/recordatorioCitaReglas.test.js && node src/services/emailRecordatorioCita.test.js",
+    "test": "node src/config/smokeTest.js && node src/config/planes.test.js && node src/config/tenantGuard.test.js && node src/config/tablasCifradas.test.js && node src/config/modelEncryption.test.js && node src/services/oauthService.test.js && node src/services/suscripcionService.test.js && node src/services/aceptacionLegalService.test.js && node src/middlewares/suscripcionMiddleware.test.js && node src/config/escrituraGuard.test.js && node src/services/almacenamientoService.test.js && node src/controllers/registroEstiloNormalizers.test.js && node src/controllers/reporteAgenda.test.js && node src/utils/turnoCaja.test.js && node src/utils/descuentoVenta.test.js && node src/utils/costoInsumo.test.js && node src/utils/vencimiento.test.js && node src/controllers/facturaCompraReferencias.test.js && node src/services/soporteReglas.test.js && node src/services/soporteCorreoReglas.test.js && node src/services/codigoVerificacionService.test.js && node src/services/turnstileService.test.js && node src/services/verificacionPendienteService.test.js && node src/scripts/borrarCuentaReglas.test.js && node src/services/recordatorioCitaReglas.test.js && node src/services/emailRecordatorioCita.test.js && node src/services/correoRegistroService.test.js",
     "migrate": "node src/config/runMigrations.js",
     "migrate:status": "node src/config/runMigrations.js status",
     "create:superadmin": "node src/scripts/createSuperadmin.js",
@@ -19,7 +19,8 @@
     "soporte:estado": "node src/scripts/soporte.js estado",
     "secrets:generate": "node src/scripts/generateSecrets.js",
     "cifrado:rotar": "node src/scripts/rotarCifrado.js",
-    "cuenta:borrar": "node src/scripts/borrarCuenta.js"
+    "cuenta:borrar": "node src/scripts/borrarCuenta.js",
+    "cuenta:limpiar-no-verificadas": "node src/scripts/limpiarNoVerificadas.js"
   },
   "keywords": [],
   "author": "",
