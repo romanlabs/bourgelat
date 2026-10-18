@@ -46,7 +46,27 @@ const resolverFalloEmision = ({ etapa, error }) => {
 const respuestaValidacionCompleta = (bill) =>
   Boolean(bill && String(bill.cufe || '').trim() && String(bill.number || '').trim())
 
+// El rango de numeración debe ser uno de los sincronizados de la clínica y
+// estar vigente: antes se aceptaba cualquier entero del body y se podía
+// consumir un rango ajeno, de otro documento o vencido.
+const validarRangoNumeracion = (rangos, rangoId) => {
+  if (!Array.isArray(rangos) || rangos.length === 0) {
+    return { ok: false, mensaje: 'Sincroniza la facturación electrónica de la clínica antes de emitir: no hay rangos de numeración cargados.' }
+  }
+  const rango = rangos.find((r) => String(r?.id) === String(rangoId))
+  if (!rango) {
+    return { ok: false, mensaje: 'El rango de numeración elegido no pertenece a la clínica. Sincroniza y elige uno de la lista.' }
+  }
+  const inactivo = rango.is_active === false || rango.is_active === 0 || rango.is_active === '0'
+  const vencido = rango.is_expired === true || rango.is_expired === 1 || rango.is_expired === '1'
+  if (inactivo || vencido) {
+    return { ok: false, mensaje: 'El rango de numeración elegido está inactivo o vencido. Elige otro en la configuración.' }
+  }
+  return { ok: true }
+}
+
 module.exports = {
+  validarRangoNumeracion,
   ESTADOS_EMITIBLES,
   MENSAJE_RESPUESTA_INCOMPLETA,
   resolverFalloEmision,

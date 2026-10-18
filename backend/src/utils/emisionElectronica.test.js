@@ -6,6 +6,7 @@ const {
   ESTADOS_EMITIBLES,
   resolverFalloEmision,
   respuestaValidacionCompleta,
+  validarRangoNumeracion,
 } = require('./emisionElectronica')
 
 // Una factura validada o en envío no se puede volver a emitir.
@@ -41,5 +42,15 @@ assert.strictEqual(respuestaValidacionCompleta({ cufe: 'abc', number: 'SETP1' })
 assert.strictEqual(respuestaValidacionCompleta({ number: 'SETP1' }), false)
 assert.strictEqual(respuestaValidacionCompleta({ cufe: 'abc' }), false)
 assert.strictEqual(respuestaValidacionCompleta(null), false)
+
+// Rango de numeración.
+const rangos = [{ id: 8, is_active: 1 }, { id: 9, is_active: 0 }, { id: 10, is_expired: true }]
+assert.strictEqual(validarRangoNumeracion(rangos, 8).ok, true, 'rango vigente')
+assert.strictEqual(validarRangoNumeracion(rangos, '8').ok, true, 'id como texto')
+assert.strictEqual(validarRangoNumeracion(rangos, 7).ok, false, 'rango ajeno')
+assert.strictEqual(validarRangoNumeracion(rangos, 9).ok, false, 'rango inactivo')
+assert.strictEqual(validarRangoNumeracion(rangos, 10).ok, false, 'rango vencido')
+assert.strictEqual(validarRangoNumeracion([], 8).ok, false, 'sin sincronizar')
+assert.strictEqual(validarRangoNumeracion(undefined, 8).ok, false, 'sin snapshot')
 
 console.log('emisionElectronica.test.js: todos los tests pasaron ✔')
