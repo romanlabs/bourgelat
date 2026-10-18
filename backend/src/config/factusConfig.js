@@ -65,8 +65,17 @@ const obtenerCredencialesIntegracion = (integracion) => {
   }
 }
 
-const resolverConfiguracionFactus = (integracion) => {
+// Las credenciales del servidor (FACTUS_*) solo sirven en desarrollo o si se
+// habilitan a propósito con FACTUS_CREDENCIALES_COMPARTIDAS=true. En producción
+// cada clínica factura con su propia cuenta: antes una clínica sin integración
+// heredaba las del servidor y emitía con el NIT y el rango de la plataforma.
+const permiteCredencialesEntorno = (env = process.env) =>
+  env.NODE_ENV !== 'production' || env.FACTUS_CREDENCIALES_COMPARTIDAS === 'true'
+
+const resolverConfiguracionFactus = (integracion, env = process.env) => {
   const configuracionLocal = obtenerConfiguracionFactusEnv()
+  const usarEntorno = permiteCredencialesEntorno(env)
+  const local = usarEntorno ? configuracionLocal : null
   const credencialesIntegracion = obtenerCredencialesIntegracion(integracion)
   const usaCredencialesIntegracion = Boolean(
     credencialesIntegracion.clientId &&
@@ -75,41 +84,42 @@ const resolverConfiguracionFactus = (integracion) => {
     credencialesIntegracion.password
   )
 
-  const clientId = credencialesIntegracion.clientId || configuracionLocal?.clientId || ''
-  const clientSecret = credencialesIntegracion.clientSecret || configuracionLocal?.clientSecret || ''
-  const username = credencialesIntegracion.username || configuracionLocal?.username || ''
-  const password = credencialesIntegracion.password || configuracionLocal?.password || ''
-
-  const credencialesCompletas = Boolean(clientId && clientSecret && username && password)
-  const baseUrl = obtenerBaseUrlFactus({
-    baseUrl: integracion?.baseUrl || configuracionLocal?.baseUrl,
-    ambiente: integracion?.ambiente || configuracionLocal?.ambiente,
-  })
-
+  // Nunca se mezclan: o las cuatro de la clínica o las cuatro del entorno.
+  let credenciales = { clientId: '', clientSecret: '', username: '', password: '' }
   let fuente = 'ninguna'
   if (usaCredencialesIntegracion) {
+    credenciales = credencialesIntegracion
     fuente = 'integracion'
-  } else if (credencialesCompletas && configuracionLocal?.credencialesCompletas) {
-    fuente = integracion ? 'mixta' : 'env'
+  } else if (local?.credencialesCompletas) {
+    credenciales = {
+      clientId: local.clientId,
+      clientSecret: local.clientSecret,
+      username: local.username,
+      password: local.password,
+    }
+    fuente = 'env'
   }
+
+  const credencialesCompletas = fuente !== 'ninguna'
+  const baseUrl = obtenerBaseUrlFactus({
+    baseUrl: integracion?.baseUrl || local?.baseUrl,
+    ambiente: integracion?.ambiente || local?.ambiente,
+  })
 
   return {
     configuracionLocal,
     configuracionEfectiva: {
       proveedor: 'factus',
-      ambiente: integracion?.ambiente || configuracionLocal?.ambiente || 'sandbox',
-      activa: integracion?.activa ?? configuracionLocal?.activa ?? false,
+      ambiente: integracion?.ambiente || local?.ambiente || 'sandbox',
+      activa: integracion?.activa ?? local?.activa ?? false,
       baseUrl,
-      rangoNumeracionId: integracion?.rangoNumeracionId ?? configuracionLocal?.rangoNumeracionId ?? null,
-      documentoCodigo: integracion?.documentoCodigo || configuracionLocal?.documentoCodigo || '01',
-      formaPagoCodigo: integracion?.formaPagoCodigo || configuracionLocal?.formaPagoCodigo || '1',
-      metodoPagoCodigo: integracion?.metodoPagoCodigo || configuracionLocal?.metodoPagoCodigo || '10',
-      enviarEmail: integracion?.enviarEmail ?? configuracionLocal?.enviarEmail ?? false,
+      rangoNumeracionId: integracion?.rangoNumeracionId ?? local?.rangoNumeracionId ?? null,
+      documentoCodigo: integracion?.documentoCodigo || local?.documentoCodigo || '01',
+      formaPagoCodigo: integracion?.formaPagoCodigo || local?.formaPagoCodigo || '1',
+      metodoPagoCodigo: integracion?.metodoPagoCodigo || local?.metodoPagoCodigo || '10',
+      enviarEmail: integracion?.enviarEmail ?? local?.enviarEmail ?? false,
       configuracionAdicional: integracion?.configuracionAdicional || {},
-      clientId,
-      clientSecret,
-      username,
-      password,
+      ...credenciales,
       credencialesCompletas,
       fuenteCredenciales: fuente,
     },
@@ -128,6 +138,7 @@ const obtenerContextoFactusPorClinica = async (clinicaId) => {
 }
 
 module.exports = {
+  permiteCredencialesEntorno,
   serializarIntegracionFactus,
   serializarConfiguracionLocalFactus,
   resolverConfiguracionFactus,

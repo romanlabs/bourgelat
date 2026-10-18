@@ -12,6 +12,7 @@ const {
 const {
   serializarIntegracionFactus,
   serializarConfiguracionLocalFactus,
+  permiteCredencialesEntorno,
   resolverConfiguracionFactus,
 } = require('../config/factusConfig')
 
@@ -44,7 +45,11 @@ const obtenerConfiguracionFacturacion = async (req, res) => {
 
     res.json({
       integracion: serializarIntegracionFactus(integracion),
-      configuracionLocal: serializarConfiguracionLocalFactus(configuracionLocal),
+      // La configuración del servidor solo se muestra donde puede usarse
+      // (desarrollo o credenciales compartidas habilitadas a propósito).
+      configuracionLocal: permiteCredencialesEntorno()
+        ? serializarConfiguracionLocalFactus(configuracionLocal)
+        : null,
       configuracionEfectiva: {
         ambiente: configuracionEfectiva.ambiente,
         baseUrl: configuracionEfectiva.baseUrl,
