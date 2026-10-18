@@ -1059,6 +1059,7 @@ const emitirFacturaElectronica = async (req, res) => {
 
     const factura = await obtenerFacturaDetallada(id, clinicaId)
     validarFacturaParaEmision(factura)
+    const estadoElectronicoAnterior = factura.estadoElectronico
 
     if (!factura.propietario) {
       return res.status(400).json({
@@ -1241,7 +1242,7 @@ const emitirFacturaElectronica = async (req, res) => {
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} validada electronicamente ante la DIAN`,
       datosAnteriores: {
-        estadoElectronico: factura.estadoElectronico,
+        estadoElectronico: estadoElectronicoAnterior,
       },
       datosNuevos: {
         estadoElectronico: 'validada',
