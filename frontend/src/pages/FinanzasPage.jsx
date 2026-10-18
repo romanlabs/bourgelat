@@ -107,6 +107,7 @@ export default function FinanzasPage() {
     setPosOpen(false)
     setVentaExitosa(false)
     setFacturaCreadaId(null)
+    facturacionHook.descartarCobroVinculado()
   }
 
   useEffect(() => {

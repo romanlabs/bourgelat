@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { finanzasApi } from './finanzasApi'
 import { formatDateTime, imprimirTirilla } from './reciboTermico'
+import { mensajeDeError } from '@/lib/errores'
 
 export const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -55,8 +56,7 @@ export const getEstadoElectronicoTone = (estado) => {
   return 'border-border bg-muted text-foreground'
 }
 
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
+const getErrorMessage = mensajeDeError
 
 // Reexportado: varios componentes del historial lo importan desde este hook.
 export { formatDateTime }
@@ -164,7 +164,8 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
       setMotivoAnulacion('')
       // La anulacion revierte el efectivo del turno de caja abierto y devuelve
       // el stock de los items de producto (ver facturaController.anularFactura).
-      invalidarDominios(queryClient, 'facturacion', 'caja', 'productos')
+      // También suelta la consulta o el servicio de estilos que cobraba.
+      invalidarDominios(queryClient, 'facturacion', 'caja', 'productos', 'historias')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible anular la factura.'))

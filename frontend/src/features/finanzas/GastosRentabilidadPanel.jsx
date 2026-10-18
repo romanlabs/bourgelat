@@ -22,6 +22,7 @@ import { mesLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
+import { mensajeDeError } from '@/lib/errores'
 
 const CATEGORIAS = [
   { value: 'nomina', label: 'Nómina' },
@@ -270,7 +271,7 @@ function FilaDeudor({ cliente }) {
       setFacturaAbono(null)
       setMonto('')
     } catch (err) {
-      setError(err.response?.data?.message || 'No se pudo registrar el abono')
+      setError(mensajeDeError(err, 'No se pudo registrar el abono'))
     }
   }
 
