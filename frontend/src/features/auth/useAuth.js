@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
-import { hasRole } from '@/lib/permissions'
 import { authApi } from './authApi'
 
 const obtenerMensajeError = (error, fallback) =>
@@ -28,9 +27,7 @@ export const useLogin = () => {
         suscripcion: data.suscripcion || null,
       })
       toast.success(`Bienvenido, ${data.usuario?.nombre || data.clinica?.nombre || 'Bourgelat'}`)
-      navigate(hasRole(data.usuario, 'superadmin') ? '/superadmin' : '/dashboard', {
-        replace: true,
-      })
+      navigate('/dashboard', { replace: true })
     },
     onError: (error) => {
       if (pideVerificacion(error)) return
@@ -77,9 +74,7 @@ export const useSesionVerificada = (contexto = 'registro') => {
     })
     if (contexto === 'login') {
       toast.success(`Bienvenido, ${data.usuario?.nombre || data.clinica?.nombre || 'Bourgelat'}`)
-      navigate(hasRole(data.usuario, 'superadmin') ? '/superadmin' : '/dashboard', {
-        replace: true,
-      })
+      navigate('/dashboard', { replace: true })
       return
     }
     toast.success('Clínica registrada exitosamente')

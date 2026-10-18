@@ -52,6 +52,7 @@ const {
 } = require('../services/verificacionPendienteService')
 const logger = require('../utils/logger')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
+const { validarCorreoRegistro } = require('../services/correoRegistroService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -222,6 +223,12 @@ const registro = async (req, res) => {
       return res.status(400).json({
         message: 'El teléfono debe ser un celular colombiano válido de 10 dígitos',
       })
+    }
+
+    // Correo desechable o de un dominio sin MX: no recibiría el código de verificación.
+    for (const correo of new Set([emailAdministrador, emailContactoClinica])) {
+      const validacion = await validarCorreoRegistro(correo)
+      if (!validacion.ok) return res.status(400).json({ message: validacion.mensaje })
     }
 
     const [clinicaPorEmail, usuarioPorEmail, clinicaPorNit] = await Promise.all([

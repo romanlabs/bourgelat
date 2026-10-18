@@ -137,10 +137,15 @@ const main = async () => {
   }
 }
 
-main()
-  .then(() => sequelize.close())
-  .catch(async (error) => {
-    console.error(`Error: ${error.message}`)
-    await sequelize.close()
-    process.exit(1)
-  })
+module.exports = { consultar, tablasConClinica, describir, borrar }
+
+// Solo corre como CLI; limpiarNoVerificadas.js reutiliza las funciones de arriba.
+if (require.main === module) {
+  main()
+    .then(() => sequelize.close())
+    .catch(async (error) => {
+      console.error(`Error: ${error.message}`)
+      await sequelize.close()
+      process.exit(1)
+    })
+}

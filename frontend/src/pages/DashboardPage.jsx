@@ -54,7 +54,7 @@ import {
   toNumber,
 } from '@/features/dashboard/dashboardUtils'
 import { finanzasApi } from '@/features/finanzas/finanzasApi'
-import { hasAnyRole } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
@@ -428,7 +428,19 @@ function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
 
 // Dentro de AdminShell como el resto de la app: sin él, los roles no admin
 // entraban a una página sin menú, sin buscador y sin forma de cerrar sesión.
-function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
+// Accesos del panel para roles no admin, filtrados por permisos: antes la
+// tarjeta llevaba siempre a Pacientes, aunque el rol (ej. facturador) no
+// tuviera acceso y rebotara.
+const MODULOS_OPERATIVOS = [
+  { key: 'agenda', to: '/agenda', icon: CalendarClock, titulo: 'Agenda', descripcion: 'Citas del día, sala de espera y recepción.' },
+  { key: 'pacientes', to: '/pacientes', icon: PawPrint, titulo: 'Pacientes y tutores', descripcion: 'Fichas de pacientes y datos de sus tutores.' },
+  { key: 'historias', to: '/historias', icon: Stethoscope, titulo: 'Historias clínicas', descripcion: 'Consultas, fórmulas y exámenes de cada paciente.' },
+  { key: 'finanzas', to: '/finanzas', icon: Wallet, titulo: 'Caja y facturación', descripcion: 'Ventas, cobros y tu turno de caja.' },
+  { key: 'inventario', to: '/inventario', icon: Boxes, titulo: 'Inventario', descripcion: 'Productos, insumos y facturas de compra.' },
+]
+
+function RestrictedDashboard({ nombreClinica, usuarioEmail, usuario }) {
+  const modulos = MODULOS_OPERATIVOS.filter((modulo) => canAccessModule(usuario, modulo.key))
   return (
     <AdminShell currentKey="dashboard" title="Panel de control">
       <div className="mx-auto max-w-5xl">
@@ -456,18 +468,18 @@ function RestrictedDashboard({ nombreClinica, usuarioEmail }) {
               </p>
             </div>
 
-            <div className="border border-border bg-muted px-4 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Siguiente módulo
-              </p>
-              <p className="mt-3 text-base font-semibold text-foreground">Pacientes y tutores</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                La base clínica publicada ya puede usarse desde el equipo operativo.
-              </p>
-              <NavCta to="/pacientes" icon={PawPrint} className="mt-4">
-                Abrir módulo
-              </NavCta>
-            </div>
+            {modulos.map((modulo) => (
+              <div key={modulo.key} className="border border-border bg-muted px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Tu módulo
+                </p>
+                <p className="mt-3 text-base font-semibold text-foreground">{modulo.titulo}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{modulo.descripcion}</p>
+                <NavCta to={modulo.to} icon={modulo.icon} className="mt-4">
+                  Abrir módulo
+                </NavCta>
+              </div>
+            ))}
           </div>
         </section>
       </div>
@@ -824,7 +836,7 @@ export default function DashboardPage() {
   )
 
   if (!esAdministrador) {
-    return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} />
+    return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} usuario={usuario} />
   }
 
   const renderSummaryOverview = () => {

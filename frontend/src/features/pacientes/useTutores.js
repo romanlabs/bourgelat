@@ -116,13 +116,15 @@ export function useTutores({ enabled }) {
   }
 
   function handleDrawerSubmit(formData) {
+    // Al editar, vaciar correo o ciudad manda null para que se borre.
+    const vacio = editingTutor ? null : undefined
     const payload = {
       nombre: formData.nombre.trim(),
       tipoDocumento: formData.tipoDocumento,
       numeroDocumento: formData.numeroDocumento.trim(),
       telefono: formData.telefono.replace(/\D/g, ''),
-      email: formData.email?.trim().toLowerCase() || undefined,
-      ciudad: formData.ciudad?.trim() || undefined,
+      email: formData.email?.trim().toLowerCase() || vacio,
+      ciudad: formData.ciudad?.trim() || vacio,
     }
 
     if (editingTutor) {

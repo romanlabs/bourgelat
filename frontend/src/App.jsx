@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { QueryClient } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
+import { iniciarVigilanciaSesion, leerAvisoSesion } from '@/lib/sesionPestanas'
 import { AppRouter } from '@/router'
 import { useEffect, useState } from 'react'
 import { authApi } from '@/features/auth/authApi'
@@ -48,7 +49,6 @@ const PROTECTED_PREFIXES = [
   '/auditoria',
   '/inventario',
   '/finanzas',
-  '/superadmin',
 ]
 
 const shouldBootstrapSession = () => {
@@ -104,6 +104,16 @@ function AuthBootstrap({ children }) {
   return children
 }
 
+function SesionPestanas() {
+  useEffect(() => {
+    const aviso = leerAvisoSesion()
+    if (aviso) toast.info(aviso)
+    return iniciarVigilanciaSesion()
+  }, [])
+
+  return null
+}
+
 function ThemeSync() {
   const dark = useThemeStore((state) => state.dark)
 
@@ -121,6 +131,7 @@ export default function App() {
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeSync />
+        <SesionPestanas />
         <AuthBootstrap>
           <AppRouter />
         </AuthBootstrap>

@@ -41,7 +41,7 @@ router.get('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcio
 router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcionista', 'auxiliar'), requerirEscritura, [
   param('id').isUUID().withMessage('Propietario no valido'),
   body('nombre').optional().notEmpty().withMessage('El nombre no puede estar vacío').trim(),
-  body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
+  body('email').optional({ values: 'null' }).isEmail().withMessage('Email inválido').normalizeEmail(),
   body('telefono').optional().notEmpty().withMessage('El teléfono no puede estar vacío').trim(),
   body('tipoDocumento').optional().isIn(['CC', 'CE', 'NIT', 'PP']).withMessage('Tipo de documento no válido'),
   body('numeroDocumento').optional().notEmpty().withMessage('El número de documento no puede estar vacío').trim(),
