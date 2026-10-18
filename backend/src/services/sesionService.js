@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 
 const { appConfig } = require('../config/app')
@@ -8,9 +9,13 @@ const generarAccessToken = (payload) =>
     expiresIn: process.env.JWT_EXPIRES_IN || '15m',
   })
 
+// jwtid único: sin él, dos tokens del mismo usuario emitidos en el mismo
+// segundo salían idénticos y el segundo chocaba con el índice único de
+// refresh_tokens (401 «Refresh token invalido» y vuelta al login).
 const generarRefreshToken = (payload) =>
   jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    jwtid: crypto.randomUUID(),
   })
 
 const calcularFechaExpiracionRefresh = () => {
@@ -20,6 +25,12 @@ const calcularFechaExpiracionRefresh = () => {
   )
   return expiracion
 }
+
+// En la BD solo va la huella SHA-256 del refresh token: si alguien lee la
+// tabla (backup, consulta), no obtiene sesiones utilizables. Toda búsqueda
+// por token usa esta misma huella.
+const huellaRefreshToken = (token) =>
+  crypto.createHash('sha256').update(String(token)).digest('hex')
 
 const guardarRefreshToken = async ({
   token,
@@ -31,7 +42,7 @@ const guardarRefreshToken = async ({
 }) => {
   await RefreshToken.create(
     {
-      token,
+      token: huellaRefreshToken(token),
       expiracion: calcularFechaExpiracionRefresh(),
       clinicaId: clinicaId || null,
       usuarioId: usuarioId || null,
@@ -42,4 +53,4 @@ const guardarRefreshToken = async ({
   )
 }
 
-module.exports = { generarAccessToken, generarRefreshToken, guardarRefreshToken }
+module.exports = { generarAccessToken, generarRefreshToken, guardarRefreshToken, huellaRefreshToken }
