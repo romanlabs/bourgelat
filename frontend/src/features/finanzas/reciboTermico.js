@@ -19,10 +19,22 @@ export const formatDateTime = (value) => {
   }
 }
 
+// La tirilla se escribe como HTML en un iframe del mismo origen: todo texto que
+// venga de datos (producto, cliente, clínica) se escapa para que un nombre con
+// etiquetas no se ejecute al imprimir.
+export const escaparHtml = (valor) =>
+  String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
 export const buildThermalReceiptHtml = ({ factura, clinica }) => {
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Bourgelat'
-  const identificacion = clinica?.nit ? `NIT ${clinica.nit}` : ''
-  const ubicacion = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
+  const nombreClinica = escaparHtml(clinica?.nombreComercial || clinica?.nombre || 'Bourgelat')
+  const identificacion = clinica?.nit ? `NIT ${escaparHtml(clinica.nit)}` : ''
+  const ubicacion = escaparHtml([clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', '))
+  const numero = escaparHtml(factura?.numero || '')
   const descuento = Number(factura?.descuento || 0)
   const anulada = factura?.estado === 'anulada'
   const lineas = (factura?.items || [])
@@ -32,7 +44,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
       const subtotal = formatCurrency(item.subtotal || 0)
       return `
         <div class="item">
-          <div class="item-name">${item.descripcion || 'Concepto'}</div>
+          <div class="item-name">${escaparHtml(item.descripcion || 'Concepto')}</div>
           <div class="row"><span class="muted">${cantidad} x ${unitario}</span><span class="num">${subtotal}</span></div>
         </div>
       `
@@ -44,7 +56,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
     <html lang="es">
       <head>
         <meta charset="utf-8" />
-        <title>Tirilla ${factura?.numero || ''}</title>
+        <title>Tirilla ${numero}</title>
         <style>
           @page { size: 80mm auto; margin: 4mm; }
           body {
@@ -100,12 +112,12 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
         </div>
         <div class="divider"></div>
         ${anulada ? '<div class="stamp">ANULADA</div>' : ''}
-        <div class="center doc-number">FACTURA ${factura?.numero || '-'}</div>
+        <div class="center doc-number">FACTURA ${numero || '-'}</div>
         <div class="section">
           <div class="row"><span class="muted">Fecha</span><span>${formatDateTime(factura?.createdAt || factura?.fecha)}</span></div>
-          <div class="row"><span class="muted">Cliente</span><span>${factura?.propietario?.nombre || 'Consumidor final'}</span></div>
-          <div class="row"><span class="muted">Pago</span><span>${PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago || '-'}</span></div>
-          <div class="row"><span class="muted">Atendio</span><span>${factura?.usuario?.nombre || '-'}</span></div>
+          <div class="row"><span class="muted">Cliente</span><span>${escaparHtml(factura?.propietario?.nombre || 'Consumidor final')}</span></div>
+          <div class="row"><span class="muted">Pago</span><span>${escaparHtml(PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago || '-')}</span></div>
+          <div class="row"><span class="muted">Atendio</span><span>${escaparHtml(factura?.usuario?.nombre || '-')}</span></div>
         </div>
         <div class="divider"></div>
         <div class="section">
@@ -117,7 +129,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
           <div class="total-row"><span>TOTAL</span><span class="amount num">${formatCurrency(factura?.total || 0)}</span></div>
         </div>
         ${factura?.estadoElectronico === 'validada' && factura?.cufe
-          ? `<div class="section"><div class="muted" style="word-break: break-all; font-size: 10px;">CUFE: ${factura.cufe}</div></div>`
+          ? `<div class="section"><div class="muted" style="word-break: break-all; font-size: 10px;">CUFE: ${escaparHtml(factura.cufe)}</div></div>`
           : ''}
         <div class="footer">
           <div>Gracias por confiar en nosotros</div>

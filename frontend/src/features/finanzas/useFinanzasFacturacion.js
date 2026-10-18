@@ -6,6 +6,7 @@ import { invalidarDominios } from '@/lib/queryKeys'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { serviciosApi } from '@/features/servicios/serviciosApi'
 import { finanzasApi } from './finanzasApi'
+import { mensajeDeError } from '@/lib/errores'
 
 const createBlankInvoiceItem = () => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -25,8 +26,7 @@ const toAmount = (value) => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
+const getErrorMessage = mensajeDeError
 
 const buildInitialForm = () => ({
   propietarioId: '',
@@ -119,8 +119,9 @@ export function useFinanzasFacturacion({
       setOwnerSearch('')
       setProductSearch('')
       setBarcodeInput('')
-      // La venta descuenta stock y suma al turno de caja abierto.
-      invalidarDominios(queryClient, 'facturacion', 'productos', 'caja')
+      // La venta descuenta stock y suma al turno de caja abierto. Si cobró una
+      // consulta o un servicio de estilos, los marca como facturados.
+      invalidarDominios(queryClient, 'facturacion', 'productos', 'caja', 'historias')
 
       if (emisionAutomaticaActiva && data?.factura?.id && data?.factura?.estadoElectronico === 'pendiente') {
         emitirParaAutoEmision.mutate({
@@ -255,11 +256,13 @@ export function useFinanzasFacturacion({
       precioMinimo: toAmount(item.precioMinimo),
     }))
 
-    setInvoiceForm((curr) => ({
-      ...curr,
-      propietarioId: preliquidacion?.propietario?.id || curr.propietarioId,
+    // Reemplaza el carrito: anexar duplicaba los ítems al repetir «Facturar
+    // consulta» y mezclaba la consulta con una venta a medias.
+    setInvoiceForm(() => ({
+      ...buildInitialForm(),
+      propietarioId: preliquidacion?.propietario?.id || '',
       historiaClinicaId: preliquidacion?.historiaClinicaId || '',
-      items: [...curr.items, ...items],
+      items,
     }))
 
     if (preliquidacion?.productosSinStock?.length) {
@@ -276,15 +279,25 @@ export function useFinanzasFacturacion({
    * servicio de peluqueria desde el catalogo. El aviso ayuda a no olvidarlo.
    */
   const loadPreliquidacionEstilo = (preliquidacion) => {
-    setInvoiceForm((curr) => ({
-      ...curr,
-      propietarioId: preliquidacion?.propietario?.id || curr.propietarioId,
+    setInvoiceForm(() => ({
+      ...buildInitialForm(),
+      propietarioId: preliquidacion?.propietario?.id || '',
       registroEstiloId: preliquidacion?.registroEstiloId || '',
     }))
 
     if (preliquidacion?.tipoCorte) {
       toast.info(`Agrega el servicio de estilos al carrito: ${preliquidacion.tipoCorte}.`)
     }
+  }
+
+  // Al cerrar el POS sin vender, un carrito que venía de una consulta o de un
+  // servicio de estilos se descarta: si no, la siguiente venta (aunque fuera
+  // de otra cosa) quedaba ligada a esa consulta y la marcaba como cobrada.
+  const descartarCobroVinculado = () => {
+    if (!invoiceForm.historiaClinicaId && !invoiceForm.registroEstiloId) return
+    setInvoiceForm(buildInitialForm)
+    setSelectedOwnerData(null)
+    setOwnerSearch('')
   }
 
   const handleBarcodeScan = () => {
@@ -391,6 +404,7 @@ export function useFinanzasFacturacion({
     addProductToInvoice,
     loadPreliquidacionHistoria,
     loadPreliquidacionEstilo,
+    descartarCobroVinculado,
     removeInvoiceItem,
     updateInvoiceItem,
   }

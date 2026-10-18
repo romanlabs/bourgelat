@@ -82,6 +82,14 @@ export default function CartSidebar({
           onSelect={selectOwner}
           selectedId={invoiceForm?.propietarioId}
         />
+
+        {invoiceForm?.historiaClinicaId || invoiceForm?.registroEstiloId ? (
+          <p className="mt-2 rounded-md bg-info-soft px-2 py-1 text-[11px] font-medium text-info">
+            {invoiceForm.historiaClinicaId
+              ? 'Cobrando una consulta: al vender queda marcada como facturada.'
+              : 'Cobrando un servicio de estilos: al vender queda marcado como facturado.'}
+          </p>
+        ) : null}
       </div>
 
       {/* ── Items: única zona con scroll ── */}
