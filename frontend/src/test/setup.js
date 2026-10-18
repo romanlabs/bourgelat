@@ -39,7 +39,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // jsdom doesn't implement IntersectionObserver
-global.IntersectionObserver = class {
+globalThis.IntersectionObserver = class {
   constructor() {}
   observe() {}
   unobserve() {}
@@ -47,7 +47,7 @@ global.IntersectionObserver = class {
 }
 
 // jsdom doesn't implement ResizeObserver
-global.ResizeObserver = class {
+globalThis.ResizeObserver = class {
   constructor() {}
   observe() {}
   unobserve() {}
