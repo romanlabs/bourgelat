@@ -11,9 +11,9 @@ export const pacientesApi = {
     return data
   },
 
-  async obtenerMascotas({ buscar, especie, pagina = 1, limite = 8 } = {}) {
+  async obtenerMascotas({ buscar, especie, estado, pagina = 1, limite = 8 } = {}) {
     const { data } = await api.get('/mascotas', {
-      params: cleanParams({ buscar, especie, pagina, limite }),
+      params: cleanParams({ buscar, especie, estado, pagina, limite }),
     })
     return data
   },
@@ -37,6 +37,16 @@ export const pacientesApi = {
 
   async crearMascota(payload) {
     const { data } = await api.post('/mascotas', payload)
+    return data
+  },
+
+  async desactivarMascota(mascotaId) {
+    const { data } = await api.patch(`/mascotas/${mascotaId}/desactivar`)
+    return data
+  },
+
+  async activarMascota(mascotaId) {
+    const { data } = await api.patch(`/mascotas/${mascotaId}/activar`)
     return data
   },
 

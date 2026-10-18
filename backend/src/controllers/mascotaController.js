@@ -86,7 +86,8 @@ const obtenerMascotas = async (req, res) => {
     const { buscar, especie } = req.query;
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 10 });
 
-    const where = tenantWhere(req, { activo: true });
+    // ?estado=inactivas lista las desactivadas (para reactivarlas); por defecto, activas.
+    const where = tenantWhere(req, { activo: req.query.estado !== 'inactivas' });
 
     if (especie) where.especie = especie;
 
@@ -226,10 +227,39 @@ const desactivarMascota = async (req, res) => {
       resultado: 'exitoso',
     });
 
-    res.json({ message: 'Mascota desactivada exitosamente' });
+    res.json({ message: 'Paciente desactivado' });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
 };
 
-module.exports = { crearMascota, subirFotoMascota, obtenerMascotas, obtenerMascota, editarMascota, desactivarMascota };
+// Revierte la desactivación (un paciente desactivado por error o que volvió).
+const activarMascota = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clinicaId } = req.usuario;
+
+    const mascota = await Mascota.findOne({ where: { id, clinicaId } });
+
+    if (!mascota) {
+      return res.status(404).json({ message: 'Mascota no encontrada' });
+    }
+
+    await mascota.update({ activo: true });
+
+    await registrarAuditoria({
+      accion: 'ACTIVAR_MASCOTA',
+      entidad: 'Mascota',
+      entidadId: mascota.id,
+      descripcion: 'Paciente reactivado',
+      req,
+      resultado: 'exitoso',
+    });
+
+    res.json({ message: 'Paciente reactivado' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
+module.exports = { crearMascota, subirFotoMascota, obtenerMascotas, obtenerMascota, editarMascota, desactivarMascota, activarMascota };

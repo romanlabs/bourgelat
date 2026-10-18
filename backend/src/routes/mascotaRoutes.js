@@ -12,6 +12,7 @@ const {
   obtenerMascota,
   editarMascota,
   desactivarMascota,
+  activarMascota,
 } = require('../controllers/mascotaController')
 
 const fotoPerfilValidator = body('fotoPerfil')
@@ -65,6 +66,10 @@ const validarConsultaMascotas = [
     .optional()
     .isIn(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'])
     .withMessage('Especie no valida'),
+  query('estado')
+    .optional()
+    .isIn(['activas', 'inactivas'])
+    .withMessage('Estado no valido'),
   query('pagina')
     .optional()
     .isInt({ min: 1 })
@@ -115,6 +120,14 @@ router.patch(
   verificarRol('admin', 'superadmin'),
   requerirEscritura,
   desactivarMascota
+)
+
+router.patch(
+  '/:id/activar',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  activarMascota
 )
 
 module.exports = router
