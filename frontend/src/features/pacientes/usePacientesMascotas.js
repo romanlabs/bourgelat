@@ -20,6 +20,8 @@ export function usePacientesMascotas({ enabled }) {
 
   const [buscar, setBuscar] = useState(() => (esTabActivo && searchParams.get('buscar')) || '')
   const [especie, setEspecie] = useState('todas')
+  // Solo admin: lista los pacientes desactivados para poder reactivarlos.
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [pagina, setPagina] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingPaciente, setEditingPaciente] = useState(null)
@@ -55,12 +57,18 @@ export function usePacientesMascotas({ enabled }) {
     setPagina(1)
   }
 
+  function cambiarVerDesactivados(valor) {
+    setVerDesactivados(valor)
+    setPagina(1)
+  }
+
   const mascotasQuery = useQuery({
-    queryKey: ['pacientes-mascotas', buscarDiferido, especie, pagina],
+    queryKey: ['pacientes-mascotas', buscarDiferido, especie, pagina, verDesactivados],
     queryFn: () =>
       pacientesApi.obtenerMascotas({
         buscar: buscarDiferido || undefined,
         especie: especie !== 'todas' ? especie : undefined,
+        estado: verDesactivados ? 'inactivas' : undefined,
         pagina,
         limite: 12,
       }),
@@ -108,6 +116,18 @@ export function usePacientesMascotas({ enabled }) {
       invalidarMascotas()
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el paciente.')),
+  })
+
+  // Desactivar oculta al paciente de listas y selectores (fallecido, duplicado);
+  // su historia se conserva y se puede reactivar.
+  const cambiarEstadoMascotaMutation = useMutation({
+    mutationFn: ({ mascotaId, activar }) =>
+      activar ? pacientesApi.activarMascota(mascotaId) : pacientesApi.desactivarMascota(mascotaId),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Paciente actualizado')
+      invalidarMascotas()
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cambiar el estado del paciente.')),
   })
 
   // Todos los planes incluyen historias y antecedentes.
@@ -198,6 +218,8 @@ export function usePacientesMascotas({ enabled }) {
     buscar, setBuscar: cambiarBuscar,
     buscarAplicado: buscarDiferido,
     especie, setEspecie: cambiarEspecie,
+    verDesactivados, setVerDesactivados: cambiarVerDesactivados,
+    cambiarEstadoMascotaMutation,
     pagina, setPagina,
     drawerOpen,
     editingPaciente,

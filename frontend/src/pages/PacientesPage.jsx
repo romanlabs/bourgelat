@@ -8,12 +8,15 @@ import {
   PawPrint,
   Pencil,
   Plus,
+  PowerOff,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   UserRound,
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import {
@@ -89,6 +92,10 @@ export default function PacientesPage() {
   // Mismos roles que aceptan el POST y el PUT del backend en cada entidad.
   const puedeGestionarTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
   const puedeGestionarPaciente = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  // Desactivar/reactivar pacientes: solo administración (igual que el backend).
+  const puedeDesactivarPaciente = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const [pacienteADesactivar, setPacienteADesactivar] = useState(null)
+  const [tutorADesactivar, setTutorADesactivar] = useState(null)
   const { propsAccion } = useSoloLectura()
 
   const enabled = rolPermitido && puedeVerModulo
@@ -286,6 +293,17 @@ export default function PacientesPage() {
                     onValueChange={mascotasHook.setEspecie}
                     options={SPECIES_OPTIONS}
                   />
+                  {puedeDesactivarPaciente && (
+                    <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={mascotasHook.verDesactivados}
+                        onChange={(e) => mascotasHook.setVerDesactivados(e.target.checked)}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Ver desactivados
+                    </label>
+                  )}
                 </div>
                 {puedeGestionarPaciente && (
                   <button
@@ -375,6 +393,33 @@ export default function PacientesPage() {
                               </NavCtaLink>
                             </>
                           )}
+                          {puedeDesactivarPaciente && (
+                            <>
+                              <span className="h-3.5 w-px bg-border" aria-hidden="true" />
+                              {mascotasHook.verDesactivados ? (
+                                <NavCtaLink
+                                  size="sm"
+                                  onClick={() =>
+                                    mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
+                                  }
+                                  disabled={mascotasHook.cambiarEstadoMascotaMutation.isPending}
+                                  aria-label={`Reactivar ${row.paciente}`}
+                                >
+                                  <RotateCcw />
+                                  Reactivar
+                                </NavCtaLink>
+                              ) : (
+                                <NavCtaLink
+                                  size="sm"
+                                  onClick={() => setPacienteADesactivar(row)}
+                                  aria-label={`Desactivar ${row.paciente}`}
+                                >
+                                  <PowerOff />
+                                  Desactivar
+                                </NavCtaLink>
+                              )}
+                            </>
+                          )}
                         </div>
                       ),
                     },
@@ -404,14 +449,27 @@ export default function PacientesPage() {
           {activeTab === 'tutores' && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SearchInput
-                  value={tutoresHook.buscar}
-                  onChange={tutoresHook.setBuscar}
-                  placeholder="Nombre, documento o teléfono"
-                  ariaLabel="Buscar tutor"
-                  cargando={tutoresHook.tutoresQuery.isFetching}
-                  className="w-72 max-w-full"
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <SearchInput
+                    value={tutoresHook.buscar}
+                    onChange={tutoresHook.setBuscar}
+                    placeholder="Nombre, documento o teléfono"
+                    ariaLabel="Buscar tutor"
+                    cargando={tutoresHook.tutoresQuery.isFetching}
+                    className="w-72 max-w-full"
+                  />
+                  {puedeDesactivarPaciente && (
+                    <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={tutoresHook.verDesactivados}
+                        onChange={(e) => tutoresHook.setVerDesactivados(e.target.checked)}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Ver desactivados
+                    </label>
+                  )}
+                </div>
                 {puedeGestionarTutor && (
                   <button
                     type="button"
@@ -454,15 +512,44 @@ export default function PacientesPage() {
                           key: 'acciones',
                           label: 'Acciones',
                           render: (row) => (
-                            <NavCtaLink
-                              size="sm"
-                              onClick={() => tutoresHook.openEditDrawer(row.raw)}
-                              aria-label={`Editar ${row.nombre}`}
-                              {...propsAccion}
-                            >
-                              <Pencil />
-                              Editar
-                            </NavCtaLink>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <NavCtaLink
+                                size="sm"
+                                onClick={() => tutoresHook.openEditDrawer(row.raw)}
+                                aria-label={`Editar ${row.nombre}`}
+                                {...propsAccion}
+                              >
+                                <Pencil />
+                                Editar
+                              </NavCtaLink>
+                              {puedeDesactivarPaciente && (
+                                <>
+                                  <span className="h-3.5 w-px bg-border" aria-hidden="true" />
+                                  {tutoresHook.verDesactivados ? (
+                                    <NavCtaLink
+                                      size="sm"
+                                      onClick={() =>
+                                        tutoresHook.cambiarEstadoTutorMutation.mutate({ propietarioId: row.raw.id, activar: true })
+                                      }
+                                      disabled={tutoresHook.cambiarEstadoTutorMutation.isPending}
+                                      aria-label={`Reactivar ${row.nombre}`}
+                                    >
+                                      <RotateCcw />
+                                      Reactivar
+                                    </NavCtaLink>
+                                  ) : (
+                                    <NavCtaLink
+                                      size="sm"
+                                      onClick={() => setTutorADesactivar(row)}
+                                      aria-label={`Desactivar ${row.nombre}`}
+                                    >
+                                      <PowerOff />
+                                      Desactivar
+                                    </NavCtaLink>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           ),
                         }]
                       : []),
@@ -489,6 +576,38 @@ export default function PacientesPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pacienteADesactivar)}
+        onOpenChange={(abierto) => { if (!abierto) setPacienteADesactivar(null) }}
+        title={`¿Desactivar a ${pacienteADesactivar?.paciente || 'este paciente'}?`}
+        description="Dejará de aparecer en las listas y al agendar. Su historia clínica se conserva y puedes reactivarlo desde «Ver desactivados»."
+        confirmLabel="Desactivar"
+        variant="destructive"
+        loading={mascotasHook.cambiarEstadoMascotaMutation.isPending}
+        onConfirm={() =>
+          mascotasHook.cambiarEstadoMascotaMutation.mutate(
+            { mascotaId: pacienteADesactivar.id, activar: false },
+            { onSuccess: () => setPacienteADesactivar(null) }
+          )
+        }
+      />
+
+      <ConfirmDialog
+        open={Boolean(tutorADesactivar)}
+        onOpenChange={(abierto) => { if (!abierto) setTutorADesactivar(null) }}
+        title={`¿Desactivar a ${tutorADesactivar?.nombre || 'este tutor'}?`}
+        description="Dejará de aparecer en las listas y al buscar tutores. Sus pacientes, historias y ventas se conservan, y puedes reactivarlo desde «Ver desactivados»."
+        confirmLabel="Desactivar"
+        variant="destructive"
+        loading={tutoresHook.cambiarEstadoTutorMutation.isPending}
+        onConfirm={() =>
+          tutoresHook.cambiarEstadoTutorMutation.mutate(
+            { propietarioId: tutorADesactivar.raw.id, activar: false },
+            { onSuccess: () => setTutorADesactivar(null) }
+          )
+        }
+      />
 
       {/* Drawer: alta y edicion de paciente */}
       <PacienteDrawer
