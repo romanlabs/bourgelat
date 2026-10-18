@@ -113,6 +113,11 @@ const obtenerConfiguracionFactusEnv = () => {
   }
 }
 
+// Sin límite, una respuesta lenta dejaba la emisión colgada sin saber si la
+// DIAN la recibió. Al vencer, fetch lanza un error sin status: la emisión lo
+// trata como «sin confirmación» y bloquea el reenvío.
+const TIEMPO_MAXIMO_FACTUS_MS = 30000
+
 const solicitarTokenFactus = async ({
   baseUrl,
   clientId,
@@ -121,7 +126,7 @@ const solicitarTokenFactus = async ({
   password,
 }) => {
   if (typeof fetch !== 'function') {
-    throw new Error('La integraciÃ³n con Factus requiere Node.js 18+ para usar fetch nativo')
+    throw new Error('La integración de facturación electrónica requiere Node.js 18+ para usar fetch nativo')
   }
 
   asegurarBaseUrlFactus(baseUrl)
@@ -135,6 +140,7 @@ const solicitarTokenFactus = async ({
   })
 
   const response = await fetch(`${baseUrl}/oauth/token`, {
+    signal: AbortSignal.timeout(TIEMPO_MAXIMO_FACTUS_MS),
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -170,6 +176,7 @@ const solicitarFactus = async ({
   asegurarBaseUrlFactus(baseUrl)
 
   const response = await fetch(`${baseUrl}${path}`, {
+    signal: AbortSignal.timeout(TIEMPO_MAXIMO_FACTUS_MS),
     method,
     headers: crearHeadersFactus(token, headers),
     body,
