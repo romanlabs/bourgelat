@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { cajaApi } from './cajaApi'
+import { mensajeDeError } from '@/lib/errores'
 
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback
+const getErrorMessage = mensajeDeError
 
 export function useCajaTurno({ enabled, esAdmin }) {
   const queryClient = useQueryClient()
