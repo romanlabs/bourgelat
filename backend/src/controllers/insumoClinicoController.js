@@ -341,7 +341,12 @@ const registrarMovimientoClinico = async (req, res) => {
             const cantidadPresentacionNormalizada = normalizarNumero(cantidadPresentacion);
             const precioPresentacionNormalizado = normalizarNumero(precioPresentacion);
             const costoAnteriorTotal = stockAnterior * Number(insumo.precioUnitarioBase);
-            const costoNuevoTotal = costoAnteriorTotal + precioPresentacionNormalizado;
+            // El precio es el de UNA presentación de cantidadPresentacion unidades
+            // base; se cobra en proporción a lo que entra. La pantalla manda una
+            // presentación (cantidad = cantidadPresentacion) y da lo mismo que antes,
+            // pero otra cantidad por API ya no deja el costo mal.
+            const costoCompra = precioPresentacionNormalizado * (cantidadNormalizada / cantidadPresentacionNormalizada);
+            const costoNuevoTotal = costoAnteriorTotal + costoCompra;
             precioUnitarioNuevo = stockNuevo > 0 ? redondear(costoNuevoTotal / stockNuevo) : 0;
             datosCompra = {
               cantidadPresentacion: cantidadPresentacionNormalizada,
