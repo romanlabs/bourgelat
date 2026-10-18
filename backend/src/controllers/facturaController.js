@@ -17,6 +17,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
+const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta } = require('../utils/emisionElectronica')
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
 const AbonoFactura = require('../models/AbonoFactura')
@@ -268,8 +269,15 @@ const validarFacturaParaEmision = (factura) => {
     throw error
   }
 
-  if (factura.estadoElectronico === 'validada' && factura.cufe) {
+  // Validada (con o sin CUFE) o en envío: podría existir ya ante la DIAN.
+  if (factura.estadoElectronico === 'validada') {
     const error = new Error('La factura ya fue validada electronicamente')
+    error.status = 409
+    throw error
+  }
+
+  if (factura.estadoElectronico === 'enviada') {
+    const error = new Error('La factura ya se envió a la DIAN y está pendiente de confirmación. No la reenvíes: contacta a soporte.')
     error.status = 409
     throw error
   }
@@ -1031,11 +1039,15 @@ const obtenerFactura = async (req, res) => {
 }
 
 const emitirFacturaElectronica = async (req, res) => {
+  const { id } = req.params
+  const { clinicaId } = req.usuario
   let payloadFactus = null
+  // reservada: la factura ya pasó a 'enviada'. etapa: hasta dónde llegó el
+  // envío; decide si es seguro reintentar (ver utils/emisionElectronica.js).
+  let reservada = false
+  let etapa = 'antes_de_enviar'
 
   try {
-    const { id } = req.params
-    const { clinicaId } = req.usuario
     const {
       rangoNumeracionId,
       documentoCodigo,
@@ -1066,13 +1078,13 @@ const emitirFacturaElectronica = async (req, res) => {
 
     if (!configuracionEfectiva.activa) {
       return res.status(400).json({
-        message: 'La integracion de Factus no esta activa para esta clinica',
+        message: 'La facturación electrónica no está activa para esta clínica',
       })
     }
 
     if (!configuracionEfectiva.credencialesCompletas) {
       return res.status(400).json({
-        message: 'Faltan credenciales de Factus para emitir electronicamente',
+        message: 'Faltan las credenciales de facturación electrónica de la clínica',
       })
     }
 
@@ -1094,7 +1106,7 @@ const emitirFacturaElectronica = async (req, res) => {
 
     if (!rangoEfectivo) {
       return res.status(400).json({
-        message: 'No hay un rango de numeracion configurado para Factus',
+        message: 'No hay un rango de numeracion configurado para la facturación electrónica',
       })
     }
 
@@ -1115,6 +1127,28 @@ const emitirFacturaElectronica = async (req, res) => {
       fechaVencimientoPago,
     })
 
+    // Reserva atómica: un solo UPDATE condicionado al estado. Si dos clics (o
+    // dos pestañas) llegan a la vez, solo uno la toma; el otro recibe 409 en
+    // vez de emitir una segunda factura ante la DIAN.
+    const [filasReservadas] = await Factura.update(
+      { estadoElectronico: 'enviada', proveedorElectronico: 'factus' },
+      {
+        where: {
+          id,
+          clinicaId,
+          estado: { [Op.in]: ['emitida', 'pagada'] },
+          estadoElectronico: { [Op.in]: ESTADOS_EMITIBLES },
+        },
+      }
+    )
+    if (filasReservadas === 0) {
+      return res.status(409).json({
+        message: 'Esta factura ya se está enviando o ya fue enviada a la DIAN.',
+        code: 'EMISION_EN_CURSO',
+      })
+    }
+    reservada = true
+
     const tokenFactus = await solicitarTokenFactus({
       baseUrl: configuracionEfectiva.baseUrl,
       clientId: configuracionEfectiva.clientId,
@@ -1123,47 +1157,89 @@ const emitirFacturaElectronica = async (req, res) => {
       password: configuracionEfectiva.password,
     })
 
+    etapa = 'envio'
     const respuestaFactus = await validarFacturaFactus({
       baseUrl: configuracionEfectiva.baseUrl,
       token: tokenFactus.access_token,
       payload: payloadFactus,
     })
+    // Desde aquí la DIAN ya respondió: cualquier fallo deja la factura en
+    // revisión ('enviada'), nunca disponible para reemitir.
+    etapa = 'respuesta'
 
     const respuestaLimpia = limpiarRespuestaFactus(respuestaFactus)
     const bill = respuestaLimpia?.data?.bill || {}
+
+    if (!respuestaValidacionCompleta(bill)) {
+      logger.error({ contexto: 'emision-electronica', mensaje: 'Respuesta sin CUFE o número', facturaId: id })
+      try {
+        await factura.update({
+          mensajeElectronico: MENSAJE_RESPUESTA_INCOMPLETA,
+          payloadElectronico: payloadFactus,
+          respuestaElectronica: respuestaLimpia,
+        })
+      } catch (errorGuardado) {
+        logger.error({ contexto: 'emision-electronica', mensaje: 'No se guardó la respuesta incompleta', facturaId: id, error: errorGuardado.message })
+      }
+      return res.status(502).json({ message: MENSAJE_RESPUESTA_INCOMPLETA, code: 'EMISION_SIN_CONFIRMAR' })
+    }
+
+    // Primero lo mínimo que prueba la validación (estado y CUFE). Si esta
+    // escritura falla, la factura queda 'enviada' (bloqueada) y el CUFE queda
+    // en el log para conciliarla a mano: nunca se reemite.
+    try {
+      await factura.update({
+        estadoElectronico: 'validada',
+        documentoElectronico: documentoEfectivo,
+        rangoNumeracionId: rangoEfectivo,
+        referenciaExterna: limpiarTexto(bill.id || bill.number) || null,
+        cufe: limpiarTexto(bill.cufe),
+        fechaEnvioElectronico: parsearFechaFactus(bill.created_at) || new Date(),
+        fechaValidacionElectronica: parsearFechaFactus(bill.validated) || new Date(),
+      })
+    } catch (errorGuardado) {
+      logger.error({
+        contexto: 'emision-electronica',
+        mensaje: 'La DIAN validó la factura pero no se pudo guardar localmente',
+        facturaId: id,
+        numeroDian: bill.number,
+        cufe: bill.cufe,
+        error: errorGuardado.message,
+      })
+      return res.status(500).json({
+        message: 'La DIAN aceptó la factura, pero no pudimos guardar la confirmación. No la reenvíes: contacta a soporte.',
+        code: 'EMISION_SIN_GUARDAR',
+      })
+    }
+
     const tieneErroresFactus = Boolean(bill.errors && Object.keys(bill.errors).length > 0)
     const mensajeElectronico = [
       extraerMensajeFactus(respuestaLimpia),
       tieneErroresFactus ? `Advertencias DIAN: ${Object.values(bill.errors).join(' | ')}` : '',
     ].filter(Boolean).join(' | ')
 
-    await factura.update({
-      proveedorElectronico: 'factus',
-      estadoElectronico: 'validada',
-      documentoElectronico: documentoEfectivo,
-      rangoNumeracionId: rangoEfectivo,
-      referenciaExterna: limpiarTexto(bill.id || bill.number || factura.numero) || null,
-      cufe: limpiarTexto(bill.cufe) || null,
-      fechaEnvioElectronico: parsearFechaFactus(bill.created_at) || new Date(),
-      fechaValidacionElectronica: parsearFechaFactus(bill.validated) || new Date(),
-      mensajeElectronico: mensajeElectronico || 'Factura validada electronicamente',
-      payloadElectronico: payloadFactus,
-      respuestaElectronica: respuestaLimpia,
-    })
-
-    if (integracion) {
-      await integracion.update({
-        ultimoChequeo: new Date(),
-        ultimoEstadoChequeo: 'exitoso',
-        ultimoMensajeChequeo: `Factura ${factura.numero} emitida y validada en Factus`,
+    try {
+      await factura.update({
+        mensajeElectronico: mensajeElectronico || 'Factura validada electronicamente',
+        payloadElectronico: payloadFactus,
+        respuestaElectronica: respuestaLimpia,
       })
+      if (integracion) {
+        await integracion.update({
+          ultimoChequeo: new Date(),
+          ultimoEstadoChequeo: 'exitoso',
+          ultimoMensajeChequeo: `Factura ${factura.numero} emitida y validada ante la DIAN`,
+        })
+      }
+    } catch (errorGuardado) {
+      logger.error({ contexto: 'emision-electronica', mensaje: 'Factura validada; falló guardar el detalle', facturaId: id, error: errorGuardado.message })
     }
 
     await registrarAuditoria({
       accion: 'EMITIR_FACTURA_ELECTRONICA',
       entidad: 'Factura',
       entidadId: factura.id,
-      descripcion: `Factura ${factura.numero} validada electronicamente en Factus`,
+      descripcion: `Factura ${factura.numero} validada electronicamente ante la DIAN`,
       datosAnteriores: {
         estadoElectronico: factura.estadoElectronico,
       },
@@ -1176,10 +1252,15 @@ const emitirFacturaElectronica = async (req, res) => {
       resultado: 'exitoso',
     })
 
-    const facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+    let facturaActualizada
+    try {
+      facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
+    } catch {
+      facturaActualizada = factura.toJSON()
+    }
 
     res.json({
-      message: 'Factura emitida electronicamente en Factus',
+      message: 'Factura emitida electrónicamente ante la DIAN',
       factura: facturaActualizada,
       factus: {
         id: bill.id || null,
@@ -1191,42 +1272,43 @@ const emitirFacturaElectronica = async (req, res) => {
       },
     })
   } catch (error) {
-    const status = error.status || 400
+    // Sin reserva el error es de una validación local: no se toca la factura
+    // (antes un 409 «ya validada» la pasaba a 'error' y habilitaba reemitir).
+    if (!reservada) {
+      const status = [400, 404, 409, 422].includes(error.status) ? error.status : 400
+      return res.status(status).json({ message: error.message })
+    }
+
+    const fallo = etapa === 'respuesta'
+      ? resolverFalloEmision({ etapa: 'envio', error: {} })
+      : resolverFalloEmision({ etapa, error })
 
     try {
-      if (req.params?.id && req.usuario?.clinicaId) {
-        const factura = await Factura.findOne({
-          where: { id: req.params.id, clinicaId: req.usuario.clinicaId },
+      const factura = await Factura.findOne({ where: { id, clinicaId } })
+      if (factura && factura.estadoElectronico === 'enviada') {
+        await factura.update({
+          estadoElectronico: fallo.estadoElectronico,
+          mensajeElectronico: fallo.mensaje,
+          payloadElectronico: payloadFactus,
+          respuestaElectronica: limpiarRespuestaFactus(error.payload) || null,
         })
-
-        if (factura) {
-          await factura.update({
-            proveedorElectronico: 'factus',
-            estadoElectronico: status === 422 ? 'rechazada' : 'error',
-            mensajeElectronico: error.message,
-            payloadElectronico: payloadFactus,
-            respuestaElectronica: limpiarRespuestaFactus(error.payload) || null,
-          })
-        }
       }
-    } catch {
-      // Evitar que falle la respuesta principal si no se puede guardar el estado local
+    } catch (errorGuardado) {
+      logger.error({ contexto: 'emision-electronica', mensaje: 'No se guardó el estado del fallo', facturaId: id, error: errorGuardado.message })
     }
+
+    logger.error({ contexto: 'emision-electronica', facturaId: id, etapa, statusProveedor: error.status || null, mensaje: error.message })
 
     await registrarAuditoria({
       accion: 'EMITIR_FACTURA_ELECTRONICA',
       entidad: 'Factura',
-      entidadId: req.params?.id,
-      descripcion: `Fallo al emitir factura electronica: ${error.message}`,
+      entidadId: id,
+      descripcion: `Fallo al emitir factura electronica (${etapa}): ${error.message}`,
       req,
       resultado: 'fallido',
     })
 
-    res.status(status).json({
-      message: 'No fue posible emitir la factura electronica',
-      error: error.message,
-      payload: error.payload || null,
-    })
+    res.status(fallo.httpStatus).json({ message: fallo.mensaje, code: 'EMISION_FALLIDA' })
   }
 }
 
@@ -1544,7 +1626,15 @@ const anularFactura = async (req, res) => {
       return res.status(400).json({ message: 'La factura ya esta anulada' })
     }
 
-    if (factura.estadoElectronico === 'validada' && factura.cufe) {
+    // Una factura en envío también podría existir ante la DIAN.
+    if (factura.estadoElectronico === 'enviada') {
+      await transaction.rollback()
+      return res.status(409).json({
+        message: 'La factura se está enviando a la DIAN o quedó pendiente de confirmación. No se puede anular hasta confirmarla con soporte.',
+      })
+    }
+
+    if (factura.estadoElectronico === 'validada') {
       await transaction.rollback()
       return res.status(409).json({
         message:
