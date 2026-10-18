@@ -27,7 +27,7 @@ export default function TerminosPage() {
     >
       <LegalHeader version={version} vigencia={vigencia} />
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <LegalSection numero={1} titulo="Aceptación y partes">
           <p className={legalP}>
             Estos términos regulan el uso de Bourgelat, una plataforma de software para la gestión de clínicas

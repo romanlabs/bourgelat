@@ -404,13 +404,13 @@ export default function InventarioPage() {
           )}
 
           {/* Navegación de tabs — solo movil, en escritorio vive en la barra superior */}
-          <div className="flex gap-0 border-b border-border sm:hidden">
+          <div className="flex gap-0 overflow-x-auto border-b border-border sm:hidden">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => handleTabClick(tab.id)}
-                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'

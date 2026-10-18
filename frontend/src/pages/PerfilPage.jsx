@@ -145,6 +145,7 @@ function CardIdentidad({ usuario }) {
               onClick={() => fileInputRef.current?.click()}
               disabled={subiendoFoto}
               title="Cambiar foto"
+              aria-label="Cambiar foto de perfil"
               className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
             >
               <Camera className="h-4 w-4" />
@@ -277,6 +278,7 @@ function CardSeguridad({ usuario }) {
                 <button
                   type="button"
                   onClick={() => setVerActual((v) => !v)}
+                  aria-label={verActual ? 'Ocultar contraseña actual' : 'Mostrar contraseña actual'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {verActual ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -298,6 +300,7 @@ function CardSeguridad({ usuario }) {
                 <button
                   type="button"
                   onClick={() => setVerNueva((v) => !v)}
+                  aria-label={verNueva ? 'Ocultar contraseña nueva' : 'Mostrar contraseña nueva'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {verNueva ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

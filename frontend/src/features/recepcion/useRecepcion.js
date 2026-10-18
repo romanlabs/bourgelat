@@ -150,7 +150,7 @@ export function useRecepcion({ fecha, habilitado = true }) {
 
   const mascotasQuery = useQuery({
     queryKey: ['agenda-mascotas-base'],
-    queryFn: () => pacientesApi.obtenerMascotas({ pagina: 1, limite: 200 }),
+    queryFn: () => pacientesApi.obtenerMascotas({ pagina: 1, limite: 100 }),
     enabled: habilitado,
     placeholderData: (previousData) => previousData,
   })

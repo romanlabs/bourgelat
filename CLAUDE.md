@@ -236,7 +236,7 @@ docker compose up
 ```
 
 Variables de entorno:
-- `frontend/.env` → `VITE_API_URL=http://localhost:3000`
+- `frontend/.env` → `VITE_API_URL=http://localhost:3000/api`
 - `backend/.env` → copiar de `.env.production.example`
 
 ---
