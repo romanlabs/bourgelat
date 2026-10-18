@@ -588,6 +588,15 @@ const crearFactura = async (req, res) => {
         })
       }
 
+      // Cada referencia debe ir con su tipo: un productoId sin tipo 'producto'
+      // se guardaba como servicio sin validar la clínica ni descontar stock.
+      if ((item.productoId && item.tipo !== 'producto') || (item.servicioClinicoId && item.tipo !== 'servicio')) {
+        await transaction.rollback()
+        return res.status(400).json({
+          message: `El item "${limpiarTexto(item.descripcion)}" tiene un tipo que no corresponde a su producto o servicio`,
+        })
+      }
+
       let producto = null
       let insumosConsumo = null
       if (item.tipo === 'servicio' && item.servicioClinicoId) {
@@ -649,6 +658,10 @@ const crearFactura = async (req, res) => {
         if (!producto) {
           await transaction.rollback()
           return res.status(404).json({ message: `Producto no encontrado: ${item.descripcion}` })
+        }
+        if (producto.activo === false) {
+          await transaction.rollback()
+          return res.status(400).json({ message: `"${producto.nombre}" está desactivado y no se puede vender` })
         }
         productosBloqueados.set(producto.id, producto)
 
