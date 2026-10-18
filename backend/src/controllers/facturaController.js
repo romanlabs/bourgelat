@@ -16,6 +16,8 @@ const CajaTurno = require('../models/CajaTurno')
 const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
+const { leerDescuento } = require('../utils/descuentoVenta')
+const logger = require('../utils/logger')
 const AbonoFactura = require('../models/AbonoFactura')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
@@ -423,7 +425,6 @@ const crearFactura = async (req, res) => {
       metodoPago,
       observaciones,
       descuentoGeneral,
-      usuarioId,
       emitirElectronica = false,
       documentoElectronico = '01',
       rangoNumeracionId = null,
@@ -557,19 +558,25 @@ const crearFactura = async (req, res) => {
     for (const item of items) {
       const cantidad = convertirANumero(item.cantidad, NaN)
       const precioUnitario = convertirANumero(item.precioUnitario, NaN)
-      const descuentoItem = convertirANumero(item.descuento, 0)
 
       if (
         !limpiarTexto(item.descripcion) ||
         !Number.isFinite(cantidad) ||
         cantidad <= 0 ||
         !Number.isFinite(precioUnitario) ||
-        precioUnitario < 0 ||
-        descuentoItem < 0
+        precioUnitario < 0
       ) {
         await transaction.rollback()
         return res.status(400).json({
-          message: 'Cada item debe tener descripcion, cantidad valida, precio no negativo y descuento valido',
+          message: 'Cada item debe tener descripcion, cantidad valida y precio no negativo',
+        })
+      }
+
+      const descuentoItem = leerDescuento(item.descuento, precioUnitario * cantidad)
+      if (descuentoItem === null) {
+        await transaction.rollback()
+        return res.status(400).json({
+          message: `El descuento de "${limpiarTexto(item.descripcion)}" debe ser un número entre 0 y el valor del item`,
         })
       }
 
@@ -669,7 +676,13 @@ const crearFactura = async (req, res) => {
       })
     }
 
-    const descuento = Math.min(convertirANumero(descuentoGeneral, 0), subtotal)
+    const descuento = leerDescuento(descuentoGeneral, subtotal)
+    if (descuento === null) {
+      await transaction.rollback()
+      return res.status(400).json({
+        message: 'El descuento general debe ser un número entre 0 y el subtotal de la venta',
+      })
+    }
     const baseGravable = subtotal - descuento
     const impuesto = 0
     const total = baseGravable + impuesto
@@ -703,7 +716,8 @@ const crearFactura = async (req, res) => {
       documentoElectronico: emitirElectronica ? documentoElectronico : null,
       rangoNumeracionId: emitirElectronica ? rangoNumeracionId : null,
       propietarioId: propietarioId || null,
-      usuarioId: usuarioId || req.usuario.id,
+      // Siempre quien está logueado: el body no puede atribuir la venta a otro.
+      usuarioId: req.usuario.id,
       clinicaId,
       cajaTurnoId: turnoActivo.id,
     }, { transaction })
@@ -789,7 +803,16 @@ const crearFactura = async (req, res) => {
 
     await transaction.commit()
 
-    const facturaCompleta = await obtenerFacturaDetallada(factura.id, clinicaId)
+    // La venta ya quedó guardada: si falla la relectura, se responde 201 con
+    // lo básico. Un 500 aquí hacía que la cajera reintentara y duplicara la
+    // venta, el descuento de stock y el efectivo de caja.
+    let facturaCompleta
+    try {
+      facturaCompleta = await obtenerFacturaDetallada(factura.id, clinicaId)
+    } catch (error) {
+      logger.error({ contexto: 'crear-factura', mensaje: 'Venta guardada pero falló la relectura', facturaId: factura.id, error: error.message })
+      facturaCompleta = factura.toJSON()
+    }
 
     await registrarAuditoria({
       accion: 'CREAR_FACTURA',
@@ -806,7 +829,9 @@ const crearFactura = async (req, res) => {
       factura: facturaCompleta,
     })
   } catch (error) {
-    await transaction.rollback()
+    // Si el error llega después del commit, la operación ya quedó guardada:
+    // rollback sobre una transacción cerrada lanzaría otra excepción.
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -1291,7 +1316,9 @@ const registrarAbono = async (req, res) => {
       estado: nuevoEstado,
     })
   } catch (error) {
-    await transaction.rollback()
+    // Si el error llega después del commit, la operación ya quedó guardada:
+    // rollback sobre una transacción cerrada lanzaría otra excepción.
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
@@ -1572,7 +1599,9 @@ const anularFactura = async (req, res) => {
 
     res.json({ message: 'Factura anulada exitosamente' })
   } catch (error) {
-    await transaction.rollback()
+    // Si el error llega después del commit, la operación ya quedó guardada:
+    // rollback sobre una transacción cerrada lanzaría otra excepción.
+    if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
   }
 }
