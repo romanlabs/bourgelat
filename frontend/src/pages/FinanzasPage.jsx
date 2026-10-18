@@ -247,14 +247,14 @@ export default function FinanzasPage() {
         />
       ) : (
         <div className="space-y-5">
-          <div className="flex items-center justify-between border-b border-border">
-            <div className="flex gap-0">
+          <div className="flex items-center justify-between gap-2 border-b border-border">
+            <div className="flex min-w-0 gap-0 overflow-x-auto">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                  className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold transition-colors sm:px-5 ${
                     activeTab === tab.id
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
@@ -267,7 +267,7 @@ export default function FinanzasPage() {
             <button
               type="button"
               onClick={abrirPos}
-              className="mr-1 inline-flex items-center gap-1.5 border border-primary bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="mr-1 inline-flex shrink-0 items-center gap-1.5 border border-primary bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               <Plus className="h-3.5 w-3.5" />
               Nueva venta

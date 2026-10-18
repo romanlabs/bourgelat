@@ -145,16 +145,19 @@ export default function PacienteDrawer({
       toast.error('Selecciona un tutor antes de registrar el paciente.')
       return
     }
+    // Al editar, un campo vaciado se manda como null para que se borre; con
+    // undefined el backend lo ignoraba y volvía el valor viejo.
+    const vacio = modoEdicion ? null : undefined
     const payload = {
       propietarioId: selectedOwner?.id,
       nombre: formData.nombre.trim(),
       especie: formData.especie,
-      raza: formData.raza?.trim() || undefined,
+      raza: formData.raza?.trim() || vacio,
       sexo: formData.sexo,
-      fechaNacimiento: formData.fechaNacimiento || undefined,
-      peso: formData.peso ? Number(formData.peso) : undefined,
-      color: formData.color?.trim() || undefined,
-      observaciones: formData.observaciones?.trim() || undefined,
+      fechaNacimiento: formData.fechaNacimiento || vacio,
+      peso: formData.peso ? Number(formData.peso) : vacio,
+      color: formData.color?.trim() || vacio,
+      observaciones: formData.observaciones?.trim() || vacio,
       esterilizado: formData.esterilizado,
     }
     onSubmit({
