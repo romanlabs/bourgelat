@@ -18,10 +18,20 @@ export const pacientesApi = {
     return data
   },
 
-  async obtenerPropietarios({ buscar, pagina = 1, limite = 8 } = {}) {
+  async obtenerPropietarios({ buscar, estado, pagina = 1, limite = 8 } = {}) {
     const { data } = await api.get('/propietarios', {
-      params: cleanParams({ buscar, pagina, limite }),
+      params: cleanParams({ buscar, estado, pagina, limite }),
     })
+    return data
+  },
+
+  async desactivarPropietario(propietarioId) {
+    const { data } = await api.patch(`/propietarios/${propietarioId}/desactivar`)
+    return data
+  },
+
+  async activarPropietario(propietarioId) {
+    const { data } = await api.patch(`/propietarios/${propietarioId}/activar`)
     return data
   },
 
