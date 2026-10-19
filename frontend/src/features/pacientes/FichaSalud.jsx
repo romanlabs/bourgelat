@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { chartColors } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { hoyLocal } from '@/lib/fecha'
@@ -65,9 +65,10 @@ export function PesoEnElTiempo({ historias }) {
         <p className="shrink-0 text-lg font-semibold tabular-nums text-foreground">{formatoNumero(ultimo.valor, 2)} kg</p>
       </div>
       {pesos.length > 1 ? (
-        <div className="h-36" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
+        <div className="h-40 rounded-xl bg-muted px-1 pb-2 pt-1" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
           <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
             <LineChart data={datos} margin={{ top: 22, right: 14, bottom: 0, left: 14 }}>
+              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 4" />
               <XAxis
                 dataKey="etiqueta"
                 tickLine={false}
