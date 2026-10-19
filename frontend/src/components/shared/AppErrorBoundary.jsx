@@ -44,7 +44,7 @@ export default class AppErrorBoundary extends Component {
             </div>
             <div>
               <p className="text-lg font-semibold tracking-[-0.02em]">Bourgelat</p>
-              <p className="mt-1 hidden text-xs uppercase tracking-[0.22em] text-white/48 sm:block">
+              <p className="mt-1 hidden text-[13px] tracking-[0.22em] text-white/48 sm:block">
                 continuidad operativa para clínicas veterinarias
               </p>
             </div>
@@ -53,7 +53,7 @@ export default class AppErrorBoundary extends Component {
 
         <div className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-[34px] border border-papel-300 bg-papel-50 shadow-[0_30px_100px_rgba(7,20,32,0.18)]">
           <div className="border-b border-papel-300 bg-[linear-gradient(135deg,theme(colors.tinta.900),theme(colors.tinta.800))] px-6 py-8 text-white sm:px-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-caramel-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[13px] font-semibold text-caramel-300">
               <AlertTriangle className="h-3.5 w-3.5" />
               Estado de la pantalla
             </div>
@@ -70,7 +70,7 @@ export default class AppErrorBoundary extends Component {
 
           <div className="px-6 py-8 sm:px-8">
             <div className="rounded-[28px] border border-papel-300 bg-papel-100 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-tinta-500">
+              <p className="text-[13px] font-semibold text-tinta-500">
                 Información para soporte
               </p>
               <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-sm leading-7 text-tinta-700">

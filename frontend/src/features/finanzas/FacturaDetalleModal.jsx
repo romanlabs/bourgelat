@@ -56,38 +56,37 @@ export default function FacturaDetalleModal({ historialHook }) {
         <DialogHeader>
           <DialogTitle>Detalle de factura</DialogTitle>
           <DialogDescription>
-            Desde aquí revisas la venta, imprimes la tirilla y solo intervienes la emisión
-            electrónica si hubo pendiente o error.
+            Revisa la venta, imprime la tirilla o registra el pago.
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-4 max-h-[75vh] overflow-y-auto pr-1">
           {facturaDetalleQuery.isError ? (
-            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+            <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
               No fue posible cargar el detalle de la factura seleccionada.
             </div>
           ) : facturaDetalleQuery.isLoading || facturaDetalleQuery.isPlaceholderData ? (
             <div className="space-y-3">
               {[0, 1, 2].map((item) => (
-                <div key={item} className="h-16 animate-pulse border border-border bg-muted" />
+                <div key={item} className="h-16 animate-pulse rounded-xl bg-muted" />
               ))}
             </div>
           ) : facturaSeleccionada ? (
             <div className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-semibold text-foreground">
+                  <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
                     {facturaSeleccionada.numero}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {facturaSeleccionada.propietario?.nombre || 'Sin propietario'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handlePrintReceipt}
-                    className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+                    className="inline-flex h-10 items-center gap-2 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Printer className="h-4 w-4" />
                     Imprimir tirilla
@@ -102,34 +101,34 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               </div>
 
-              <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="flex items-baseline justify-between gap-3 rounded-xl bg-muted px-5 py-4">
+                <p className="text-[15px] font-semibold text-foreground">
                   Total facturado
                 </p>
-                <p className="text-2xl font-bold tabular-nums text-foreground">
+                <p className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
                   {formatCurrency(facturaSeleccionada.total)}
                 </p>
               </div>
 
-              <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
-                <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="rounded-xl bg-muted px-4 py-3">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Fecha
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-foreground">
                     {formatLongDate(facturaSeleccionada.fecha)}
                   </dd>
                 </div>
-                <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="rounded-xl bg-muted px-4 py-3">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Pago
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-foreground">
                     {PAYMENT_METHOD_LABELS[facturaSeleccionada.metodoPago] || 'Sin definir'}
                   </dd>
                 </div>
-                <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="rounded-xl bg-muted px-4 py-3">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Responsable
                   </dt>
                   <dd className="mt-1 truncate text-sm font-semibold text-foreground">
@@ -138,22 +137,22 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               </dl>
 
-              <div className="overflow-x-auto border border-border">
-                <table className="min-w-full divide-y divide-border text-sm">
-                  <thead className="bg-muted">
+              <div className="overflow-x-auto rounded-xl bg-muted/50">
+                <table className="min-w-full text-sm">
+                  <thead>
                     <tr>
-                      <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-left text-[13px] font-medium text-muted-foreground">
                         Concepto
                       </th>
-                      <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-right text-[13px] font-medium text-muted-foreground">
                         Cantidad
                       </th>
-                      <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-right text-[13px] font-medium text-muted-foreground">
                         Subtotal
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-border/60">
                     {(facturaSeleccionada.items || []).map((item) => (
                       <tr key={item.id}>
                         <td className="px-3 py-3 text-foreground">{item.descripcion}</td>
@@ -167,11 +166,11 @@ export default function FacturaDetalleModal({ historialHook }) {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t border-border bg-muted">
-                      <td className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" colSpan={2}>
+                    <tr className="border-t border-border">
+                      <td className="px-3 py-3 text-[15px] font-semibold text-foreground" colSpan={2}>
                         Total
                       </td>
-                      <td className="px-3 py-3 text-right font-bold tabular-nums text-foreground">
+                      <td className="px-3 py-3 text-right text-lg font-semibold tabular-nums text-foreground">
                         {formatCurrency(facturaSeleccionada.total)}
                       </td>
                     </tr>
@@ -180,59 +179,59 @@ export default function FacturaDetalleModal({ historialHook }) {
               </div>
 
               {facturaSeleccionada.observaciones ? (
-                <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
                   {facturaSeleccionada.observaciones}
                 </div>
               ) : null}
 
-              <div className="space-y-3 border-t border-border pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="space-y-3 border-t border-border/60 pt-5">
+                <p className="text-[15px] font-semibold text-foreground">
                   Estado electrónico
                 </p>
-                <div className="grid gap-3">
-                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <div className="grid gap-2">
+                  <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
                     CUFE:{' '}
                     <span className="font-semibold text-foreground">
                       {facturaSeleccionada.cufe || 'Pendiente'}
                     </span>
                   </div>
-                  <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
+                  <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
                     Validada en:{' '}
                     <span className="font-semibold text-foreground">
                       {facturaSeleccionada.fechaValidacionElectronica
                         ? formatDateTime(facturaSeleccionada.fechaValidacionElectronica)
-                        : 'Sin validacion'}
+                        : 'Sin validación'}
                     </span>
                   </div>
                   {facturaSeleccionada.mensajeElectronico ? (
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                    <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
                       {facturaSeleccionada.mensajeElectronico}
                     </div>
                   ) : null}
                   {facturaSeleccionada.motivoAnulacion ? (
-                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-                      Motivo de anulacion: {facturaSeleccionada.motivoAnulacion}
+                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
+                      Motivo de anulación: {facturaSeleccionada.motivoAnulacion}
                     </div>
                   ) : null}
                 </div>
               </div>
 
               {canEmitInvoice ? (
-                <div className="space-y-4 border-t border-border pt-4">
+                <div className="space-y-4 border-t border-border/60 pt-5">
                   <div className="flex items-center gap-2">
                     <SendHorizontal className="h-4 w-4 text-primary" />
                     <p className="text-sm font-semibold text-foreground">
                       Reintentar emisión electrónica
                     </p>
                   </div>
-                  <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                  <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
                     La emisión electrónica normalmente sale automática al crear la factura
                     cuando la clínica tiene esta funcionalidad activa. Este bloque solo
                     sirve para pendientes, rechazos o reintentos controlados.
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         Forma de pago
                       </span>
                       <Select
@@ -251,7 +250,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                       />
                     </label>
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         Vencimiento
                       </span>
                       <input
@@ -264,11 +263,11 @@ export default function FacturaDetalleModal({ historialHook }) {
                           }))
                         }
                         disabled={emisionForm.formaPagoCodigo !== '2'}
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:bg-muted"
+                        className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:bg-muted"
                       />
                     </label>
                   </div>
-                  <label className="flex items-center gap-3 border border-border bg-muted px-4 py-3 text-sm text-foreground">
+                  <label className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={emisionForm.enviarEmail}
@@ -278,7 +277,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                           enviarEmail: event.target.checked,
                         }))
                       }
-                      className="h-4 w-4 border-border text-primary focus:ring-primary"
+                      className="h-5 w-5 accent-primary"
                     />
                     Enviar el correo al tutor al emitir electrónicamente
                   </label>
@@ -286,7 +285,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     type="button"
                     onClick={handleEmitirFactura}
                     disabled={emitirFacturaMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <SendHorizontal className="h-4 w-4" />
                     {emitirFacturaMutation.isPending ? 'Emitiendo...' : 'Reintentar emisión'}
@@ -295,7 +294,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               ) : null}
 
               {canRegisterPayment ? (
-                <div className="space-y-4 border-t border-border pt-4">
+                <div className="space-y-4 border-t border-border/60 pt-5">
                   <div className="flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-primary" />
                     <p className="text-sm font-semibold text-foreground">Registrar pago</p>
@@ -309,8 +308,6 @@ export default function FacturaDetalleModal({ historialHook }) {
                     options={[
                       { value: 'efectivo', label: 'Efectivo' },
                       { value: 'transferencia', label: 'Transferencia' },
-                      { value: 'nequi', label: 'Nequi' },
-                      { value: 'daviplata', label: 'Daviplata' },
                       { value: 'tarjeta_debito', label: 'Tarjeta débito' },
                       { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
                       { value: 'otro', label: 'Otro' },
@@ -320,7 +317,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     type="button"
                     onClick={handleRegistrarPago}
                     disabled={registrarPagoMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-primary bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Wallet className="h-4 w-4" />
                     {registrarPagoMutation.isPending ? 'Registrando...' : 'Marcar como pagada'}
@@ -329,7 +326,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               ) : null}
 
               {canVoidInvoice ? (
-                <div className="space-y-4 border-t border-border pt-4">
+                <div className="space-y-4 border-t border-border/60 pt-5">
                   <div className="flex items-center gap-2">
                     <Ban className="h-4 w-4 text-danger" />
                     <p className="text-sm font-semibold text-foreground">Anular factura</p>
@@ -338,13 +335,13 @@ export default function FacturaDetalleModal({ historialHook }) {
                     value={motivoAnulacion}
                     onChange={(event) => setMotivoAnulacion(event.target.value)}
                     placeholder="Describe el motivo de anulación para auditoría y control interno."
-                    className="min-h-24 w-full border border-border bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-primary"
+                    className="min-h-24 w-full rounded-lg border border-input bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   <button
                     type="button"
                     onClick={handleAnularFactura}
                     disabled={anularFacturaMutation.isPending}
-                    className="inline-flex items-center gap-2 border border-danger/30 bg-danger px-4 py-3 text-sm font-semibold text-white transition hover:bg-danger disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-11 items-center gap-2 rounded-lg bg-danger-soft px-4 text-sm font-semibold text-danger transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Ban className="h-4 w-4" />
                     {anularFacturaMutation.isPending ? 'Anulando...' : 'Anular factura'}
@@ -352,14 +349,14 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : facturaSeleccionada?.estadoElectronico === 'validada' &&
                 facturaSeleccionada?.cufe ? (
-                <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+                <div className="rounded-xl bg-warning-soft px-4 py-4 text-sm leading-6 text-warning">
                   Esta factura ya fue validada electrónicamente. No se puede anular desde
-                  caja: requiere un flujo tributario controlado como nota credito.
+                  caja: requiere una nota crédito.
                 </div>
               ) : null}
             </div>
           ) : (
-            <div className="border border-dashed border-border bg-muted px-4 py-6 text-sm leading-7 text-muted-foreground">
+            <div className="rounded-xl bg-muted px-4 py-6 text-sm leading-6 text-muted-foreground">
               No fue posible abrir el detalle de esta factura.
             </div>
           )}

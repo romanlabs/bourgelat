@@ -17,7 +17,7 @@ export default function SearchInput({
 }) {
   return (
     <div className={`relative ${className}`}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
         type="search"
         value={value}
@@ -25,7 +25,7 @@ export default function SearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel || placeholder}
         maxLength={120}
-        className="h-10 w-full border border-border bg-card pl-10 pr-9 text-sm text-foreground outline-none transition focus:border-primary [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-10 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:appearance-none"
       />
       {cargando ? (
         <Loader2
@@ -37,7 +37,7 @@ export default function SearchInput({
           type="button"
           onClick={() => onChange('')}
           aria-label="Limpiar búsqueda"
-          className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground transition hover:text-foreground"
+          className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>

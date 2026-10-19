@@ -2,13 +2,13 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const sectionCardVariants = cva(
-  'overflow-hidden rounded-2xl border border-border bg-card shadow-panel',
+  'overflow-hidden rounded-2xl bg-card',
   {
     variants: {
       padding: {
         none: '',
         sm:   '[&>[data-slot=body]]:p-4',
-        md:   '[&>[data-slot=body]]:p-5',
+        md:   '[&>[data-slot=body]]:px-6 [&>[data-slot=body]]:pb-6 [&>[data-slot=body]]:pt-4',
         lg:   '[&>[data-slot=body]]:p-6',
       },
     },
@@ -35,13 +35,13 @@ export function SectionCard({ title, description, action, children, padding, cla
       {hasHeader && (
         <div
           data-slot="header"
-          className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-2 px-6 pt-6 pb-1 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
             {title && (
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">
                 {title}
-              </p>
+              </h2>
             )}
             {description && (
               <p className="mt-1 text-small text-muted-foreground">{description}</p>

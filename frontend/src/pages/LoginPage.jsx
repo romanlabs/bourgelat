@@ -23,7 +23,17 @@ const loginSchema = z.object({
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 
 const inputClass =
-  'h-11 w-full rounded-lg border border-input bg-background px-3 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary'
+  'h-12 w-full rounded-lg border border-input bg-card px-4 text-base muy-bajo:h-11 text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
+
+const labelClass = 'mb-2 muy-bajo:mb-1.5 block text-sm font-semibold text-foreground'
+
+const botonPrincipalClass =
+  'h-12 w-full text-base muy-bajo:h-11'
+
+const enlaceClass =
+  'rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+const SELLOS = ['Tus datos cifrados', 'Soporte en español', '30 días de prueba']
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -103,143 +113,189 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-10">
-      <Link
-        to="/"
-        className="group absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-brand-foreground no-underline shadow-sm transition-colors hover:border-brand/50 hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-6 sm:top-6"
+    <div className="flex min-h-[100dvh] bg-background text-foreground lg:h-[100dvh] lg:overflow-hidden">
+      <section
+        aria-label="Bourgelat"
+        className="hidden flex-1 flex-col justify-between gap-8 bg-sidebar p-10 text-sidebar-foreground lg:flex xl:p-14 bajo:xl:p-10 muy-bajo:p-8"
       >
-        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-        Volver al inicio
-      </Link>
+        {/* El logo definitivo está en camino: mientras tanto, el nombre. */}
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-[26px] font-bold tracking-[-0.03em]">Bourgelat</span>
+          <Link
+            to="/"
+            className="group inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/80 no-underline transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
+            Volver al inicio
+          </Link>
+        </div>
 
-      <div className="w-full max-w-[420px] text-center">
-        <Logo className="justify-center" />
-
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-foreground">
-          Ingresa a tu cuenta
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gestiona tu clínica en un solo lugar
-        </p>
-      </div>
-
-      <div className="mt-8 w-full max-w-[420px] text-left">
-        {searchParams.get('error') === 'oauth' ? (
-          <p className="mt-4 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-            No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
+        <div className="flex max-w-[520px] flex-col gap-5">
+          <p className="text-[clamp(40px,4.4vw,64px)] bajo:text-[clamp(36px,3.6vw,52px)] muy-bajo:text-[clamp(32px,3vw,44px)] font-semibold leading-none tracking-[-0.045em]">
+            La clínica entera, en orden.
           </p>
-        ) : null}
+          <p className="text-lg leading-relaxed text-sidebar-foreground/85">
+            Agenda, historias, inventario y caja en un solo lugar, hecho para veterinarias en Colombia.
+          </p>
+        </div>
 
-        {emailPendiente ? (
-          <div className="mt-6 rounded-2xl border border-border bg-card p-6">
-            <CodigoVerificacionPaso
-              email={emailPendiente}
-              onVerificado={sesionVerificada}
-              onVolver={() => {
-                setEmailPendiente(null)
-                setReinicio((n) => n + 1)
-              }}
-            />
-          </div>
-        ) : null}
+        <ul className="flex flex-wrap gap-2.5">
+          {SELLOS.map((sello) => (
+            <li key={sello} className="rounded-lg bg-sidebar-foreground/10 px-3 py-2 text-sm">
+              {sello}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className={`mt-6 space-y-4 ${emailPendiente ? 'hidden' : ''}`}
-          autoComplete="off"
+      <section
+        aria-labelledby="login-titulo"
+        className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-8 pt-20 sm:px-10 lg:py-6"
+      >
+        <Link
+          to="/"
+          className="group absolute left-4 top-4 inline-flex h-10 lg:hidden items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground no-underline transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-6 sm:top-6"
         >
-          <input type="text" name="login-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
-          <input type="password" name="login-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
+          Volver al inicio
+        </Link>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Correo electrónico
-            </label>
-            <input
-              {...emailField}
-              type="email"
-              autoComplete="off"
-              autoCapitalize="none"
-              inputMode="email"
-              spellCheck={false}
-              placeholder="tu@correo.com"
-              className={`${inputClass} ${errors.email ? 'border-danger' : ''}`}
-            />
-            {errors.email ? <p className="mt-1 text-sm text-danger">{errors.email.message}</p> : null}
+        <div className="w-full max-w-[420px]">
+          <Logo className="mb-8 lg:hidden" />
+
+          <div className={emailPendiente ? 'hidden' : ''}>
+            <h1 id="login-titulo" className="text-[40px] bajo:text-[34px] muy-bajo:text-[30px] font-semibold leading-none tracking-[-0.04em] text-foreground">
+              Hola de nuevo
+            </h1>
+            <p className="mt-1.5 text-base text-muted-foreground">Entra con tu cuenta de la clínica</p>
           </div>
 
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Contraseña</label>
-              <Link to="/recuperar-password" className="text-sm font-medium text-primary hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <div className="relative">
-              <input
-                {...passwordField}
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="off"
-                placeholder="Ingresa tu contraseña"
-                className={`${inputClass} pr-10 ${errors.password ? 'border-danger' : ''}`}
+          {searchParams.get('error') === 'oauth' ? (
+            <p role="alert" className="mt-6 rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">
+              No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
+            </p>
+          ) : null}
+
+          {emailPendiente ? (
+            <div className="rounded-2xl bg-card p-6">
+              <CodigoVerificacionPaso
+                email={emailPendiente}
+                onVerificado={sesionVerificada}
+                onVolver={() => {
+                  setEmailPendiente(null)
+                  setReinicio((n) => n + 1)
+                }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
             </div>
-            {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
-          </div>
+          ) : null}
 
-          <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
-
-          <Button
-            type="submit"
-            disabled={isPending || (turnstileHabilitado && !turnstileToken)}
-            className="h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            {isPending ? 'Ingresando...' : 'Ingresar'}
-          </Button>
-        </form>
-
-        {oauthHabilitado && !emailPendiente ? (
-          <div className="mt-5">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">o</span>
-              <div className="h-px flex-1 bg-border" />
+          {oauthHabilitado && !emailPendiente ? (
+            <div className="mt-8 bajo:mt-6 muy-bajo:mt-4">
+              <BotonesSociales contexto="login" />
+              <div className="mt-5 muy-bajo:mt-3 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-[13px] text-muted-foreground">o con tu correo</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
             </div>
-            <BotonesSociales contexto="login" />
-          </div>
-        ) : null}
+          ) : null}
 
-        <p className={`mt-6 text-center text-sm text-muted-foreground ${emailPendiente ? 'hidden' : ''}`}>
-          ¿Primera vez en Bourgelat?{' '}
-          <button
-            type="button"
-            onClick={() => setRegistroAbierto(true)}
-            className="font-semibold text-primary hover:underline"
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className={`${oauthHabilitado ? 'mt-5 muy-bajo:mt-3' : 'mt-8 bajo:mt-6'} space-y-5 bajo:space-y-4 muy-bajo:space-y-3 ${emailPendiente ? 'hidden' : ''}`}
+            autoComplete="off"
           >
-            Crear cuenta
-          </button>
-        </p>
-      </div>
+            <input type="text" name="login-shadow-email" autoComplete="username" className="hidden" tabIndex={-1} />
+            <input type="password" name="login-shadow-password" autoComplete="new-password" className="hidden" tabIndex={-1} />
+
+            <div>
+              <label htmlFor="login-email" className={labelClass}>
+                Correo
+              </label>
+              <input
+                {...emailField}
+                id="login-email"
+                type="email"
+                autoComplete="off"
+                autoCapitalize="none"
+                inputMode="email"
+                spellCheck={false}
+                placeholder="tu@clinica.co"
+                aria-invalid={errors.email ? 'true' : undefined}
+                className={`${inputClass} ${errors.email ? 'border-danger' : ''}`}
+              />
+              {errors.email ? <p className="mt-1.5 text-sm text-danger">{errors.email.message}</p> : null}
+            </div>
+
+            <div>
+              <div className="mb-2 muy-bajo:mb-1.5 flex items-center justify-between gap-3">
+                <label htmlFor="login-password" className="text-sm font-semibold text-foreground">
+                  Contraseña
+                </label>
+                <Link to="/recuperar-password" className={`text-sm ${enlaceClass}`}>
+                  ¿La olvidaste?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  {...passwordField}
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="off"
+                  placeholder="Tu contraseña"
+                  aria-invalid={errors.password ? 'true' : undefined}
+                  className={`${inputClass} pr-12 ${errors.password ? 'border-danger' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                </button>
+              </div>
+              {errors.password ? <p className="mt-1.5 text-sm text-danger">{errors.password.message}</p> : null}
+            </div>
+
+            <TurnstileWidget resetKey={reinicio} onToken={setTurnstileToken} />
+
+            <Button
+              type="submit"
+              disabled={isPending || (turnstileHabilitado && !turnstileToken)}
+              className={botonPrincipalClass}
+            >
+              {isPending ? 'Entrando...' : 'Entrar'}
+            </Button>
+          </form>
+
+          <p className={`mt-6 bajo:mt-4 muy-bajo:mt-3 text-center text-[15px] text-muted-foreground ${emailPendiente ? 'hidden' : ''}`}>
+            ¿Tu clínica aún no usa Bourgelat?{' '}
+            <button type="button" onClick={() => setRegistroAbierto(true)} className={enlaceClass}>
+              Crea una cuenta
+            </button>
+          </p>
+        </div>
+      </section>
 
       <RegistroDialog open={registroAbierto} onOpenChange={handleRegistroOpenChange} />
 
       {tokenOnboardingOauth ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-[380px] rounded-2xl border border-border bg-card p-6 shadow-lg">
-            <h2 className="text-lg font-semibold text-foreground">Un último paso</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 px-4 dark:bg-background/80">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="oauth-ultimo-paso"
+            className="w-full max-w-[420px] rounded-2xl bg-card p-6 shadow-modal"
+          >
+            <h2 id="oauth-ultimo-paso" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+              Un último paso
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               ¿Cómo se llama tu clínica?
             </p>
             <form
-              className="mt-4 space-y-3"
+              className="mt-5 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault()
                 const formulario = new FormData(e.currentTarget)
@@ -255,7 +311,8 @@ export default function LoginPage() {
                 name="nombreClinica"
                 type="text"
                 required
-                placeholder="Clínica Veterinaria Bourgelat"
+                aria-label="Nombre de la clínica"
+                placeholder="Veterinaria San Roque"
                 className={inputClass}
               />
               <ConsentimientoRegistro
@@ -265,7 +322,7 @@ export default function LoginPage() {
                 }}
                 comunicacionesProps={{ name: 'aceptaComunicaciones' }}
               />
-              <Button type="submit" disabled={completandoOauth || !aceptaTerminosOauth} className="h-11 w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button type="submit" disabled={completandoOauth || !aceptaTerminosOauth} className={botonPrincipalClass}>
                 {completandoOauth ? 'Creando cuenta...' : 'Continuar'}
               </Button>
             </form>

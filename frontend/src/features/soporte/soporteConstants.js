@@ -7,27 +7,27 @@ import { es } from 'date-fns/locale'
 export const ESTADOS_TICKET = {
   abierto: {
     label: 'Abierto',
-    tone: 'border-foreground/20 bg-card text-foreground',
+    tone: 'bg-secondary text-secondary-foreground',
     dot: 'bg-foreground',
   },
   en_progreso: {
     label: 'En progreso',
-    tone: 'border-info/30 bg-info-soft text-info',
+    tone: 'bg-info-soft text-info',
     dot: 'bg-info',
   },
   esperando_usuario: {
     label: 'Esperando tu respuesta',
-    tone: 'border-warning/30 bg-warning-soft text-warning',
+    tone: 'bg-warning-soft text-warning',
     dot: 'bg-warning',
   },
   resuelto: {
     label: 'Resuelto',
-    tone: 'border-success/30 bg-success-soft text-success',
+    tone: 'bg-success-soft text-success',
     dot: 'bg-success',
   },
   cerrado: {
     label: 'Cerrado',
-    tone: 'border-border bg-muted text-muted-foreground',
+    tone: 'bg-muted text-muted-foreground',
     dot: 'bg-muted-foreground',
   },
 }
@@ -60,7 +60,8 @@ export const MODULOS_APP = [
   { value: '/pacientes', label: 'Pacientes' },
   { value: '/historias', label: 'Historias' },
   { value: '/antecedentes', label: 'Antecedentes' },
-  { value: '/finanzas', label: 'Caja y finanzas' },
+  { value: '/caja', label: 'Caja' },
+  { value: '/finanzas', label: 'Finanzas' },
   { value: '/inventario', label: 'Inventario' },
   { value: '/usuarios', label: 'Usuarios' },
   { value: '/configuracion', label: 'Clínica y configuración' },

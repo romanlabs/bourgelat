@@ -14,7 +14,7 @@ export function FuncionNoIncluida({ titulo, descripcion, size = 'md' }) {
       title={titulo}
       description={descripcion}
       action={
-        <Button asChild variant="outline">
+        <Button asChild>
           <Link to="/planes">Ver planes</Link>
         </Button>
       }

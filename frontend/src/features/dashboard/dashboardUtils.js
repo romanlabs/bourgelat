@@ -49,6 +49,7 @@ export const PAYMENT_METHOD_LABELS = {
   transferencia: 'Transferencia',
   nequi: 'Nequi',
   daviplata: 'Daviplata',
+  credito: 'A crédito',
   otro: 'Otro',
 }
 

@@ -11,9 +11,9 @@ export const pacientesApi = {
     return data
   },
 
-  async obtenerMascotas({ buscar, especie, estado, pagina = 1, limite = 8 } = {}) {
+  async obtenerMascotas({ buscar, especie, estado, conteo, pagina = 1, limite = 8 } = {}) {
     const { data } = await api.get('/mascotas', {
-      params: cleanParams({ buscar, especie, estado, pagina, limite }),
+      params: cleanParams({ buscar, especie, estado, conteo, pagina, limite }),
     })
     return data
   },

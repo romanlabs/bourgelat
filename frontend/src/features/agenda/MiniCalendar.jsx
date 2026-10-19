@@ -42,7 +42,7 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
   return (
     <div className="w-full select-none">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-lg font-normal capitalize text-foreground">
+        <p className="text-[15px] font-semibold capitalize tracking-[-0.01em] text-foreground">
           {format(mesVisible, 'MMMM yyyy', { locale: es })}
         </p>
         <div className="flex items-center gap-0.5">
@@ -50,7 +50,7 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
             <button
               type="button"
               onClick={() => setMesVisible((prev) => addMonths(prev, -1))}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Mes anterior"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
@@ -60,7 +60,7 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
             <button
               type="button"
               onClick={() => setMesVisible((prev) => addMonths(prev, 1))}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="h-3.5 w-3.5" />
@@ -71,7 +71,7 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
 
       <div className="grid grid-cols-7 gap-y-0.5">
         {DIAS_HEADER.map((d) => (
-          <div key={d} className="text-center text-[11px] font-medium text-muted-foreground">
+          <div key={d} className="text-center text-[13px] font-medium text-muted-foreground">
             {d}
           </div>
         ))}
@@ -87,11 +87,11 @@ export function MiniCalendar({ fechaBase, onSelectDay }) {
               type="button"
               onClick={() => onSelectDay(day)}
               className={cn(
-                'mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium transition',
+                'mx-auto flex h-6 w-6 items-center justify-center rounded-md text-[13px] font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 !delMes && 'text-muted-foreground/40',
                 delMes && !esSeleccionado && 'text-foreground hover:bg-muted',
-                esHoy && !esSeleccionado && 'font-bold text-primary',
-                esSeleccionado && 'bg-primary font-semibold text-white hover:bg-primary'
+                esHoy && !esSeleccionado && 'bg-accent font-semibold text-accent-foreground',
+                esSeleccionado && 'bg-primary font-semibold text-primary-foreground hover:bg-primary'
               )}
             >
               {format(day, 'd')}

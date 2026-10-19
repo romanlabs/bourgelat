@@ -70,6 +70,10 @@ const validarConsultaMascotas = [
     .optional()
     .isIn(['activas', 'inactivas'])
     .withMessage('Estado no valido'),
+  query('conteo')
+    .optional()
+    .isIn(['especies'])
+    .withMessage('Conteo no valido'),
   query('pagina')
     .optional()
     .isInt({ min: 1 })

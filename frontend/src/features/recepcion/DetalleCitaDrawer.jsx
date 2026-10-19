@@ -8,19 +8,20 @@ const formatTime = (value) => value?.slice(0, 5) || '--:--'
 
 const tipoLabel = (value) => TYPE_OPTIONS.find((option) => option.value === value)?.label || value
 
+// Igual que en la sala de espera: «Iniciar atención» es la acción fuerte.
 const ACTION_TONE = {
-  en_espera: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
-  en_atencion: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
-  completada: 'border-success/30 bg-success-soft text-success hover:bg-success/15 ',
-  cancelada: 'border-danger/30 bg-danger-soft text-danger hover:bg-danger/15 ',
-  no_asistio: 'border-warning/30 bg-warning-soft text-warning hover:bg-warning/15 ',
+  en_espera: 'bg-secondary text-secondary-foreground hover:brightness-95',
+  en_atencion: 'bg-primary text-primary-foreground hover:brightness-110',
+  completada: 'bg-success-soft text-success hover:brightness-95',
+  cancelada: 'bg-danger-soft text-danger hover:brightness-95',
+  no_asistio: 'bg-muted text-muted-foreground hover:brightness-95',
 }
 
 function Dato({ label, children }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="text-right text-sm text-foreground">{children}</span>
+      <span className="shrink-0 text-[13px] text-muted-foreground">{label}</span>
+      <span className="text-right text-[15px] font-medium text-foreground">{children}</span>
     </div>
   )
 }
@@ -50,8 +51,8 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
                 type="button"
                 disabled={isPending}
                 onClick={() => onAccion(cita, estado)}
-                className={`border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                  ACTION_TONE[estado] || 'border-border bg-muted text-foreground'
+                className={`h-11 rounded-lg px-4 text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                  ACTION_TONE[estado] || 'bg-muted text-foreground'
                 }`}
               >
                 {ACCION_LABELS[estado]}
@@ -64,19 +65,19 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
       {cita ? (
         <div className="grid gap-5">
           <div>
-            <p className="text-lg font-semibold leading-7 tracking-[-0.01em] text-foreground">
+            <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] text-foreground">
               {cita.mascota?.nombre || 'Paciente'}
             </p>
-            <p className="text-xs text-muted-foreground">{etiquetaEspecie(cita.mascota?.especie) || 'Especie sin registrar'}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{etiquetaEspecie(cita.mascota?.especie) || 'Especie sin registrar'}</p>
           </div>
 
           <StatusBadge variant={cita.estado} showDot size="sm" className="justify-self-start" />
 
-          <div className="grid gap-2.5 border-t border-border pt-4">
+          <div className="grid gap-2.5 rounded-xl bg-muted px-4 py-3.5">
             <Dato label="Tutor">{cita.propietario?.nombre || 'Sin tutor'}</Dato>
             <Dato label="Telefono">
               {cita.propietario?.telefono ? (
-                <a href={`tel:${cita.propietario.telefono}`} className="tabular-nums text-primary hover:underline">
+                <a href={`tel:${cita.propietario.telefono}`} className="tabular-nums text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
                   {cita.propietario.telefono}
                 </a>
               ) : (
@@ -87,7 +88,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
             <Dato label="Consultorio">{cita.consultorio?.nombre || 'Sin asignar'}</Dato>
           </div>
 
-          <div className="grid gap-2.5 border-t border-border pt-4">
+          <div className="grid gap-2.5 rounded-xl bg-muted px-4 py-3.5">
             <Dato label="Horario">
               <span className="tabular-nums">
                 {formatTime(cita.horaInicio)} – {formatTime(cita.horaFin)}
@@ -110,30 +111,30 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
           </div>
 
           {cita.motivo ? (
-            <div className="border-t border-border pt-4">
-              <p className="mb-1.5 text-xs text-muted-foreground">Motivo</p>
-              <p className="text-sm leading-6 text-foreground">{cita.motivo}</p>
+            <div className="rounded-xl bg-muted px-4 py-3.5">
+              <p className="mb-1 text-[13px] text-muted-foreground">Motivo</p>
+              <p className="text-[15px] leading-6 text-foreground">{cita.motivo}</p>
             </div>
           ) : null}
 
           {cita.observaciones ? (
-            <div className="border-t border-border pt-4">
-              <p className="mb-1.5 text-xs text-muted-foreground">Observaciones</p>
-              <p className="text-sm leading-6 text-foreground">{cita.observaciones}</p>
+            <div className="rounded-xl bg-muted px-4 py-3.5">
+              <p className="mb-1 text-[13px] text-muted-foreground">Observaciones</p>
+              <p className="text-[15px] leading-6 text-foreground">{cita.observaciones}</p>
             </div>
           ) : null}
 
           {cita.motivoCancelacion ? (
-            <div className="border-t border-border pt-4">
-              <p className="mb-1.5 text-xs text-muted-foreground">Motivo de cancelación</p>
-              <p className="text-sm leading-6 text-foreground">{cita.motivoCancelacion}</p>
+            <div className="rounded-xl bg-muted px-4 py-3.5">
+              <p className="mb-1 text-[13px] text-muted-foreground">Motivo de cancelación</p>
+              <p className="text-[15px] leading-6 text-foreground">{cita.motivoCancelacion}</p>
             </div>
           ) : null}
 
           {cita.mascotaId ? (
             <Link
               to={`/pacientes/${cita.mascotaId}/historial?citaId=${cita.id}`}
-              className="border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-foreground transition hover:bg-muted"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Abrir historia clínica
             </Link>

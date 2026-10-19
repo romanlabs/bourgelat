@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils'
  * de la agenda: panel redondeado, items cómodos y palomita en el elegido.
  *
  * Dos variantes de disparador:
- *  - "pill"  → píldora redonda, para barras de filtros y toolbars
+ *  - "pill"  → compacto, para barras de filtros y toolbars (el nombre se
+ *              conserva por compatibilidad; ya no es una píldora redonda)
  *  - "field" → rectangular a lo ancho, para campos de formulario
  */
 // Radix no admite "" como valor de item; los campos de formulario que usan la
@@ -32,8 +33,8 @@ const valorRaiz = (value, hayOpcionVacia) => {
 }
 
 const triggerVariants = {
-  pill: 'h-10 rounded-full border border-border bg-card pl-5 pr-4 shadow-sm hover:bg-muted data-[state=open]:bg-muted',
-  field: 'h-10 w-full rounded-md border border-border bg-card px-3 focus:border-primary',
+  pill: 'h-10 rounded-lg border border-input bg-card pl-3.5 pr-3 hover:bg-muted data-[state=open]:bg-muted',
+  field: 'h-11 w-full rounded-lg border border-input bg-card px-3',
 }
 
 const SelectContent = React.forwardRef(({ className, children, ...props }, ref) => (
@@ -43,7 +44,7 @@ const SelectContent = React.forwardRef(({ className, children, ...props }, ref) 
       position="popper"
       sideOffset={6}
       className={cn(
-        'z-[100] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        'z-[100] max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-xl bg-card p-1.5 text-card-foreground shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className
       )}
       {...props}
@@ -60,14 +61,14 @@ const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => 
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'flex cursor-pointer select-none items-center gap-3 px-5 py-2.5 text-sm text-foreground outline-none transition data-[highlighted]:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition data-[highlighted]:bg-muted data-[state=checked]:font-semibold data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     {...props}
   >
     <span className="flex h-4 w-4 shrink-0 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check className="h-4 w-4 text-primary" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -125,7 +126,7 @@ function Select({
         id={id}
         aria-label={ariaLabel}
         className={cn(
-          'flex items-center justify-between gap-2 text-sm font-normal text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex items-center justify-between gap-2 text-sm font-normal text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[placeholder]:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
           triggerVariants[variant],
           className
         )}
@@ -160,7 +161,7 @@ const SelectLabel = React.forwardRef(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
     className={cn(
-      'px-5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground',
+      'px-3 pb-1 pt-2 text-[13px] font-semibold text-muted-foreground',
       className
     )}
     {...props}

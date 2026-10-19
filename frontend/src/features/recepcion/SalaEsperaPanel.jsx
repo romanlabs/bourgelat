@@ -92,12 +92,12 @@ const minutosDesde = (hora, ahoraMinutos) => {
 const tiempoDeFila = (cita, ahoraMinutos) => {
   if (cita.estado === 'en_atencion') {
     const texto = formatDuracion(minutosDesde(cita.horaInicioAtencion || cita.horaLlegada, ahoraMinutos))
-    return texto ? { texto: `${texto} en consulta`, tone: 'text-info' } : null
+    return texto ? { texto: `${texto} en consulta`, tone: 'text-primary' } : null
   }
 
   if (cita.estado === 'en_espera') {
     const texto = formatDuracion(minutosDesde(cita.horaLlegada || cita.horaInicio, ahoraMinutos))
-    return texto ? { texto: `${texto} esperando`, tone: 'text-info' } : null
+    return texto ? { texto: `${texto} esperando`, tone: 'text-brand-foreground' } : null
   }
 
   if (cita.estado === 'programada') {
@@ -113,21 +113,23 @@ const tiempoDeFila = (cita, ahoraMinutos) => {
   return null
 }
 
+// Mismos tonos por estado que la pantalla Hoy y el calendario.
 const AVATAR_TONE = {
-  programada: 'bg-warm-100 text-warm-700',
-  en_espera: 'bg-info-soft text-info ',
-  en_atencion: 'bg-info-soft text-info ',
-  completada: 'bg-warm-100 text-warm-600',
-  cancelada: 'bg-danger-soft text-danger ',
-  no_asistio: 'bg-warning-soft text-warning ',
+  programada: 'bg-secondary text-secondary-foreground',
+  en_espera: 'bg-brand-muted text-brand-foreground',
+  en_atencion: 'bg-primary text-primary-foreground',
+  completada: 'bg-success-soft text-success',
+  cancelada: 'bg-danger-soft text-danger',
+  no_asistio: 'bg-muted text-muted-foreground',
 }
 
+// «Iniciar atención» es la acción fuerte de la sala; el resto, botones suaves.
 const ACTION_TONE = {
-  en_espera: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
-  en_atencion: 'border-info/30 bg-info-soft text-info hover:bg-info/15 ',
-  completada: 'border-success/30 bg-success-soft text-success hover:bg-success/15 ',
-  cancelada: 'border-danger/30 bg-danger-soft text-danger hover:bg-danger/15 ',
-  no_asistio: 'border-warning/30 bg-warning-soft text-warning hover:bg-warning/15 ',
+  en_espera: 'bg-secondary text-secondary-foreground hover:brightness-95',
+  en_atencion: 'bg-primary text-primary-foreground hover:brightness-110',
+  completada: 'bg-success-soft text-success hover:brightness-95',
+  cancelada: 'bg-danger-soft text-danger hover:brightness-95',
+  no_asistio: 'bg-muted text-muted-foreground hover:brightness-95',
 }
 
 function AccionesMenu({ acciones, disabled, onSelect }) {
@@ -140,13 +142,13 @@ function AccionesMenu({ acciones, disabled, onSelect }) {
       <button
         type="button"
         disabled={disabled}
-        aria-label="Mas acciones"
+        aria-label="Más acciones"
         aria-expanded={open}
         onClick={(event) => {
           event.stopPropagation()
           setOpen((current) => !current)
         }}
-        className="flex h-9 w-9 items-center justify-center border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
@@ -154,7 +156,7 @@ function AccionesMenu({ acciones, disabled, onSelect }) {
       {open ? (
         <>
           <div className="fixed inset-0 z-30" onClick={(event) => { event.stopPropagation(); setOpen(false) }} aria-hidden="true" />
-          <div className="absolute right-0 top-10 z-40 w-48 border border-border bg-card py-1 shadow-lg">
+          <div className="absolute right-0 top-11 z-40 w-52 rounded-xl bg-popover p-1.5 shadow-dropdown">
             {acciones.map((estado) => (
               <button
                 key={estado}
@@ -164,7 +166,7 @@ function AccionesMenu({ acciones, disabled, onSelect }) {
                   setOpen(false)
                   onSelect(estado)
                 }}
-                className="block w-full px-4 py-2 text-left text-sm text-foreground transition hover:bg-muted"
+                className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {ACCION_LABELS[estado]}
               </button>
@@ -195,16 +197,16 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
           onSeleccionar(cita)
         }
       }}
-      className={`flex w-full items-center gap-4 border-b border-border px-4 py-3 text-left transition hover:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 ${
-        seleccionada ? 'bg-muted/60' : ''
+      className={`flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        seleccionada ? 'bg-accent' : 'hover:bg-muted'
       } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_hsl(var(--danger))]' : ''}`}
     >
-      <span className="w-12 shrink-0 text-sm font-semibold tabular-nums text-foreground">
+      <span className="w-12 shrink-0 text-[15px] font-semibold tabular-nums text-muted-foreground">
         {formatTime(cita.horaLlegada || cita.horaInicio)}
       </span>
 
       <span
-        className={`hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold sm:flex ${
+        className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[15px] font-bold sm:flex ${
           AVATAR_TONE[cita.estado] || 'bg-muted text-muted-foreground'
         }`}
         aria-hidden="true"
@@ -218,7 +220,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
             {cita.mascota?.nombre || 'Paciente'}
           </p>
           {cita.origen === 'walk_in' ? (
-            <span className="shrink-0 rounded-full border border-caramel-200 bg-caramel-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-caramel-700">
+            <span className="shrink-0 rounded-md bg-brand-muted px-2.5 py-1 text-[13px] font-semibold text-brand-foreground">
               {ORIGEN_LABELS.walk_in}
             </span>
           ) : null}
@@ -228,16 +230,16 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
             <TriangleAlert className="h-4 w-4 shrink-0 text-warning" aria-label={cruce} title={cruce} />
           ) : null}
         </div>
-        <p className="truncate text-xs text-muted-foreground">{cita.propietario?.nombre || 'Sin tutor'}</p>
+        <p className="truncate text-sm text-muted-foreground">{cita.propietario?.nombre || 'Sin tutor'}</p>
       </div>
 
-      <p className="hidden w-52 shrink-0 text-xs leading-5 text-muted-foreground lg:block">
+      <p className="hidden w-52 shrink-0 text-[13px] leading-5 text-muted-foreground lg:block">
         {cita.veterinario?.nombre || 'Sin profesional'}
         <br />
         {cita.consultorio?.nombre || 'Sin consultorio'}
       </p>
 
-      <p className={`hidden w-32 shrink-0 text-xs font-semibold sm:block ${tiempo?.tone || 'text-muted-foreground'}`}>
+      <p className={`hidden w-32 shrink-0 text-[13px] font-semibold sm:block ${tiempo?.tone || 'text-muted-foreground'}`}>
         {tiempo?.texto || '—'}
       </p>
 
@@ -247,7 +249,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
             type="button"
             disabled={isPending}
             onClick={() => onAccion(cita, primaria)}
-            className={`border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${ACTION_TONE[primaria]}`}
+            className={`inline-flex h-10 items-center rounded-lg px-3.5 text-[13px] font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${ACTION_TONE[primaria]}`}
           >
             {ACCION_LABELS[primaria]}
           </button>
@@ -310,7 +312,7 @@ export function SalaEsperaPanel({
     }))
     const resueltas = citasFiltradas.filter((cita) => ESTADOS_RESUELTOS.includes(cita.estado))
     if (resueltas.length > 0) {
-      activos.push({ estado: 'resueltas', label: 'Resueltas del dia', dot: 'bg-warm-300', text: 'text-warm-600', citas: resueltas })
+      activos.push({ estado: 'resueltas', label: 'Resueltas del día', dot: 'bg-muted-foreground', text: 'text-muted-foreground', citas: resueltas })
     }
     return activos.filter((grupo) => grupo.citas.length > 0)
   }, [citasFiltradas])
@@ -339,7 +341,7 @@ export function SalaEsperaPanel({
 
   return (
     <DashboardPanel
-      title="Sala de espera del dia"
+      title="Sala de espera del día"
       action={
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:w-64">
@@ -349,60 +351,59 @@ export function SalaEsperaPanel({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar paciente o tutor"
-              className="h-10 w-full border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+              aria-label="Buscar paciente o tutor"
+              className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           {headerActions}
         </div>
       }
     >
-      <div className="-m-5">
-        <div className="flex flex-wrap items-center gap-5 border-b border-border px-5 py-3">
+      <div className="-mx-3">
+        <div className="mx-3 mb-3 flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl bg-muted px-5 py-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-bold leading-none tabular-nums text-info">{resumen.enAtencion}</span>
-            <span className="text-xs text-muted-foreground">en atención</span>
+            <span className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-primary">{resumen.enAtencion}</span>
+            <span className="text-[13px] text-muted-foreground">en atención</span>
           </div>
-          <span className="h-6 w-px bg-border" aria-hidden="true" />
-          <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-bold leading-none tabular-nums text-info">{resumen.enEspera}</span>
-            <span className="text-xs text-muted-foreground">en espera</span>
+                    <div className="flex items-baseline gap-2">
+            <span className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-brand-foreground">{resumen.enEspera}</span>
+            <span className="text-[13px] text-muted-foreground">en espera</span>
           </div>
-          <span className="h-6 w-px bg-border" aria-hidden="true" />
-          <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-bold leading-none tabular-nums text-warm-700">{resumen.programadas}</span>
-            <span className="text-xs text-muted-foreground">por llegar</span>
+                    <div className="flex items-baseline gap-2">
+            <span className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">{resumen.programadas}</span>
+            <span className="text-[13px] text-muted-foreground">por llegar</span>
           </div>
           {lastUpdatedAt ? (
-            <p className="ml-auto text-xs text-muted-foreground">
+            <p className="ml-auto text-[13px] text-muted-foreground">
               Actualizado {lastUpdatedAt.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
             </p>
           ) : null}
         </div>
 
         {isError ? (
-          <div className="border-b border-danger/30 bg-danger-soft px-5 py-4 text-sm leading-7 text-danger">
+          <div className="mx-3 mb-3 rounded-xl bg-danger-soft px-4 py-3.5 text-sm font-medium leading-6 text-danger">
             {errorMessage}
           </div>
         ) : null}
 
         {isLoading ? (
-          <div className="divide-y divide-border">
+          <div className="flex flex-col gap-1">
             {[0, 1, 2].map((row) => (
-              <div key={row} className="flex items-center gap-4 px-4 py-3">
-                <div className="h-4 w-12 animate-pulse bg-muted" />
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
+              <div key={row} className="flex items-center gap-4 px-3 py-3">
+                <div className="h-4 w-12 animate-pulse rounded bg-muted" />
+                <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-muted" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-40 animate-pulse bg-muted" />
-                  <div className="h-3 w-28 animate-pulse bg-muted" />
+                  <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-28 animate-pulse rounded bg-muted" />
                 </div>
-                <div className="h-9 w-32 animate-pulse bg-muted" />
+                <div className="h-10 w-32 animate-pulse rounded-lg bg-muted" />
               </div>
             ))}
           </div>
         ) : null}
 
         {!isLoading && citasFiltradas.length === 0 ? (
-          <div className="p-5">
+          <div className="px-3 pb-3">
             <EmptyState
               icon={<Users />}
               title={citas.length === 0 ? 'Sala de espera vacía' : 'Sin resultados para esa búsqueda'}
@@ -418,12 +419,12 @@ export function SalaEsperaPanel({
 
         {!isLoading && grupos.map((grupo) => (
           <div key={grupo.estado}>
-            <div className="flex items-center gap-2.5 border-b border-border bg-background px-5 py-2">
-              <span className={`h-1.5 w-1.5 rounded-full ${grupo.dot}`} aria-hidden="true" />
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${grupo.text}`}>
+            <div className="flex items-center gap-2.5 px-3 pb-1 pt-4">
+              <span className={`h-2.5 w-2.5 rounded-[3px] ${grupo.dot}`} aria-hidden="true" />
+              <p className={`text-[13px] font-semibold ${grupo.text}`}>
                 {grupo.label}
               </p>
-              <span className="text-[11px] tabular-nums text-muted-foreground">{grupo.citas.length}</span>
+              <span className="text-[13px] tabular-nums text-muted-foreground">{grupo.citas.length}</span>
             </div>
             {grupo.citas.map((cita) => (
               <FilaCita
@@ -441,14 +442,14 @@ export function SalaEsperaPanel({
           </div>
         ))}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 px-5 py-3">
-          <p className="text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-3 pt-1">
+          <p className="text-[13px] text-muted-foreground">
             Resueltas hoy: {resumen.completadas ?? 0} completadas · {resueltasOcultas} en total
           </p>
           <button
             type="button"
             onClick={() => setMostrarResueltas((current) => !current)}
-            className="border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            className="inline-flex h-10 items-center rounded-lg bg-secondary px-3.5 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {mostrarResueltas ? 'Ocultar resueltas' : `Ver resueltas (${resueltasOcultas})`}
           </button>
@@ -477,7 +478,8 @@ export function SalaEsperaPanel({
           value={motivoCancelacion}
           onChange={(event) => setMotivoCancelacion(event.target.value)}
           placeholder="Motivo de cancelación"
-          className="min-h-[90px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
+          aria-label="Motivo de cancelación"
+          className="min-h-[90px] w-full rounded-lg border border-input bg-card px-3 py-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
         />
       </ConfirmDialog>
     </DashboardPanel>

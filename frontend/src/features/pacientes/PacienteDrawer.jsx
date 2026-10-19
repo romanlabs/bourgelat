@@ -48,7 +48,7 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+  'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 export default function PacienteDrawer({
   open,
@@ -185,56 +185,56 @@ export default function PacienteDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[520px] sm:border-l sm:border-border ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[520px] ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
           <div>
-            <p className="text-sm font-semibold text-foreground">{modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               {modoEdicion
                 ? 'Corrige la ficha del paciente.'
                 : 'Selecciona el tutor y completa la ficha del paciente.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground">
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           <form id="paciente-drawer-form" className="grid gap-5" onSubmit={handleSubmit(handleFormSubmit)}>
 
             {/* Seccion: Tutor */}
-            <div className="grid gap-3 border border-border bg-muted/40 p-4">
+            <div className="grid gap-3 rounded-2xl bg-muted p-4">
               <div className="flex items-center gap-2">
                 <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Tutor responsable *</p>
+                <p className="text-[15px] font-semibold text-foreground">Tutor responsable *</p>
               </div>
 
               {modoEdicion ? (
-                <div className="border border-border bg-card px-4 py-3 text-sm text-foreground">
+                <div className="rounded-xl bg-card px-4 py-3 text-sm text-foreground">
                   <p className="font-semibold">{selectedOwner?.nombre || 'Sin tutor'}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-[13px] text-muted-foreground">
                     {selectedOwner?.telefono || 'Sin teléfono'}
                     {selectedOwner?.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
+                  <p className="mt-2 text-[13px] leading-5 text-muted-foreground">
                     El tutor no se puede reasignar desde aqui: cambiarlo afectaria historias, citas y
                     facturas ya emitidas.
                   </p>
                 </div>
               ) : selectedOwner ? (
-                <div className="border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
+                <div className="rounded-xl bg-success-soft px-4 py-3 text-sm text-success">
                   <p className="font-semibold">{selectedOwner.nombre}</p>
-                  <p className="mt-1 text-xs">
+                  <p className="mt-1 text-[13px]">
                     {selectedOwner.telefono || 'Sin teléfono'}
                     {selectedOwner.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
                   <button
                     type="button"
                     onClick={() => { setSelectedOwner(null); onOwnerSearch('') }}
-                    className="mt-2 text-xs font-semibold text-success hover:text-success"
+                    className="mt-2 rounded text-[13px] font-semibold text-success hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Cambiar tutor
                   </button>
@@ -248,20 +248,20 @@ export default function PacienteDrawer({
                       value={ownerSearch}
                       onChange={(e) => onOwnerSearch(e.target.value)}
                       placeholder="Nombre, teléfono o documento"
-                      className="h-11 w-full border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+                      className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
 
                   {!ownerSearch.trim() && (
-                    <p className="text-xs leading-5 text-muted-foreground">Escribe para buscar un tutor ya registrado.</p>
+                    <p className="text-[13px] leading-5 text-muted-foreground">Escribe para buscar un tutor ya registrado.</p>
                   )}
 
                   {ownerSearch.trim() && isSearchingOwners && (
-                    <p className="text-xs text-muted-foreground">Buscando tutores...</p>
+                    <p className="text-[13px] text-muted-foreground">Buscando tutores...</p>
                   )}
 
                   {ownerSearch.trim() && !isSearchingOwners && propietarios.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Sin resultados. Crea el tutor primero desde la tab Tutores.</p>
+                    <p className="text-[13px] text-muted-foreground">Sin resultados. Crea el tutor primero en la vista Tutores.</p>
                   )}
 
                   {ownerSearch.trim() && propietarios.map((owner) => (
@@ -269,13 +269,13 @@ export default function PacienteDrawer({
                       key={owner.id}
                       type="button"
                       onClick={() => { setSelectedOwner(owner); onOwnerSearch(owner.nombre) }}
-                      className="flex w-full items-start justify-between gap-3 border border-border bg-card px-4 py-3 text-left transition hover:border-primary hover:bg-muted"
+                      className="flex w-full items-start justify-between gap-3 rounded-xl bg-card px-4 py-3 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{owner.telefono || 'Sin teléfono'}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{owner.telefono || 'Sin teléfono'}</p>
                       </div>
-                      <span className="shrink-0 text-xs font-semibold text-primary">Seleccionar</span>
+                      <span className="shrink-0 text-[13px] font-semibold text-primary">Seleccionar</span>
                     </button>
                   ))}
                 </div>
@@ -283,50 +283,50 @@ export default function PacienteDrawer({
             </div>
 
             {/* Seccion: Foto */}
-            <div className="grid gap-3 border-t border-border pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Foto del paciente</p>
+            <div className="grid gap-3">
+              <p className="text-[15px] font-semibold text-foreground">Foto del paciente</p>
               <div className="flex items-start gap-4">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
+                <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-muted">
                   {photoPreview
                     ? <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
-                    : <PawPrint className="h-8 w-8 text-muted-foreground/50" />
+                    : <PawPrint className="h-9 w-9 text-brand-foreground" />
                   }
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-9 cursor-pointer items-center gap-2 border border-border bg-foreground px-3 text-xs font-semibold text-background transition hover:bg-foreground/90">
+                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-within:ring-2 focus-within:ring-ring">
                     <Upload className="h-3.5 w-3.5" />
                     {photoFile ? 'Cambiar foto' : 'Seleccionar foto'}
                   </label>
                   <input id={`photo-${photoInputKey}`} key={photoInputKey} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} className="sr-only" />
                   {photoFile
                     ? <div className="flex items-center gap-2">
-                        <p className="max-w-[160px] truncate text-xs text-muted-foreground" title={photoFile.name}>{photoFile.name}</p>
-                        <button type="button" onClick={() => { setPhotoFile(null); setPhotoInputKey((k) => k + 1) }} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+                        <p className="max-w-[160px] truncate text-[13px] text-muted-foreground" title={photoFile.name}>{photoFile.name}</p>
+                        <button type="button" onClick={() => { setPhotoFile(null); setPhotoInputKey((k) => k + 1) }} aria-label="Quitar foto" className="rounded text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><X className="h-4 w-4" /></button>
                       </div>
-                    : <p className="text-[11px] text-muted-foreground">JPG, PNG o WEBP · max 4 MB</p>
+                    : <p className="text-[13px] text-muted-foreground">JPG, PNG o WEBP · máx. 4 MB</p>
                   }
                 </div>
               </div>
             </div>
 
             {/* Seccion: Datos del paciente */}
-            <div className="grid gap-4 border-t border-border pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Datos del paciente</p>
+            <div className="grid gap-4">
+              <p className="text-[15px] font-semibold text-foreground">Datos del paciente</p>
 
               {/* Preview card */}
               {nombreWatch && (
-                <div className="flex items-center gap-3 border border-border bg-muted/40 px-4 py-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-muted text-sm font-bold uppercase text-muted-foreground">
+                <div className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-base font-bold uppercase text-primary">
                     {String(nombreWatch).slice(0, 1)}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground">{nombreWatch}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       {etiquetaEspecie(especieWatch)}{razaWatch ? ` / ${razaWatch}` : ''}
                       {selectedOwner ? ` · ${selectedOwner.nombre}` : ''}
                     </p>
                   </div>
-                  <StatusPill tone={selectedOwner ? 'border-success/30 bg-success-soft text-success ' : 'border-warning/30 bg-warning-soft text-warning '}>
+                  <StatusPill tone={selectedOwner ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'}>
                     {selectedOwner ? 'Tutor listo' : 'Falta tutor'}
                   </StatusPill>
                 </div>
@@ -334,12 +334,12 @@ export default function PacienteDrawer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nombre *</label>
+                  <label htmlFor="p-nombre" className="text-[13px] font-medium text-muted-foreground">Nombre *</label>
                   <input id="p-nombre" type="text" placeholder="Nombre del paciente" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
-                  {errors.nombre && <p className="text-xs text-danger">{errors.nombre.message}</p>}
+                  {errors.nombre && <p className="text-[13px] text-danger">{errors.nombre.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-especie" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Especie *</label>
+                  <label htmlFor="p-especie" className="text-[13px] font-medium text-muted-foreground">Especie *</label>
                   <Controller
                     name="especie"
                     control={control}
@@ -357,17 +357,17 @@ export default function PacienteDrawer({
                     )}
                   />
                   {modoEdicion && (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       La especie no se puede cambiar después del registro.
                     </p>
                   )}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-raza" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Raza o cruce</label>
+                  <label htmlFor="p-raza" className="text-[13px] font-medium text-muted-foreground">Raza o cruce</label>
                   <input id="p-raza" type="text" placeholder="Raza o cruce" className={fieldClass} {...register('raza')} />
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-sexo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sexo</label>
+                  <label htmlFor="p-sexo" className="text-[13px] font-medium text-muted-foreground">Sexo</label>
                   <Controller
                     name="sexo"
                     control={control}
@@ -385,44 +385,44 @@ export default function PacienteDrawer({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>
+                  <label htmlFor="p-nacimiento" className="text-[13px] font-medium text-muted-foreground">Fecha de nacimiento</label>
                   <input id="p-nacimiento" type="date" max={hoyLocal()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-danger' : ''}`} {...register('fechaNacimiento')} />
-                  {errors.fechaNacimiento && <p className="text-xs text-danger">{errors.fechaNacimiento.message}</p>}
+                  {errors.fechaNacimiento && <p className="text-[13px] text-danger">{errors.fechaNacimiento.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-peso" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Peso actual (kg)</label>
+                  <label htmlFor="p-peso" className="text-[13px] font-medium text-muted-foreground">Peso actual (kg)</label>
                   <input id="p-peso" type="number" min="0" step="0.1" placeholder="0.0" className={`${fieldClass} ${errors.peso ? 'border-danger' : ''}`} {...register('peso')} />
-                  {errors.peso && <p className="text-xs text-danger">{errors.peso.message}</p>}
+                  {errors.peso && <p className="text-[13px] text-danger">{errors.peso.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-color" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Color principal</label>
+                  <label htmlFor="p-color" className="text-[13px] font-medium text-muted-foreground">Color principal</label>
                   <input id="p-color" type="text" placeholder="Color principal" className={fieldClass} {...register('color')} />
                 </div>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground transition hover:bg-muted/80">
-                <input type="checkbox" {...register('esterilizado')} />
+              <label className="flex h-11 cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground transition hover:bg-accent">
+                <input type="checkbox" className="h-4 w-4 accent-primary" {...register('esterilizado')} />
                 Paciente esterilizado
               </label>
 
               <div className="grid gap-1.5">
-                <label htmlFor="p-obs" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observaciones</label>
-                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" {...register('observaciones')} />
+                <label htmlFor="p-obs" className="text-[13px] font-medium text-muted-foreground">Observaciones</label>
+                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" {...register('observaciones')} />
               </div>
             </div>
           </form>
         </div>
 
-        <div className="flex gap-3 border-t border-border px-5 py-4">
+        <div className="flex gap-2.5 bg-card px-6 pb-6 pt-3">
           <button
             type="submit"
             form="paciente-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar paciente' : 'Guardar paciente'}
           </button>
-          <button type="button" onClick={onClose} className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted">
+          <button type="button" onClick={onClose} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             Cancelar
           </button>
         </div>

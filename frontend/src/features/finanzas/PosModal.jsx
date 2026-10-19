@@ -34,6 +34,9 @@ const buildCashSuggestions = (total) => {
  * El último paso muestra la factura recién emitida sin salir del POS, para no
  * mandar al cajero al historial a buscar lo que acaba de vender.
  * Solo venta interna: no menciona facturación electrónica en ningún paso.
+ *
+ * Con `embedded` se pinta dentro de la página (pestaña Venta de Caja) en lugar
+ * de en una ventana: mismo flujo, sin cabecera propia ni botón de cerrar.
  */
 export default function PosModal({
   open,
@@ -43,6 +46,7 @@ export default function PosModal({
   ventaExitosa,
   facturaCreadaId,
   onNuevaVenta,
+  embedded = false,
 }) {
   const [view, setView] = useState('cart')          // cart | pago | exito | factura
   const [mobilePane, setMobilePane] = useState('productos')
@@ -77,6 +81,7 @@ export default function PosModal({
   const total = invoiceTotals?.total ?? 0
   const metodoPago = invoiceForm?.metodoPago || 'efectivo'
   const esEfectivo = metodoPago === 'efectivo'
+  const esCredito = metodoPago === 'credito'
   const monto = parseFloat(montoRecibido) || 0
   const vuelto = monto - total
   const vueltoOk = vuelto >= 0
@@ -110,7 +115,7 @@ export default function PosModal({
 
   const confirmarVenta = () => {
     // Capturamos antes de emitir: el hook limpia el carrito al tener éxito.
-    setSnapshot({ total, recibido: esEfectivo ? monto : total, vuelto: esEfectivo ? vuelto : 0, metodo: metodoLabel })
+    setSnapshot({ total, recibido: esEfectivo ? monto : esCredito ? 0 : total, vuelto: esEfectivo ? vuelto : 0, metodo: metodoLabel })
     handleCrearFactura()
   }
 
@@ -145,34 +150,34 @@ export default function PosModal({
 
   const puedeConfirmar = itemCount > 0 && (!esEfectivo || (montoRecibido !== '' && vueltoOk))
 
-  return (
-    <DialogRoot open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-none gap-0 overflow-hidden rounded-2xl border-border p-0 w-[min(96vw,1120px)]">
-        <div className="flex h-[min(92dvh,780px)] flex-col bg-background">
-          {/* ── Cabecera ── */}
-          <header className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-5 py-3 pr-12">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <ShoppingCart className="h-4 w-4" />
+  const contenido = (
+        <div className={embedded ? 'flex h-full flex-col overflow-hidden rounded-2xl bg-background' : 'flex h-[min(92dvh,780px)] flex-col bg-background'}>
+          {/* ── Cabecera (solo en la ventana: en la página ya hay título) ── */}
+          {embedded ? null : (
+          <header className="flex shrink-0 items-center gap-3 bg-card px-6 py-4 pr-14">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <ShoppingCart className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="text-sm font-semibold text-foreground">Punto de venta</DialogTitle>
-              <p className="text-[11px] text-muted-foreground">
+              <DialogTitle className="text-xl font-semibold tracking-[-0.02em] text-foreground">Nueva venta</DialogTitle>
+              <p className="text-[13px] text-muted-foreground">
                 {view === 'factura'
                   ? 'Factura emitida'
                   : view === 'exito'
                     ? 'Venta registrada'
                     : view === 'pago'
                       ? 'Cobro'
-                      : 'Arma la compra y cobra'}
+                      : 'Busca productos o servicios, arma la cuenta y cobra'}
               </p>
             </div>
             {view !== 'exito' && view !== 'factura' && itemCount > 0 ? (
               <span className="ml-auto hidden items-baseline gap-1.5 sm:flex">
-                <span className="text-[11px] text-muted-foreground">Total</span>
-                <span className="text-base font-bold tabular-nums text-foreground">{formatCOP(total)}</span>
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">{formatCOP(total)}</span>
               </span>
             ) : null}
           </header>
+          )}
 
           {/* ── Cuerpo ── */}
           <div className="min-h-0 flex-1 overflow-hidden">
@@ -180,8 +185,8 @@ export default function PosModal({
             {view === 'cart' && (
               <>
                 {/* Desktop: dos columnas */}
-                <div className="hidden h-full lg:grid lg:grid-cols-[1fr_360px]">
-                  <div className="min-h-0 overflow-hidden border-r border-border">
+                <div className="hidden h-full lg:grid lg:grid-cols-[1fr_400px]">
+                  <div className="min-h-0 overflow-hidden">
                     <ProductCommandSearch
                       productSearch={productSearch}
                       setProductSearch={setProductSearch}
@@ -221,7 +226,7 @@ export default function PosModal({
 
                 {/* Mobile: segmentado productos / carrito */}
                 <div className="flex h-full flex-col lg:hidden">
-                  <div className="flex shrink-0 gap-1 border-b border-border bg-card p-1">
+                  <div className="mx-4 mt-3 flex shrink-0 gap-1 rounded-xl bg-secondary p-1">
                     {[
                       { id: 'productos', label: 'Productos', icon: PackageSearch },
                       { id: 'carrito', label: `Carrito${itemCount ? ` · ${itemCount}` : ''}`, icon: ShoppingCart },
@@ -232,17 +237,18 @@ export default function PosModal({
                           key={t.id}
                           type="button"
                           onClick={() => setMobilePane(t.id)}
-                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
-                            mobilePane === t.id ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                          aria-pressed={mobilePane === t.id}
+                          className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            mobilePane === t.id ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground'
                           }`}
                         >
-                          <Icon className="h-3.5 w-3.5" />
+                          <Icon className="h-4 w-4" />
                           {t.label}
                         </button>
                       )
                     })}
                   </div>
-                  <div className="min-h-0 flex-1 overflow-hidden">
+                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
                     {mobilePane === 'productos' ? (
                       <ProductCommandSearch
                         productSearch={productSearch}
@@ -287,79 +293,80 @@ export default function PosModal({
 
             {/* Paso 2: cobro — el vuelto es el protagonista */}
             {view === 'pago' && (
-              <div className="flex h-full flex-col lg:flex-row">
+              <div className="flex h-full flex-col gap-5 overflow-y-auto p-5 lg:flex-row lg:overflow-hidden">
 
                 {/* Resumen de la venta: el cajero confirma que esta cobrando
                     sin tener que devolverse al carrito. */}
-                <aside className="hidden shrink-0 flex-col border-r border-border bg-muted/30 p-5 lg:flex lg:w-[340px]">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Resumen de la venta
-                  </p>
-                  <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-card">
+                <aside className="hidden shrink-0 flex-col rounded-2xl bg-card p-6 lg:flex lg:w-[360px]">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
+                    Cuenta
+                  </h3>
+                  <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
                     {items.map((item) => {
                       const qty = parseFloat(item.cantidad) || 0
                       const precio = parseFloat(item.precioUnitario) || 0
                       return (
                         <div
                           key={item.id}
-                          className="flex items-start justify-between gap-3 border-b border-border/60 px-4 py-2.5 last:border-b-0"
+                          className="flex items-start justify-between gap-3 border-b border-border/60 py-3 last:border-b-0"
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-xs font-semibold text-foreground">
+                            <p className="truncate text-[15px] font-semibold text-foreground">
                               {item.descripcion || 'Sin descripción'}
                             </p>
-                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            <p className="mt-0.5 text-[13px] tabular-nums text-muted-foreground">
                               {qty} × {formatCOP(precio)}
                             </p>
                           </div>
-                          <span className="shrink-0 text-xs font-bold tabular-nums text-foreground">
+                          <span className="shrink-0 text-[15px] font-semibold tabular-nums text-foreground">
                             {formatCOP(Math.max(qty * precio, 0))}
                           </span>
                         </div>
                       )
                     })}
                   </div>
-                  <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-border pt-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="mt-4 flex items-baseline justify-between pt-2">
+                    <span className="text-[17px] font-semibold text-foreground">
                       Total
                     </span>
-                    <span className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+                    <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
                       {formatCOP(total)}
                     </span>
                   </div>
                 </aside>
 
-                <div className="mx-auto flex h-full w-full max-w-md flex-col px-6 py-5">
-                <div className="rounded-2xl border border-border bg-card px-6 py-5 text-center">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="flex min-h-0 w-full flex-1 flex-col rounded-2xl bg-card p-6 lg:overflow-y-auto">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
                     Total a cobrar
-                  </p>
-                  <p className="mt-1 text-[2.5rem] font-bold leading-none tabular-nums text-foreground">
+                  </h3>
+                  <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-foreground">
                     {formatCOP(total)}
                   </p>
-                  <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
-                    {MetodoIcon && <MetodoIcon className="h-3.5 w-3.5 text-primary" />}
+                  <span className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-[13px] font-semibold text-secondary-foreground">
+                    {MetodoIcon && <MetodoIcon className="h-4 w-4 text-primary" />}
                     {metodoLabel}
                   </span>
                 </div>
 
                 {esEfectivo ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-baseline justify-between">
-                      <label htmlFor="pos-recibido" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <div className="mt-6 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label htmlFor="pos-recibido" className="text-sm font-semibold text-foreground">
                         Recibido
                       </label>
                       {cashSuggestions.length > 0 && (
-                        <div className="flex gap-1.5">
+                        <div className="flex flex-wrap gap-1.5">
                           {cashSuggestions.map((amount, i) => (
                             <button
                               key={amount}
                               type="button"
                               onClick={() => setMontoRecibido(String(amount))}
-                              className={`rounded-lg border px-2 py-1 text-[11px] font-semibold tabular-nums transition ${
+                              aria-pressed={monto === amount}
+                              className={`h-9 rounded-lg px-3 text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                 monto === amount
-                                  ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                                  ? 'bg-foreground text-background'
+                                  : 'bg-secondary text-secondary-foreground hover:brightness-95'
                               }`}
                             >
                               {i === 0 ? 'Exacto' : `$${(amount / 1000).toLocaleString('es-CO')}k`}
@@ -374,22 +381,24 @@ export default function PosModal({
                       onChange={(value) => setMontoRecibido(value === 0 ? '' : String(value))}
                       placeholder="$ 0"
                       autoFocus
-                      className={`w-full rounded-xl border-2 bg-card px-4 py-3 text-right text-2xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:outline-none ${
-                        montoRecibido && !vueltoOk ? 'border-danger/30 focus:border-danger ' : 'border-border focus:border-primary'
+                      className={`h-14 w-full rounded-lg border bg-card px-4 text-right text-2xl font-semibold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        montoRecibido && !vueltoOk ? 'border-danger' : 'border-input'
                       }`}
                     />
                     {/* Vuelto: el número que el cajero necesita ver grande */}
                     <div
-                      className={`flex items-center justify-between rounded-xl px-4 py-3 ${
-                        montoRecibido && vueltoOk ? 'bg-primary/10' : montoRecibido ? 'bg-danger-soft' : 'bg-muted'
+                      className={`flex h-14 items-center justify-between rounded-lg px-4 ${
+                        montoRecibido && vueltoOk ? 'bg-success-soft' : montoRecibido ? 'bg-danger-soft' : 'bg-muted'
                       }`}
                     >
-                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className={`text-sm font-semibold ${
+                        montoRecibido && vueltoOk ? 'text-success' : montoRecibido ? 'text-danger' : 'text-muted-foreground'
+                      }`}>
                         {montoRecibido && !vueltoOk ? 'Falta' : 'Vuelto'}
                       </span>
                       <span
-                        className={`text-2xl font-bold tabular-nums ${
-                          !montoRecibido ? 'text-muted-foreground/50' : vueltoOk ? 'text-primary' : 'text-danger'
+                        className={`text-2xl font-semibold tracking-[-0.02em] tabular-nums ${
+                          !montoRecibido ? 'text-muted-foreground' : vueltoOk ? 'text-success' : 'text-danger'
                         }`}
                       >
                         {formatCOP(Math.abs(montoRecibido ? vuelto : 0))}
@@ -397,8 +406,10 @@ export default function PosModal({
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-4 rounded-xl border border-border bg-muted px-4 py-3 text-center text-sm text-muted-foreground">
-                    Pago con {metodoLabel.toLowerCase()} — sin vuelto.
+                  <p className="mt-6 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+                    {esCredito
+                      ? `Queda por cobrar a ${selectedOwnerData?.nombre || 'el cliente'}. Los abonos se registran en Caja, pestaña Por cobrar.`
+                      : `Pago con ${metodoLabel.toLowerCase()} — sin vuelto.`}
                   </p>
                 )}
 
@@ -407,21 +418,21 @@ export default function PosModal({
                     type="button"
                     onClick={confirmarVenta}
                     disabled={isPending || !puedeConfirmar}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:brightness-100"
                   >
                     {isPending ? (
                       <><Loader2 className="h-4 w-4 animate-spin" /> Registrando…</>
                     ) : (
-                      <>Registrar venta <ArrowRight className="h-4 w-4" /></>
+                      <><span className="tabular-nums">{esCredito ? `Registrar venta a crédito por ${formatCOP(total)}` : `Cobrar ${formatCOP(total)}`}</span> <ArrowRight className="h-4 w-4" /></>
                     )}
                   </button>
                   <button
                     type="button"
                     onClick={() => setView('cart')}
                     disabled={isPending}
-                    className="flex w-full items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                    className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   >
-                    <ArrowLeft className="h-3.5 w-3.5" /> Volver al carrito
+                    <ArrowLeft className="h-4 w-4" /> Volver a la cuenta
                   </button>
                 </div>
                 </div>
@@ -430,36 +441,36 @@ export default function PosModal({
 
             {/* Paso 3: éxito — cuánto devolver */}
             {view === 'exito' && snapshot && (
-              <div className="mx-auto flex h-full max-w-md flex-col items-center justify-center px-6 py-8 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="mx-auto flex h-full max-w-md flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success-soft text-success">
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-foreground">Venta registrada</p>
+                <p className="mt-4 text-[22px] font-semibold tracking-[-0.02em] text-foreground">Venta registrada</p>
                 <p className="text-sm text-muted-foreground">Se descontó el inventario y quedó en el historial.</p>
 
                 {/* El vuelto es lo unico que el cajero necesita leer de lejos;
                     total y recibido quedan de respaldo, en letra menor. */}
                 {snapshot.vuelto > 0 && (
-                  <div className="mt-6 w-full rounded-2xl border border-primary/25 bg-primary/10 px-6 py-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  <div className="mt-6 w-full rounded-2xl bg-success-soft px-6 py-5">
+                    <p className="text-sm font-semibold text-success">
                       Devolver al cliente
                     </p>
-                    <p className="mt-1 text-[2.75rem] font-bold leading-none tracking-tight tabular-nums text-primary">
+                    <p className="mt-2 text-[48px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-success">
                       {formatCOP(snapshot.vuelto)}
                     </p>
                   </div>
                 )}
 
-                <dl className={`w-full space-y-px overflow-hidden rounded-xl border border-border bg-border text-sm ${snapshot.vuelto > 0 ? 'mt-3' : 'mt-6'}`}>
-                  <div className="flex items-center justify-between bg-card px-4 py-2.5">
+                <dl className={`w-full overflow-hidden rounded-xl bg-card text-[15px] ${snapshot.vuelto > 0 ? 'mt-3' : 'mt-6'}`}>
+                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3 last:border-b-0">
                     <dt className="text-muted-foreground">Total</dt>
                     <dd className="font-semibold tabular-nums text-foreground">{formatCOP(snapshot.total)}</dd>
                   </div>
-                  <div className="flex items-center justify-between bg-card px-4 py-2.5">
+                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3 last:border-b-0">
                     <dt className="text-muted-foreground">Recibido</dt>
                     <dd className="font-semibold tabular-nums text-foreground">{formatCOP(snapshot.recibido)}</dd>
                   </div>
-                  <div className="flex items-center justify-between bg-card px-4 py-2.5">
+                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3 last:border-b-0">
                     <dt className="text-muted-foreground">Pago</dt>
                     <dd className="font-semibold text-foreground">{snapshot.metodo}</dd>
                   </div>
@@ -469,7 +480,7 @@ export default function PosModal({
                   <button
                     type="button"
                     onClick={() => setView('factura')}
-                    className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                    className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <FileText className="h-4 w-4" />
                     Ver factura
@@ -477,17 +488,19 @@ export default function PosModal({
                 ) : null}
 
                 <div className={`flex w-full gap-2 ${facturaCreadaId ? 'mt-2' : 'mt-6'}`}>
+                  {embedded ? null : (
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 rounded-xl border border-border bg-card py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                    className="h-12 flex-1 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Cerrar
                   </button>
+                  )}
                   <button
                     type="button"
                     onClick={nuevaVenta}
-                    className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
+                    className="h-12 flex-1 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Nueva venta
                   </button>
@@ -497,33 +510,33 @@ export default function PosModal({
 
             {/* Paso 4: la factura recién emitida, dentro del mismo POS */}
             {view === 'factura' && (
-              <div className="h-full overflow-y-auto px-5 py-5">
+              <div className="h-full overflow-y-auto p-5">
                 <div className="mx-auto max-w-lg">
                   {facturaQuery.isError ? (
-                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
                       No fue posible cargar la factura. Quedó registrada y puedes verla en el
                       historial.
                     </div>
                   ) : facturaQuery.isLoading ? (
                     <div className="space-y-3">
                       {[0, 1, 2].map((i) => (
-                        <div key={i} className="h-16 animate-pulse rounded-xl border border-border bg-muted" />
+                        <div key={i} className="h-16 animate-pulse rounded-xl bg-card" />
                       ))}
                     </div>
                   ) : facturaEmitida ? (
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-lg font-bold text-foreground">{facturaEmitida.numero}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
+                          <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{facturaEmitida.numero}</p>
+                          <p className="mt-0.5 text-[13px] text-muted-foreground">
                             {formatDateTime(facturaEmitida.createdAt || facturaEmitida.fecha)}
                           </p>
                         </div>
-                        <div className="flex shrink-0 gap-2">
+                        <div className="flex shrink-0 flex-wrap gap-2">
                           <button
                             type="button"
                             onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+                            className="inline-flex h-10 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <Printer className="h-4 w-4" />
                             Imprimir tirilla
@@ -533,7 +546,7 @@ export default function PosModal({
                             type="button"
                             onClick={descargarPdf}
                             disabled={generandoPdf}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-10 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {generandoPdf ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -545,44 +558,44 @@ export default function PosModal({
                         </div>
                       </div>
 
-                      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border text-sm">
-                        <div className="bg-card px-4 py-2.5">
-                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Cliente</dt>
+                      <dl className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="rounded-xl bg-card px-4 py-3">
+                          <dt className="text-[13px] text-muted-foreground">Cliente</dt>
                           <dd className="mt-0.5 truncate font-semibold text-foreground">
                             {facturaEmitida.propietario?.nombre || 'Consumidor final'}
                           </dd>
                         </div>
-                        <div className="bg-card px-4 py-2.5">
-                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Pago</dt>
+                        <div className="rounded-xl bg-card px-4 py-3">
+                          <dt className="text-[13px] text-muted-foreground">Pago</dt>
                           <dd className="mt-0.5 truncate font-semibold text-foreground">
                             {snapshot?.metodo || facturaEmitida.metodoPago}
                           </dd>
                         </div>
                       </dl>
 
-                      <div className="overflow-hidden rounded-xl border border-border">
-                        <table className="min-w-full divide-y divide-border text-sm">
-                          <tbody className="divide-y divide-border">
+                      <div className="overflow-hidden rounded-xl bg-card">
+                        <table className="min-w-full text-sm">
+                          <tbody className="divide-y divide-border/60">
                             {(facturaEmitida.items || []).map((item) => (
                               <tr key={item.id}>
-                                <td className="px-3 py-2.5">
+                                <td className="px-4 py-3">
                                   <p className="font-medium text-foreground">{item.descripcion}</p>
-                                  <p className="text-[11px] text-muted-foreground">
+                                  <p className="text-[13px] tabular-nums text-muted-foreground">
                                     {item.cantidad} x {formatCOP(Number(item.precioUnitario))}
                                   </p>
                                 </td>
-                                <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-foreground">
+                                <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
                                   {formatCOP(Number(item.subtotal))}
                                 </td>
                               </tr>
                             ))}
                           </tbody>
                           <tfoot>
-                            <tr className="border-t border-border bg-muted">
-                              <td className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            <tr className="border-t border-border">
+                              <td className="px-4 py-4 text-[15px] font-semibold text-foreground">
                                 Total
                               </td>
-                              <td className="px-3 py-3 text-right text-base font-bold tabular-nums text-foreground">
+                              <td className="px-4 py-4 text-right text-[28px] font-semibold tracking-[-0.03em] tabular-nums text-foreground">
                                 {formatCOP(Number(facturaEmitida.total))}
                               </td>
                             </tr>
@@ -594,7 +607,7 @@ export default function PosModal({
                         <button
                           type="button"
                           onClick={() => setView('exito')}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <ArrowLeft className="h-4 w-4" />
                           Volver
@@ -602,7 +615,7 @@ export default function PosModal({
                         <button
                           type="button"
                           onClick={nuevaVenta}
-                          className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
+                          className="h-12 flex-1 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                           Nueva venta
                         </button>
@@ -614,6 +627,14 @@ export default function PosModal({
             )}
           </div>
         </div>
+  )
+
+  if (embedded) return contenido
+
+  return (
+    <DialogRoot open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-none gap-0 overflow-hidden rounded-2xl p-0 w-[min(96vw,1180px)]">
+        {contenido}
       </DialogContent>
     </DialogRoot>
   )

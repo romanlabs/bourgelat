@@ -69,13 +69,13 @@ export default function BotonesSociales({ contexto = 'registro' }) {
   const accion = contexto === 'login' ? 'Continuar' : 'Registrarme'
   if (!oauthHabilitado) return null
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       {PROVEEDORES.map(({ id, label }) => (
         <button
           key={id}
           type="button"
           onClick={() => abrirPopupOauth(`${API_URL}/auth/oauth/${id}`)}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-foreground/15 bg-transparent px-4 text-sm font-medium text-foreground transition hover:border-foreground/30 hover:bg-foreground/[0.03]"
+          className="flex h-12 muy-bajo:h-11 w-full items-center justify-center gap-3 rounded-lg border border-input bg-card px-4 text-[15px] font-semibold text-foreground transition hover:bg-muted active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ProviderIcon id={id} />
           {accion} con {label}

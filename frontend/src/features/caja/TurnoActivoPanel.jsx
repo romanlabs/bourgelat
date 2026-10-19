@@ -30,7 +30,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
     return (
       <div className="space-y-3">
         {[0, 1].map((item) => (
-          <div key={item} className="h-20 animate-pulse rounded-[24px] border border-border bg-muted" />
+          <div key={item} className="h-20 animate-pulse rounded-2xl bg-card" />
         ))}
       </div>
     )
@@ -44,12 +44,12 @@ export default function TurnoActivoPanel({ cajaHook }) {
             icon={<Wallet />}
             variant="primary"
             title="No tienes un turno de caja abierto"
-            description="Abre tu turno registrando el fondo inicial en efectivo antes de operar la caja."
+            description="Cuenta la base en efectivo y abre tu turno para empezar a cobrar."
             action={
               <button
                 type="button"
                 onClick={() => setAperturaOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
+                className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <Wallet className="h-4 w-4" />
                 Abrir turno
@@ -70,61 +70,61 @@ export default function TurnoActivoPanel({ cajaHook }) {
     <div className="space-y-5">
       <DashboardPanel
         title="Turno activo"
-        subtitle="Resumen en vivo del efectivo del turno. El sistema recalcula el efectivo esperado con cada venta y movimiento."
+        subtitle="El efectivo esperado se actualiza con cada venta y movimiento."
         action={
           turnoActivo.vencido ? (
-            <StatusPill tone="border-warning/30 bg-warning-soft text-warning ">
+            <StatusPill tone="bg-warning-soft text-warning">
               Turno vencido
             </StatusPill>
           ) : (
-            <StatusPill tone="border-success/30 bg-success-soft text-success ">Turno abierto</StatusPill>
+            <StatusPill tone="bg-success-soft text-success">Turno abierto</StatusPill>
           )
         }
       >
         {!turnoActivo.vencido && turnoActivo.fueraDeHorario ? (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-info/30 bg-info-soft px-4 py-3 text-sm leading-6 text-info">
+          <div className="mb-4 flex items-start gap-3 rounded-xl bg-info-soft px-4 py-3 text-sm leading-6 text-info">
             <Clock className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>
-              La clinica ya cerro{turnoActivo.horaCierre ? ` (${turnoActivo.horaCierre})` : ''} y tu turno sigue abierto.
-              Puedes seguir cobrando si lo necesitas, pero ciérralo antes de irte para dejar el corte del dia listo.
+              La clínica ya cerró{turnoActivo.horaCierre ? ` (${turnoActivo.horaCierre})` : ''} y tu turno sigue abierto.
+              Puedes seguir cobrando si lo necesitas, pero ciérralo antes de irte para dejar el corte del día listo.
             </p>
           </div>
         ) : null}
 
         {turnoActivo.vencido ? (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
+          <div className="mb-4 flex items-start gap-3 rounded-xl bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>
-              Este turno se abrio el {new Date(turnoActivo.fechaApertura).toLocaleDateString('es-CO')} y quedo abierto de un dia anterior. No puedes seguir vendiendo ni registrar movimientos hasta cerrarlo.
+              Este turno se abrió el {new Date(turnoActivo.fechaApertura).toLocaleDateString('es-CO')} y quedó abierto de un día anterior. No puedes seguir vendiendo ni registrar movimientos hasta cerrarlo.
             </p>
           </div>
         ) : null}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Fondo inicial</p>
-            <p className="mt-1 text-base font-bold tabular-nums text-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5">
+            <p className="text-[13px] font-semibold text-muted-foreground">Base inicial</p>
+            <p className="mt-1.5 text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">
               {formatCurrency(turnoActivo.montoInicial)}
             </p>
-            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Efectivo con el que abriste el turno</p>
+            <p className="mt-1 text-[13px] leading-snug text-muted-foreground">Efectivo con el que abriste el turno</p>
           </div>
-          <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ventas en efectivo</p>
-            <p className="mt-1 text-base font-bold tabular-nums text-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5">
+            <p className="text-[13px] font-semibold text-muted-foreground">Ventas en efectivo</p>
+            <p className="mt-1.5 text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">
               {formatCurrency(turnoActivo.totalVentasEfectivo)}
             </p>
-            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Ventas del sistema pagadas en efectivo</p>
+            <p className="mt-1 text-[13px] leading-snug text-muted-foreground">Ventas del sistema pagadas en efectivo</p>
           </div>
-          <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ingresos / egresos</p>
-            <p className="mt-1 text-base font-bold tabular-nums text-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5">
+            <p className="text-[13px] font-semibold text-muted-foreground">Ingresos / egresos</p>
+            <p className="mt-1.5 text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">
               +{formatCurrency(turnoActivo.totalIngresosManuales)} / -{formatCurrency(turnoActivo.totalEgresosManuales)}
             </p>
-            <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Movimientos manuales, no incluye ventas</p>
+            <p className="mt-1 text-[13px] leading-snug text-muted-foreground">Movimientos manuales, no incluye ventas</p>
           </div>
-          <div className="rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Efectivo esperado</p>
-            <p className="mt-1 text-base font-bold tabular-nums text-primary">{formatCurrency(montoFinalEsperado)}</p>
-            <p className="mt-0.5 text-[10px] leading-tight text-primary/70">Fondo + ventas + ingresos - egresos</p>
+          <div className="rounded-xl bg-accent px-4 py-3.5">
+            <p className="text-[13px] font-semibold text-accent-foreground">Efectivo esperado</p>
+            <p className="mt-1.5 text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">{formatCurrency(montoFinalEsperado)}</p>
+            <p className="mt-1.5 text-[13px] leading-snug text-accent-foreground">Base + ventas + ingresos − egresos</p>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
             <button
               type="button"
               onClick={() => setMovimientoOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <PlusCircle className="h-4 w-4" />
               Registrar movimiento
@@ -142,7 +142,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
           <button
             type="button"
             onClick={() => setCierreOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
+            className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Banknote className="h-4 w-4" />
             Cerrar turno
@@ -156,7 +156,8 @@ export default function TurnoActivoPanel({ cajaHook }) {
           <button
             type="button"
             onClick={() => setMovimientosExpandido((curr) => !curr)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+            aria-expanded={movimientosExpandido}
+            className="inline-flex h-10 items-center gap-1.5 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {movimientosExpandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {movimientosExpandido ? 'Ocultar' : `Ver movimientos (${movimientos.length})`}
@@ -165,13 +166,13 @@ export default function TurnoActivoPanel({ cajaHook }) {
       >
         {movimientosExpandido ? (
           movimientos.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
+            <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
               Aún no hay movimientos manuales registrados en este turno.
             </div>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="space-y-1">
               {movimientos.map((movimiento) => (
-                <div key={movimiento.id} className="flex items-center justify-between gap-3 py-2">
+                <div key={movimiento.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-3 hover:bg-muted">
                   <div className="flex items-center gap-3">
                     {movimiento.tipo === 'ingreso' ? (
                       <ArrowUpCircle className="h-4 w-4 text-success" />
@@ -181,12 +182,12 @@ export default function TurnoActivoPanel({ cajaHook }) {
                     <div>
                       <p className="text-sm font-semibold text-foreground">{motivoLabel(movimiento.motivo)}</p>
                       {movimiento.observaciones ? (
-                        <p className="text-xs text-muted-foreground">{movimiento.observaciones}</p>
+                        <p className="text-[13px] text-muted-foreground">{movimiento.observaciones}</p>
                       ) : null}
                     </div>
                   </div>
                   <p
-                    className={`text-sm font-bold tabular-nums ${
+                    className={`text-[15px] font-semibold tabular-nums ${
                       movimiento.tipo === 'ingreso' ? 'text-success' : 'text-danger'
                     }`}
                   >

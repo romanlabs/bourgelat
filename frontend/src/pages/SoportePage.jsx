@@ -30,15 +30,15 @@ import {
 const AVISOS_ESTADO = {
   esperando_usuario: {
     texto: 'El equipo de Bourgelat te respondió y espera tu respuesta.',
-    tone: 'border-warning/30 bg-warning-soft text-warning ',
+    tone: 'bg-warning-soft text-warning',
   },
   resuelto: {
     texto: 'El equipo lo marcó como resuelto. Si todo quedó bien, ciérralo; si no, respóndenos y lo reabrimos.',
-    tone: 'border-success/30 bg-success-soft text-success ',
+    tone: 'bg-success-soft text-success',
   },
   cerrado: {
     texto: 'Este ticket está cerrado. Si el problema vuelve, abre un ticket nuevo.',
-    tone: 'border-border bg-muted text-muted-foreground',
+    tone: 'bg-muted text-muted-foreground',
   },
 }
 
@@ -147,12 +147,12 @@ export default function SoportePage() {
         <section
           aria-label="Tickets"
           className={cn(
-            'min-w-0 self-start overflow-hidden rounded-xl border border-border bg-card',
+            'min-w-0 self-start overflow-hidden rounded-2xl bg-card',
             ticketId && 'hidden lg:block'
           )}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="text-sm font-semibold text-foreground">
+          <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
+            <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">
               {esAdmin ? 'Tickets de la clínica' : 'Tus tickets'}
             </h2>
             <Select
@@ -168,9 +168,9 @@ export default function SoportePage() {
           </div>
 
           {listaQuery.isLoading ? (
-            <ul className="divide-y divide-border" aria-busy="true">
+            <ul className="space-y-1 px-2 pb-2" aria-busy="true">
               {[0, 1, 2].map((fila) => (
-                <li key={fila} className="space-y-2 px-4 py-4">
+                <li key={fila} className="space-y-2 rounded-xl px-3 py-3">
                   <div className="h-3 w-20 animate-pulse rounded bg-muted" />
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                   <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
@@ -195,7 +195,7 @@ export default function SoportePage() {
               }
             />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="space-y-1 px-2 pb-2">
               {tickets.map((item) => (
                 <li key={item.id}>
                   <TicketResumen
@@ -221,7 +221,7 @@ export default function SoportePage() {
         <section
           aria-label="Detalle del ticket"
           className={cn(
-            'min-h-[480px] min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card',
+            'min-h-[480px] min-w-0 flex-col overflow-hidden rounded-2xl bg-card',
             ticketId ? 'flex' : 'hidden lg:flex'
           )}
         >
@@ -269,7 +269,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
   const ticket = query.data?.ticket
 
   const volver = (
-    <div className="border-b border-border px-3 py-2 lg:hidden">
+    <div className="px-3 pt-3 lg:hidden">
       <Button variant="ghost" size="sm" onClick={onVolver}>
         <ArrowLeft />
         Todos los tickets
@@ -318,8 +318,8 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
     <>
       {volver}
 
-      <header className="border-b border-border px-5 py-4 sm:px-6">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+      <header className="px-5 pb-2 pt-5 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
           <span className="font-mono">{ticket.codigo}</span>
           <span aria-hidden>·</span>
           <span>{etiquetaCategoria(ticket.categoria)}</span>
@@ -331,12 +331,12 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
           ) : null}
         </div>
         <div className="mt-1.5 flex flex-wrap items-start justify-between gap-3">
-          <h2 className="min-w-0 break-words text-lg font-semibold leading-snug text-foreground">
+          <h2 className="min-w-0 break-words text-[22px] font-semibold leading-snug tracking-[-0.02em] text-foreground">
             {ticket.asunto}
           </h2>
           <EstadoTicketBadge estado={ticket.estado} />
         </div>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
           <span>
             Abierto el {formatearFechaTicket(ticket.createdAt)}
             {esAdmin && ticket.creadoPor ? ` por ${ticket.creadoPor.nombre}` : ''}
@@ -349,7 +349,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
       </header>
 
       {aviso ? (
-        <p className={cn('mx-5 mt-4 rounded-lg border px-4 py-2.5 text-sm sm:mx-6', aviso.tone)}>
+        <p className={cn('mx-5 mt-3 rounded-xl px-4 py-3 text-sm leading-6 sm:mx-6', aviso.tone)}>
           {aviso.texto}
         </p>
       ) : null}
@@ -361,7 +361,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
             target="_blank"
             rel="noreferrer"
             title="Abrir la captura en otra pestaña"
-            className="mb-5 block w-fit overflow-hidden rounded-lg border border-border transition hover:border-primary/50"
+            className="mb-5 block w-fit overflow-hidden rounded-xl bg-muted outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <img
               src={ticket.capturaUrl}
@@ -376,7 +376,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
       </div>
 
       {admiteMensajes ? (
-        <footer className="border-t border-border px-5 py-4 sm:px-6">
+        <footer className="bg-muted/60 px-5 py-4 sm:px-6">
           <ResponderTicketForm
             onSubmit={onResponder}
             isPending={respondiendo}
@@ -386,7 +386,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
                 : 'Agrega más detalles o responde…'
             }
           />
-          <div className="mt-3 border-t border-border pt-3">
+          <div className="mt-2">
             <Button variant="ghost" size="sm" onClick={onCerrar}>
               <CircleCheck />
               Ya se solucionó, cerrar ticket
@@ -401,7 +401,7 @@ function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, on
 function PanelInicio({ onNuevo }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-12 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-primary">
         <LifeBuoy className="h-7 w-7" />
       </span>
       <div className="max-w-sm space-y-1.5">
@@ -413,7 +413,7 @@ function PanelInicio({ onNuevo }) {
       <ol className="grid max-w-md gap-3 text-left">
         {PASOS.map((paso, indice) => (
           <li key={paso} className="flex gap-3 text-sm text-muted-foreground">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-semibold text-primary">
               {indice + 1}
             </span>
             <span className="pt-0.5">{paso}</span>

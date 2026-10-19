@@ -20,8 +20,8 @@ import {
 import { perfilApi } from '@/features/perfil/perfilApi'
 
 const INPUT_CLASS =
-  'h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary'
-const LABEL_CLASS = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'
+  'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+const LABEL_CLASS = 'mb-1.5 block text-sm font-medium text-foreground'
 
 const ROLE_LABELS = {
   admin: 'Administrador',
@@ -133,10 +133,10 @@ function CardIdentidad({ usuario }) {
               <img
                 src={usuario.foto}
                 alt="Foto de perfil"
-                className="h-24 w-24 rounded-full border border-border object-cover"
+                className="h-24 w-24 rounded-full bg-muted object-cover"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-sidebar text-xl font-semibold text-sidebar-primary">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-accent text-2xl font-bold text-primary">
                 {inicialesDe(usuario)}
               </div>
             )}
@@ -146,7 +146,7 @@ function CardIdentidad({ usuario }) {
               disabled={subiendoFoto}
               title="Cambiar foto"
               aria-label="Cambiar foto de perfil"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-dropdown outline-none transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Camera className="h-4 w-4" />
             </button>
@@ -155,9 +155,9 @@ function CardIdentidad({ usuario }) {
             <button
               type="button"
               onClick={() => actualizar({ foto: null })}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+              className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-destructive"
             >
-              <Trash2 className="h-3 w-3" /> Quitar foto
+              <Trash2 className="h-3.5 w-3.5" /> Quitar foto
             </button>
           ) : null}
           <input
@@ -174,14 +174,14 @@ function CardIdentidad({ usuario }) {
             <label className={LABEL_CLASS}>Nombre</label>
             <input {...register('nombre')} className={INPUT_CLASS} />
             {errors.nombre ? (
-              <p className="mt-1 text-xs text-destructive">{errors.nombre.message}</p>
+              <p className="mt-1 text-[13px] text-destructive">{errors.nombre.message}</p>
             ) : null}
           </div>
           <div>
             <label className={LABEL_CLASS}>Celular</label>
             <input {...register('telefono')} className={INPUT_CLASS} placeholder="3001234567" />
             {errors.telefono ? (
-              <p className="mt-1 text-xs text-destructive">{errors.telefono.message}</p>
+              <p className="mt-1 text-[13px] text-destructive">{errors.telefono.message}</p>
             ) : null}
           </div>
           <div>
@@ -210,7 +210,7 @@ function CardIdentidad({ usuario }) {
             {roles.map((rol) => (
               <StatusPill key={rol}>{ROLE_LABELS[rol] || rol}</StatusPill>
             ))}
-            <StatusPill tone="border-border bg-accent text-foreground">
+            <StatusPill tone="bg-accent text-primary">
               Acceso: {metodoAcceso}
             </StatusPill>
           </div>
@@ -285,7 +285,7 @@ function CardSeguridad({ usuario }) {
                 </button>
               </div>
               {errors.passwordActual ? (
-                <p className="mt-1 text-xs text-destructive">{errors.passwordActual.message}</p>
+                <p className="mt-1 text-[13px] text-destructive">{errors.passwordActual.message}</p>
               ) : null}
             </div>
             <div>
@@ -307,27 +307,27 @@ function CardSeguridad({ usuario }) {
                 </button>
               </div>
               {errors.passwordNueva ? (
-                <p className="mt-1 text-xs text-destructive">{errors.passwordNueva.message}</p>
+                <p className="mt-1 text-[13px] text-destructive">{errors.passwordNueva.message}</p>
               ) : null}
             </div>
             <div>
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Actualizando...' : 'Cambiar contraseña'}
               </Button>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 text-[13px] text-muted-foreground">
                 Al cambiarla se cierran tus sesiones en otros dispositivos.
               </p>
             </div>
           </form>
         ) : (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
+          <div className="flex items-start gap-3 rounded-xl bg-muted p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
               <p className="text-sm font-medium text-foreground">
                 Tu acceso es gestionado por{' '}
                 {usuario?.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 No tienes contraseña en Bourgelat; la seguridad de tu cuenta (verificación en dos
                 pasos, recuperación) se administra desde tu cuenta de{' '}
                 {usuario?.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'}.
@@ -336,9 +336,9 @@ function CardSeguridad({ usuario }) {
           </div>
         )}
 
-        <div className="flex flex-col items-start justify-center gap-2 rounded-lg border border-border p-4">
+        <div className="flex flex-col items-start justify-center gap-2 rounded-xl bg-muted p-4">
           <p className="text-sm font-medium text-foreground">Sesiones</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             Si sospechas que alguien más entró con tu cuenta, cierra todas las sesiones abiertas.
           </p>
           <Button type="button" variant="outline" onClick={cerrarTodas} disabled={cerrando}>

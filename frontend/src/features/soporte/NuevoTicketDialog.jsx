@@ -51,9 +51,9 @@ const DEFAULT_VALUES = {
 const MAX_CAPTURA_BYTES = 5 * 1024 * 1024
 const TIPOS_CAPTURA = ['image/jpeg', 'image/png', 'image/webp']
 
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+const labelClass = 'text-[13px] font-semibold text-muted-foreground'
 const fieldClass =
-  'w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary'
+  'w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
 
 const validarCaptura = (archivo) => {
   if (!TIPOS_CAPTURA.includes(archivo.type)) return 'La captura debe ser JPG, PNG o WEBP.'
@@ -145,7 +145,7 @@ export default function NuevoTicketDialog({ open, onOpenChange, moduloInicial = 
               type="text"
               autoComplete="off"
               placeholder="Ej: No me deja cerrar la caja"
-              className={cn(fieldClass, 'h-10', errors.asunto && 'border-danger')}
+              className={cn(fieldClass, 'h-11', errors.asunto && 'border-danger')}
               {...register('asunto')}
             />
             <FieldError message={errors.asunto?.message} className="mt-0" />
@@ -233,7 +233,7 @@ export default function NuevoTicketDialog({ open, onOpenChange, moduloInicial = 
             </span>
 
             {captura && previewUrl ? (
-              <div className="relative w-fit overflow-hidden rounded-lg border border-border">
+              <div className="relative w-fit overflow-hidden rounded-xl bg-muted">
                 <img src={previewUrl} alt="Vista previa de la captura" className="max-h-40 w-auto object-contain" />
                 <button
                   type="button"
@@ -247,12 +247,12 @@ export default function NuevoTicketDialog({ open, onOpenChange, moduloInicial = 
             ) : (
               <label
                 htmlFor="ticket-captura"
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground transition hover:border-primary/50 hover:bg-muted"
+                className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-input bg-muted px-4 py-3 text-sm text-muted-foreground transition hover:border-primary hover:bg-accent"
               >
                 <ImagePlus className="h-5 w-5 shrink-0 text-primary" />
                 <span>
-                  Elige una imagen o pégala con <kbd className="rounded border border-border bg-card px-1 text-xs">Ctrl</kbd>+
-                  <kbd className="rounded border border-border bg-card px-1 text-xs">V</kbd>. JPG, PNG o WEBP, hasta 5 MB.
+                  Elige una imagen o pégala con <kbd className="rounded border border-border bg-card px-1 text-[13px]">Ctrl</kbd>+
+                  <kbd className="rounded border border-border bg-card px-1 text-[13px]">V</kbd>. JPG, PNG o WEBP, hasta 5 MB.
                 </span>
               </label>
             )}

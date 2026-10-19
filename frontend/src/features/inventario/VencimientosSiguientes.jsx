@@ -19,8 +19,8 @@ export default function VencimientosSiguientes({ productoId, insumoClinicoId, on
   if (!vencimientos.length) return null
 
   return (
-    <div className="grid gap-2 border border-dashed border-border bg-muted/50 px-3 py-3">
-      <p className="text-xs font-medium text-muted-foreground">
+    <div className="grid gap-2 rounded-xl border border-dashed border-border bg-muted/50 px-3 py-3">
+      <p className="text-[13px] font-medium text-muted-foreground">
         Próximos vencimientos registrados en compras
       </p>
       <ul className="grid gap-1.5">
@@ -32,7 +32,7 @@ export default function VencimientosSiguientes({ productoId, insumoClinicoId, on
             <span className="text-foreground">
               {v.fechaVencimiento}
               {v.lote && <span className="text-muted-foreground"> · Lote {v.lote}</span>}
-              <span className="block text-xs text-muted-foreground">
+              <span className="block text-[13px] text-muted-foreground">
                 {v.proveedor}
                 {v.numeroFactura && ` · Factura ${v.numeroFactura}`}
               </span>
@@ -40,7 +40,7 @@ export default function VencimientosSiguientes({ productoId, insumoClinicoId, on
             <button
               type="button"
               onClick={() => onUsar(v.fechaVencimiento, v.lote || '')}
-              className="shrink-0 text-xs font-medium text-primary hover:underline"
+              className="shrink-0 text-[13px] font-medium text-primary hover:underline"
             >
               Usar esta fecha
             </button>

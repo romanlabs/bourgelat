@@ -37,27 +37,27 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
         ) : detalle ? (
           <div className="mt-4 max-h-[70vh] space-y-5 overflow-y-auto">
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-lg border border-border bg-muted px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Cajero</p>
+              <div className="rounded-xl bg-muted px-4 py-3">
+                <p className="text-[13px] font-semibold text-muted-foreground">Cajero</p>
                 <p className="font-semibold text-foreground">{detalle.turno.usuario?.nombre || 'Sin nombre'}</p>
               </div>
-              <div className="rounded-lg border border-border bg-muted px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Diferencia</p>
-                <p className="font-semibold tabular-nums text-foreground">{formatCurrency(detalle.turno.diferencia)}</p>
+              <div className="rounded-xl bg-muted px-4 py-3">
+                <p className="text-[13px] font-semibold text-muted-foreground">Diferencia</p>
+                <p className="text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">{formatCurrency(detalle.turno.diferencia)}</p>
               </div>
             </div>
 
             {detalle.turno.categoriaDiferencia ? (
-              <div className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
+              <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning">
                 <p className="font-semibold">{CATEGORIA_DIFERENCIA_LABELS[detalle.turno.categoriaDiferencia] || detalle.turno.categoriaDiferencia}</p>
                 {detalle.turno.observacionesCierre ? (
-                  <p className="mt-1 text-xs">{detalle.turno.observacionesCierre}</p>
+                  <p className="mt-1 text-[13px]">{detalle.turno.observacionesCierre}</p>
                 ) : null}
               </div>
             ) : null}
 
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="mb-1 text-[15px] font-semibold text-foreground">
                 Movimientos manuales
               </p>
               {detalle.movimientos.length === 0 ? (
@@ -67,7 +67,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
                   {detalle.movimientos.map((movimiento) => (
                     <div key={movimiento.id} className="flex items-center justify-between py-2">
                       <span className="text-foreground">{motivoMovimientoLabel(movimiento.motivo)}</span>
-                      <span className={movimiento.tipo === 'ingreso' ? 'text-success' : 'text-danger'}>
+                      <span className={`font-semibold tabular-nums ${movimiento.tipo === 'ingreso' ? 'text-success' : 'text-danger'}`}>
                         {movimiento.tipo === 'ingreso' ? '+' : '-'}
                         {formatCurrency(movimiento.monto)}
                       </span>
@@ -78,8 +78,8 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
             </div>
 
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Trazabilidad de inventario (productos vendidos en el turno)
+              <p className="mb-1 text-[15px] font-semibold text-foreground">
+                Productos vendidos en el turno
               </p>
               {detalle.trazabilidadInventario.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No se vendieron productos de inventario en este turno.</p>
