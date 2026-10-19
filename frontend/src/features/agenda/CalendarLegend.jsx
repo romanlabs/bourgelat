@@ -1,6 +1,7 @@
 import { Popover } from 'radix-ui'
 import { Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 import { buildTipoTone, TIPOS_LEYENDA } from './calendarConstants'
 
 // Leyenda por tipo de cita, en un botón para no gastar una fila del
@@ -9,15 +10,17 @@ import { buildTipoTone, TIPOS_LEYENDA } from './calendarConstants'
 export function CalendarLegend() {
   return (
     <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-secondary"
-        >
-          <Palette className="h-4 w-4" />
-          Colores
-        </button>
-      </Popover.Trigger>
+      <SimpleTooltip label="Colores de las citas">
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            aria-label="Colores de las citas"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-secondary"
+          >
+            <Palette className="h-[18px] w-[18px]" />
+          </button>
+        </Popover.Trigger>
+      </SimpleTooltip>
       <Popover.Portal>
         <Popover.Content
           align="start"

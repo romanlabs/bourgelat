@@ -285,6 +285,8 @@ export default function AdminShell({
   // Pantallas donde el contenido necesita todo el alto (Agenda): título más
   // chico y buscador como ícono.
   compactHeader = false,
+  // Controles que van en la misma fila del título (la barra del calendario).
+  titleAside = null,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
@@ -677,7 +679,8 @@ export default function AdminShell({
 
           {!hidePageHeader && (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="min-w-0 flex-1">
+              <div className={cn('min-w-0 flex-1', titleAside && 'flex flex-wrap items-center gap-x-6 gap-y-3')}>
+                <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h1
                     className={cn(
@@ -694,6 +697,8 @@ export default function AdminShell({
                 {description ? (
                   <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-2.5 text-base leading-6')}>{description}</p>
                 ) : null}
+                </div>
+                {titleAside}
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">

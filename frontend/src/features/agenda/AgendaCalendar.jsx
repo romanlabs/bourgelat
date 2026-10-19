@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
@@ -31,6 +31,7 @@ export default function AgendaCalendar({
   onReschedule,
   onVistaTablaChange,
   onResumenChange,
+  onToolbarChange,
   isUpdating = false,
   isRescheduling = false,
 }) {
@@ -83,23 +84,41 @@ export default function AgendaCalendar({
     onResumenChange?.({ titulo: tituloRango, total: totalCitas, cargando: isLoading })
   }, [onResumenChange, tituloRango, totalCitas, isLoading])
 
+  // La barra sube a la fila del título de la página (AgendaPage la pone ahí).
+  // Memoizada: un nodo nuevo en cada render haría que el efecto de abajo
+  // actualice a la página sin parar. Las funciones de navegación no están en
+  // las dependencias porque cierran sobre el mismo estado que ya se vigila.
+  const toolbarNode = useMemo(
+    () => (
+      <CalendarToolbar
+        view={effectiveView}
+        onViewChange={setView}
+        onPrev={irAnterior}
+        onNext={irSiguiente}
+        onToday={irHoy}
+        isMobile={isMobile}
+        isFetching={isFetching && !isLoading}
+        prefs={prefs}
+        onTogglePref={togglePref}
+        onVistaTablaChange={onVistaTablaChange}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
+        extra={<CalendarLegend />}
+      />
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveView, isMobile, isFetching, isLoading, prefs, sidebarOpen, onVistaTablaChange, fechaBase]
+  )
+
+  useEffect(() => {
+    if (!onToolbarChange) return
+    onToolbarChange(toolbarNode)
+    return () => onToolbarChange(null)
+  }, [toolbarNode, onToolbarChange])
+
   return (
     <div className="flex flex-col gap-4">
-        <CalendarToolbar
-          view={effectiveView}
-          onViewChange={setView}
-          onPrev={irAnterior}
-          onNext={irSiguiente}
-          onToday={irHoy}
-          isMobile={isMobile}
-          isFetching={isFetching && !isLoading}
-          prefs={prefs}
-          onTogglePref={togglePref}
-          onVistaTablaChange={onVistaTablaChange}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={toggleSidebar}
-          extra={<CalendarLegend />}
-        />
+      {onToolbarChange ? null : toolbarNode}
 
     <div className="relative flex">
       {/* Columna lateral: solo ocupa espacio en el flujo cuando esta abierta */}

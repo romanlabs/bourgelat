@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,31 @@ function formatHourLabel(slot) {
   const hour = parseInt(slot.slice(0, 2), 10)
   const h12 = hour % 12 === 0 ? 12 : hour % 12
   return `${h12} ${hour < 12 ? 'AM' : 'PM'}`
+}
+
+/**
+ * Alto disponible desde donde empieza la grilla hasta el borde inferior de la
+ * ventana, para que el calendario llene la pantalla sin scroll de página en
+ * cualquier tamaño. Se vuelve a medir en cada render (el encabezado cambia de
+ * alto cuando llega la barra) y al redimensionar.
+ */
+function useAltoDisponible(ref, margenInferior = 16, minimo = 320) {
+  const [alto, setAlto] = useState(null)
+
+  const medir = () => {
+    const el = ref.current
+    if (!el) return
+    const disponible = Math.max(minimo, Math.floor(window.innerHeight - el.getBoundingClientRect().top - margenInferior))
+    setAlto((previo) => (previo === disponible ? previo : disponible))
+  }
+
+  useLayoutEffect(medir)
+  useEffect(() => {
+    window.addEventListener('resize', medir)
+    return () => window.removeEventListener('resize', medir)
+  })
+
+  return alto
 }
 
 /** Alto de slot fluido: intenta que la grilla completa quepa en el contenedor. */
@@ -93,6 +118,7 @@ export function TimeGridView({
   getBloqueoDelDia,
 }) {
   const scrollRef = useRef(null)
+  const altoDisponible = useAltoDisponible(scrollRef)
   const slotHeight = useSlotHeight(scrollRef, slots.length)
   const gridHeight = slots.length * slotHeight
   const esDia = days.length === 1
@@ -112,8 +138,8 @@ export function TimeGridView({
     <div
       ref={scrollRef}
       className="overflow-y-auto overflow-x-hidden rounded-2xl bg-card px-2 pb-2"
-      // Cabe en la pantalla bajo el encabezado y la barra; el scroll queda dentro.
-      style={{ height: 'max(320px, calc(100dvh - 166px))' }}
+      // Llena la pantalla bajo el encabezado; el scroll de las horas queda dentro.
+      style={{ height: altoDisponible ? `${altoDisponible}px` : 'max(320px, calc(100dvh - 166px))' }}
     >
       {/* Cabecera: nombres de día */}
       <div

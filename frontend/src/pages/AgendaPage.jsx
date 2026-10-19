@@ -70,7 +70,7 @@ function AgendaTabs({ activeTab, onTabChange }) {
           type="button"
           aria-pressed={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`h-9 rounded-lg px-4 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`h-9 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             activeTab === tab.id
               ? 'bg-card font-semibold text-foreground'
               : 'font-medium text-muted-foreground hover:text-foreground'
@@ -120,6 +120,7 @@ export default function AgendaPage() {
     new URLSearchParams(window.location.search).get('nueva') ? { fecha: hoyLocal() } : null
   )
   const [resumenCalendario, setResumenCalendario] = useState(null)
+  const [calendarToolbar, setCalendarToolbar] = useState(null)
 
   const rolPermitido = canAccessModule(usuario, 'agenda')
   // Todos los planes incluyen citas y reportes operativos.
@@ -249,8 +250,12 @@ export default function AgendaPage() {
 
   // El encabezado dice qué se está viendo: el rango del calendario y cuántas citas trae.
   const enCalendario = activeTab === 'agenda' && vistaAgenda === 'calendario' && resumenCalendario
+  // El año solo se muestra si no es el actual: «18 – 24 de octubre».
+  const tituloRango = enCalendario
+    ? resumenCalendario.titulo.replace(` de ${new Date().getFullYear()}`, '').replace(` ${new Date().getFullYear()}`, '')
+    : ''
   const tituloAgenda = enCalendario
-    ? resumenCalendario.titulo.charAt(0).toUpperCase() + resumenCalendario.titulo.slice(1)
+    ? tituloRango.charAt(0).toUpperCase() + tituloRango.slice(1)
     : activeTab === 'recepcion'
       ? 'Recepción'
       : activeTab === 'analitica'
@@ -272,6 +277,7 @@ export default function AgendaPage() {
     <AdminShell
       currentKey="agenda"
       compactHeader
+      titleAside={activeTab === 'agenda' && vistaAgenda === 'calendario' ? calendarToolbar : null}
       title={tituloAgenda}
       description={descripcionAgenda}
       actions={
@@ -420,6 +426,7 @@ export default function AgendaPage() {
                         isRescheduling={reprogramarMutation.isPending}
                         onVistaTablaChange={handleVistaTabla}
                         onResumenChange={setResumenCalendario}
+                        onToolbarChange={setCalendarToolbar}
                       />
                     </>
                   )
