@@ -18,7 +18,10 @@ export const MODULE_ACCESS = {
   pacientes: ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'],
   historias: ['admin', 'superadmin', 'veterinario', 'auxiliar'],
   antecedentes: ['admin', 'superadmin', 'veterinario', 'auxiliar'],
-  finanzas: ['admin', 'superadmin', 'facturador', 'recepcionista', 'auxiliar', 'veterinario'],
+  // Caja: el turno solo lo abren estos roles (cajaRoutes), y sin turno no se vende.
+  caja: ['admin', 'superadmin', 'recepcionista', 'facturador'],
+  // Finanzas: reporte de ingresos (admin, facturador) y gastos (admin).
+  finanzas: ['admin', 'superadmin', 'facturador'],
   inventario: ['admin', 'superadmin', 'auxiliar'],
   usuarios: ['admin', 'superadmin'],
   configuracion: ['admin', 'superadmin'],

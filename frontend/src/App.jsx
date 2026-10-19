@@ -49,6 +49,7 @@ const PROTECTED_PREFIXES = [
   '/auditoria',
   '/inventario',
   '/finanzas',
+  '/caja',
 ]
 
 const shouldBootstrapSession = () => {

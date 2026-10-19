@@ -34,6 +34,9 @@ const buildCashSuggestions = (total) => {
  * El último paso muestra la factura recién emitida sin salir del POS, para no
  * mandar al cajero al historial a buscar lo que acaba de vender.
  * Solo venta interna: no menciona facturación electrónica en ningún paso.
+ *
+ * Con `embedded` se pinta dentro de la página (pestaña Venta de Caja) en lugar
+ * de en una ventana: mismo flujo, sin cabecera propia ni botón de cerrar.
  */
 export default function PosModal({
   open,
@@ -43,6 +46,7 @@ export default function PosModal({
   ventaExitosa,
   facturaCreadaId,
   onNuevaVenta,
+  embedded = false,
 }) {
   const [view, setView] = useState('cart')          // cart | pago | exito | factura
   const [mobilePane, setMobilePane] = useState('productos')
@@ -77,6 +81,7 @@ export default function PosModal({
   const total = invoiceTotals?.total ?? 0
   const metodoPago = invoiceForm?.metodoPago || 'efectivo'
   const esEfectivo = metodoPago === 'efectivo'
+  const esCredito = metodoPago === 'credito'
   const monto = parseFloat(montoRecibido) || 0
   const vuelto = monto - total
   const vueltoOk = vuelto >= 0
@@ -110,7 +115,7 @@ export default function PosModal({
 
   const confirmarVenta = () => {
     // Capturamos antes de emitir: el hook limpia el carrito al tener éxito.
-    setSnapshot({ total, recibido: esEfectivo ? monto : total, vuelto: esEfectivo ? vuelto : 0, metodo: metodoLabel })
+    setSnapshot({ total, recibido: esEfectivo ? monto : esCredito ? 0 : total, vuelto: esEfectivo ? vuelto : 0, metodo: metodoLabel })
     handleCrearFactura()
   }
 
@@ -145,11 +150,10 @@ export default function PosModal({
 
   const puedeConfirmar = itemCount > 0 && (!esEfectivo || (montoRecibido !== '' && vueltoOk))
 
-  return (
-    <DialogRoot open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-none gap-0 overflow-hidden rounded-2xl p-0 w-[min(96vw,1180px)]">
-        <div className="flex h-[min(92dvh,780px)] flex-col bg-background">
-          {/* ── Cabecera ── */}
+  const contenido = (
+        <div className={embedded ? 'flex h-full flex-col overflow-hidden rounded-2xl bg-background' : 'flex h-[min(92dvh,780px)] flex-col bg-background'}>
+          {/* ── Cabecera (solo en la ventana: en la página ya hay título) ── */}
+          {embedded ? null : (
           <header className="flex shrink-0 items-center gap-3 bg-card px-6 py-4 pr-14">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
               <ShoppingCart className="h-5 w-5" />
@@ -173,6 +177,7 @@ export default function PosModal({
               </span>
             ) : null}
           </header>
+          )}
 
           {/* ── Cuerpo ── */}
           <div className="min-h-0 flex-1 overflow-hidden">
@@ -402,7 +407,9 @@ export default function PosModal({
                   </div>
                 ) : (
                   <p className="mt-6 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-                    Pago con {metodoLabel.toLowerCase()} — sin vuelto.
+                    {esCredito
+                      ? `Queda por cobrar a ${selectedOwnerData?.nombre || 'el cliente'}. Los abonos se registran en Caja, pestaña Por cobrar.`
+                      : `Pago con ${metodoLabel.toLowerCase()} — sin vuelto.`}
                   </p>
                 )}
 
@@ -416,7 +423,7 @@ export default function PosModal({
                     {isPending ? (
                       <><Loader2 className="h-4 w-4 animate-spin" /> Registrando…</>
                     ) : (
-                      <><span className="tabular-nums">Cobrar {formatCOP(total)}</span> <ArrowRight className="h-4 w-4" /></>
+                      <><span className="tabular-nums">{esCredito ? `Registrar venta a crédito por ${formatCOP(total)}` : `Cobrar ${formatCOP(total)}`}</span> <ArrowRight className="h-4 w-4" /></>
                     )}
                   </button>
                   <button
@@ -481,6 +488,7 @@ export default function PosModal({
                 ) : null}
 
                 <div className={`flex w-full gap-2 ${facturaCreadaId ? 'mt-2' : 'mt-6'}`}>
+                  {embedded ? null : (
                   <button
                     type="button"
                     onClick={onClose}
@@ -488,6 +496,7 @@ export default function PosModal({
                   >
                     Cerrar
                   </button>
+                  )}
                   <button
                     type="button"
                     onClick={nuevaVenta}
@@ -618,6 +627,14 @@ export default function PosModal({
             )}
           </div>
         </div>
+  )
+
+  if (embedded) return contenido
+
+  return (
+    <DialogRoot open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-none gap-0 overflow-hidden rounded-2xl p-0 w-[min(96vw,1180px)]">
+        {contenido}
       </DialogContent>
     </DialogRoot>
   )

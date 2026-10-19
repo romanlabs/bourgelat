@@ -8,7 +8,7 @@ export const PRODUCT_CATEGORIES = [
   { value: 'suplemento', label: 'Suplemento' },
 ]
 
-import { Banknote, CreditCard, Landmark, MoreHorizontal, Smartphone } from 'lucide-react'
+import { Banknote, CreditCard, HandCoins, Landmark, MoreHorizontal, Smartphone } from 'lucide-react'
 
 export const PAYMENT_METHOD_ICONS = {
   efectivo: Banknote,
@@ -17,6 +17,7 @@ export const PAYMENT_METHOD_ICONS = {
   transferencia: Landmark,
   nequi: Smartphone,
   daviplata: Smartphone,
+  credito: HandCoins,
   otro: MoreHorizontal,
 }
 

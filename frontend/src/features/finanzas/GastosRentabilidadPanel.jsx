@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { fechaCorta } from '@/features/pacientes/fichaSaludUtils'
 import { toast } from 'sonner'
 import { HandCoins, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import {
@@ -43,12 +44,12 @@ const METODOS_GASTO = [
   { value: 'otro', label: 'Otro' },
 ]
 
+// Igual que la venta: Nequi, Daviplata y cualquier banco van como transferencia.
 const METODOS_ABONO = [
   { value: 'efectivo', label: 'Efectivo' },
   { value: 'transferencia', label: 'Transferencia' },
-  { value: 'nequi', label: 'Nequi' },
-  { value: 'daviplata', label: 'Daviplata' },
   { value: 'tarjeta_debito', label: 'Tarjeta débito' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
   { value: 'otro', label: 'Otro' },
 ]
 
@@ -67,7 +68,7 @@ function rangoDelMes(mesISO) {
 const inputClass =
   'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-function GastoForm() {
+export function GastoForm() {
   const crearGasto = useCrearGasto()
   const [form, setForm] = useState({
     categoria: 'insumos',
@@ -286,7 +287,7 @@ function FilaDeudor({ cliente }) {
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-semibold text-foreground">{cliente.nombre}</span>
           <span className="block text-[13px] text-muted-foreground">
-            debe desde {cliente.facturaMasAntigua}{cliente.telefono ? ` · ${cliente.telefono}` : ''}
+            debe desde {fechaCorta(cliente.facturaMasAntigua)}{cliente.telefono ? ` · ${cliente.telefono}` : ''}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-3">
@@ -299,7 +300,7 @@ function FilaDeudor({ cliente }) {
         <div className="space-y-2 rounded-xl bg-muted px-4 pb-4">
           {cliente.facturas.map((f) => (
             <div key={f.id} className="flex flex-wrap items-center gap-3 pt-3 text-sm">
-              <span className="text-muted-foreground">#{f.numero} · {f.fecha}</span>
+              <span className="text-muted-foreground">#{f.numero} · {fechaCorta(f.fecha)}</span>
               <span className="text-muted-foreground">de {formatCurrency(f.total)} quedan</span>
               <span className="font-semibold tabular-nums text-danger">{formatCurrency(f.saldoPendiente)}</span>
               {facturaAbono === f.id ? (
@@ -353,7 +354,7 @@ function FilaDeudor({ cliente }) {
   )
 }
 
-function CuentasPorCobrarPanel() {
+export function CuentasPorCobrarPanel() {
   const { data, isLoading } = useCuentasPorCobrar()
 
   return (
@@ -361,7 +362,7 @@ function CuentasPorCobrarPanel() {
       title="Cuentas por cobrar"
       subtitle={
         data?.totalClientes
-          ? `${data.totalClientes} clientes deben ${formatCurrency(data.totalPorCobrar)} en total.`
+          ? `${data.totalClientes === 1 ? 'Un cliente debe' : `${data.totalClientes} clientes deben`} ${formatCurrency(data.totalPorCobrar)} en total.`
           : 'Clientes con saldo de fiado pendiente.'
       }
     >

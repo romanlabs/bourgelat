@@ -272,7 +272,7 @@ export default function RegistroEstiloFormDrawer({
             <button
               type="button"
               onClick={() =>
-                navigate('/finanzas', { state: { facturarEstiloId: registroToEdit.id } })
+                navigate('/caja', { state: { facturarEstiloId: registroToEdit.id } })
               }
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >

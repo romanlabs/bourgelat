@@ -340,7 +340,7 @@ export default function JornadaHoy({
                   {cajaHoy?.turnoApertura ? `Turno abierto ${cajaHoy.turnoApertura}` : 'Sin turno abierto'}
                 </p>
               </div>
-              <Link to="/finanzas" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100">
+              <Link to="/caja" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100">
                 Ir a caja
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>

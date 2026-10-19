@@ -7,7 +7,7 @@ export const ALL_QUICK_ACTIONS = {
   facturar: {
     key: 'facturar',
     label: 'Facturar',
-    to: '/finanzas',
+    to: '/caja',
     icon: Receipt,
     accent: 'bg-brand-muted text-brand-foreground group-hover:bg-brand/20',
     cardHover: 'hover:border-brand/30 hover:bg-brand-muted/50',

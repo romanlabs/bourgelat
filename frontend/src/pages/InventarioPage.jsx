@@ -457,7 +457,7 @@ export default function InventarioPage() {
       title="Inventario y control de cantidades"
       description="Productos, insumos, servicios y compras: qué hay, qué falta y qué vence."
       actions={
-        <NavCta to="/finanzas" icon={Wallet}>
+        <NavCta to="/caja" icon={Wallet}>
           Ir a caja
         </NavCta>
       }

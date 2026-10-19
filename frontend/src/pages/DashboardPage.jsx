@@ -76,6 +76,7 @@ const EMPTY_RECORD = {}
 
 const MODULE_ICONS = {
   '/agenda': CalendarClock,
+  '/caja': Wallet,
   '/finanzas': Wallet,
   '/inventario': Boxes,
   '/pacientes': PawPrint,
@@ -204,7 +205,7 @@ const MODULOS_OPERATIVOS = [
   { key: 'agenda', to: '/agenda', icon: CalendarClock, titulo: 'Agenda', descripcion: 'Citas del día, sala de espera y recepción.' },
   { key: 'pacientes', to: '/pacientes', icon: PawPrint, titulo: 'Pacientes y tutores', descripcion: 'Fichas de pacientes y datos de sus tutores.' },
   { key: 'historias', to: '/historias', icon: Stethoscope, titulo: 'Historias clínicas', descripcion: 'Consultas, fórmulas y exámenes de cada paciente.' },
-  { key: 'finanzas', to: '/finanzas', icon: Wallet, titulo: 'Caja y facturación', descripcion: 'Ventas, cobros y tu turno de caja.' },
+  { key: 'caja', to: '/caja', icon: Wallet, titulo: 'Caja', descripcion: 'Ventas, cobros y tu turno de caja.' },
   { key: 'inventario', to: '/inventario', icon: Boxes, titulo: 'Inventario', descripcion: 'Productos, insumos y facturas de compra.' },
 ]
 
@@ -255,7 +256,7 @@ function RestrictedDashboard({ usuario }) {
           loading={agendaHoyQuery.isLoading}
           alertas={EMPTY_LIST}
           puedeAtender={canAccessModule(usuario, 'historias')}
-          puedeCobrar={canAccessModule(usuario, 'finanzas')}
+          puedeCobrar={canAccessModule(usuario, 'caja')}
           puedeVerCaja={false}
         />
       ) : null}
@@ -532,7 +533,7 @@ export default function DashboardPage() {
         id: 'dian',
         title: 'Facturas con problema',
         detail: `${formatNumber(dianErrores)} facturas fueron rechazadas o no se pudieron enviar a la DIAN. Requieren revisión antes del siguiente corte.`,
-        to: '/finanzas',
+        to: '/caja',
         actionLabel: 'Abrir caja',
       })
     }
@@ -715,7 +716,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-5">
         <KpiGrid
-          action={<OpenModuleButton to="/finanzas" label="Abrir caja completa" />}
+          action={<OpenModuleButton to="/caja" label="Abrir caja completa" />}
           items={[
             {
               id: 'ingresos-periodo',
@@ -785,7 +786,7 @@ export default function DashboardPage() {
           emptyTitle="No hay facturas registradas"
           emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
           action={
-            <NavCtaLink to="/finanzas">Abrir módulo</NavCtaLink>
+            <NavCtaLink to="/caja">Abrir módulo</NavCtaLink>
           }
         />
       </div>
@@ -1109,7 +1110,7 @@ export default function DashboardPage() {
             </StatusPill>
           ) : null}
           <Link
-            to="/finanzas"
+            to="/caja"
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
           >
             <Receipt className="h-4 w-4" />

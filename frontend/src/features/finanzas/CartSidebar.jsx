@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
-import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
-import { PAYMENT_METHOD_SHORT } from './finanzasConstants'
+import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacion'
+import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
 
 // Alias en mayúscula: la regla no-unused-vars no ve el uso dentro del JSX y
@@ -40,8 +40,10 @@ export default function CartSidebar({
   const hasObs = Boolean(invoiceForm?.observaciones?.trim())
   const total = invoiceTotals?.total ?? 0
 
+  const opcionPago = PAYMENT_METHOD_OPTIONS.find((o) => o.value === metodoPago)
+  const falta = faltaParaCobrar(invoiceForm)
   const setMetodoPago = (value) => {
-    setInvoiceForm((f) => ({ ...f, metodoPago: value }))
+    setInvoiceForm((f) => ({ ...f, metodoPago: value, detallePago: '' }))
   }
 
   const incrementQty = (id, current) => {
@@ -226,48 +228,47 @@ export default function CartSidebar({
 
       {/* ── Pie fijo: método, total y cobro ── */}
       <div className="shrink-0 space-y-4 border-t border-border px-5 pb-5 pt-4">
-        {/* Método de pago en grilla: cuando entre una pasarela (Wompi), su
-            método aparece aquí como una celda más. */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-foreground">Método de pago</span>
-            <button
-              type="button"
-              onClick={() => setObsOpen((v) => !v)}
-              aria-label="Observaciones"
-              title="Observaciones"
-              aria-pressed={obsOpen || hasObs}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                obsOpen || hasObs
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              <StickyNote className="h-3.5 w-3.5" />
-              Nota
-            </button>
-          </div>
-          <div role="group" aria-label="Método de pago" className="grid grid-cols-3 gap-1.5">
-            {PAYMENT_METHOD_OPTIONS.map((opt) => {
-              const activo = metodoPago === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  aria-pressed={activo}
-                  onClick={() => setMetodoPago(opt.value)}
-                  className={`flex h-10 min-w-0 items-center justify-center rounded-lg px-1.5 text-[13px] transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    activo
-                      ? 'bg-foreground font-semibold text-background'
-                      : 'bg-secondary font-medium text-secondary-foreground hover:brightness-95'
-                  }`}
-                >
-                  <span className="truncate">{PAYMENT_METHOD_SHORT[opt.value] || opt.label}</span>
-                </button>
-              )
-            })}
-          </div>
+        {/* Método de pago en una lista: siete opciones no merecen siete botones
+            en el pie. Cuando entre una pasarela (Wompi) será una opción más. */}
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 text-sm font-semibold text-foreground">Pago</span>
+          <Select
+            variant="field"
+            aria-label="Método de pago"
+            className="h-10 min-w-0 flex-1"
+            value={metodoPago}
+            onValueChange={setMetodoPago}
+            options={PAYMENT_METHOD_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+          />
+          <button
+            type="button"
+            onClick={() => setObsOpen((v) => !v)}
+            aria-label="Observaciones"
+            title="Observaciones"
+            aria-pressed={obsOpen || hasObs}
+            className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              obsOpen || hasObs
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`}
+          >
+            <StickyNote className="h-3.5 w-3.5" />
+            Nota
+          </button>
         </div>
+
+        {/* Detalle del método: banco de la transferencia o cuál es «otro» */}
+        {opcionPago?.detalle ? (
+          <input
+            type="text"
+            value={invoiceForm?.detallePago ?? ''}
+            onChange={(e) => setInvoiceForm((f) => ({ ...f, detallePago: e.target.value }))}
+            maxLength={80}
+            aria-label={opcionPago.detalle.label}
+            placeholder={`${opcionPago.detalle.label}${opcionPago.detalle.requerido ? '' : ' (opcional)'}: ${opcionPago.detalle.placeholder}`}
+            className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        ) : null}
 
         {/* Observaciones (solo si está abierto) */}
         {obsOpen && (
@@ -307,10 +308,10 @@ export default function CartSidebar({
         <button
           type="button"
           onClick={onOpenPaymentModal}
-          disabled={!hasItems}
+          disabled={!hasItems || Boolean(falta)}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:brightness-100"
         >
-          {!hasItems ? 'Agrega productos para cobrar' : <span className="tabular-nums">Cobrar {formatCOP(total)}</span>}
+          {!hasItems ? 'Agrega productos para cobrar' : falta ? falta : <span className="tabular-nums">Cobrar {formatCOP(total)}</span>}
         </button>
       </div>
     </div>

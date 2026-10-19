@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
   Boxes,
+  ChartColumn,
   CalendarClock,
   ChevronsUpDown,
   FileText,
@@ -38,7 +39,7 @@ import { useModuleAccess } from '@/lib/useModuleAccess'
 import { canAccessModule, getUserRoles } from '@/lib/permissions'
 
 const QUICK_ACTION_MODULE = {
-  facturar: 'finanzas',
+  facturar: 'caja',
   paciente: 'pacientes',
   historia: 'pacientes',
   agenda: 'agenda',
@@ -69,8 +70,9 @@ const NAV_ITEMS = [
   { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
   { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
   { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
-  { key: 'finanzas', label: 'Caja', to: '/finanzas', icon: Receipt },
+  { key: 'caja', label: 'Caja', to: '/caja', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
+  { key: 'finanzas', label: 'Finanzas', to: '/finanzas', icon: ChartColumn },
   { key: 'configuracion', label: 'Clínica', to: '/configuracion' },
   { key: 'usuarios', label: 'Usuarios', to: '/usuarios' },
   { key: 'auditoria', label: 'Auditoría', to: '/auditoria' },
@@ -82,7 +84,7 @@ const NAV_SECTIONS = [
   {
     key: 'operacion',
     label: null,
-    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes', 'finanzas', 'inventario'],
+    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes', 'caja', 'inventario', 'finanzas'],
   },
   {
     key: 'administracion',

@@ -1257,7 +1257,7 @@ export default function HistoriaClinicaFormDrawer({
             {puedeEditarHistorias && historiaActual?.id && historiaActual.bloqueada && !historiaActual.facturaId && (
               <button
                 type="button"
-                onClick={() => navigate('/finanzas', { state: { facturarHistoriaId: historiaActual.id } })}
+                onClick={() => navigate('/caja', { state: { facturarHistoriaId: historiaActual.id } })}
                 className={BOTON_SECUNDARIO}
               >
                 Facturar consulta

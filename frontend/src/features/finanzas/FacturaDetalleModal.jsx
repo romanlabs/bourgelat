@@ -308,8 +308,6 @@ export default function FacturaDetalleModal({ historialHook }) {
                     options={[
                       { value: 'efectivo', label: 'Efectivo' },
                       { value: 'transferencia', label: 'Transferencia' },
-                      { value: 'nequi', label: 'Nequi' },
-                      { value: 'daviplata', label: 'Daviplata' },
                       { value: 'tarjeta_debito', label: 'Tarjeta débito' },
                       { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
                       { value: 'otro', label: 'Otro' },
