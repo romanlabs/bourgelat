@@ -287,8 +287,8 @@ export default function AdminShell({
   compactHeader = false,
   // Controles que van en la misma fila del título (la barra del calendario).
   titleAside = null,
-  // Páginas con buscador propio (Pacientes): sin el botón del buscador global
-  // en la fila del título; Ctrl K sigue funcionando.
+  // Páginas con buscador propio (Pacientes, ficha): sin el botón del buscador
+  // global del encabezado; Ctrl K sigue funcionando.
   hideSearch = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
@@ -423,7 +423,9 @@ export default function AdminShell({
         <header
           className={cn(
             'sticky top-0 z-40 flex h-16 items-center justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
-            !headerCenter && !hidePageHeader && 'lg:hidden'
+            // En escritorio la barra solo queda si la página no trae título
+            // ni buscador propio (la ficha pone el suyo junto a «Volver»).
+            !headerCenter && (!hidePageHeader || hideSearch) && 'lg:hidden'
           )}
         >
           <div className="flex min-w-0 items-center gap-2.5 lg:hidden">

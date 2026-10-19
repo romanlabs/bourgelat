@@ -4,9 +4,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import {
-  ChevronLeft, HeartPulse, Mail, PawPrint, Phone, Plus, Scissors,
+  Camera, ChevronLeft, HeartPulse, Loader2, Mail, PawPrint, Phone, Plus, Scissors, Search,
 } from 'lucide-react'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
+import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
+import { PesoEnElTiempo, VacunasYDesparasitacion } from '@/features/pacientes/FichaSalud'
+import { formatoNumero, medicionesDe } from '@/features/pacientes/fichaSaludUtils'
+import { useAdminSearch } from '@/components/layout/HeaderSlotContext'
+import { useSoloLectura } from '@/lib/useSoloLectura'
+import { mensajeDeError } from '@/lib/errores'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { useAuthStore } from '@/store/authStore'
@@ -31,6 +37,27 @@ const TABS = [
 ]
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+const MAX_FOTO_BYTES = 4 * 1024 * 1024
+const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp']
+
+// Buscador global junto a «Volver»: va dentro del shell para leer su contexto.
+function BotonBuscar() {
+  const abrirBusqueda = useAdminSearch()
+  if (!abrirBusqueda) return null
+  return (
+    <button
+      type="button"
+      onClick={abrirBusqueda}
+      aria-label="Buscar"
+      className={`hidden h-10 w-64 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground lg:flex ${FOCO}`}
+    >
+      <Search className="h-[18px] w-[18px] shrink-0" />
+      <span className="flex-1 truncate whitespace-nowrap text-left">Buscar paciente o tutor</span>
+      <kbd className="rounded-md bg-muted px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground">Ctrl K</kbd>
+    </button>
+  )
+}
 
 function PatientHeaderSkeleton() {
   return (
@@ -139,8 +166,45 @@ export default function PacienteHistorialPage() {
 
   const { registrosQuery, registros } = useEstilosMascota({ mascotaId })
 
+  const antecedentesQuery = useQuery({
+    queryKey: ['antecedentes-detalle', mascotaId],
+    queryFn: () => antecedentesApi.obtenerAntecedentes(mascotaId),
+    enabled: Boolean(mascotaId) && tieneAntecedentes,
+  })
+  const antecedentes = antecedentesQuery.data?.antecedentes
+
+  const { propsAccion } = useSoloLectura()
+  const puedeCambiarFoto = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
+  const fotoInputRef = useRef(null)
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+
   const mascota = mascotaQuery.data?.mascota
   const historias = historiasQuery.data?.historias || []
+
+  const handleCambiarFoto = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!TIPOS_FOTO.includes(file.type)) {
+      toast.error('La foto debe estar en formato JPG, PNG o WEBP.')
+      return
+    }
+    if (file.size > MAX_FOTO_BYTES) {
+      toast.error('La foto supera el máximo permitido de 4 MB.')
+      return
+    }
+    setSubiendoFoto(true)
+    try {
+      const { fotoPerfil } = await pacientesApi.subirFotoMascota(file)
+      await pacientesApi.editarMascota(mascotaId, { fotoPerfil })
+      invalidarDominios(queryClient, 'pacientes')
+      toast.success('Foto actualizada.')
+    } catch (error) {
+      toast.error(mensajeDeError(error, 'No fue posible cambiar la foto.'))
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
 
   // Igual que con citaId: una sola apertura por historiaId, para que cerrar el
   // drawer no lo vuelva a abrir en el siguiente render.
@@ -237,12 +301,23 @@ export default function PacienteHistorialPage() {
         .filter(Boolean)
         .join(' · ')
     : ''
+  // Peso y temperatura de la consulta más reciente que los tenga; el peso cae
+  // al registrado en el paciente si ninguna consulta lo trae.
+  const ultimoPeso = medicionesDe(historias, 'peso').at(-1)?.valor ?? (Number(mascota?.peso) || null)
+  const ultimaTemperatura = medicionesDe(historias, 'temperatura').at(-1)?.valor ?? null
+  const alergias = (antecedentes?.alergias || [])
+    .map((alergia) => alergia.descripcion || alergia.tipo)
+    .filter(Boolean)
   const datosClave = mascota
     ? [
-        { label: 'Peso', value: mascota.peso ? `${String(mascota.peso).replace('.', ',')} kg` : 'Sin registrar' },
-        { label: 'Especie', value: etiquetaEspecie(mascota.especie) || 'Sin registrar' },
+        { label: 'Peso', value: ultimoPeso ? `${formatoNumero(ultimoPeso, 2)} kg` : '—' },
+        { label: 'Temperatura', value: ultimaTemperatura ? `${formatoNumero(ultimaTemperatura)} °C` : '—' },
+        {
+          label: 'Alergias',
+          value: antecedentesQuery.isPending ? '…' : alergias.length ? alergias.join(', ') : 'Ninguna',
+          alerta: alergias.length > 0,
+        },
         { label: 'Historia N.º', value: numeroHistoria || 'Sin número' },
-        { label: 'Color', value: mascota.color || 'Sin registrar' },
       ]
     : []
   const puedeEditarExamenes = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario', 'auxiliar', 'recepcionista'])
@@ -253,15 +328,19 @@ export default function PacienteHistorialPage() {
       currentKey="pacientes"
       title={mascota?.nombre ? `Historial de ${mascota.nombre}` : 'Historial clínico'}
       hidePageHeader
+      hideSearch
     >
       <div className="flex flex-col gap-6">
-        <Link
-          to="/pacientes"
-          className={`inline-flex min-h-8 items-center gap-1.5 self-start rounded text-sm font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Volver a pacientes
-        </Link>
+        <div className="flex items-center justify-between gap-3 lg:pt-6">
+          <Link
+            to="/pacientes"
+            className={`inline-flex min-h-8 items-center gap-1.5 rounded text-sm font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Volver a pacientes
+          </Link>
+          <BotonBuscar />
+        </div>
 
         {/* Encabezado del paciente: foto grande y datos clave */}
         {mascotaQuery.isPending && <PatientHeaderSkeleton />}
@@ -285,6 +364,29 @@ export default function PacienteHistorialPage() {
               ) : (
                 <PawPrint className="h-40 w-40 text-brand-foreground/25" strokeWidth={1.4} />
               )}
+              {puedeCambiarFoto ? (
+                <>
+                  <input
+                    ref={fotoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleCambiarFoto}
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fotoInputRef.current?.click()}
+                    disabled={subiendoFoto || propsAccion.disabled}
+                    title={propsAccion.title}
+                    className={`absolute bottom-4 left-4 inline-flex h-10 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 ${FOCO}`}
+                  >
+                    {subiendoFoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                    {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                  </button>
+                </>
+              ) : null}
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col justify-between gap-7 px-5 py-7 sm:px-9 sm:py-9">
@@ -337,7 +439,12 @@ export default function PacienteHistorialPage() {
                 {datosClave.map((dato) => (
                   <div key={dato.label} className="min-w-0">
                     <dt className="text-[13px] opacity-80">{dato.label}</dt>
-                    <dd className="mt-1 truncate text-[19px] font-semibold tabular-nums">{dato.value}</dd>
+                    <dd
+                      title={dato.value}
+                      className={`mt-1 truncate text-[19px] font-semibold tabular-nums ${dato.alerta ? 'text-brand' : ''}`}
+                    >
+                      {dato.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -463,19 +570,15 @@ export default function PacienteHistorialPage() {
               </section>
             ) : null}
 
+            <PesoEnElTiempo historias={historias} />
+
             {tieneAntecedentes && mascota ? (
-              <section aria-labelledby="ficha-antecedentes" className="flex flex-col gap-3 rounded-2xl bg-card p-6">
-                <h2 id="ficha-antecedentes" className="text-lg font-semibold text-foreground">Antecedentes</h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Alergias, vacunas, desparasitación, cirugías y condiciones crónicas de {mascota.nombre}.
-                </p>
-                <Link
-                  to={`/antecedentes?mascotaId=${mascotaId}`}
-                  className={`inline-flex h-10 items-center justify-center self-start rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px ${FOCO}`}
-                >
-                  Ver antecedentes
-                </Link>
-              </section>
+              <VacunasYDesparasitacion
+                antecedentes={antecedentes}
+                cargando={antecedentesQuery.isPending}
+                mascotaId={mascotaId}
+                mascotaNombre={mascota.nombre}
+              />
             ) : null}
           </div>
         </div>
