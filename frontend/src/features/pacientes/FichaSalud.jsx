@@ -1,19 +1,52 @@
 import { Link } from 'react-router-dom'
+import { LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { chartColors } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { hoyLocal } from '@/lib/fecha'
 import { aFechaLocal, fechaCorta, formatoNumero, medicionesDe, mesBarra, mesCorto, soloDia } from './fichaSaludUtils'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
+const COLOR_PESO = chartColors.categorica[0]
+
+function TooltipPeso({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const punto = payload[0].payload
+  return (
+    <div className="rounded-xl bg-card px-3 py-2 shadow-dropdown">
+      <p className="text-xs text-muted-foreground">{fechaCorta(punto.fecha)}</p>
+      <p className="text-sm font-semibold tabular-nums text-foreground">{formatoNumero(punto.valor, 2)} kg</p>
+    </div>
+  )
+}
+
+// Punto de cada consulta; el de la más reciente va relleno y más grande.
+function PuntoPeso({ cx, cy, index, ultimo }) {
+  if (cx == null || cy == null) return null
+  const esUltimo = index === ultimo
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={esUltimo ? 5.5 : 4}
+      fill={esUltimo ? COLOR_PESO : 'hsl(var(--card))'}
+      stroke={COLOR_PESO}
+      strokeWidth={2}
+    />
+  )
+}
+
 export function PesoEnElTiempo({ historias }) {
-  const pesos = medicionesDe(historias, 'peso').slice(-6)
+  const pesos = medicionesDe(historias, 'peso').slice(-8)
   if (pesos.length === 0) return null
 
   const primero = pesos[0]
   const ultimo = pesos[pesos.length - 1]
   const diferencia = ultimo.valor - primero.valor
-  const max = Math.max(...pesos.map((p) => p.valor))
-  const min = Math.min(...pesos.map((p) => p.valor))
+  const datos = pesos.map((p) => ({
+    ...p,
+    etiqueta: p.fecha === hoyLocal() ? 'hoy' : mesBarra(p.fecha),
+  }))
 
   const resumen =
     pesos.length === 1
@@ -23,30 +56,52 @@ export function PesoEnElTiempo({ historias }) {
         : `${diferencia > 0 ? '+' : '−'}${formatoNumero(Math.abs(diferencia))} kg desde ${mesCorto(primero.fecha)}`
 
   return (
-    <section aria-labelledby="ficha-peso" className="flex flex-col gap-4 rounded-2xl bg-card p-6">
-      <div>
-        <h2 id="ficha-peso" className="text-lg font-semibold text-foreground">Peso</h2>
-        <p className={cn('mt-0.5 text-sm', diferencia < -0.05 ? 'text-warning' : 'text-muted-foreground')}>{resumen}</p>
+    <section aria-labelledby="ficha-peso" className="flex flex-col gap-3 rounded-2xl bg-card p-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="ficha-peso" className="text-lg font-semibold text-foreground">Peso</h2>
+          <p className={cn('mt-0.5 text-sm', diferencia < -0.05 ? 'text-warning' : 'text-muted-foreground')}>{resumen}</p>
+        </div>
+        <p className="shrink-0 text-lg font-semibold tabular-nums text-foreground">{formatoNumero(ultimo.valor, 2)} kg</p>
       </div>
-      <ol className="flex h-28 items-end gap-2" aria-label="Peso en cada consulta">
-        {pesos.map((p, i) => {
-          // Escala entre el mínimo y el máximo para que se note el cambio.
-          const alto = max === min ? 70 : 30 + ((p.valor - min) / (max - min)) * 70
-          const esUltimo = i === pesos.length - 1
-          return (
-            <li key={`${p.fecha}-${i}`} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
-              <span className="text-xs font-semibold tabular-nums text-foreground">{formatoNumero(p.valor)}</span>
-              <span
-                className={cn('w-full max-w-9 rounded-md', esUltimo ? 'bg-primary' : 'bg-primary/25')}
-                style={{ height: `${alto}%` }}
+      {pesos.length > 1 ? (
+        <div className="h-36" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
+            <LineChart data={datos} margin={{ top: 22, right: 14, bottom: 0, left: 14 }}>
+              <XAxis
+                dataKey="etiqueta"
+                tickLine={false}
+                axisLine={false}
+                interval={0}
+                fontSize={11}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                dy={4}
               />
-              <span className="truncate text-[11px] text-muted-foreground">
-                {p.fecha === hoyLocal() ? 'hoy' : mesBarra(p.fecha)}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+              <YAxis hide domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+              <Tooltip content={<TooltipPeso />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }} />
+              <Line
+                type="monotone"
+                dataKey="valor"
+                stroke={COLOR_PESO}
+                strokeWidth={2.5}
+                dot={(props) => <PuntoPeso key={props.index} {...props} ultimo={datos.length - 1} />}
+                activeDot={{ r: 6, fill: COLOR_PESO, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                isAnimationActive={false}
+              >
+                <LabelList
+                  dataKey="valor"
+                  position="top"
+                  offset={10}
+                  fontSize={11}
+                  fontWeight={600}
+                  fill="hsl(var(--foreground))"
+                  formatter={(valor) => formatoNumero(valor)}
+                />
+              </Line>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      ) : null}
     </section>
   )
 }
