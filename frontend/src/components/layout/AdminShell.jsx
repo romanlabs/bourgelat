@@ -282,6 +282,9 @@ export default function AdminShell({
   quickActions = null,
   showQuickActions = false,
   hidePageHeader = false,
+  // Pantallas donde el contenido necesita todo el alto (Agenda): título más
+  // chico y buscador como ícono.
+  compactHeader = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
@@ -669,20 +672,27 @@ export default function AdminShell({
           </Dialog.Portal>
         </Dialog.Root>
 
-        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && 'lg:pt-8 bajo:lg:pt-5')}>
+        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <h1 className="text-3xl font-semibold leading-none tracking-[-0.035em] text-foreground sm:text-[40px] bajo:sm:text-[34px]">
+                  <h1
+                    className={cn(
+                      'font-semibold leading-none text-foreground',
+                      compactHeader
+                        ? 'text-2xl tracking-[-0.03em] sm:text-[26px]'
+                        : 'text-3xl tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
+                    )}
+                  >
                     {title}
                   </h1>
                   {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                 </div>
                 {description ? (
-                  <p className="mt-2.5 max-w-3xl text-base leading-6 text-muted-foreground">{description}</p>
+                  <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-2.5 text-base leading-6')}>{description}</p>
                 ) : null}
               </div>
 
@@ -692,11 +702,18 @@ export default function AdminShell({
                     type="button"
                     onClick={openSearch}
                     aria-label="Buscar"
-                    className="hidden h-10 w-64 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
+                    className={cn(
+                      'hidden h-10 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex',
+                      compactHeader ? 'w-10 justify-center px-0' : 'w-64'
+                    )}
                   >
                     <Search className="h-[18px] w-[18px] shrink-0" />
-                    <span className="flex-1 truncate whitespace-nowrap text-left">Buscar paciente o tutor</span>
-                    <kbd className="rounded-md bg-muted px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground">Ctrl K</kbd>
+                    {compactHeader ? null : (
+                      <>
+                        <span className="flex-1 truncate whitespace-nowrap text-left">Buscar paciente o tutor</span>
+                        <kbd className="rounded-md bg-muted px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground">Ctrl K</kbd>
+                      </>
+                    )}
                   </button>
                 )}
                 {actions}

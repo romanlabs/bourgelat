@@ -270,6 +270,7 @@ export default function AgendaPage() {
   return (
     <AdminShell
       currentKey="agenda"
+      compactHeader
       title={tituloAgenda}
       description={descripcionAgenda}
       actions={<AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />}

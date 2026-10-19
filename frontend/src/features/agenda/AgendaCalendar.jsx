@@ -104,9 +104,8 @@ export default function AgendaCalendar({
           onNuevaCita={nuevaCita}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={toggleSidebar}
-          extra={<CalendarLegend className="ml-2 hidden 2xl:flex" />}
+          extra={<CalendarLegend />}
         />
-        <CalendarLegend className="2xl:hidden" />
 
     <div className="relative flex">
       {/* Columna lateral: solo ocupa espacio en el flujo cuando esta abierta */}

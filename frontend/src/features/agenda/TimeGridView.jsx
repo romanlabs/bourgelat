@@ -113,7 +113,7 @@ export function TimeGridView({
       ref={scrollRef}
       className="overflow-y-auto overflow-x-hidden rounded-2xl bg-card px-2 pb-2"
       // Cabe en la pantalla bajo el encabezado y la barra; el scroll queda dentro.
-      style={{ height: 'max(320px, calc(100dvh - 340px))' }}
+      style={{ height: 'max(320px, calc(100dvh - 166px))' }}
     >
       {/* Cabecera: nombres de día */}
       <div
@@ -133,7 +133,7 @@ export function TimeGridView({
             <div
               key={day.toISOString()}
               className={cn(
-                'py-2.5 text-center',
+                'py-2 text-center',
                 bloqueo && 'bg-warning-soft'
               )}
             >
@@ -142,9 +142,9 @@ export function TimeGridView({
               </p>
               <p
                 className={cn(
-                  'mt-1 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums',
+                  'mt-0.5 inline-flex text-[20px] font-semibold leading-none tracking-[-0.02em] tabular-nums',
                   esHoy
-                    ? 'mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground'
+                    ? 'h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground'
                     : 'text-foreground'
                 )}
               >
@@ -153,7 +153,7 @@ export function TimeGridView({
               {!isLoading && count > 0 && (
                 <span
                   className={cn(
-                    'mt-1.5 inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[13px] font-semibold tabular-nums',
+                    'ml-1.5 inline-flex items-center justify-center rounded-md px-1.5 py-0.5 align-middle text-[13px] font-semibold tabular-nums',
                     count >= 4 ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'
                   )}
                 >
