@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { ArrowLeftRight, Check, CircleAlert, FileSpreadsheet, Filter, PackagePlus, Plus, ShieldCheck, Sparkles, Boxes, ShoppingCart, FlaskConical, Wallet } from 'lucide-react'
+import { ArrowLeftRight, Check, FileSpreadsheet, Filter, MoreHorizontal, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -10,11 +10,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import SearchInput from '@/components/shared/SearchInput'
 import { Button } from '@/components/ui/button'
-import {
-  DashboardPanel,
-  DonutCard,
-  KpiCard,
-} from '@/features/dashboard/dashboardComponents'
+import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
 import { canAccessModule } from '@/lib/permissions'
@@ -27,7 +23,6 @@ import FacturaCompraDetalleModal from '@/features/inventario/FacturaCompraDetall
 import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDialog'
 import ActualizarVencimientoDialog from '@/features/inventario/ActualizarVencimientoDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
-import { DESTINO_BADGE } from '@/features/inventario/inventarioUtils'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
 import { useImportarInventario } from '@/features/inventario/useImportarInventario'
 import {
@@ -44,7 +39,6 @@ import { useServicios } from '@/features/servicios/useServicios'
 import { Select } from '@/components/ui/select'
 
 const TABS = [
-  { id: 'resumen', label: 'Resumen' },
   { id: 'productos', label: 'Productos' },
   { id: 'servicios', label: 'Servicios' },
   { id: 'movimientos', label: 'Movimientos' },
@@ -64,11 +58,6 @@ const ALERTA_BADGE = {
   vencido: { variant: 'vencido' },
   bajo_stock: { variant: 'bajo_stock', label: 'Bajo el mínimo' },
   proximo_vencimiento: { variant: 'proximo_vencimiento', label: 'Vence pronto', className: 'bg-info-soft text-info' },
-}
-
-const ALERTA_RESUMEN_BADGE = {
-  Vencido: { variant: 'vencido', label: 'Vencido' },
-  'Próximo a vencer': { variant: 'proximo', label: 'Próximo a vencer', className: 'bg-info-soft text-info' },
 }
 
 // "2027-03-14" → "14 mar. 2027". Se parte a mano para no correr un día por la zona horaria.
@@ -219,6 +208,63 @@ function Vencimiento({ row }) {
   return <span className={cn('whitespace-nowrap tabular-nums', tono)}>{fecha}</span>
 }
 
+// Cambio de cantidad con signo: lo que entra en verde, lo que sale en ladrillo.
+function CambioCantidad({ delta }) {
+  if (delta === null || delta === undefined) return <span className="text-muted-foreground">—</span>
+  const positivo = delta > 0
+  return (
+    <span className={cn('whitespace-nowrap font-semibold tabular-nums', positivo ? 'text-success' : delta < 0 ? 'text-danger' : 'text-muted-foreground')}>
+      {positivo ? '+' : delta < 0 ? '−' : ''}
+      {formatNumber(Math.abs(delta))}
+    </span>
+  )
+}
+
+const TONO_TIPO = {
+  entrada: 'bg-success-soft text-success',
+  salida: 'bg-danger-soft text-danger',
+  ajuste: 'bg-info-soft text-info',
+}
+
+// Acciones de una fila en un menú «⋯»: la tabla queda limpia y las acciones
+// siguen a un clic.
+function AccionesFila({ nombre, acciones }) {
+  const visibles = acciones.filter(Boolean)
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`Acciones de ${nombre}`}
+          className={cn('flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=open]:bg-muted', FOCO)}
+        >
+          <MoreHorizontal className="h-[18px] w-[18px]" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 min-w-[200px] rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        >
+          {visibles.map((accion) => (
+            <DropdownMenu.Item
+              key={accion.label}
+              onSelect={accion.onSelect}
+              className={cn(
+                'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm outline-none transition hover:bg-muted focus:bg-muted',
+                accion.peligro ? 'text-danger' : 'text-foreground'
+              )}
+            >
+              {accion.label}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
 function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action }) {
@@ -342,7 +388,7 @@ function RestrictedInventoryPage() {
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
 
-  const [activeTab, setActiveTab] = useState('resumen')
+  const [activeTab, setActiveTab] = useState('productos')
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
@@ -416,7 +462,7 @@ export default function InventarioPage() {
 
   if (!rolPermitido) return <RestrictedInventoryPage />
 
-  const { resumen, categoriasData, alertsRows, reporteQuery } = resumenHook
+  const { resumen, alertsRows, reporteQuery } = resumenHook
   const {
     productosQuery,
     productosRows,
@@ -451,16 +497,60 @@ export default function InventarioPage() {
     selectProduct,
   } = movimientosHook
 
+  // El título dice cuánto hay en el inventario elegido; las altas van en la
+  // fila del título (sin buscador global, que sigue en Ctrl K) para no
+  // repetirlas en cada pestaña.
+  const esClinica = inventarioSeleccionado === 'clinica'
+  const totalInsumos = insumosClinicosHook.insumosQuery.data?.total
+  const titulo = esClinica
+    ? typeof totalInsumos === 'number'
+      ? `${formatNumber(totalInsumos)} ${totalInsumos === 1 ? 'insumo clínico' : 'insumos clínicos'}`
+      : 'Inventario de la clínica'
+    : inventarioSeleccionado === 'ventas' && !reporteQuery.isPending
+      ? `${formatNumber(resumen.totalProductos || 0)} ${resumen.totalProductos === 1 ? 'producto' : 'productos'} en bodega`
+      : 'Inventario'
+  const descripcion = esClinica
+    ? 'Lo que se usa en consulta y procedimientos; se descuenta al cerrar la historia.'
+    : inventarioSeleccionado === 'ventas' && !reporteQuery.isPending
+      ? [
+          `Valen ${formatCurrency(resumen.valorTotalInventario || 0)} a precio de venta`,
+          resumen.bajoStock ? `${formatNumber(resumen.bajoStock)} bajo el mínimo` : null,
+        ].filter(Boolean).join(' · ')
+      : 'Productos, insumos, servicios y compras.'
+
+  const accionesEncabezado = (
+    <div className="flex flex-wrap items-center gap-2">
+      {inventarioSeleccionado === 'ventas' ? (
+        <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={importarInventarioHook.openImportDialog}>
+          <FileSpreadsheet />
+          Importar Excel
+        </Button>
+      ) : null}
+      <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={facturaCompraHook.abrirNueva}>
+        <ShoppingCart />
+        Registrar compra
+      </Button>
+      {inventarioSeleccionado === 'ventas' ? (
+        <Button type="button" className="h-10 px-3.5" onClick={openCreateDrawer}>
+          <PackagePlus />
+          Nuevo producto
+        </Button>
+      ) : esClinica ? (
+        <Button type="button" className="h-10 px-3.5" onClick={insumosClinicosHook.openCreateDrawer}>
+          <FlaskConical />
+          Nuevo insumo
+        </Button>
+      ) : null}
+    </div>
+  )
+
   return (
     <AdminShell
       currentKey="inventario"
-      title="Inventario y control de cantidades"
-      description="Productos, insumos, servicios y compras: qué hay, qué falta y qué vence."
-      actions={
-        <NavCta to="/caja" icon={Wallet}>
-          Ir a caja
-        </NavCta>
-      }
+      title={titulo}
+      description={descripcion}
+      actions={accionesEncabezado}
+      hideSearch
       asideNote="Aquí se concentran alertas, productos y movimientos. Lo importante es cuidar el inventario antes de afectar la caja o la consulta."
     >
       {!puedeVerInventario ? (
@@ -489,102 +579,6 @@ export default function InventarioPage() {
           )}
 
           <InventarioTabs activeTab={activeTab} onTabChange={handleTabClick} />
-
-          {/* Tab: Resumen */}
-          {activeTab === 'resumen' && (
-            <div className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <KpiCard
-                  icon={Boxes}
-                  label="Productos activos"
-                  value={formatNumber(resumen.totalProductos || 0)}
-                  helper="Productos actualmente activos en el inventario."
-                />
-                <KpiCard
-                  icon={ShieldCheck}
-                  label="Valor inventariado"
-                  value={formatCurrency(resumen.valorTotalInventario || 0)}
-                  helper="Valor estimado a precio de venta del inventario cargado."
-                  tone="text-success"
-                />
-                <KpiCard
-                  icon={CircleAlert}
-                  label="Cantidad baja"
-                  value={formatNumber(resumen.bajoStock || 0)}
-                  helper="Productos por debajo del mínimo definido."
-                  tone="text-warning"
-                />
-                <KpiCard
-                  icon={Sparkles}
-                  label="Alertas totales"
-                  value={formatNumber(alertsRows.length)}
-                  helper="Cantidad baja, próximos a vencer y vencidos, de ventas y clínico."
-                  tone="text-danger"
-                />
-              </div>
-
-              {/* Fase 2b: breakpoint corregido de 2xl → xl */}
-              <div className="grid gap-5 xl:grid-cols-[380px_minmax(0,1fr)]">
-                <DonutCard
-                  title="Categorías activas"
-                  subtitle="Distribución de productos por categoría."
-                  data={categoriasData}
-                  centerLabel="Productos"
-                  centerValue={formatNumber(resumen.totalProductos || 0)}
-                  formatter={formatNumber}
-                  emptyMessage="Aún no hay categorías para mostrar."
-                />
-                <TablaInventario
-                  title="Alertas prioritarias"
-                  subtitle="Lo que conviene revisar primero."
-                  rows={alertsRows.slice(0, 10)}
-                  columns={[
-                    {
-                      key: 'tipo',
-                      label: 'Alerta',
-                      render: (row) => (
-                        <StatusBadge {...(ALERTA_RESUMEN_BADGE[row.tipo] || { variant: 'bajo_stock', label: row.tipo })} />
-                      ),
-                    },
-                    {
-                      key: 'nombre',
-                      label: 'Producto o insumo',
-                      render: (row) => <span className="font-semibold">{row.nombre}</span>,
-                    },
-                    {
-                      key: 'inventario',
-                      label: 'Inventario',
-                      render: (row) => (
-                        <StatusBadge
-                          variant={`destino-${row.inventario}`}
-                          label={DESTINO_BADGE[row.inventario].label}
-                          className={DESTINO_BADGE[row.inventario].className}
-                        />
-                      ),
-                    },
-                    { key: 'categoria', label: 'Categoría' },
-                    { key: 'detalle', label: 'Detalle' },
-                    {
-                      key: 'accion',
-                      label: 'Acciones',
-                      render: (row) =>
-                        row.tipo === 'Vencido' || row.tipo === 'Próximo a vencer' ? (
-                          <button
-                            type="button"
-                            onClick={() => abrirRelevoVencimiento(row.raw, row.inventario === 'clinico' ? 'insumo' : 'producto')}
-                            className={cn(ENLACE, 'whitespace-nowrap text-primary')}
-                          >
-                            Actualizar vencimiento
-                          </button>
-                        ) : null,
-                    },
-                  ]}
-                  emptyTitle="No hay alertas activas"
-                  emptyBody="Cuando las cantidades o los vencimientos requieran atención, aparecerán aquí."
-                />
-              </div>
-            </div>
-          )}
 
           {/* Tab: Productos — sin inventario seleccionado */}
           {activeTab === 'productos' && inventarioSeleccionado === null && (
@@ -626,16 +620,6 @@ export default function InventarioPage() {
                     onBajoStockChange={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="secondary" size="lg" className="px-4" onClick={importarInventarioHook.openImportDialog}>
-                    <FileSpreadsheet />
-                    Importar Excel
-                  </Button>
-                  <Button type="button" size="lg" className="px-4" onClick={openCreateDrawer}>
-                    <PackagePlus />
-                    Nuevo producto
-                  </Button>
-                </div>
               </div>
 
               {productosQuery.isLoading ? (
@@ -669,13 +653,22 @@ export default function InventarioPage() {
                       render: (row) => <Vencimiento row={row} />,
                     },
                     {
+                      key: 'costo',
+                      label: 'Costo',
+                      align: 'right',
+                      render: (row) => (
+                        <span className="whitespace-nowrap tabular-nums text-muted-foreground">
+                          {formatCurrency(Number(row.raw?.precioCompra || 0))}
+                        </span>
+                      ),
+                    },
+                    {
                       key: 'precio',
                       label: 'Precio',
                       align: 'right',
                       render: (row) => (
-                        <span className="flex flex-col items-end gap-0.5 whitespace-nowrap tabular-nums">
-                          <span className="font-semibold">{formatCurrency(Number(row.raw?.precioVenta || 0))}</span>
-                          <span className="text-[13px] text-muted-foreground">Total {row.valor}</span>
+                        <span className="whitespace-nowrap font-semibold tabular-nums">
+                          {formatCurrency(Number(row.raw?.precioVenta || 0))}
                         </span>
                       ),
                     },
@@ -686,41 +679,21 @@ export default function InventarioPage() {
                     },
                     {
                       key: 'accion',
-                      label: 'Acciones',
+                      label: <span className="sr-only">Acciones</span>,
+                      align: 'right',
                       render: (row) => (
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                          {(row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && (
-                            <button
-                              type="button"
-                              onClick={() => abrirRelevoVencimiento(row.raw, 'producto')}
-                              className={cn(ENLACE, 'text-primary')}
-                            >
-                              Actualizar vencimiento
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleMovimientoClick(row.raw)}
-                            className={cn(ENLACE, 'text-primary')}
-                          >
-                            Movimiento
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openEditDrawer(row.raw)}
-                            className={cn(ENLACE, 'text-foreground')}
-                          >
-                            Editar
-                          </button>
-                          {/* Fase 2a: desactivar directo desde la tabla */}
-                          <button
-                            type="button"
-                            onClick={() => openConfirmDelete(row.raw)}
-                            className={cn(ENLACE, 'text-danger')}
-                          >
-                            Desactivar
-                          </button>
-                        </div>
+                        <AccionesFila
+                          nombre={row.nombre}
+                          acciones={[
+                            (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
+                              label: 'Actualizar vencimiento',
+                              onSelect: () => abrirRelevoVencimiento(row.raw, 'producto'),
+                            },
+                            { label: 'Registrar movimiento', onSelect: () => handleMovimientoClick(row.raw) },
+                            { label: 'Editar', onSelect: () => openEditDrawer(row.raw) },
+                            { label: 'Desactivar', onSelect: () => openConfirmDelete(row.raw), peligro: true },
+                          ]}
+                        />
                       ),
                     },
                   ]}
@@ -739,6 +712,71 @@ export default function InventarioPage() {
                 paginas={productosQuery.data?.paginas || 1}
                 onChange={setPaginaProductos}
               />
+
+              <div className="grid items-start gap-4 lg:grid-cols-2">
+                <section aria-labelledby="inv-movimientos" className="flex flex-col gap-3 rounded-2xl bg-card p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 id="inv-movimientos" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Últimos movimientos</h2>
+                    <button type="button" onClick={() => setActiveTab('movimientos')} className={cn(ENLACE, 'text-primary')}>
+                      Ver todos
+                    </button>
+                  </div>
+                  {movimientosRows.length === 0 ? (
+                    <p className="rounded-xl bg-muted px-4 py-3.5 text-sm text-muted-foreground">Aún no hay movimientos.</p>
+                  ) : (
+                    <ul className="flex flex-col divide-y divide-border">
+                      {movimientosRows.slice(0, 5).map((m) => (
+                        <li key={m.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                          <span className="min-w-0">
+                            <span className="block truncate text-[15px] font-semibold text-foreground">{m.producto}</span>
+                            <span className="block truncate text-[13px] text-muted-foreground">
+                              {[m.motivoLabel, m.fecha].filter(Boolean).join(' · ')}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground">Quedan {m.cambio}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+
+                <section aria-labelledby="inv-vencen" className="flex flex-col gap-3 rounded-2xl bg-card p-5">
+                  <h2 id="inv-vencen" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Vencen pronto</h2>
+                  {alertsRows.filter((a) => a.tipo === 'Vencido' || a.tipo === 'Próximo a vencer').length === 0 ? (
+                    <p className="rounded-xl bg-muted px-4 py-3.5 text-sm text-muted-foreground">Nada vence en los próximos días.</p>
+                  ) : (
+                    <ul className="flex flex-col divide-y divide-border">
+                      {alertsRows
+                        .filter((a) => a.tipo === 'Vencido' || a.tipo === 'Próximo a vencer')
+                        .slice(0, 5)
+                        .map((a) => (
+                          <li key={a.id} className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                            <span className="min-w-0">
+                              <span className="block truncate text-[15px] font-semibold text-foreground">{a.nombre}</span>
+                              <span className="block truncate text-[13px] text-muted-foreground">
+                                {[a.inventario === 'clinico' ? 'Inventario de la clínica' : 'Inventario de ventas', a.raw?.lote ? `Lote ${a.raw.lote}` : null]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => abrirRelevoVencimiento(a.raw, a.inventario === 'clinico' ? 'insumo' : 'producto')}
+                              className={cn(
+                                'shrink-0 whitespace-nowrap rounded-md text-[13px] font-semibold tabular-nums hover:underline',
+                                FOCO,
+                                a.tipo === 'Vencido' ? 'text-danger' : 'text-info'
+                              )}
+                              title="Actualizar vencimiento"
+                            >
+                              {a.tipo === 'Vencido' ? `Venció ${a.detalle}` : a.detalle}
+                            </button>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </section>
+              </div>
             </div>
           )}
 
@@ -763,10 +801,6 @@ export default function InventarioPage() {
                     onBajoStockChange={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
                   />
                 </div>
-                <Button type="button" size="lg" className="px-4" onClick={insumosClinicosHook.openCreateDrawer}>
-                  <FlaskConical />
-                  Nuevo insumo clínico
-                </Button>
               </div>
 
               {insumosClinicosHook.insumosQuery.isLoading ? (
@@ -821,33 +855,20 @@ export default function InventarioPage() {
                     },
                     {
                       key: 'accion',
-                      label: 'Acciones',
+                      label: <span className="sr-only">Acciones</span>,
+                      align: 'right',
                       render: (row) => (
-                        <div className="flex flex-wrap gap-x-3 gap-y-1">
-                          {(row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && (
-                            <button
-                              type="button"
-                              onClick={() => abrirRelevoVencimiento(row.raw, 'insumo')}
-                              className={cn(ENLACE, 'text-primary')}
-                            >
-                              Actualizar vencimiento
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => insumosClinicosHook.openEditDrawer(row.raw)}
-                            className={cn(ENLACE, 'text-foreground')}
-                          >
-                            Editar o comprar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => insumosClinicosHook.openConfirmDelete(row.raw)}
-                            className={cn(ENLACE, 'text-danger')}
-                          >
-                            Desactivar
-                          </button>
-                        </div>
+                        <AccionesFila
+                          nombre={row.nombre}
+                          acciones={[
+                            (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
+                              label: 'Actualizar vencimiento',
+                              onSelect: () => abrirRelevoVencimiento(row.raw, 'insumo'),
+                            },
+                            { label: 'Editar o comprar', onSelect: () => insumosClinicosHook.openEditDrawer(row.raw) },
+                            { label: 'Desactivar', onSelect: () => insumosClinicosHook.openConfirmDelete(row.raw), peligro: true },
+                          ]}
+                        />
                       ),
                     },
                   ]}
@@ -952,7 +973,7 @@ export default function InventarioPage() {
           {/* Tab: Movimientos */}
           {activeTab === 'movimientos' && (
             <div className="space-y-5">
-              <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+              <div className="grid items-start gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
                 <DashboardPanel
                   title="Registrar movimiento"
                   subtitle="Entrada, salida o ajuste sobre la cantidad de un producto."
@@ -986,6 +1007,7 @@ export default function InventarioPage() {
                               ...cur,
                               tipo: nextType,
                               motivo: (MOVEMENT_REASON_OPTIONS[nextType] || MOVEMENT_REASON_OPTIONS.entrada)[0].value,
+                              motivoOtro: '',
                             }))
                           }}
                           options={MOVEMENT_TYPE_OPTIONS}
@@ -1000,11 +1022,28 @@ export default function InventarioPage() {
                           id="mov-motivo"
                           className="h-11"
                           value={movementForm.motivo}
-                          onValueChange={(value) => setMovementForm((cur) => ({ ...cur, motivo: value }))}
+                          onValueChange={(value) => setMovementForm((cur) => ({ ...cur, motivo: value, motivoOtro: '' }))}
                           options={motivosDisponibles}
                         />
                       </div>
                     </div>
+
+                    {movementForm.motivo === 'otro' ? (
+                      <div className="grid gap-1.5">
+                        <label htmlFor="mov-motivo-otro" className="text-[13px] font-semibold text-muted-foreground">
+                          ¿Cuál motivo? *
+                        </label>
+                        <input
+                          id="mov-motivo-otro"
+                          type="text"
+                          maxLength={80}
+                          value={movementForm.motivoOtro ?? ''}
+                          onChange={(e) => setMovementForm((cur) => ({ ...cur, motivoOtro: e.target.value }))}
+                          placeholder="Donación, préstamo a otra sede, muestra médica…"
+                          className={INPUT}
+                        />
+                      </div>
+                    ) : null}
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-1.5">
@@ -1083,24 +1122,33 @@ export default function InventarioPage() {
                         </div>
                       </div>
 
-                      <TablaInventario
-                        title="Últimos movimientos del producto"
-                        subtitle="Vista rápida de entradas, salidas y ajustes recientes."
-                        rows={detalleMovimientosRows}
-                        columns={[
-                          { key: 'fecha', label: 'Fecha' },
-                          { key: 'tipo', label: 'Tipo' },
-                          { key: 'motivo', label: 'Motivo' },
-                          { key: 'cantidad', label: 'Cantidad' },
-                          { key: 'cambio', label: 'Cantidad final' },
-                        ]}
-                        emptyTitle="Sin movimientos recientes"
-                        emptyBody="Este producto aún no tiene movimientos registrados."
-                      />
+                      <div>
+                        <h3 className="text-[15px] font-semibold text-foreground">Últimos movimientos del producto</h3>
+                        {detalleMovimientosRows.length === 0 ? (
+                          <p className="mt-2 rounded-xl bg-muted px-4 py-3.5 text-sm text-muted-foreground">
+                            Este producto aún no tiene movimientos registrados.
+                          </p>
+                        ) : (
+                          <ul className="mt-2 flex flex-col divide-y divide-border">
+                            {detalleMovimientosRows.map((m) => (
+                              <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-semibold text-foreground">{m.motivoLabel}</span>
+                                  <span className="block text-[13px] text-muted-foreground">{m.tipoLabel} · {m.fecha}</span>
+                                </span>
+                                <span className="flex shrink-0 items-baseline gap-2 text-sm">
+                                  <CambioCantidad delta={m.delta} />
+                                  <span className="text-[13px] tabular-nums text-muted-foreground">queda {m.cambio}</span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="rounded-xl bg-muted px-4 py-5 text-sm leading-6 text-muted-foreground">
-                      Selecciona un producto en el selector de arriba para ver su detalle y los últimos movimientos.
+                      Elige un producto en el formulario para ver su cantidad y sus últimos movimientos.
                     </div>
                   )}
                 </DashboardPanel>
@@ -1116,17 +1164,43 @@ export default function InventarioPage() {
                   subtitle="Historial de cambios en las cantidades."
                   rows={movimientosRows}
                   columns={[
-                    { key: 'fecha', label: 'Fecha' },
-                    { key: 'producto', label: 'Producto' },
-                    { key: 'tipo', label: 'Tipo' },
-                    { key: 'motivo', label: 'Motivo' },
-                    { key: 'cambio', label: 'Cantidad final' },
+                    {
+                      key: 'fecha',
+                      label: 'Fecha',
+                      render: (row) => <span className="whitespace-nowrap tabular-nums text-muted-foreground">{row.fecha}</span>,
+                    },
+                    {
+                      key: 'producto',
+                      label: 'Producto',
+                      render: (row) => <span className="font-semibold text-foreground">{row.producto}</span>,
+                    },
+                    {
+                      key: 'tipo',
+                      label: 'Movimiento',
+                      render: (row) => (
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className={cn('rounded-md px-2 py-0.5 text-[13px] font-semibold', TONO_TIPO[row.tipo] || 'bg-muted text-muted-foreground')}>
+                            {row.tipoLabel}
+                          </span>
+                          <span className="text-foreground">{row.motivoLabel}</span>
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'delta',
+                      label: 'Cantidad',
+                      align: 'right',
+                      render: (row) => <CambioCantidad delta={row.delta} />,
+                    },
+                    {
+                      key: 'cambio',
+                      label: 'Queda',
+                      align: 'right',
+                      render: (row) => <span className="tabular-nums text-foreground">{row.cambio}</span>,
+                    },
                   ]}
                   emptyTitle="Aún no hay movimientos registrados"
                   emptyBody="Cuando se creen entradas, salidas o ajustes, esta tabla mostrará lo más reciente."
-                  action={
-                    <StatusBadge variant="pagina" label={`Página ${movimientosQuery.data?.paginaActual || 1}`} />
-                  }
                 />
               )}
 

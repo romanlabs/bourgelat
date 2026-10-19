@@ -13,7 +13,7 @@ export const MOVEMENT_TYPE_OPTIONS = [
 
 export const MOVEMENT_REASON_OPTIONS = {
   entrada: [
-    { value: 'inventario_inicial', label: 'Inventario Inicial' },
+    { value: 'inventario_inicial', label: 'Inventario inicial' },
     { value: 'compra', label: 'Compra' },
     { value: 'devolucion', label: 'Devolución' },
     { value: 'otro', label: 'Otro' },
@@ -35,8 +35,42 @@ const DEFAULT_MOVEMENT_FORM = {
   tipo: 'entrada',
   cantidad: '',
   motivo: 'compra',
+  // Cuando el motivo es «Otro»: cuál fue (viaja en las observaciones).
+  motivoOtro: '',
   observaciones: '',
   precioUnitario: '',
+}
+
+const PREFIJO_MOTIVO_OTRO = 'Motivo: '
+
+// Lo que la tabla muestra de un movimiento: tipo y motivo con nombre legible
+// y el cambio con signo (en un ajuste, la diferencia contra lo que había).
+const TIPO_LABELS = Object.fromEntries(MOVEMENT_TYPE_OPTIONS.map((o) => [o.value, o.label]))
+const MOTIVO_LABELS = Object.fromEntries(
+  Object.values(MOVEMENT_REASON_OPTIONS).flat().map((o) => [o.value, o.label])
+)
+const capitalizar = (texto) => (texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '')
+
+export function describirMovimiento(m) {
+  const cantidad = Number(m.cantidad || 0)
+  const delta =
+    m.tipo === 'entrada'
+      ? cantidad
+      : m.tipo === 'salida'
+        ? -cantidad
+        : m.stockAnterior !== undefined && m.stockAnterior !== null
+          ? Number(m.stockNuevo) - Number(m.stockAnterior)
+          : null
+  // «Otro» muestra lo que se escribió al registrarlo (va al inicio de las observaciones).
+  const otro =
+    m.motivo === 'otro' && String(m.observaciones || '').startsWith(PREFIJO_MOTIVO_OTRO)
+      ? String(m.observaciones).slice(PREFIJO_MOTIVO_OTRO.length).split(' · ')[0]
+      : ''
+  return {
+    tipoLabel: TIPO_LABELS[m.tipo] || capitalizar(m.tipo),
+    motivoLabel: otro || MOTIVO_LABELS[m.motivo] || capitalizar(String(m.motivo || '').split('_').join(' ')),
+    delta,
+  }
 }
 
 export function useInventarioMovimientos({ enabled }) {
@@ -87,6 +121,7 @@ export function useInventarioMovimientos({ enabled }) {
         tipo: m.tipo,
         motivo: m.motivo,
         cambio: formatNumber(m.stockNuevo),
+        ...describirMovimiento(m),
       })),
     [movimientosQuery.data?.movimientos]
   )
@@ -107,6 +142,7 @@ export function useInventarioMovimientos({ enabled }) {
         motivo: m.motivo.replaceAll('_', ' '),
         cantidad: formatNumber(m.cantidad),
         cambio: formatNumber(m.stockNuevo),
+        ...describirMovimiento(m),
       })),
     [productoDetalleQuery.data?.producto?.movimientos]
   )
@@ -136,13 +172,22 @@ export function useInventarioMovimientos({ enabled }) {
       toast.error('La cantidad del movimiento debe ser mayor a 0.')
       return
     }
+    const motivoOtro = movementForm.motivo === 'otro' ? String(movementForm.motivoOtro || '').trim() : ''
+    if (movementForm.motivo === 'otro' && !motivoOtro) {
+      toast.error('Escribe cuál es el motivo del movimiento.')
+      return
+    }
+    const observaciones = [
+      motivoOtro ? `${PREFIJO_MOTIVO_OTRO}${motivoOtro}` : '',
+      movementForm.observaciones.trim(),
+    ].filter(Boolean).join(' · ')
     registrarMovimientoMutation.mutate({
       productoId: movementForm.productoId,
       payload: {
         tipo: movementForm.tipo,
         cantidad: Number(movementForm.cantidad),
         motivo: movementForm.motivo,
-        observaciones: movementForm.observaciones.trim() || undefined,
+        observaciones: observaciones || undefined,
         precioUnitario: movementForm.precioUnitario ? Number(movementForm.precioUnitario) : 0,
       },
     })
