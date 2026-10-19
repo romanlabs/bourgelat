@@ -4,22 +4,21 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 const navCtaVariants = cva(
-  'group inline-flex items-center gap-3 rounded-full border bg-card text-sm font-semibold transition-all outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'group inline-flex items-center gap-2 rounded-lg font-semibold transition-all outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-px disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       tone: {
-        primary: 'border-border hover:border-primary/30 hover:shadow-sm',
-        destructive:
-          'border-danger/20 hover:border-danger/40 hover:shadow-sm',
+        primary: 'bg-secondary text-secondary-foreground hover:brightness-95',
+        destructive: 'bg-danger-soft text-danger hover:brightness-95',
       },
       variant: {
         solid: '',
-        outline: 'bg-transparent',
+        outline: 'bg-transparent hover:bg-secondary',
       },
       size: {
-        sm: 'py-1.5 pl-1.5 pr-4 text-xs',
-        md: 'py-2 pl-2 pr-5 text-sm',
-        lg: 'py-2.5 pl-2.5 pr-6 text-base',
+        sm: 'h-8 px-3 text-[13px]',
+        md: 'h-10 px-4 text-sm',
+        lg: 'h-11 px-5 text-base',
       },
     },
     defaultVariants: { tone: 'primary', variant: 'solid', size: 'md' },
@@ -27,18 +26,17 @@ const navCtaVariants = cva(
 )
 
 const navCtaIconVariants = cva(
-  'flex shrink-0 items-center justify-center rounded-full transition-colors [&_svg]:h-4 [&_svg]:w-4',
+  'flex shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4',
   {
     variants: {
       tone: {
-        primary: 'bg-primary/10 text-primary group-hover:bg-primary/15',
-        destructive:
-          'bg-danger-soft text-danger group-hover:bg-danger/15',
+        primary: 'text-primary',
+        destructive: 'text-danger',
       },
       size: {
-        sm: 'h-6 w-6 [&_svg]:h-3.5 [&_svg]:w-3.5',
-        md: 'h-8 w-8',
-        lg: 'h-9 w-9',
+        sm: '[&_svg]:h-3.5 [&_svg]:w-3.5',
+        md: '',
+        lg: '',
       },
     },
     defaultVariants: { tone: 'primary', size: 'md' },
@@ -63,10 +61,9 @@ const navCtaLinkVariants = cva(
 )
 
 /**
- * Pill de navegación entre módulos: círculo con ícono a la izquierda + texto.
- * Un solo acento de color (tone) en toda la app — vive solo en el círculo,
- * nunca como fondo sólido del pill, para no competir con los botones de
- * acción real (Button).
+ * Botón secundario de navegación entre módulos: fondo bruma, ícono en el
+ * color del tono y texto. Nunca relleno sólido, para no competir con los
+ * botones de acción real (Button).
  *
  * Props:
  *   to       — ruta interna (usa react-router Link); se ignora si asChild=true

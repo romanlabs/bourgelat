@@ -19,7 +19,7 @@ function ChartTooltip({ active, payload, label, formatter }) {
   if (!active || !payload?.length) return null
 
   return (
-    <div className="min-w-[120px] rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-dropdown">
+    <div className="min-w-[120px] rounded-xl bg-card px-3.5 py-2.5 shadow-dropdown">
       {label ? (
         <p className="mb-2 border-b border-border pb-1.5 text-[13px] font-semibold text-muted-foreground">
           {label}
@@ -43,22 +43,22 @@ function ChartTooltip({ active, payload, label, formatter }) {
 export function DashboardPanel({ title, subtitle, action, children, className = '' }) {
   return (
     <section
-      className={`overflow-hidden rounded-[28px] border border-border bg-card shadow-panel ${className}`}
+      className={`overflow-hidden rounded-2xl bg-card ${className}`}
     >
       <div
-        className={`flex flex-col gap-3 px-5 py-4 lg:flex-row lg:justify-between ${
+        className={`flex flex-col gap-3 px-6 pt-6 pb-1 lg:flex-row lg:justify-between ${
           subtitle ? 'lg:items-end' : 'lg:items-center'
-        } ${children ? 'border-b border-border' : ''}`}
+        }`}
       >
         <div>
-          <p className="text-[13px] font-semibold text-muted-foreground">
+          <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">
             {title}
-          </p>
+          </h2>
           {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
       </div>
-      {children ? <div className="p-5">{children}</div> : null}
+      {children ? <div className="px-6 pb-6 pt-4">{children}</div> : null}
     </section>
   )
 }
@@ -114,31 +114,25 @@ export function KpiCard({
   badge,
   badgeTone = 'bg-muted text-muted-foreground',
 }) {
+  // Cifra grande arriba del ojo, etiqueta en tipo oración y el icono como
+  // detalle a la derecha: se lee el número antes que el adorno.
   return (
     <div
       title={helper || undefined}
-      className={`flex h-full gap-3 rounded-xl border bg-card px-3.5 py-2.5 shadow-panel ${
-        badge ? 'items-start' : 'items-center'
-      } ${borderTone} ${className}`}
+      className={`flex h-full flex-col gap-2 rounded-2xl bg-card px-5 py-4 ${borderTone === 'border-border' ? '' : `border ${borderTone}`} ${className}`}
     >
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted ${tone}`}>
-        {createElement(icon, { className: 'h-4 w-4' })}
-      </span>
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className="truncate text-[13px] font-semibold text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-lg font-bold leading-tight tabular-nums text-card-foreground [overflow-wrap:anywhere]">
-          {value}
-        </p>
-        {badge ? (
-          <span
-            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeTone}`}
-          >
-            {badge}
-          </span>
-        ) : null}
+      <div className="flex items-center justify-between gap-3">
+        <p className="truncate text-sm font-medium text-muted-foreground">{label}</p>
+        {icon ? createElement(icon, { className: `h-4 w-4 shrink-0 ${tone}` }) : null}
       </div>
+      <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-card-foreground [overflow-wrap:anywhere]">
+        {value}
+      </p>
+      {badge ? (
+        <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-[13px] font-semibold ${badgeTone}`}>
+          {badge}
+        </span>
+      ) : null}
     </div>
   )
 }
@@ -183,7 +177,7 @@ export function KpiGrid({ items, className = '', action, columns }) {
 export function StatusPill({ children, tone = 'border-border bg-muted text-foreground' }) {
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded-full border px-3 py-1 text-[13px] font-semibold ${tone} whitespace-normal break-words [overflow-wrap:anywhere]`}
+      className={`inline-flex max-w-full items-center rounded-md px-2.5 py-1 text-[13px] font-semibold ${tone} whitespace-normal break-words [overflow-wrap:anywhere]`}
     >
       {children}
     </span>
@@ -210,10 +204,10 @@ export function DonutCard({
 
   return (
     <div
-      className={`flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel ${className}`}
+      className={`flex h-full flex-col overflow-hidden rounded-2xl bg-card ${className}`}
     >
-      <div className="border-b border-border px-5 py-4">
-        <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
+      <div className="px-6 pt-6 pb-1">
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
       <div
@@ -346,10 +340,10 @@ export function LinePanel({
   const hasData = data.some((item) => lineas.some((linea) => Number(item[linea.dataKey] || 0) > 0))
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-card">
+      <div className="flex flex-col gap-3 px-6 pt-6 pb-1 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
+          <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
           {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
@@ -417,9 +411,9 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
   const hasData = data.some((item) => Number(item[dataKey] || 0) > 0)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
-      <div className="border-b border-border px-5 py-4">
-        <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-card">
+      <div className="px-6 pt-6 pb-1">
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
       <div className={`flex-1 ${height} px-2 py-4`}>
@@ -465,14 +459,14 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
 
 export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, filters, collapsed = false }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
+    <div className="overflow-hidden rounded-2xl bg-card">
       <div
         className={`flex flex-col gap-2.5 px-5 py-3 lg:flex-row lg:items-center lg:justify-between ${
           collapsed ? '' : 'border-b border-border'
         }`}
       >
         <div>
-          <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
+          <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
           {!collapsed && subtitle ? <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
