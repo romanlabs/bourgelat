@@ -33,7 +33,7 @@ export const ALL_QUICK_ACTIONS = {
   agenda: {
     key: 'agenda',
     label: 'Nueva cita',
-    to: '/agenda',
+    to: '/agenda?nueva=1',
     icon: CalendarClock,
     accent: 'bg-brand-muted text-brand-foreground group-hover:bg-brand/20',
     cardHover: 'hover:border-brand/30 hover:bg-brand-muted/50',

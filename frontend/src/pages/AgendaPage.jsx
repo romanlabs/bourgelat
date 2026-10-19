@@ -131,7 +131,10 @@ export default function AgendaPage() {
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
-  const [recepcionPrefill, setRecepcionPrefill] = useState(null)
+  // «Nueva cita» desde otras pantallas llega con ?nueva=1 y abre el formulario.
+  const [recepcionPrefill, setRecepcionPrefill] = useState(() =>
+    new URLSearchParams(window.location.search).get('nueva') ? { fecha: hoyLocal() } : null
+  )
   const [calendarToolbar, setCalendarToolbar] = useState(null)
 
   const rolPermitido = canAccessModule(usuario, 'agenda')

@@ -119,8 +119,10 @@ function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
       </dl>
 
       <div className="rounded-xl bg-muted px-4 py-3.5">
-        <p className="text-[13px] text-muted-foreground">Motivo</p>
-        <p className="mt-1 text-[15px] leading-6">{cita.motivo || 'Sin motivo registrado'}</p>
+        <p className="text-[13px] text-muted-foreground">Nota de recepción</p>
+        <p className="mt-1 text-[15px] leading-6">
+          {cita.observaciones || cita.motivo || 'Sin notas de recepción'}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2.5">
@@ -139,7 +141,7 @@ function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
             className="inline-flex h-12 flex-1 basis-32 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
           >
             <Receipt className="h-4 w-4" />
-            Cobrar
+            Cobrar consulta
           </Link>
         ) : null}
       </div>
@@ -155,13 +157,18 @@ function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
 export default function JornadaHoy({
   citas,
   loading,
-  ingresosHoy,
+  cajaHoy,
   alertas,
   puedeAtender,
   puedeCobrar,
   puedeVerCaja,
+  // Si quien mira también atiende (admin y veterinario a la vez), puede
+  // quedarse solo con sus pacientes.
+  usuarioIdMios = null,
+  onVerReportes = null,
 }) {
   const [consultorio, setConsultorio] = useState('todos')
+  const [soloMios, setSoloMios] = useState(false)
   const [seleccionId, setSeleccionId] = useState(null)
 
   const ordenadas = useMemo(
@@ -178,8 +185,11 @@ export default function JornadaHoy({
   }, [ordenadas])
 
   const visibles = useMemo(
-    () => (consultorio === 'todos' ? ordenadas : ordenadas.filter((c) => c.consultorio?.id === consultorio)),
-    [consultorio, ordenadas]
+    () =>
+      ordenadas
+        .filter((c) => consultorio === 'todos' || c.consultorio?.id === consultorio)
+        .filter((c) => !soloMios || c.veterinario?.id === usuarioIdMios),
+    [consultorio, ordenadas, soloMios, usuarioIdMios]
   )
 
   const seleccionada = useMemo(() => {
@@ -204,6 +214,30 @@ export default function JornadaHoy({
           <h2 id="hoy-jornada" className="text-[22px] font-semibold tracking-[-0.02em]">
             La jornada
           </h2>
+          <div className="flex flex-wrap items-center gap-2">
+          {usuarioIdMios ? (
+            <div role="group" aria-label="Pacientes" className="flex gap-1 rounded-xl bg-muted p-1">
+              {[
+                { id: false, nombre: 'Todos' },
+                { id: true, nombre: 'Mis pacientes' },
+              ].map((opcion) => (
+                <button
+                  key={String(opcion.id)}
+                  type="button"
+                  aria-pressed={soloMios === opcion.id}
+                  onClick={() => setSoloMios(opcion.id)}
+                  className={cn(
+                    'h-9 rounded-lg px-3.5 text-[13px] transition',
+                    soloMios === opcion.id
+                      ? 'bg-card font-semibold text-foreground'
+                      : 'font-medium text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {opcion.nombre}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {consultorios.length > 1 ? (
             <div role="group" aria-label="Consultorio" className="flex flex-wrap gap-1 rounded-xl bg-muted p-1">
               {[{ id: 'todos', nombre: 'Todos' }, ...consultorios].map((opcion) => (
@@ -224,6 +258,7 @@ export default function JornadaHoy({
               ))}
             </div>
           ) : null}
+          </div>
         </div>
 
         {loading ? (
@@ -294,18 +329,37 @@ export default function JornadaHoy({
         <PanelPaciente cita={seleccionada} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} />
 
         {puedeVerCaja ? (
-          <section aria-labelledby="hoy-caja" className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground dark:bg-secondary dark:text-foreground">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 id="hoy-caja" className="text-lg font-semibold">Caja de hoy</h2>
+          <section
+            aria-labelledby="hoy-caja"
+            className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground dark:bg-secondary dark:text-foreground"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="hoy-caja" className="text-lg font-semibold">Caja de hoy</h2>
+                <p className="mt-0.5 text-[13px] opacity-80">
+                  {cajaHoy?.turnoApertura ? `Turno abierto ${cajaHoy.turnoApertura}` : 'Sin turno abierto'}
+                </p>
+              </div>
               <Link to="/finanzas" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100">
                 Ir a caja
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
             <p className="text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums">
-              {formatCurrency(ingresosHoy)}
+              {formatCurrency(cajaHoy?.total ?? 0)}
             </p>
-            <p className="text-sm opacity-80">Cobrado hoy en todos los métodos de pago</p>
+            {cajaHoy?.porMetodo?.length ? (
+              <dl className="flex flex-col gap-2 text-[15px]">
+                {cajaHoy.porMetodo.map((metodo) => (
+                  <div key={metodo.key} className="flex items-center justify-between gap-3">
+                    <dt className="opacity-80">{metodo.label}</dt>
+                    <dd className="font-semibold tabular-nums">{formatCurrency(metodo.valor)}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-sm opacity-80">Todavía no hay cobros hoy</p>
+            )}
           </section>
         ) : null}
 
@@ -328,6 +382,16 @@ export default function JornadaHoy({
               </Link>
             ))
           )}
+          {onVerReportes ? (
+            <button
+              type="button"
+              onClick={onVerReportes}
+              className="mt-2 inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
+            >
+              Ver reportes del mes
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
         </section>
       </div>
     </div>

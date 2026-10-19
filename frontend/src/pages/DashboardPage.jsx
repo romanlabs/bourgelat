@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  CalendarPlus,
   BarChart3,
   Boxes,
   CalendarClock,
@@ -24,7 +25,7 @@ import {
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { ALL_QUICK_ACTIONS } from '@/components/layout/quickActions'
+import { cajaApi } from '@/features/caja/cajaApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
@@ -252,7 +253,6 @@ function RestrictedDashboard({ usuario }) {
         <JornadaHoy
           citas={citasOrdenadas}
           loading={agendaHoyQuery.isLoading}
-          ingresosHoy={0}
           alertas={EMPTY_LIST}
           puedeAtender={canAccessModule(usuario, 'historias')}
           puedeCobrar={canAccessModule(usuario, 'finanzas')}
@@ -336,12 +336,6 @@ export default function DashboardPage() {
   const puedeAbrirCaja = esAdministrador
   // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
   const mostrarDian = puedeVerIngresos && tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
-
-  const quickActions = useMemo(() => {
-    const keys = ['agenda', 'paciente', 'historia', 'facturar']
-    if (puedeVerInventario) keys.splice(1, 0, 'inventario')
-    return keys.map((key) => ALL_QUICK_ACTIONS[key])
-  }, [puedeVerInventario])
 
   const ingresosQuery = useQuery({
     queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
@@ -551,6 +545,64 @@ export default function DashboardPage() {
     return entry?.total ?? 0
   }, [ingresosPorDia, hoy])
 
+  const ingresosHoyQuery = useQuery({
+    queryKey: ['dashboard-ingresos', hoy, hoy],
+    queryFn: () => dashboardApi.obtenerReporteIngresos({ fechaInicio: hoy, fechaFin: hoy }),
+    enabled: puedeVerIngresos,
+  })
+
+  const turnoActivoQuery = useQuery({
+    queryKey: ['caja-turno-activo'],
+    queryFn: () => cajaApi.obtenerTurnoActivo(),
+    enabled: puedeVerIngresos,
+  })
+
+  const cajaHoy = useMemo(() => {
+    const porMetodo = Object.entries(ingresosHoyQuery.data?.ingresosPorMetodoPago || {})
+      .map(([key, valor]) => ({ key, label: PAYMENT_METHOD_LABELS[key] || key, valor: Number(valor) || 0 }))
+      .filter((metodo) => metodo.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
+    const apertura = turnoActivoQuery.data?.turno?.fechaApertura
+    return {
+      total: porMetodo.length ? porMetodo.reduce((suma, metodo) => suma + metodo.valor, 0) : ingresosHoy,
+      porMetodo,
+      turnoApertura: apertura
+        ? new Date(apertura).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+        : null,
+    }
+  }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoy])
+
+  // «Para revisar» nombra cada caso (el producto, el paciente) en vez de contar.
+  const alertasHoy = useMemo(() => {
+    const productosBajos = (inventarioQuery.data?.productos || [])
+      .filter((producto) => Number(producto.stock) <= Number(producto.stockMinimo))
+      .slice(0, 3)
+      .map((producto) => ({
+        id: `producto-${producto.id}`,
+        title: producto.nombre,
+        detail:
+          Number(producto.stock) <= 0
+            ? 'Agotado'
+            : `Quedan ${formatNumber(producto.stock)}, el mínimo es ${formatNumber(producto.stockMinimo)}`,
+        to: '/inventario',
+      }))
+    const historiasAbiertas = citasHoyRows
+      .filter((cita) => cita.estado === 'completada' && !cita.historia?.id)
+      .slice(0, 3)
+      .map((cita) => ({
+        id: `historia-${cita.id}`,
+        title: `Historia de ${cita.mascota?.nombre || 'un paciente'} sin cerrar`,
+        detail: `Consulta de las ${String(cita.horaInicio || '').slice(0, 5)}`,
+        to: '/agenda',
+      }))
+    const resto = tacticalAlerts.filter(
+      (alerta) =>
+        !(alerta.id === 'inventario' && productosBajos.length > 0) &&
+        !(alerta.id === 'urgencias-sin-historia' && historiasAbiertas.length > 0)
+    )
+    return [...historiasAbiertas, ...productosBajos, ...resto]
+  }, [inventarioQuery.data?.productos, citasHoyRows, tacticalAlerts])
+
   if (!esAdministrador) {
     return <RestrictedDashboard usuario={usuario} />
   }
@@ -559,11 +611,13 @@ export default function DashboardPage() {
     <JornadaHoy
       citas={citasHoyRows}
       loading={agendaHoyQuery.isLoading}
-      ingresosHoy={ingresosHoy}
-      alertas={tacticalAlerts}
+      cajaHoy={cajaHoy}
+      alertas={alertasHoy}
       puedeAtender={puedeAbrirHistorias}
       puedeCobrar={puedeAbrirCaja}
       puedeVerCaja={puedeVerIngresos}
+      usuarioIdMios={hasAnyRole(usuario, ['veterinario']) ? usuario?.id : null}
+      onVerReportes={() => setActiveTab('agenda')}
     />
   )
 
@@ -1048,16 +1102,34 @@ export default function DashboardPage() {
       title={tituloHoy}
       description={descripcionHoy}
       actions={
-        typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
-          <StatusPill tone="border-destructive/40 bg-destructive/10 text-destructive">
-            Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}
-          </StatusPill>
-        ) : null
+        <>
+          {typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
+            <StatusPill tone="bg-danger-soft text-danger">
+              Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}
+            </StatusPill>
+          ) : null}
+          <Link
+            to="/finanzas"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
+          >
+            <Receipt className="h-4 w-4" />
+            Cobrar
+          </Link>
+          <Link
+            to="/agenda?nueva=1"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Nueva cita
+          </Link>
+        </>
       }
-      showQuickActions
-      quickActions={quickActions}
     >
-      <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
+      {/* Hoy es la jornada; los reportes del mes quedan a un clic y se
+          navegan con pestañas solo cuando se abren. */}
+      {activeTab === 'resumen' ? null : (
+        <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
+      )}
 
       {queryErrors.length > 0 ? (
         <div className="space-y-3">

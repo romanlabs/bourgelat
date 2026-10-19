@@ -4,6 +4,7 @@ import { Dialog, DropdownMenu } from 'radix-ui'
 import {
   Boxes,
   CalendarClock,
+  ChevronsUpDown,
   FileText,
   HeartPulse,
   LayoutDashboard,
@@ -55,6 +56,13 @@ const ROL_LABELS_SIDEBAR = {
 
 // Los módulos del día a día llevan icono; los administrativos van como texto
 // debajo, para que el menú se lea de un vistazo.
+// Un usuario puede tener varios roles (principal + adicionales): se muestran todos.
+const etiquetaRoles = (usuario) =>
+  getUserRoles(usuario)
+    .map((rol) => ROL_LABELS_SIDEBAR[rol])
+    .filter(Boolean)
+    .join(' · ') || 'Mi perfil'
+
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Hoy', to: '/dashboard', icon: LayoutDashboard },
   { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
@@ -94,7 +102,7 @@ function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
         type="button"
         aria-disabled="true"
         onClick={onBloqueado}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-[7px] text-left text-sm font-medium text-sidebar-foreground/55 transition-colors duration-150 hover:bg-sidebar-accent"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-1 text-left text-sm font-medium text-sidebar-foreground/55 transition-colors duration-150 hover:bg-sidebar-accent"
       >
         {Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
         <span className="flex-1 truncate">{item.label}</span>
@@ -109,7 +117,7 @@ function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-[7px] text-sm transition-colors duration-150',
+        'flex items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-1 text-sm transition-colors duration-150',
         active
           ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground'
           : 'font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -121,7 +129,92 @@ function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
   )
 }
 
-function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales }) {
+// Menú de la cuenta: se abre desde el bloque del usuario en el menú lateral
+// (escritorio) o desde el avatar de la barra superior (celular).
+function MenuUsuario({ usuario, iniciales, pathname, dark, toggleDark, logout, align = 'end', side = 'bottom', children }) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>{children}</DropdownMenu.Trigger>
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content
+        align={align}
+        side={side}
+        sideOffset={8}
+        className="z-50 w-64 rounded-xl bg-card p-1.5 text-card-foreground shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+      >
+        <div className="flex items-center gap-2.5 px-2.5 py-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+            {usuario?.foto ? (
+              <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
+            ) : (
+              iniciales
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {usuario?.nombre || 'Sin nombre'}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {usuario?.email || etiquetaRoles(usuario)}
+            </p>
+          </div>
+        </div>
+
+        <DropdownMenu.Separator className="my-1 h-px bg-border" />
+
+        <DropdownMenu.Item asChild>
+          <Link
+            to="/perfil"
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
+          >
+            <User className="h-4 w-4 text-muted-foreground" />
+            Mi perfil
+          </Link>
+        </DropdownMenu.Item>
+
+        {/* Lleva la ruta actual para que el ticket nazca con el modulo
+            donde ocurrio el problema. */}
+        <DropdownMenu.Item asChild>
+          <Link
+            to={`/soporte?nuevo=1&desde=${encodeURIComponent(pathname)}`}
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
+          >
+            <LifeBuoy className="h-4 w-4 text-muted-foreground" />
+            Ayuda y soporte
+          </Link>
+        </DropdownMenu.Item>
+
+        <DropdownMenu.Item
+          onSelect={(event) => {
+            event.preventDefault()
+            toggleDark()
+          }}
+          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
+        >
+          {dark ? (
+            <Sun className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Moon className="h-4 w-4 text-muted-foreground" />
+          )}
+          {dark ? 'Modo claro' : 'Modo oscuro'}
+        </DropdownMenu.Item>
+
+        <DropdownMenu.Separator className="my-1 h-px bg-border" />
+
+        <DropdownMenu.Item
+          onSelect={logout}
+          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-destructive outline-none transition hover:bg-danger-soft focus:bg-danger-soft"
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar sesión
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales, menuUsuario }) {
   return (
     <div className="flex h-full flex-col gap-6 px-4 py-6 bajo:gap-4 bajo:py-5 muy-bajo:gap-3 muy-bajo:py-4">
       <Link to="/dashboard" onClick={onNavigate} className="flex flex-col gap-1 px-3">
@@ -155,24 +248,26 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
         })}
       </nav>
 
-      <Link
-        to="/perfil"
-        onClick={onNavigate}
-        className={cn(
-          'flex items-center gap-3 rounded-xl p-3 transition-colors muy-bajo:p-2',
-          currentKey === 'perfil'
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-            : 'bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent'
-        )}
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground muy-bajo:h-8 muy-bajo:w-8">
-          {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : iniciales}
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-semibold">{usuario?.nombre || 'Mi perfil'}</span>
-          <span className="truncate text-[13px] opacity-75">{ROL_LABELS_SIDEBAR[usuario?.rol] || 'Mi perfil'}</span>
-        </span>
-      </Link>
+      <MenuUsuario {...menuUsuario} align="start" side="top">
+        <button
+          type="button"
+          className={cn(
+            'flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring muy-bajo:p-2',
+            currentKey === 'perfil'
+              ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+              : 'bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent'
+          )}
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground muy-bajo:h-8 muy-bajo:w-8">
+            {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : iniciales}
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-sm font-semibold">{usuario?.nombre || 'Mi perfil'}</span>
+            <span className="truncate text-[13px] opacity-75">{etiquetaRoles(usuario)}</span>
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+        </button>
+      </MenuUsuario>
     </div>
   )
 }
@@ -289,7 +384,17 @@ export default function AdminShell({
       .join('')
   }, [usuario?.email, usuario?.nombre])
 
+  const menuUsuarioProps = {
+    usuario,
+    iniciales: usuarioIniciales,
+    pathname: location.pathname,
+    dark,
+    toggleDark,
+    logout,
+  }
+
   const sidebarProps = {
+    menuUsuario: menuUsuarioProps,
     currentKey,
     canAccess,
     guard,
@@ -307,7 +412,12 @@ export default function AdminShell({
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10">
+        <header
+          className={cn(
+            'sticky top-0 z-40 flex h-16 items-center justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
+            !headerCenter && !hidePageHeader && 'lg:hidden'
+          )}
+        >
           <div className="flex min-w-0 items-center gap-2.5 lg:hidden">
             <button
               type="button"
@@ -344,96 +454,15 @@ export default function AdminShell({
               </kbd>
             </button>
 
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  type="button"
-                  title={`${usuario?.nombre || 'Mi perfil'} · Opciones`}
-                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {usuario?.foto ? (
-                    <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    usuarioIniciales
-                  )}
-                </button>
-              </DropdownMenu.Trigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  align="end"
-                  sideOffset={8}
-                  className="z-50 w-64 rounded-xl bg-card p-1.5 text-card-foreground shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-                >
-                  <div className="flex items-center gap-2.5 px-2.5 py-2">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-                      {usuario?.foto ? (
-                        <img src={usuario.foto} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        usuarioIniciales
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {usuario?.nombre || 'Sin nombre'}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {usuario?.email || ROL_LABELS_SIDEBAR[usuario?.rol]}
-                      </p>
-                    </div>
-                  </div>
-
-                  <DropdownMenu.Separator className="my-1 h-px bg-border" />
-
-                  <DropdownMenu.Item asChild>
-                    <Link
-                      to="/perfil"
-                      className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
-                    >
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      Mi perfil
-                    </Link>
-                  </DropdownMenu.Item>
-
-                  {/* Lleva la ruta actual para que el ticket nazca con el modulo
-                      donde ocurrio el problema. */}
-                  <DropdownMenu.Item asChild>
-                    <Link
-                      to={`/soporte?nuevo=1&desde=${encodeURIComponent(location.pathname)}`}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
-                    >
-                      <LifeBuoy className="h-4 w-4 text-muted-foreground" />
-                      Ayuda y soporte
-                    </Link>
-                  </DropdownMenu.Item>
-
-                  <DropdownMenu.Item
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      toggleDark()
-                    }}
-                    className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground outline-none transition hover:bg-accent focus:bg-accent"
-                  >
-                    {dark ? (
-                      <Sun className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Moon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {dark ? 'Modo claro' : 'Modo oscuro'}
-                  </DropdownMenu.Item>
-
-                  <DropdownMenu.Separator className="my-1 h-px bg-border" />
-
-                  <DropdownMenu.Item
-                    onSelect={logout}
-                    className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-destructive outline-none transition hover:bg-danger-soft focus:bg-danger-soft"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Cerrar sesión
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+            <MenuUsuario {...menuUsuarioProps}>
+              <button
+                type="button"
+                title={`${usuario?.nombre || 'Mi perfil'} · Opciones`}
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+              >
+                {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : usuarioIniciales}
+              </button>
+            </MenuUsuario>
           </div>
         </header>
 
@@ -640,7 +669,7 @@ export default function AdminShell({
           </Dialog.Portal>
         </Dialog.Root>
 
-        <main className="mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10">
+        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10', !headerCenter && !hidePageHeader && 'lg:pt-8')}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
@@ -657,12 +686,22 @@ export default function AdminShell({
                 ) : null}
               </div>
 
-              {actions || visibleQuickActions.length > 0 ? (
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                  {actions}
-                  <QuickCreateMenu actions={visibleQuickActions} />
-                </div>
-              ) : null}
+              <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                {headerCenter ? null : (
+                  <button
+                    type="button"
+                    onClick={openSearch}
+                    aria-label="Buscar"
+                    className="hidden h-10 w-64 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:flex"
+                  >
+                    <Search className="h-[18px] w-[18px] shrink-0" />
+                    <span className="flex-1 truncate whitespace-nowrap text-left">Buscar paciente o tutor</span>
+                    <kbd className="rounded-md bg-muted px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground">Ctrl K</kbd>
+                  </button>
+                )}
+                {actions}
+                {visibleQuickActions.length > 0 ? <QuickCreateMenu actions={visibleQuickActions} /> : null}
+              </div>
             </div>
           )}
 
