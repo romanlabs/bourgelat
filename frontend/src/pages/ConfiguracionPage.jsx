@@ -1,21 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Popover } from 'radix-ui'
 import { toast } from 'sonner'
 import {
   Building2,
   CalendarOff,
-  Clock,
   ImageIcon,
   Loader2,
-  Mail,
-  Phone,
   Plus,
-  ShieldCheck,
   Sparkles,
   Trash2,
   Upload,
   Users,
-  Wallet,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -33,10 +29,8 @@ import { Button } from '@/components/ui/button'
 import { formatHora12, formatFranja12 } from '@/lib/hora'
 import {
   DashboardPanel,
-  KpiCard,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
-import { formatNumber } from '@/features/dashboard/dashboardUtils'
 import { configuracionApi } from '@/features/configuracion/configuracionApi'
 import RecordatoriosCitaSection from '@/features/configuracion/RecordatoriosCitaSection'
 import { recepcionApi } from '@/features/recepcion/recepcionApi'
@@ -155,11 +149,12 @@ const formatCredentialSource = (value) => {
 
 function FormField({ label, helper, required = false, children }) {
   return (
-    <label className="grid gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <label className="grid content-start gap-2">
+      {/* Altura fija: con o sin «Requerido», los campos vecinos quedan alineados */}
+      <div className="flex h-6 items-center gap-2">
         <span className={LABEL_CLASS}>{label}</span>
         {required ? (
-          <span className="rounded-md bg-warning-soft px-2 py-0.5 text-[13px] font-semibold text-warning">
+          <span className="rounded bg-warning-soft px-1.5 text-[12px] font-semibold leading-5 text-warning">
             Requerido
           </span>
         ) : null}
@@ -197,7 +192,7 @@ function ConfiguracionContent({
   setClinica,
 }) {
   const queryClient = useQueryClient()
-  const [activeSection, setActiveSection] = useState('resumen')
+  const [activeSection, setActiveSection] = useState('ficha')
   const [clinicForm, setClinicForm] = useState(() => buildClinicForm(initialClinica))
   const [factusForm, setFactusForm] = useState(() => buildFactusForm(initialFactus))
 
@@ -219,26 +214,6 @@ function ConfiguracionContent({
       (perfilFiscal?.camposFaltantes || []).map((field) => FISCAL_FIELD_LABELS[field] || field),
     [perfilFiscal?.camposFaltantes]
   )
-
-  const datosBaseCubiertos = useMemo(() => {
-    const fields = [
-      clinicForm.nombre,
-      clinicForm.email,
-      clinicForm.telefono,
-      clinicForm.direccion,
-      clinicForm.departamento,
-      clinicForm.ciudad,
-    ]
-
-    return fields.filter(Boolean).length
-  }, [
-    clinicForm.ciudad,
-    clinicForm.departamento,
-    clinicForm.direccion,
-    clinicForm.email,
-    clinicForm.nombre,
-    clinicForm.telefono,
-  ])
 
   const integracionFactus = initialFactus?.integracion || null
   const configuracionEfectiva = initialFactus?.configuracionEfectiva || null
@@ -412,216 +387,56 @@ function ConfiguracionContent({
     })
   }
 
+  // La facturación electrónica (DIAN) llega después: sin el plan que la incluye
+  // se muestra como «Próximamente» y no se abre.
   const sectionOptions = [
-    { id: 'resumen', label: 'Resumen', helper: 'Panorama institucional' },
-    { id: 'ficha', label: 'Ficha editable', helper: 'Identidad, contacto y fiscal' },
-    { id: 'consultorios', label: 'Consultorios', helper: 'Salas usadas por recepción y agenda' },
-    { id: 'horarios', label: 'Horarios y cierres', helper: 'Horario de atención y días bloqueados' },
+    { id: 'ficha', label: 'Ficha de la clínica', helper: 'Identidad, contacto y datos fiscales' },
+    { id: 'consultorios', label: 'Consultorios', helper: 'Salas que usan agenda y recepción' },
+    { id: 'horarios', label: 'Horarios y cierres', helper: 'Atención y días bloqueados' },
     { id: 'recordatorios', label: 'Recordatorios', helper: 'Aviso por correo antes de cada cita' },
-    ...(puedeVerFacturacionElectronica
-      ? [{ id: 'facturacion', label: 'Facturación electrónica', helper: 'Estado e integración' }]
-      : []),
+    {
+      id: 'facturacion',
+      label: 'Facturación electrónica',
+      helper: 'Integración con la DIAN',
+      proximamente: !puedeVerFacturacionElectronica,
+    },
   ]
 
   return (
-    <div className="space-y-5">
-      <DashboardPanel
-        title="Organiza esta configuración por bloques"
-        subtitle="Primero revisa el resumen, luego edita la ficha institucional y deja la facturación electrónica en una vista separada."
-        action={
-          <StatusPill tone="bg-secondary text-secondary-foreground">
-            Configuración guiada
-          </StatusPill>
-        }
-      >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-          {sectionOptions.map((section) => (
+    <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+      <nav aria-label="Secciones de la configuración" className="flex flex-col gap-1 rounded-2xl bg-card p-2 lg:sticky lg:top-6">
+        {sectionOptions.map((section) => {
+          const activa = activeSection === section.id
+          return (
             <button
               key={section.id}
               type="button"
+              disabled={section.proximamente}
               onClick={() => setActiveSection(section.id)}
-              aria-pressed={activeSection === section.id}
-              className={`rounded-xl px-4 py-4 text-left outline-none transition active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring ${
-                activeSection === section.id
-                  ? 'bg-accent'
-                  : 'bg-muted hover:bg-secondary'
+              aria-current={activa ? 'page' : undefined}
+              className={`rounded-xl px-3.5 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default ${
+                activa ? 'bg-accent' : section.proximamente ? '' : 'hover:bg-muted'
               }`}
             >
-              <p className={`text-base font-semibold tracking-[-0.01em] ${activeSection === section.id ? 'text-primary' : 'text-foreground'}`}>
-                {section.label}
-              </p>
-              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{section.helper}</p>
-            </button>
-          ))}
-        </div>
-      </DashboardPanel>
-
-      <div className="grid gap-4 xl:grid-cols-4">
-        <KpiCard
-          icon={Building2}
-          label="Ficha institucional"
-          value={`${formatNumber(datosBaseCubiertos)}/6`}
-          helper="Nombre, correo, celular, dirección, departamento y ciudad listos para operar."
-          tone="text-primary"
-        />
-        <KpiCard
-          icon={Mail}
-          label="Contacto principal"
-          value={clinicForm.email ? 'Listo' : 'Pendiente'}
-          helper={clinicForm.email || 'Define un correo institucional para respuestas y documentos.'}
-          tone={clinicForm.email ? 'text-success' : 'text-warning'}
-          borderTone={clinicForm.email ? 'border-border' : 'border-warning/30'}
-        />
-        <KpiCard
-          icon={Phone}
-          label="Linea administrativa"
-          value={clinicForm.telefono ? 'Activa' : 'Pendiente'}
-          helper={clinicForm.telefono || 'Agrega un celular colombiano válido para el contacto principal.'}
-          tone={clinicForm.telefono ? 'text-success' : 'text-warning'}
-          borderTone={clinicForm.telefono ? 'border-border' : 'border-warning/30'}
-        />
-        <KpiCard
-          icon={ShieldCheck}
-          label="Perfil fiscal"
-          value={perfilFiscal?.listoParaFacturacion ? 'Listo' : `${formatNumber(camposPendientes.length)} pendientes`}
-          helper={
-            perfilFiscal?.listoParaFacturacion
-              ? 'La clínica ya tiene base institucional y fiscal para una operación más formal.'
-              : 'Completa la ficha para habilitar una salida tributaria más ordenada.'
-          }
-          tone={perfilFiscal?.listoParaFacturacion ? 'text-success' : 'text-warning'}
-          borderTone={perfilFiscal?.listoParaFacturacion ? 'border-border' : 'border-warning/30'}
-        />
-      </div>
-
-      {activeSection === 'resumen' ? (
-        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
-          <DashboardPanel
-            title="Lectura institucional"
-            subtitle="Lo que ya está listo para operar, comunicarse y presentarse de forma coherente al equipo y al cliente."
-          >
-            <div className="space-y-4">
-              <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
-                <p className="font-semibold text-foreground">
-                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clínica sin nombre visible'}
-                </p>
-                <p>{clinicForm.razonSocial || 'Razón social pendiente'}</p>
-                <p>
-                  {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
-                    'Ubicación pendiente'}
-                </p>
-                <p>{clinicForm.email || 'Correo pendiente'}</p>
-                <p>{clinicForm.telefono || 'Celular pendiente'}</p>
-              </div>
-
-              <div className="grid gap-3 xl:grid-cols-2">
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Nombre visible:{' '}
-                  <span className="font-semibold text-foreground">
-                    {clinicForm.nombreComercial || clinicForm.nombre || 'Pendiente'}
-                  </span>
-                </div>
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Logo institucional:{' '}
-                  <span className="font-semibold text-foreground">
-                    {clinicForm.logo ? 'Disponible' : 'Pendiente'}
-                  </span>
-                </div>
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Contacto principal:{' '}
-                  <span className="font-semibold text-foreground">
-                    {clinicForm.email ? 'Listo' : 'Pendiente'}
-                  </span>
-                </div>
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Perfil fiscal:{' '}
-                  <span className="font-semibold text-foreground">
-                    {perfilFiscal?.listoParaFacturacion ? 'Listo' : 'En ajuste'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveSection('ficha')}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  Editar ficha institucional
-                </button>
-                {puedeVerFacturacionElectronica ? (
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection('facturacion')}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    Ver facturación electrónica
-                  </button>
+              <span className="flex items-center justify-between gap-2">
+                <span className={`text-[15px] font-semibold ${activa ? 'text-primary' : section.proximamente ? 'text-muted-foreground' : 'text-foreground'}`}>
+                  {section.label}
+                </span>
+                {section.proximamente ? (
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">Próximamente</span>
                 ) : null}
-              </div>
-            </div>
-          </DashboardPanel>
+              </span>
+              <span className="mt-0.5 block text-[13px] text-muted-foreground">{section.helper}</span>
+            </button>
+          )
+        })}
+      </nav>
 
-          <div className="space-y-5">
-            <DashboardPanel
-              title="Pendientes fiscales"
-              subtitle="Lo que aún falta para dejar la salida tributaria más completa."
-            >
-              {camposPendientes.length ? (
-                <div className="space-y-3">
-                  <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
-                    Todavía faltan datos fiscales base. Completa esta lista antes de formalizar la
-                    facturación electrónica.
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {camposPendientes.map((item) => (
-                      <StatusPill key={item} tone="bg-card text-warning">
-                        {item}
-                      </StatusPill>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-xl bg-success-soft px-4 py-3.5 text-sm leading-6 text-success">
-                  La ficha fiscal ya tiene la información base para una operación mas profesional.
-                </div>
-              )}
-            </DashboardPanel>
-
-            <DashboardPanel
-              title="Criterio de administración"
-              subtitle="La clínica mantiene sus datos base; la configuración delicada con la DIAN se controla aparte."
-            >
-              <div className="space-y-3">
-                <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
-                  Esta separación reduce errores y evita que el cliente mezcle configuración visible
-                  con claves de acceso o cambios delicados de integración.
-                </div>
-                <NavCta to="/finanzas" icon={Wallet} variant="outline" className="w-full justify-center">
-                  Ir a finanzas
-                </NavCta>
-              </div>
-            </DashboardPanel>
-          </div>
-        </div>
-      ) : null}
-
+      <div className="min-w-0 space-y-5">
       {activeSection === 'ficha' ? (
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
         <DashboardPanel
-          title="Ficha institucional editable"
-          subtitle="Aquí conviene editar nombre visible, contacto, dirección y datos fiscales, sin mezclarlo con la facturación electrónica."
-          action={
-            <StatusPill
-              tone={
-                perfilFiscal?.listoParaFacturacion
-                  ? 'bg-success-soft text-success'
-                  : 'bg-warning-soft text-warning'
-              }
-            >
-              {perfilFiscal?.listoParaFacturacion ? 'Perfil fiscal listo' : 'Perfil fiscal pendiente'}
-            </StatusPill>
-          }
+          title="Ficha de la clínica"
+          subtitle="Nombre, contacto, dirección y logo. Los datos fiscales (NIT y demás) solo se necesitan para la facturación electrónica, que llega pronto."
         >
           <form className="grid gap-4" onSubmit={handleSaveClinica}>
             <div className="grid gap-4 xl:grid-cols-2">
@@ -901,82 +716,9 @@ function ConfiguracionContent({
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveSection('resumen')}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                Volver al resumen
-              </button>
             </div>
           </form>
         </DashboardPanel>
-
-        <div className="space-y-5">
-          <DashboardPanel
-            title="Resumen institucional"
-            subtitle="Lectura corta para revisar si lo que ven el cliente y el equipo ya está listo."
-          >
-            <div className="space-y-4">
-              <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
-                <p className="font-semibold text-foreground">
-                  {clinicForm.nombreComercial || clinicForm.nombre || 'Clínica sin nombre visible'}
-                </p>
-                <p>{clinicForm.razonSocial || 'Razón social pendiente'}</p>
-                <p>
-                  {[clinicForm.ciudad, clinicForm.departamento].filter(Boolean).join(', ') ||
-                    'Ubicación pendiente'}
-                </p>
-                <p>{clinicForm.email || 'Correo pendiente'}</p>
-                <p>{clinicForm.telefono || 'Celular pendiente'}</p>
-              </div>
-
-              <div className="grid gap-3">
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  NIT: <span className="font-semibold text-foreground">{clinicForm.nit || 'Pendiente'}</span>
-                </div>
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Documento fiscal:{' '}
-                  <span className="font-semibold text-foreground">
-                    {FISCAL_DOCUMENT_OPTIONS.find(
-                      (option) => option.value === clinicForm.tipoDocumentoFacturacionId
-                    )?.label || 'Pendiente'}
-                  </span>
-                </div>
-                <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                  Logo institucional:{' '}
-                  <span className="font-semibold text-foreground">{clinicForm.logo ? 'Disponible' : 'Pendiente'}</span>
-                </div>
-              </div>
-            </div>
-          </DashboardPanel>
-
-          <DashboardPanel
-            title="Pendientes fiscales"
-            subtitle="Lo que aún falta para dejar la salida tributaria más completa."
-          >
-            {camposPendientes.length ? (
-              <div className="space-y-3">
-                <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
-                  Todavía faltan datos fiscales base. Completa esta lista antes de formalizar la
-                  facturación electrónica.
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {camposPendientes.map((item) => (
-                    <StatusPill key={item} tone="bg-card text-warning">
-                      {item}
-                    </StatusPill>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-success-soft px-4 py-3.5 text-sm leading-6 text-success">
-                La ficha fiscal ya tiene la información base para una operación mas profesional.
-              </div>
-            )}
-          </DashboardPanel>
-        </div>
-      </div>
       ) : null}
 
       {activeSection === 'consultorios' ? <ConsultoriosSection /> : null}
@@ -1351,6 +1093,7 @@ function ConfiguracionContent({
         </div>
         )
       ) : null}
+      </div>
     </div>
   )
 }
@@ -1366,8 +1109,6 @@ const DIAS_SEMANA = [
   { clave: '6', label: 'Sábado' },
   { clave: '0', label: 'Domingo' },
 ]
-
-const FRANJA_POR_DEFECTO = { inicio: '08:00', fin: '12:00' }
 
 const buildHorarioForm = (horarioAtencion) =>
   Object.fromEntries(
@@ -1419,27 +1160,128 @@ const hoyLocal = () => {
   ).padStart(2, '0')}`
 }
 
-function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
-  const actualizarDia = (clave, franjas) =>
-    setHorario((current) => ({ ...current, [clave]: franjas }))
+// La vista es «abre, cierra y una pausa opcional»; lo que se guarda siguen
+// siendo franjas (una, o dos si hay pausa), igual que espera el backend.
+const PAUSA_POR_DEFECTO = { inicio: '13:00', fin: '14:00' }
+
+const vistaDia = (franjas = []) => {
+  if (!franjas.length) return null
+  const ordenadas = [...franjas].sort((a, b) => a.inicio.localeCompare(b.inicio))
+  return {
+    abre: ordenadas[0].inicio,
+    cierra: ordenadas[ordenadas.length - 1].fin,
+    pausa: ordenadas.length > 1 ? { inicio: ordenadas[0].fin, fin: ordenadas[1].inicio } : null,
+    variasFranjas: ordenadas.length > 2,
+  }
+}
+
+const franjasDesdeVista = ({ abre, cierra, pausa }) =>
+  pausa
+    ? [
+        { inicio: abre, fin: pausa.inicio },
+        { inicio: pausa.fin, fin: cierra },
+      ]
+    : [{ inicio: abre, fin: cierra }]
+
+// Hora en una sola caja («8:00 a. m.»), cada 15 minutos: el horario de la
+// semana cabe en una fila por día. Una hora guardada fuera de la grilla se
+// conserva como opción.
+const OPCIONES_HORA = Array.from({ length: 96 }, (_, i) => {
+  const valor = `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`
+  return { value: valor, label: formatHora12(valor) }
+})
+
+function HoraChip({ value, onChange, ...props }) {
+  const opciones = OPCIONES_HORA.some((o) => o.value === value)
+    ? OPCIONES_HORA
+    : [...OPCIONES_HORA, { value, label: formatHora12(value) }].sort((x, y) => x.value.localeCompare(y.value))
+  return (
+    <Select variant="field" className="h-9 w-[112px] text-[13px]" value={value} onValueChange={onChange} options={opciones} {...props} />
+  )
+}
+
+function Interruptor({ activo, onChange, etiqueta }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={activo}
+      aria-label={etiqueta}
+      onClick={onChange}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+        activo ? 'bg-primary' : 'bg-muted-foreground/25'
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 rounded-full bg-card transition-transform ${activo ? 'translate-x-6' : 'translate-x-1'}`}
+      />
+    </button>
+  )
+}
+
+// La pausa se lee como texto en la misma fila del día; al tocarla se editan
+// sus dos horas en un globo. Así el horario de la semana va en una línea por día.
+function PausaDia({ label, pausa, onCambiar }) {
+  if (!pausa) {
+    return (
+      <span className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+        Sin pausa
+        <button
+          type="button"
+          onClick={() => onCambiar({ ...PAUSA_POR_DEFECTO })}
+          className="inline-flex items-center gap-0.5 rounded-md px-1 font-semibold text-primary outline-none transition hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Pausa
+        </button>
+      </span>
+    )
+  }
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`Editar la pausa del ${label.toLowerCase()}`}
+          className="rounded-md px-1 text-[13px] text-muted-foreground underline decoration-dotted underline-offset-4 outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Pausa de {formatFranja12(pausa.inicio, pausa.fin)}
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          sideOffset={6}
+          className="z-50 flex flex-col gap-3 rounded-xl bg-popover p-3 shadow-dropdown outline-none"
+        >
+          <p className="text-[13px] font-semibold text-foreground">Pausa del {label.toLowerCase()}</p>
+          <span className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <HoraChip aria-label={`${label}, pausa desde`} value={pausa.inicio} onChange={(valor) => onCambiar({ ...pausa, inicio: valor })} />
+            a
+            <HoraChip aria-label={`${label}, pausa hasta`} value={pausa.fin} onChange={(valor) => onCambiar({ ...pausa, fin: valor })} />
+          </span>
+          <Popover.Close asChild>
+            <button
+              type="button"
+              onClick={() => onCambiar(null)}
+              className="self-start rounded-md text-[13px] font-semibold text-danger outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Quitar pausa
+            </button>
+          </Popover.Close>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  )
+}
+
+function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigurar = false }) {
+  const actualizarDia = (clave, vista) =>
+    setHorario((current) => ({ ...current, [clave]: vista ? franjasDesdeVista(vista) : [] }))
 
   const alternarDia = (clave) =>
-    actualizarDia(clave, horario[clave]?.length ? [] : [{ ...FRANJA_POR_DEFECTO }])
-
-  const actualizarFranja = (clave, indice, cambios) =>
-    actualizarDia(
-      clave,
-      horario[clave].map((franja, i) => (i === indice ? { ...franja, ...cambios } : franja))
-    )
-
-  const agregarFranja = (clave) =>
-    actualizarDia(clave, [...horario[clave], { inicio: '14:00', fin: '18:00' }])
-
-  const eliminarFranja = (clave, indice) =>
-    actualizarDia(
-      clave,
-      horario[clave].filter((_, i) => i !== indice)
-    )
+    actualizarDia(clave, horario[clave]?.length ? null : { abre: '08:00', cierra: '18:00', pausa: null })
 
   // Copiar el primer dia abierto al resto ahorra configurar siete veces lo mismo.
   const copiarATodaLaSemana = () => {
@@ -1464,100 +1306,74 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
   }
 
   return (
-    <DashboardPanel
-      title="Horario de atención"
-      subtitle="Define en qué días y franjas atiende la clínica. La agenda solo permitirá programar citas dentro de este horario."
-      action={<Clock className="h-4 w-4 text-primary" />}
-    >
-      <div className="grid gap-3">
+    <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="horario-atencion" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Horario de atención</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">La agenda solo ofrece cupos dentro de este horario.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={copiarATodaLaSemana}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-secondary px-3.5 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Copiar a toda la semana
+          </button>
+          <button
+            type="button"
+            onClick={onGuardar}
+            disabled={guardando}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {guardando ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+
+      {sinConfigurar ? (
+        <p className="mt-3 rounded-xl bg-info-soft px-4 py-3 text-sm leading-6 text-info">
+          Aún no has configurado el horario: la agenda acepta citas a cualquier hora, todos los días.
+          Enciende los días en que atiendes y guarda.
+        </p>
+      ) : null}
+
+      <ul className="mt-3 flex flex-col divide-y divide-border">
         {DIAS_SEMANA.map(({ clave, label }) => {
-          const franjas = horario[clave] || []
-          const abierto = franjas.length > 0
+          const vista = vistaDia(horario[clave])
+          const abierto = Boolean(vista)
+          const cambiar = (cambios) => actualizarDia(clave, { ...vista, ...cambios })
 
           return (
-            <div
-              key={clave}
-              className={`rounded-xl px-4 py-3 ${abierto ? 'bg-muted' : 'bg-muted/50'}`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <label className="flex items-center gap-3 text-sm font-semibold text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={abierto}
-                    onChange={() => alternarDia(clave)}
-                    className="h-4 w-4 rounded border-input accent-primary text-primary focus:ring-ring"
-                  />
-                  {label}
-                </label>
-
-                {abierto ? (
-                  <button
-                    type="button"
-                    onClick={() => agregarFranja(clave)}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Agregar franja
-                  </button>
-                ) : (
-                  <span className="text-[13px] font-semibold text-muted-foreground">
-                    Cerrado
-                  </span>
-                )}
-              </div>
-
+            <li key={clave} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+              <span className="w-[88px] shrink-0 text-sm font-semibold text-foreground">{label}</span>
+              <Interruptor
+                activo={abierto}
+                onChange={() => alternarDia(clave)}
+                etiqueta={`${label}: ${abierto ? 'abierto' : 'cerrado'}`}
+              />
               {abierto ? (
-                <div className="mt-3 grid gap-2">
-                  {franjas.map((franja, indice) => (
-                    <div key={indice} className="flex flex-wrap items-center gap-2">
-                      <HoraPicker
-                        aria-label={`${label}, apertura`}
-                        value={franja.inicio}
-                        onChange={(valor) => actualizarFranja(clave, indice, { inicio: valor })}
-                      />
-                      <span className="text-sm text-muted-foreground">a</span>
-                      <HoraPicker
-                        aria-label={`${label}, cierre`}
-                        value={franja.fin}
-                        onChange={(valor) => actualizarFranja(clave, indice, { fin: valor })}
-                      />
-                      {franjas.length > 1 ? (
-                        <button
-                          type="button"
-                          aria-label={`Eliminar franja de ${label.toLowerCase()}`}
-                          onClick={() => eliminarFranja(clave, indice)}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground outline-none transition hover:bg-danger-soft hover:text-danger active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                <>
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <HoraChip aria-label={`${label}, abre`} value={vista.abre} onChange={(valor) => cambiar({ abre: valor })} />
+                    a
+                    <HoraChip aria-label={`${label}, cierra`} value={vista.cierra} onChange={(valor) => cambiar({ cierra: valor })} />
+                  </span>
+                  <PausaDia label={label} pausa={vista.pausa} onCambiar={(pausa) => cambiar({ pausa })} />
+                  {vista.variasFranjas ? (
+                    <span className="w-full text-[13px] text-warning">
+                      Este día tiene más de dos franjas; al editarlo queda con una sola pausa.
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <span className="text-sm text-muted-foreground">Cerrado</span>
+              )}
+            </li>
           )
         })}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onGuardar}
-          disabled={guardando}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {guardando ? 'Guardando...' : 'Guardar horario'}
-        </button>
-        <button
-          type="button"
-          onClick={copiarATodaLaSemana}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Copiar a toda la semana
-        </button>
-      </div>
-    </DashboardPanel>
+      </ul>
+    </section>
   )
 }
 
@@ -1629,6 +1445,8 @@ function HorariosSection({ horarioAtencion }) {
     motivo: '',
   })
   const [impacto, setImpacto] = useState(null)
+  // Guardar con los siete días apagados cierra la agenda: se confirma antes.
+  const [confirmarTodoCerrado, setConfirmarTodoCerrado] = useState(false)
 
   useEffect(() => {
     setHorario(buildHorarioForm(horarioAtencion))
@@ -1697,6 +1515,11 @@ function HorariosSection({ horarioAtencion }) {
       return
     }
 
+    if (DIAS_SEMANA.every(({ clave }) => !horario[clave]?.length)) {
+      setConfirmarTodoCerrado(true)
+      return
+    }
+
     guardarHorarioMutation.mutate(horario)
   }
 
@@ -1750,7 +1573,42 @@ function HorariosSection({ horarioAtencion }) {
         setHorario={setHorario}
         onGuardar={handleGuardarHorario}
         guardando={guardarHorarioMutation.isPending}
+        sinConfigurar={!horarioAtencion}
       />
+
+      <DialogRoot open={confirmarTodoCerrado} onOpenChange={setConfirmarTodoCerrado}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>¿Guardar con todos los días cerrados?</DialogTitle>
+            <DialogDescription>
+              Así la agenda no acepta ninguna cita programada (los ingresos directos sí, con aviso).
+              Si lo que quieres es atender a cualquier hora, deja la clínica sin horario.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setConfirmarTodoCerrado(false)
+                guardarHorarioMutation.mutate(null)
+              }}
+            >
+              Dejar sin horario
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setConfirmarTodoCerrado(false)
+                guardarHorarioMutation.mutate(horario)
+              }}
+            >
+              Cerrar todos los días
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogRoot>
 
       <div className="space-y-5">
         <DashboardPanel
@@ -2074,25 +1932,38 @@ export default function ConfiguracionPage() {
     camposFaltantes: [],
   }
 
+  // El encabezado es la clínica misma: logo (o iniciales), nombre y sus datos.
+  const nombreClinica = clinicaActual?.nombreComercial || clinicaActual?.nombre || 'Tu clínica'
+  const inicialesClinica = nombreClinica
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() || '')
+    .join('')
+  const datosClinica = [
+    clinicaActual?.nit ? `NIT ${clinicaActual.nit}${clinicaActual.digitoVerificacion ? `-${clinicaActual.digitoVerificacion}` : ''}` : null,
+    [clinicaActual?.direccion, clinicaActual?.ciudad].filter(Boolean).join(', ') || null,
+    clinicaActual?.telefono || null,
+  ].filter(Boolean).join(' · ')
+
   return (
     <AdminShell
       currentKey="configuracion"
-      title="Configuración de clínica"
-      description="Aquí mantienes al día la identidad de la clínica, su ficha fiscal y la salida de facturación electrónica."
-      headerBadge={
-        <StatusPill
-          tone={
-            perfilFiscal.listoParaFacturacion
-              ? 'bg-success-soft text-success'
-              : 'bg-warning-soft text-warning'
-          }
-        >
-          {perfilFiscal.listoParaFacturacion ? 'Perfil fiscal listo' : 'Perfil fiscal en ajuste'}
-        </StatusPill>
+      title={
+        <span className="flex items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-xl font-bold text-primary">
+            {clinicaActual?.logo ? (
+              <img src={clinicaActual.logo} alt="" className="h-full w-full object-cover" />
+            ) : (
+              inicialesClinica
+            )}
+          </span>
+          <span className="min-w-0">{nombreClinica}</span>
+        </span>
       }
+      description={datosClinica || 'Completa la ficha con la dirección y el teléfono de la clínica.'}
       actions={
         <NavCta to="/usuarios" icon={Users}>
-          Abrir usuarios
+          Equipo y roles
         </NavCta>
       }
       asideNote="Usa esta vista para ajustar nombre visible, datos institucionales, salida fiscal y facturación, sin mezclarlo con la operación diaria."
