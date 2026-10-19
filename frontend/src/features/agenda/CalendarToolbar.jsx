@@ -61,11 +61,6 @@ export function CalendarToolbar({
           <ChevronLeft className="h-[18px] w-[18px]" />
         </button>
       </SimpleTooltip>
-      <SimpleTooltip label="Siguiente">
-        <button type="button" onClick={onNext} className={iconBtn} aria-label="Siguiente">
-          <ChevronRight className="h-[18px] w-[18px]" />
-        </button>
-      </SimpleTooltip>
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
@@ -126,6 +121,11 @@ export function CalendarToolbar({
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
+      <SimpleTooltip label="Siguiente">
+        <button type="button" onClick={onNext} className={iconBtn} aria-label="Siguiente">
+          <ChevronRight className="h-[18px] w-[18px]" />
+        </button>
+      </SimpleTooltip>
 
       {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Actualizando" />}
 
