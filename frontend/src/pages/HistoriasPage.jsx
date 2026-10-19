@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { CalendarClock, FileText, Lock, Search, Stethoscope } from 'lucide-react'
+import { Search } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
-import { NavCtaLink } from '@/components/shared/NavCta'
-import {
-  DashboardPanel,
-  DataTable,
-  KpiCard,
-  StatusPill,
-} from '@/features/dashboard/dashboardComponents'
+import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { historiasApi } from '@/features/historias/historiasApi'
@@ -33,16 +27,22 @@ const FILTROS = {
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
-const buildHistoryStatusTone = (bloqueada) =>
-  bloqueada
-    ? 'bg-warning-soft text-warning'
-    : 'bg-success-soft text-success'
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+// Lo que le falta a una consulta abierta antes de cerrarla. Motivo, diagnóstico
+// y tratamiento son obligatorios al guardar, así que solo se revisa lo opcional.
+const faltantesDe = (historia) =>
+  [
+    !historia.peso && !historia.temperatura && 'signos vitales',
+    !historia.examenFisicoDetalle && 'examen físico',
+    !(Array.isArray(historia.medicamentos) && historia.medicamentos.length) && 'fórmula',
+  ].filter(Boolean)
 
 const CAMPO =
   'h-11 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 const BOTON_PAGINA =
-  'inline-flex h-10 items-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex h-10 items-center rounded-lg bg-card px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const getCurrentMonthRange = () => {
   const now = new Date()
@@ -53,22 +53,6 @@ const getCurrentMonthRange = () => {
     fechaInicio: serialize(new Date(now.getFullYear(), now.getMonth(), 1)),
     fechaFin: serialize(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
   }
-}
-
-function FiltroChip({ icon, label, value, helper, tone, activo, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={activo}
-      className={cn(
-        'w-full rounded-2xl text-left outline-none transition active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring',
-        activo ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:brightness-[0.98]'
-      )}
-    >
-      <KpiCard icon={icon} label={label} value={value} helper={helper} tone={tone} />
-    </button>
-  )
 }
 
 function RestrictedHistoriasPage() {
@@ -180,7 +164,9 @@ export default function HistoriasPage() {
         paciente: historia.mascota?.nombre || 'Paciente',
         tutor: historia.propietario?.nombre || 'Sin tutor',
         profesional: historia.veterinario?.nombre || 'Sin profesional',
-        diagnostico: historia.diagnostico,
+        motivo: historia.motivoConsulta,
+        diagnostico: historia.diagnosticoPresuntivo || historia.diagnostico,
+        faltantes: historia.bloqueada ? [] : faltantesDe(historia),
         proximaConsulta: historia.proximaConsulta
           ? formatLongDate(historia.proximaConsulta)
           : 'Sin control',
@@ -196,199 +182,213 @@ export default function HistoriasPage() {
 
   const totalResultados = historiasQuery.data?.total || 0
 
+  const pestanas = [
+    { id: 'pendientes', label: 'Sin cerrar', conteo: resumen.pendientesPorCerrar },
+    { id: 'controles', label: 'Controles vencidos', conteo: resumen.controlesPendientes },
+    { id: 'mes', label: 'Este mes', conteo: resumen.totalMes },
+    { id: 'todas', label: 'Todas' },
+  ]
+  const descripcion = resumen.resumenQuery.isPending
+    ? 'Consultas por cerrar, controles pendientes y búsqueda por diagnóstico.'
+    : `${formatNumber(resumen.pendientesPorCerrar)} sin cerrar · ${formatNumber(resumen.totalMes)} este mes`
+  const paginas = historiasQuery.data?.paginas || 1
+  const paginaActual = historiasQuery.data?.paginaActual || 1
+
   return (
     <AdminShell
       currentKey="historias"
       title="Historias clínicas"
-      description="Consultas por cerrar, controles pendientes y búsqueda por diagnóstico."
-      headerBadge={
-        <StatusPill tone="bg-accent text-primary">
-          Consulta documentada
-        </StatusPill>
+      description={descripcion}
+      actions={
+      <div role="tablist" aria-label="Qué historias ver" className="flex flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
+        {pestanas.map((pestana) => {
+          const activa = filtro === pestana.id
+          return (
+            <button
+              key={pestana.id}
+              type="button"
+              role="tab"
+              aria-selected={activa}
+              onClick={() => aplicarFiltro(pestana.id)}
+              className={cn(
+                'h-10 rounded-[7px] px-3.5 text-[13px] transition',
+                FOCO,
+                activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {pestana.label}
+              {typeof pestana.conteo === 'number' ? (
+                <span
+                  className={cn(
+                    'ml-1.5 tabular-nums',
+                    pestana.id === 'controles' && pestana.conteo > 0 ? 'text-danger' : 'text-muted-foreground'
+                  )}
+                >
+                  {formatNumber(pestana.conteo)}
+                </span>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
       }
-      asideNote="Cerrar una historia descuenta el inventario clínico aplicado y registra su costo como gasto. Mientras siga abierta, la consulta no se puede facturar."
     >
-      <div className="space-y-5 pt-5">
-        <div className="grid gap-4 xl:grid-cols-4">
-          <FiltroChip
-            icon={Lock}
-            label="Sin cerrar"
-            value={formatNumber(resumen.pendientesPorCerrar)}
-            helper="Consultas que siguen editables: su inventario no se ha descontado y no se pueden facturar."
-            tone="text-warning"
-            activo={filtro === 'pendientes'}
-            onClick={() => aplicarFiltro('pendientes')}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+            <Search className="h-[18px] w-[18px] shrink-0" />
+            <input
+              type="search"
+              value={buscar}
+              onChange={(e) => { setBuscar(e.target.value); setPagina(1) }}
+              placeholder="Motivo o diagnóstico"
+              aria-label="Buscar por motivo o diagnóstico"
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+            />
+          </label>
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
+            aria-label="Desde"
+            className={`${CAMPO} h-12 px-3`}
           />
-          <FiltroChip
-            icon={CalendarClock}
-            label="Controles vencidos"
-            value={formatNumber(resumen.controlesPendientes)}
-            helper="Pacientes con próxima consulta ya cumplida que aún no han vuelto."
-            tone="text-danger"
-            activo={filtro === 'controles'}
-            onClick={() => aplicarFiltro('controles')}
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
+            aria-label="Hasta"
+            className={`${CAMPO} h-12 px-3`}
           />
-          <FiltroChip
-            icon={FileText}
-            label="Del mes"
-            value={formatNumber(resumen.totalMes)}
-            helper="Consultas documentadas en el mes actual."
-            tone="text-info"
-            activo={filtro === 'mes'}
-            onClick={() => aplicarFiltro('mes')}
-          />
-          <KpiCard
-            icon={Stethoscope}
-            label="Profesionales"
-            value={formatNumber(resumen.profesionalesActivos)}
-            helper="Médicos con consultas registradas este mes."
-            tone="text-info"
+          <Select
+            aria-label="Filtrar por médico"
+            value={veterinarioId}
+            onValueChange={(value) => { setVeterinarioId(value); setPagina(1) }}
+            options={[
+              { value: 'todos', label: 'Todos los médicos' },
+              ...veterinarios.map((v) => ({ value: v.id, label: v.nombre })),
+            ]}
           />
         </div>
 
-        {historiasQuery.isError || veterinariosQuery.isError ? (
-          <div className="grid gap-4">
-            {historiasQuery.isError && (
-              <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
-                {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clínicas.')}
-              </div>
-            )}
-            {veterinariosQuery.isError && (
-              <div role="alert" className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
-                {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
-              </div>
-            )}
+        {historiasQuery.isError ? (
+          <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
+            {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clínicas.')}
+          </div>
+        ) : null}
+        {veterinariosQuery.isError ? (
+          <div role="alert" className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
+            {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
           </div>
         ) : null}
 
-        <DashboardPanel
-          title={
-            filtro === 'pendientes'
-              ? 'Consultas sin cerrar'
-              : filtro === 'controles'
-                ? 'Controles pendientes'
-                : 'Listado clínico'
-          }
-          subtitle={
-            filtro === 'pendientes'
-              ? 'Ciérralas para descontar el inventario aplicado y habilitar el cobro. Abre cada una en el historial del paciente.'
-              : filtro === 'controles'
-                ? 'Pacientes citados a control que aún no han vuelto. Útil para la llamada de seguimiento.'
-                : 'Consulta por profesional, periodo o diagnóstico.'
-          }
-          action={
-            <div className="flex flex-wrap gap-3">
-              <label className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="search"
-                  value={buscar}
-                  onChange={(e) => { setBuscar(e.target.value); setPagina(1) }}
-                  placeholder="Motivo o diagnóstico"
-                  aria-label="Buscar por motivo o diagnóstico"
-                  className={`${CAMPO} pl-9 pr-3`}
-                />
-              </label>
-              <input
-                type="date"
-                value={fechaInicio}
-                onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
-                aria-label="Desde"
-                className={`${CAMPO} px-3`}
-              />
-              <input
-                type="date"
-                value={fechaFin}
-                onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
-                aria-label="Hasta"
-                className={`${CAMPO} px-3`}
-              />
-              <Select
-                aria-label="Filtrar por médico"
-                value={veterinarioId}
-                onValueChange={(value) => { setVeterinarioId(value); setPagina(1) }}
-                options={[
-                  { value: 'todos', label: 'Todos los médicos' },
-                  ...veterinarios.map((v) => ({ value: v.id, label: v.nombre })),
-                ]}
-              />
+        <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card">
+          {historiasQuery.isLoading ? (
+            <div className="flex flex-col gap-1 p-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />
+              ))}
             </div>
-          }
-        >
-          <DataTable
-            title="Historias"
-            subtitle={`${formatNumber(totalResultados)} resultado${totalResultados === 1 ? '' : 's'}`}
-            rows={historiasRows}
-            columns={[
-              { key: 'fecha', label: 'Fecha' },
-              { key: 'paciente', label: 'Paciente' },
-              { key: 'tutor', label: 'Tutor' },
-              { key: 'profesional', label: 'Profesional' },
-              { key: 'proximaConsulta', label: 'Control' },
-              {
-                key: 'bloqueada',
-                label: 'Estado',
-                render: (row) => (
-                  <StatusPill tone={buildHistoryStatusTone(row.bloqueada)}>
-                    {row.bloqueada ? 'Bloqueada' : 'Editable'}
-                  </StatusPill>
-                ),
-              },
-              {
-                key: 'accion',
-                label: 'Historial',
-                render: (row) => (
-                  <NavCtaLink
-                    to={row.mascotaId ? `/pacientes/${row.mascotaId}/historial?historiaId=${row.id}` : undefined}
-                    disabled={!row.mascotaId}
-                  >
-                    {row.bloqueada ? 'Ver' : 'Abrir y cerrar'}
-                  </NavCtaLink>
-                ),
-              },
-            ]}
-            emptyTitle={
-              filtro === 'pendientes'
-                ? 'No hay consultas sin cerrar'
-                : filtro === 'controles'
-                  ? 'No hay controles pendientes'
-                  : 'No hay historias para este filtro'
-            }
-            emptyBody={
-              filtro === 'pendientes'
-                ? 'Todas las consultas documentadas están cerradas y listas para facturar.'
-                : filtro === 'controles'
-                  ? 'Ningún paciente tiene un control vencido sin atender.'
-                  : 'Ajusta el periodo, el profesional o la búsqueda para encontrar una consulta existente.'
-            }
-          />
-
-          {(historiasQuery.data?.paginas || 1) > 1 && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
-              <p className="text-sm tabular-nums text-muted-foreground">
-                Página {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
+          ) : historiasRows.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-base font-semibold text-foreground">
+                {filtro === 'pendientes'
+                  ? 'No hay consultas sin cerrar'
+                  : filtro === 'controles'
+                    ? 'No hay controles vencidos'
+                    : 'No hay historias para este filtro'}
               </p>
-              <div className="flex gap-3">
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {filtro === 'pendientes'
+                  ? 'Todas las consultas están cerradas y listas para cobrar.'
+                  : filtro === 'controles'
+                    ? 'Ningún paciente tiene un control vencido sin atender.'
+                    : 'Ajusta el periodo, el médico o la búsqueda.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] text-sm">
+                <thead>
+                  <tr className="text-left text-[13px] text-muted-foreground">
+                    <th scope="col" className="px-5 pb-3 pt-4 font-medium">Fecha</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Paciente</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Motivo y diagnóstico</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Médico</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Control</th>
+                    <th scope="col" className="px-5 pb-3 pt-4 font-medium"><span className="sr-only">Acción</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historiasRows.map((row) => {
+                    const destino = row.mascotaId ? `/pacientes/${row.mascotaId}/historial?historiaId=${row.id}` : null
+                    return (
+                      <tr key={row.id} className="border-t border-border align-top transition hover:bg-muted">
+                        <td className="whitespace-nowrap px-5 py-3.5 tabular-nums text-foreground">{row.fecha}</td>
+                        <td className="px-3 py-3.5">
+                          <span className="block font-semibold text-foreground">{row.paciente}</span>
+                          <span className="block text-[13px] text-muted-foreground">{row.tutor}</span>
+                        </td>
+                        <td className="max-w-[340px] px-3 py-3.5">
+                          <span className="block truncate font-medium text-foreground">{row.motivo || 'Sin motivo'}</span>
+                          <span className="block truncate text-[13px] text-muted-foreground">{row.diagnostico || 'Sin diagnóstico'}</span>
+                          {row.faltantes.length ? (
+                            <span className="mt-1 block text-[13px] text-warning">Falta {row.faltantes.join(', ')}</span>
+                          ) : null}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-foreground">{row.profesional}</td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-muted-foreground">{row.proximaConsulta}</td>
+                        <td className="px-5 py-3.5 text-right">
+                          {destino ? (
+                            <Link
+                              to={destino}
+                              className={cn(
+                                'inline-flex h-9 items-center whitespace-nowrap rounded-lg px-3.5 text-[13px] font-semibold transition active:translate-y-px',
+                                FOCO,
+                                row.bloqueada
+                                  ? 'bg-secondary text-secondary-foreground hover:brightness-95'
+                                  : 'bg-primary text-primary-foreground hover:brightness-110'
+                              )}
+                            >
+                              {row.bloqueada ? 'Ver' : 'Continuar'}
+                            </Link>
+                          ) : null}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-muted px-5 py-4">
+            <span className="text-sm text-muted-foreground">
+              {formatNumber(totalResultados)} {totalResultados === 1 ? 'consulta' : 'consultas'}
+              {paginas > 1 ? ` · página ${paginaActual} de ${paginas}` : ''}
+            </span>
+            {paginas > 1 ? (
+              <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => setPagina((p) => Math.max(p - 1, 1))}
-                  disabled={(historiasQuery.data?.paginaActual || 1) <= 1}
+                  disabled={paginaActual <= 1}
                   className={BOTON_PAGINA}
                 >
                   Anterior
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPagina((p) => Math.min(p + 1, historiasQuery.data?.paginas || 1))}
-                  disabled={(historiasQuery.data?.paginaActual || 1) >= (historiasQuery.data?.paginas || 1)}
+                  onClick={() => setPagina((p) => Math.min(p + 1, paginas))}
+                  disabled={paginaActual >= paginas}
                   className={BOTON_PAGINA}
                 >
                   Siguiente
                 </button>
               </div>
-            </div>
-          )}
-        </DashboardPanel>
+            ) : null}
+          </div>
+        </section>
       </div>
     </AdminShell>
   )
