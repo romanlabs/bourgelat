@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { DropdownMenu } from 'radix-ui'
 import {
+  ChevronDown,
+  ListFilter,
   Loader2,
   Plus,
   Search,
@@ -122,6 +125,57 @@ function Buscador({ value, onChange, placeholder, ariaLabel, cargando }) {
         </button>
       ) : null}
     </label>
+  )
+}
+
+// Botón de filtro con menú de especies y su conteo; resaltado si hay una elegida.
+function FiltroEspecie({ value, onChange, porEspecie, total }) {
+  const activa = value !== 'todas'
+  const elegida = SPECIES_OPTIONS.find((option) => option.value === value)
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Filtrar por especie"
+          className={cn(
+            'flex h-12 items-center gap-2 rounded-[10px] px-4 text-sm font-semibold transition active:translate-y-px data-[state=open]:bg-accent',
+            FOCO,
+            activa ? 'bg-accent text-primary' : 'bg-secondary text-secondary-foreground hover:brightness-95'
+          )}
+        >
+          <ListFilter className="h-[18px] w-[18px]" />
+          {activa ? elegida?.label : 'Especie'}
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 w-60 rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          {SPECIES_OPTIONS.map((option) => {
+            const conteo = option.value === 'todas' ? total : porEspecie[option.value] || 0
+            return (
+              <DropdownMenu.Item
+                key={option.value}
+                onSelect={() => onChange(option.value)}
+                className={cn(
+                  'flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
+                  option.value === value && 'bg-accent font-semibold'
+                )}
+              >
+                {option.value === 'todas' ? 'Todas' : option.label}
+                <span className="text-[13px] tabular-nums text-muted-foreground">{formatNumber(conteo)}</span>
+              </DropdownMenu.Item>
+            )
+          })}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   )
 }
 
@@ -280,19 +334,6 @@ export default function PacientesPage() {
           limiteMascotas === null ? '' : ` · ${formatNumber(Math.max(limiteMascotas - totalMascotas, 0))} cupos libres en el plan`
         }`
 
-  // Solo las especies que la clínica atiende, con su conteo (la elegida
-  // se mantiene aunque quede en cero para poder volver a «Todos»).
-  const opcionesEspecie = SPECIES_OPTIONS.filter(
-    (option) =>
-      option.value === 'todas' ||
-      option.value === mascotasHook.especie ||
-      resumenHook.porEspecie[option.value] > 0
-  ).map((option) =>
-    option.value === 'todas'
-      ? { ...option, label: 'Todos' }
-      : { ...option, label: `${option.label} ${formatNumber(resumenHook.porEspecie[option.value] || 0)}` }
-  )
-
   const tutoresRows = tutoresHook.tutoresRows
   const tutorSeleccionado =
     tutoresRows.find((row) => row.id === tutorSeleccionadoId) || tutoresRows[0] || null
@@ -350,12 +391,11 @@ export default function PacientesPage() {
                   ariaLabel="Buscar paciente"
                   cargando={mascotasHook.mascotasQuery.isFetching}
                 />
-                <Segmentado
-                  label="Especie"
-                  size="h-10"
-                  options={opcionesEspecie}
+                <FiltroEspecie
                   value={mascotasHook.especie}
                   onChange={mascotasHook.setEspecie}
+                  porEspecie={resumenHook.porEspecie}
+                  total={totalMascotas}
                 />
                 {puedeDesactivarPaciente && (
                   <FiltroDesactivados
