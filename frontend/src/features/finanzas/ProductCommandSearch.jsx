@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { createElement, useRef, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import { Barcode, Check, ClipboardList, Filter, ImageOff, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -141,7 +141,7 @@ export default function ProductCommandSearch({
             { id: 'productos', label: 'Productos', icon: Package },
             { id: 'servicios', label: 'Servicios', icon: ClipboardList },
             { id: 'servicio', label: 'Servicio libre', icon: Stethoscope },
-          ].map(({ id, label }) => (
+          ].map(({ id, label, icon }) => (
             <button
               key={id}
               type="button"
@@ -152,7 +152,7 @@ export default function ProductCommandSearch({
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              {createElement(icon, { className: 'h-3.5 w-3.5' })}
               {label}
             </button>
           ))}

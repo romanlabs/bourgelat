@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
 import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS, PAYMENT_METHOD_SHORT } from './finanzasConstants'
 import ClientInlinePicker from './ClientInlinePicker'
+
+const MotionDiv = motion.div
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -123,7 +125,7 @@ export default function CartSidebar({
                 const subtotalItem = Math.max(qty * precio, 0)
 
                 return (
-                  <motion.div
+                  <MotionDiv
                     key={item.id}
                     layout
                     initial={{ opacity: 0, y: -6 }}
@@ -208,7 +210,7 @@ export default function CartSidebar({
                         Mínimo {formatCOP(precioMinimo)} (costo)
                       </p>
                     )}
-                  </motion.div>
+                  </MotionDiv>
                 )
               })}
             </AnimatePresence>
