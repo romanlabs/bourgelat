@@ -287,6 +287,9 @@ export default function AdminShell({
   compactHeader = false,
   // Controles que van en la misma fila del título (la barra del calendario).
   titleAside = null,
+  // Páginas con buscador propio (Pacientes): sin el botón del buscador global
+  // en la fila del título; Ctrl K sigue funcionando.
+  hideSearch = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
@@ -702,7 +705,7 @@ export default function AdminShell({
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                {headerCenter ? null : (
+                {headerCenter || hideSearch ? null : (
                   <button
                     type="button"
                     onClick={openSearch}

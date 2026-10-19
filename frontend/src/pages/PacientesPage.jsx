@@ -2,20 +2,16 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Loader2,
-  PawPrint,
   Plus,
   Search,
-  ShieldCheck,
   Sparkles,
   UserRound,
-  Users,
   X,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { DonutCard, KpiCard } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
@@ -28,7 +24,6 @@ import { usePacientesMascotas, SPECIES_OPTIONS } from '@/features/pacientes/useP
 import { useTutores } from '@/features/pacientes/useTutores'
 
 const TABS = [
-  { id: 'resumen', label: 'Resumen' },
   { id: 'pacientes', label: 'Pacientes' },
   { id: 'tutores', label: 'Tutores' },
 ]
@@ -211,7 +206,7 @@ export default function PacientesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(() =>
-    TABS.some((tab) => tab.id === tabParam) ? tabParam : 'resumen'
+    TABS.some((tab) => tab.id === tabParam) ? tabParam : 'pacientes'
   )
 
   // La pestaña sigue al ?tab= cuando cambia (ajuste en render, no en efecto).
@@ -280,10 +275,23 @@ export default function PacientesPage() {
   const descripcion = !totalesListos
     ? 'Tutores y pacientes de la clínica.'
     : activeTab === 'tutores'
-      ? `Con ${formatNumber(totalMascotas)} pacientes registrados`
-      : `De ${formatNumber(totalTutores)} tutores${
+      ? `Con ${formatNumber(totalMascotas)} ${totalMascotas === 1 ? 'paciente registrado' : 'pacientes registrados'}`
+      : `De ${formatNumber(totalTutores)} ${totalTutores === 1 ? 'tutor' : 'tutores'}${
           limiteMascotas === null ? '' : ` · ${formatNumber(Math.max(limiteMascotas - totalMascotas, 0))} cupos libres en el plan`
         }`
+
+  // Solo las especies que la clínica atiende, con su conteo (la elegida
+  // se mantiene aunque quede en cero para poder volver a «Todos»).
+  const opcionesEspecie = SPECIES_OPTIONS.filter(
+    (option) =>
+      option.value === 'todas' ||
+      option.value === mascotasHook.especie ||
+      resumenHook.porEspecie[option.value] > 0
+  ).map((option) =>
+    option.value === 'todas'
+      ? { ...option, label: 'Todos' }
+      : { ...option, label: `${option.label} ${formatNumber(resumenHook.porEspecie[option.value] || 0)}` }
+  )
 
   const tutoresRows = tutoresHook.tutoresRows
   const tutorSeleccionado =
@@ -309,6 +317,7 @@ export default function PacientesPage() {
       currentKey="pacientes"
       title={titulo}
       description={descripcion}
+      hideSearch
       actions={
         <div className="flex flex-wrap items-center gap-2.5">
           <Segmentado
@@ -330,105 +339,6 @@ export default function PacientesPage() {
         />
       ) : (
         <div className="flex flex-col gap-6">
-          {/* Vista: Resumen */}
-          {activeTab === 'resumen' && (
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <KpiCard
-                  icon={PawPrint}
-                  label="Pacientes activos"
-                  value={formatNumber(resumenHook.totalMascotas)}
-                  helper="Total de pacientes registrados en la clínica."
-                  tone="text-primary"
-                />
-                <KpiCard
-                  icon={Users}
-                  label="Tutores"
-                  value={formatNumber(resumenHook.totalPropietarios)}
-                  helper="Total de tutores registrados en la clínica."
-                  tone="text-primary"
-                />
-                <KpiCard
-                  icon={ShieldCheck}
-                  label="Cupo del plan"
-                  value={
-                    limiteMascotas === null
-                      ? 'Sin límite'
-                      : formatNumber(Math.max(limiteMascotas - resumenHook.totalMascotas, 0))
-                  }
-                  helper={
-                    limiteMascotas === null
-                      ? 'La suscripción actual no tiene tope de pacientes.'
-                      : `${formatNumber(resumenHook.totalMascotas)} de ${formatNumber(limiteMascotas)} en uso.`
-                  }
-                  badge={
-                    limiteMascotas === null
-                      ? null
-                      : `${formatNumber(resumenHook.totalMascotas)} de ${formatNumber(limiteMascotas)} en uso`
-                  }
-                  tone="text-primary"
-                />
-              </div>
-
-              <div className="grid items-start gap-6 lg:grid-cols-12">
-                <DonutCard
-                  className="lg:col-span-4"
-                  title="Especies"
-                  subtitle="Cómo se reparten los pacientes."
-                  data={resumenHook.speciesData}
-                  centerLabel="Pacientes"
-                  centerValue={formatNumber(resumenHook.mascotasResumen.length)}
-                  formatter={formatNumber}
-                  emptyMessage="Aún no hay pacientes para mostrar."
-                  contentClassName="sm:grid-cols-1 justify-items-center text-center"
-                  chartSize={140}
-                />
-
-                <section aria-labelledby="pac-recientes" className="rounded-2xl bg-card p-6 lg:col-span-8">
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 id="pac-recientes" className="text-lg font-semibold tracking-[-0.02em] text-foreground">
-                      Últimos pacientes registrados
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('pacientes')}
-                      className={`h-10 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px ${FOCO}`}
-                    >
-                      Ver todos
-                    </button>
-                  </div>
-                  {resumenHook.mascotasResumen.length > 0 ? (
-                    <div className="mt-3 flex flex-col gap-0.5">
-                      {resumenHook.mascotasResumen.slice(0, 5).map((mascota) => (
-                        <Link
-                          key={mascota.id}
-                          to={`/pacientes/${mascota.id}/historial`}
-                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted ${FOCO}`}
-                        >
-                          <PetAvatar name={mascota.nombre} photo={mascota.fotoPerfil} especie={mascota.especie} className="h-11 w-11 rounded-xl text-base" />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[15px] font-semibold text-foreground">
-                              {mascota.nombre}
-                            </span>
-                            <span className="block truncate text-[13px] text-muted-foreground">
-                              {[mascota.raza, mascota.Propietario?.nombre].filter(Boolean).join(' · ') ||
-                                'Sin tutor asignado'}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-[13px] font-semibold text-primary">Abrir ficha</span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 rounded-xl bg-muted px-4 py-4 text-sm text-muted-foreground">
-                      Cuando registres pacientes aparecerán aquí.
-                    </p>
-                  )}
-                </section>
-              </div>
-            </div>
-          )}
-
           {/* Vista: Pacientes */}
           {activeTab === 'pacientes' && (
             <div className="flex flex-col gap-4">
@@ -440,6 +350,13 @@ export default function PacientesPage() {
                   ariaLabel="Buscar paciente"
                   cargando={mascotasHook.mascotasQuery.isFetching}
                 />
+                <Segmentado
+                  label="Especie"
+                  size="h-10"
+                  options={opcionesEspecie}
+                  value={mascotasHook.especie}
+                  onChange={mascotasHook.setEspecie}
+                />
                 {puedeDesactivarPaciente && (
                   <FiltroDesactivados
                     checked={mascotasHook.verDesactivados}
@@ -447,15 +364,6 @@ export default function PacientesPage() {
                   />
                 )}
               </div>
-              <Segmentado
-                label="Especie"
-                size="h-10"
-                options={SPECIES_OPTIONS.map((option) =>
-                  option.value === 'todas' ? { ...option, label: 'Todas' } : option
-                )}
-                value={mascotasHook.especie}
-                onChange={mascotasHook.setEspecie}
-              />
 
               <section aria-label="Lista de pacientes" className="overflow-hidden rounded-2xl bg-card">
                 {mascotasHook.mascotasQuery.isLoading ? (

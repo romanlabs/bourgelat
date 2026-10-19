@@ -123,11 +123,25 @@ const obtenerMascotas = async (req, res) => {
       }],
     });
 
+    // ?conteo=especies agrega cuántos pacientes activos hay de cada especie
+    // (los filtros de la lista los muestran), sin importar búsqueda ni página.
+    let porEspecie;
+    if (req.query.conteo === 'especies') {
+      const grupos = await Mascota.findAll({
+        where: tenantWhere(req, { activo: true }),
+        attributes: ['especie', [sequelize.fn('COUNT', sequelize.col('id')), 'total']],
+        group: ['especie'],
+        raw: true,
+      });
+      porEspecie = Object.fromEntries(grupos.map((g) => [g.especie, Number(g.total)]));
+    }
+
     res.json({
       total: count,
       paginas: Math.ceil(count / limite),
       paginaActual: pagina,
       mascotas: rows,
+      ...(porEspecie && { porEspecie }),
     });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
