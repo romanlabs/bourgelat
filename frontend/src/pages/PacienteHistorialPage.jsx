@@ -578,6 +578,7 @@ export default function PacienteHistorialPage() {
                 cargando={antecedentesQuery.isPending}
                 mascotaId={mascotaId}
                 mascotaNombre={mascota.nombre}
+                tutor={mascota.Propietario}
               />
             ) : null}
           </div>

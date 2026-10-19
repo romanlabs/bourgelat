@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom'
+import { Mail } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { urlGmailRecordatorio } from './recordatorioVacuna'
 import { CartesianGrid, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { chartColors } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -65,17 +68,19 @@ export function PesoEnElTiempo({ historias }) {
         <p className="shrink-0 text-lg font-semibold tabular-nums text-foreground">{formatoNumero(ultimo.valor, 2)} kg</p>
       </div>
       {pesos.length > 1 ? (
-        <div className="h-40" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
-            <LineChart data={datos} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-              {/* El fondo cubre solo la zona de las líneas; las fechas quedan debajo. */}
-              <CartesianGrid vertical={false} fill="hsl(var(--muted))" stroke="hsl(var(--border))" strokeDasharray="3 4" />
+        <div className="relative h-40" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
+          {/* Fondo solo detrás de las líneas: termina donde empiezan las fechas (eje de 30 px). */}
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 bottom-[30px] rounded-t-xl bg-muted" />
+          <ResponsiveContainer className="relative" width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
+            <LineChart data={datos} margin={{ top: 0, right: 12, bottom: 0, left: 12 }}>
+              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 4" />
               <XAxis
                 dataKey="etiqueta"
+                height={30}
                 tickLine={false}
                 axisLine={false}
                 interval={0}
-                padding={{ left: 22, right: 22 }}
+                padding={{ left: 12, right: 12 }}
                 fontSize={11}
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 dy={4}
@@ -121,11 +126,13 @@ export function PesoEnElTiempo({ historias }) {
 function itemsPreventivos(antecedentes) {
   const vacunas = (antecedentes?.vacunas || []).map((v) => ({
     nombre: v.nombre || 'Vacuna',
+    tratamiento: v.nombre ? `Vacuna ${v.nombre}` : 'Vacuna',
     fecha: v.fecha,
     proxima: v.proximaDosis,
   }))
   const desparasitaciones = (antecedentes?.desparasitaciones || []).map((d) => ({
     nombre: d.tipo ? `Desparasitación ${String(d.tipo).toLowerCase()}` : 'Desparasitación',
+    tratamiento: d.tipo ? `Desparasitación ${String(d.tipo).toLowerCase()}` : 'Desparasitación',
     fecha: d.fecha,
     proxima: d.proximaFecha,
   }))
@@ -154,8 +161,9 @@ function estadoDe(proxima) {
   return aFechaLocal(dia) <= enUnMes ? 'pronto' : 'alDia'
 }
 
-export function VacunasYDesparasitacion({ antecedentes, cargando, mascotaId, mascotaNombre }) {
+export function VacunasYDesparasitacion({ antecedentes, cargando, mascotaId, mascotaNombre, tutor }) {
   const items = itemsPreventivos(antecedentes)
+  const clinica = useAuthStore((state) => state.clinica)
 
   return (
     <section aria-labelledby="ficha-vacunas" className="flex flex-col gap-3 rounded-2xl bg-card p-6">
@@ -183,6 +191,28 @@ export function VacunasYDesparasitacion({ antecedentes, cargando, mascotaId, mas
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] font-semibold text-foreground">{item.nombre}</span>
                   <span className="block text-[13px] text-muted-foreground">{texto}</span>
+                  {(estado === 'vencida' || estado === 'pronto') && tutor ? (
+                    tutor.email ? (
+                      <a
+                        href={urlGmailRecordatorio({
+                          tutorEmail: tutor.email,
+                          tutorNombre: tutor.nombre,
+                          mascotaNombre,
+                          tratamiento: item.tratamiento,
+                          proxima: item.proxima,
+                          clinica,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`mt-1 inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline ${FOCO}`}
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Recordar al tutor
+                      </a>
+                    ) : (
+                      <span className="mt-1 block text-[13px] text-muted-foreground">El tutor no tiene correo registrado</span>
+                    )
+                  ) : null}
                 </span>
                 {estado ? (
                   <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold', ESTADO[estado].clase)}>

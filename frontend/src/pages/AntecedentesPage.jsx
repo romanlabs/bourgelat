@@ -4,13 +4,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertTriangle, PawPrint, Plus, Search, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ChevronLeft, Mail, Plus, Search, Sparkles, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
+import { formatLongDate } from '@/features/dashboard/dashboardUtils'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
+import { historiasApi } from '@/features/historias/historiasApi'
+import { fechaCorta, soloDia } from '@/features/pacientes/fichaSaludUtils'
+import VidaEnLaClinica from '@/features/antecedentes/VidaEnLaClinica'
+import { urlGmailRecordatorio } from '@/features/pacientes/recordatorioVacuna'
 import { useAuthStore } from '@/store/authStore'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
@@ -83,6 +87,13 @@ const mapMedicamentosToText = (medicamentos) => {
     .join('\n')
 }
 
+// Días entre una fecha 'AAAA-MM-DD' y hoy; positivo si ya pasó.
+const diasDesde = (fecha) => {
+  const [y, m, d] = soloDia(fecha).split('-').map(Number)
+  const [hy, hm, hd] = hoyLocal().split('-').map(Number)
+  return Math.round((Date.UTC(hy, hm - 1, hd) - Date.UTC(y, m - 1, d)) / 86400000)
+}
+
 const buildRows = (items, mapper) =>
   (Array.isArray(items) ? items : []).map((item, index) => ({
     id: item.id || `${index}`,
@@ -137,6 +148,41 @@ function SeccionCard({ id, title, count, actionLabel = 'Agregar', onAction, prim
   )
 }
 
+// Enlace que abre Gmail con el recordatorio listo para el tutor. Solo aparece
+// si la dosis ya venció o vence en los próximos 30 días.
+function BotonRecordar({ item, tutor, mascotaNombre, clinica, bloque = false }) {
+  if (!item.proximaRaw || diasDesde(item.proximaRaw) < -30 || !tutor) return null
+  if (!tutor.email) {
+    return (
+      <span className={cn('text-[13px] text-muted-foreground', bloque && 'mt-1 block')}>
+        El tutor no tiene correo
+      </span>
+    )
+  }
+  return (
+    <a
+      href={urlGmailRecordatorio({
+        tutorEmail: tutor.email,
+        tutorNombre: tutor.nombre,
+        mascotaNombre,
+        tratamiento: item.tratamiento,
+        proxima: item.proximaRaw,
+        clinica,
+      })}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline',
+        bloque && 'mt-1.5 flex w-fit',
+        FOCO
+      )}
+    >
+      <Mail className="h-3.5 w-3.5" />
+      Recordar al tutor
+    </a>
+  )
+}
+
 function Vacio({ children }) {
   return <p className="rounded-xl bg-muted px-4 py-3.5 text-sm text-muted-foreground">{children}</p>
 }
@@ -172,6 +218,7 @@ function RestrictedAntecedentesPage() {
 
 export default function AntecedentesPage() {
   const usuario = useAuthStore((state) => state.usuario)
+  const clinica = useAuthStore((state) => state.clinica)
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const prefillAppliedRef = useRef(false)
@@ -267,6 +314,20 @@ export default function AntecedentesPage() {
   })
 
   const selectedAntecedentes = antecedentesQuery.data?.antecedentes
+
+  // El paciente elegido de la lista no trae el correo del tutor; el perfil sí.
+  const perfilQuery = useQuery({
+    queryKey: ['paciente-perfil', selectedPet?.id || null],
+    queryFn: () => pacientesApi.obtenerMascota(selectedPet.id),
+    enabled: rolPermitido && puedeVerAntecedentes && Boolean(selectedPet?.id),
+  })
+  const tutor = perfilQuery.data?.mascota?.Propietario || null
+
+  const historiasQuery = useQuery({
+    queryKey: ['paciente-historial', selectedPet?.id || null],
+    queryFn: () => historiasApi.obtenerHistoriasMascota(selectedPet.id),
+    enabled: rolPermitido && puedeVerAntecedentes && Boolean(selectedPet?.id),
+  })
 
   const generalValues = useMemo(() => {
     if (generalDraft) return generalDraft
@@ -385,11 +446,13 @@ export default function AntecedentesPage() {
   }))
   const vacunasRows = buildRows(selectedAntecedentes?.vacunas, (item) => ({
     nombre: item.nombre || 'Sin nombre',
-    fecha: item.fecha ? formatLongDate(item.fecha) : 'Sin fecha',
-    proximaDosis: item.proximaDosis ? formatLongDate(item.proximaDosis) : 'Sin dosis programada',
-    lote: item.lote || 'Sin lote',
+    fecha: item.fecha ? fechaCorta(item.fecha) : '—',
+    proximaDosis: item.proximaDosis ? fechaCorta(item.proximaDosis) : null,
+    lote: item.lote || '—',
     laboratorio: item.laboratorio || '—',
-    vencida: Boolean(item.proximaDosis) && String(item.proximaDosis).slice(0, 10) < hoyLocal(),
+    diasVencida: item.proximaDosis ? diasDesde(item.proximaDosis) : 0,
+    tratamiento: item.nombre ? `Vacuna ${item.nombre}` : 'Vacuna',
+    proximaRaw: item.proximaDosis || null,
   }))
   const desparasitacionesRows = buildRows(selectedAntecedentes?.desparasitaciones, (item) => ({
     tipo: item.tipo || 'Sin tipo',
@@ -397,6 +460,8 @@ export default function AntecedentesPage() {
     fecha: item.fecha ? formatLongDate(item.fecha) : 'Sin fecha',
     proximaFecha: item.proximaFecha ? formatLongDate(item.proximaFecha) : 'Sin fecha programada',
     vencida: Boolean(item.proximaFecha) && String(item.proximaFecha).slice(0, 10) < hoyLocal(),
+    tratamiento: item.tipo ? `Desparasitación ${String(item.tipo).toLowerCase()}` : 'Desparasitación',
+    proximaRaw: item.proximaFecha || null,
   }))
   const planificacionesRows = buildRows(selectedAntecedentes?.planificaciones, (item) => ({
     nombre: item.nombre || 'Sin nombre',
@@ -419,6 +484,16 @@ export default function AntecedentesPage() {
     setDesparasitacionForm(DEFAULT_DESPARASITACION_FORM)
     setPlanificacionForm(DEFAULT_PLANIFICACION_FORM)
     setCondicionForm(DEFAULT_CONDICION_FORM)
+    if (searchParams.get('mascotaId')) {
+      setSearchParams({})
+    }
+  }
+
+  // Vuelve a la lista para elegir otro paciente.
+  const handleVolverALista = () => {
+    setSelectedPet(null)
+    setPetSearch('')
+    setGeneralDraft(null)
     if (searchParams.get('mascotaId')) {
       setSearchParams({})
     }
@@ -609,17 +684,8 @@ export default function AntecedentesPage() {
     agregarCirugiaMutation.isPending ||
     agregarCondicionMutation.isPending
 
-  const resumen = [
-    { label: 'Alergias', value: alergiasRows.length },
-    { label: 'Vacunas', value: vacunasRows.length },
-    { label: 'Desparasitaciones', value: desparasitacionesRows.length },
-    { label: 'Planificación', value: planificacionesRows.length },
-    { label: 'Cirugías', value: cirugiasRows.length },
-    { label: 'Condiciones crónicas', value: condicionesRows.length },
-  ]
-
   const selectorPaciente = (
-    <div className="relative w-full sm:w-80">
+    <div className="relative w-full sm:w-72">
       <label className="flex h-12 items-center gap-2.5 rounded-lg border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
         <Search className="h-4 w-4 shrink-0" />
         <input
@@ -657,6 +723,7 @@ export default function AntecedentesPage() {
       currentKey="antecedentes"
       title={selectedPet ? `Antecedentes de ${selectedPet.nombre}` : 'Antecedentes'}
       hidePageHeader
+      hideSearch
     >
       {!puedeVerAntecedentes ? (
         <EmptyState
@@ -667,11 +734,22 @@ export default function AntecedentesPage() {
         />
       ) : (
         <div className="flex flex-col gap-6">
+          {selectedPet ? (
+            <button
+              type="button"
+              onClick={handleVolverALista}
+              className={`inline-flex min-h-8 items-center gap-1.5 self-start rounded text-sm font-medium text-muted-foreground transition hover:text-foreground lg:mt-6 ${FOCO}`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Elegir otro paciente
+            </button>
+          ) : null}
+
           {/* Encabezado: paciente y buscador */}
           <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex min-w-0 items-center gap-5">
+            <div className="flex min-w-0 flex-1 items-center gap-5">
               {selectedPet ? (
-                <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] bg-accent text-[32px] font-bold text-primary">
+                <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-accent text-[28px] font-bold text-primary">
                   {selectedPet.fotoPerfil ? (
                     <img src={selectedPet.fotoPerfil} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -680,13 +758,24 @@ export default function AntecedentesPage() {
                 </span>
               ) : null}
               <div className="min-w-0">
-                <h1 className="text-3xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[44px]">
+                <h1 className="text-3xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[38px]">
                   {selectedPet ? `Antecedentes de ${selectedPet.nombre}` : 'Antecedentes'}
                 </h1>
                 <p className="mt-2.5 text-base text-muted-foreground">{subtitulo}</p>
               </div>
             </div>
-            {selectorPaciente}
+            <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
+              {selectedPet ? (
+                <Link
+                  to={`/pacientes/${selectedPet.id}/historial`}
+                  className={`inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px ${FOCO}`}
+                >
+                  Abrir ficha
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : null}
+              {selectorPaciente}
+            </div>
           </header>
 
           {antecedentesQuery.isError ? (
@@ -739,12 +828,9 @@ export default function AntecedentesPage() {
               </div>
             </section>
           ) : cargandoAntecedentes ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="flex flex-col gap-6">
-                <div className="h-44 animate-pulse rounded-2xl bg-card" />
-                <div className="h-56 animate-pulse rounded-2xl bg-card" />
-              </div>
-              <div className="h-72 animate-pulse rounded-2xl bg-card" />
+            <div className="flex flex-col gap-6">
+              <div className="h-44 animate-pulse rounded-2xl bg-card" />
+              <div className="h-56 animate-pulse rounded-2xl bg-card" />
             </div>
           ) : (
             <>
@@ -758,10 +844,13 @@ export default function AntecedentesPage() {
                     <AlertTriangle className="h-5 w-5 shrink-0" />
                     <div>
                       <h2 id="ant-alerta" className="text-base font-semibold">
-                        {alergiasRows.length === 1 ? 'Tiene una alergia registrada' : `Tiene ${alergiasRows.length} alergias registradas`}
+                        {alergiasRows.length === 1 ? 'Alergia: ' : 'Alergias: '}
+                        {alergiasRows.map((row) => (row.descripcion !== 'Sin descripción' ? row.descripcion : row.tipo)).join(', ')}
                       </h2>
                       <p className="text-sm">
-                        {alergiasRows.map((row) => `${row.tipo} · ${row.descripcion}`).join(' / ')}
+                        {alergiasRows
+                          .map((row) => [row.tipo, row.reaccion !== 'Sin reacción' ? row.reaccion : null].filter(Boolean).join(' · '))
+                          .join(' / ')}
                       </p>
                     </div>
                   </div>
@@ -777,8 +866,7 @@ export default function AntecedentesPage() {
                 </section>
               ) : null}
 
-              <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="flex min-w-0 flex-col gap-6">
+              <div className="flex min-w-0 flex-col gap-6">
                   {/* Datos generales */}
                   <SeccionCard
                     id="ant-generales"
@@ -831,6 +919,7 @@ export default function AntecedentesPage() {
                               <th scope="col" className="px-2 pb-2.5 font-medium">Lote</th>
                               <th scope="col" className="px-2 pb-2.5 font-medium">Laboratorio</th>
                               <th scope="col" className="px-2 pb-2.5 font-medium">Estado</th>
+                              <th scope="col" className="px-2 pb-2.5"><span className="sr-only">Recordatorio</span></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -838,17 +927,27 @@ export default function AntecedentesPage() {
                               <tr key={row.id} className="border-t border-border">
                                 <td className="px-2 py-3 font-semibold text-foreground">{row.nombre}</td>
                                 <td className="whitespace-nowrap px-2 py-3">{row.fecha}</td>
-                                <td className="whitespace-nowrap px-2 py-3">{row.proximaDosis}</td>
-                                <td className="px-2 py-3">{row.lote}</td>
+                                <td className="whitespace-nowrap px-2 py-3">{row.proximaDosis || '—'}</td>
+                                <td className="whitespace-nowrap px-2 py-3">{row.lote}</td>
                                 <td className="px-2 py-3">{row.laboratorio}</td>
                                 <td className="px-2 py-3">
-                                  {row.vencida ? (
-                                    <Chip className="bg-warning-soft text-warning">Vencida</Chip>
-                                  ) : row.proximaDosis === 'Sin dosis programada' ? (
+                                  {row.diasVencida > 0 ? (
+                                    <Chip className="bg-danger-soft text-danger">
+                                      {row.diasVencida === 1 ? 'Vencida hace 1 día' : `Vencida hace ${row.diasVencida} días`}
+                                    </Chip>
+                                  ) : !row.proximaDosis ? (
                                     <Chip className="bg-muted text-muted-foreground">Sin refuerzo</Chip>
                                   ) : (
                                     <Chip className="bg-success-soft text-success">Al día</Chip>
                                   )}
+                                </td>
+                                <td className="whitespace-nowrap px-2 py-3 text-right">
+                                  <BotonRecordar
+                                    item={row}
+                                    tutor={tutor}
+                                    mascotaNombre={selectedPet.nombre}
+                                    clinica={clinica}
+                                  />
                                 </td>
                               </tr>
                             ))}
@@ -924,7 +1023,12 @@ export default function AntecedentesPage() {
                               className="px-0 text-foreground"
                               titulo={<span className="capitalize">{row.tipo}{row.producto !== 'Sin producto' ? ` · ${row.producto}` : ''}</span>}
                               detalle={`Aplicada el ${row.fecha}`}
-                              extra={row.proximaFecha !== 'Sin fecha programada' ? `Próxima: ${row.proximaFecha}` : null}
+                              extra={
+                                <>
+                                  {row.proximaFecha !== 'Sin fecha programada' ? `Próxima: ${row.proximaFecha}` : null}
+                                  <BotonRecordar item={row} tutor={tutor} mascotaNombre={selectedPet.nombre} clinica={clinica} bloque />
+                                </>
+                              }
                               chip={row.vencida ? <Chip className="bg-warning-soft text-warning">Vencida</Chip> : null}
                             />
                           ))}
@@ -980,38 +1084,14 @@ export default function AntecedentesPage() {
                       </div>
                     )}
                   </SeccionCard>
-                </div>
 
-                {/* Resumen lateral */}
-                <aside aria-labelledby="ant-resumen" className="flex flex-col gap-5 rounded-2xl bg-primary p-6 text-primary-foreground lg:sticky lg:top-6">
-                  <h2 id="ant-resumen" className="text-xl font-semibold tracking-[-0.02em]">En resumen</h2>
-                  <dl className="grid grid-cols-2 gap-x-5 gap-y-4">
-                    {resumen.map((item) => (
-                      <div key={item.label}>
-                        <dt className="text-[13px] opacity-80">{item.label}</dt>
-                        <dd className="mt-0.5 text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums">
-                          {formatNumber(item.value)}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      to={`/pacientes/${selectedPet.id}/historial`}
-                      className={`inline-flex h-10 items-center rounded-lg bg-primary-foreground px-4 text-sm font-semibold text-primary transition hover:brightness-95 active:translate-y-px ${FOCO}`}
-                    >
-                      Abrir ficha
-                    </Link>
-                    <Link
-                      to="/pacientes"
-                      className={`inline-flex h-10 items-center gap-2 rounded-lg bg-primary-foreground/15 px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
-                    >
-                      <PawPrint className="h-4 w-4" />
-                      Pacientes
-                    </Link>
-                  </div>
-                </aside>
-              </div>
+                  <VidaEnLaClinica
+                    historias={historiasQuery.data?.historias || []}
+                    antecedentes={selectedAntecedentes}
+                    mascota={selectedPet}
+                    cargando={historiasQuery.isPending}
+                  />
+                </div>
             </>
           )}
         </div>
