@@ -669,14 +669,14 @@ export default function AdminShell({
           </Dialog.Portal>
         </Dialog.Root>
 
-        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10', !headerCenter && !hidePageHeader && 'lg:pt-8')}>
+        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && 'lg:pt-8 bajo:lg:pt-5')}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <h1 className="text-3xl font-semibold leading-none tracking-[-0.035em] text-foreground sm:text-[40px]">
+                  <h1 className="text-3xl font-semibold leading-none tracking-[-0.035em] text-foreground sm:text-[40px] bajo:sm:text-[34px]">
                     {title}
                   </h1>
                   {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}

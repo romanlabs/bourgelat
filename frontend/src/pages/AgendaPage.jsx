@@ -14,7 +14,6 @@ import {
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
 import AdminShell from '@/components/layout/AdminShell'
-import { useAdminHeaderSlot } from '@/components/layout/HeaderSlotContext'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -60,43 +59,27 @@ const getErrorMessage = (error, fallback) =>
 
 const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - ${horaFin?.slice(0, 5)}`
 
-// Pestañas Agenda/Recepción/Analítica compactas para vivir en la barra
-// superior de AdminShell junto al toolbar del calendario (Hoy/nav/fecha/Vista),
-// en vez de una segunda fila debajo. Tiene que ser un componente propio (no
-// codigo inline en AgendaPage) porque useAdminHeaderSlot lee el contexto que
-// AdminShell provee a SUS hijos — AgendaPage es quien crea <AdminShell>, no
-// un descendiente suyo, asi que llamar el hook ahi arriba siempre da null.
-function AgendaHeaderTabs({ activeTab, onTabChange, calendarToolbar }) {
-  const setHeaderCenter = useAdminHeaderSlot()
-
-  useEffect(() => {
-    if (!setHeaderCenter) return
-    setHeaderCenter(
-      <div className="flex w-full items-center gap-4">
-        <div role="group" aria-label="Sección de la agenda" className="flex items-center gap-1 rounded-xl bg-muted p-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              aria-pressed={activeTab === tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`h-8 rounded-lg px-3.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                activeTab === tab.id
-                  ? 'bg-card font-semibold text-foreground'
-                  : 'font-medium text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        {calendarToolbar && <div className="min-w-0 flex-1">{calendarToolbar}</div>}
-      </div>
-    )
-    return () => setHeaderCenter(null)
-  }, [setHeaderCenter, activeTab, onTabChange, calendarToolbar])
-
-  return null
+// Pestañas Agenda / Recepción / Analítica a la derecha del título.
+function AgendaTabs({ activeTab, onTabChange }) {
+  return (
+    <div role="group" aria-label="Sección de la agenda" className="flex items-center gap-1 rounded-xl bg-muted p-1">
+      {TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          aria-pressed={activeTab === tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={`h-9 rounded-lg px-4 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            activeTab === tab.id
+              ? 'bg-card font-semibold text-foreground'
+              : 'font-medium text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function RestrictedAgendaPage() {
@@ -135,7 +118,7 @@ export default function AgendaPage() {
   const [recepcionPrefill, setRecepcionPrefill] = useState(() =>
     new URLSearchParams(window.location.search).get('nueva') ? { fecha: hoyLocal() } : null
   )
-  const [calendarToolbar, setCalendarToolbar] = useState(null)
+  const [resumenCalendario, setResumenCalendario] = useState(null)
 
   const rolPermitido = canAccessModule(usuario, 'agenda')
   // Todos los planes incluyen citas y reportes operativos.
@@ -263,9 +246,34 @@ export default function AgendaPage() {
     return <RestrictedAgendaPage />
   }
 
+  // El encabezado dice qué se está viendo: el rango del calendario y cuántas citas trae.
+  const enCalendario = activeTab === 'agenda' && vistaAgenda === 'calendario' && resumenCalendario
+  const tituloAgenda = enCalendario
+    ? resumenCalendario.titulo.charAt(0).toUpperCase() + resumenCalendario.titulo.slice(1)
+    : activeTab === 'recepcion'
+      ? 'Recepción'
+      : activeTab === 'analitica'
+        ? 'Analítica de la agenda'
+        : 'Agenda'
+  const descripcionAgenda = enCalendario
+    ? resumenCalendario.cargando
+      ? 'Cargando citas…'
+      : resumenCalendario.total === 0
+        ? 'Sin citas en este rango'
+        : `${resumenCalendario.total} ${resumenCalendario.total === 1 ? 'cita' : 'citas'} en este rango`
+    : activeTab === 'recepcion'
+      ? 'Llegadas, sala de espera e ingresos directos del día.'
+      : activeTab === 'analitica'
+        ? 'Asistencia, cancelaciones y tipos de cita del periodo.'
+        : 'Las citas del día en una tabla.'
+
   return (
-    <AdminShell currentKey="agenda" hidePageHeader title="Agenda y coordinacion de citas">
-      <AgendaHeaderTabs activeTab={activeTab} onTabChange={setActiveTab} calendarToolbar={calendarToolbar} />
+    <AdminShell
+      currentKey="agenda"
+      title={tituloAgenda}
+      description={descripcionAgenda}
+      actions={<AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+    >
       {!puedeVerAgenda ? (
         <EmptyState
           icon={<Sparkles />}
@@ -294,30 +302,11 @@ export default function AgendaPage() {
             </div>
           )}
 
-          {/* ── Navegación de tabs — solo movil, en escritorio vive en la barra superior ── */}
-          <div role="group" aria-label="Sección de la agenda" className="flex gap-1 rounded-xl bg-muted p-1 sm:hidden">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                aria-pressed={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`h-10 flex-1 rounded-lg px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  activeTab === tab.id
-                    ? 'bg-card font-semibold text-foreground'
-                    : 'font-medium text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           {/* ══════════════════════════════
               Tab: Agenda
           ══════════════════════════════ */}
           {activeTab === 'agenda' && (
-            <div className="space-y-5 pt-5 sm:pt-0">
+            <div className="space-y-5">
               {/* KPI cards — solo en vista lista; el calendario aprovecha ese espacio para la grilla */}
               {vistaAgenda === 'lista' && (
                 <div className="grid gap-4 xl:grid-cols-4">
@@ -414,7 +403,7 @@ export default function AgendaPage() {
                         isUpdating={actualizarEstadoMutation.isPending}
                         isRescheduling={reprogramarMutation.isPending}
                         onVistaTablaChange={handleVistaTabla}
-                        onToolbarChange={setCalendarToolbar}
+                        onResumenChange={setResumenCalendario}
                       />
                     </>
                   )

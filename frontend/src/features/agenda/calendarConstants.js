@@ -4,8 +4,8 @@ export const HORA_INICIO = 0   // 00:00 — dia completo, como Google Calendar
 export const HORA_FIN = 24     // 24:00 (exclusive — ultimo slot es 23:30)
 export const SLOT_MINUTOS = 30
 export const TOTAL_SLOTS = (HORA_FIN - HORA_INICIO) * 2
-export const SLOT_HEIGHT_MAX = 30 // px por slot de 30 min — densidad compacta tipo Google
-export const SLOT_HEIGHT_MIN = 22 // evita que el punto de "ahora" (9px) domine visualmente la franja
+export const SLOT_HEIGHT_MAX = 48 // px por slot de 30 min: una cita de media hora muestra paciente y motivo
+export const SLOT_HEIGHT_MIN = 44 // por debajo, la cita de media hora solo cabe en una línea
 
 /**
  * Genera los slots de la grilla en pasos de 30 min.
@@ -159,6 +159,50 @@ export function buildStateTone(estado) {
     case 'programada':
     default:
       return 'bg-secondary text-secondary-foreground'
+  }
+}
+
+// En el calendario la cita se colorea por TIPO (como en el mockup): de un
+// vistazo se ve qué clase de día viene. El estado va encima como matiz:
+// atendida y cancelada se apagan, en atención lleva anillo, en espera un punto.
+export const TIPOS_LEYENDA = [
+  { value: 'consulta_general', label: 'Consulta' },
+  { value: 'vacunacion', label: 'Vacunación' },
+  { value: 'cirugia', label: 'Cirugía' },
+  { value: 'control', label: 'Control' },
+  { value: 'urgencia', label: 'Urgencia' },
+  { value: 'otro', label: 'Otros' },
+]
+
+export function buildTipoTone(tipoCita) {
+  switch (tipoCita) {
+    case 'consulta_general':
+      return 'bg-accent text-accent-foreground'
+    case 'vacunacion':
+    case 'desparasitacion':
+      return 'bg-success-soft text-success'
+    case 'cirugia':
+      return 'bg-brand-muted text-brand-foreground'
+    case 'control':
+      return 'bg-info-soft text-info'
+    case 'urgencia':
+      return 'bg-danger-soft text-danger'
+    default:
+      return 'bg-secondary text-secondary-foreground'
+  }
+}
+
+export function buildEstadoMatiz(estado) {
+  switch (estado) {
+    case 'completada':
+      return 'opacity-60'
+    case 'cancelada':
+    case 'no_asistio':
+      return 'opacity-45 line-through'
+    case 'en_atencion':
+      return 'ring-2 ring-inset ring-primary'
+    default:
+      return ''
   }
 }
 

@@ -1,22 +1,17 @@
 import { cn } from '@/lib/utils'
-import { buildStateTone, URGENCIA_ACCENT, STATUS_OPTIONS } from './calendarConstants'
+import { buildTipoTone, TIPOS_LEYENDA } from './calendarConstants'
 
-export function CalendarLegend() {
+// Leyenda por tipo de cita. El estado se lee en la propia cita: atendida y
+// cancelada aparecen apagadas, en atención con anillo y en espera con punto ámbar.
+export function CalendarLegend({ className }) {
   return (
-    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 px-1">
-      {STATUS_OPTIONS.map(({ value, label }) => (
+    <div className={cn('flex flex-wrap items-center gap-x-4 gap-y-2', className)}>
+      {TIPOS_LEYENDA.map(({ value, label }) => (
         <div key={value} className="flex items-center gap-2">
-          <div className={cn('h-3.5 w-3.5 rounded', buildStateTone(value))} />
+          <span className={cn('h-3.5 w-3.5 rounded', buildTipoTone(value))} />
           <span className="text-[13px] text-muted-foreground">{label}</span>
         </div>
       ))}
-      <div className="flex items-center gap-2">
-        <div
-          className="h-3.5 w-3.5 rounded bg-secondary"
-          style={{ boxShadow: `inset 3px 0 0 ${URGENCIA_ACCENT}` }}
-        />
-        <span className="text-[13px] text-muted-foreground">Urgencia</span>
-      </div>
     </div>
   )
 }

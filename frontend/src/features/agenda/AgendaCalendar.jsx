@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
 import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
@@ -13,7 +11,6 @@ import { AgendaListView } from './AgendaListView'
 import { CalendarLegend } from './CalendarLegend'
 import { CitaDetailDialog } from './CitaDetailDialog'
 import { MiniCalendar } from './MiniCalendar'
-import { SimpleTooltip } from '@/components/ui/tooltip'
 import { Select } from '@/components/ui/select'
 
 const SHORTCUT_TO_VIEW = Object.fromEntries(
@@ -34,7 +31,7 @@ export default function AgendaCalendar({
   onUpdateStatus,
   onReschedule,
   onVistaTablaChange,
-  onToolbarChange,
+  onResumenChange,
   isUpdating = false,
   isRescheduling = false,
 }) {
@@ -81,98 +78,40 @@ export default function AgendaCalendar({
     setView('dia')
   }
 
-  // Memoizado a proposito: sin esto, toolbarNode seria un objeto nuevo en
-  // cada render y el efecto de abajo llamaria a onToolbarChange sin parar,
-  // lo que hace que AgendaPage vuelva a renderizar, lo que vuelve a crear un
-  // toolbarNode nuevo — bucle infinito ("Maximum update depth exceeded").
-  // irAnterior/irSiguiente/irHoy/setView/togglePref no estan en las deps:
-  // no estan memoizados en los hooks de origen, pero cierran sobre el mismo
-  // estado que ya vigilan tituloRango/effectiveView/prefs, asi que usarlos
-  // "un render viejos" es equivalente mientras esas deps no cambien.
-  const toolbarNode = useMemo(
-    () => (
-      <CalendarToolbar
-        titulo={tituloRango}
-        view={effectiveView}
-        onViewChange={setView}
-        onPrev={irAnterior}
-        onNext={irSiguiente}
-        onToday={irHoy}
-        isMobile={isMobile}
-        isFetching={isFetching && !isLoading}
-        prefs={prefs}
-        onTogglePref={togglePref}
-        onVistaTablaChange={onVistaTablaChange}
-        compact={!isMobile}
-      />
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tituloRango, effectiveView, isMobile, isFetching, isLoading, prefs, onVistaTablaChange]
-  )
+  const nuevaCita = puedeProgramar
+    ? () => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')
+    : null
 
-  // En pantallas >= 640px el toolbar lo compone AgendaPage junto con las
-  // pestañas en la barra superior de AdminShell (el mismo espacio que
-  // aprovecha Google Calendar); en movil se queda inline (ver mas abajo).
+  // La página muestra el rango y cuántas citas trae como su encabezado.
+  const totalCitas = diasVisibles.reduce((suma, dia) => suma + getCitasDelDia(dia).length, 0)
   useEffect(() => {
-    if (!onToolbarChange) return
-    onToolbarChange(isMobile ? null : toolbarNode)
-    return () => onToolbarChange(null)
-  }, [toolbarNode, isMobile, onToolbarChange])
-
-  // Boton directo: el menu desplegable solo tenia "Nueva cita" y costaba un clic de mas.
-  const crearMenu = puedeProgramar && (
-    <button
-      type="button"
-      aria-label="Nueva cita"
-      onClick={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
-      className={cn(
-        'flex shrink-0 items-center rounded-lg bg-primary font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        sidebarOpen ? 'h-11 min-w-0 flex-1 gap-2 py-0 pl-3 pr-2 text-sm' : 'h-11 w-11 justify-center'
-      )}
-    >
-      <Plus className="h-5 w-5 shrink-0" />
-      {sidebarOpen && <span className="flex-1 text-left">Nueva cita</span>}
-    </button>
-  )
+    onResumenChange?.({ titulo: tituloRango, total: totalCitas, cargando: isLoading })
+  }, [onResumenChange, tituloRango, totalCitas, isLoading])
 
   return (
-    <div className="relative flex">
-      {/* Panel cerrado: "Crear" y el boton de reabrir se superponen sobre el
-          gutter de horas de la grilla (espacio libre, igual que hace Google),
-          en vez de reservar una columna aparte que empuje la grilla */}
-      {!sidebarOpen && (
-        <div className="absolute left-0 top-0 z-40 flex w-16 flex-col items-center gap-1.5">
-          {crearMenu}
-          <SimpleTooltip label="Mostrar mini calendario">
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              aria-label="Mostrar mini calendario"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </SimpleTooltip>
-        </div>
-      )}
+    <div className="flex flex-col gap-4">
+        <CalendarToolbar
+          view={effectiveView}
+          onViewChange={setView}
+          onPrev={irAnterior}
+          onNext={irSiguiente}
+          onToday={irHoy}
+          isMobile={isMobile}
+          isFetching={isFetching && !isLoading}
+          prefs={prefs}
+          onTogglePref={togglePref}
+          onVistaTablaChange={onVistaTablaChange}
+          onNuevaCita={nuevaCita}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={toggleSidebar}
+          extra={<CalendarLegend className="ml-2 hidden 2xl:flex" />}
+        />
+        <CalendarLegend className="2xl:hidden" />
 
+    <div className="relative flex">
       {/* Columna lateral: solo ocupa espacio en el flujo cuando esta abierta */}
       {sidebarOpen && (
         <div className="mr-4 flex w-[190px] shrink-0 flex-col">
-          <div className="mb-4 flex items-center gap-1.5">
-            {crearMenu}
-            <SimpleTooltip label="Ocultar mini calendario">
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                aria-label="Ocultar mini calendario"
-                className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            </SimpleTooltip>
-          </div>
-
           <aside className="rounded-2xl bg-card p-3">
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
 
@@ -212,7 +151,6 @@ export default function AgendaCalendar({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-0">
-        {isMobile && toolbarNode}
 
         {effectiveView === 'mes' ? (
           <MonthView
@@ -262,8 +200,8 @@ export default function AgendaCalendar({
           />
         )}
 
-        <CalendarLegend />
       </div>
+    </div>
 
       <CitaDetailDialog
         cita={selectedCita}

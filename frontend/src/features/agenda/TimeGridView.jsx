@@ -112,7 +112,8 @@ export function TimeGridView({
     <div
       ref={scrollRef}
       className="overflow-y-auto overflow-x-hidden rounded-2xl bg-card px-2 pb-2"
-      style={{ height: 'max(480px, calc(100vh - 300px))' }}
+      // Cabe en la pantalla bajo el encabezado y la barra; el scroll queda dentro.
+      style={{ height: 'max(320px, calc(100dvh - 340px))' }}
     >
       {/* Cabecera: nombres de día */}
       <div
@@ -202,7 +203,7 @@ export function TimeGridView({
           return (
             <div
               key={day.toISOString()}
-              className={cn('relative border-l border-border', esHoy && 'bg-accent/30')}
+              className={cn('relative border-l border-border', esHoy && 'bg-muted/70')}
               style={{ height: `${gridHeight}px` }}
             >
               {/* Fondos de slot (clickeables para nueva cita) */}
