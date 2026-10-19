@@ -45,7 +45,7 @@ export default function AperturaTurnoModal({ open, onClose, abrirTurnoMutation }
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="text-[13px] font-semibold text-muted-foreground">
               Monto inicial
             </span>
             <MoneyInput

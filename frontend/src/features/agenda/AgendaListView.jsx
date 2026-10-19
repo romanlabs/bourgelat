@@ -92,7 +92,7 @@ export function AgendaListView({
       {diasConCitas.map(({ day, citas }) => (
         <div key={day.toISOString()} className="flex gap-4 px-2 py-3 sm:px-4">
           <div className="w-24 shrink-0 pt-2 text-right">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               {format(day, 'EEE', { locale: es })}
             </p>
             <p

@@ -209,7 +209,7 @@ function FormSection({ icon, title, filled, required, open, onToggle, children }
         <span className="flex-shrink-0 text-muted-foreground">{icon}</span>
         <span className="flex-1 text-sm font-semibold text-foreground">{title}</span>
         {required && (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-danger">requerido</span>
+          <span className="text-[13px] font-bold text-danger">requerido</span>
         )}
         <div className={cn('h-2 w-2 flex-shrink-0 rounded-full transition-colors', filled ? 'bg-primary' : 'bg-muted-foreground/30')} />
         <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
@@ -809,7 +809,7 @@ export default function HistoriaClinicaFormDrawer({
                     <div className="flex min-w-0 items-start gap-2">
                       <Link2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-wider text-primary">Cita vinculada</p>
+                        <p className="text-[13px] font-bold text-primary">Cita vinculada</p>
                         <p className="mt-0.5 text-sm font-semibold text-foreground">
                           {citaVinculada.fecha} · {citaVinculada.horaInicio?.slice(0, 5)}
                           {citaVinculada.horaFin ? `–${citaVinculada.horaFin.slice(0, 5)}` : ''}
@@ -1002,7 +1002,7 @@ export default function HistoriaClinicaFormDrawer({
 
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div className="grid gap-1">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Aplicado por</span>
+                            <span className="text-[13px] font-semibold text-muted-foreground">Aplicado por</span>
                             <Select
                               variant="field"
                               aria-label="Aplicado por"
@@ -1014,7 +1014,7 @@ export default function HistoriaClinicaFormDrawer({
                             />
                           </div>
                           <div className="grid gap-1">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Fecha y hora</span>
+                            <span className="text-[13px] font-semibold text-muted-foreground">Fecha y hora</span>
                             <input
                               type="datetime-local"
                               value={item.aplicadoEn}
@@ -1072,7 +1072,7 @@ export default function HistoriaClinicaFormDrawer({
                 )}
 
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Formulación</p>
+                  <p className="text-[13px] font-semibold text-muted-foreground">Formulación</p>
                   <button type="button" onClick={addMedicationDraft} className="inline-flex items-center gap-1 border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-muted">
                     <Plus className="h-3 w-3" /> Agregar
                   </button>

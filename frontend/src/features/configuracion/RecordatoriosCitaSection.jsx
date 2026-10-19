@@ -67,7 +67,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
         </label>
 
         <div className="grid gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <span className="text-[13px] font-semibold text-muted-foreground">
             Anticipación
           </span>
           <div className="flex flex-wrap items-center gap-3">

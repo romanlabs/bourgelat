@@ -103,7 +103,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               </div>
 
               <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[13px] font-semibold text-muted-foreground">
                   Total facturado
                 </p>
                 <p className="text-2xl font-bold tabular-nums text-foreground">
@@ -113,7 +113,7 @@ export default function FacturaDetalleModal({ historialHook }) {
 
               <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
                 <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Fecha
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-foreground">
@@ -121,7 +121,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   </dd>
                 </div>
                 <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Pago
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-foreground">
@@ -129,7 +129,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   </dd>
                 </div>
                 <div className="bg-card px-4 py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <dt className="text-[13px] font-semibold text-muted-foreground">
                     Responsable
                   </dt>
                   <dd className="mt-1 truncate text-sm font-semibold text-foreground">
@@ -142,13 +142,13 @@ export default function FacturaDetalleModal({ historialHook }) {
                 <table className="min-w-full divide-y divide-border text-sm">
                   <thead className="bg-muted">
                     <tr>
-                      <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                         Concepto
                       </th>
-                      <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                         Cantidad
                       </th>
-                      <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                         Subtotal
                       </th>
                     </tr>
@@ -168,7 +168,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border bg-muted">
-                      <td className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground" colSpan={2}>
+                      <td className="px-3 py-3 text-[13px] font-semibold text-muted-foreground" colSpan={2}>
                         Total
                       </td>
                       <td className="px-3 py-3 text-right font-bold tabular-nums text-foreground">
@@ -186,7 +186,7 @@ export default function FacturaDetalleModal({ historialHook }) {
               ) : null}
 
               <div className="space-y-3 border-t border-border pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[13px] font-semibold text-muted-foreground">
                   Estado electrónico
                 </p>
                 <div className="grid gap-3">
@@ -232,7 +232,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         Forma de pago
                       </span>
                       <Select
@@ -251,7 +251,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                       />
                     </label>
                     <label className="grid gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         Vencimiento
                       </span>
                       <input

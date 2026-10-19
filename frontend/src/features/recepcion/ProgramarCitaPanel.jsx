@@ -198,7 +198,7 @@ export function ProgramarCitaPanel({
               selector a. m./p. m. se salia del borde. */}
           <div className="grid gap-4">
             <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="mb-1 text-[13px] font-semibold text-muted-foreground">
                 Desde
               </p>
               <Controller
@@ -218,7 +218,7 @@ export function ProgramarCitaPanel({
               {errors.horaInicio ? <p className="mt-1 text-xs text-danger">{errors.horaInicio.message}</p> : null}
             </div>
             <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="mb-1 text-[13px] font-semibold text-muted-foreground">
                 Hasta
               </p>
               <Controller

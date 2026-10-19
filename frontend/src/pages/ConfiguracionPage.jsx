@@ -83,7 +83,7 @@ const FISCAL_FIELD_LABELS = {
 
 const INPUT_CLASS =
   'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
-const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
+const LABEL_CLASS = 'text-[13px] font-semibold text-muted-foreground'
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
 const normalizePhone = (value) => value.replace(/\D/g, '').slice(0, 10)
@@ -159,7 +159,7 @@ function FormField({ label, helper, required = false, children }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className={LABEL_CLASS}>{label}</span>
         {required ? (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-warning">
+          <span className="text-[13px] font-semibold text-warning">
             Requerido
           </span>
         ) : null}
@@ -446,7 +446,7 @@ function ConfiguracionContent({
                   : 'border-border bg-muted hover:border-border hover:bg-muted'
               }`}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 {section.label}
               </p>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
@@ -1499,7 +1499,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando }) {
                     Agregar franja
                   </button>
                 ) : (
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <span className="text-[13px] font-semibold text-muted-foreground">
                     Cerrado
                   </span>
                 )}

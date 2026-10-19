@@ -45,7 +45,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
     <div className="space-y-3">
       {alergias.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-danger">
+          <p className="mb-1 text-[13px] font-semibold text-danger">
             Alergias
           </p>
           <div className="space-y-1">
@@ -67,7 +67,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {condiciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-warning">
+          <p className="mb-1 text-[13px] font-semibold text-warning">
             Condiciones crónicas
           </p>
           <div className="space-y-1">
@@ -86,7 +86,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {medicamentosTexto ? (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-info">
+          <p className="mb-1 text-[13px] font-semibold text-info">
             Medicamentos actuales
           </p>
           <p className="whitespace-pre-line text-sm leading-6 text-foreground">
@@ -97,7 +97,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {vacunas.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-success">
+          <p className="mb-1 text-[13px] font-semibold text-success">
             Vacunas
           </p>
           <div className="space-y-1">
@@ -121,7 +121,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {desparasitaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-warning">
+          <p className="mb-1 text-[13px] font-semibold text-warning">
             Desparasitación
           </p>
           <div className="space-y-1">
@@ -145,7 +145,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {planificaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-info">
+          <p className="mb-1 text-[13px] font-semibold text-info">
             Planificación
           </p>
           <div className="space-y-1">

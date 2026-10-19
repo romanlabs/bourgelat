@@ -292,7 +292,7 @@ export default function PosModal({
                 {/* Resumen de la venta: el cajero confirma que esta cobrando
                     sin tener que devolverse al carrito. */}
                 <aside className="hidden shrink-0 flex-col border-r border-border bg-muted/30 p-5 lg:flex lg:w-[340px]">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     Resumen de la venta
                   </p>
                   <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-card">
@@ -320,7 +320,7 @@ export default function PosModal({
                     })}
                   </div>
                   <div className="mt-4 flex items-baseline justify-between border-t border-dashed border-border pt-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[13px] font-semibold text-muted-foreground">
                       Total
                     </span>
                     <span className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
@@ -331,7 +331,7 @@ export default function PosModal({
 
                 <div className="mx-auto flex h-full w-full max-w-md flex-col px-6 py-5">
                 <div className="rounded-2xl border border-border bg-card px-6 py-5 text-center">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     Total a cobrar
                   </p>
                   <p className="mt-1 text-[2.5rem] font-bold leading-none tabular-nums text-foreground">
@@ -346,7 +346,7 @@ export default function PosModal({
                 {esEfectivo ? (
                   <div className="mt-4 space-y-3">
                     <div className="flex items-baseline justify-between">
-                      <label htmlFor="pos-recibido" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <label htmlFor="pos-recibido" className="text-[13px] font-semibold text-muted-foreground">
                         Recibido
                       </label>
                       {cashSuggestions.length > 0 && (
@@ -384,7 +384,7 @@ export default function PosModal({
                         montoRecibido && vueltoOk ? 'bg-primary/10' : montoRecibido ? 'bg-danger-soft' : 'bg-muted'
                       }`}
                     >
-                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="text-[13px] font-semibold text-muted-foreground">
                         {montoRecibido && !vueltoOk ? 'Falta' : 'Vuelto'}
                       </span>
                       <span
@@ -441,7 +441,7 @@ export default function PosModal({
                     total y recibido quedan de respaldo, en letra menor. */}
                 {snapshot.vuelto > 0 && (
                   <div className="mt-6 w-full rounded-2xl border border-primary/25 bg-primary/10 px-6 py-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    <p className="text-[13px] font-semibold text-muted-foreground">
                       Devolver al cliente
                     </p>
                     <p className="mt-1 text-[2.75rem] font-bold leading-none tracking-tight tabular-nums text-primary">
@@ -547,13 +547,13 @@ export default function PosModal({
 
                       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border text-sm">
                         <div className="bg-card px-4 py-2.5">
-                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Cliente</dt>
+                          <dt className="text-[13px] text-muted-foreground">Cliente</dt>
                           <dd className="mt-0.5 truncate font-semibold text-foreground">
                             {facturaEmitida.propietario?.nombre || 'Consumidor final'}
                           </dd>
                         </div>
                         <div className="bg-card px-4 py-2.5">
-                          <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Pago</dt>
+                          <dt className="text-[13px] text-muted-foreground">Pago</dt>
                           <dd className="mt-0.5 truncate font-semibold text-foreground">
                             {snapshot?.metodo || facturaEmitida.metodoPago}
                           </dd>
@@ -579,7 +579,7 @@ export default function PosModal({
                           </tbody>
                           <tfoot>
                             <tr className="border-t border-border bg-muted">
-                              <td className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              <td className="px-3 py-3 text-[13px] font-semibold text-muted-foreground">
                                 Total
                               </td>
                               <td className="px-3 py-3 text-right text-base font-bold tabular-nums text-foreground">

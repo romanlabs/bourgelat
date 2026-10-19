@@ -218,7 +218,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
             {cita.mascota?.nombre || 'Paciente'}
           </p>
           {cita.origen === 'walk_in' ? (
-            <span className="shrink-0 rounded-full border border-caramel-200 bg-caramel-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-caramel-700">
+            <span className="shrink-0 rounded-full border border-caramel-200 bg-caramel-50 px-2 py-0.5 text-[13px] font-semibold text-caramel-700">
               {ORIGEN_LABELS.walk_in}
             </span>
           ) : null}
@@ -420,7 +420,7 @@ export function SalaEsperaPanel({
           <div key={grupo.estado}>
             <div className="flex items-center gap-2.5 border-b border-border bg-background px-5 py-2">
               <span className={`h-1.5 w-1.5 rounded-full ${grupo.dot}`} aria-hidden="true" />
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${grupo.text}`}>
+              <p className={`text-[13px] font-semibold ${grupo.text}`}>
                 {grupo.label}
               </p>
               <span className="text-[11px] tabular-nums text-muted-foreground">{grupo.citas.length}</span>

@@ -50,7 +50,7 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
         <button
           type="button"
           onClick={() => setExpandido((curr) => !curr)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-semibold text-foreground transition hover:bg-muted"
         >
           {expandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           {expandido ? 'Ocultar' : `Ver reporte (${filasOrdenadas.length})`}
@@ -58,7 +58,7 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
       }
       filters={
         <>
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Periodo</span>
+          <span className="text-[13px] font-semibold text-muted-foreground">Periodo</span>
           <input
             type="date"
             value={reporteFiltros.fechaInicio}

@@ -102,7 +102,7 @@ export function TutorPetSelector({
     <div className="space-y-4">
       <div className="border border-border bg-muted px-4 py-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="flex items-center gap-2 text-[13px] font-semibold text-muted-foreground">
             <Search className="h-3.5 w-3.5" />
             Buscar tutor
           </div>
@@ -152,7 +152,7 @@ export function TutorPetSelector({
                       {owner.telefono || 'Sin teléfono principal'}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <span className="text-[13px] font-semibold text-muted-foreground">
                     Seleccionar
                   </span>
                 </button>
@@ -209,7 +209,7 @@ export function TutorPetSelector({
 
       {selectedOwner && nuevaMascota ? (
         <div className="space-y-3 border border-border bg-muted px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[13px] font-semibold text-muted-foreground">
             Paciente nuevo de {selectedOwner.nombre}
           </p>
           <input

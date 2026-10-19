@@ -178,7 +178,7 @@ export default function AgendaCalendar({
 
           {(onEstadoChange || onVeterinarioChange) && (
             <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Filtros
               </p>
               {onEstadoChange && (

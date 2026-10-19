@@ -41,7 +41,7 @@ export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+            <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
             {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
           </div>
           <button

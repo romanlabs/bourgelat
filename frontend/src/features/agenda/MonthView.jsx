@@ -158,7 +158,7 @@ export function MonthView({
             key={day.toISOString()}
             className="border-r border-border py-1.5 text-center last:border-r-0"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="text-[13px] font-semibold text-muted-foreground">
               {format(day, 'EEE', { locale: es })}
             </p>
           </div>

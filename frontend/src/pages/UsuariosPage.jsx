@@ -187,7 +187,7 @@ function PasswordChecklist({ password, visible }) {
 
   return (
     <div className="border border-border bg-muted px-3 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="text-[13px] font-semibold text-muted-foreground">
         Requisitos de acceso
       </p>
       <div className="mt-3 grid gap-2">
@@ -557,7 +557,7 @@ export default function UsuariosPage() {
                       : 'border-border bg-muted hover:border-border hover:bg-card'
                   }`}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     {section.label}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
@@ -675,7 +675,7 @@ export default function UsuariosPage() {
                           Editar
                         </button>
                         {row.raw.id === usuario?.id ? (
-                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          <span className="text-[13px] font-semibold text-muted-foreground">
                             Sesión actual
                           </span>
                         ) : (
@@ -779,7 +779,7 @@ export default function UsuariosPage() {
                   visible={showPasswordChecklist || createForm.password.length > 0}
                 />
                 <div className="grid gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     Roles adicionales
                   </p>
                   <RoleChecklist
@@ -930,7 +930,7 @@ export default function UsuariosPage() {
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <p className="text-[13px] font-semibold text-muted-foreground">
                       Roles adicionales
                     </p>
                     <RoleChecklist

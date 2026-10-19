@@ -105,7 +105,9 @@ module.exports = {
       },
       fontFamily: {
                 sans: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Spectral', 'Spectral Fallback', 'Georgia', 'serif'],
+        // Rediseño «Petróleo y blanco»: una sola familia. Los títulos van en
+        // Geist con peso 600 y tracking negativo, no en serif.
+        display: ['Geist Variable', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['Geist Mono', 'Fira Code', 'Cascadia Code', 'monospace'],
       },
 

@@ -51,7 +51,7 @@ const DEFAULT_VALUES = {
 const MAX_CAPTURA_BYTES = 5 * 1024 * 1024
 const TIPOS_CAPTURA = ['image/jpeg', 'image/png', 'image/webp']
 
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+const labelClass = 'text-[13px] font-semibold text-muted-foreground'
 const fieldClass =
   'w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary'
 

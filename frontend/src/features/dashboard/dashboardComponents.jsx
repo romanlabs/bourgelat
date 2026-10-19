@@ -21,7 +21,7 @@ function ChartTooltip({ active, payload, label, formatter }) {
   return (
     <div className="min-w-[120px] rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-dropdown">
       {label ? (
-        <p className="mb-2 border-b border-border pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="mb-2 border-b border-border pb-1.5 text-[13px] font-semibold text-muted-foreground">
           {label}
         </p>
       ) : null}
@@ -51,7 +51,7 @@ export function DashboardPanel({ title, subtitle, action, children, className = 
         } ${children ? 'border-b border-border' : ''}`}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[13px] font-semibold text-muted-foreground">
             {title}
           </p>
           {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
@@ -125,7 +125,7 @@ export function KpiCard({
         {createElement(icon, { className: 'h-4 w-4' })}
       </span>
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="truncate text-[13px] font-semibold text-muted-foreground">
           {label}
         </p>
         <p className="text-lg font-bold leading-tight tabular-nums text-card-foreground [overflow-wrap:anywhere]">
@@ -183,7 +183,7 @@ export function KpiGrid({ items, className = '', action, columns }) {
 export function StatusPill({ children, tone = 'border-border bg-muted text-foreground' }) {
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${tone} whitespace-normal break-words [overflow-wrap:anywhere]`}
+      className={`inline-flex max-w-full items-center rounded-full border px-3 py-1 text-[13px] font-semibold ${tone} whitespace-normal break-words [overflow-wrap:anywhere]`}
     >
       {children}
     </span>
@@ -213,7 +213,7 @@ export function DonutCard({
       className={`flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel ${className}`}
     >
       <div className="border-b border-border px-5 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
       <div
@@ -245,7 +245,7 @@ export function DonutCard({
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <span className="text-[13px] font-semibold text-muted-foreground">
                   {centerLabel}
                 </span>
                 <span className="mt-1 text-xl font-bold tabular-nums text-card-foreground">{centerValue}</span>
@@ -310,7 +310,7 @@ export function MiniDonutChart({
             </PieChart>
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="text-[13px] font-semibold text-muted-foreground">
               {centerLabel}
             </span>
             <span className="mt-1 text-[13px] font-semibold leading-none text-card-foreground">
@@ -319,7 +319,7 @@ export function MiniDonutChart({
           </div>
         </>
       ) : (
-        <div className="flex h-full w-full items-center justify-center rounded-full border border-dashed border-border bg-muted text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="flex h-full w-full items-center justify-center rounded-full border border-dashed border-border bg-muted text-[13px] font-semibold text-muted-foreground">
           Sin
         </div>
       )}
@@ -349,7 +349,7 @@ export function LinePanel({
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
       <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
           {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
@@ -419,7 +419,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
       <div className="border-b border-border px-5 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+        <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
       <div className={`flex-1 ${height} px-2 py-4`}>
@@ -472,7 +472,7 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
         }`}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">{title}</p>
           {!collapsed && subtitle ? <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
         </div>
         {action}
@@ -490,7 +490,7 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                    className="px-4 py-2 text-left text-[13px] font-semibold text-muted-foreground"
                   >
                     {column.label}
                   </th>

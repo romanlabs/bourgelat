@@ -63,7 +63,7 @@ const STATUS_MAP = {
 }
 
 const badgeVariants = cva(
-  'inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border font-semibold uppercase tracking-[0.12em] whitespace-nowrap',
+  'inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border font-semibold tracking-[0.12em] whitespace-nowrap',
   {
     variants: {
       size: {

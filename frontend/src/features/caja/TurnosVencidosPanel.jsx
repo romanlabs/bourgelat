@@ -51,7 +51,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
               <button
                 type="button"
                 onClick={() => setTurnoSeleccionado(row.esperado)}
-                className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
+                className="rounded-lg border border-border bg-card px-3 py-2 text-[13px] font-semibold text-foreground transition hover:bg-muted"
               >
                 Cerrar turno
               </button>

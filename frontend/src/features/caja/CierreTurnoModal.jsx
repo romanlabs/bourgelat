@@ -94,7 +94,7 @@ export default function CierreTurnoModal({
           </div>
 
           <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="text-[13px] font-semibold text-muted-foreground">
               Efectivo contado
             </span>
             <MoneyInput
@@ -153,7 +153,7 @@ export default function CierreTurnoModal({
 
           {tieneMontoValido && diferenciaAbs > 0 && (
             <label className="grid gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="text-[13px] font-semibold text-muted-foreground">
                 Comentario {requiereJustificacion ? '(obligatorio, mínimo 20 caracteres)' : '(opcional)'}
               </span>
               <textarea
@@ -169,7 +169,7 @@ export default function CierreTurnoModal({
 
           {requiereJustificacion && (
             <label className="grid gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="text-[13px] font-semibold text-muted-foreground">
                 Categoria (obligatoria)
               </span>
               <Select

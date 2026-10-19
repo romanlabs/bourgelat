@@ -9,7 +9,7 @@ const fieldClass = (hasError) =>
     hasError ? 'border-danger' : 'border-border'
   }`
 
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+const labelClass = 'text-[13px] font-semibold text-muted-foreground'
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -180,7 +180,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
 
           <div className="border-t border-border pt-5">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Insumos que consume
               </p>
               <button

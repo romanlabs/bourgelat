@@ -56,7 +56,7 @@ export default function TrustBar() {
         <div className="grid grid-cols-1 items-center gap-0 sm:gap-7 lg:grid-cols-[minmax(260px,0.54fr)_minmax(0,1.46fr)]">
           <div className="mx-auto max-w-[23rem] text-center lg:mx-0 lg:text-left">
             <p
-              className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#a35f25]"
+              className="text-[13px] font-semibold tracking-[0.3em] text-[#a35f25]"
               style={fadeIn(0)}
             >
               Respaldo técnico

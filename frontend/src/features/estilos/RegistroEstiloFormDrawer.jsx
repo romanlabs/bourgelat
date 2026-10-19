@@ -172,7 +172,7 @@ export default function RegistroEstiloFormDrawer({
             onSubmit={handleSubmit(handleFormSubmit)}
           >
             <div className="grid gap-1.5">
-              <label htmlFor="re-tipoCorte" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <label htmlFor="re-tipoCorte" className="text-[13px] font-semibold text-muted-foreground">
                 Tipo de corte *
               </label>
               <input
@@ -187,7 +187,7 @@ export default function RegistroEstiloFormDrawer({
             </div>
 
             <div className="grid gap-1.5">
-              <label htmlFor="re-estilista" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <label htmlFor="re-estilista" className="text-[13px] font-semibold text-muted-foreground">
                 Estilista *
               </label>
               <Controller
@@ -212,7 +212,7 @@ export default function RegistroEstiloFormDrawer({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <label htmlFor="re-fechaServicio" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="re-fechaServicio" className="text-[13px] font-semibold text-muted-foreground">
                   Fecha del servicio *
                 </label>
                 <input
@@ -226,7 +226,7 @@ export default function RegistroEstiloFormDrawer({
               </div>
 
               <div className="grid gap-1.5">
-                <label htmlFor="re-proximaCita" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="re-proximaCita" className="text-[13px] font-semibold text-muted-foreground">
                   Próxima cita sugerida
                 </label>
                 <input
@@ -240,7 +240,7 @@ export default function RegistroEstiloFormDrawer({
             </div>
 
             <div className="grid gap-1.5">
-              <label htmlFor="re-observaciones" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <label htmlFor="re-observaciones" className="text-[13px] font-semibold text-muted-foreground">
                 Observaciones
               </label>
               <textarea

@@ -61,7 +61,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
             </div>
 
             <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Total de la compra
               </p>
               <p className="text-2xl font-bold tabular-nums text-foreground">
@@ -71,13 +71,13 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
 
             <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
               <div className="bg-card px-4 py-3">
-                <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <dt className="text-[13px] font-semibold text-muted-foreground">
                   Fecha de compra
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-foreground">{factura.fecha}</dd>
               </div>
               <div className="bg-card px-4 py-3">
-                <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <dt className="text-[13px] font-semibold text-muted-foreground">
                   Forma de pago
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-foreground">
@@ -85,7 +85,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                 </dd>
               </div>
               <div className="bg-card px-4 py-3">
-                <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <dt className="text-[13px] font-semibold text-muted-foreground">
                   N° factura proveedor
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-foreground">
@@ -98,16 +98,16 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
               <table className="min-w-full divide-y divide-border text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                       Producto
                     </th>
-                    <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                       Cantidad
                     </th>
-                    <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                       Precio unitario
                     </th>
-                    <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
                       Subtotal
                     </th>
                   </tr>
@@ -127,7 +127,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                             )}
                           </span>
                           <span
-                            className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badge.className}`}
+                            className={`inline-block rounded px-1.5 py-0.5 text-[13px] font-semibold ${badge.className}`}
                           >
                             {badge.label}
                           </span>
@@ -155,7 +155,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                 <tfoot>
                   <tr className="border-t border-border bg-muted">
                     <td
-                      className="px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                      className="px-3 py-3 text-[13px] font-semibold text-muted-foreground"
                       colSpan={3}
                     >
                       Total

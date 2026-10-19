@@ -268,7 +268,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-[13px] font-semibold text-muted-foreground">
           Exámenes de laboratorio
         </p>
         {puedeEditar && (

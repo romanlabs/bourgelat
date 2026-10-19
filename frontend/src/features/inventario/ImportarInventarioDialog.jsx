@@ -92,7 +92,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
             </button>
 
             <div className="grid gap-2 border border-border bg-muted/50 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Categorias validas para la columna "Categoria"
               </p>
               <div className="flex flex-wrap gap-2">

@@ -106,7 +106,7 @@ export default function CartSidebar({
         ) : (
           <>
             <div className="sticky top-0 z-10 flex items-center justify-between bg-card/95 px-3 py-1.5 backdrop-blur-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Carrito
               </p>
               <span className="rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-bold tabular-nums text-primary">
@@ -223,7 +223,7 @@ export default function CartSidebar({
             una pasarela (Wompi), su metodo aparece aqui como una celda mas. */}
         <div className="px-3 pt-3">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-[13px] font-semibold text-muted-foreground">
               Método de pago
             </span>
             <button

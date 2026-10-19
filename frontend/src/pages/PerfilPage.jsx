@@ -21,7 +21,7 @@ import { perfilApi } from '@/features/perfil/perfilApi'
 
 const INPUT_CLASS =
   'h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary'
-const LABEL_CLASS = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'
+const LABEL_CLASS = 'mb-1 block text-[13px] font-semibold text-muted-foreground'
 
 const ROLE_LABELS = {
   admin: 'Administrador',

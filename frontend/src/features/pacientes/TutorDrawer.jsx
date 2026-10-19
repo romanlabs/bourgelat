@@ -114,7 +114,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             }}
           >
             <div className="grid gap-1.5">
-              <label htmlFor="t-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <label htmlFor="t-nombre" className="text-[13px] font-semibold text-muted-foreground">
                 Nombre completo *
               </label>
               <input id="t-nombre" type="text" placeholder="Nombre del tutor" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
@@ -123,7 +123,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <label htmlFor="t-tipo-doc" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="t-tipo-doc" className="text-[13px] font-semibold text-muted-foreground">
                   Tipo de documento *
                 </label>
                 <Controller
@@ -143,7 +143,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 />
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="t-num-doc" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="t-num-doc" className="text-[13px] font-semibold text-muted-foreground">
                   Numero de documento *
                 </label>
                 <input id="t-num-doc" type="text" placeholder="Documento principal" className={`${fieldClass} ${errors.numeroDocumento ? 'border-danger' : ''}`} {...register('numeroDocumento')} />
@@ -153,14 +153,14 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <label htmlFor="t-tel" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="t-tel" className="text-[13px] font-semibold text-muted-foreground">
                   Telefono o celular *
                 </label>
                 <input id="t-tel" type="text" inputMode="numeric" placeholder="Número principal" className={`${fieldClass} ${errors.telefono ? 'border-danger' : ''}`} {...register('telefono')} />
                 {errors.telefono && <p className="text-xs text-danger">{errors.telefono.message}</p>}
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="t-email" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <label htmlFor="t-email" className="text-[13px] font-semibold text-muted-foreground">
                   Correo <span className="font-normal normal-case tracking-normal text-muted-foreground/70">(opcional)</span>
                 </label>
                 <input id="t-email" type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-danger' : ''}`} {...register('email')} />
@@ -169,7 +169,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             </div>
 
             <div className="grid gap-1.5">
-              <label htmlFor="t-ciudad" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <label htmlFor="t-ciudad" className="text-[13px] font-semibold text-muted-foreground">
                 Ciudad o municipio <span className="font-normal normal-case tracking-normal text-muted-foreground/70">(opcional)</span>
               </label>
               <input id="t-ciudad" type="text" placeholder="Ciudad principal" className={fieldClass} {...register('ciudad')} />

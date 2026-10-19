@@ -71,7 +71,7 @@ export default function RestablecerPasswordPage() {
           </span>
           <span>
             <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
-            <span className="mt-1 block text-[10px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
+            <span className="mt-1 block text-[13px] tracking-[0.24em]" style={{ color: ACCENT }}>
               acceso veterinario
             </span>
           </span>
@@ -84,7 +84,7 @@ export default function RestablecerPasswordPage() {
             className="w-full max-w-[400px] border border-foreground/10 bg-card/95 px-8 py-8 backdrop-blur-sm"
             style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em]" style={{ color: ACCENT }}>
+            <p className="text-[13px] font-semibold tracking-[0.26em]" style={{ color: ACCENT }}>
               Nueva contraseña
             </p>
 
@@ -118,7 +118,7 @@ export default function RestablecerPasswordPage() {
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" noValidate>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <label className="mb-1 block text-[13px] font-semibold text-muted-foreground">
                     Contraseña nueva
                   </label>
                   <div className="relative">
@@ -152,7 +152,7 @@ export default function RestablecerPasswordPage() {
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
+                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
                 >
                   {isPending ? 'Guardando...' : 'Guardar contraseña'}
                   {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}

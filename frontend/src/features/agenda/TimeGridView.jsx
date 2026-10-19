@@ -137,7 +137,7 @@ export function TimeGridView({
                 bloqueo && 'bg-warning-soft'
               )}
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-[13px] font-medium text-muted-foreground">
                 {format(day, esDia ? 'EEEE' : 'EEE', { locale: es })}
               </p>
               <p

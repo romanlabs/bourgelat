@@ -210,7 +210,7 @@ export default function LoginPage() {
           <div className="mt-5">
             <div className="mb-4 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">o</span>
+              <span className="text-[13px] font-medium text-muted-foreground">o</span>
               <div className="h-px flex-1 bg-border" />
             </div>
             <BotonesSociales contexto="login" />

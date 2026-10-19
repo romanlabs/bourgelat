@@ -39,7 +39,7 @@ export function SectionCard({ title, description, action, children, padding, cla
         >
           <div className="min-w-0">
             {title && (
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 {title}
               </p>
             )}

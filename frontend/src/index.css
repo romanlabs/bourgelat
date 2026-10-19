@@ -67,106 +67,107 @@ input:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Paleta «Papel y pulso». Roles:
-   - tinta (foreground, sidebar) = estructura
-   - brand (caramelo)            = firma: pulso, eyebrows, foco. Nunca un botón
-   - primary (pino)              = acción y "saludable/confirmada"
-   - success/warning/danger/info = estados, cada uno con su fondo -soft */
+/* Paleta «Petróleo y blanco». Roles:
+   - primary (petróleo)          = estructura y acción: menú, botones, encabezados
+   - card (blanco)               = superficies de contenido
+   - brand (ámbar)               = lo que pasa ahora, foco y detalles. Nunca texto sobre blanco
+   - success/warning/danger/info = estados, cada uno con su fondo -soft
+   Las superficies se separan por tono, no por bordes ni sombras. */
 :root {
-  --background: 36 42% 95%;        /* papel #f8f4ee */
-  --foreground: 209 57% 15%;       /* tinta #10263a */
-  --card: 40 100% 99%;             /* hoja #fffdf9 */
-  --card-foreground: 209 57% 15%;
-  --popover: 40 100% 99%;
-  --popover-foreground: 209 57% 15%;
-  --primary: 160 60% 30%;          /* pino #1f7a5c */
+  --background: 195 18% 96%;       /* lienzo #f2f5f6 */
+  --foreground: 196 48% 12%;       /* tinta #10262e */
+  --card: 0 0% 100%;               /* blanco */
+  --card-foreground: 196 48% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 196 48% 12%;
+  --primary: 192 72% 21%;          /* petróleo #0f4c5c, 9,5:1 con blanco */
   --primary-foreground: 0 0% 100%;
-  --secondary: 36 30% 91%;
-  --secondary-foreground: 209 57% 15%;
-  --muted: 36 30% 91%;
-  --muted-foreground: 206 14% 41%; /* tinta suave #5a6b78 */
-  --accent: 30 60% 94%;
-  --accent-foreground: 28 48% 36%;
-  --destructive: 8 59% 45%;
+  --secondary: 194 28% 91%;        /* bruma #e1ebee: botón secundario */
+  --secondary-foreground: 196 48% 12%;
+  --muted: 195 18% 96%;
+  --muted-foreground: 196 15% 34%; /* tinta suave #4a5d64 */
+  --accent: 190 31% 93%;           /* fila seleccionada #e6f0f2 */
+  --accent-foreground: 192 72% 21%;
+  --destructive: 8 59% 44%;
   --destructive-foreground: 0 0% 100%;
-  --border: 37 28% 85%;            /* línea #e4dccf */
-  --input: 36 23% 79%;
-  --ring: 27 44% 48%;
-  --brand: 27 44% 48%;             /* caramelo #b07645 */
-  --brand-foreground: 28 48% 36%;  /* caramelo para texto #8a5a30 */
-  --brand-muted: 27 55% 94%;
+  --border: 193 15% 89%;           /* línea #dde4e6 */
+  --input: 195 16% 85%;
+  --ring: 36 88% 59%;              /* foco en ámbar */
+  --brand: 36 88% 59%;             /* ámbar #f2a93b */
+  --brand-foreground: 37 88% 25%;  /* ámbar para texto #7a4f08 */
+  --brand-muted: 38 89% 92%;
   --caramel: var(--brand);
-  --caramel-foreground: 0 0% 100%;
+  --caramel-foreground: 196 48% 12%;
   --caramel-muted: var(--brand-muted);
-  --success: 160 60% 30%;
-  --success-soft: 149 32% 93%;
-  --warning: 37 87% 30%;
-  --warning-soft: 38 80% 92%;
-  --danger: 8 59% 45%;
-  --danger-soft: 13 63% 93%;
-  --info: 200 51% 37%;
-  --info-soft: 199 42% 93%;
-  --chart-1: 160 60% 30%;
-  --chart-2: 200 51% 37%;
-  --chart-3: 27 44% 48%;
-  --chart-4: 38 70% 55%;
-  --chart-5: 206 14% 41%;
+  --success: 154 46% 33%;
+  --success-soft: 149 37% 92%;
+  --warning: 37 88% 27%;
+  --warning-soft: 38 89% 92%;
+  --danger: 8 59% 44%;
+  --danger-soft: 10 72% 94%;
+  --info: 256 27% 33%;
+  --info-soft: 263 26% 92%;
+  --chart-1: 192 72% 21%;
+  --chart-2: 36 88% 59%;
+  --chart-3: 192 36% 62%;
+  --chart-4: 256 27% 55%;
+  --chart-5: 196 15% 55%;
   --radius: 0.625rem;
-  --sidebar: 207 55% 10%;          /* noche #0b1a26 */
-  --sidebar-foreground: 207 20% 82%;
-  --sidebar-primary: 29 59% 64%;   /* caramelo claro #d9a06b */
-  --sidebar-primary-foreground: 207 55% 10%;
-  --sidebar-accent: 206 42% 13%;
-  --sidebar-accent-foreground: 37 41% 93%;
-  --sidebar-border: 206 39% 19%;
-  --sidebar-ring: 29 59% 64%;
+  --sidebar: 192 72% 21%;          /* el menú es petróleo */
+  --sidebar-foreground: 190 30% 95%;
+  --sidebar-primary: 0 0% 100%;    /* ítem activo: blanco con texto petróleo */
+  --sidebar-primary-foreground: 192 72% 21%;
+  --sidebar-accent: 192 55% 26%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 192 45% 28%;
+  --sidebar-ring: 36 88% 59%;
 }
 
 .dark {
-  --background: 207 48% 9%;
-  --foreground: 38 29% 89%;
-  --card: 206 42% 13%;
-  --card-foreground: 38 29% 89%;
-  --popover: 206 42% 13%;
-  --popover-foreground: 38 29% 89%;
-  --primary: 156 47% 57%;
-  --primary-foreground: 207 55% 10%;
-  --secondary: 207 37% 21%;
-  --secondary-foreground: 38 29% 89%;
-  --muted: 207 37% 21%;
-  --muted-foreground: 206 19% 68%;
-  --accent: 27 30% 18%;
-  --accent-foreground: 29 59% 64%;
-  --destructive: 8 59% 45%;
+  --background: 195 55% 9%;        /* #0a1c22 */
+  --foreground: 195 22% 92%;
+  --card: 196 47% 13%;             /* #11272f */
+  --card-foreground: 195 22% 92%;
+  --popover: 196 47% 13%;
+  --popover-foreground: 195 22% 92%;
+  --primary: 190 44% 56%;          /* petróleo aclarado #5fb0c0 */
+  --primary-foreground: 193 75% 9%;
+  --secondary: 197 47% 17%;
+  --secondary-foreground: 195 22% 92%;
+  --muted: 197 47% 17%;
+  --muted-foreground: 194 16% 67%;
+  --accent: 197 47% 17%;
+  --accent-foreground: 190 44% 70%;
+  --destructive: 9 70% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 207 37% 21%;
-  --input: 207 37% 24%;
-  --ring: 29 59% 64%;
-  --brand: 29 59% 64%;
-  --brand-foreground: 29 59% 64%;
-  --brand-muted: 27 30% 15%;
-  --caramel-foreground: 27 20% 10%;
-  --success: 156 47% 57%;
-  --success-soft: 156 35% 16%;
-  --warning: 38 80% 62%;
-  --warning-soft: 38 50% 16%;
-  --danger: 8 75% 68%;
-  --danger-soft: 8 45% 18%;
-  --info: 200 55% 65%;
-  --info-soft: 200 40% 18%;
-  --chart-1: 156 47% 57%;
-  --chart-2: 200 55% 65%;
-  --chart-3: 29 59% 64%;
-  --chart-4: 38 80% 62%;
-  --chart-5: 206 19% 68%;
-  --sidebar: 207 55% 7%;
-  --sidebar-foreground: 207 20% 82%;
-  --sidebar-primary: 29 59% 64%;
-  --sidebar-primary-foreground: 207 55% 10%;
-  --sidebar-accent: 206 42% 13%;
-  --sidebar-accent-foreground: 37 41% 93%;
-  --sidebar-border: 206 39% 19%;
-  --sidebar-ring: 29 59% 64%;
+  --border: 197 39% 20%;
+  --input: 197 39% 24%;
+  --ring: 37 86% 64%;
+  --brand: 37 86% 64%;
+  --brand-foreground: 37 86% 70%;
+  --brand-muted: 37 40% 16%;
+  --caramel-foreground: 196 48% 12%;
+  --success: 150 52% 70%;
+  --success-soft: 155 40% 16%;
+  --warning: 38 86% 74%;
+  --warning-soft: 37 40% 16%;
+  --danger: 9 80% 71%;
+  --danger-soft: 9 40% 17%;
+  --info: 252 50% 78%;
+  --info-soft: 256 25% 18%;
+  --chart-1: 190 44% 56%;
+  --chart-2: 37 86% 64%;
+  --chart-3: 192 30% 45%;
+  --chart-4: 252 50% 72%;
+  --chart-5: 194 16% 55%;
+  --sidebar: 192 56% 6%;           /* #071519 */
+  --sidebar-foreground: 195 22% 85%;
+  --sidebar-primary: 195 22% 92%;
+  --sidebar-primary-foreground: 195 55% 9%;
+  --sidebar-accent: 196 47% 13%;
+  --sidebar-accent-foreground: 195 22% 92%;
+  --sidebar-border: 196 47% 13%;
+  --sidebar-ring: 37 86% 64%;
 }
 
 @layer base {

@@ -74,7 +74,7 @@ export default function CompletarRegistroPage() {
           </span>
           <span>
             <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
-            <span className="mt-1 block text-[10px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
+            <span className="mt-1 block text-[13px] tracking-[0.24em]" style={{ color: ACCENT }}>
               acceso veterinario
             </span>
           </span>
@@ -88,7 +88,7 @@ export default function CompletarRegistroPage() {
             style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
           >
             <p
-              className="text-[11px] font-semibold uppercase tracking-[0.26em]"
+              className="text-[13px] font-semibold tracking-[0.26em]"
               style={{ color: ACCENT }}
             >
               Un último paso
@@ -111,7 +111,7 @@ export default function CompletarRegistroPage() {
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" autoComplete="off">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <label className="mb-1 block text-[13px] font-semibold text-muted-foreground">
                     Nombre de la clínica
                   </label>
                   <input
@@ -144,7 +144,7 @@ export default function CompletarRegistroPage() {
                 <Button
                   type="submit"
                   disabled={isPending || !aceptaTerminos}
-                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
+                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
                 >
                   {isPending ? 'Creando clínica...' : 'Entrar a la plataforma'}
                   {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}

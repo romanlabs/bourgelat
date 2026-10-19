@@ -173,7 +173,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
     <div className="space-y-5 pt-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[13px] font-semibold text-muted-foreground">
             Lectura del periodo
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -349,7 +349,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                 )}
 
                 <div className="mt-auto rounded-2xl border border-border bg-muted px-4 py-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     Origen de la demanda
                   </p>
                   <div className="mt-3 flex flex-col gap-2">

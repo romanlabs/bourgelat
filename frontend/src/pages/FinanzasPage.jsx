@@ -453,7 +453,7 @@ export default function FinanzasPage() {
                       <button
                         type="button"
                         onClick={() => historialHook.seleccionarFactura(row.id)}
-                        className="border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground hover:bg-muted"
+                        className="border border-border bg-card px-3 py-2 text-[13px] font-semibold text-foreground hover:bg-muted"
                       >
                         Ver detalle
                       </button>

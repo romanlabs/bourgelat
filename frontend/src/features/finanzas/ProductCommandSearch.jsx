@@ -35,7 +35,7 @@ function FiltroCategoriaMenu({ categoriaFiltro, setCategoriaFiltro }) {
           sideOffset={6}
           className="z-50 w-56 rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <DropdownMenu.Label className="px-5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <DropdownMenu.Label className="px-5 py-1.5 text-[13px] font-semibold text-muted-foreground">
             Categoría
           </DropdownMenu.Label>
           {[{ value: '', label: 'Todos' }, ...PRODUCT_CATEGORIES].map((opt) => (
@@ -404,7 +404,7 @@ export default function ProductCommandSearch({
             </div>
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <label className="text-[13px] font-semibold text-muted-foreground">
                   Descripción *
                 </label>
                 <input
@@ -418,7 +418,7 @@ export default function ProductCommandSearch({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <label className="text-[13px] font-semibold text-muted-foreground">
                   Precio unitario (COP)
                 </label>
                 <input

@@ -117,7 +117,7 @@ export default function InsumoClinicoDrawer({
       hasError ? 'border-danger' : 'border-border'
     }`
 
-  const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+  const labelClass = 'text-[13px] font-semibold text-muted-foreground'
   const unidadLabel = UNIDAD_BASE_OPTIONS.find((u) => u.value === unidadBase)?.value || unidadBase
 
   const compraValida =
@@ -189,7 +189,7 @@ export default function InsumoClinicoDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-5">
           <form id="insumo-clinico-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Información básica
               </p>
 
@@ -251,7 +251,7 @@ export default function InsumoClinicoDrawer({
 
             {!editingInsumo && (
               <div className="grid gap-4 border-t border-border pt-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[13px] font-semibold text-muted-foreground">
                   Presentación de compra
                 </p>
 
@@ -319,7 +319,7 @@ export default function InsumoClinicoDrawer({
             )}
 
             <div className="grid gap-2 border-t border-border pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Cómo se consume
               </p>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
@@ -331,7 +331,7 @@ export default function InsumoClinicoDrawer({
 
             {editingInsumo && (
               <div className="grid gap-4 border-t border-border pt-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="text-[13px] font-semibold text-muted-foreground">
                   Existencias
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -471,7 +471,7 @@ export default function InsumoClinicoDrawer({
             )}
 
             <div className="grid gap-4 border-t border-border pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Alertas y datos del lote
               </p>
               <div className="grid gap-1.5">

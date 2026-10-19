@@ -101,28 +101,28 @@ export default function TurnoActivoPanel({ cajaHook }) {
         ) : null}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Fondo inicial</p>
+            <p className="text-[13px] font-semibold text-muted-foreground">Fondo inicial</p>
             <p className="mt-1 text-base font-bold tabular-nums text-foreground">
               {formatCurrency(turnoActivo.montoInicial)}
             </p>
             <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Efectivo con el que abriste el turno</p>
           </div>
           <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ventas en efectivo</p>
+            <p className="text-[13px] font-semibold text-muted-foreground">Ventas en efectivo</p>
             <p className="mt-1 text-base font-bold tabular-nums text-foreground">
               {formatCurrency(turnoActivo.totalVentasEfectivo)}
             </p>
             <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Ventas del sistema pagadas en efectivo</p>
           </div>
           <div className="rounded-xl border border-border bg-card px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Ingresos / egresos</p>
+            <p className="text-[13px] font-semibold text-muted-foreground">Ingresos / egresos</p>
             <p className="mt-1 text-base font-bold tabular-nums text-foreground">
               +{formatCurrency(turnoActivo.totalIngresosManuales)} / -{formatCurrency(turnoActivo.totalEgresosManuales)}
             </p>
             <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">Movimientos manuales, no incluye ventas</p>
           </div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Efectivo esperado</p>
+            <p className="text-[13px] font-semibold text-primary">Efectivo esperado</p>
             <p className="mt-1 text-base font-bold tabular-nums text-primary">{formatCurrency(montoFinalEsperado)}</p>
             <p className="mt-0.5 text-[10px] leading-tight text-primary/70">Fondo + ventas + ingresos - egresos</p>
           </div>
@@ -156,7 +156,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
           <button
             type="button"
             onClick={() => setMovimientosExpandido((curr) => !curr)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-semibold text-foreground transition hover:bg-muted"
           >
             {movimientosExpandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {movimientosExpandido ? 'Ocultar' : `Ver movimientos (${movimientos.length})`}

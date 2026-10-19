@@ -102,7 +102,7 @@ function GastoForm() {
   return (
     <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
       <label className="grid gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Categoría</span>
+        <span className="text-[13px] font-semibold text-muted-foreground">Categoría</span>
         <Select
           variant="field"
           aria-label="Categoría del gasto"
@@ -112,7 +112,7 @@ function GastoForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Concepto</span>
+        <span className="text-[13px] font-semibold text-muted-foreground">Concepto</span>
         <input
           value={form.descripcion}
           onChange={set('descripcion')}
@@ -122,7 +122,7 @@ function GastoForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Valor</span>
+        <span className="text-[13px] font-semibold text-muted-foreground">Valor</span>
         <MoneyInput
           value={form.monto}
           onChange={(value) => setForm((f) => ({ ...f, monto: value === 0 ? '' : String(value) }))}
@@ -131,7 +131,7 @@ function GastoForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Pago</span>
+        <span className="text-[13px] font-semibold text-muted-foreground">Pago</span>
         <Select
           variant="field"
           aria-label="Método de pago"

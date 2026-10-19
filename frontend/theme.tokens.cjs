@@ -159,25 +159,25 @@ const colors = {
    */
   chart: {
     estados: {
-      neutro:  '#7d8c98', // programada
-      warning: '#d49a2a', // en espera
-      info:    '#2f6f8f', // en atención
-      success: '#1f7a5c', // completada
-      danger:  '#b4412f', // cancelada
+      neutro:  '#8aa3ab', // programada
+      warning: '#f2a93b', // en espera
+      info:    '#0f4c5c', // en atención
+      success: '#2e7d5b', // completada
+      danger:  '#b3402e', // cancelada
       dangerSuave: '#d9826f', // no asistió
     },
-    vacio: '#d6ccbd', // parte "libre" de medidores y donas (uso vs. límite)
+    vacio: '#e1ebee', // parte "libre" de medidores y donas (uso vs. límite)
     categorica: [
-      '#1f7a5c', // pino
-      '#2f6f8f', // petróleo
-      '#b07645', // caramelo
-      '#d49a2a', // miel
-      '#b4412f', // ladrillo
-      '#5a6b78', // tinta suave
-      '#7fa88f', // salvia
-      '#34495d', // tinta
-      '#c98b6b', // arcilla
-      '#8a8f3c', // oliva
+      '#0f4c5c', // petróleo
+      '#f2a93b', // ámbar
+      '#6fa7b5', // petróleo claro
+      '#6b5b95', // lila
+      '#2e7d5b', // verde
+      '#4a5d64', // tinta suave
+      '#b3402e', // ladrillo
+      '#a8c7cf', // bruma
+      '#c98b3a', // ámbar oscuro
+      '#10262e', // tinta
     ],
   },
 
@@ -221,10 +221,10 @@ const typography = {
 const shadows = {
   /**
    * card — elevación base. Cards, paneles, tablas.
-   * Filosofía: borde fino + sombra casi imperceptible.
-   * Más limpio que sombras grandes en entorno clínico.
+   * Rediseño «Petróleo y blanco»: sin sombra en reposo; la tarjeta blanca sobre
+   * el fondo gris azulado ya la separa. Las sombras quedan para lo que flota.
    */
-  card:     '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.05)',
+  card:     'none',
 
   /**
    * modal — overlays, drawers, diálogos.

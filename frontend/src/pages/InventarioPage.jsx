@@ -98,7 +98,7 @@ function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, b
           sideOffset={6}
           className="z-50 w-56 rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <DropdownMenu.Label className="px-5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <DropdownMenu.Label className="px-5 py-1.5 text-[13px] font-semibold text-muted-foreground">
             Categoría
           </DropdownMenu.Label>
           {categoryOptions.map((opt) => (
@@ -492,7 +492,7 @@ export default function InventarioPage() {
                       label: 'Inventario',
                       render: (row) => (
                         <span
-                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${DESTINO_BADGE[row.inventario].className}`}
+                          className={`inline-block rounded px-1.5 py-0.5 text-[13px] font-semibold ${DESTINO_BADGE[row.inventario].className}`}
                         >
                           {DESTINO_BADGE[row.inventario].label}
                         </span>
@@ -925,7 +925,7 @@ export default function InventarioPage() {
                 >
                   <form className="grid gap-4" onSubmit={submitMovementForm}>
                     <div className="grid gap-1.5">
-                      <label htmlFor="mov-producto" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <label htmlFor="mov-producto" className="text-[13px] font-semibold text-muted-foreground">
                         Producto *
                       </label>
                       <ProductoComboBox
@@ -939,7 +939,7 @@ export default function InventarioPage() {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-1.5">
-                        <label htmlFor="mov-tipo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <label htmlFor="mov-tipo" className="text-[13px] font-semibold text-muted-foreground">
                           Tipo de movimiento
                         </label>
                         <Select
@@ -958,7 +958,7 @@ export default function InventarioPage() {
                         />
                       </div>
                       <div className="grid gap-1.5">
-                        <label htmlFor="mov-motivo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <label htmlFor="mov-motivo" className="text-[13px] font-semibold text-muted-foreground">
                           Motivo
                         </label>
                         <Select
@@ -974,7 +974,7 @@ export default function InventarioPage() {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="grid gap-1.5">
-                        <label htmlFor="mov-cantidad" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <label htmlFor="mov-cantidad" className="text-[13px] font-semibold text-muted-foreground">
                           {movementForm.tipo === 'ajuste' ? 'Cantidad final' : 'Cantidad'}
                         </label>
                         <input
@@ -989,7 +989,7 @@ export default function InventarioPage() {
                         />
                       </div>
                       <div className="grid gap-1.5">
-                        <label htmlFor="mov-precio" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <label htmlFor="mov-precio" className="text-[13px] font-semibold text-muted-foreground">
                           Precio unitario
                         </label>
                         <input
@@ -1006,7 +1006,7 @@ export default function InventarioPage() {
                     </div>
 
                     <div className="grid gap-1.5">
-                      <label htmlFor="mov-obs" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <label htmlFor="mov-obs" className="text-[13px] font-semibold text-muted-foreground">
                         Observaciones
                       </label>
                       <textarea
@@ -1036,19 +1036,19 @@ export default function InventarioPage() {
                     <div className="grid gap-4">
                       <div className="grid gap-3 border border-border bg-muted px-4 py-4 text-sm text-foreground sm:grid-cols-2">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Producto</p>
+                          <p className="text-[13px] text-muted-foreground">Producto</p>
                           <p className="mt-1 font-semibold">{detalleProducto?.nombre || selectedProduct.nombre}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cantidad actual</p>
+                          <p className="text-[13px] text-muted-foreground">Cantidad actual</p>
                           <p className="mt-1 font-semibold">{formatNumber(detalleProducto?.stock ?? selectedProduct.stock ?? 0)}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Cantidad mínima</p>
+                          <p className="text-[13px] text-muted-foreground">Cantidad mínima</p>
                           <p className="mt-1">{formatNumber(detalleProducto?.stockMinimo ?? selectedProduct.stockMinimo ?? 0)}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Laboratorio / lote</p>
+                          <p className="text-[13px] text-muted-foreground">Laboratorio / lote</p>
                           <p className="mt-1">{detalleProducto?.laboratorio || '-'} / {detalleProducto?.lote || '-'}</p>
                         </div>
                       </div>

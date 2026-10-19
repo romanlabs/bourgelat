@@ -35,7 +35,7 @@ const fieldClass = (hasError) =>
   `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
     hasError ? 'border-danger' : 'border-border'
   }`
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+const labelClass = 'text-[13px] font-semibold text-muted-foreground'
 
 const crearSchema = (stock) =>
   z

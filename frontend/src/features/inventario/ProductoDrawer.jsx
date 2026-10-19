@@ -133,7 +133,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
       hasError ? 'border-danger' : 'border-border'
     }`
 
-  const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+  const labelClass = 'text-[13px] font-semibold text-muted-foreground'
   const unidadLabel = UNIT_OPTIONS.find((u) => u.value === unidadMedida)?.label?.toLowerCase() || 'unidad'
 
   if (typeof document === 'undefined') return null
@@ -185,7 +185,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
           <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Información básica
               </p>
 
@@ -279,7 +279,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
             {/* Seccion: Existencias */}
             <div className="grid gap-4 border-t border-border pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Existencias
               </p>
 
@@ -334,7 +334,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
             {/* Seccion: Precios */}
             <div className="grid gap-4 border-t border-border pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="text-[13px] font-semibold text-muted-foreground">
                 Precios
               </p>
 

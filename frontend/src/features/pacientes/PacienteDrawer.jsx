@@ -209,7 +209,7 @@ export default function PacienteDrawer({
             <div className="grid gap-3 border border-border bg-muted/40 p-4">
               <div className="flex items-center gap-2">
                 <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Tutor responsable *</p>
+                <p className="text-[13px] font-semibold text-muted-foreground">Tutor responsable *</p>
               </div>
 
               {modoEdicion ? (
@@ -284,7 +284,7 @@ export default function PacienteDrawer({
 
             {/* Seccion: Foto */}
             <div className="grid gap-3 border-t border-border pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Foto del paciente</p>
+              <p className="text-[13px] font-semibold text-muted-foreground">Foto del paciente</p>
               <div className="flex items-start gap-4">
                 <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
                   {photoPreview
@@ -311,7 +311,7 @@ export default function PacienteDrawer({
 
             {/* Seccion: Datos del paciente */}
             <div className="grid gap-4 border-t border-border pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Datos del paciente</p>
+              <p className="text-[13px] font-semibold text-muted-foreground">Datos del paciente</p>
 
               {/* Preview card */}
               {nombreWatch && (
@@ -334,12 +334,12 @@ export default function PacienteDrawer({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-nombre" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Nombre *</label>
+                  <label htmlFor="p-nombre" className="text-[13px] font-semibold text-muted-foreground">Nombre *</label>
                   <input id="p-nombre" type="text" placeholder="Nombre del paciente" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
                   {errors.nombre && <p className="text-xs text-danger">{errors.nombre.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-especie" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Especie *</label>
+                  <label htmlFor="p-especie" className="text-[13px] font-semibold text-muted-foreground">Especie *</label>
                   <Controller
                     name="especie"
                     control={control}
@@ -363,11 +363,11 @@ export default function PacienteDrawer({
                   )}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-raza" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Raza o cruce</label>
+                  <label htmlFor="p-raza" className="text-[13px] font-semibold text-muted-foreground">Raza o cruce</label>
                   <input id="p-raza" type="text" placeholder="Raza o cruce" className={fieldClass} {...register('raza')} />
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-sexo" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Sexo</label>
+                  <label htmlFor="p-sexo" className="text-[13px] font-semibold text-muted-foreground">Sexo</label>
                   <Controller
                     name="sexo"
                     control={control}
@@ -385,17 +385,17 @@ export default function PacienteDrawer({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-nacimiento" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fecha de nacimiento</label>
+                  <label htmlFor="p-nacimiento" className="text-[13px] font-semibold text-muted-foreground">Fecha de nacimiento</label>
                   <input id="p-nacimiento" type="date" max={hoyLocal()} className={`${fieldClass} ${errors.fechaNacimiento ? 'border-danger' : ''}`} {...register('fechaNacimiento')} />
                   {errors.fechaNacimiento && <p className="text-xs text-danger">{errors.fechaNacimiento.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-peso" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Peso actual (kg)</label>
+                  <label htmlFor="p-peso" className="text-[13px] font-semibold text-muted-foreground">Peso actual (kg)</label>
                   <input id="p-peso" type="number" min="0" step="0.1" placeholder="0.0" className={`${fieldClass} ${errors.peso ? 'border-danger' : ''}`} {...register('peso')} />
                   {errors.peso && <p className="text-xs text-danger">{errors.peso.message}</p>}
                 </div>
                 <div className="grid gap-1.5">
-                  <label htmlFor="p-color" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Color principal</label>
+                  <label htmlFor="p-color" className="text-[13px] font-semibold text-muted-foreground">Color principal</label>
                   <input id="p-color" type="text" placeholder="Color principal" className={fieldClass} {...register('color')} />
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function PacienteDrawer({
               </label>
 
               <div className="grid gap-1.5">
-                <label htmlFor="p-obs" className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Observaciones</label>
+                <label htmlFor="p-obs" className="text-[13px] font-semibold text-muted-foreground">Observaciones</label>
                 <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary" {...register('observaciones')} />
               </div>
             </div>

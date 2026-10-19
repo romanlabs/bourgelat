@@ -38,11 +38,11 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
           <div className="mt-4 max-h-[70vh] space-y-5 overflow-y-auto">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-lg border border-border bg-muted px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Cajero</p>
+                <p className="text-[13px] font-semibold text-muted-foreground">Cajero</p>
                 <p className="font-semibold text-foreground">{detalle.turno.usuario?.nombre || 'Sin nombre'}</p>
               </div>
               <div className="rounded-lg border border-border bg-muted px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Diferencia</p>
+                <p className="text-[13px] font-semibold text-muted-foreground">Diferencia</p>
                 <p className="font-semibold tabular-nums text-foreground">{formatCurrency(detalle.turno.diferencia)}</p>
               </div>
             </div>
@@ -57,7 +57,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
             ) : null}
 
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="mb-2 text-[13px] font-semibold text-muted-foreground">
                 Movimientos manuales
               </p>
               {detalle.movimientos.length === 0 ? (
@@ -78,7 +78,7 @@ export default function TurnoDetalleModal({ turnoId, onClose }) {
             </div>
 
             <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="mb-2 text-[13px] font-semibold text-muted-foreground">
                 Trazabilidad de inventario (productos vendidos en el turno)
               </p>
               {detalle.trazabilidadInventario.length === 0 ? (

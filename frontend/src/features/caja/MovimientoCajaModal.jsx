@@ -78,7 +78,7 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
           </div>
 
           <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monto</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">Monto</span>
             <MoneyInput
               value={form.monto}
               onChange={(value) => setForm((curr) => ({ ...curr, monto: value === 0 ? '' : String(value) }))}
@@ -89,7 +89,7 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
           </label>
 
           <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Motivo</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">Motivo</span>
             <Select
               variant="field"
               aria-label="Motivo del movimiento"
@@ -101,7 +101,7 @@ export default function MovimientoCajaModal({ open, onClose, registrarMovimiento
           </label>
 
           <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="text-[13px] font-semibold text-muted-foreground">
               Observaciones (opcional)
             </span>
             <textarea

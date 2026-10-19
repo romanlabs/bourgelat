@@ -800,7 +800,7 @@ export default function AntecedentesPage() {
                       </p>
                       {selectedAntecedentes.medicamentosActuales?.length > 0 && (
                         <div>
-                          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">Medicamentos actuales</p>
+                          <p className="mb-1 text-[13px] font-semibold text-muted-foreground">Medicamentos actuales</p>
                           <p className="whitespace-pre-line text-foreground">{mapMedicamentosToText(selectedAntecedentes.medicamentosActuales)}</p>
                         </div>
                       )}
