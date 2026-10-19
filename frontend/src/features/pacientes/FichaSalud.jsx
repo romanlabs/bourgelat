@@ -65,20 +65,29 @@ export function PesoEnElTiempo({ historias }) {
         <p className="shrink-0 text-lg font-semibold tabular-nums text-foreground">{formatoNumero(ultimo.valor, 2)} kg</p>
       </div>
       {pesos.length > 1 ? (
-        <div className="h-40 rounded-xl bg-muted px-1 pb-2 pt-1" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
+        <div className="h-40" role="img" aria-label={`Peso en las últimas ${pesos.length} consultas: ${resumen}`}>
           <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
-            <LineChart data={datos} margin={{ top: 22, right: 14, bottom: 0, left: 14 }}>
-              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 4" />
+            <LineChart data={datos} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              {/* El fondo cubre solo la zona de las líneas; las fechas quedan debajo. */}
+              <CartesianGrid vertical={false} fill="hsl(var(--muted))" stroke="hsl(var(--border))" strokeDasharray="3 4" />
               <XAxis
                 dataKey="etiqueta"
                 tickLine={false}
                 axisLine={false}
                 interval={0}
+                padding={{ left: 22, right: 22 }}
                 fontSize={11}
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 dy={4}
               />
-              <YAxis hide domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+              {/* Margen arriba para que el valor sobre cada punto quepa dentro del fondo. */}
+              <YAxis
+                hide
+                domain={([min, max]) => {
+                  const rango = Math.max(max - min, 0.5)
+                  return [min - rango * 0.3, max + rango * 0.6]
+                }}
+              />
               <Tooltip content={<TooltipPeso />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }} />
               <Line
                 type="monotone"
