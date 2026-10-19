@@ -43,7 +43,7 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+  'h-11 rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 /**
  * Panel izquierdo de Recepción: programa una cita nueva. Evolución del
@@ -156,7 +156,7 @@ export function ProgramarCitaPanel({
   const contenido = (
     <>
       {!puedeProgramar ? (
-        <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+        <div className="rounded-xl bg-muted px-4 py-5 text-[15px] leading-7 text-muted-foreground">
           Tu rol actual puede consultar la agenda, pero no crear nuevas citas.
         </div>
       ) : (
@@ -177,7 +177,7 @@ export function ProgramarCitaPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <input type="date" {...register('fecha')} className={`${fieldClass} w-full`} />
-              {errors.fecha ? <p className="mt-1 text-xs text-danger">{errors.fecha.message}</p> : null}
+              {errors.fecha ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.fecha.message}</p> : null}
             </div>
             <Controller
               name="tipoCita"
@@ -215,7 +215,7 @@ export function ProgramarCitaPanel({
                   />
                 )}
               />
-              {errors.horaInicio ? <p className="mt-1 text-xs text-danger">{errors.horaInicio.message}</p> : null}
+              {errors.horaInicio ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.horaInicio.message}</p> : null}
             </div>
             <div>
               <p className="mb-1 text-[13px] font-semibold text-muted-foreground">
@@ -228,12 +228,12 @@ export function ProgramarCitaPanel({
                   <HoraPicker aria-label="Hora de fin" value={field.value} onChange={field.onChange} />
                 )}
               />
-              {errors.horaFin ? <p className="mt-1 text-xs text-danger">{errors.horaFin.message}</p> : null}
+              {errors.horaFin ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.horaFin.message}</p> : null}
             </div>
           </div>
 
           {!ventana.valido ? (
-            <div className="border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
+            <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
               <p className="flex items-start gap-2 font-semibold">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 {ventana.codigo === 'bloqueado'
@@ -243,7 +243,7 @@ export function ProgramarCitaPanel({
                     : 'Ese horario está fuera del horario de atención.'}
               </p>
               {ventana.franjas?.length ? (
-                <p className="mt-1 pl-6 text-xs">
+                <p className="mt-1 pl-6 text-[13px]">
                   Horario de ese día:{' '}
                   {ventana.franjas
                     .map((franja) => formatFranja12(franja.inicio, franja.fin))
@@ -251,12 +251,12 @@ export function ProgramarCitaPanel({
                 </p>
               ) : null}
               {puedeForzar ? (
-                <label className="mt-2 flex items-center gap-2 pl-6 text-xs font-semibold">
+                <label className="mt-2 flex items-center gap-2 pl-6 text-[13px] font-semibold">
                   <input
                     type="checkbox"
                     checked={forzar}
                     onChange={(event) => setForzar(event.target.checked)}
-                    className="h-4 w-4 border-border text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   Agendar de todos modos (urgencia)
                 </label>
@@ -294,12 +294,12 @@ export function ProgramarCitaPanel({
                 />
               )}
             />
-            {errors.veterinarioId ? <p className="mt-1 text-xs text-danger">{errors.veterinarioId.message}</p> : null}
+            {errors.veterinarioId ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.veterinarioId.message}</p> : null}
             {/* Una clinica recien creada solo tiene al administrador, que no es
                 profesional hasta que se le asigna el rol: sin este aviso el
                 desplegable sale vacio y no hay forma de agendar. */}
             {!veterinariosCargando && veterinarios.length === 0 ? (
-              <div className="mt-2 border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
+              <div className="mt-2 rounded-xl bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
                 <p className="font-semibold">Aún no hay profesionales para atender citas.</p>
                 <p>
                   Si tú atiendes pacientes, en Usuarios edita tu cuenta y marca el rol adicional Veterinario. También puedes
@@ -319,13 +319,13 @@ export function ProgramarCitaPanel({
               placeholder="Motivo principal de la cita"
               className={`${fieldClass} w-full`}
             />
-            {errors.motivo ? <p className="mt-1 text-xs text-danger">{errors.motivo.message}</p> : null}
+            {errors.motivo ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.motivo.message}</p> : null}
           </div>
 
           <textarea
             {...register('observaciones')}
             placeholder="Observaciones operativas para recepción o consulta"
-            className="min-h-[100px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
+            className="min-h-[100px] rounded-lg border border-input bg-card px-3 py-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
 
           <button
@@ -337,7 +337,7 @@ export function ProgramarCitaPanel({
               veterinarios.length === 0 ||
               (!ventana.valido && !forzar)
             }
-            className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
           </button>

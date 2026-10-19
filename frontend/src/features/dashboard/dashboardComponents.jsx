@@ -461,7 +461,7 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
   return (
     <div className="overflow-hidden rounded-2xl bg-card">
       <div
-        className={`flex flex-col gap-2.5 px-5 py-3 lg:flex-row lg:items-center lg:justify-between ${
+        className={`flex flex-col gap-2.5 px-6 pt-5 pb-2 lg:flex-row lg:items-center lg:justify-between ${
           collapsed ? '' : 'border-b border-border'
         }`}
       >
@@ -473,29 +473,29 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
       </div>
 
       {!collapsed && filters ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/40 px-5 py-2.5">{filters}</div>
+        <div className="flex flex-wrap items-center gap-2 px-6 pb-3">{filters}</div>
       ) : null}
 
       {collapsed ? null : rows.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-border text-sm">
-            <thead className="bg-muted">
+        <div className="overflow-x-auto px-3 pb-3">
+          <table className="min-w-full text-sm">
+            <thead className="border-b border-border">
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className="px-4 py-2 text-left text-[13px] font-semibold text-muted-foreground"
+                    className="px-3 py-2.5 text-left text-[13px] font-medium text-muted-foreground"
                   >
                     {column.label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {rows.map((row) => (
-                <tr key={row.id || row.key} className="transition hover:bg-muted/50">
+                <tr key={row.id || row.key} className="transition hover:bg-muted">
                   {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-2 align-top text-foreground break-words [overflow-wrap:anywhere]">
+                    <td key={column.key} className="px-3 py-3 align-top text-foreground first:rounded-l-xl last:rounded-r-xl break-words [overflow-wrap:anywhere]">
                       {column.render ? column.render(row) : row[column.key]}
                     </td>
                   ))}
@@ -505,8 +505,8 @@ export function DataTable({ title, subtitle, columns, rows, emptyTitle, emptyBod
           </table>
         </div>
       ) : (
-        <div className="px-5 py-8">
-          <div className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6">
+        <div className="px-6 pb-6 pt-2">
+          <div className="rounded-xl bg-muted px-5 py-6">
             <p className="text-sm font-semibold text-card-foreground">{emptyTitle}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{emptyBody}</p>
           </div>

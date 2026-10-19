@@ -129,8 +129,8 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
   }, [open, onClose])
 
   const fieldClass = (hasError) =>
-    `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
-      hasError ? 'border-danger' : 'border-border'
+    `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+      hasError ? 'border-danger' : 'border-input'
     }`
 
   const labelClass = 'text-[13px] font-semibold text-muted-foreground'
@@ -142,7 +142,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-foreground/50 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -154,17 +154,17 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         role="dialog"
         aria-modal="true"
         aria-label={editingProduct ? `Editar ${editingProduct.nombre}` : 'Nuevo producto'}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
           <div>
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
               {editingProduct ? 'Editar producto' : 'Nuevo producto'}
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               {editingProduct
                 ? 'Ajusta los datos. La cantidad se modifica desde movimientos.'
                 : 'Registro rápido para dejar el inventario listo.'}
@@ -174,14 +174,14 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
             type="button"
             onClick={onClose}
             aria-label="Cerrar formulario"
-            className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
@@ -192,14 +192,14 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               <div className="grid gap-1.5">
                 <span className={labelClass}>Foto del producto</span>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                     {photoPreview
                       ? <img src={photoPreview} alt="Vista previa" className="h-full w-full object-cover" />
                       : <ImageOff className="h-5 w-5 text-muted-foreground/50" />
                     }
                   </div>
                   <div className="grid gap-1">
-                    <label htmlFor={`producto-foto-${photoInputKey}`} className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 border border-border bg-card px-2.5 text-xs font-semibold text-foreground transition hover:bg-muted">
+                    <label htmlFor={`producto-foto-${photoInputKey}`} className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-lg bg-secondary px-2.5 text-[13px] font-semibold text-foreground transition hover:bg-muted">
                       <Upload className="h-3.5 w-3.5" />
                       {photoPreview ? 'Cambiar foto' : 'Seleccionar foto'}
                     </label>
@@ -211,7 +211,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       onChange={handlePhotoChange}
                       className="sr-only"
                     />
-                    <p className="text-[11px] text-muted-foreground">JPG, PNG o WEBP · máx 4 MB</p>
+                    <p className="text-[13px] text-muted-foreground">JPG, PNG o WEBP · máx 4 MB</p>
                   </div>
                 </div>
               </div>
@@ -227,7 +227,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                   className={fieldClass(errors.nombre)}
                   {...register('nombre')}
                 />
-                {errors.nombre && <p className="text-xs text-danger">{errors.nombre.message}</p>}
+                {errors.nombre && <p className="text-[13px] text-danger">{errors.nombre.message}</p>}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -272,7 +272,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                   />
                 </div>
               </div>
-              <p className="text-[11px] leading-4 text-muted-foreground">
+              <p className="text-[13px] leading-5 text-muted-foreground">
                 Elige cómo cuentas una unidad en la estantería. La cantidad baja de a una cada venta.
               </p>
             </div>
@@ -289,7 +289,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                     {editingProduct ? 'Cantidad actual' : 'Cantidad inicial'}
                   </label>
                   {editingProduct ? (
-                    <div className="flex h-11 items-center border border-border bg-muted px-3 text-sm text-muted-foreground">
+                    <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
                       {formatNumber(editingProduct.stock || 0)} {unidadLabel}
                     </div>
                   ) : (
@@ -327,7 +327,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                   />
                 </div>
               </div>
-              <p className="text-[11px] leading-4 text-muted-foreground">
+              <p className="text-[13px] leading-5 text-muted-foreground">
                 Bourgelat te avisa cuando la cantidad llegue a ese número o menos.
               </p>
             </div>
@@ -381,12 +381,12 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
 
               {/* Ganancia / margen calculado */}
               {ventaBajoCosto ? (
-                <div className="flex items-center gap-2 border border-danger/30 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
+                <div className="flex items-center gap-2 rounded-lg bg-danger-soft px-3 py-2 text-[13px] font-semibold text-danger">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   El precio de venta está por debajo del costo.
                 </div>
               ) : margen !== null && Number(precioCompra) > 0 ? (
-                <div className="flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs">
+                <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-[13px]">
                   <span className="text-muted-foreground">Ganancia por unidad</span>
                   <span className="font-semibold text-foreground">
                     {formatCOP(ganancia)}
@@ -401,7 +401,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               <button
                 type="button"
                 onClick={() => setAdditionalOpen((v) => !v)}
-                className="flex w-full items-center gap-2 border border-dashed border-border bg-muted px-3 py-2.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted/80"
+                className="flex h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="text-base leading-none">{additionalOpen ? '−' : '+'}</span>
                 {additionalOpen ? 'Ocultar lote, laboratorio y vencimiento' : 'Agregar lote, laboratorio y vencimiento'}
@@ -455,7 +455,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                       }}
                     />
                   )}
-                  <label htmlFor="d-formula" className="flex cursor-pointer items-center gap-3 border border-border bg-muted px-3 py-3 text-sm text-foreground transition hover:bg-muted/80">
+                  <label htmlFor="d-formula" className="flex cursor-pointer items-center gap-3 rounded-xl bg-muted px-3 py-3 text-sm text-foreground transition hover:bg-muted/80">
                     <input
                       id="d-formula"
                       type="checkbox"
@@ -470,19 +470,19 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-border px-5 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
           <button
             type="submit"
             form="product-drawer-form"
             disabled={isPending}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingProduct ? 'Actualizar producto' : 'Guardar producto'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>

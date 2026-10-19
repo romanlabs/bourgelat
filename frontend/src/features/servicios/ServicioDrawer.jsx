@@ -5,8 +5,8 @@ import MoneyInput from '@/components/shared/MoneyInput'
 import { Select } from '@/components/ui/select'
 
 const fieldClass = (hasError) =>
-  `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
-    hasError ? 'border-danger' : 'border-border'
+  `h-11 w-full rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+    hasError ? 'border-danger' : 'border-input'
   }`
 
 const labelClass = 'text-[13px] font-semibold text-muted-foreground'
@@ -105,7 +105,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
   return createPortal(
     <>
       <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-foreground/50 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -116,23 +116,23 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
           <div>
-            <h2 className="text-base font-semibold text-foreground">{titulo}</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Define el precio de venta y los insumos clínicos que consume cada vez que se factura.
             </p>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition" aria-label="Cerrar">
+          <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Cerrar">
             <X size={18} />
           </button>
         </div>
 
-        <form id="servicio-drawer-form" className="flex-1 overflow-y-auto px-5 py-5 space-y-5" onSubmit={handleSubmit}>
+        <form id="servicio-drawer-form" className="flex-1 overflow-y-auto px-6 py-4 space-y-5" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 flex flex-col gap-1">
               <label className={labelClass}>Nombre del servicio *</label>
@@ -170,7 +170,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             <div className="col-span-2 flex flex-col gap-1">
               <label className={labelClass}>Descripción</label>
               <textarea
-                className="min-h-[70px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
+                className="min-h-[70px] rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 value={form.descripcion}
                 onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
                 maxLength={1000}
@@ -186,7 +186,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
               <button
                 type="button"
                 onClick={agregarFila}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Agregar insumo
@@ -197,7 +197,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
               {form.insumos.map((row) => {
                 const insumo = insumoPorId(row.insumoClinicoId)
                 return (
-                  <div key={row.rowId} className="flex items-start gap-2 border border-border bg-muted/40 p-3">
+                  <div key={row.rowId} className="flex items-start gap-2 rounded-xl bg-muted/40 p-3">
                     <Select
                       variant="field"
                       aria-label="Insumo"
@@ -221,7 +221,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
                         onChange={(e) => actualizarFila(row.rowId, 'cantidadConsumida', e.target.value)}
                       />
                       {insumo && (
-                        <span className="text-[11px] text-muted-foreground">{insumo.unidadBase}</span>
+                        <span className="text-[13px] text-muted-foreground">{insumo.unidadBase}</span>
                       )}
                     </div>
                     <button
@@ -237,7 +237,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
               })}
             </div>
 
-            <div className="mt-4 flex items-center justify-between border border-border bg-muted px-3 py-2 text-xs">
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-[13px]">
               <span className="text-muted-foreground">Costo estimado de insumos</span>
               <span className="font-semibold text-foreground">
                 {formatCOP(costoEstimado)}
@@ -251,19 +251,19 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           </div>
         </form>
 
-        <div className="flex gap-3 border-t border-border px-5 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
           <button
             type="submit"
             form="servicio-drawer-form"
             disabled={isPending || !formularioValido}
-            className="flex-1 border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingServicio ? 'Actualizar servicio' : 'Guardar servicio'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>

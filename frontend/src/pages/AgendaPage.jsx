@@ -73,16 +73,17 @@ function AgendaHeaderTabs({ activeTab, onTabChange, calendarToolbar }) {
     if (!setHeaderCenter) return
     setHeaderCenter(
       <div className="flex w-full items-center gap-4">
-        <div className="flex items-center gap-1 rounded-full border border-border bg-muted p-0.5">
+        <div role="group" aria-label="Sección de la agenda" className="flex items-center gap-1 rounded-xl bg-muted p-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`h-8 rounded-full px-3.5 text-sm font-semibold transition ${
+              className={`h-8 rounded-lg px-3.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 activeTab === tab.id
-                  ? 'bg-card text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-card font-semibold text-foreground'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -106,7 +107,7 @@ function RestrictedAgendaPage() {
           title="Agenda"
           subtitle="Esta sección se muestra a recepción, veterinarios o perfiles administrativos."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-5 text-[15px] leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la agenda clínica. Solicita permisos al
             administrador principal si necesitas programar, confirmar o reprogramar citas.
           </div>
@@ -275,12 +276,12 @@ export default function AgendaPage() {
           {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
               {citasQuery.isError && (
-                <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+                <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm font-medium leading-6 text-danger">
                   {getErrorMessage(citasQuery.error, 'No fue posible cargar la agenda seleccionada.')}
                 </div>
               )}
               {veterinariosQuery.isError && (
-                <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+                <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm font-medium leading-6 text-warning">
                   {getErrorMessage(
                     veterinariosQuery.error,
                     'No fue posible cargar el equipo veterinario disponible.'
@@ -291,16 +292,17 @@ export default function AgendaPage() {
           )}
 
           {/* ── Navegación de tabs — solo movil, en escritorio vive en la barra superior ── */}
-          <div className="flex gap-0 border-b border-border sm:hidden">
+          <div role="group" aria-label="Sección de la agenda" className="flex gap-1 rounded-xl bg-muted p-1 sm:hidden">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
+                aria-pressed={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`-mb-px border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                className={`h-10 flex-1 rounded-lg px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                    ? 'bg-card font-semibold text-foreground'
+                    : 'font-medium text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {tab.label}
@@ -318,7 +320,7 @@ export default function AgendaPage() {
                 <div className="grid gap-4 xl:grid-cols-4">
                   <KpiCard
                     icon={CalendarClock}
-                    label="Citas del dia"
+                    label="Citas del día"
                     value={formatNumber(citasDelDia)}
                     helper={`Agenda visible para ${formatLongDate(fecha)}.`}
                     tone="text-primary"
@@ -350,14 +352,16 @@ export default function AgendaPage() {
               {/* Toggle de vista: calendario / lista, se reutiliza como "extra" del toolbar del calendario */}
               {(() => {
                 const vistaToggle = (
-                  <div className="flex overflow-hidden rounded-full border border-border bg-muted">
+                  <div role="group" aria-label="Vista" className="flex gap-1 rounded-xl bg-muted p-1">
                     <button
                       type="button"
                       onClick={() => setVistaAgenda('calendario')}
                       title="Vista calendario"
-                      className={`flex h-9 w-9 items-center justify-center transition ${
+                      aria-label="Vista calendario"
+                      aria-pressed={vistaAgenda === 'calendario'}
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         vistaAgenda === 'calendario'
-                          ? 'bg-foreground text-background'
+                          ? 'bg-card text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
@@ -367,9 +371,11 @@ export default function AgendaPage() {
                       type="button"
                       onClick={() => setVistaAgenda('lista')}
                       title="Vista lista"
-                      className={`flex h-9 w-9 items-center justify-center transition ${
+                      aria-label="Vista lista"
+                      aria-pressed={vistaAgenda === 'lista'}
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         vistaAgenda === 'lista'
-                          ? 'bg-foreground text-background'
+                          ? 'bg-card text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
@@ -414,8 +420,8 @@ export default function AgendaPage() {
                 /* Vista lista: mantiene el header de tarjeta con filtros propios de la tabla */
                 return (
                   <DashboardPanel
-                    title="Agenda del dia"
-                    subtitle="Tabla operativa para recepción, confirmación y seguimiento rápido por profesional."
+                    title="Agenda del día"
+                    subtitle="Las citas del día en una tabla, para confirmar y seguir cada caso."
                     action={
                       <div className="flex flex-wrap items-center gap-3">
                         {vistaToggle}
@@ -426,11 +432,12 @@ export default function AgendaPage() {
                             setFecha(event.target.value)
                             setPagina(1)
                           }}
-                          className="h-9 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                          aria-label="Fecha"
+                          className="h-10 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                         />
                         <Select
                           aria-label="Filtrar por estado"
-                          className="h-9"
+                          className="h-10"
                           value={estado}
                           onValueChange={(value) => {
                             setEstado(value)
@@ -440,7 +447,7 @@ export default function AgendaPage() {
                         />
                         <Select
                           aria-label="Filtrar por profesional"
-                          className="h-9"
+                          className="h-10"
                           value={veterinarioId}
                           onValueChange={(value) => {
                             setVeterinarioId(value)
@@ -456,7 +463,7 @@ export default function AgendaPage() {
                   >
                     <DataTable
                       title="Citas programadas"
-                      subtitle="Lectura diaria con acción rápida sobre cada caso."
+                      subtitle="Toca «Gestionar» para cambiar el estado o reprogramar."
                       rows={citasRows}
                       columns={[
                         { key: 'horario', label: 'Horario' },
@@ -480,7 +487,7 @@ export default function AgendaPage() {
                             <div className="flex items-center gap-2">
                               <StatusBadge variant={row.estado} showDot size="sm" />
                               {row.sinHistoria && (
-                                <StatusPill tone="border-danger/30 bg-danger-soft text-danger ">
+                                <StatusPill tone="bg-danger-soft text-danger">
                                   Sin historia
                                 </StatusPill>
                               )}
@@ -489,12 +496,12 @@ export default function AgendaPage() {
                         },
                         {
                           key: 'accion',
-                          label: 'Gestion',
+                          label: 'Gestión',
                           render: (row) => (
                             <button
                               type="button"
                               onClick={() => setSelectedAppointment(row.raw)}
-                              className="text-sm font-semibold text-primary hover:text-primary"
+                              className="inline-flex h-9 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               Gestionar
                             </button>
@@ -504,23 +511,23 @@ export default function AgendaPage() {
                       emptyTitle="No hay citas para este filtro"
                       emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestaña Recepción."
                       action={
-                        <StatusPill tone="border-border bg-muted text-foreground">
+                        <StatusPill tone="bg-muted text-foreground">
                           {formatLongDate(fecha)}
                         </StatusPill>
                       }
                     />
 
                     {(citasQuery.data?.paginas || 1) > 1 && (
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
                         <p className="text-sm text-muted-foreground">
-                          Pagina {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
+                          Página {citasQuery.data?.paginaActual || 1} de {citasQuery.data?.paginas || 1}
                         </p>
                         <div className="flex gap-3">
                           <button
                             type="button"
                             onClick={() => setPagina((current) => Math.max(current - 1, 1))}
                             disabled={(citasQuery.data?.paginaActual || 1) <= 1}
-                            className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex h-10 items-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Anterior
                           </button>
@@ -534,7 +541,7 @@ export default function AgendaPage() {
                             disabled={
                               (citasQuery.data?.paginaActual || 1) >= (citasQuery.data?.paginas || 1)
                             }
-                            className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex h-10 items-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Siguiente
                           </button>

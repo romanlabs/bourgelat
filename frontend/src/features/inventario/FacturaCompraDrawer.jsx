@@ -24,8 +24,8 @@ const INSUMO_CATEGORY_OPTIONS = sinOpcionTodas(CATEGORIAS_CLINICAS)
 const esClinico = (item) => item.destinoInventario === 'clinico'
 
 const fieldClass = (hasError) =>
-  `h-10 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary w-full ${
-    hasError ? 'border-danger' : 'border-border'
+  `h-11 w-full rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+    hasError ? 'border-danger' : 'border-input'
   }`
 
 function AvisoProductoDuplicado({ nombre, origen }) {
@@ -52,7 +52,7 @@ function AvisoProductoDuplicado({ nombre, origen }) {
   if (!coincidencia) return null
 
   return (
-    <p className="flex items-start gap-1.5 text-xs text-warning">
+    <p className="flex items-start gap-1.5 text-[13px] text-warning">
       <AlertTriangle size={14} className="mt-0.5 shrink-0" />
       Ya existe {origen === 'clinico' ? 'un insumo' : 'un producto'} llamado &quot;
       {coincidencia.nombre}&quot; en el catálogo. Verifica que no sea el mismo antes de crear uno
@@ -73,7 +73,7 @@ function CamposVencimiento({ item, fechaCompra, onChange }) {
     <div className="space-y-1">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Fecha de vencimiento</label>
+          <label className="text-[13px] text-muted-foreground">Fecha de vencimiento</label>
           <input
             type="date"
             className={fieldClass(false)}
@@ -82,7 +82,7 @@ function CamposVencimiento({ item, fechaCompra, onChange }) {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Lote</label>
+          <label className="text-[13px] text-muted-foreground">Lote</label>
           <input
             className={fieldClass(false)}
             placeholder="Opcional"
@@ -94,7 +94,7 @@ function CamposVencimiento({ item, fechaCompra, onChange }) {
       </div>
       {aviso && (
         <p
-          className={`flex items-start gap-1.5 text-xs ${
+          className={`flex items-start gap-1.5 text-[13px] ${
             aviso.tono === 'warn' ? 'text-warning' : 'text-muted-foreground'
           }`}
         >
@@ -159,7 +159,7 @@ export default function FacturaCompraDrawer({
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-foreground/50 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -171,23 +171,23 @@ export default function FacturaCompraDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] sm:border-l sm:border-border ${
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
           <div>
-            <h2 className="text-base font-semibold text-foreground">{titulo}</h2>
+            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
             {editingFactura && (
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {editingFactura.proveedor} — {editingFactura.fecha}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Cerrar"
           >
             <X size={18} />
@@ -195,12 +195,12 @@ export default function FacturaCompraDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
 
           {/* Datos cabecera */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Proveedor *</label>
+              <label className="text-[13px] font-medium text-muted-foreground">Proveedor *</label>
               <input
                 className={fieldClass(!form.proveedor.trim())}
                 placeholder="Nombre del proveedor"
@@ -209,12 +209,12 @@ export default function FacturaCompraDrawer({
                 maxLength={200}
               />
               {!form.proveedor.trim() && (
-                <p className="text-xs text-danger">El proveedor es obligatorio</p>
+                <p className="text-[13px] text-danger">El proveedor es obligatorio</p>
               )}
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Fecha de compra *</label>
+              <label className="text-[13px] font-medium text-muted-foreground">Fecha de compra *</label>
               <input
                 type="date"
                 className={fieldClass(!form.fecha)}
@@ -224,7 +224,7 @@ export default function FacturaCompraDrawer({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">N° factura proveedor</label>
+              <label className="text-[13px] font-medium text-muted-foreground">N° factura proveedor</label>
               <input
                 className={fieldClass(false)}
                 placeholder="Opcional"
@@ -235,9 +235,9 @@ export default function FacturaCompraDrawer({
             </div>
 
             <div className="col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Observaciones</label>
+              <label className="text-[13px] font-medium text-muted-foreground">Observaciones</label>
               <textarea
-                className="border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary w-full resize-none"
+                className="rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring w-full resize-none"
                 rows={2}
                 placeholder="Opcional"
                 value={form.observaciones}
@@ -248,7 +248,7 @@ export default function FacturaCompraDrawer({
 
             {/* Tipo de pago */}
             <div className="col-span-2 flex flex-col gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Forma de pago *</span>
+              <span className="text-[13px] font-medium text-muted-foreground">Forma de pago *</span>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'contado', label: 'Contado', desc: 'Pago inmediato al recibir la mercancía' },
@@ -264,7 +264,7 @@ export default function FacturaCompraDrawer({
                         fechaPagoFinal: op.value === 'contado' ? '' : f.fechaPagoFinal,
                       }))
                     }
-                    className={`flex flex-col items-start gap-0.5 rounded border px-4 py-3 text-left transition ${
+                    className={`flex flex-col items-start gap-0.5 rounded-lg border px-4 py-3 text-left transition ${
                       form.tipoPago === op.value
                         ? 'border-primary bg-primary/8 ring-1 ring-primary'
                         : 'border-border bg-background hover:bg-muted'
@@ -273,14 +273,14 @@ export default function FacturaCompraDrawer({
                     <span className={`text-sm font-semibold ${form.tipoPago === op.value ? 'text-primary' : 'text-foreground'}`}>
                       {op.label}
                     </span>
-                    <span className="text-xs text-muted-foreground leading-snug">{op.desc}</span>
+                    <span className="text-[13px] text-muted-foreground leading-snug">{op.desc}</span>
                   </button>
                 ))}
               </div>
 
               {form.tipoPago === 'credito' && (
                 <div className="flex flex-col gap-1 mt-1">
-                  <label className="text-xs font-medium text-muted-foreground">Fecha límite de pago *</label>
+                  <label className="text-[13px] font-medium text-muted-foreground">Fecha límite de pago *</label>
                   <input
                     type="date"
                     className={fieldClass(!form.fechaPagoFinal)}
@@ -289,7 +289,7 @@ export default function FacturaCompraDrawer({
                     onChange={(e) => setForm((f) => ({ ...f, fechaPagoFinal: e.target.value }))}
                   />
                   {!form.fechaPagoFinal && (
-                    <p className="text-xs text-danger">Debes ingresar la fecha límite de pago</p>
+                    <p className="text-[13px] text-danger">Debes ingresar la fecha límite de pago</p>
                   )}
                 </div>
               )}
@@ -303,23 +303,23 @@ export default function FacturaCompraDrawer({
               <button
                 type="button"
                 onClick={agregarItem}
-                className="flex items-center gap-1 text-xs text-primary hover:underline"
+                className="flex items-center gap-1 text-[13px] text-primary hover:underline"
               >
                 <Plus size={14} /> Agregar ítem
               </button>
             </div>
 
             {form.items.length === 0 && (
-              <p className="text-xs text-muted-foreground py-3 text-center border border-dashed border-border rounded">
+              <p className="text-[13px] text-muted-foreground py-3 text-center border border-dashed border-border rounded-lg">
                 Sin ítems — agrega al menos uno
               </p>
             )}
 
             <div className="space-y-2">
               {form.items.map((item, idx) => (
-                <div key={idx} className="border border-border rounded p-3 space-y-2 bg-background">
+                <div key={idx} className="space-y-3 rounded-xl bg-muted p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">Ítem {idx + 1}</span>
+                    <span className="text-[13px] font-medium text-muted-foreground">Ítem {idx + 1}</span>
                     {form.items.length > 1 && (
                       <button
                         type="button"
@@ -333,7 +333,7 @@ export default function FacturaCompraDrawer({
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground">Inventario destino *</label>
+                    <label className="text-[13px] text-muted-foreground">Inventario destino *</label>
                     <Select
                       variant="field"
                       aria-label="Inventario al que pertenece el producto"
@@ -341,7 +341,7 @@ export default function FacturaCompraDrawer({
                       onValueChange={(value) => actualizarItemDestino(idx, value)}
                       options={DESTINO_INVENTARIO_OPTIONS}
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[13px] text-muted-foreground">
                       {esClinico(item)
                         ? 'Se consume en consultas y procedimientos, no se vende al tutor.'
                         : 'Mercancía que se le vende al tutor en el punto de venta.'}
@@ -359,7 +359,7 @@ export default function FacturaCompraDrawer({
                         onClick={() => {
                           if (Boolean(item.esNuevo) !== op.value) toggleItemEsNuevo(idx)
                         }}
-                        className={`rounded border px-3 py-1.5 text-xs font-semibold transition ${
+                        className={`rounded-lg border px-3 py-1.5 text-[13px] font-semibold transition ${
                           Boolean(item.esNuevo) === op.value
                             ? 'border-primary bg-primary/8 text-primary'
                             : 'border-border bg-background text-muted-foreground hover:bg-muted'
@@ -373,7 +373,7 @@ export default function FacturaCompraDrawer({
                   {item.esNuevo ? (
                     <div className="space-y-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs text-muted-foreground">
+                        <label className="text-[13px] text-muted-foreground">
                           {esClinico(item) ? 'Nombre del insumo *' : 'Nombre del producto *'}
                         </label>
                         <input
@@ -384,7 +384,7 @@ export default function FacturaCompraDrawer({
                           maxLength={200}
                         />
                         {!item.productoNuevo.nombre.trim() && (
-                          <p className="text-xs text-danger">El nombre es obligatorio</p>
+                          <p className="text-[13px] text-danger">El nombre es obligatorio</p>
                         )}
                         {item.productoNuevo.nombre.trim() && (
                           <AvisoProductoDuplicado
@@ -395,7 +395,7 @@ export default function FacturaCompraDrawer({
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs text-muted-foreground">Categoría *</label>
+                          <label className="text-[13px] text-muted-foreground">Categoría *</label>
                           <Select
                             variant="field"
                             aria-label="Categoría del producto"
@@ -406,12 +406,12 @@ export default function FacturaCompraDrawer({
                             options={esClinico(item) ? INSUMO_CATEGORY_OPTIONS : PRODUCT_CATEGORY_OPTIONS}
                           />
                           {!item.productoNuevo.categoria && (
-                            <p className="text-xs text-danger">Selecciona una categoría</p>
+                            <p className="text-[13px] text-danger">Selecciona una categoría</p>
                           )}
                         </div>
                         {esClinico(item) ? (
                           <div className="flex flex-col gap-1">
-                            <label className="text-xs text-muted-foreground">Unidad base *</label>
+                            <label className="text-[13px] text-muted-foreground">Unidad base *</label>
                             <Select
                               variant="field"
                               aria-label="Unidad base de consumo"
@@ -422,12 +422,12 @@ export default function FacturaCompraDrawer({
                               options={UNIDAD_BASE_OPTIONS}
                             />
                             {!item.productoNuevo.unidadBase && (
-                              <p className="text-xs text-danger">Selecciona una unidad</p>
+                              <p className="text-[13px] text-danger">Selecciona una unidad</p>
                             )}
                           </div>
                         ) : (
                           <div className="flex flex-col gap-1">
-                            <label className="text-xs text-muted-foreground">Unidad de medida *</label>
+                            <label className="text-[13px] text-muted-foreground">Unidad de medida *</label>
                             <Select
                               variant="field"
                               aria-label="Unidad de medida"
@@ -438,14 +438,14 @@ export default function FacturaCompraDrawer({
                               options={UNIT_OPTIONS}
                             />
                             {!item.productoNuevo.unidadMedida && (
-                              <p className="text-xs text-danger">Selecciona una unidad</p>
+                              <p className="text-[13px] text-danger">Selecciona una unidad</p>
                             )}
                           </div>
                         )}
                       </div>
                       {esClinico(item) && (
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs text-muted-foreground">
+                          <label className="text-[13px] text-muted-foreground">
                             Cantidad por presentación *
                           </label>
                           <input
@@ -460,13 +460,13 @@ export default function FacturaCompraDrawer({
                             }
                           />
                           {!(Number(item.productoNuevo.cantidadPresentacion) > 0) && (
-                            <p className="text-xs text-danger">
+                            <p className="text-[13px] text-danger">
                               Indica cuánto trae cada presentación
                             </p>
                           )}
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[13px] text-muted-foreground">
                         {esClinico(item) ? (
                           <>
                             Se creará en el inventario clínico con existencia 0 y el precio de este ítem
@@ -485,7 +485,7 @@ export default function FacturaCompraDrawer({
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">
+                      <label className="text-[13px] text-muted-foreground">
                         {esClinico(item) ? 'Insumo clínico *' : 'Producto *'}
                       </label>
                       <ProductoComboBox
@@ -501,7 +501,7 @@ export default function FacturaCompraDrawer({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">
+                      <label className="text-[13px] text-muted-foreground">
                         {esClinico(item) ? 'Cantidad (presentaciones) *' : 'Cantidad *'}
                       </label>
                       <input
@@ -513,7 +513,7 @@ export default function FacturaCompraDrawer({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground">
+                      <label className="text-[13px] text-muted-foreground">
                         {esClinico(item) ? 'Precio por presentación (COP)' : 'Precio unitario (COP)'}
                       </label>
                       <MoneyInput
@@ -532,7 +532,7 @@ export default function FacturaCompraDrawer({
                     />
                   )}
 
-                  <div className="text-right text-xs text-muted-foreground">
+                  <div className="text-right text-[13px] text-muted-foreground">
                     Subtotal:{' '}
                     <span className="font-semibold text-foreground">
                       {formatCOP(Number(item.cantidad || 0) * Number(item.precioUnitario || 0))}
@@ -545,23 +545,23 @@ export default function FacturaCompraDrawer({
 
           {/* Error */}
           {errorMsg && (
-            <p className="text-sm text-danger rounded border border-danger/30 bg-danger-soft px-3 py-2">
+            <p className="text-sm text-danger rounded-lg bg-danger-soft px-3 py-2">
               {errorMsg}
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border px-5 py-4 space-y-3">
+        <div className="space-y-3 border-t border-border/60 px-6 py-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total estimado</span>
-            <span className="text-lg font-bold text-foreground">{formatCOP(totalCalculado)}</span>
+            <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-foreground">{formatCOP(totalCalculado)}</span>
           </div>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 rounded border border-border text-sm text-muted-foreground hover:bg-muted transition"
+              className="h-11 flex-1 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancelar
             </button>
@@ -569,7 +569,7 @@ export default function FacturaCompraDrawer({
               type="button"
               onClick={onSubmit}
               disabled={isSaving || !formularioValido}
-              className="flex-1 h-10 rounded bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? 'Guardando…' : editingFactura ? 'Guardar cambios' : 'Guardar borrador'}
             </button>

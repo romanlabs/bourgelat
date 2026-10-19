@@ -71,7 +71,7 @@ function RestrictedFinancePage() {
           title="Caja y facturación"
           subtitle="Esta sección se muestra a perfiles operativos y administrativos autorizados."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad financiera completa. Si necesitas revisar ingresos
             o facturas, solicita permisos al administrador principal o al facturador de la clínica.
           </div>
@@ -225,9 +225,9 @@ export default function FinanzasPage() {
     <AdminShell
       currentKey="finanzas"
       title="Caja y facturación"
-      description="Operación diaria de ventas, servicios, productos y control de facturas con una lectura más natural para recepción, auxiliares, médicos y facturación."
+      description="Cobra ventas, lleva el turno de caja y revisa ingresos, gastos y facturas."
       headerBadge={
-        <StatusPill tone="border-success/30 bg-success-soft text-success ">
+        <StatusPill tone="bg-success-soft text-success">
           Corte mensual activo
         </StatusPill>
       }
@@ -247,31 +247,41 @@ export default function FinanzasPage() {
         />
       ) : (
         <div className="space-y-5">
-          <div className="flex items-center justify-between gap-2 border-b border-border">
-            <div className="flex min-w-0 gap-0 overflow-x-auto">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              role="tablist"
+              aria-label="Secciones de caja y facturación"
+              className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1"
+            >
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold transition-colors sm:px-5 ${
+                  className={`flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                      ? 'bg-card font-semibold text-foreground'
+                      : 'font-medium text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={abrirPos}
-              className="mr-1 inline-flex shrink-0 items-center gap-1.5 border border-primary bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Nueva venta
-            </button>
+            {/* En la pestaña Venta el botón grande del centro ya es la acción
+                principal: no repetimos un segundo botón primario. */}
+            {activeTab !== 'facturacion' ? (
+              <button
+                type="button"
+                onClick={abrirPos}
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nueva venta
+              </button>
+            ) : null}
           </div>
 
           {/* ── Tab: Resumen ── */}
@@ -280,19 +290,19 @@ export default function FinanzasPage() {
               {resumenHook.ingresosQuery.isError || resumenHook.resumenQuery.isError ? (
                 <div className="grid gap-4">
                   {resumenHook.ingresosQuery.isError ? (
-                    <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+                    <div className="rounded-xl bg-warning-soft px-4 py-4 text-sm leading-6 text-warning">
                       No fue posible cargar el reporte de ingresos del periodo.
                     </div>
                   ) : null}
                   {resumenHook.resumenQuery.isError ? (
-                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
                       No fue posible cargar el resumen de facturas.
                     </div>
                   ) : null}
                 </div>
               ) : null}
 
-              <div className="grid gap-4 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <KpiCard
                   icon={Wallet}
                   label="Ingresos del mes"
@@ -316,7 +326,7 @@ export default function FinanzasPage() {
                 />
                 <KpiCard
                   icon={CircleAlert}
-                  label="Pendientes electronicos"
+                  label="Pendientes electrónicos"
                   value={formatNumber(resumenHook.pendientesElectronicos)}
                   helper="Facturas con emisión pendiente, rechazada o con error técnico."
                   tone="text-warning"
@@ -349,9 +359,9 @@ export default function FinanzasPage() {
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (
             cajaHook.turnoActivoQuery.isLoading ? (
-              <div className="h-40 animate-pulse rounded-[28px] border border-border bg-muted" />
+              <div className="h-40 animate-pulse rounded-2xl bg-card" />
             ) : !cajaHook.turnoActivo ? (
-              <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
+              <div className="overflow-hidden rounded-2xl bg-card">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
@@ -365,12 +375,12 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : cajaHook.turnoActivo.vencido ? (
-              <div className="overflow-hidden rounded-[28px] border border-warning/30 bg-warning-soft shadow-panel">
+              <div className="overflow-hidden rounded-2xl bg-warning-soft">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
-                  title="Tu turno de caja quedó abierto desde un dia anterior"
-                  description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo — asi el corte del dia queda correcto."
+                  title="Tu turno de caja quedó abierto desde un día anterior"
+                  description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo: así el corte del día queda correcto."
                   action={
                     <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
                       Cerrar turno vencido
@@ -379,27 +389,56 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : (
-              <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-panel">
-                <div className="max-w-sm text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Receipt className="h-8 w-8" />
+              <div className="space-y-5">
+                {/* Franja del turno: el cajero ve de un vistazo que puede cobrar. */}
+                <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-3 rounded-2xl bg-card px-5 py-3.5">
+                  <div className="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm">
+                    <span className="flex items-center gap-2 font-semibold text-success">
+                      <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                      Turno abierto
+                    </span>
+                    <span className="text-muted-foreground">
+                      Fondo{' '}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(cajaHook.turnoActivo.montoInicial)}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Ventas en efectivo{' '}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(cajaHook.turnoActivo.totalVentasEfectivo || 0)}
+                      </span>
+                    </span>
                   </div>
-                  <h2 className="mt-5 text-xl font-bold text-foreground">Registrar una venta</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Abre el punto de venta para armar la compra, cobrar y calcular el vuelto — todo
-                    en una sola ventana.
-                  </p>
                   <button
                     type="button"
-                    onClick={abrirPos}
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                    onClick={() => setActiveTab('turnos')}
+                    className="inline-flex h-10 items-center px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Plus className="h-4 w-4" />
-                    Nueva venta
+                    Ver turno de caja
                   </button>
-                  <p className="mt-4 text-[11px] text-muted-foreground">
-                    Turno de caja abierto · fondo {formatCurrency(cajaHook.turnoActivo.montoInicial)}
-                  </p>
+                </div>
+
+                <div className="flex min-h-[22rem] items-center justify-center rounded-2xl bg-card px-6 py-12">
+                  <div className="flex max-w-md flex-col items-center text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+                      <Receipt className="h-7 w-7" />
+                    </div>
+                    <h2 className="mt-5 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-foreground">
+                      Registrar una venta
+                    </h2>
+                    <p className="mt-2 text-[15px] leading-6 text-muted-foreground">
+                      Arma la cuenta, cobra y calcula el cambio en una sola ventana.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={abrirPos}
+                      className="mt-6 inline-flex h-14 items-center gap-2 rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Nueva venta
+                    </button>
+                  </div>
                 </div>
               </div>
             )
@@ -422,8 +461,8 @@ export default function FinanzasPage() {
           {activeTab === 'historial' && (
             <div className="space-y-5">
               {historialHook.facturasQuery.isError ? (
-                <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-                  No fue posible cargar la tabla administrativa de facturas.
+                <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
+                  No fue posible cargar la lista de facturas.
                 </div>
               ) : null}
 
@@ -453,7 +492,7 @@ export default function FinanzasPage() {
                       <button
                         type="button"
                         onClick={() => historialHook.seleccionarFactura(row.id)}
-                        className="border border-border bg-card px-3 py-2 text-[13px] font-semibold text-foreground hover:bg-muted"
+                        className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
                       >
                         Ver detalle
                       </button>
@@ -471,7 +510,8 @@ export default function FinanzasPage() {
                         value={historialHook.buscarInput}
                         onChange={(event) => historialHook.setBuscarInput(event.target.value)}
                         placeholder="Buscar factura o cliente"
-                        className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        aria-label="Buscar factura o cliente"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pl-10 pr-3"
                       />
                     </label>
                     <div className="flex items-center gap-2">
@@ -481,16 +521,16 @@ export default function FinanzasPage() {
                         max={historialHook.fechaFin}
                         onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
                         aria-label="Fecha inicial del filtro"
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
                       />
-                      <span className="text-xs text-muted-foreground">a</span>
+                      <span className="text-sm text-muted-foreground">a</span>
                       <input
                         type="date"
                         value={historialHook.fechaFin}
                         min={historialHook.fechaInicio}
                         onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
                         aria-label="Fecha final del filtro"
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
                       />
                     </div>
                     <Select
@@ -505,7 +545,7 @@ export default function FinanzasPage() {
                     />
                     <button
                       type="submit"
-                      className="border border-border bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-foreground/90"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Buscar
                     </button>
@@ -514,9 +554,9 @@ export default function FinanzasPage() {
               />
 
               {(historialHook.facturasQuery.data?.paginas || 1) > 1 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-5 py-4 shadow-sm">
-                  <p className="text-sm text-muted-foreground">
-                    Pagina {historialHook.facturasQuery.data?.paginaActual || 1} de{' '}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card px-5 py-4">
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    Página {historialHook.facturasQuery.data?.paginaActual || 1} de{' '}
                     {historialHook.facturasQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -527,7 +567,7 @@ export default function FinanzasPage() {
                         historialHook.setPagina((curr) => Math.max(curr - 1, 1))
                       }}
                       disabled={(historialHook.facturasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -543,7 +583,7 @@ export default function FinanzasPage() {
                         (historialHook.facturasQuery.data?.paginaActual || 1) >=
                         (historialHook.facturasQuery.data?.paginas || 1)
                       }
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -552,10 +592,10 @@ export default function FinanzasPage() {
               ) : null}
 
               {!puedeEmitirElectronica ? (
-                <div className="border border-border bg-card px-5 py-5 shadow-sm">
+                <div className="rounded-2xl bg-card px-5 py-5">
                   <div className="flex items-start gap-3">
                     <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                    <div className="text-sm leading-7 text-muted-foreground">
+                    <div className="text-sm leading-6 text-muted-foreground">
                       La configuración técnica de la facturación electrónica ya no se modifica desde la clínica.
                       Si necesitas activar o corregir la integración, se hace desde soporte central
                       con un perfil superadmin.

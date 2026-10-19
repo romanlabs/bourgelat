@@ -35,8 +35,14 @@ const getErrorMessage = (error, fallback) =>
 
 const buildHistoryStatusTone = (bloqueada) =>
   bloqueada
-    ? 'border-warning/30 bg-warning-soft text-warning '
-    : 'border-success/30 bg-success-soft text-success '
+    ? 'bg-warning-soft text-warning'
+    : 'bg-success-soft text-success'
+
+const CAMPO =
+  'h-11 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+
+const BOTON_PAGINA =
+  'inline-flex h-10 items-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const getCurrentMonthRange = () => {
   const now = new Date()
@@ -56,8 +62,8 @@ function FiltroChip({ icon, label, value, helper, tone, activo, onClick }) {
       onClick={onClick}
       aria-pressed={activo}
       className={cn(
-        'w-full rounded-xl text-left transition',
-        activo ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:opacity-80'
+        'w-full rounded-2xl text-left outline-none transition active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring',
+        activo ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:brightness-[0.98]'
       )}
     >
       <KpiCard icon={icon} label={label} value={value} helper={helper} tone={tone} />
@@ -73,7 +79,7 @@ function RestrictedHistoriasPage() {
           title="Historias clínicas"
           subtitle="Esta sección se muestra a veterinarios, auxiliares o administración autorizada."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-4 text-[15px] leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad sobre la historia clínica. Solicita permisos al
             administrador o al médico responsable.
           </div>
@@ -194,9 +200,9 @@ export default function HistoriasPage() {
     <AdminShell
       currentKey="historias"
       title="Historias clínicas"
-      description="Bandeja de trabajo clínico: consultas sin cerrar, controles pendientes y búsqueda por diagnóstico."
+      description="Consultas por cerrar, controles pendientes y búsqueda por diagnóstico."
       headerBadge={
-        <StatusPill tone="border-danger/30 bg-danger-soft text-danger ">
+        <StatusPill tone="bg-accent text-primary">
           Consulta documentada
         </StatusPill>
       }
@@ -235,7 +241,7 @@ export default function HistoriasPage() {
             icon={Stethoscope}
             label="Profesionales"
             value={formatNumber(resumen.profesionalesActivos)}
-            helper="Medicos con consultas registradas este mes."
+            helper="Médicos con consultas registradas este mes."
             tone="text-info"
           />
         </div>
@@ -243,12 +249,12 @@ export default function HistoriasPage() {
         {historiasQuery.isError || veterinariosQuery.isError ? (
           <div className="grid gap-4">
             {historiasQuery.isError && (
-              <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+              <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
                 {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clínicas.')}
               </div>
             )}
             {veterinariosQuery.isError && (
-              <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+              <div role="alert" className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
                 {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
               </div>
             )}
@@ -280,7 +286,7 @@ export default function HistoriasPage() {
                   onChange={(e) => { setBuscar(e.target.value); setPagina(1) }}
                   placeholder="Motivo o diagnóstico"
                   aria-label="Buscar por motivo o diagnóstico"
-                  className="h-10 border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus:border-info"
+                  className={`${CAMPO} pl-9 pr-3`}
                 />
               </label>
               <input
@@ -288,21 +294,21 @@ export default function HistoriasPage() {
                 value={fechaInicio}
                 onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
                 aria-label="Desde"
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
+                className={`${CAMPO} px-3`}
               />
               <input
                 type="date"
                 value={fechaFin}
                 onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
                 aria-label="Hasta"
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
+                className={`${CAMPO} px-3`}
               />
               <Select
                 aria-label="Filtrar por médico"
                 value={veterinarioId}
                 onValueChange={(value) => { setVeterinarioId(value); setPagina(1) }}
                 options={[
-                  { value: 'todos', label: 'Todos los medicos' },
+                  { value: 'todos', label: 'Todos los médicos' },
                   ...veterinarios.map((v) => ({ value: v.id, label: v.nombre })),
                 ]}
               />
@@ -358,16 +364,16 @@ export default function HistoriasPage() {
           />
 
           {(historiasQuery.data?.paginas || 1) > 1 && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <p className="text-sm text-muted-foreground">
-                Pagina {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
+              <p className="text-sm tabular-nums text-muted-foreground">
+                Página {historiasQuery.data?.paginaActual || 1} de {historiasQuery.data?.paginas || 1}
               </p>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setPagina((p) => Math.max(p - 1, 1))}
                   disabled={(historiasQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  className={BOTON_PAGINA}
                 >
                   Anterior
                 </button>
@@ -375,7 +381,7 @@ export default function HistoriasPage() {
                   type="button"
                   onClick={() => setPagina((p) => Math.min(p + 1, historiasQuery.data?.paginas || 1))}
                   disabled={(historiasQuery.data?.paginaActual || 1) >= (historiasQuery.data?.paginas || 1)}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  className={BOTON_PAGINA}
                 >
                   Siguiente
                 </button>

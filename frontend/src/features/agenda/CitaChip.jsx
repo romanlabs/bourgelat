@@ -2,13 +2,15 @@ import { cn } from '@/lib/utils'
 import { formatHora12 } from '@/lib/hora'
 import {
   buildStateTone,
-  getAccentColor,
   URGENCIA_ACCENT,
   TIPO_SHORT,
   especieToEmoji,
   timeToTop,
   calcCitaHeight,
 } from './calendarConstants'
+
+// La urgencia se marca con una franja roja a la izquierda (sombra interna, no borde).
+const estiloUrgencia = { boxShadow: `inset 3px 0 0 ${URGENCIA_ACCENT}` }
 
 // Chip posicionado absoluto dentro de una columna de la grilla horaria
 export function CitaChip({ cita, onClick, esProxima, slotHeight, gridInicio, gridFin }) {
@@ -29,41 +31,40 @@ export function CitaChip({ cita, onClick, esProxima, slotHeight, gridInicio, gri
       }}
       title={`${cita.mascota?.nombre || 'Cita'} — ${horaLabel}${sinHistoria ? ' — Pendiente de historia' : ''}`}
       className={cn(
-        'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-sm border-y border-r px-1.5 py-1 text-left shadow-sm transition-all hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+        'absolute left-0.5 right-0.5 z-10 overflow-hidden rounded-md px-2 py-1 text-left transition hover:-translate-y-px hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         buildStateTone(cita.estado),
-        esUrgencia && 'border-dashed !border-danger',
-        esProxima && 'ring-2 ring-primary ring-offset-1'
+        esProxima && 'ring-2 ring-inset ring-brand'
       )}
       style={{
         top: `${top}px`,
-        height: `${height}px`,
-        minHeight: '24px',
-        borderLeftWidth: '3px',
-        borderLeftColor: esUrgencia ? URGENCIA_ACCENT : getAccentColor(cita.estado),
+        height: `${Math.max(height - 2, 22)}px`,
+        minHeight: '22px',
+        ...(esUrgencia ? estiloUrgencia : null),
       }}
     >
       {sinHistoria && (
         <span
-          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-danger ring-1 ring-white"
+          className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger ring-1 ring-card"
           title="Pendiente de historia clínica"
         />
       )}
-      <p className="truncate text-[11px] font-bold leading-tight">
-        <span className="mr-0.5 not-italic">{esUrgencia ? '⚡' : emoji}</span>
+      <p className="truncate text-[13px] font-semibold leading-4">
+        <span className="mr-1 not-italic">{esUrgencia ? '⚡' : emoji}</span>
+        {height < 44 ? <span className="mr-1 font-medium tabular-nums opacity-80">{horaLabel}</span> : null}
         {cita.mascota?.nombre || 'Paciente'}
       </p>
       {height >= 44 && (
-        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-75">
-          {horaLabel} · {tipoCorto}
+        <p className="mt-0.5 truncate text-[13px] leading-4 opacity-80">
+          <span className="tabular-nums">{horaLabel}</span> · {tipoCorto}
         </p>
       )}
       {height >= 64 && (
-        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-60">
+        <p className="mt-0.5 truncate text-[13px] leading-4 opacity-75">
           {cita.propietario?.nombre?.split(' ')[0] || ''}
         </p>
       )}
       {height >= 84 && (
-        <p className="mt-0.5 truncate text-[10px] leading-tight opacity-55">
+        <p className="mt-0.5 truncate text-[13px] leading-4 opacity-75">
           Dr. {cita.veterinario?.nombre?.split(' ')[0] || ''}
         </p>
       )}
@@ -87,18 +88,14 @@ export function CitaChipMini({ cita, onClick, esProxima }) {
       }}
       title={`${horaLabel} · ${cita.mascota?.nombre || 'Cita'}${sinHistoria ? ' — Pendiente de historia' : ''}`}
       className={cn(
-        'relative flex w-full items-center gap-1 overflow-hidden rounded-sm border-y border-r px-1 py-px text-left transition hover:brightness-95 focus:outline-none focus:ring-1 focus:ring-primary',
+        'relative flex w-full items-center gap-1.5 overflow-hidden rounded-md px-1.5 py-0.5 text-left transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         buildStateTone(cita.estado),
-        esUrgencia && 'border-dashed !border-danger',
-        esProxima && 'ring-1 ring-primary'
+        esProxima && 'ring-2 ring-inset ring-brand'
       )}
-      style={{
-        borderLeftWidth: '3px',
-        borderLeftColor: esUrgencia ? URGENCIA_ACCENT : getAccentColor(cita.estado),
-      }}
+      style={esUrgencia ? estiloUrgencia : undefined}
     >
-      <span className="text-[9px] font-semibold tabular-nums opacity-75">{horaLabel}</span>
-      <span className="truncate text-[10px] font-semibold leading-4">
+      <span className="shrink-0 text-[13px] font-medium tabular-nums opacity-80">{horaLabel}</span>
+      <span className="truncate text-[13px] font-semibold leading-5">
         <span className="mr-0.5">{esUrgencia ? '⚡' : emoji}</span>
         {cita.mascota?.nombre || 'Paciente'}
       </span>

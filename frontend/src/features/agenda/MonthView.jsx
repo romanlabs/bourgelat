@@ -38,11 +38,11 @@ function DiaCell({
           : undefined
       }
       className={cn(
-        'relative flex min-h-[76px] flex-col gap-0.5 border-b border-r border-border p-1 sm:min-h-[92px]',
-        !delMes && 'bg-muted/30',
-        esHoy && 'bg-primary/5',
+        'relative flex min-h-[84px] flex-col gap-1 border-l border-t border-border p-1.5 sm:min-h-[104px]',
+        !delMes && 'bg-muted/40',
+        esHoy && 'bg-accent/30',
         bloqueo && 'bg-warning-soft',
-        clickeable && 'cursor-pointer transition-colors hover:bg-accent/30'
+        clickeable && 'cursor-pointer transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring'
       )}
       onClick={() => {
         if (clickeable && onSlotClick) {
@@ -63,19 +63,19 @@ function DiaCell({
         }}
         title="Ver día"
         className={cn(
-          'self-end text-xs font-semibold leading-none transition hover:text-primary',
+          'flex h-7 min-w-7 items-center justify-center self-end rounded-md px-1 text-[13px] font-semibold leading-none tabular-nums transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           esHoy
-            ? 'flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white hover:text-white'
+            ? 'bg-primary text-primary-foreground hover:bg-primary hover:brightness-110'
             : delMes
               ? 'text-foreground'
-              : 'text-muted-foreground/60'
+              : 'text-muted-foreground'
         )}
       >
         {format(day, 'd')}
       </button>
 
       {bloqueo ? (
-        <p className="truncate rounded-sm bg-warning-soft px-1 py-px text-[10px] font-semibold text-warning">
+        <p className="truncate rounded-md bg-card px-1.5 py-0.5 text-[13px] font-semibold text-warning">
           {bloqueo.motivo}
         </p>
       ) : null}
@@ -95,7 +95,7 @@ function DiaCell({
             <button
               type="button"
               onClick={(e) => e.stopPropagation()}
-              className="mt-auto self-start text-[10px] font-semibold text-muted-foreground transition hover:text-primary"
+              className="mt-auto self-start rounded-md px-1 text-[13px] font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               +{ocultas} más
             </button>
@@ -105,9 +105,9 @@ function DiaCell({
               align="start"
               sideOffset={4}
               onClick={(e) => e.stopPropagation()}
-              className="z-50 w-64 border border-border bg-card p-2 shadow-lg"
+              className="z-50 w-72 rounded-xl bg-popover p-3 shadow-dropdown"
             >
-              <p className="mb-1.5 px-1 text-xs font-semibold capitalize text-foreground">
+              <p className="mb-2 px-1 text-sm font-semibold first-letter:uppercase text-foreground">
                 {format(day, "EEEE d 'de' MMMM", { locale: es })}
               </p>
               <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
@@ -150,15 +150,15 @@ export function MonthView({
   const gridCols = { gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))` }
 
   return (
-    <div className="overflow-hidden rounded-sm border border-border">
+    <div className="overflow-hidden rounded-2xl bg-card p-2">
       {/* Cabecera con nombres de día */}
-      <div className="grid border-b border-border bg-card" style={gridCols}>
+      <div className="grid" style={gridCols}>
         {nombresDias.map((day) => (
           <div
             key={day.toISOString()}
-            className="border-r border-border py-1.5 text-center last:border-r-0"
+            className="py-2 text-center"
           >
-            <p className="text-[13px] font-semibold text-muted-foreground">
+            <p className="text-[13px] font-medium text-muted-foreground first-letter:uppercase">
               {format(day, 'EEE', { locale: es })}
             </p>
           </div>
@@ -171,9 +171,9 @@ export function MonthView({
           ? days.map((day) => (
               <div
                 key={day.toISOString()}
-                className="min-h-[76px] border-b border-r border-border p-1 sm:min-h-[92px]"
+                className="min-h-[84px] border-l border-t border-border p-1.5 sm:min-h-[104px]"
               >
-                <div className="h-4 w-full animate-pulse rounded-sm bg-muted opacity-50" />
+                <div className="h-5 w-full animate-pulse rounded-md bg-muted" />
               </div>
             ))
           : days.map((day) => (

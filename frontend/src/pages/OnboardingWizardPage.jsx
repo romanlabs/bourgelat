@@ -1,10 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import Logo from '@/components/shared/Logo'
 import { useGuardarOnboarding } from '@/features/onboarding/useOnboarding'
 import { Select } from '@/components/ui/select'
 
 const TOTAL_PASOS = 5
+
+const opcionClass = (activa) =>
+  `w-full rounded-xl px-4 py-4 text-left transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+    activa ? 'bg-accent ring-2 ring-primary' : 'bg-card hover:bg-muted'
+  }`
+
+const inputClass =
+  'h-11 w-full rounded-lg border border-input bg-card px-4 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
+
+const labelClass = 'mb-2 block text-sm font-semibold text-foreground'
+const tituloClass = 'text-[28px] font-semibold leading-tight tracking-[-0.035em] text-foreground'
+const subtituloClass = 'mt-2 text-[15px] text-muted-foreground'
 
 const OPCIONES_USO = [
   { valor: 'dueno', titulo: 'Soy dueño/administrador', subtitulo: 'Gestiono la clínica en general' },
@@ -75,46 +88,53 @@ export default function OnboardingWizardPage() {
   }
 
   return (
-    <div className="grid min-h-[100dvh] lg:grid-cols-2">
-      <div className="flex flex-col justify-center px-6 py-10 sm:px-12 lg:px-20">
-        <Logo className="mb-8" />
-        <div className="mb-2 flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+    <div className="grid min-h-[100dvh] bg-background text-foreground lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+      <div className="mx-auto flex w-full max-w-[560px] flex-col justify-center px-4 py-10 sm:px-8">
+        <Logo className="mb-10" />
+        <div className="mb-6 flex items-center gap-3">
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary"
+            role="progressbar"
+            aria-label="Avance del registro"
+            aria-valuemin={1}
+            aria-valuemax={TOTAL_PASOS}
+            aria-valuenow={paso}
+          >
             <div
               className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${(paso / TOTAL_PASOS) * 100}%` }}
             />
           </div>
-          <span className="text-sm text-muted-foreground">{paso}/{TOTAL_PASOS}</span>
+          <span className="text-sm tabular-nums text-muted-foreground">
+            Paso {paso} de {TOTAL_PASOS}
+          </span>
         </div>
         {paso > 1 ? (
           <button
             type="button"
             onClick={() => setPaso(paso - 1)}
-            className="mb-4 text-left text-sm font-medium text-primary hover:underline"
+            className="-ml-2 mb-4 inline-flex h-9 w-fit items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-primary transition hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            ← Volver
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Volver
           </button>
         ) : null}
 
         {paso === 1 ? (
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">¿Cómo planeas usar Bourgelat?</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Selecciona la opción que más se alinea a tu rol.</p>
-            <div className="mt-6 space-y-3">
+            <h1 className={tituloClass}>¿Cómo planeas usar Bourgelat?</h1>
+            <p className={subtituloClass}>Selecciona la opción que más se alinea a tu rol.</p>
+            <div className="mt-6 space-y-2.5">
               {OPCIONES_USO.map((opcion) => (
                 <button
                   key={opcion.valor}
                   type="button"
                   onClick={() => actualizar('usoPlanificado', opcion.valor)}
-                  className={`w-full rounded-xl border p-4 text-left transition ${
-                    respuestas.usoPlanificado === opcion.valor
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/40'
-                  }`}
+                  aria-pressed={respuestas.usoPlanificado === opcion.valor}
+                  className={opcionClass(respuestas.usoPlanificado === opcion.valor)}
                 >
-                  <p className="font-medium text-foreground">{opcion.titulo}</p>
-                  <p className="text-sm text-muted-foreground">{opcion.subtitulo}</p>
+                  <p className="text-[15px] font-semibold text-foreground">{opcion.titulo}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{opcion.subtitulo}</p>
                 </button>
               ))}
             </div>
@@ -123,29 +143,29 @@ export default function OnboardingWizardPage() {
 
         {paso === 2 ? (
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Vamos a conocerte mejor</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Estos datos nos ayudan a personalizar tu experiencia.</p>
+            <h1 className={tituloClass}>Vamos a conocerte mejor</h1>
+            <p className={subtituloClass}>Estos datos nos ayudan a personalizar tu experiencia.</p>
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">¿Cuál es tu cargo?</label>
+                <label className={labelClass}>¿Cuál es tu cargo?</label>
                 <input
                   type="text"
                   value={respuestas.cargo}
                   onChange={(e) => actualizar('cargo', e.target.value)}
                   placeholder="Ej.: Directora médica"
-                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">WhatsApp (opcional)</label>
+                <label className={labelClass}>WhatsApp (opcional)</label>
                 <input
                   type="tel"
                   value={respuestas.whatsapp}
                   onChange={(e) => actualizar('whatsapp', e.target.value)}
                   placeholder="Número de contacto"
-                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className={inputClass}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">Formato: 3001234567 (sin +57)</p>
+                <p className="mt-1.5 text-[13px] text-muted-foreground">Formato: 3001234567 (sin +57)</p>
               </div>
             </div>
           </div>
@@ -153,15 +173,15 @@ export default function OnboardingWizardPage() {
 
         {paso === 3 ? (
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Cuéntanos sobre tu clínica</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Estos detalles nos ayudan a adaptar Bourgelat a tu negocio.</p>
+            <h1 className={tituloClass}>Cuéntanos sobre tu clínica</h1>
+            <p className={subtituloClass}>Estos detalles nos ayudan a adaptar Bourgelat a tu negocio.</p>
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Tipo de clínica</label>
+                <label className={labelClass}>Tipo de clínica</label>
                 <Select
                   variant="field"
                   aria-label="Tipo de clínica"
-                  className="h-11 rounded-lg"
+                  className="h-11"
                   placeholder="Selecciona una opción"
                   value={respuestas.tipoClinica}
                   onValueChange={(value) => actualizar('tipoClinica', value)}
@@ -169,17 +189,18 @@ export default function OnboardingWizardPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">¿Cuántas personas trabajan en tu clínica?</label>
+                <label className={labelClass}>¿Cuántas personas trabajan en tu clínica?</label>
                 <div className="flex flex-wrap gap-2">
                   {OPCIONES_TAMANO_EQUIPO.map((opcion) => (
                     <button
                       key={opcion}
                       type="button"
                       onClick={() => actualizar('tamanoEquipo', opcion)}
-                      className={`rounded-lg border px-4 py-2 text-sm transition ${
+                      aria-pressed={respuestas.tamanoEquipo === opcion}
+                      className={`h-10 rounded-lg px-4 text-sm font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         respuestas.tamanoEquipo === opcion
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border text-foreground hover:border-primary/40'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-card text-foreground hover:bg-muted'
                       }`}
                     >
                       {opcion}
@@ -188,11 +209,11 @@ export default function OnboardingWizardPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Mascotas atendidas al mes</label>
+                <label className={labelClass}>Mascotas atendidas al mes</label>
                 <Select
                   variant="field"
                   aria-label="Mascotas por mes"
-                  className="h-11 rounded-lg"
+                  className="h-11"
                   placeholder="Selecciona un rango"
                   value={respuestas.mascotasPorMes}
                   onValueChange={(value) => actualizar('mascotasPorMes', value)}
@@ -205,21 +226,18 @@ export default function OnboardingWizardPage() {
 
         {paso === 4 ? (
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Elige tu objetivo inicial</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Selecciona lo que quieres priorizar para empezar a usar Bourgelat.</p>
-            <div className="mt-6 space-y-3">
+            <h1 className={tituloClass}>Elige tu objetivo inicial</h1>
+            <p className={subtituloClass}>Selecciona lo que quieres priorizar para empezar a usar Bourgelat.</p>
+            <div className="mt-6 space-y-2.5">
               {OPCIONES_OBJETIVO.map((opcion) => (
                 <button
                   key={opcion.valor}
                   type="button"
                   onClick={() => actualizar('objetivoInicial', opcion.valor)}
-                  className={`w-full rounded-xl border p-4 text-left transition ${
-                    respuestas.objetivoInicial === opcion.valor
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/40'
-                  }`}
+                  aria-pressed={respuestas.objetivoInicial === opcion.valor}
+                  className={opcionClass(respuestas.objetivoInicial === opcion.valor)}
                 >
-                  <p className="font-medium text-foreground">{opcion.label}</p>
+                  <p className="text-[15px] font-semibold text-foreground">{opcion.label}</p>
                 </button>
               ))}
             </div>
@@ -228,14 +246,14 @@ export default function OnboardingWizardPage() {
 
         {paso === 5 ? (
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">¡Solo un dato más!</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Con esta información definimos tus primeros pasos.</p>
+            <h1 className={tituloClass}>¡Solo un dato más!</h1>
+            <p className={subtituloClass}>Con esta información definimos tus primeros pasos.</p>
             <div className="mt-6">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">¿Cómo gestionas tu clínica hoy? (opcional)</label>
+              <label className={labelClass}>¿Cómo gestionas tu clínica hoy? (opcional)</label>
               <Select
                 variant="field"
                 aria-label="Gestión actual"
-                className="h-11 rounded-lg"
+                className="h-11"
                 placeholder="Selecciona una opción"
                 value={respuestas.gestionActual}
                 onValueChange={(value) => actualizar('gestionActual', value)}
@@ -249,13 +267,20 @@ export default function OnboardingWizardPage() {
           type="button"
           disabled={!puedeAvanzar || isPending}
           onClick={siguiente}
-          className="mt-8 h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-8 h-12 w-full rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {paso < TOTAL_PASOS ? 'Continuar' : isPending ? 'Guardando...' : 'Finalizar'}
         </button>
       </div>
 
-      <div className="hidden bg-muted lg:block" aria-hidden="true" />
+      <aside className="hidden flex-col justify-center gap-6 bg-sidebar p-12 text-sidebar-foreground lg:flex xl:p-[72px]">
+        <p className="max-w-[440px] text-[clamp(32px,3.4vw,48px)] font-semibold leading-[1.05] tracking-[-0.04em]">
+          Ajustamos Bourgelat a tu clínica.
+        </p>
+        <p className="max-w-[420px] text-lg leading-relaxed text-sidebar-foreground/85">
+          Cinco preguntas cortas para dejarte listo lo que más vas a usar desde el primer día.
+        </p>
+      </aside>
     </div>
   )
 }

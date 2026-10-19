@@ -11,6 +11,10 @@ module.exports = {
       // Va en extend para quedar despues de sm..2xl y poder sobreescribirlos.
       screens: {
         short: { raw: '(max-height: 500px) and (orientation: landscape)' },
+        // Pantallas bajas (portátiles, ventanas pequeñas): las vistas de una
+        // sola pantalla, como el inicio de sesión, se compactan para no tener scroll.
+        bajo: { raw: '(max-height: 780px)' },
+        'muy-bajo': { raw: '(max-height: 640px)' },
       },
 
       colors: {

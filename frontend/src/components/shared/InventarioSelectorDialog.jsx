@@ -52,17 +52,17 @@ export default function InventarioSelectorDialog({ open, onOpenChange, onSelect,
                 type="button"
                 onClick={() => onSelect(opcion.value)}
                 className={cn(
-                  'flex flex-col gap-2 border p-4 text-left transition',
+                  'flex flex-col gap-2 rounded-xl p-4 text-left transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   activa
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border bg-card hover:border-primary hover:bg-primary/5'
+                    ? 'bg-accent ring-2 ring-primary'
+                    : 'bg-muted hover:bg-accent'
                 )}
               >
                 <span className="flex items-center gap-2">
                   <Icon className="h-5 w-5 text-primary" />
                   <span className="text-sm font-semibold text-foreground">{opcion.label}</span>
                 </span>
-                <span className="text-xs leading-5 text-muted-foreground">{opcion.descripcion}</span>
+                <span className="text-[13px] leading-5 text-muted-foreground">{opcion.descripcion}</span>
               </button>
             )
           })}

@@ -42,17 +42,17 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {alergias.length > 0 && (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-danger">
+          <p className="mb-1.5 text-[13px] font-semibold text-danger">
             Alergias
           </p>
           <div className="space-y-1">
             {alergias.map((item, index) => (
               <div
                 key={index}
-                className="rounded border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger"
+                className="rounded-lg bg-danger-soft px-3 py-2.5 text-sm text-danger"
               >
                 <span className="font-semibold">{item.tipo || 'Alergia'}</span>
                 {item.descripcion ? <span> · {item.descripcion}</span> : null}
@@ -67,14 +67,14 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {condiciones.length > 0 && (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-warning">
+          <p className="mb-1.5 text-[13px] font-semibold text-warning">
             Condiciones crónicas
           </p>
           <div className="space-y-1">
             {condiciones.map((item, index) => (
               <div
                 key={index}
-                className="rounded border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning"
+                className="rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-warning"
               >
                 <span className="font-semibold">{item.nombre}</span>
                 {item.tratamientoActual ? <span> · {item.tratamientoActual}</span> : null}
@@ -86,7 +86,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {medicamentosTexto ? (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-info">
+          <p className="mb-1.5 text-[13px] font-semibold text-info">
             Medicamentos actuales
           </p>
           <p className="whitespace-pre-line text-sm leading-6 text-foreground">
@@ -97,7 +97,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {vacunas.length > 0 && (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-success">
+          <p className="mb-1.5 text-[13px] font-semibold text-success">
             Vacunas
           </p>
           <div className="space-y-1">
@@ -113,7 +113,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
               </div>
             ))}
             {vacunas.length > 3 ? (
-              <p className="text-xs text-muted-foreground">+{vacunas.length - 3} más</p>
+              <p className="text-[13px] text-muted-foreground">+{vacunas.length - 3} más</p>
             ) : null}
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {desparasitaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-warning">
+          <p className="mb-1.5 text-[13px] font-semibold text-warning">
             Desparasitación
           </p>
           <div className="space-y-1">
@@ -137,7 +137,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
               </div>
             ))}
             {desparasitaciones.length > 3 ? (
-              <p className="text-xs text-muted-foreground">+{desparasitaciones.length - 3} más</p>
+              <p className="text-[13px] text-muted-foreground">+{desparasitaciones.length - 3} más</p>
             ) : null}
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
 
       {planificaciones.length > 0 && (
         <div>
-          <p className="mb-1 text-[13px] font-semibold text-info">
+          <p className="mb-1.5 text-[13px] font-semibold text-info">
             Planificación
           </p>
           <div className="space-y-1">
@@ -161,14 +161,14 @@ export default function AntecedentesResumen({ antecedentes, mascotaId }) {
               </div>
             ))}
             {planificaciones.length > 3 ? (
-              <p className="text-xs text-muted-foreground">+{planificaciones.length - 3} más</p>
+              <p className="text-[13px] text-muted-foreground">+{planificaciones.length - 3} más</p>
             ) : null}
           </div>
         </div>
       )}
 
       {antecedentes?.esterilizado ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Paciente esterilizado
           {antecedentes.fechaEsterilizacion ? ` · ${antecedentes.fechaEsterilizacion}` : ''}
         </p>

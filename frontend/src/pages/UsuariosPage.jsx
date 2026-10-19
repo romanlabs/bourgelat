@@ -124,12 +124,12 @@ function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
         return (
           <label
             key={role.value}
-            className={`flex items-center gap-3 border px-3 py-3 text-sm transition ${
+            className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition focus-within:ring-2 focus-within:ring-ring ${
               disabled
-                ? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
+                ? 'cursor-not-allowed bg-muted text-muted-foreground'
                 : checked
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-foreground hover:bg-muted'
+                  ? 'cursor-pointer bg-accent text-primary'
+                  : 'cursor-pointer bg-muted text-foreground hover:bg-secondary'
             }`}
           >
             <input
@@ -151,6 +151,25 @@ function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
   )
 }
 
+// Cada rol con su color, como en el resto de la app: administración en
+// petróleo, veterinario en agua, facturación en miel, recepción en lila.
+const TONO_ROL = {
+  admin: 'bg-primary text-primary-foreground',
+  superadmin: 'bg-primary text-primary-foreground',
+  veterinario: 'bg-accent text-primary',
+  facturador: 'bg-warning-soft text-warning',
+  recepcionista: 'bg-info-soft text-info',
+  auxiliar: 'bg-success-soft text-success',
+}
+
+const inicialesDe = (nombre = '') =>
+  nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() || '')
+    .join('') || '?'
+
 function RoleBadges({ user }) {
   const roles = [user.rol, ...(Array.isArray(user.rolesAdicionales) ? user.rolesAdicionales : [])]
 
@@ -159,13 +178,7 @@ function RoleBadges({ user }) {
       {roles.map((role, index) => (
         <StatusPill
           key={`${user.id}-${role}-${index}`}
-          tone={
-            role === 'admin'
-              ? 'border-info/30 bg-info-soft text-info '
-              : role === 'veterinario'
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-border bg-muted text-foreground'
-          }
+          tone={TONO_ROL[role] || 'bg-secondary text-secondary-foreground'}
         >
           {getRoleLabel(role)}
         </StatusPill>
@@ -186,15 +199,15 @@ function PasswordChecklist({ password, visible }) {
   ]
 
   return (
-    <div className="border border-border bg-muted px-3 py-3">
-      <p className="text-[13px] font-semibold text-muted-foreground">
+    <div className="rounded-xl bg-muted px-4 py-3.5">
+      <p className="text-sm font-semibold text-foreground">
         Requisitos de acceso
       </p>
       <div className="mt-3 grid gap-2">
         {rules.map((rule) => (
           <div key={rule.id} className="flex items-center justify-between gap-3 text-sm">
             <span className="text-muted-foreground">{rule.label}</span>
-            <span className={rule.valid ? 'text-success' : 'text-muted-foreground'}>
+            <span className={rule.valid ? 'font-semibold text-success' : 'text-muted-foreground'}>
               {rule.valid ? 'Cumple' : 'Pendiente'}
             </span>
           </div>
@@ -206,13 +219,13 @@ function PasswordChecklist({ password, visible }) {
 
 function RestrictedUsersPage() {
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Usuarios y roles"
           subtitle="Esta sección se reserva para la administración de la clínica."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
             Tu acceso actual no tiene permisos para administrar usuarios, roles ni estados del equipo.
           </div>
         </DashboardPanel>
@@ -488,9 +501,9 @@ export default function UsuariosPage() {
     <AdminShell
       currentKey="usuarios"
       title="Usuarios y roles"
-      description="Centro administrativo para crear equipo, ordenar permisos, revisar cupos del plan y mantener una estructura limpia de acceso por clínica."
+      description="Quién entra al sistema, con qué rol y cuántos cupos quedan en el plan."
       headerBadge={
-        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
+        <StatusPill tone="bg-accent text-primary">
           Control del equipo
         </StatusPill>
       }
@@ -505,22 +518,22 @@ export default function UsuariosPage() {
         <EmptyState
           icon={<Sparkles />}
           title="Usuarios y roles no disponibles en el plan actual"
-          description="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuración comercial de la clínica."
+          description="El control del equipo hace parte del flujo base del sistema. Si esta área no aparece habilitada, conviene revisar la configuración comercial de la clínica."
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-5">
           {usuariosQuery.isError ? (
-            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+            <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
               {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
             </div>
           ) : null}
 
           <DashboardPanel
             title="Organiza la administración del equipo"
-            subtitle="Separamos lectura, alta y edición para que cada tarea sea mas clara y no obligue a recorrer toda la pantalla."
+            subtitle="Separamos lectura, alta y edición para que cada tarea sea más clara y no obligue a recorrer toda la pantalla."
             action={
-              <StatusPill tone="border-border bg-muted text-foreground">
+              <StatusPill tone="bg-secondary text-secondary-foreground">
                 {limiteUsuarios === null
                   ? 'Sin límite de usuarios'
                   : textoCupos(cupoDisponible, 'disponible', 'disponibles')}
@@ -551,16 +564,17 @@ export default function UsuariosPage() {
                   key={section.id}
                   type="button"
                   onClick={() => goToSection(section.id)}
-                  className={`border px-4 py-4 text-left transition ${
+                  aria-pressed={activeSection === section.id}
+                  className={`rounded-xl px-4 py-4 text-left outline-none transition active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring ${
                     activeSection === section.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border bg-muted hover:border-border hover:bg-card'
+                      ? 'bg-accent'
+                      : 'bg-muted hover:bg-secondary'
                   }`}
                 >
-                  <p className="text-[13px] font-semibold text-muted-foreground">
+                  <p className={`text-base font-semibold tracking-[-0.01em] ${activeSection === section.id ? 'text-primary' : 'text-foreground'}`}>
                     {section.label}
                   </p>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
+                  <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{section.helper}</p>
                 </button>
               ))}
             </div>
@@ -579,14 +593,14 @@ export default function UsuariosPage() {
               subtitle="Tabla administrativa para buscar, filtrar, editar o activar y desactivar usuarios."
               action={
                 <div className="flex flex-wrap gap-3">
-                  <div className="flex items-center border border-border bg-card px-3">
+                  <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                     <Search className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
                       value={buscar}
                       onChange={(event) => setBuscar(event.target.value)}
                       placeholder="Buscar por nombre, correo o celular"
-                      className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
+                      className="h-11 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
                   <Select
@@ -613,9 +627,17 @@ export default function UsuariosPage() {
                     key: 'nombre',
                     label: 'Colaborador',
                     render: (row) => (
-                      <div>
-                        <p className="font-semibold text-foreground">{row.nombre}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{row.email}</p>
+                      <div className="flex items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary"
+                        >
+                          {inicialesDe(row.nombre)}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground">{row.nombre}</p>
+                          <p className="mt-0.5 text-[13px] text-muted-foreground">{row.email}</p>
+                        </div>
                       </div>
                     ),
                   },
@@ -650,8 +672,8 @@ export default function UsuariosPage() {
                       <StatusPill
                         tone={
                           row.activo
-                            ? 'border-success/30 bg-success-soft text-success'
-                            : 'border-border bg-muted text-muted-foreground'
+                            ? 'bg-success-soft text-success'
+                            : 'bg-muted text-muted-foreground'
                         }
                       >
                         {row.activo ? 'Activo' : 'Inactivo'}
@@ -670,12 +692,12 @@ export default function UsuariosPage() {
                             setEditForm(buildEditForm(row.raw))
                             goToSection('editar')
                           }}
-                          className="text-sm font-semibold text-primary hover:text-primary"
+                          className="inline-flex h-9 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           Editar
                         </button>
                         {row.raw.id === usuario?.id ? (
-                          <span className="text-[13px] font-semibold text-muted-foreground">
+                          <span className="inline-flex h-9 items-center px-1 text-[13px] font-semibold text-muted-foreground">
                             Sesión actual
                           </span>
                         ) : (
@@ -683,7 +705,7 @@ export default function UsuariosPage() {
                             type="button"
                             onClick={() => toggleUsuarioMutation.mutate({ id: row.raw.id })}
                             disabled={toggleUsuarioMutation.isPending}
-                            className="text-sm font-semibold text-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {row.raw.activo ? 'Desactivar' : 'Activar'}
                           </button>
@@ -695,7 +717,7 @@ export default function UsuariosPage() {
                 emptyTitle="No hay usuarios para este filtro"
                 emptyBody="Ajusta la búsqueda o registra el primer colaborador desde la pestaña Crear usuario."
                 action={
-                  <StatusPill tone="border-border bg-muted text-foreground">
+                  <StatusPill tone="bg-secondary text-secondary-foreground">
                     {formatNumber(tableRows.length)} visibles
                   </StatusPill>
                 }
@@ -716,10 +738,10 @@ export default function UsuariosPage() {
                     setCreateForm((current) => ({ ...current, nombre: event.target.value }))
                   }
                   placeholder="Nombre completo del colaborador"
-                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                  className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center border border-border bg-card px-3">
+                  <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="email"
@@ -731,7 +753,7 @@ export default function UsuariosPage() {
                       className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                     />
                   </div>
-                  <div className="flex items-center border border-border bg-card px-3">
+                  <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
@@ -771,7 +793,7 @@ export default function UsuariosPage() {
                       setCreateForm((current) => ({ ...current, password: event.target.value }))
                     }
                     placeholder="Contraseña inicial"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
                 <PasswordChecklist
@@ -779,7 +801,7 @@ export default function UsuariosPage() {
                   visible={showPasswordChecklist || createForm.password.length > 0}
                 />
                 <div className="grid gap-2">
-                  <p className="text-[13px] font-semibold text-muted-foreground">
+                  <p className="text-sm font-medium text-foreground">
                     Roles adicionales
                   </p>
                   <RoleChecklist
@@ -793,7 +815,7 @@ export default function UsuariosPage() {
                 <button
                   type="submit"
                   disabled={crearUsuarioMutation.isPending}
-                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {crearUsuarioMutation.isPending ? 'Guardando...' : 'Guardar usuario'}
                 </button>
@@ -806,7 +828,7 @@ export default function UsuariosPage() {
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
             <DashboardPanel
               title="Resumen administrativo"
-              subtitle="Lectura concreta para coordinacion, seguridad y continuidad del acceso."
+              subtitle="Lectura concreta para coordinación, seguridad y continuidad del acceso."
             >
               <DataTable
                 title="Controles clave"
@@ -821,7 +843,7 @@ export default function UsuariosPage() {
                         : 'Cobertura sensible',
                     detalle:
                       totalAdministrativos > 1
-                        ? 'La clínica tiene mas de un usuario con administración.'
+                        ? 'La clínica tiene más de un usuario con administración.'
                         : 'Conviene tener al menos dos administradores para no depender de una sola cuenta.',
                   },
                   {
@@ -870,7 +892,7 @@ export default function UsuariosPage() {
               action={<PencilLine className="h-4 w-4 text-primary" />}
             >
               {!selectedUser ? (
-                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+                <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                   Esta vista se llena cuando eliges un colaborador desde la tabla principal.
                 </div>
               ) : (
@@ -882,9 +904,9 @@ export default function UsuariosPage() {
                       setEditForm((current) => ({ ...current, nombre: event.target.value }))
                     }
                     placeholder="Nombre del colaborador"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                    className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                   />
-                  <div className="flex items-center border border-border bg-card px-3">
+                  <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <input
                       type="email"
@@ -912,7 +934,7 @@ export default function UsuariosPage() {
                       }
                       options={ROLE_OPTIONS}
                     />
-                    <div className="flex items-center border border-border bg-card px-3">
+                    <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
@@ -930,7 +952,7 @@ export default function UsuariosPage() {
                     </div>
                   </div>
                   <div className="grid gap-2">
-                    <p className="text-[13px] font-semibold text-muted-foreground">
+                    <p className="text-sm font-medium text-foreground">
                       Roles adicionales
                     </p>
                     <RoleChecklist
@@ -943,14 +965,14 @@ export default function UsuariosPage() {
                   </div>
 
                   {esUsuarioActualSeleccionado ? (
-                    <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
+                    <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
                       En tu propia cuenta puedes agregar roles adicionales, por ejemplo Veterinario si atiendes pacientes. El rol principal y el permiso de administrador los cambia otra cuenta administrativa.
                     </div>
                   ) : null}
 
-                  <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
+                  <div className="rounded-xl bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
                     <p className="font-semibold text-foreground">{selectedUser.nombre}</p>
-                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)}</p>
+                    <p className="mt-1">Último acceso: {formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)}</p>
                     <p className="mt-1">
                       Estado actual: {selectedUser.activo ? 'Activo' : 'Inactivo'}
                     </p>
@@ -960,7 +982,7 @@ export default function UsuariosPage() {
                     <button
                       type="submit"
                       disabled={editarUsuarioMutation.isPending}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {editarUsuarioMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                     </button>
@@ -970,7 +992,7 @@ export default function UsuariosPage() {
                         setSelectedUserId(null)
                         setEditForm(DEFAULT_EDIT_FORM)
                       }}
-                      className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Limpiar selección
                     </button>
@@ -982,13 +1004,13 @@ export default function UsuariosPage() {
           </div>
           ) : null}
 
-          <details className="group rounded-none border border-border bg-card">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-foreground">
-              Ver metricas del equipo
-              <span className="text-xs font-normal text-muted-foreground group-open:hidden">Mostrar</span>
-              <span className="hidden text-xs font-normal text-muted-foreground group-open:inline">Ocultar</span>
+          <details className="group rounded-2xl bg-card">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl px-6 py-4 text-lg font-semibold tracking-[-0.01em] text-foreground outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+              Ver cifras del equipo
+              <span className="text-sm font-medium text-muted-foreground group-open:hidden">Mostrar</span>
+              <span className="hidden text-sm font-medium text-muted-foreground group-open:inline">Ocultar</span>
             </summary>
-            <div className="space-y-5 border-t border-border px-4 py-5">
+            <div className="space-y-5 px-6 pb-6 pt-2">
               <div className="grid gap-4 xl:grid-cols-4">
                 <KpiCard
                   icon={Users}
@@ -1027,7 +1049,7 @@ export default function UsuariosPage() {
               <div className="grid gap-5 2xl:grid-cols-[420px_420px_minmax(0,1fr)]">
                 <DonutCard
                   title="Roles principales"
-                  subtitle="Composicion actual del equipo activo por cargo principal."
+                  subtitle="Composición actual del equipo activo por cargo principal."
                   data={roleDistribution}
                   centerLabel="Activos"
                   centerValue={formatNumber(activos.length)}
@@ -1045,16 +1067,16 @@ export default function UsuariosPage() {
                 />
                 <DashboardPanel
                   title="Criterio de control"
-                  subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el último admin de la clínica."
+                  subtitle="Lo importante en esta vista es sostener acceso útil, sin sobrecargar el equipo ni romper el último admin de la clínica."
                 >
                   <div className="grid gap-4">
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                    <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                       Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuración, suscripción y equipo.
                     </div>
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                    <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                       Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
                     </div>
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+                    <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                       La plataforma ya bloquea desactivar o degradar al último administrador activo para evitar dejar la clínica sin control.
                     </div>
                   </div>

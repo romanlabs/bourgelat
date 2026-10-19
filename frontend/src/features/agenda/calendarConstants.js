@@ -140,36 +140,38 @@ export function calcCitaHeight(
   return Math.max((effectiveDuration / SLOT_MINUTOS) * slotHeight, 24)
 }
 
-// Estados de cita con los mismos tonos que StatusBadge: neutral → programada,
-// warning → en espera, info → en atención, success → completada, danger →
-// cancelada / no asistió. Siguen el modo oscuro vía los tokens de index.css.
+// Estados de cita con los mismos tonos que la pantalla Hoy (JornadaHoy):
+// programada en gris suave, en espera en ámbar, en atención en petróleo,
+// completada en verde, cancelada en rojo y no asistió apagada. Sin borde: el
+// color de fondo basta. Siguen el modo oscuro vía los tokens de index.css.
 export function buildStateTone(estado) {
   switch (estado) {
     case 'en_espera':
-      return 'border-warning/30 bg-warning-soft text-warning'
+      return 'bg-brand-muted text-brand-foreground'
     case 'en_atencion':
-      return 'border-info/30 bg-info-soft text-info'
+      return 'bg-primary text-primary-foreground'
     case 'completada':
-      return 'border-success/30 bg-success-soft text-success'
+      return 'bg-success-soft text-success'
     case 'cancelada':
+      return 'bg-danger-soft text-danger'
     case 'no_asistio':
-      return 'border-danger/30 bg-danger-soft text-danger opacity-75'
+      return 'bg-muted text-muted-foreground'
     case 'programada':
     default:
-      return 'border-border bg-card text-foreground'
+      return 'bg-secondary text-secondary-foreground'
   }
 }
 
-/** Color de la barra lateral del chip (se usa en style, por eso es CSS y no clase). */
+/** Color de la marca de urgencia y de los puntos de estado (se usa en style, por eso es CSS y no clase). */
 export const URGENCIA_ACCENT = 'hsl(var(--danger))'
 
 export function getAccentColor(estado) {
   switch (estado) {
-    case 'en_espera':   return 'hsl(var(--warning))'
-    case 'en_atencion': return 'hsl(var(--info))'
+    case 'en_espera':   return 'hsl(var(--brand))'
+    case 'en_atencion': return 'hsl(var(--primary))'
     case 'completada':  return 'hsl(var(--success))'
-    case 'cancelada':
-    case 'no_asistio':  return 'hsl(var(--danger))'
+    case 'cancelada':   return 'hsl(var(--danger))'
+    case 'no_asistio':  return 'hsl(var(--muted-foreground))'
     case 'programada':
     default:            return 'hsl(var(--muted-foreground))'
   }

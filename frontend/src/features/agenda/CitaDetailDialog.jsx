@@ -110,11 +110,11 @@ export function CitaDetailDialog({
     <DialogRoot open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-sm sm:max-w-md">
         <DialogHeader className="mb-4">
-          <DialogTitle className="">
+          <DialogTitle className="text-[22px] font-semibold tracking-[-0.02em]">
             {cita.mascota?.nombre || 'Cita'}
           </DialogTitle>
           <DialogDescription asChild>
-            <div className="space-y-0.5 text-sm">
+            <div className="space-y-1 text-[15px]">
               <p className="text-muted-foreground">
                 Tutor: <span className="font-medium text-foreground">{cita.propietario?.nombre || '—'}</span>
               </p>
@@ -141,7 +141,7 @@ export function CitaDetailDialog({
               <div className="flex items-center gap-2 pt-1">
                 <span
                   className={cn(
-                    'inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold',
+                    'inline-flex items-center rounded-md px-2.5 py-1 text-[13px] font-semibold',
                     buildStateTone(cita.estado)
                   )}
                 >
@@ -152,7 +152,7 @@ export function CitaDetailDialog({
                     type="button"
                     disabled={isUpdating}
                     onClick={() => onUpdateStatus(cita.id, { estado: 'en_espera' }, cita)}
-                    className="text-xs font-semibold text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-8 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Marcar en espera
                   </button>
@@ -163,8 +163,8 @@ export function CitaDetailDialog({
         </DialogHeader>
 
         {cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id && (
-          <div className="mb-4 flex items-center justify-between gap-3 border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm">
-            <p className="leading-tight text-danger">
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-danger-soft px-4 py-3 text-sm">
+            <p className="font-medium leading-5 text-danger">
               Esta urgencia aún no tiene historia clínica. El proceso no queda cerrado hasta documentarla.
             </p>
             <NavCta
@@ -181,16 +181,16 @@ export function CitaDetailDialog({
 
         {/* Tabs de sección */}
         {(puedeGestionarEstado || puedeReprogramar) && (
-          <div className="flex gap-1 border-b border-border pb-3 mb-4">
+          <div role="group" aria-label="Acción" className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
             {puedeGestionarEstado && (
               <button
                 type="button"
                 onClick={() => setActiveSection('estado')}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold transition',
+                  'h-9 flex-1 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   activeSection === 'estado'
-                    ? 'bg-primary text-white'
-                    : 'border border-border bg-muted text-muted-foreground hover:text-foreground'
+                    ? 'bg-card font-semibold text-foreground'
+                    : 'font-medium text-muted-foreground hover:text-foreground'
                 )}
               >
                 Cambiar estado
@@ -201,10 +201,10 @@ export function CitaDetailDialog({
                 type="button"
                 onClick={() => setActiveSection('reprogramar')}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold transition',
+                  'h-9 flex-1 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   activeSection === 'reprogramar'
-                    ? 'bg-primary text-white'
-                    : 'border border-border bg-muted text-muted-foreground hover:text-foreground'
+                    ? 'bg-card font-semibold text-foreground'
+                    : 'font-medium text-muted-foreground hover:text-foreground'
                 )}
               >
                 Reprogramar
@@ -233,7 +233,8 @@ export function CitaDetailDialog({
                   setStatusForm((prev) => ({ ...prev, motivoCancelacion: e.target.value }))
                 }
                 placeholder="Motivo de cancelación (obligatorio)"
-                className="min-h-[80px] border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
+                aria-label="Motivo de cancelación"
+                className="min-h-[88px] rounded-lg border border-input bg-card px-3 py-2.5 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 required
               />
             )}
@@ -241,10 +242,10 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isUpdating || (statusForm.estado === 'cancelada' && !statusForm.motivoCancelacion.trim())}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {isUpdating ? 'Guardando...' : 'Actualizar estado'}
+              {isUpdating ? 'Guardando…' : 'Actualizar estado'}
             </button>
           </form>
         )}
@@ -258,7 +259,8 @@ export function CitaDetailDialog({
               onChange={(e) =>
                 setRescheduleForm((prev) => ({ ...prev, fecha: e.target.value }))
               }
-              className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+              aria-label="Nueva fecha"
+              className="h-11 rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
               required
             />
             <div className="grid gap-2">
@@ -279,12 +281,12 @@ export function CitaDetailDialog({
                 onChange={(valor) => setRescheduleForm((prev) => ({ ...prev, horaFin: valor }))}
               />
               {rescheduleForm.horaFin && rescheduleForm.horaFin <= rescheduleForm.horaInicio ? (
-                <p className="text-xs text-danger">La hora de fin debe ser posterior a la de inicio.</p>
+                <p className="text-[13px] font-medium text-danger">La hora de fin debe ser posterior a la de inicio.</p>
               ) : null}
             </div>
 
             {!ventana.valido ? (
-              <div className="border border-warning/30 bg-warning-soft px-3 py-2.5 text-xs leading-6 text-warning">
+              <div className="rounded-xl bg-warning-soft px-4 py-3 text-[13px] leading-6 text-warning">
                 <p className="flex items-start gap-2 font-semibold">
                   <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {ventana.codigo === 'bloqueado'
@@ -307,7 +309,7 @@ export function CitaDetailDialog({
                       type="checkbox"
                       checked={forzar}
                       onChange={(event) => setForzar(event.target.checked)}
-                      className="h-4 w-4 border-border text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-input accent-primary focus-visible:ring-2 focus-visible:ring-ring"
                     />
                     Reprogramar de todos modos (urgencia)
                   </label>
@@ -318,10 +320,10 @@ export function CitaDetailDialog({
             <button
               type="submit"
               disabled={isRescheduling || (!ventana.valido && !forzar)}
-              className="flex h-10 items-center justify-center gap-2 border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRescheduling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {isRescheduling ? 'Guardando...' : 'Reprogramar cita'}
+              {isRescheduling ? 'Guardando…' : 'Reprogramar cita'}
             </button>
           </form>
         )}

@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { motion as Motion } from 'motion/react'
-import { ArrowRight, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Logo from '@/components/shared/Logo'
 import { useVerificarEmail, useReenviarVerificacion } from '@/features/auth/useAuth'
 
-// Caramelo de marca para texto (eyebrows y enlaces); sigue el tema.
-const ACCENT = 'hsl(var(--brand-foreground))'
+const inputClass =
+  'h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
 
 export default function VerificarEmailPage() {
   const [token] = useState(() => {
@@ -31,97 +30,73 @@ export default function VerificarEmailPage() {
     return <Navigate to="/login" replace />
   }
 
-  const inputClass =
-    'h-14 w-full rounded-none border-0 border-b border-input bg-transparent px-1 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-brand'
-
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
-      <Motion.header
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4 sm:px-8"
-      >
-        <Link to="/" className="group inline-flex items-center gap-3 text-foreground no-underline">
-          <span className="flex h-9 w-9 items-center justify-center bg-foreground text-background transition-colors duration-200 group-hover:bg-brand">
-            <Stethoscope className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
-            <span className="mt-1 block text-[13px] tracking-[0.24em]" style={{ color: ACCENT }}>
-              acceso veterinario
-            </span>
-          </span>
+    <div className="flex min-h-[100dvh] flex-col bg-background px-4 py-5 text-foreground sm:px-8 sm:py-6">
+      <header>
+        <Link
+          to="/"
+          className="inline-flex rounded-lg no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Logo />
         </Link>
-      </Motion.header>
+      </header>
 
-      <main className="relative z-10 flex flex-1 items-center overflow-hidden pb-24 lg:pb-4">
-        <div className="w-full px-5 sm:px-8 lg:pl-[15%] lg:pr-8">
-          <div
-            className="w-full max-w-[400px] border border-foreground/10 bg-card/95 px-8 py-8 backdrop-blur-sm"
-            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
-          >
-            <p className="text-[13px] font-semibold tracking-[0.26em]" style={{ color: ACCENT }}>
-              Verificación de correo
-            </p>
+      <main className="flex flex-1 items-center justify-center py-10">
+        <div className="w-full max-w-[440px] rounded-2xl bg-card p-6 sm:p-8" aria-live="polite">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.035em] text-foreground">
+            {isPending ? 'Verificando tu correo...' : isSuccess ? 'Correo verificado' : 'No pudimos verificar tu correo'}
+          </h1>
 
-            <h1
-              className="mt-3 text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-foreground"
-              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
-            >
-              {isPending ? 'Verificando tu correo...' : isSuccess ? 'Correo verificado' : 'No pudimos verificar tu correo'}
-            </h1>
+          {isSuccess ? (
+            <div className="mt-5 space-y-5">
+              <p className="rounded-lg bg-success-soft px-4 py-3 text-[15px] leading-relaxed text-success">
+                Ya confirmamos que este correo es tuyo. Puedes seguir usando Bourgelat con normalidad.
+              </p>
+              <Button asChild className="h-12 w-full text-base">
+                <Link to="/dashboard">Ir al inicio</Link>
+              </Button>
+            </div>
+          ) : tokenInvalido ? (
+            <div className="mt-5 space-y-5">
+              <p className="rounded-lg bg-danger-soft px-4 py-3 text-[15px] leading-relaxed text-danger">
+                El enlace no es válido o ya expiró. Escribe tu correo para recibir uno nuevo.
+              </p>
 
-            {isSuccess ? (
-              <div className="mt-6 space-y-4">
-                <p className="text-sm text-foreground/75">
-                  Ya confirmamos que este correo es tuyo. Puedes seguir usando Bourgelat con normalidad.
+              {reenviado ? (
+                <p className="rounded-lg bg-info-soft px-4 py-3 text-[15px] leading-relaxed text-info">
+                  Si el correo está registrado y aún no ha sido verificado, recibirás un nuevo enlace.
                 </p>
-                <Link
-                  to="/dashboard"
-                  className="inline-block text-sm font-semibold underline"
-                  style={{ color: ACCENT }}
-                >
-                  Ir al dashboard
-                </Link>
-              </div>
-            ) : tokenInvalido ? (
-              <div className="mt-6 space-y-4">
-                <p className="text-sm text-danger">
-                  El enlace no es válido o ya expiró. Escribe tu correo para recibir uno nuevo.
-                </p>
-
-                {reenviado ? (
-                  <p className="text-sm text-foreground/75">
-                    Si el correo está registrado y aún no ha sido verificado, recibirás un nuevo enlace.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="verificar-email" className="mb-2 block text-sm font-semibold text-foreground">
+                      Correo
+                    </label>
                     <input
+                      id="verificar-email"
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      placeholder="tucorreo@ejemplo.com"
+                      placeholder="tu@clinica.co"
                       className={inputClass}
                     />
-                    <Button
-                      type="button"
-                      disabled={reenviando || !email}
-                      onClick={() => reenviar({ email })}
-                      className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
-                    >
-                      {reenviando ? 'Enviando...' : 'Reenviar enlace'}
-                      {!reenviando ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}
-                    </Button>
                   </div>
-                )}
-              </div>
-            ) : isError ? (
-              <p className="mt-6 text-sm text-danger">
-                Ocurrió un error al verificar tu correo. Intenta de nuevo mas tarde.
-              </p>
-            ) : null}
-          </div>
+                  <Button
+                    type="button"
+                    disabled={reenviando || !email}
+                    onClick={() => reenviar({ email })}
+                    className="h-12 w-full text-base"
+                  >
+                    {reenviando ? 'Enviando...' : 'Reenviar enlace'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : isError ? (
+            <p className="mt-5 rounded-lg bg-danger-soft px-4 py-3 text-[15px] leading-relaxed text-danger">
+              Ocurrió un error al verificar tu correo. Intenta de nuevo más tarde.
+            </p>
+          ) : null}
         </div>
       </main>
     </div>

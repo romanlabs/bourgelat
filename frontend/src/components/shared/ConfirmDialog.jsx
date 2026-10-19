@@ -38,26 +38,26 @@ export function ConfirmDialog({
 }) {
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-[440px]">
         <DialogHeader>
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger-soft">
-            <TriangleAlert className="h-5 w-5 text-danger" />
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-[14px] bg-danger-soft">
+            <TriangleAlert className="h-6 w-6 text-danger" />
           </div>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
 
-        {children ? <div className="py-2 text-sm text-muted-foreground">{children}</div> : null}
+        {children ? <div className="pt-4 text-[15px] leading-relaxed text-muted-foreground">{children}</div> : null}
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-6">
           <DialogClose asChild>
-            <Button variant="outline" size="sm" disabled={loading}>
+            <Button variant="secondary" size="lg" disabled={loading}>
               {cancelLabel}
             </Button>
           </DialogClose>
           <Button
             variant={variant}
-            size="sm"
+            size="lg"
             disabled={loading}
             onClick={onConfirm}
           >

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { createElement, useRef, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import { Barcode, Check, ClipboardList, Filter, ImageOff, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,13 +18,13 @@ function FiltroCategoriaMenu({ categoriaFiltro, setCategoriaFiltro }) {
           type="button"
           aria-label="Filtrar por categoría"
           className={cn(
-            'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 data-[state=open]:bg-muted',
-            categoriaFiltro && 'border-primary text-primary'
+            'relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-card text-muted-foreground transition hover:text-foreground active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent',
+            categoriaFiltro && 'bg-accent text-accent-foreground'
           )}
         >
           <Filter className="h-4 w-4" />
           {categoriaFiltro && (
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand" />
           )}
         </button>
       </DropdownMenu.Trigger>
@@ -33,9 +33,9 @@ function FiltroCategoriaMenu({ categoriaFiltro, setCategoriaFiltro }) {
         <DropdownMenu.Content
           align="end"
           sideOffset={6}
-          className="z-50 w-56 rounded-lg border border-border bg-card py-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className="z-50 w-56 rounded-xl bg-card p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <DropdownMenu.Label className="px-5 py-1.5 text-[13px] font-semibold text-muted-foreground">
+          <DropdownMenu.Label className="px-3 py-1.5 text-[13px] font-semibold text-muted-foreground">
             Categoría
           </DropdownMenu.Label>
           {[{ value: '', label: 'Todos' }, ...PRODUCT_CATEGORIES].map((opt) => (
@@ -43,8 +43,8 @@ function FiltroCategoriaMenu({ categoriaFiltro, setCategoriaFiltro }) {
               key={opt.value || 'todos'}
               onSelect={() => setCategoriaFiltro(opt.value)}
               className={cn(
-                'flex cursor-pointer items-center justify-between px-5 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
-                categoriaFiltro === opt.value && 'font-medium text-primary'
+                'flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
+                categoriaFiltro === opt.value && 'bg-accent font-semibold text-accent-foreground'
               )}
             >
               {opt.label}
@@ -123,7 +123,7 @@ export default function ProductCommandSearch({
         <button
           type="button"
           onClick={() => setActiveTab('servicio')}
-          className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Plus className="h-4 w-4" />
           Agregar servicio manual
@@ -135,24 +135,26 @@ export default function ProductCommandSearch({
   return (
     <div className="flex h-full flex-col">
       {/* Header: tabs + escáner */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        <div className="flex gap-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
+        <div role="tablist" aria-label="Catálogo" className="inline-flex flex-wrap items-center gap-1 rounded-xl bg-secondary p-1">
           {[
             { id: 'productos', label: 'Productos', icon: Package },
             { id: 'servicios', label: 'Servicios', icon: ClipboardList },
             { id: 'servicio', label: 'Servicio libre', icon: Stethoscope },
-          ].map(({ id, label }) => (
+          ].map(({ id, label, icon }) => (
             <button
               key={id}
               type="button"
+              role="tab"
+              aria-selected={activeTab === id}
               onClick={() => setActiveTab(id)}
-              className={`-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2 text-xs font-semibold transition-colors ${
+              className={`flex h-9 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 activeTab === id
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'bg-card font-semibold text-foreground'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              {createElement(icon, { className: `h-4 w-4 shrink-0 ${activeTab === id ? 'text-primary' : 'text-muted-foreground'}` })}
               {label}
             </button>
           ))}
@@ -161,42 +163,45 @@ export default function ProductCommandSearch({
           type="button"
           onClick={toggleScan}
           title="Escanear código de barras"
-          className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+          aria-pressed={scanMode}
+          className={`inline-flex h-10 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             scanMode
-              ? 'border-primary bg-primary/10 text-primary'
-              : 'border-border bg-card text-muted-foreground hover:text-foreground'
+              ? 'bg-accent text-accent-foreground'
+              : 'bg-card text-foreground hover:bg-muted'
           }`}
         >
-          <Scan className="h-3.5 w-3.5" />
+          <Scan className="h-4 w-4" />
           Escáner
         </button>
       </div>
 
       {/* Escáner de código de barras */}
       {scanMode && (
-        <div className="flex items-center gap-2 border-b border-border bg-warning-soft px-4 py-2">
-          <Barcode className="h-4 w-4 shrink-0 text-warning" />
+        <div className="mx-5 mt-3 flex h-12 items-center gap-2 rounded-xl bg-brand-muted px-4">
+          <Barcode className="h-4 w-4 shrink-0 text-brand-foreground" />
           <input
             ref={barcodeRef}
             type="text"
             value={barcodeInput}
             onChange={(e) => setBarcodeInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleBarcodeScan() }}
-            placeholder="Escanea o escribe el código..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            placeholder="Escanea o escribe el código"
+            aria-label="Código de barras"
+            className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <button
             type="button"
             onClick={handleBarcodeScan}
             disabled={buscarProductoPorBarcodeMutation?.isPending}
-            className="border border-warning bg-warning-soft px-3 py-1 text-xs font-semibold text-warning transition hover:bg-warning/20 disabled:opacity-60"
+            className="h-9 rounded-lg bg-card px-3 text-[13px] font-semibold text-foreground transition hover:bg-muted active:translate-y-px disabled:opacity-60"
           >
             {buscarProductoPorBarcodeMutation?.isPending ? '...' : 'Agregar'}
           </button>
           <button
             type="button"
             onClick={() => setScanMode(false)}
-            className="text-muted-foreground hover:text-foreground"
+            aria-label="Cerrar escáner"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -206,9 +211,9 @@ export default function ProductCommandSearch({
       {activeTab === 'productos' ? (
         <>
           {/* Barra de búsqueda + filtro */}
-          <div className="flex items-center gap-2 px-4 py-3">
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3.5 py-2.5 focus-within:border-primary">
-              <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-2 px-5 pt-3">
+            <div className="flex h-14 min-w-0 flex-1 items-center gap-3 rounded-xl bg-card px-4 focus-within:ring-2 focus-within:ring-ring">
+              <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
@@ -217,11 +222,12 @@ export default function ProductCommandSearch({
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="Buscar producto... (Enter para agregar el primero)"
-                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                placeholder="Buscar producto (Enter agrega el primero)"
+                aria-label="Buscar producto"
+                className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               {productSearch && (
-                <button type="button" onClick={() => setProductSearch('')} className="shrink-0 text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => setProductSearch('')} aria-label="Limpiar búsqueda" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -234,11 +240,12 @@ export default function ProductCommandSearch({
 
           {/* Chip de la categoría activa: sin él, el filtro queda invisible */}
           {categoriaActiva && (
-            <div className="px-4 pb-3">
+            <div className="px-5 pt-3">
               <button
                 type="button"
                 onClick={() => setCategoriaFiltro('')}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary/15"
+                aria-label={`Quitar filtro ${categoriaActiva.label}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-[13px] font-semibold text-accent-foreground transition hover:brightness-95"
               >
                 {categoriaActiva.label}
                 <X className="h-3 w-3" />
@@ -247,11 +254,11 @@ export default function ProductCommandSearch({
           )}
 
           {/* Grid de productos */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-5">
             {productosQuery?.isLoading ? (
               <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-48 animate-pulse rounded-xl border border-border bg-muted" />
+                  <div key={i} className="h-48 animate-pulse rounded-xl bg-card" />
                 ))}
               </div>
             ) : productosDisponibles.length === 0 ? (
@@ -273,10 +280,10 @@ export default function ProductCommandSearch({
                       type="button"
                       onClick={() => !sinStock && addProductToInvoice(product)}
                       disabled={sinStock}
-                      className={`group relative flex flex-col gap-2 rounded-xl border p-3 text-left transition ${
+                      className={`group relative flex flex-col gap-2 rounded-xl p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         sinStock
-                          ? 'cursor-not-allowed border-border bg-muted opacity-50'
-                          : 'border-border bg-card shadow-sm hover:border-primary hover:shadow-md'
+                          ? 'cursor-not-allowed bg-muted opacity-60'
+                          : 'bg-card hover:bg-accent active:translate-y-px'
                       }`}
                     >
                       {/* La imagen manda: es lo que el cajero reconoce de un vistazo */}
@@ -294,27 +301,27 @@ export default function ProductCommandSearch({
                         }
                       </div>
                       <div className="min-w-0">
-                        <p className="line-clamp-2 text-[13px] font-semibold leading-tight text-foreground">
+                        <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
                           {product.nombre}
                         </p>
                         {product.categoria && (
-                          <p className="mt-0.5 truncate text-[11px] capitalize text-muted-foreground">
+                          <p className="mt-0.5 truncate text-[13px] capitalize text-muted-foreground">
                             {product.categoria}
                           </p>
                         )}
                       </div>
                       <div className="mt-auto flex items-baseline justify-between gap-2">
-                        <span className="text-[15px] font-bold text-primary">
+                        <span className="text-[15px] font-semibold tabular-nums text-foreground">
                           {formatCOP(product.precioVenta || 0)}
                         </span>
                         {product.stock !== null && product.stock !== undefined && (
-                          <span className={`shrink-0 text-[11px] ${sinStock ? 'font-semibold text-danger' : 'text-muted-foreground'}`}>
-                            {sinStock ? 'Agotado' : `Stock: ${product.stock}`}
+                          <span className={`shrink-0 text-[13px] tabular-nums ${sinStock ? 'font-semibold text-danger' : 'text-muted-foreground'}`}>
+                            {sinStock ? 'Agotado' : `Quedan ${product.stock}`}
                           </span>
                         )}
                       </div>
                       {!sinStock && (
-                        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-card text-primary opacity-0 shadow-sm transition group-hover:opacity-100">
+                        <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
                           <Plus className="h-3.5 w-3.5" />
                         </span>
                       )}
@@ -328,31 +335,32 @@ export default function ProductCommandSearch({
       ) : activeTab === 'servicios' ? (
         <>
           {/* Barra de búsqueda del catalogo de servicios */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3.5 py-2.5 focus-within:border-primary">
-              <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="px-5 pt-3">
+            <div className="flex h-14 items-center gap-3 rounded-xl bg-card px-4 focus-within:ring-2 focus-within:ring-ring">
+              <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
                 type="text"
                 value={servicioSearch}
                 onChange={(e) => setServicioSearch(e.target.value)}
-                placeholder="Buscar servicio del catálogo..."
-                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                placeholder="Buscar servicio del catálogo"
+                aria-label="Buscar servicio"
+                className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               {servicioSearch && (
-                <button type="button" onClick={() => setServicioSearch('')} className="shrink-0 text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => setServicioSearch('')} aria-label="Limpiar búsqueda" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground">
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-5">
             {serviciosQuery?.isLoading ? (
               <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-48 animate-pulse rounded-xl border border-border bg-muted" />
+                  <div key={i} className="h-48 animate-pulse rounded-xl bg-card" />
                 ))}
               </div>
             ) : serviciosDisponibles.length === 0 ? (
@@ -369,23 +377,23 @@ export default function ProductCommandSearch({
                     key={servicio.id}
                     type="button"
                     onClick={() => addServiceFromCatalog(servicio)}
-                    className="group relative flex min-h-[104px] flex-col gap-2 rounded-xl border border-border bg-card p-3.5 text-left shadow-sm transition hover:border-primary hover:shadow-md"
+                    className="group relative flex min-h-[104px] flex-col gap-2 rounded-xl bg-card p-3.5 text-left transition hover:bg-accent active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {/* Los servicios no tienen imagen: el nombre ocupa ese lugar */}
                     <div className="min-w-0">
-                      <p className="line-clamp-2 text-[13px] font-semibold leading-tight text-foreground">
+                      <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
                         {servicio.nombre}
                       </p>
                       {servicio.categoria && (
-                        <p className="mt-0.5 truncate text-[11px] capitalize text-muted-foreground">
+                        <p className="mt-0.5 truncate text-[13px] capitalize text-muted-foreground">
                           {servicio.categoria}
                         </p>
                       )}
                     </div>
-                    <span className="mt-auto text-[15px] font-bold text-primary">
+                    <span className="mt-auto text-[15px] font-semibold tabular-nums text-foreground">
                       {formatCOP(servicio.precioVenta || 0)}
                     </span>
-                    <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-card text-primary opacity-0 shadow-sm transition group-hover:opacity-100">
+                    <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
                       <Plus className="h-3.5 w-3.5" />
                     </span>
                   </button>
@@ -397,23 +405,23 @@ export default function ProductCommandSearch({
       ) : (
         /* Tab: Servicio manual */
         <div className="flex flex-1 flex-col items-center justify-center p-8">
-          <div className="w-full max-w-sm space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Stethoscope className="h-4 w-4 text-primary" />
+          <div className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6">
+            <div className="flex items-center gap-2 text-lg font-semibold tracking-[-0.02em] text-foreground">
+              <Stethoscope className="h-5 w-5 text-primary" />
               Agregar servicio o concepto libre
             </div>
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <label className="text-[13px] font-semibold text-muted-foreground">
-                  Descripción *
+                  Descripción
                 </label>
                 <input
                   type="text"
                   value={serviceForm.descripcion}
                   onChange={(e) => setServiceForm((f) => ({ ...f, descripcion: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddService() }}
-                  placeholder="Ej: Consulta general, Baño y corte..."
-                  className="w-full border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  placeholder="Ej.: consulta general, baño y corte"
+                  className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   autoFocus
                 />
               </div>
@@ -427,14 +435,14 @@ export default function ProductCommandSearch({
                   onChange={(e) => setServiceForm((f) => ({ ...f, precio: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddService() }}
                   placeholder="0"
-                  className="w-full border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                  className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddService}
                 disabled={!serviceForm.descripcion.trim()}
-                className="flex w-full items-center justify-center gap-2 border border-primary bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" />
                 Agregar al carrito

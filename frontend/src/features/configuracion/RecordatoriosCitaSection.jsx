@@ -12,7 +12,7 @@ import { aMinutos, desdeMinutos, esquemaRecordatorioCita, MINUTOS_POR_DEFECTO } 
 import { invalidarDominios } from '@/lib/queryKeys'
 
 const INPUT_CLASS =
-  'h-11 w-24 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary disabled:opacity-50'
+  'h-11 w-24 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 
 const valoresIniciales = (clinica) => ({
   activo: clinica?.recordatorioCitaActivo ?? true,
@@ -67,7 +67,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
         </label>
 
         <div className="grid gap-2">
-          <span className="text-[13px] font-semibold text-muted-foreground">
+          <span className="text-sm font-medium text-foreground">
             Anticipación
           </span>
           <div className="flex flex-wrap items-center gap-3">
@@ -90,7 +90,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
             <span className="text-sm text-muted-foreground">antes de la cita</span>
           </div>
           {errors.cantidad ? <p className="text-sm text-danger">{errors.cantidad.message}</p> : null}
-          <p className="text-xs leading-6 text-muted-foreground">
+          <p className="text-[13px] leading-6 text-muted-foreground">
             Entre 15 minutos y 48 horas. Si la cita se agenda con menos tiempo, el aviso sale enseguida.
           </p>
         </div>

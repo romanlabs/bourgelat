@@ -126,11 +126,11 @@ export default function AgendaCalendar({
       aria-label="Nueva cita"
       onClick={() => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')}
       className={cn(
-        'flex shrink-0 items-center rounded-2xl border border-border bg-card font-medium text-foreground shadow-[0_1px_2px_rgba(8,25,39,0.15),0_1px_3px_1px_rgba(8,25,39,0.1)] transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-        sidebarOpen ? 'h-14 min-w-0 flex-1 gap-3 py-0 pl-3 pr-2 text-sm' : 'h-14 w-14 justify-center'
+        'flex shrink-0 items-center rounded-lg bg-primary font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        sidebarOpen ? 'h-11 min-w-0 flex-1 gap-2 py-0 pl-3 pr-2 text-sm' : 'h-11 w-11 justify-center'
       )}
     >
-      <Plus className="h-6 w-6 shrink-0 text-primary" />
+      <Plus className="h-5 w-5 shrink-0" />
       {sidebarOpen && <span className="flex-1 text-left">Nueva cita</span>}
     </button>
   )
@@ -148,7 +148,7 @@ export default function AgendaCalendar({
               type="button"
               onClick={toggleSidebar}
               aria-label="Mostrar mini calendario"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -166,18 +166,18 @@ export default function AgendaCalendar({
                 type="button"
                 onClick={toggleSidebar}
                 aria-label="Ocultar mini calendario"
-                className="flex h-14 w-9 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground"
+                className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
             </SimpleTooltip>
           </div>
 
-          <aside className="border-r border-border pr-4">
+          <aside className="rounded-2xl bg-card p-3">
           <MiniCalendar fechaBase={fechaBase} onSelectDay={irADia} />
 
           {(onEstadoChange || onVeterinarioChange) && (
-            <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+            <div className="mt-4 flex flex-col gap-2 pt-1">
               <p className="text-[13px] font-semibold text-muted-foreground">
                 Filtros
               </p>

@@ -11,7 +11,7 @@ import { DESTINO_BADGE } from './inventarioUtils'
 
 function estadoBadge(estado) {
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_COLORS[estado] || ''}`}>
+    <span className={`inline-block rounded-md px-2.5 py-1 text-[13px] font-semibold ${ESTADO_COLORS[estado] || ''}`}>
       {estado.charAt(0).toUpperCase() + estado.slice(1)}
     </span>
   )
@@ -60,23 +60,23 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
               {estadoBadge(factura.estado)}
             </div>
 
-            <div className="flex items-end justify-between border border-border bg-muted px-4 py-3">
+            <div className="flex items-end justify-between rounded-xl bg-muted px-4 py-3">
               <p className="text-[13px] font-semibold text-muted-foreground">
                 Total de la compra
               </p>
-              <p className="text-2xl font-bold tabular-nums text-foreground">
+              <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
                 {formatCurrency(Number(factura.total || 0))}
               </p>
             </div>
 
-            <dl className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
-              <div className="bg-card px-4 py-3">
+            <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <div className="rounded-xl bg-muted px-4 py-3">
                 <dt className="text-[13px] font-semibold text-muted-foreground">
                   Fecha de compra
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-foreground">{factura.fecha}</dd>
               </div>
-              <div className="bg-card px-4 py-3">
+              <div className="rounded-xl bg-muted px-4 py-3">
                 <dt className="text-[13px] font-semibold text-muted-foreground">
                   Forma de pago
                 </dt>
@@ -84,7 +84,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                   {estadoPagoTexto(factura)}
                 </dd>
               </div>
-              <div className="bg-card px-4 py-3">
+              <div className="rounded-xl bg-muted px-4 py-3">
                 <dt className="text-[13px] font-semibold text-muted-foreground">
                   N° factura proveedor
                 </dt>
@@ -94,46 +94,46 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
               </div>
             </dl>
 
-            <div className="overflow-x-auto border border-border">
-              <table className="min-w-full divide-y divide-border text-sm">
-                <thead className="bg-muted">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
                   <tr>
-                    <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-3 text-left text-[13px] font-medium text-muted-foreground">
                       Producto
                     </th>
-                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-medium text-muted-foreground">
                       Cantidad
                     </th>
-                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-medium text-muted-foreground">
                       Precio unitario
                     </th>
-                    <th className="px-3 py-3 text-right text-[13px] font-semibold text-muted-foreground">
+                    <th className="px-3 py-3 text-right text-[13px] font-medium text-muted-foreground">
                       Subtotal
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody>
                   {(factura.items || []).map((item) => {
                     const { destino, nombre, unidad } = referenciaItem(item)
                     const badge = DESTINO_BADGE[destino]
                     return (
-                    <tr key={item.id}>
+                    <tr key={item.id} className="border-t border-border/60">
                       <td className="px-3 py-3 text-foreground">
                         <div className="flex flex-wrap items-center gap-2">
                           <span>
                             {nombre || (destino === 'clinico' ? 'Insumo eliminado' : 'Producto eliminado')}
                             {unidad && (
-                              <span className="ml-1 text-xs text-muted-foreground">({unidad})</span>
+                              <span className="ml-1 text-[13px] text-muted-foreground">({unidad})</span>
                             )}
                           </span>
                           <span
-                            className={`inline-block rounded px-1.5 py-0.5 text-[13px] font-semibold ${badge.className}`}
+                            className={`inline-block rounded-lg px-1.5 py-0.5 text-[13px] font-semibold ${badge.className}`}
                           >
                             {badge.label}
                           </span>
                         </div>
                         {item.fechaVencimiento && (
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="mt-1 text-[13px] text-muted-foreground">
                             Vence {item.fechaVencimiento}
                             {item.lote && ` · Lote ${item.lote}`}
                           </p>
@@ -153,7 +153,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-border bg-muted">
+                  <tr className="border-t border-border/60">
                     <td
                       className="px-3 py-3 text-[13px] font-semibold text-muted-foreground"
                       colSpan={3}
@@ -169,7 +169,7 @@ export default function FacturaCompraDetalleModal({ factura, onClose }) {
             </div>
 
             {factura.observaciones && (
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
                 {factura.observaciones}
               </div>
             )}

@@ -207,50 +207,84 @@ const MODULOS_OPERATIVOS = [
   { key: 'inventario', to: '/inventario', icon: Boxes, titulo: 'Inventario', descripcion: 'Productos, insumos y facturas de compra.' },
 ]
 
-function RestrictedDashboard({ nombreClinica, usuarioEmail, usuario }) {
+// Hoy para los roles que no administran: la misma jornada del admin, sin la
+// caja del día ni los reportes, y con accesos a sus módulos debajo.
+function RestrictedDashboard({ usuario }) {
+  const hoy = useMemo(() => serializeDate(new Date()), [])
+  const puedeVerAgenda = canAccessModule(usuario, 'agenda')
   const modulos = MODULOS_OPERATIVOS.filter((modulo) => canAccessModule(usuario, modulo.key))
+
+  const agendaHoyQuery = useQuery({
+    queryKey: ['dashboard-citas-hoy-detalle', hoy],
+    queryFn: () => agendaApi.obtenerCitas({ fecha: hoy, pagina: 1, limite: 40 }),
+    enabled: puedeVerAgenda,
+  })
+  const citas = agendaHoyQuery.data?.citas ?? EMPTY_LIST
+
+  // El veterinario ve sus pacientes y los que aún no tienen profesional.
+  const citasOrdenadas = useMemo(() => {
+    if (!usuario?.id || !hasAnyRole(usuario, ['veterinario'])) return citas
+    return citas.filter((c) => !c.veterinario?.id || c.veterinario.id === usuario.id)
+  }, [citas, usuario])
+
+  const enEspera = citasOrdenadas.filter((c) => c.estado === 'en_espera').length
+  const atendidas = citasOrdenadas.filter((c) => c.estado === 'completada').length
+  const total = citasOrdenadas.length
+  const fechaHoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const titulo = !puedeVerAgenda
+    ? `Hola, ${usuario?.nombre?.split(' ')[0] || 'bienvenido'}`
+    : total === 0
+      ? 'Sin citas hoy'
+      : total === 1
+        ? '1 cita hoy'
+        : `${formatNumber(total)} citas hoy`
+  const descripcion = [
+    fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1),
+    total > 0 ? `${formatNumber(atendidas)} ${atendidas === 1 ? 'atendida' : 'atendidas'}` : null,
+    enEspera > 0 ? `${formatNumber(enEspera)} en espera` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
-    <AdminShell currentKey="dashboard" title="Panel de control">
-      <div className="mx-auto max-w-5xl">
-        <section className="border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-6 py-5">
-            <p className="text-[13px] font-semibold text-muted-foreground">
-              Panel de control
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-foreground">{nombreClinica}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Este panel de control está reservado para administración. Tu perfil puede seguir
-              trabajando en las secciones permitidas, pero el seguimiento financiero, los reportes y
-              las decisiones de plan se concentran aquí.
-            </p>
-          </div>
+    <AdminShell currentKey="dashboard" title={titulo} description={descripcion}>
+      {puedeVerAgenda ? (
+        <JornadaHoy
+          citas={citasOrdenadas}
+          loading={agendaHoyQuery.isLoading}
+          ingresosHoy={0}
+          alertas={EMPTY_LIST}
+          puedeAtender={canAccessModule(usuario, 'historias')}
+          puedeCobrar={canAccessModule(usuario, 'finanzas')}
+          puedeVerCaja={false}
+        />
+      ) : null}
 
-          <div className="grid gap-4 p-6 md:grid-cols-2">
-            <div className="border border-border bg-muted px-4 py-4">
-              <p className="text-[13px] font-semibold text-muted-foreground">
-                Acceso actual
-              </p>
-              <p className="mt-3 text-base font-semibold text-foreground">{usuarioEmail || 'Sin correo principal'}</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Si necesitas ver reportes o controles de plan, solicita acceso al administrador.
-              </p>
-            </div>
-
-            {modulos.map((modulo) => (
-              <div key={modulo.key} className="border border-border bg-muted px-4 py-4">
-                <p className="text-[13px] font-semibold text-muted-foreground">
-                  Tu módulo
-                </p>
-                <p className="mt-3 text-base font-semibold text-foreground">{modulo.titulo}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{modulo.descripcion}</p>
-                <NavCta to={modulo.to} icon={modulo.icon} className="mt-4">
-                  Abrir módulo
-                </NavCta>
-              </div>
-            ))}
+      {modulos.length > 0 ? (
+        <section aria-labelledby="hoy-modulos" className="flex flex-col gap-3">
+          <h2 id="hoy-modulos" className="text-lg font-semibold tracking-[-0.01em]">
+            Tus módulos
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {modulos.map((modulo) => {
+              const Icon = modulo.icon
+              return (
+                <Link
+                  key={modulo.key}
+                  to={modulo.to}
+                  className="group flex flex-col gap-3 rounded-2xl bg-card p-5 transition hover:bg-accent active:translate-y-px"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary group-hover:bg-card">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-base font-semibold">{modulo.titulo}</span>
+                  <span className="text-sm leading-5 text-muted-foreground">{modulo.descripcion}</span>
+                </Link>
+              )
+            })}
           </div>
         </section>
-      </div>
+      ) : null}
     </AdminShell>
   )
 }
@@ -518,7 +552,7 @@ export default function DashboardPage() {
   }, [ingresosPorDia, hoy])
 
   if (!esAdministrador) {
-    return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} usuario={usuario} />
+    return <RestrictedDashboard usuario={usuario} />
   }
 
   const renderSummaryOverview = () => (

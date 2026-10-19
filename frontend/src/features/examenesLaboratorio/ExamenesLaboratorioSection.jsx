@@ -112,42 +112,42 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-label={examen ? 'Editar examen de laboratorio' : 'Registrar examen de laboratorio'}
-        className="relative z-10 flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden border border-border bg-card shadow-2xl"
+        className="relative z-10 flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <p className="text-sm font-semibold text-foreground">
+        <div className="flex items-center justify-between px-6 pb-2 pt-5">
+          <p className="text-lg font-semibold tracking-[-0.02em] text-foreground">
             {examen ? 'Editar examen de laboratorio' : 'Registrar examen de laboratorio'}
           </p>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-8 w-8 items-center justify-center border border-border bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+        <form onSubmit={handleSubmit} className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
           <div className="grid gap-1">
             <input
               type="text"
               value={form.tipo}
               onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}
               placeholder="Tipo de examen"
-              className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
+              className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             />
-            <div className="flex flex-wrap gap-1">
+            <div className="mt-1 flex flex-wrap gap-1.5">
               {TIPOS_EXAMEN_SUGERIDOS.map((tipo) => (
                 <button
                   key={tipo}
                   type="button"
                   onClick={() => setForm((c) => ({ ...c, tipo }))}
                   className={cn(
-                    'border px-1.5 py-0.5 text-[10px] font-semibold transition',
+                    'rounded-md px-2.5 py-1 text-[13px] font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     form.tipo === tipo
-                      ? 'border-info/30 bg-info-soft text-info '
-                      : 'border-border bg-muted text-muted-foreground hover:text-foreground'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-muted text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {tipo}
@@ -158,22 +158,22 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="mb-1 text-xs text-muted-foreground">Fecha del examen</p>
+              <p className="mb-1.5 text-[13px] text-muted-foreground">Fecha del examen</p>
               <input
                 type="date"
                 value={form.fecha}
                 onChange={(e) => setForm((c) => ({ ...c, fecha: e.target.value }))}
-                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
+                className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div>
-              <p className="mb-1 text-xs text-muted-foreground">Laboratorio (opcional)</p>
+              <p className="mb-1.5 text-[13px] text-muted-foreground">Laboratorio (opcional)</p>
               <input
                 type="text"
                 value={form.laboratorio}
                 onChange={(e) => setForm((c) => ({ ...c, laboratorio: e.target.value }))}
                 placeholder="Laboratorio externo"
-                className="h-10 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-info"
+                className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           </div>
@@ -182,27 +182,27 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
             value={form.resultados}
             onChange={(e) => setForm((c) => ({ ...c, resultados: e.target.value }))}
             placeholder="Resultados del examen"
-            className="min-h-[100px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info"
+            className="min-h-[100px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           />
           <textarea
             value={form.interpretacion}
             onChange={(e) => setForm((c) => ({ ...c, interpretacion: e.target.value }))}
             placeholder="Interpretación clínica (opcional)"
-            className="min-h-[70px] w-full border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-info"
+            className="min-h-[70px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           />
 
           <div>
-            <p className="mb-1 text-xs text-muted-foreground">
+            <p className="mb-1.5 text-[13px] text-muted-foreground">
               Adjunto (PDF o imagen, máx. 8 MB) — opcional
             </p>
             <input
               type="file"
               accept="application/pdf,image/jpeg,image/png,image/webp"
               onChange={(e) => setArchivo(e.target.files?.[0] || null)}
-              className="w-full border border-border bg-card px-3 py-2 text-sm text-foreground file:mr-3 file:border-0 file:bg-muted file:px-3 file:py-1 file:text-xs file:font-semibold"
+              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-[13px] file:font-semibold file:text-secondary-foreground"
             />
             {examen?.archivoNombre && !archivo && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1.5 text-[13px] text-muted-foreground">
                 Adjunto actual: {examen.archivoNombre} (se conserva si no seleccionas otro)
               </p>
             )}
@@ -211,19 +211,19 @@ function ExamenFormModal({ open, examen, mascotaId, onClose }) {
           <button type="submit" className="hidden" aria-hidden="true" />
         </form>
 
-        <div className="flex gap-3 border-t border-border px-5 py-4">
+        <div className="flex gap-2.5 px-6 pb-5 pt-3">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={guardarMutation.isPending}
-            className="border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardarMutation.isPending ? 'Guardando...' : examen ? 'Guardar cambios' : 'Registrar examen'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="border border-border bg-muted px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted/80"
+            className="inline-flex h-11 items-center rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>
@@ -266,50 +266,50 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
   const abrirEditar = (examen) => { setExamenEnEdicion(examen); setModalOpen(true) }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold text-muted-foreground">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-base font-semibold text-foreground">
           Exámenes de laboratorio
         </p>
         {puedeEditar && (
           <button
             type="button"
             onClick={abrirCrear}
-            className="inline-flex items-center gap-1 border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Plus className="h-3 w-3" /> Registrar examen
+            <Plus className="h-3.5 w-3.5" /> Registrar examen
           </button>
         )}
       </div>
 
       {examenesQuery.isPending ? (
-        <p className="text-xs text-muted-foreground">Cargando exámenes...</p>
+        <p className="text-sm text-muted-foreground">Cargando exámenes...</p>
       ) : examenesQuery.isError ? (
-        <p className="text-xs text-danger">No fue posible cargar los exámenes.</p>
+        <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">No fue posible cargar los exámenes.</p>
       ) : examenes.length === 0 ? (
-        <div className="border border-dashed border-border bg-muted/40 px-4 py-4 text-center">
-          <FlaskConical className="mx-auto mb-1 h-5 w-5 text-muted-foreground/50" />
-          <p className="text-xs text-muted-foreground">Sin exámenes de laboratorio registrados.</p>
+        <div className="rounded-xl bg-muted px-4 py-5 text-center">
+          <FlaskConical className="mx-auto mb-1.5 h-5 w-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Sin exámenes de laboratorio registrados.</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-1.5">
           {examenes.map((examen) => (
-            <div key={examen.id} className="border border-border bg-muted/30 px-3 py-2.5">
+            <div key={examen.id} className="rounded-xl bg-muted px-4 py-3.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{examen.tipo}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="text-[15px] font-semibold text-foreground">{examen.tipo}</p>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">
                     {formatFecha(examen.fecha)}
                     {examen.laboratorio ? ` · ${examen.laboratorio}` : ''}
                     {examen.registradoPor?.nombre ? ` · ${examen.registradoPor.nombre}` : ''}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-3">
                   {puedeEditar && (
                     <button
                       type="button"
                       onClick={() => abrirEditar(examen)}
-                      className="text-xs font-semibold text-info hover:text-info"
+                      className="rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Editar
                     </button>
@@ -319,18 +319,18 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                       type="button"
                       onClick={() => setExamenAEliminar(examen)}
                       disabled={eliminarMutation.isPending}
-                      className="text-xs font-semibold text-danger hover:text-danger disabled:opacity-60"
+                      className="rounded text-[13px] font-semibold text-danger hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                     >
                       Eliminar
                     </button>
                   )}
                 </div>
               </div>
-              <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-xs text-foreground">
+              <p className="mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-foreground">
                 {examen.resultados}
               </p>
               {examen.interpretacion && (
-                <p className="mt-1 line-clamp-2 text-xs italic text-muted-foreground">
+                <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">
                   {examen.interpretacion}
                 </p>
               )}
@@ -338,9 +338,9 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                 <button
                   type="button"
                   onClick={() => abrirAdjunto(examen)}
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-info hover:text-info"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Paperclip className="h-3 w-3" />
+                  <Paperclip className="h-3.5 w-3.5" />
                   {examen.archivoNombre || 'Ver adjunto'}
                 </button>
               )}

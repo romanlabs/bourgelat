@@ -86,15 +86,15 @@ export default function CierreTurnoModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="rounded-xl border border-border bg-muted px-4 py-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Efectivo esperado</span>
-              <span className="font-bold tabular-nums text-foreground">{formatCurrency(montoFinalEsperado)}</span>
+          <div className="rounded-xl bg-muted px-4 py-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-semibold text-muted-foreground">Efectivo esperado</span>
+              <span className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">{formatCurrency(montoFinalEsperado)}</span>
             </div>
           </div>
 
           <label className="grid gap-2">
-            <span className="text-[13px] font-semibold text-muted-foreground">
+            <span className="text-sm font-semibold text-foreground">
               Efectivo contado
             </span>
             <MoneyInput
@@ -102,12 +102,12 @@ export default function CierreTurnoModal({
               onChange={(value) => setForm((curr) => ({ ...curr, montoFinalContado: value === 0 ? '' : String(value) }))}
               placeholder="$ 0"
               autoFocus
-              className="w-full rounded-xl border-2 border-border bg-card px-4 py-2.5 text-right text-xl font-bold tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none"
+              className="h-14 w-full rounded-lg border border-input bg-card px-4 text-right text-2xl font-semibold tracking-[-0.02em] tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </label>
 
           {tieneMontoValido && diferenciaAbs === 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
+            <div className="flex items-center gap-2 rounded-xl bg-success-soft px-4 py-3 text-sm font-semibold text-success">
               <CheckCircle2 className="h-4 w-4" />
               Cierre cuadrado, sin diferencias.
             </div>
@@ -115,10 +115,10 @@ export default function CierreTurnoModal({
 
           {tieneMontoValido && diferenciaAbs > 0 && (
             <div
-              className={`rounded-xl border px-4 py-3 text-sm ${
+              className={`rounded-xl px-4 py-3 text-sm font-semibold tabular-nums ${
                 diferencia > 0
-                  ? 'border-info/30 bg-info-soft text-info '
-                  : 'border-warning/30 bg-warning-soft text-warning '
+                  ? 'bg-info-soft text-info'
+                  : 'bg-warning-soft text-warning'
               }`}
             >
               {diferencia > 0 ? 'Sobrante' : 'Faltante'} de {formatCurrency(diferenciaAbs)}
@@ -126,9 +126,9 @@ export default function CierreTurnoModal({
           )}
 
           {requiereRevisionAdmin && (
-            <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+            <div className="flex items-start gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              La diferencia supera $30.000. Se notificara automaticamente al administrador de la clinica.
+              La diferencia supera $30.000. Se le avisará al administrador de la clínica.
             </div>
           )}
 
@@ -139,10 +139,11 @@ export default function CierreTurnoModal({
                   key={nota}
                   type="button"
                   onClick={() => setForm((curr) => ({ ...curr, observacionesCierre: nota }))}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                  aria-pressed={form.observacionesCierre === nota}
+                  className={`h-9 rounded-lg px-3 text-[13px] font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     form.observacionesCierre === nota
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-card text-muted-foreground hover:border-primary/40'
+                      ? 'bg-foreground text-background'
+                      : 'bg-secondary text-secondary-foreground hover:brightness-95'
                   }`}
                 >
                   {nota}
@@ -153,15 +154,15 @@ export default function CierreTurnoModal({
 
           {tieneMontoValido && diferenciaAbs > 0 && (
             <label className="grid gap-2">
-              <span className="text-[13px] font-semibold text-muted-foreground">
+              <span className="text-sm font-semibold text-foreground">
                 Comentario {requiereJustificacion ? '(obligatorio, mínimo 20 caracteres)' : '(opcional)'}
               </span>
               <textarea
                 value={form.observacionesCierre}
                 onChange={(event) => setForm((curr) => ({ ...curr, observacionesCierre: event.target.value }))}
-                placeholder="Explica que pudo causar la diferencia"
-                className={`min-h-20 w-full rounded-xl border bg-card px-3 py-2.5 text-sm leading-6 text-foreground outline-none transition focus:border-primary ${
-                  requiereJustificacion && !comentarioValido ? 'border-danger/30' : 'border-border'
+                placeholder="Explica qué pudo causar la diferencia"
+                className={`min-h-20 w-full rounded-lg border bg-card px-3 py-2.5 text-sm leading-6 text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  requiereJustificacion && !comentarioValido ? 'border-danger' : 'border-input'
                 }`}
               />
             </label>
@@ -169,13 +170,13 @@ export default function CierreTurnoModal({
 
           {requiereJustificacion && (
             <label className="grid gap-2">
-              <span className="text-[13px] font-semibold text-muted-foreground">
-                Categoria (obligatoria)
+              <span className="text-sm font-semibold text-foreground">
+                Categoría (obligatoria)
               </span>
               <Select
                 variant="field"
                 aria-label="Categoría de la diferencia"
-                className={`rounded-xl ${!form.categoriaDiferencia ? 'border-danger/30' : ''}`}
+                className={`rounded-lg ${!form.categoriaDiferencia ? 'border-danger' : ''}`}
                 placeholder="Selecciona una categoría"
                 value={form.categoriaDiferencia}
                 onValueChange={(value) => setForm((curr) => ({ ...curr, categoriaDiferencia: value }))}
@@ -187,7 +188,7 @@ export default function CierreTurnoModal({
           <button
             type="submit"
             disabled={!puedeConfirmar || cerrarTurnoMutation.isPending}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-base disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:brightness-100"
           >
             {cerrarTurnoMutation.isPending ? (
               <>

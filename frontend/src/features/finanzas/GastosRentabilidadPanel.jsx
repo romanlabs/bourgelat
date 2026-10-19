@@ -65,7 +65,7 @@ function rangoDelMes(mesISO) {
 }
 
 const inputClass =
-  'h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+  'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 function GastoForm() {
   const crearGasto = useCrearGasto()
@@ -100,7 +100,7 @@ function GastoForm() {
   }
 
   return (
-    <form onSubmit={asentar} className="mb-5 grid gap-3 border border-border bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
+    <form onSubmit={asentar} className="mb-5 grid gap-3 rounded-xl bg-muted p-4 sm:grid-cols-3 lg:grid-cols-[1fr_1.5fr_0.8fr_0.8fr_auto]">
       <label className="grid gap-1">
         <span className="text-[13px] font-semibold text-muted-foreground">Categoría</span>
         <Select
@@ -144,7 +144,7 @@ function GastoForm() {
         <button
           type="submit"
           disabled={crearGasto.isPending}
-          className="h-10 w-full border border-border bg-foreground px-4 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-11 w-full px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {crearGasto.isPending ? 'Registrando…' : 'Registrar gasto'}
         </button>
@@ -181,7 +181,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
       title="Gastos del negocio"
       subtitle={data ? `${data.total} gastos · total ${formatCurrency(data.totalMonto || 0)} en el periodo.` : 'Registra y consulta los gastos del periodo.'}
       action={
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Periodo
           <input
             type="month"
@@ -212,10 +212,10 @@ function GastosTable({ periodo, mes, onMesChange }) {
                 {row.gasto.descripcion ? <span className="text-muted-foreground"> — {row.gasto.descripcion}</span> : null}
                 {/* Lo generó el sistema al cerrar una historia, no un usuario. */}
                 {row.gasto.origen === 'consumo_insumos' ? (
-                  <span className="ml-2"><StatusPill tone="border-info/30 bg-info-soft text-info ">Automático</StatusPill></span>
+                  <span className="ml-2"><StatusPill tone="bg-info-soft text-info">Automático</StatusPill></span>
                 ) : null}
                 {row.gasto.anulado ? (
-                  <span className="ml-2"><StatusPill tone="border-danger/30 bg-danger-soft text-danger ">Anulado</StatusPill></span>
+                  <span className="ml-2"><StatusPill tone="bg-danger-soft text-danger">Anulado</StatusPill></span>
                 ) : null}
               </span>
             ),
@@ -242,7 +242,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
                 <button
                   type="button"
                   onClick={() => anular(row.gasto)}
-                  className="text-xs font-semibold text-muted-foreground underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                  className="inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold text-muted-foreground transition hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Anular
                 </button>
@@ -276,29 +276,29 @@ function FilaDeudor({ cliente }) {
   }
 
   return (
-    <div className="border-b border-border last:border-b-0">
+    <div className="rounded-xl">
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-muted/50"
+        className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-foreground">{cliente.nombre}</span>
-          <span className="block text-xs text-muted-foreground">
+          <span className="block truncate text-[15px] font-semibold text-foreground">{cliente.nombre}</span>
+          <span className="block text-[13px] text-muted-foreground">
             debe desde {cliente.facturaMasAntigua}{cliente.telefono ? ` · ${cliente.telefono}` : ''}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-3">
           <span className="font-semibold tabular-nums text-danger">{formatCurrency(cliente.totalDeuda)}</span>
-          <span aria-hidden className="text-xs text-muted-foreground">{abierto ? '▲' : '▼'}</span>
+          <span aria-hidden className="text-[13px] text-muted-foreground">{abierto ? '▲' : '▼'}</span>
         </span>
       </button>
 
       {abierto ? (
-        <div className="space-y-2 bg-muted/40 px-4 pb-4">
+        <div className="space-y-2 rounded-xl bg-muted px-4 pb-4">
           {cliente.facturas.map((f) => (
-            <div key={f.id} className="flex flex-wrap items-center gap-3 border-t border-border pt-3 text-sm">
+            <div key={f.id} className="flex flex-wrap items-center gap-3 pt-3 text-sm">
               <span className="text-muted-foreground">#{f.numero} · {f.fecha}</span>
               <span className="text-muted-foreground">de {formatCurrency(f.total)} quedan</span>
               <span className="font-semibold tabular-nums text-danger">{formatCurrency(f.saldoPendiente)}</span>
@@ -309,12 +309,12 @@ function FilaDeudor({ cliente }) {
                     value={monto}
                     onChange={(value) => setMonto(value === 0 ? '' : String(value))}
                     placeholder="valor"
-                    className={`${inputClass} h-9 w-28 text-right tabular-nums`}
+                    className={`${inputClass} h-10 w-32 text-right tabular-nums`}
                   />
                   <Select
                     variant="field"
                     aria-label="Método del abono"
-                    className="h-9"
+                    className="h-10"
                     value={metodoPago}
                     onValueChange={setMetodoPago}
                     options={METODOS_ABONO}
@@ -323,14 +323,14 @@ function FilaDeudor({ cliente }) {
                     type="button"
                     onClick={() => cobrar(f)}
                     disabled={registrarAbono.isPending || !monto}
-                    className="h-9 border border-primary bg-primary px-3 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-10 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Abonar
                   </button>
                   <button
                     type="button"
                     onClick={() => { setFacturaAbono(null); setMonto('') }}
-                    className="text-xs text-muted-foreground underline decoration-dotted"
+                    className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Cancelar
                   </button>
@@ -339,14 +339,14 @@ function FilaDeudor({ cliente }) {
                 <button
                   type="button"
                   onClick={() => { setFacturaAbono(f.id); setMonto('') }}
-                  className="text-xs font-semibold text-primary underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                  className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
                 >
                   Registrar abono
                 </button>
               )}
             </div>
           ))}
-          {error ? <p className="text-xs text-danger">{error}</p> : null}
+          {error ? <p className="text-[13px] text-danger">{error}</p> : null}
         </div>
       ) : null}
     </div>
@@ -368,12 +368,12 @@ function CuentasPorCobrarPanel() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Revisando deudas…</p>
       ) : !data?.clientes?.length ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6">
+        <div className="rounded-xl bg-muted px-4 py-6">
           <p className="text-sm font-semibold text-card-foreground">Nadie debe</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">El fiado está al día.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border">
+        <div className="space-y-1">
           {data.clientes.map((cliente) => (
             <FilaDeudor key={cliente.propietarioId || 'mostrador'} cliente={cliente} />
           ))}
@@ -403,7 +403,7 @@ export default function GastosRentabilidadPanel() {
           descripcion="Tu plan Esencial incluye gastos y cuentas por cobrar. El cálculo de ingresos, gastos y ganancia del mes está en el plan Clínica."
         />
       )}
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {incluyeRentabilidad && (
           <>
         <KpiCard

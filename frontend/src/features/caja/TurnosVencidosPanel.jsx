@@ -25,7 +25,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
     <>
       <DataTable
         title="Turnos vencidos"
-        subtitle="Turnos que quedaron abiertos desde un dia anterior. El cajero no puede facturar hasta cerrarlos."
+        subtitle="Quedaron abiertos desde un día anterior. El cajero no puede facturar hasta cerrarlos."
         rows={turnosVencidos.map((turno) => ({
           id: turno.id,
           cajero: turno.usuario?.nombre || 'Sin nombre',
@@ -39,7 +39,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
             key: 'esperado',
             label: 'Efectivo esperado',
             render: (row) => (
-              <StatusPill tone="border-warning/30 bg-warning-soft text-warning ">
+              <StatusPill tone="bg-warning-soft text-warning tabular-nums">
                 {formatCurrency(montoEsperado(row.esperado))}
               </StatusPill>
             ),
@@ -51,7 +51,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
               <button
                 type="button"
                 onClick={() => setTurnoSeleccionado(row.esperado)}
-                className="rounded-lg border border-border bg-card px-3 py-2 text-[13px] font-semibold text-foreground transition hover:bg-muted"
+                className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
               >
                 Cerrar turno
               </button>
@@ -59,7 +59,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
           },
         ]}
         emptyTitle="Sin turnos vencidos"
-        emptyBody="Ningún turno quedó abierto de un dia anterior."
+        emptyBody="Ningún turno quedó abierto de un día anterior."
       />
 
       {turnoSeleccionado ? (
@@ -70,7 +70,7 @@ export default function TurnosVencidosPanel({ cajaHook }) {
           cerrarTurnoMutation={cerrarTurnoAdminMutation}
           turnoId={turnoSeleccionado.id}
           titulo={`Cerrar turno de ${turnoSeleccionado.usuario?.nombre || 'este cajero'}`}
-          descripcion="Este turno quedó abierto de un dia anterior. Cuenta el efectivo físico para cerrarlo en nombre del cajero."
+          descripcion="Este turno quedó abierto de un día anterior. Cuenta el efectivo físico para cerrarlo en nombre del cajero."
         />
       ) : null}
     </>

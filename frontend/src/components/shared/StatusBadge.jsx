@@ -11,12 +11,12 @@ import { cn } from '@/lib/utils'
  *   info     → en curso (en atención, emitida, enviado, prueba gratis)
  */
 const TONOS = {
-  neutral:  { colors: 'bg-muted border-border text-muted-foreground', dot: 'bg-muted-foreground' },
-  apagado:  { colors: 'bg-transparent border-border text-muted-foreground', dot: 'bg-border' },
-  success:  { colors: 'bg-success-soft border-success/30 text-success', dot: 'bg-success' },
-  warning:  { colors: 'bg-warning-soft border-warning/30 text-warning', dot: 'bg-warning' },
-  danger:   { colors: 'bg-danger-soft border-danger/30 text-danger', dot: 'bg-danger' },
-  info:     { colors: 'bg-info-soft border-info/30 text-info', dot: 'bg-info' },
+  neutral:  { colors: 'bg-secondary text-secondary-foreground', dot: 'bg-muted-foreground' },
+  apagado:  { colors: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground/60' },
+  success:  { colors: 'bg-success-soft text-success', dot: 'bg-success' },
+  warning:  { colors: 'bg-warning-soft text-warning', dot: 'bg-warning' },
+  danger:   { colors: 'bg-danger-soft text-danger', dot: 'bg-danger' },
+  info:     { colors: 'bg-info-soft text-info', dot: 'bg-info' },
 }
 
 /**
@@ -29,11 +29,12 @@ const TONOS = {
 const STATUS_MAP = {
   // ── Citas ─────────────────────────────────────────────────────
   programada:  { label: 'Programada',  ...TONOS.neutral },
-  en_espera:   { label: 'En espera',   ...TONOS.warning },
-  en_atencion: { label: 'En atención', ...TONOS.info    },
+  // Mismos tonos que la agenda y la jornada de Hoy.
+  en_espera:   { label: 'En espera',   colors: 'bg-brand-muted text-brand-foreground', dot: 'bg-brand' },
+  en_atencion: { label: 'En atención', colors: 'bg-primary text-primary-foreground', dot: 'bg-primary' },
   completada:  { label: 'Completada',  ...TONOS.success },
   cancelada:   { label: 'Cancelada',   ...TONOS.danger  },
-  no_asistio:  { label: 'No asistió',  ...TONOS.danger  },
+  no_asistio:  { label: 'No asistió',  colors: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' },
   atrasada:    { label: 'Atrasada',    ...TONOS.danger  },
 
   // ── Facturas ──────────────────────────────────────────────────
@@ -63,12 +64,12 @@ const STATUS_MAP = {
 }
 
 const badgeVariants = cva(
-  'inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full border font-semibold tracking-[0.12em] whitespace-nowrap',
+  'inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-md text-[13px] font-semibold leading-5 whitespace-nowrap',
   {
     variants: {
       size: {
-        sm: 'px-2 py-0.5 text-[10px]',
-        md: 'px-2.5 py-1 text-[11px]',
+        sm: 'px-2 py-0.5',
+        md: 'px-2.5 py-1',
       },
     },
     defaultVariants: { size: 'md' },

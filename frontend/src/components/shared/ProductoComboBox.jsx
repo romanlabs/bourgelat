@@ -122,8 +122,8 @@ export default function ProductoComboBox({
   return (
     <div ref={containerRef} className="relative">
       <div
-        className={`flex h-11 items-center gap-2 border bg-card px-3 text-sm text-foreground transition focus-within:border-primary ${
-          hasError ? 'border-danger' : 'border-border'
+        className={`flex h-11 items-center gap-2 rounded-lg border bg-card px-3 text-[15px] text-foreground transition focus-within:ring-2 focus-within:ring-ring ${
+          hasError ? 'border-danger' : 'border-input'
         } ${disabled ? 'opacity-60' : ''}`}
       >
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -147,7 +147,7 @@ export default function ProductoComboBox({
       </div>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto border border-border bg-card shadow-lg">
+        <div className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-xl bg-card p-1.5 shadow-dropdown">
           {productosQuery.isLoading ? (
             <p className="px-3 py-3 text-sm text-muted-foreground">Buscando...</p>
           ) : resultados.length === 0 ? (
@@ -159,12 +159,12 @@ export default function ProductoComboBox({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => seleccionar(p)}
-                className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition ${
-                  idx === highlightedIndexClamped ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                  idx === highlightedIndexClamped ? 'bg-accent text-foreground' : 'text-foreground hover:bg-muted'
                 }`}
               >
                 <span className="truncate">{p.nombre}</span>
-                <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+                <span className="ml-2 shrink-0 text-[13px] tabular-nums text-muted-foreground">
                   Cantidad: {p.stock}
                   {p.unidad ? ` ${p.unidad}` : ''}
                 </span>

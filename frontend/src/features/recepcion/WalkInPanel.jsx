@@ -7,7 +7,7 @@ import { TYPE_OPTIONS } from './recepcionConstants'
 import { Select, SelectItem, SelectGroup, SelectLabel } from '@/components/ui/select'
 
 const fieldClass =
-  'h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary'
+  'h-11 rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 const DEFAULT_FORM = {
   veterinarioId: '',
@@ -68,7 +68,7 @@ export function WalkInPanel({
   const contenido = (
     <>
       {!puedeProgramar ? (
-        <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+        <div className="rounded-xl bg-muted px-4 py-5 text-[15px] leading-7 text-muted-foreground">
           Tu rol actual no puede registrar ingresos directos.
         </div>
       ) : (
@@ -139,15 +139,15 @@ export function WalkInPanel({
             value={form.observaciones}
             onChange={(event) => setForm((current) => ({ ...current, observaciones: event.target.value }))}
             placeholder="Observaciones"
-            className="min-h-[90px] border border-border bg-card px-3 py-3 text-sm text-foreground outline-none transition focus:border-primary"
+            className="min-h-[90px] rounded-lg border border-input bg-card px-3 py-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
 
           <button
             type="submit"
             disabled={crearWalkInMutation.isPending}
-            className="border border-danger bg-danger px-4 py-3 text-sm font-semibold text-white transition hover:bg-danger disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {crearWalkInMutation.isPending ? 'Registrando...' : 'Registrar en sala de espera'}
+            {crearWalkInMutation.isPending ? 'Registrando…' : 'Registrar en sala de espera'}
           </button>
         </form>
       )}

@@ -19,7 +19,7 @@ function TimelineItemSkeleton() {
       <div className="absolute left-0 top-1.5 flex h-5 w-5 items-center justify-center">
         <SkeletonBlock className="h-3 w-3 rounded-full" />
       </div>
-      <div className="space-y-2 border border-border bg-card px-4 py-4">
+      <div className="space-y-2 rounded-2xl bg-card px-5 py-4">
         <SkeletonBlock className="h-4 w-32" />
         <SkeletonBlock className="h-3.5 w-56" />
         <SkeletonBlock className="h-3.5 w-48" />
@@ -30,16 +30,16 @@ function TimelineItemSkeleton() {
 
 function EmptyTimeline({ onNuevaConsulta }) {
   return (
-    <div className="rounded border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
-      <FileText className="mx-auto mb-3 h-7 w-7 text-muted-foreground/40" />
-      <p className="text-sm font-semibold text-foreground">Sin historias clínicas</p>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <div className="rounded-2xl bg-card px-6 py-10 text-center">
+      <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-primary"><FileText className="h-6 w-6" /></span>
+      <p className="text-lg font-semibold tracking-[-0.01em] text-foreground">Sin historias clínicas</p>
+      <p className="mt-1 text-[13px] text-muted-foreground">
         Este paciente aún no tiene consultas registradas.
       </p>
       <button
         type="button"
         onClick={onNuevaConsulta}
-        className="mt-4 inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2 text-xs font-semibold text-background transition hover:bg-foreground/90"
+        className="mt-4 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Plus className="h-3.5 w-3.5" />
         Registrar primera consulta
@@ -60,32 +60,32 @@ function TimelineCard({
         <div
           className={`h-3 w-3 rounded-full border-2 ${
             bloqueada
-              ? 'border-warning bg-warning-soft '
-              : 'border-primary bg-primary/20'
+              ? 'border-warning bg-warning-soft'
+              : 'border-primary bg-accent'
           }`}
         />
       </div>
 
-      <div className="border border-border bg-card px-4 py-4 transition hover:bg-muted/30">
+      <div className="rounded-2xl bg-card px-5 py-4">
         {/* Header row */}
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground">
+            <span className="text-[13px] font-semibold tabular-nums text-foreground">
               {formatDate(fechaConsulta || createdAt)}
             </span>
             {veterinario?.nombre && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span className="text-xs text-muted-foreground">{veterinario.nombre}</span>
+                <span className="text-[13px] text-muted-foreground">{veterinario.nombre}</span>
               </>
             )}
           </div>
           <span
-            className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-semibold ${
               bloqueada
-                ? 'border-warning/30 bg-warning-soft text-warning '
-                : 'border-success/30 bg-success-soft text-success '
+                ? 'bg-warning-soft text-warning'
+                : 'bg-success-soft text-success'
             }`}
           >
             {bloqueada ? <Lock className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
@@ -120,7 +120,7 @@ function TimelineCard({
               type="button"
               onClick={() => onImprimirFormula(historia.id)}
               disabled={imprimiendo}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               <Printer className="h-3.5 w-3.5" />
               {imprimiendo ? 'Generando...' : 'Imprimir fórmula'}
@@ -131,7 +131,7 @@ function TimelineCard({
               type="button"
               onClick={() => onImprimirHistoria(historia.id)}
               disabled={imprimiendoHistoria}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               <FileText className="h-3.5 w-3.5" />
               {imprimiendoHistoria ? 'Generando...' : 'Imprimir historia'}
@@ -140,7 +140,7 @@ function TimelineCard({
           <button
             type="button"
             onClick={() => onEdit(historia)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition hover:text-primary/80"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
           >
             {bloqueada ? 'Ver detalle' : 'Ver / Editar'}
             <span aria-hidden>→</span>
@@ -196,7 +196,7 @@ export default function HistoriaClinicaTimeline({
         <div className="absolute left-0 top-1 flex h-5 w-5 items-center justify-center">
           <div className="h-3 w-3 rounded-full border-2 border-border bg-muted" />
         </div>
-        <p className="py-1 text-xs text-muted-foreground">Inicio del historial</p>
+        <p className="py-1 text-[13px] text-muted-foreground">Inicio del historial</p>
       </div>
     </div>
   )

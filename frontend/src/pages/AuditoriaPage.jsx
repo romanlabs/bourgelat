@@ -70,7 +70,7 @@ function RestrictedAuditPage() {
           title="Auditoría y actividad"
           subtitle="Esta sección se reserva para la administración principal."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
             Tu acceso actual no tiene permisos para consultar el historial de cambios delicados ni la actividad del sistema.
           </div>
         </DashboardPanel>
@@ -175,9 +175,9 @@ export default function AuditoriaPage() {
     <AdminShell
       currentKey="auditoria"
       title="Auditoría y actividad"
-      description="Vista para seguir cambios delicados del sistema, responsables, intentos fallidos y el historial de la operación de la clínica."
+      description="Quién cambió qué y cuándo, con los intentos fallidos a la vista."
       headerBadge={
-        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
+        <StatusPill tone="bg-accent text-primary">
           Historial activo
         </StatusPill>
       }
@@ -189,7 +189,7 @@ export default function AuditoriaPage() {
       asideNote="Usa esta vista para seguir cambios de acceso, caja, historias e inventario sin depender de memoria o revisiones manuales."
     >
       {auditoriaQuery.isError ? (
-        <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+        <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
           {getErrorMessage(auditoriaQuery.error, 'No fue posible cargar la auditoría de la clínica.')}
         </div>
       ) : null}
@@ -254,13 +254,13 @@ export default function AuditoriaPage() {
           subtitle="La auditoría sirve para reconstruir qué pasó, quién lo hizo y si el sistema aceptó o rechazó la acción."
         >
           <div className="grid gap-3 lg:grid-cols-3">
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+            <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
               Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticación, cambios de usuarios, anulaciones y bloqueos clínicos.
             </div>
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+            <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
               Cuando una acción afecte caja, historias o permisos, esta vista te da responsable, momento y descripción en un solo lugar.
             </div>
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+            <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
               Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operación sin depender de capturas o recuerdos.
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function AuditoriaPage() {
           subtitle="Filtra los eventos recientes por sección, resultado o responsable."
           action={
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center border border-border bg-card px-3">
+              <div className="flex items-center rounded-lg border border-input bg-card px-3 transition focus-within:ring-2 focus-within:ring-ring">
                 <ScanSearch className="h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
@@ -281,7 +281,7 @@ export default function AuditoriaPage() {
                     setPagina(1)
                   }}
                   placeholder="Buscar por acción o descripción"
-                  className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
+                  className="h-11 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
                 />
               </div>
               <Select
@@ -330,7 +330,7 @@ export default function AuditoriaPage() {
                   setDesde(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
               />
               <input
                 type="date"
@@ -339,7 +339,7 @@ export default function AuditoriaPage() {
                   setHasta(event.target.value)
                   setPagina(1)
                 }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           }
@@ -358,7 +358,7 @@ export default function AuditoriaPage() {
                 render: (row) => (
                   <div>
                     <p className="font-medium text-foreground">{row.responsable}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{row.responsableEmail || 'Sin correo asociado'}</p>
+                    <p className="mt-1 text-[13px] text-muted-foreground">{row.responsableEmail || 'Sin correo asociado'}</p>
                   </div>
                 ),
               },
@@ -369,11 +369,11 @@ export default function AuditoriaPage() {
                   <StatusPill
                     tone={
                       row.resultado === 'fallido'
-                        ? 'border-danger/30 bg-danger-soft text-danger'
-                        : 'border-success/30 bg-success-soft text-success'
+                        ? 'bg-danger-soft text-danger'
+                        : 'bg-success-soft text-success'
                     }
                   >
-                    {row.resultado}
+                    {row.resultado ? `${row.resultado[0].toUpperCase()}${row.resultado.slice(1)}` : "—"}
                   </StatusPill>
                 ),
               },
@@ -386,14 +386,14 @@ export default function AuditoriaPage() {
             emptyTitle="No hay eventos para este filtro"
             emptyBody="Ajusta fechas o filtros para revisar otra parte del historial."
             action={
-              <StatusPill tone="border-border bg-muted text-foreground">
+              <StatusPill tone="bg-secondary text-secondary-foreground">
                 Página {auditoriaQuery.data?.paginaActual || 1}
               </StatusPill>
             }
           />
 
           {(auditoriaQuery.data?.paginas || 1) > 1 ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
               <p className="text-sm text-muted-foreground">
                 Página {auditoriaQuery.data?.paginaActual || 1} de {auditoriaQuery.data?.paginas || 1}
               </p>
@@ -402,7 +402,7 @@ export default function AuditoriaPage() {
                   type="button"
                   onClick={() => setPagina((current) => Math.max(current - 1, 1))}
                   disabled={(auditoriaQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Anterior
                 </button>
@@ -412,7 +412,7 @@ export default function AuditoriaPage() {
                     setPagina((current) => Math.min(current + 1, auditoriaQuery.data?.paginas || 1))
                   }
                   disabled={(auditoriaQuery.data?.paginaActual || 1) >= (auditoriaQuery.data?.paginas || 1)}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Siguiente
                 </button>
@@ -439,13 +439,13 @@ export default function AuditoriaPage() {
             subtitle="Dónde aporta más valor esta pantalla dentro de la operación diaria."
           >
             <div className="grid gap-4 xl:grid-cols-3">
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                 Revisar altas, cambios de rol y desactivaciones de usuarios cuando el equipo cambie turnos o permisos.
               </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                 Auditar anulaciones, errores de caja o validaciones fallidas cuando el cierre administrativo no cuadre.
               </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
+              <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
                 Seguir bloqueos, historias o integraciones para soporte interno sin tener que revisar los datos uno por uno.
               </div>
             </div>

@@ -68,8 +68,8 @@ function NowLine({ slotHeight, gridInicio }) {
       className="pointer-events-none absolute left-0 right-0 z-10"
       style={{ top: `${top + 0.5}px` }}
     >
-      <div className="absolute inset-x-0 h-[2px] -translate-y-1/2 bg-danger" />
-      <div className="absolute left-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-danger" />
+      <div className="absolute inset-x-0 h-[2px] -translate-y-1/2 bg-brand" />
+      <div className="absolute left-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand" />
     </div>
   )
 }
@@ -111,7 +111,7 @@ export function TimeGridView({
   return (
     <div
       ref={scrollRef}
-      className="overflow-y-auto overflow-x-hidden"
+      className="overflow-y-auto overflow-x-hidden rounded-2xl bg-card px-2 pb-2"
       style={{ height: 'max(480px, calc(100vh - 300px))' }}
     >
       {/* Cabecera: nombres de día */}
@@ -121,7 +121,7 @@ export function TimeGridView({
       >
         <div className="flex items-end justify-start pb-1 pl-1.5">
           {showTimezoneLabel && (
-            <span className="text-[9px] font-medium text-muted-foreground/70">GMT-05</span>
+            <span className="text-[13px] text-muted-foreground">GMT-05</span>
           )}
         </div>
         {days.map((day) => {
@@ -132,19 +132,18 @@ export function TimeGridView({
             <div
               key={day.toISOString()}
               className={cn(
-                'border-r border-border py-2 text-center last:border-r-0',
-                esHoy && 'bg-primary/5',
+                'py-2.5 text-center',
                 bloqueo && 'bg-warning-soft'
               )}
             >
-              <p className="text-[13px] font-medium text-muted-foreground">
+              <p className={cn('text-[13px] font-medium', esHoy ? 'text-primary' : 'text-muted-foreground')}>
                 {format(day, esDia ? 'EEEE' : 'EEE', { locale: es })}
               </p>
               <p
                 className={cn(
-                  'mt-1 text-xl font-normal leading-none',
+                  'mt-1 text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums',
                   esHoy
-                    ? 'mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary text-2xl text-white'
+                    ? 'mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground'
                     : 'text-foreground'
                 )}
               >
@@ -153,8 +152,8 @@ export function TimeGridView({
               {!isLoading && count > 0 && (
                 <span
                   className={cn(
-                    'mt-1 inline-flex h-4 items-center justify-center rounded-full px-1.5 text-[9px] font-bold',
-                    count >= 4 ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                    'mt-1.5 inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[13px] font-semibold tabular-nums',
+                    count >= 4 ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {count}
@@ -165,7 +164,7 @@ export function TimeGridView({
               {bloqueo ? (
                 <p
                   title={bloqueo.motivo}
-                  className="mx-1 mt-1 truncate rounded-sm bg-warning-soft px-1 py-px text-[10px] font-semibold text-warning"
+                  className="mx-1 mt-1.5 truncate rounded-md bg-card px-1.5 py-0.5 text-[13px] font-semibold text-warning"
                 >
                   {bloqueo.motivo}
                 </p>
@@ -184,7 +183,7 @@ export function TimeGridView({
             <div key={slot} style={{ height: `${slotHeight}px` }}>
               {slot.endsWith(':00') && idx > 0 && (
                 <span
-                  className="absolute right-1.5 -translate-y-1/2 whitespace-nowrap text-[11px] font-medium tabular-nums text-muted-foreground"
+                  className="absolute right-2 -translate-y-1/2 whitespace-nowrap text-[13px] font-medium tabular-nums text-muted-foreground"
                   style={{ top: `${idx * slotHeight}px` }}
                 >
                   {formatHourLabel(slot)}
@@ -203,7 +202,7 @@ export function TimeGridView({
           return (
             <div
               key={day.toISOString()}
-              className="relative border-r border-border last:border-r-0"
+              className={cn('relative border-l border-border', esHoy && 'bg-accent/30')}
               style={{ height: `${gridHeight}px` }}
             >
               {/* Fondos de slot (clickeables para nueva cita) */}
@@ -229,7 +228,7 @@ export function TimeGridView({
                       'absolute w-full',
                       slot.endsWith(':00') && idx > 0 && 'border-t border-border',
                       !habil && 'bg-muted/60',
-                      clickeable && 'hover:bg-accent/30 cursor-pointer transition-colors'
+                      clickeable && 'cursor-pointer transition-colors hover:bg-accent/60'
                     )}
                     style={{
                       top: `${idx * slotHeight}px`,
@@ -255,7 +254,7 @@ export function TimeGridView({
                 [40, 60, 80].map((top) => (
                   <div
                     key={top}
-                    className="absolute left-0.5 right-0.5 animate-pulse rounded-sm bg-muted"
+                    className="absolute left-0.5 right-0.5 animate-pulse rounded-md bg-muted"
                     style={{ top: `${top}%`, height: '28px', opacity: 0.5 }}
                   />
                 ))}

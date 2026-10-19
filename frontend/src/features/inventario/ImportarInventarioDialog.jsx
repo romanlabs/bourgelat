@@ -77,7 +77,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         {!resultado && step === 'seleccion' && (
           <div className="mt-4 grid gap-4">
             {parseResult.globalError && (
-              <div className="border border-danger/30 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
+              <div className="rounded-lg bg-danger-soft px-3 py-2 text-[13px] font-semibold text-danger">
                 {parseResult.globalError}
               </div>
             )}
@@ -85,13 +85,13 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
             <button
               type="button"
               onClick={downloadImportTemplate}
-              className="inline-flex w-fit items-center gap-2 border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+              className="inline-flex w-fit items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-[13px] font-semibold text-foreground transition hover:bg-muted"
             >
               <Download className="h-3.5 w-3.5" />
               Descargar plantilla
             </button>
 
-            <div className="grid gap-2 border border-border bg-muted/50 px-3 py-3">
+            <div className="grid gap-2 rounded-xl bg-muted/50 px-3 py-3">
               <p className="text-[13px] font-semibold text-muted-foreground">
                 Categorias validas para la columna "Categoria"
               </p>
@@ -100,14 +100,14 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                   <span
                     key={c.value}
                     title={c.descripcion}
-                    className="inline-flex items-center gap-1.5 border border-border bg-card px-2 py-1 text-xs font-medium text-foreground"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2 py-1 text-[13px] font-medium text-foreground"
                   >
-                    <code className="text-[11px] text-primary">{c.value}</code>
+                    <code className="text-[13px] text-primary">{c.value}</code>
                     <span className="text-muted-foreground">— {c.label}</span>
                   </span>
                 ))}
               </div>
-              <p className="text-[11px] leading-4 text-muted-foreground">
+              <p className="text-[13px] leading-5 text-muted-foreground">
                 Escribe el valor exacto (en minusculas) en la columna Categoria. La plantilla descargable incluye
                 estas mismas categorias en filas de ejemplo y en la hoja "Categorías válidas".
               </p>
@@ -115,13 +115,13 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
 
             <label
               htmlFor="import-inventario-file"
-              className="flex cursor-pointer flex-col items-center gap-2 border border-dashed border-border bg-muted px-6 py-10 text-center transition hover:bg-muted/80"
+              className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-muted px-6 py-10 text-center transition hover:bg-muted/80"
             >
               <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">
                 {parsing ? 'Leyendo archivo...' : 'Selecciona un archivo .xlsx'}
               </span>
-              <span className="text-xs text-muted-foreground">O arrastralo aquí</span>
+              <span className="text-[13px] text-muted-foreground">O arrastralo aquí</span>
             </label>
             <input
               id="import-inventario-file"
@@ -138,52 +138,52 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
         {!resultado && step === 'preview' && (
           <div className="mt-4 grid gap-4">
             {parseResult.globalError ? (
-              <div className="border border-danger/30 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
+              <div className="rounded-lg bg-danger-soft px-3 py-2 text-[13px] font-semibold text-danger">
                 {parseResult.globalError}
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-3 text-[13px]">
                   <span className="font-semibold text-foreground">{fileName}</span>
-                  <span className="border border-success/30 bg-success-soft px-2 py-1 font-semibold text-success">
+                  <span className="rounded-lg bg-success-soft px-2 py-1 font-semibold text-success">
                     {parseResult.validRows.length} validas
                   </span>
                   {parseResult.invalidRows.length > 0 && (
-                    <span className="border border-danger/30 bg-danger-soft px-2 py-1 font-semibold text-danger">
+                    <span className="rounded-lg bg-danger-soft px-2 py-1 font-semibold text-danger">
                       {parseResult.invalidRows.length} con errores
                     </span>
                   )}
                 </div>
 
                 <div className="max-h-80 overflow-y-auto border border-border">
-                  <table className="w-full text-xs">
-                    <thead className="sticky top-0 bg-muted text-left">
+                  <table className="w-full text-[13px]">
+                    <thead className="sticky top-0 bg-card text-left">
                       <tr>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Fila</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Nombre</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Categoría</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Cantidad</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Precio venta</th>
-                        <th className="px-3 py-2 font-semibold text-muted-foreground">Estado</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Fila</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Nombre</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Categoría</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Cantidad</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Precio venta</th>
+                        <th className="px-3 py-2 font-medium text-muted-foreground">Estado</th>
                       </tr>
                     </thead>
                     <tbody>
                       {parseResult.validRows.map(({ rowNumber, data }) => (
-                        <tr key={`valid-${rowNumber}`} className="border-t border-border">
+                        <tr key={`valid-${rowNumber}`} className="border-t border-border/60">
                           <td className="px-3 py-2 text-muted-foreground">{rowNumber}</td>
                           <td className="px-3 py-2 text-foreground">{data.nombre}</td>
                           <td className="px-3 py-2 text-foreground">{CATEGORY_LABELS[data.categoria] || data.categoria}</td>
                           <td className="px-3 py-2 text-foreground">{data.stock}</td>
                           <td className="px-3 py-2 text-foreground">{formatCurrency(data.precioVenta)}</td>
                           <td className="px-3 py-2">
-                            <span className="border border-success/30 bg-success-soft px-2 py-0.5 font-semibold text-success">
+                            <span className="rounded-lg bg-success-soft px-2 py-0.5 font-semibold text-success">
                               Valido
                             </span>
                           </td>
                         </tr>
                       ))}
                       {parseResult.invalidRows.map(({ rowNumber, data, errors }) => (
-                        <tr key={`invalid-${rowNumber}`} className="border-t border-border">
+                        <tr key={`invalid-${rowNumber}`} className="border-t border-border/60">
                           <td className="px-3 py-2 text-muted-foreground">{rowNumber}</td>
                           <td className="px-3 py-2 text-foreground">{data.nombre || '-'}</td>
                           <td className="px-3 py-2 text-foreground">{data.categoria || '-'}</td>
@@ -191,7 +191,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                           <td className="px-3 py-2 text-foreground">-</td>
                           <td className="px-3 py-2">
                             <span
-                              className="border border-danger/30 bg-danger-soft px-2 py-0.5 font-semibold text-danger"
+                              className="rounded-lg bg-danger-soft px-2 py-0.5 font-semibold text-danger"
                               title={errors.join(' | ')}
                             >
                               {errors[0]}
@@ -210,7 +210,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                 type="button"
                 onClick={handleConfirm}
                 disabled={isPending || parseResult.validRows.length === 0}
-                className="inline-flex items-center gap-2 border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Upload className="h-4 w-4" />
                 {isPending ? 'Importando...' : `Importar ${parseResult.validRows.length} productos`}
@@ -218,7 +218,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
               <button
                 type="button"
                 onClick={handleChooseAnother}
-                className="border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Elegir otro archivo
               </button>
@@ -228,12 +228,12 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
 
         {resultado && (
           <div className="mt-4 grid gap-4">
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              <span className="border border-success/30 bg-success-soft px-2 py-1 font-semibold text-success">
+            <div className="flex flex-wrap items-center gap-3 text-[13px]">
+              <span className="rounded-lg bg-success-soft px-2 py-1 font-semibold text-success">
                 {resultado.creados?.length || 0} creados
               </span>
               {resultado.omitidos?.length > 0 && (
-                <span className="border border-warning/30 bg-warning-soft px-2 py-1 font-semibold text-warning">
+                <span className="rounded-lg bg-warning-soft px-2 py-1 font-semibold text-warning">
                   {resultado.omitidos.length} omitidos
                 </span>
               )}
@@ -241,17 +241,17 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
 
             {resultado.omitidos?.length > 0 && (
               <div className="max-h-64 overflow-y-auto border border-border">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-muted text-left">
+                <table className="w-full text-[13px]">
+                  <thead className="sticky top-0 bg-card text-left">
                     <tr>
-                      <th className="px-3 py-2 font-semibold text-muted-foreground">Fila</th>
-                      <th className="px-3 py-2 font-semibold text-muted-foreground">Nombre</th>
-                      <th className="px-3 py-2 font-semibold text-muted-foreground">Motivo</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Fila</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Nombre</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Motivo</th>
                     </tr>
                   </thead>
                   <tbody>
                     {resultado.omitidos.map((item, index) => (
-                      <tr key={`${item.fila}-${index}`} className="border-t border-border">
+                      <tr key={`${item.fila}-${index}`} className="border-t border-border/60">
                         <td className="px-3 py-2 text-muted-foreground">{item.fila}</td>
                         <td className="px-3 py-2 text-foreground">{item.nombre}</td>
                         <td className="px-3 py-2 text-foreground">{item.motivo.replaceAll('_', ' ')}</td>
@@ -265,7 +265,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
             <button
               type="button"
               onClick={handleClose}
-              className="w-fit border border-border bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-foreground/90"
+              className="w-fit inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cerrar
             </button>
