@@ -9,6 +9,7 @@ import {
   List,
   ShieldCheck,
   Sparkles,
+  Plus,
   Stethoscope,
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
@@ -273,7 +274,21 @@ export default function AgendaPage() {
       compactHeader
       title={tituloAgenda}
       description={descripcionAgenda}
-      actions={<AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+      actions={
+        <>
+          <AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          {puedeProgramar ? (
+            <button
+              type="button"
+              onClick={() => setRecepcionPrefill({ fecha: hoyLocal() })}
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva cita
+            </button>
+          ) : null}
+        </>
+      }
     >
       {!puedeVerAgenda ? (
         <EmptyState

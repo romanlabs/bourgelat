@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
 import { STATUS_OPTIONS, VIEW_OPTIONS } from './calendarConstants'
 import { useAgendaCalendar } from './useAgendaCalendar'
 import { useCalendarView } from './useCalendarView'
@@ -78,10 +77,6 @@ export default function AgendaCalendar({
     setView('dia')
   }
 
-  const nuevaCita = puedeProgramar
-    ? () => onSlotClick?.(format(fechaBase, 'yyyy-MM-dd'), '09:00')
-    : null
-
   // La página muestra el rango y cuántas citas trae como su encabezado.
   const totalCitas = diasVisibles.reduce((suma, dia) => suma + getCitasDelDia(dia).length, 0)
   useEffect(() => {
@@ -101,7 +96,6 @@ export default function AgendaCalendar({
           prefs={prefs}
           onTogglePref={togglePref}
           onVistaTablaChange={onVistaTablaChange}
-          onNuevaCita={nuevaCita}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={toggleSidebar}
           extra={<CalendarLegend />}
