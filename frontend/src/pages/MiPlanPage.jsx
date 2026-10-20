@@ -60,7 +60,13 @@ function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
   if (limite === null || limite === undefined) {
     return (
       <div className="flex min-w-[200px] flex-col gap-2">
-        <span className="flex justify-between gap-4 text-sm"><span>{etiqueta}</span><span className="font-semibold">{formato(usados)} · sin límite</span></span>
+        <span className="flex justify-between gap-4 text-sm">
+          <span>{etiqueta}</span>
+          <span className="font-semibold">{formato(usados)} · sin límite</span>
+        </span>
+        <span className="flex h-2 rounded bg-primary-foreground/20" aria-hidden>
+          <span className="h-2 w-full rounded bg-primary-foreground/35" />
+        </span>
       </div>
     )
   }
