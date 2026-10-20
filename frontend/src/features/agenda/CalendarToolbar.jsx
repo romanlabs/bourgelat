@@ -8,9 +8,9 @@ import { VIEW_OPTIONS, VIEW_PREFS } from './calendarConstants'
 const VISTAS_SOLO_ESCRITORIO = ['semana', '4dias']
 
 const iconBtn =
-  'flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const pillBtn =
-  'h-10 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'flex h-10 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const navBtn =
+  'flex h-10 w-9 items-center justify-center rounded-lg transition hover:bg-accent active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const itemMenu =
   'flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 
@@ -38,7 +38,7 @@ export function CalendarToolbar({
   const vistaActual = VIEW_OPTIONS.find((opt) => opt.value === view)
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1.5">
       {onToggleSidebar && !isMobile ? (
         <SimpleTooltip label={sidebarOpen ? 'Ocultar mini calendario' : 'Mostrar mini calendario'}>
           <button
@@ -53,21 +53,28 @@ export function CalendarToolbar({
         </SimpleTooltip>
       ) : null}
 
-      <button type="button" onClick={onToday} className={pillBtn}>
-        Hoy
-      </button>
-      <SimpleTooltip label="Anterior">
-        <button type="button" onClick={onPrev} className={iconBtn} aria-label="Anterior">
-          <ChevronLeft className="h-[18px] w-[18px]" />
+      <div className="flex h-10 items-center rounded-lg bg-secondary text-secondary-foreground">
+        <SimpleTooltip label="Anterior">
+          <button type="button" onClick={onPrev} className={navBtn} aria-label="Anterior">
+            <ChevronLeft className="h-[18px] w-[18px]" />
+          </button>
+        </SimpleTooltip>
+        <button type="button" onClick={onToday} className={cn(navBtn, 'w-auto px-2 text-sm font-semibold')}>
+          Hoy
         </button>
-      </SimpleTooltip>
+        <SimpleTooltip label="Siguiente">
+          <button type="button" onClick={onNext} className={navBtn} aria-label="Siguiente">
+            <ChevronRight className="h-[18px] w-[18px]" />
+          </button>
+        </SimpleTooltip>
+      </div>
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
             aria-label="Vista del calendario"
-            className="flex h-10 items-center gap-2 rounded-lg bg-secondary pl-4 pr-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent"
+            className="flex h-10 items-center gap-1.5 rounded-lg bg-secondary pl-3 pr-2.5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent"
           >
             {vistaActual?.label ?? 'Vista'}
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -121,11 +128,6 @@ export function CalendarToolbar({
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-      <SimpleTooltip label="Siguiente">
-        <button type="button" onClick={onNext} className={iconBtn} aria-label="Siguiente">
-          <ChevronRight className="h-[18px] w-[18px]" />
-        </button>
-      </SimpleTooltip>
 
       {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Actualizando" />}
 

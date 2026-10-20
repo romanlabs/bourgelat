@@ -6,9 +6,9 @@ const cleanParams = (params) =>
   )
 
 export const auditoriaApi = {
-  async obtenerLogs({ pagina = 1, limite = 20, accion, entidad, resultado, buscar, desde, hasta } = {}) {
+  async obtenerLogs({ pagina = 1, limite = 20, accion, entidad, resultado, buscar, desde, hasta, usuarioId, tipo } = {}) {
     const { data } = await api.get('/auditoria', {
-      params: cleanParams({ pagina, limite, accion, entidad, resultado, buscar, desde, hasta }),
+      params: cleanParams({ pagina, limite, accion, entidad, resultado, buscar, desde, hasta, usuarioId, tipo }),
     })
     return data
   },

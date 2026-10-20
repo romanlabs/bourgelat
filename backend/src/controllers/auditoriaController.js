@@ -31,8 +31,26 @@ const parseDateRange = ({ desde, hasta }) => {
   return Object.keys(filtro).length > 0 ? filtro : null
 }
 
-const construirWhere = ({ clinicaId, accion, entidad, resultado, buscar, desde, hasta }) => {
+// Agrupa las acciones por su verbo para filtrar y etiquetar sin listar cada una.
+const TIPOS_ACCION = {
+  crear: ['CREAR_', 'REGISTRAR_', 'REGISTRO_', 'ABRIR_', 'EMITIR_'],
+  editar: ['EDITAR_', 'ACTUALIZAR_', 'CAMBIAR_', 'CERRAR_', 'BLOQUEAR_', 'ACTIVAR_', 'GUARDAR_', 'RELEVAR_', 'COMPLETAR_', 'RESPONDER_', 'SINCRONIZAR_'],
+  anular: ['ANULAR_', 'ELIMINAR_', 'DESACTIVAR_', 'CANCELAR_'],
+  sesion: ['LOGIN', 'LOGOUT', 'PASSWORD_', 'EMAIL_', 'REFRESH_'],
+  fallido: [],
+}
+
+const tipoDeAccion = (accion, resultado) => {
+  if (resultado === 'fallido' || /FALLIDO|INTENTO_|REUSE/.test(accion || '')) return 'fallido'
+  const tipo = Object.entries(TIPOS_ACCION).find(([, prefijos]) =>
+    prefijos.some((prefijo) => (accion || '').startsWith(prefijo))
+  )
+  return tipo ? tipo[0] : 'otro'
+}
+
+const construirWhere = ({ clinicaId, accion, entidad, resultado, buscar, desde, hasta, usuarioId, tipo }) => {
   const where = { clinicaId }
+  const y = []
 
   const accionLimpia = limpiarTexto(accion)
   const entidadLimpia = limpiarTexto(entidad)
@@ -42,6 +60,21 @@ const construirWhere = ({ clinicaId, accion, entidad, resultado, buscar, desde, 
   if (accionLimpia) where.accion = accionLimpia
   if (entidadLimpia) where.entidad = entidadLimpia
   if (resultadoLimpio) where.resultado = resultadoLimpio
+  if (usuarioId) where.usuarioId = usuarioId
+
+  if (tipo === 'fallido') {
+    y.push({
+      [Op.or]: [
+        { resultado: 'fallido' },
+        { accion: { [Op.iLike]: '%FALLIDO%' } },
+        { accion: { [Op.startsWith]: 'INTENTO_' } },
+        { accion: { [Op.iLike]: '%REUSE%' } },
+      ],
+    })
+  } else if (TIPOS_ACCION[tipo]) {
+    y.push({ resultado: 'exitoso' })
+    y.push({ [Op.or]: TIPOS_ACCION[tipo].map((prefijo) => ({ accion: { [Op.startsWith]: prefijo } })) })
+  }
 
   const rangoFecha = parseDateRange({ desde, hasta })
   if (rangoFecha?.error) {
@@ -52,12 +85,16 @@ const construirWhere = ({ clinicaId, accion, entidad, resultado, buscar, desde, 
   }
 
   if (buscarLimpio) {
-    where[Op.or] = [
-      { accion: { [Op.iLike]: `%${buscarLimpio}%` } },
-      { entidad: { [Op.iLike]: `%${buscarLimpio}%` } },
-      { descripcion: { [Op.iLike]: `%${buscarLimpio}%` } },
-    ]
+    y.push({
+      [Op.or]: [
+        { accion: { [Op.iLike]: `%${buscarLimpio}%` } },
+        { entidad: { [Op.iLike]: `%${buscarLimpio}%` } },
+        { descripcion: { [Op.iLike]: `%${buscarLimpio}%` } },
+      ],
+    })
   }
+
+  if (y.length) where[Op.and] = y
 
   return { where }
 }
@@ -83,6 +120,8 @@ const obtenerAuditoria = async (req, res) => {
       buscar: req.query.buscar,
       desde: req.query.desde,
       hasta: req.query.hasta,
+      usuarioId: req.query.usuarioId || undefined,
+      tipo: req.query.tipo || undefined,
     })
 
     if (filtroConstruido.error) {
@@ -92,7 +131,11 @@ const obtenerAuditoria = async (req, res) => {
     const { where } = filtroConstruido
     const offset = (pagina - 1) * limite
 
-    const [resultadoPaginado, totalFallidos, totalExitosos, porEntidadRows, porAccionRows, usuariosInvolucrados] =
+    // El selector de persona lista a quien actuó en el rango, sin los demás filtros.
+    const wherePersonas = { clinicaId, usuarioId: { [Op.ne]: null } }
+    if (where.createdAt) wherePersonas.createdAt = where.createdAt
+
+    const [resultadoPaginado, totalFallidos, totalExitosos, porEntidadRows, porAccionRows, usuariosInvolucrados, personasRows] =
       await Promise.all([
         AuditoriaLog.findAndCountAll({
           where,
@@ -122,10 +165,18 @@ const obtenerAuditoria = async (req, res) => {
           distinct: true,
           col: 'usuarioId',
         }),
+        AuditoriaLog.findAll({
+          where: wherePersonas,
+          attributes: [[fn('DISTINCT', col('usuarioId')), 'usuarioId']],
+          raw: true,
+        }),
       ])
 
     const usuarioIds = [
-      ...new Set(resultadoPaginado.rows.map((log) => log.usuarioId).filter(Boolean)),
+      ...new Set([
+        ...resultadoPaginado.rows.map((log) => log.usuarioId),
+        ...personasRows.map((row) => row.usuarioId),
+      ].filter(Boolean)),
     ]
 
     const usuarios = usuarioIds.length
@@ -147,6 +198,7 @@ const obtenerAuditoria = async (req, res) => {
 
       return {
         ...logPlano,
+        tipo: tipoDeAccion(logPlano.accion, logPlano.resultado),
         responsable: responsable
           ? {
               id: responsable.id,
@@ -176,6 +228,11 @@ const obtenerAuditoria = async (req, res) => {
       accionesDisponibles: porAccionRows
         .map((row) => row.accion)
         .filter(Boolean),
+      personas: personasRows
+        .map((row) => usuariosPorId.get(row.usuarioId))
+        .filter(Boolean)
+        .map(({ id, nombre }) => ({ id, nombre }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
     })
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message })
@@ -184,4 +241,5 @@ const obtenerAuditoria = async (req, res) => {
 
 module.exports = {
   obtenerAuditoria,
+  TIPOS_ACCION,
 }

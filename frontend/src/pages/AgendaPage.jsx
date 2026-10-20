@@ -70,7 +70,7 @@ function AgendaTabs({ activeTab, onTabChange }) {
           type="button"
           aria-pressed={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`h-9 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`h-9 rounded-lg px-2.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             activeTab === tab.id
               ? 'bg-card font-semibold text-foreground'
               : 'font-medium text-muted-foreground hover:text-foreground'
@@ -287,7 +287,7 @@ export default function AgendaPage() {
             <button
               type="button"
               onClick={() => setRecepcionPrefill({ fecha: hoyLocal() })}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Plus className="h-4 w-4" />
               Nueva cita

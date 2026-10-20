@@ -5,9 +5,12 @@ const {
   formatDateOnly,
 } = require('../config/planes')
 const Suscripcion = require('../models/Suscripcion')
+const Usuario = require('../models/Usuario')
+const Clinica = require('../models/Clinica')
 const {
   obtenerSuscripcionActivaClinica,
   calcularDiasRestantes,
+  obtenerLimiteNumerico,
 } = require('../services/suscripcionService')
 
 const obtenerSuscripcionActiva = async (req, res) => {
@@ -21,9 +24,21 @@ const obtenerSuscripcionActiva = async (req, res) => {
 
       const diasRestantes = calcularDiasRestantes({ suscripcion, hoy: formatDateOnly() })
 
+      const [usuariosActivos, clinica] = await Promise.all([
+        Usuario.count({ where: { clinicaId, activo: true }, transaction }),
+        Clinica.findOne({ where: { id: clinicaId }, attributes: ['almacenamientoUsadoMB'], transaction }),
+      ])
+
       return {
         suscripcion,
         diasRestantes,
+        uso: {
+          usuarios: { usados: usuariosActivos, limite: obtenerLimiteNumerico(suscripcion, 'limiteUsuarios') },
+          almacenamientoMB: {
+            usados: Number(clinica?.almacenamientoUsadoMB) || 0,
+            limite: obtenerLimiteNumerico(suscripcion, 'almacenamientoMB'),
+          },
+        },
         advertencia:
           advertencia ||
           (diasRestantes !== null && diasRestantes <= 7 ? 'Tu suscripcion vence pronto' : null),

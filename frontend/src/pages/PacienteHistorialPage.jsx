@@ -389,16 +389,16 @@ export default function PacienteHistorialPage() {
               ) : null}
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col justify-between gap-7 px-5 py-7 sm:px-9 sm:py-9">
+            <div className="flex min-w-0 flex-1 flex-col justify-between gap-5 px-5 py-6 sm:px-9 sm:py-7">
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div className="min-w-0">
                   <h1
                     id="ficha-nombre"
-                    className="text-5xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[80px]"
+                    className="text-5xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[64px]"
                   >
                     {mascota.nombre}
                   </h1>
-                  {subtitulo ? <p className="mt-3 text-[17px] opacity-85">{subtitulo}</p> : null}
+                  {subtitulo ? <p className="mt-2 text-base opacity-85">{subtitulo}</p> : null}
                 </div>
 
                 <div className="flex flex-wrap gap-2.5">
@@ -435,13 +435,13 @@ export default function PacienteHistorialPage() {
                 </div>
               </div>
 
-              <dl className="grid grid-cols-2 gap-4 border-t border-primary-foreground/15 pt-6 sm:grid-cols-4">
+              <dl className="grid grid-cols-2 gap-4 border-t border-primary-foreground/15 pt-5 sm:grid-cols-4">
                 {datosClave.map((dato) => (
                   <div key={dato.label} className="min-w-0">
                     <dt className="text-[13px] opacity-80">{dato.label}</dt>
                     <dd
                       title={dato.value}
-                      className={`mt-1 truncate text-[19px] font-semibold tabular-nums ${dato.alerta ? 'text-brand' : ''}`}
+                      className={`mt-1 font-semibold tabular-nums ${dato.alerta ? 'line-clamp-2 text-base leading-snug text-brand' : 'truncate text-[19px]'}`}
                     >
                       {dato.value}
                     </dd>

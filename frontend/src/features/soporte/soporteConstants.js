@@ -34,15 +34,15 @@ export const ESTADOS_TICKET = {
 
 export const CATEGORIAS_TICKET = [
   { value: 'error', label: 'Algo no funciona' },
-  { value: 'duda', label: 'Duda de uso' },
-  { value: 'facturacion', label: 'Facturación o pagos' },
-  { value: 'sugerencia', label: 'Sugerencia' },
+  { value: 'duda', label: 'Tengo una duda' },
+  { value: 'facturacion', label: 'Pagos y plan' },
+  { value: 'sugerencia', label: 'Una idea' },
   { value: 'otro', label: 'Otro' },
 ]
 
 export const PRIORIDADES_TICKET = [
-  { value: 'baja', label: 'Puedo seguir trabajando', dot: 'bg-muted-foreground' },
-  { value: 'media', label: 'Me retrasa', dot: 'bg-warning' },
+  { value: 'baja', label: 'Puede esperar', dot: 'bg-muted-foreground' },
+  { value: 'media', label: 'Me afecta', dot: 'bg-warning' },
   { value: 'alta', label: 'No puedo trabajar', dot: 'bg-danger' },
 ]
 

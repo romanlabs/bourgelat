@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CircleCheck, Inbox, LifeBuoy, Plus } from 'lucide-react'
+import { CircleCheck } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
-import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { ConfirmDialog, EmptyState } from '@/components/shared'
+import { ConfirmDialog } from '@/components/shared'
 import Paginacion from '@/components/shared/Paginacion'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import EstadoTicketBadge from '@/features/soporte/EstadoTicketBadge'
-import NuevoTicketDialog from '@/features/soporte/NuevoTicketDialog'
+import NuevaSolicitudForm from '@/features/soporte/NuevaSolicitudForm'
 import ResponderTicketForm from '@/features/soporte/ResponderTicketForm'
 import TicketHilo from '@/features/soporte/TicketHilo'
 import TicketResumen from '@/features/soporte/TicketResumen'
@@ -28,25 +27,15 @@ import {
 } from '@/features/soporte/soporteConstants'
 
 const AVISOS_ESTADO = {
-  esperando_usuario: {
-    texto: 'El equipo de Bourgelat te respondió y espera tu respuesta.',
-    tone: 'bg-warning-soft text-warning',
-  },
   resuelto: {
-    texto: 'El equipo lo marcó como resuelto. Si todo quedó bien, ciérralo; si no, respóndenos y lo reabrimos.',
+    texto: 'Lo marcamos como resuelto. Si todo quedó bien, ciérralo; si no, respóndenos y lo reabrimos.',
     tone: 'bg-success-soft text-success',
   },
   cerrado: {
-    texto: 'Este ticket está cerrado. Si el problema vuelve, abre un ticket nuevo.',
+    texto: 'Esta solicitud está cerrada. Si el problema vuelve, escribe una nueva.',
     tone: 'bg-muted text-muted-foreground',
   },
 }
-
-const PASOS = [
-  'Cuéntanos qué pasó y, si puedes, adjunta una captura.',
-  'El equipo de Bourgelat lo revisa y te responde aquí. También te avisamos por correo.',
-  'Cuando quede resuelto, cierra el ticket.',
-]
 
 export default function SoportePage() {
   const usuario = useAuthStore((state) => state.usuario)
@@ -54,31 +43,29 @@ export default function SoportePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [filtro, setFiltro] = useState('activos')
   const [pagina, setPagina] = useState(1)
-  const [dialogoAbierto, setDialogoAbierto] = useState(false)
-  // Cambia en cada apertura para remontar el dialogo con el formulario limpio.
-  const [dialogoKey, setDialogoKey] = useState(0)
+  // Cambia para remontar el formulario limpio (tras enviar o al llegar desde el menú).
+  const [formKey, setFormKey] = useState(0)
   const [moduloInicial, setModuloInicial] = useState('')
+  const [asuntoInicial, setAsuntoInicial] = useState('')
+  const [categoriaInicial, setCategoriaInicial] = useState('error')
+  const [enfocarForm, setEnfocarForm] = useState(false)
   const [confirmarCierre, setConfirmarCierre] = useState(false)
   const [solicitudAtendida, setSolicitudAtendida] = useState(null)
 
   const ticketId = searchParams.get('ticket')
 
-  const abrirDialogo = (modulo = '') => {
-    setModuloInicial(modulo)
-    setDialogoKey((key) => key + 1)
-    setDialogoAbierto(true)
-  }
-
-  // Llegada desde "Ayuda y soporte" del menu de usuario (?nuevo=1&desde=/ruta):
-  // abre el formulario con el modulo donde estaba la persona. Se ajusta el
-  // estado durante el render (no en un efecto) y se recuerda la solicitud para
-  // no reabrir en cada render; al limpiar la URL se olvida, asi un segundo
-  // clic en el menu desde esta misma pagina vuelve a abrirlo.
+  // Llegada desde "Ayuda y soporte" del menú de usuario (?nuevo=1&desde=/ruta):
+  // enfoca el formulario con el módulo donde estaba la persona. Se ajusta el
+  // estado durante el render y se recuerda la solicitud para no repetirlo.
   const solicitudNueva = searchParams.get('nuevo') === '1' ? searchParams.toString() : null
 
   if (solicitudNueva && solicitudNueva !== solicitudAtendida) {
     setSolicitudAtendida(solicitudNueva)
-    abrirDialogo(searchParams.get('desde') || '')
+    setModuloInicial(searchParams.get('desde') || '')
+    setAsuntoInicial(searchParams.get('asunto') || '')
+    setCategoriaInicial(searchParams.get('categoria') || 'error')
+    setEnfocarForm(true)
+    setFormKey((key) => key + 1)
   } else if (!solicitudNueva && solicitudAtendida) {
     setSolicitudAtendida(null)
   }
@@ -87,13 +74,11 @@ export default function SoportePage() {
     document.title = 'Soporte | Bourgelat'
   }, [])
 
-  // Quita ?nuevo y ?desde de la URL para que recargar no reabra el formulario.
+  // Quita ?nuevo y ?desde de la URL para que recargar no lo repita.
   useEffect(() => {
     if (!solicitudNueva) return
-
     const siguientes = new URLSearchParams(searchParams)
-    siguientes.delete('nuevo')
-    siguientes.delete('desde')
+    for (const clave of ['nuevo', 'desde', 'asunto', 'categoria']) siguientes.delete(clave)
     setSearchParams(siguientes, { replace: true })
   }, [solicitudNueva, searchParams, setSearchParams])
 
@@ -109,19 +94,18 @@ export default function SoportePage() {
 
   const seleccionarTicket = (id) => {
     const siguientes = new URLSearchParams(searchParams)
-    if (id) {
-      siguientes.set('ticket', id)
-    } else {
-      siguientes.delete('ticket')
-    }
+    if (id) siguientes.set('ticket', id)
+    else siguientes.delete('ticket')
     setSearchParams(siguientes)
   }
 
-  const abrirNuevo = () => abrirDialogo('')
-
   const crearTicket = async (datos) => {
     const data = await crearMutation.mutateAsync(datos)
-    setDialogoAbierto(false)
+    setModuloInicial('')
+    setAsuntoInicial('')
+    setCategoriaInicial('error')
+    setEnfocarForm(false)
+    setFormKey((key) => key + 1)
     setFiltro('activos')
     setPagina(1)
     seleccionarTicket(data.ticket.id)
@@ -130,131 +114,96 @@ export default function SoportePage() {
   return (
     <AdminShell
       currentKey="soporte"
-      title="Soporte"
-      description={
-        esAdmin
-          ? 'Reporta problemas de uso y sigue las respuestas del equipo de Bourgelat. Como administrador ves los tickets de toda la clínica.'
-          : 'Reporta problemas de uso y sigue las respuestas del equipo de Bourgelat.'
-      }
-      actions={
-        <Button onClick={abrirNuevo}>
-          <Plus />
-          Nuevo ticket
-        </Button>
-      }
+      title="¿En qué te ayudamos?"
+      description="Te respondemos aquí y a tu correo, normalmente el mismo día hábil"
     >
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <section
-          aria-label="Tickets"
-          className={cn(
-            'min-w-0 self-start overflow-hidden rounded-2xl bg-card',
-            ticketId && 'hidden lg:block'
-          )}
-        >
-          <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
-            <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">
-              {esAdmin ? 'Tickets de la clínica' : 'Tus tickets'}
-            </h2>
-            <Select
-              value={filtro}
-              onValueChange={(valor) => {
-                setFiltro(valor)
-                setPagina(1)
-              }}
-              options={FILTROS_ESTADO}
-              aria-label="Filtrar por estado"
-              className="h-9 pl-4 pr-3"
-            />
-          </div>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <section aria-labelledby="s-mis" className="rounded-2xl bg-card p-2">
+            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
+              <h2 id="s-mis" className="text-lg font-semibold text-foreground">
+                {esAdmin ? 'Solicitudes de la clínica' : 'Tus solicitudes'}
+              </h2>
+              <Select
+                value={filtro}
+                onValueChange={(valor) => {
+                  setFiltro(valor)
+                  setPagina(1)
+                }}
+                options={FILTROS_ESTADO}
+                aria-label="Filtrar por estado"
+                className="h-9 border-0 bg-muted pl-3.5 pr-3"
+              />
+            </div>
 
-          {listaQuery.isLoading ? (
-            <ul className="space-y-1 px-2 pb-2" aria-busy="true">
-              {[0, 1, 2].map((fila) => (
-                <li key={fila} className="space-y-2 rounded-xl px-3 py-3">
-                  <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-                </li>
-              ))}
-            </ul>
-          ) : listaQuery.isError ? (
-            <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-              No pudimos cargar los tickets. Intenta de nuevo en un momento.
-            </p>
-          ) : tickets.length === 0 ? (
-            <EmptyState
-              size="sm"
-              icon={<Inbox />}
-              title={filtro === 'activos' ? 'No tienes tickets activos' : 'No hay tickets en este filtro'}
-              description="Si algo no funciona o tienes una duda, abre un ticket y te ayudamos."
-              action={
-                <Button size="sm" variant="outline" onClick={abrirNuevo}>
-                  <Plus />
-                  Abrir un ticket
-                </Button>
-              }
-            />
-          ) : (
-            <ul className="space-y-1 px-2 pb-2">
-              {tickets.map((item) => (
-                <li key={item.id}>
-                  <TicketResumen
-                    ticket={item}
-                    activo={item.id === ticketId}
-                    mostrarAutor={esAdmin && item.creadoPor?.id !== usuario?.id}
-                    onSelect={seleccionarTicket}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
+            {listaQuery.isLoading ? (
+              <div className="space-y-2 p-2" aria-busy="true">
+                {[0, 1, 2].map((fila) => (
+                  <div key={fila} className="h-14 animate-pulse rounded-xl bg-muted" />
+                ))}
+              </div>
+            ) : listaQuery.isError ? (
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                No pudimos cargar tus solicitudes. Intenta de nuevo en un momento.
+              </p>
+            ) : tickets.length === 0 ? (
+              <p className="px-4 pb-6 pt-2 text-sm text-muted-foreground">
+                {filtro === 'activos'
+                  ? 'No tienes solicitudes abiertas. Si algo no funciona o tienes una duda, escríbenos en el formulario.'
+                  : 'No hay solicitudes con este filtro.'}
+              </p>
+            ) : (
+              <ul>
+                {tickets.map((item) => (
+                  <li key={item.id}>
+                    <TicketResumen
+                      ticket={item}
+                      activo={item.id === ticketId}
+                      mostrarAutor={esAdmin && item.creadoPor?.id !== usuario?.id}
+                      onSelect={seleccionarTicket}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
 
-          <div className="px-4 pb-4 empty:hidden">
-            <Paginacion
-              pagina={listaQuery.data?.pagina || 1}
-              paginas={listaQuery.data?.paginas || 1}
-              onChange={setPagina}
-            />
-          </div>
-        </section>
+            <div className="px-3 pb-2 empty:hidden">
+              <Paginacion
+                pagina={listaQuery.data?.pagina || 1}
+                paginas={listaQuery.data?.paginas || 1}
+                onChange={setPagina}
+              />
+            </div>
+          </section>
 
-        <section
-          aria-label="Detalle del ticket"
-          className={cn(
-            'min-h-[480px] min-w-0 flex-col overflow-hidden rounded-2xl bg-card',
-            ticketId ? 'flex' : 'hidden lg:flex'
-          )}
-        >
           {ticketId ? (
             <DetalleTicket
               query={detalleQuery}
               esAdmin={esAdmin}
-              onVolver={() => seleccionarTicket(null)}
               onResponder={(mensaje) => responderMutation.mutateAsync({ ticketId, mensaje })}
               respondiendo={responderMutation.isPending}
               onCerrar={() => setConfirmarCierre(true)}
             />
-          ) : (
-            <PanelInicio onNuevo={abrirNuevo} />
-          )}
-        </section>
-      </div>
+          ) : null}
+        </div>
 
-      <NuevoTicketDialog
-        key={dialogoKey}
-        open={dialogoAbierto}
-        onOpenChange={setDialogoAbierto}
-        moduloInicial={moduloInicial}
-        onSubmit={crearTicket}
-        isPending={crearMutation.isPending}
-      />
+        <NuevaSolicitudForm
+          key={formKey}
+          moduloInicial={moduloInicial}
+          asuntoInicial={asuntoInicial}
+          categoriaInicial={categoriaInicial}
+          enfocar={enfocarForm}
+          onSubmit={crearTicket}
+          isPending={crearMutation.isPending}
+        />
+      </div>
 
       <ConfirmDialog
         open={confirmarCierre}
         onOpenChange={setConfirmarCierre}
-        title="¿Cerrar este ticket?"
-        description="Hazlo cuando el problema esté resuelto. Un ticket cerrado ya no admite mensajes; si el problema vuelve, abre uno nuevo."
-        confirmLabel="Cerrar ticket"
+        title="¿Ya quedó resuelto?"
+        description="Cerramos la solicitud y ya no admite mensajes. Si el problema vuelve, escribe una nueva."
+        confirmLabel="Sí, cerrar"
         variant="default"
         loading={cerrarMutation.isPending}
         onConfirm={() =>
@@ -265,165 +214,85 @@ export default function SoportePage() {
   )
 }
 
-function DetalleTicket({ query, esAdmin, onVolver, onResponder, respondiendo, onCerrar }) {
+function DetalleTicket({ query, esAdmin, onResponder, respondiendo, onCerrar }) {
   const ticket = query.data?.ticket
-
-  const volver = (
-    <div className="px-3 pt-3 lg:hidden">
-      <Button variant="ghost" size="sm" onClick={onVolver}>
-        <ArrowLeft />
-        Todos los tickets
-      </Button>
-    </div>
-  )
 
   if (query.isLoading) {
     return (
-      <>
-        {volver}
-        <div className="space-y-3 p-6" aria-busy="true">
-          <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-          <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
-          <div className="h-24 animate-pulse rounded-xl bg-muted" />
-        </div>
-      </>
+      <section className="space-y-3 rounded-2xl bg-card p-6" aria-busy="true">
+        <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="h-24 animate-pulse rounded-xl bg-muted" />
+      </section>
     )
   }
 
   if (query.isError || !ticket) {
     return (
-      <>
-        {volver}
-        <EmptyState
-          size="sm"
-          icon={<Inbox />}
-          title="No encontramos este ticket"
-          description="Puede que no exista o que no tengas acceso a él."
-          action={
-            <Button size="sm" variant="outline" onClick={onVolver}>
-              Ver los tickets
-            </Button>
-          }
-          className="flex-1"
-        />
-      </>
+      <section className="rounded-2xl bg-card px-6 py-8 text-center">
+        <p className="font-semibold text-foreground">No encontramos esta solicitud</p>
+        <p className="mt-1 text-sm text-muted-foreground">Puede que no exista o que no tengas acceso a ella.</p>
+      </section>
     )
   }
 
   const prioridad = prioridadTicket(ticket.prioridad)
   const aviso = AVISOS_ESTADO[ticket.estado]
   const admiteMensajes = ticket.estado !== 'cerrado'
+  const detalle = [
+    ticket.codigo,
+    etiquetaCategoria(ticket.categoria),
+    ticket.modulo ? etiquetaModulo(ticket.modulo) : null,
+    prioridad.label.toLowerCase(),
+    `abierta el ${formatearFechaTicket(ticket.createdAt)}${esAdmin && ticket.creadoPor ? ` por ${ticket.creadoPor.nombre}` : ''}`,
+  ].filter(Boolean)
 
   return (
-    <>
-      {volver}
-
-      <header className="px-5 pb-2 pt-5 sm:px-6">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
-          <span className="font-mono">{ticket.codigo}</span>
-          <span aria-hidden>·</span>
-          <span>{etiquetaCategoria(ticket.categoria)}</span>
-          {ticket.modulo ? (
-            <>
-              <span aria-hidden>·</span>
-              <span>{etiquetaModulo(ticket.modulo)}</span>
-            </>
-          ) : null}
-        </div>
-        <div className="mt-1.5 flex flex-wrap items-start justify-between gap-3">
-          <h2 className="min-w-0 break-words text-[22px] font-semibold leading-snug tracking-[-0.02em] text-foreground">
+    <section aria-labelledby="s-hilo" className="flex flex-col gap-4 rounded-2xl bg-card p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 id="s-hilo" className="break-words text-xl font-semibold tracking-[-0.02em] text-foreground">
             {ticket.asunto}
           </h2>
-          <EstadoTicketBadge estado={ticket.estado} />
+          <span className="text-[13px] text-muted-foreground">{detalle.join(' · ')}</span>
         </div>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
-          <span>
-            Abierto el {formatearFechaTicket(ticket.createdAt)}
-            {esAdmin && ticket.creadoPor ? ` por ${ticket.creadoPor.nombre}` : ''}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className={cn('h-2 w-2 rounded-full', prioridad.dot)} aria-hidden />
-            {prioridad.label}
-          </span>
-        </p>
-      </header>
+        <EstadoTicketBadge estado={ticket.estado} />
+      </div>
 
-      {aviso ? (
-        <p className={cn('mx-5 mt-3 rounded-xl px-4 py-3 text-sm leading-6 sm:mx-6', aviso.tone)}>
-          {aviso.texto}
-        </p>
+      {aviso ? <p className={cn('rounded-xl px-4 py-3 text-sm leading-6', aviso.tone)}>{aviso.texto}</p> : null}
+
+      {ticket.capturaUrl ? (
+        <a
+          href={ticket.capturaUrl}
+          target="_blank"
+          rel="noreferrer"
+          title="Abrir la captura en otra pestaña"
+          className="block w-fit overflow-hidden rounded-xl bg-muted outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <img src={ticket.capturaUrl} alt="Captura adjunta" loading="lazy" className="max-h-44 w-auto object-contain" />
+        </a>
       ) : null}
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-        {ticket.capturaUrl ? (
-          <a
-            href={ticket.capturaUrl}
-            target="_blank"
-            rel="noreferrer"
-            title="Abrir la captura en otra pestaña"
-            className="mb-5 block w-fit overflow-hidden rounded-xl bg-muted outline-none transition hover:brightness-95 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <img
-              src={ticket.capturaUrl}
-              alt="Captura adjunta al ticket"
-              loading="lazy"
-              className="max-h-44 w-auto object-contain"
-            />
-          </a>
-        ) : null}
-
-        <TicketHilo mensajes={ticket.mensajes} />
-      </div>
+      <TicketHilo mensajes={ticket.mensajes} />
 
       {admiteMensajes ? (
-        <footer className="bg-muted/60 px-5 py-4 sm:px-6">
-          <ResponderTicketForm
-            onSubmit={onResponder}
-            isPending={respondiendo}
-            placeholder={
-              ticket.estado === 'esperando_usuario'
-                ? 'Responde al equipo de Bourgelat…'
-                : 'Agrega más detalles o responde…'
-            }
-          />
-          <div className="mt-2">
-            <Button variant="ghost" size="sm" onClick={onCerrar}>
-              <CircleCheck />
-              Ya se solucionó, cerrar ticket
-            </Button>
-          </div>
-        </footer>
+        <ResponderTicketForm
+          onSubmit={onResponder}
+          isPending={respondiendo}
+          submitLabel="Responder"
+          placeholder="Escribe tu respuesta"
+          accionSecundaria={
+            <button
+              type="button"
+              onClick={onCerrar}
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-success-soft px-4 text-sm font-semibold text-success transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <CircleCheck className="h-4 w-4" />
+              Ya quedó resuelto
+            </button>
+          }
+        />
       ) : null}
-    </>
-  )
-}
-
-function PanelInicio({ onNuevo }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-12 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-primary">
-        <LifeBuoy className="h-7 w-7" />
-      </span>
-      <div className="max-w-sm space-y-1.5">
-        <h2 className="text-lg font-semibold text-foreground">¿En qué te ayudamos?</h2>
-        <p className="text-sm text-muted-foreground">
-          Elige un ticket de la lista para ver la conversación, o abre uno nuevo.
-        </p>
-      </div>
-      <ol className="grid max-w-md gap-3 text-left">
-        {PASOS.map((paso, indice) => (
-          <li key={paso} className="flex gap-3 text-sm text-muted-foreground">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-semibold text-primary">
-              {indice + 1}
-            </span>
-            <span className="pt-0.5">{paso}</span>
-          </li>
-        ))}
-      </ol>
-      <Button onClick={onNuevo}>
-        <Plus />
-        Nuevo ticket
-      </Button>
-    </div>
+    </section>
   )
 }

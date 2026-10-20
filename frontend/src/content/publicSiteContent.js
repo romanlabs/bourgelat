@@ -50,3 +50,16 @@ export const brandProfile = {
 
 export const legalDraftNotice =
   'Este contenido es un borrador operativo para el sitio mientras se completa la revisión legal final en Colombia.'
+
+// Cobro manual (sin pasarela): QR Bre-B de Bancolombia + comprobante + activación
+// manual con `npm run suscripcion:asignar`. Precios: mismos de PlanesPage/planes.js.
+export const pagoManual = {
+  llaveBreB: '0093458902',
+  destinatario: 'bourgelat',
+  precioMensual: 89000,
+  precioAnualPorMes: 75000,
+  // Número de WhatsApp para comprobantes (formato internacional sin +, ej. 573001234567).
+  // Vacío mientras se define: la página muestra solo el correo.
+  whatsapp: '',
+  correo: 'soporte@bourgelat.co',
+}

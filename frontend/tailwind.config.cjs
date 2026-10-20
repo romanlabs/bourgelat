@@ -15,6 +15,9 @@ module.exports = {
         // sola pantalla, como el inicio de sesión, se compactan para no tener scroll.
         bajo: { raw: '(max-height: 780px)' },
         'muy-bajo': { raw: '(max-height: 640px)' },
+        // El menú lateral mide 794px holgado y 711px compacto: se compacta antes.
+        'menu-bajo': { raw: '(max-height: 820px)' },
+        'menu-muy-bajo': { raw: '(max-height: 730px)' },
       },
 
       colors: {

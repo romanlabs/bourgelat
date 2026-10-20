@@ -3,9 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
   Boxes,
+  Building2,
   ChartColumn,
   CalendarClock,
   ChevronsUpDown,
+  CreditCard,
   FileText,
   HeartPulse,
   LayoutDashboard,
@@ -16,9 +18,11 @@ import {
   Moon,
   PawPrint,
   Receipt,
+  ScrollText,
   Search,
   Sun,
   User,
+  UserCog,
   Users,
   X,
 } from 'lucide-react'
@@ -55,8 +59,6 @@ const ROL_LABELS_SIDEBAR = {
   superadmin: 'Administrador de la plataforma',
 }
 
-// Los módulos del día a día llevan icono; los administrativos van como texto
-// debajo, para que el menú se lea de un vistazo.
 // Un usuario puede tener varios roles (principal + adicionales): se muestran todos.
 const etiquetaRoles = (usuario) =>
   getUserRoles(usuario)
@@ -73,11 +75,11 @@ const NAV_ITEMS = [
   { key: 'caja', label: 'Caja', to: '/caja', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
   { key: 'finanzas', label: 'Finanzas', to: '/finanzas', icon: ChartColumn },
-  { key: 'configuracion', label: 'Clínica', to: '/configuracion' },
-  { key: 'usuarios', label: 'Usuarios', to: '/usuarios' },
-  { key: 'auditoria', label: 'Auditoría', to: '/auditoria' },
-  { key: 'soporte', label: 'Soporte', to: '/soporte' },
-  { key: 'planes', label: 'Planes', to: '/planes' },
+  { key: 'configuracion', label: 'Clínica', to: '/configuracion', icon: Building2 },
+  { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: UserCog },
+  { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: ScrollText },
+  { key: 'soporte', label: 'Soporte', to: '/soporte', icon: LifeBuoy },
+  { key: 'planes', label: 'Mi plan', to: '/plan', icon: CreditCard },
 ]
 
 const NAV_SECTIONS = [
@@ -104,7 +106,7 @@ function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
         type="button"
         aria-disabled="true"
         onClick={onBloqueado}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-1 text-left text-sm font-medium text-sidebar-foreground/55 transition-colors duration-150 hover:bg-sidebar-accent"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 menu-bajo:py-2 menu-muy-bajo:py-1 text-left text-sm font-medium text-sidebar-foreground/55 transition-colors duration-150 hover:bg-sidebar-accent"
       >
         {Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
         <span className="flex-1 truncate">{item.label}</span>
@@ -119,7 +121,7 @@ function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2.5 bajo:py-2 muy-bajo:py-1 text-sm transition-colors duration-150',
+        'flex items-center gap-3 rounded-lg px-3 py-2.5 menu-bajo:py-2 menu-muy-bajo:py-1 text-sm transition-colors duration-150',
         active
           ? 'bg-sidebar-primary font-semibold text-sidebar-primary-foreground'
           : 'font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -218,22 +220,22 @@ function MenuUsuario({ usuario, iniciales, pathname, dark, toggleDark, logout, a
 
 function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales, menuUsuario }) {
   return (
-    <div className="flex h-full flex-col gap-6 px-4 py-6 bajo:gap-4 bajo:py-5 muy-bajo:gap-3 muy-bajo:py-4">
+    <div className="flex h-full flex-col gap-6 px-4 py-6 menu-bajo:gap-4 menu-bajo:py-5 menu-muy-bajo:gap-3 menu-muy-bajo:py-4">
       <Link to="/dashboard" onClick={onNavigate} className="flex flex-col gap-1 px-3">
         <span className="text-[22px] font-bold leading-none tracking-[-0.03em] text-sidebar-accent-foreground">
           Bourgelat
         </span>
-        <span className="truncate text-[13px] text-sidebar-foreground/75 muy-bajo:hidden">{nombreClinica}</span>
+        <span className="truncate text-[13px] text-sidebar-foreground/75 menu-muy-bajo:hidden">{nombreClinica}</span>
       </Link>
 
-      <nav aria-label="Principal" className="flex flex-1 flex-col gap-5 overflow-y-auto bajo:gap-3 [scrollbar-width:thin]">
+      <nav aria-label="Principal" className="flex flex-1 flex-col gap-5 overflow-y-auto menu-bajo:gap-3 [scrollbar-width:thin]">
         {NAV_SECTIONS.map((section) => {
           const sectionItems = section.items.map((itemKey) => NAV_ITEMS_BY_KEY[itemKey]).filter(Boolean)
 
           return (
             <div key={section.key} className="flex flex-col gap-0.5">
               {section.label ? (
-                <p className="px-3 pb-1.5 text-[13px] text-sidebar-foreground/70 muy-bajo:pb-0.5">{section.label}</p>
+                <p className="px-3 pb-1.5 text-[13px] text-sidebar-foreground/70 menu-muy-bajo:pb-0.5">{section.label}</p>
               ) : null}
               {sectionItems.map((item) => (
                 <NavItem
@@ -254,13 +256,13 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
         <button
           type="button"
           className={cn(
-            'flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring muy-bajo:p-2',
+            'flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring menu-muy-bajo:p-2',
             currentKey === 'perfil'
               ? 'bg-sidebar-primary text-sidebar-primary-foreground'
               : 'bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent'
           )}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground muy-bajo:h-8 muy-bajo:w-8">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground menu-muy-bajo:h-8 menu-muy-bajo:w-8">
             {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : iniciales}
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
@@ -685,15 +687,15 @@ export default function AdminShell({
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className={cn('min-w-0 flex-1', titleAside && 'flex flex-wrap items-center gap-x-6 gap-y-3')}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+              <div className={cn('min-w-0 flex-1', titleAside && 'flex flex-wrap items-center gap-x-4 gap-y-3')}>
                 <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h1
                     className={cn(
                       'font-semibold leading-none text-foreground',
                       compactHeader
-                        ? 'text-2xl tracking-[-0.03em] sm:text-[26px]'
+                        ? 'text-2xl tracking-[-0.03em]'
                         : 'text-3xl tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
                     )}
                   >
