@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
 import RegistroDialog from '@/features/auth/RegistroDialog'
+import { useAuthStore } from '@/store/authStore'
 
 const footerLinks = [
   { label: 'Nosotros', to: '/nosotros' },
@@ -9,6 +10,7 @@ const footerLinks = [
   { label: 'Terminos', to: '/terminos' },
   { label: 'Cookies', to: '/cookies' },
   { label: 'Planes', to: '/planes' },
+  { label: 'Pagar', to: '/pagar' },
 ]
 
 export default function PublicPageShell({
@@ -19,6 +21,7 @@ export default function PublicPageShell({
 }) {
   // El <title> y los meta los pone aplicarSeo (lib/seo.js) desde content/seo.js.
   const [registroAbierto, setRegistroAbierto] = useState(false)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   return (
     <div className="min-h-screen bg-papel-100 text-tinta-800">
@@ -49,20 +52,32 @@ export default function PublicPageShell({
                 <ArrowLeft className="h-4 w-4" />
                 Volver al inicio
               </Link>
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 rounded-full border border-papel-300 px-4 py-2 text-sm font-medium text-tinta-600 no-underline transition hover:border-papel-400 hover:text-tinta-800"
-              >
-                Iniciar sesión
-              </Link>
-              <button
-                type="button"
-                onClick={() => setRegistroAbierto(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-tinta-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-tinta-700"
-              >
-                Crear cuenta
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 rounded-full bg-tinta-800 px-4 py-2 text-sm font-semibold text-white no-underline transition hover:bg-tinta-700"
+                >
+                  Ir a la app
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 rounded-full border border-papel-300 px-4 py-2 text-sm font-medium text-tinta-600 no-underline transition hover:border-papel-400 hover:text-tinta-800"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setRegistroAbierto(true)}
+                    className="inline-flex items-center gap-2 rounded-full bg-tinta-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-tinta-700"
+                  >
+                    Crear cuenta
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>

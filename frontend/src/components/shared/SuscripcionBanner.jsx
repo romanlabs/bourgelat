@@ -24,7 +24,7 @@ const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
           crear ni editar registros.
         </p>
         <Link
-          to="/configuracion"
+          to="/plan"
           className="inline-flex h-9 items-center rounded-lg bg-card px-3.5 font-semibold text-warning transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Activar plan
@@ -51,7 +51,7 @@ const SuscripcionBanner = ({ soloLecturaOnly = false }) => {
           : `Te ${dias === 1 ? 'queda' : 'quedan'} ${dias} ${dias === 1 ? 'día' : 'días'} de prueba.`}
       </p>
       <Link
-        to="/configuracion"
+        to="/plan"
         className="inline-flex h-9 items-center rounded-lg bg-primary px-3.5 font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Activar plan
