@@ -15,7 +15,7 @@ export function CalendarLegend() {
           <button
             type="button"
             aria-label="Colores de las citas"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-secondary"
+            className="flex h-10 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-secondary"
           >
             <Palette className="h-[18px] w-[18px]" />
           </button>

@@ -687,15 +687,15 @@ export default function AdminShell({
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className={cn('min-w-0 flex-1', titleAside && 'flex flex-wrap items-center gap-x-6 gap-y-3')}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+              <div className={cn('min-w-0 flex-1', titleAside && 'flex flex-wrap items-center gap-x-4 gap-y-3')}>
                 <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h1
                     className={cn(
                       'font-semibold leading-none text-foreground',
                       compactHeader
-                        ? 'text-2xl tracking-[-0.03em] sm:text-[26px]'
+                        ? 'text-2xl tracking-[-0.03em]'
                         : 'text-3xl tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
                     )}
                   >
