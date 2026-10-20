@@ -208,7 +208,7 @@ export default function MiPlanPage() {
   )
 
   return (
-    <AdminShell currentKey="planes" title="Mi plan" hidePageHeader>
+    <AdminShell currentKey="planes" title="Mi plan" hidePageHeader hideSearch>
       <div className="flex flex-col gap-7 lg:pt-6">
         <section
           aria-labelledby="pl-actual"
