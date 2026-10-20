@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ListFilter,
   Loader2,
+  MoreHorizontal,
   Plus,
   Search,
   Sparkles,
@@ -33,7 +34,48 @@ const TABS = [
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const BTN_PRIMARIO = `inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
-const ACCION_FILA = `rounded text-[13px] font-semibold text-primary transition hover:underline disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`
+const ITEM_MENU = 'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
+
+// Antecedentes, editar y desactivar en un menú «⋯»; «Abrir ficha» queda a la vista.
+function AccionesPaciente({ nombre, antecedentesTo, onEditar, onCambiarEstado, reactivar }) {
+  if (!antecedentesTo && !onEditar && !onCambiarEstado) return null
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`Acciones de ${nombre}`}
+          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
+        >
+          <MoreHorizontal className="h-[18px] w-[18px]" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 min-w-[180px] rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        >
+          {antecedentesTo ? (
+            <DropdownMenu.Item asChild className={ITEM_MENU}>
+              <Link to={antecedentesTo}>Antecedentes</Link>
+            </DropdownMenu.Item>
+          ) : null}
+          {onEditar ? (
+            <DropdownMenu.Item onSelect={onEditar} className={ITEM_MENU}>
+              Editar
+            </DropdownMenu.Item>
+          ) : null}
+          {onCambiarEstado ? (
+            <DropdownMenu.Item onSelect={onCambiarEstado} className={cn(ITEM_MENU, !reactivar && 'text-danger')}>
+              {reactivar ? 'Reactivar' : 'Desactivar'}
+            </DropdownMenu.Item>
+          ) : null}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
 
 // Color de la inicial según la especie: se distingue la lista de un vistazo.
 const TONO_ESPECIE = {
@@ -465,46 +507,25 @@ export default function PacientesPage() {
                               {row.peso === 'Sin peso' ? <span className="text-muted-foreground">—</span> : row.peso}
                             </td>
                             <td className="px-5 py-3">
-                              <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
-                                {row.antecedentesTo && (
-                                  <Link to={row.antecedentesTo} className={ACCION_FILA}>
-                                    Antecedentes
-                                  </Link>
-                                )}
-                                {puedeGestionarPaciente && (
-                                  <button
-                                    type="button"
-                                    onClick={() => mascotasHook.openEditDrawer(row.raw)}
-                                    aria-label={`Editar ${row.paciente}`}
-                                    {...propsAccion}
-                                    className={ACCION_FILA}
-                                  >
-                                    Editar
-                                  </button>
-                                )}
-                                {puedeDesactivarPaciente &&
-                                  (mascotasHook.verDesactivados ? (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
-                                      }
-                                      disabled={mascotasHook.cambiarEstadoMascotaMutation.isPending}
-                                      aria-label={`Reactivar ${row.paciente}`}
-                                      className={ACCION_FILA}
-                                    >
-                                      Reactivar
-                                    </button>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => setPacienteADesactivar(row)}
-                                      aria-label={`Desactivar ${row.paciente}`}
-                                      className={cn(ACCION_FILA, 'text-muted-foreground')}
-                                    >
-                                      Desactivar
-                                    </button>
-                                  ))}
+                              <div className="flex items-center justify-end gap-1.5">
+                                <AccionesPaciente
+                                  nombre={row.paciente}
+                                  antecedentesTo={row.antecedentesTo}
+                                  onEditar={
+                                    puedeGestionarPaciente && !propsAccion.disabled
+                                      ? () => mascotasHook.openEditDrawer(row.raw)
+                                      : null
+                                  }
+                                  onCambiarEstado={
+                                    !puedeDesactivarPaciente
+                                      ? null
+                                      : mascotasHook.verDesactivados
+                                        ? () =>
+                                            mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
+                                        : () => setPacienteADesactivar(row)
+                                  }
+                                  reactivar={mascotasHook.verDesactivados}
+                                />
                                 {row.historiasTo && (
                                   <Link
                                     to={row.historiasTo}

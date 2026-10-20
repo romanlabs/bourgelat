@@ -3,9 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
   Boxes,
+  Building2,
   ChartColumn,
   CalendarClock,
   ChevronsUpDown,
+  CreditCard,
   FileText,
   HeartPulse,
   LayoutDashboard,
@@ -16,9 +18,11 @@ import {
   Moon,
   PawPrint,
   Receipt,
+  ScrollText,
   Search,
   Sun,
   User,
+  UserCog,
   Users,
   X,
 } from 'lucide-react'
@@ -55,8 +59,6 @@ const ROL_LABELS_SIDEBAR = {
   superadmin: 'Administrador de la plataforma',
 }
 
-// Los módulos del día a día llevan icono; los administrativos van como texto
-// debajo, para que el menú se lea de un vistazo.
 // Un usuario puede tener varios roles (principal + adicionales): se muestran todos.
 const etiquetaRoles = (usuario) =>
   getUserRoles(usuario)
@@ -73,11 +75,11 @@ const NAV_ITEMS = [
   { key: 'caja', label: 'Caja', to: '/caja', icon: Receipt },
   { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
   { key: 'finanzas', label: 'Finanzas', to: '/finanzas', icon: ChartColumn },
-  { key: 'configuracion', label: 'Clínica', to: '/configuracion' },
-  { key: 'usuarios', label: 'Usuarios', to: '/usuarios' },
-  { key: 'auditoria', label: 'Auditoría', to: '/auditoria' },
-  { key: 'soporte', label: 'Soporte', to: '/soporte' },
-  { key: 'planes', label: 'Planes', to: '/planes' },
+  { key: 'configuracion', label: 'Clínica', to: '/configuracion', icon: Building2 },
+  { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: UserCog },
+  { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: ScrollText },
+  { key: 'soporte', label: 'Soporte', to: '/soporte', icon: LifeBuoy },
+  { key: 'planes', label: 'Planes', to: '/planes', icon: CreditCard },
 ]
 
 const NAV_SECTIONS = [
