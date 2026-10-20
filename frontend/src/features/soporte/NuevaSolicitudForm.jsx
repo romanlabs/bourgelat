@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ImagePlus, Loader2, X } from 'lucide-react'
@@ -31,6 +31,45 @@ const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring
 const campo =
   'w-full rounded-lg border-0 bg-card px-3.5 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-brand'
 
+// Cada tipo pide cosas distintas: la urgencia solo se pregunta cuando algo no funciona.
+const TEXTOS_POR_TIPO = {
+  error: {
+    prioridad: null,
+    asunto: 'Por ejemplo: no me deja cerrar el turno',
+    detalle: 'Cuéntanos qué pasó',
+    ayuda: 'Qué hacías, qué esperabas y qué salió',
+    adjuntar: 'Adjuntar captura de pantalla',
+  },
+  duda: {
+    prioridad: 'media',
+    asunto: 'Por ejemplo: ¿cómo registro una vacuna?',
+    detalle: 'Tu pregunta',
+    ayuda: 'Qué quieres hacer; te explicamos paso a paso',
+    adjuntar: 'Adjuntar captura (opcional)',
+  },
+  facturacion: {
+    prioridad: 'media',
+    asunto: 'Por ejemplo: quiero pasar a pago anual',
+    detalle: 'Detalles',
+    ayuda: 'Qué necesitas con tu plan o tu pago. Si ya pagaste, adjunta el comprobante',
+    adjuntar: 'Adjuntar comprobante o captura',
+  },
+  sugerencia: {
+    prioridad: 'baja',
+    asunto: 'Por ejemplo: enviar la fórmula por WhatsApp',
+    detalle: 'Cuéntanos tu idea',
+    ayuda: 'Qué te gustaría poder hacer y para qué te serviría',
+    adjuntar: 'Adjuntar imagen (opcional)',
+  },
+  otro: {
+    prioridad: 'media',
+    asunto: 'En pocas palabras, qué necesitas',
+    detalle: 'Cuéntanos',
+    ayuda: 'Escribe lo que necesites',
+    adjuntar: 'Adjuntar captura (opcional)',
+  },
+}
+
 const validarCaptura = (archivo) => {
   if (!TIPOS_CAPTURA.includes(archivo.type)) return 'La captura debe ser JPG, PNG o WEBP.'
   if (archivo.size > MAX_CAPTURA_BYTES) return 'La captura supera 5 MB.'
@@ -52,23 +91,33 @@ export default function NuevaSolicitudForm({
   const [errorCaptura, setErrorCaptura] = useState('')
   const asuntoRef = useRef(null)
 
+  const categoriaDefecto = TEXTOS_POR_TIPO[categoriaInicial] ? categoriaInicial : 'error'
+
   const {
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
       asunto: asuntoInicial.slice(0, 150),
-      categoria: CATEGORIAS_TICKET.some((c) => c.value === categoriaInicial) ? categoriaInicial : 'error',
-      prioridad: 'media',
+      categoria: categoriaDefecto,
+      prioridad: TEXTOS_POR_TIPO[categoriaDefecto].prioridad || 'media',
       modulo: normalizarModulo(moduloInicial),
       descripcion: '',
     },
   })
 
   const { ref: asuntoRegisterRef, ...asuntoProps } = register('asunto')
+  const categoria = useWatch({ control, name: 'categoria' })
+  const textos = TEXTOS_POR_TIPO[categoria] || TEXTOS_POR_TIPO.error
+
+  const cambiarTipo = (valor, onChange) => {
+    onChange(valor)
+    setValue('prioridad', TEXTOS_POR_TIPO[valor].prioridad || 'media')
+  }
 
   useEffect(() => {
     if (!enfocar) return
@@ -141,7 +190,7 @@ export default function NuevaSolicitudForm({
                     key={opcion.value}
                     type="button"
                     aria-pressed={activo}
-                    onClick={() => field.onChange(opcion.value)}
+                    onClick={() => cambiarTipo(opcion.value, field.onChange)}
                     className={cn(
                       'h-[38px] rounded-lg px-3 text-[13px] transition',
                       activo ? 'bg-primary-foreground font-semibold text-primary' : 'bg-primary-foreground/15 hover:bg-primary-foreground/25',
@@ -157,6 +206,7 @@ export default function NuevaSolicitudForm({
         )}
       />
 
+      {categoria === 'error' ? (
       <Controller
         name="prioridad"
         control={control}
@@ -186,6 +236,7 @@ export default function NuevaSolicitudForm({
           </div>
         )}
       />
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="ticket-asunto" className="text-sm font-semibold">Asunto</label>
@@ -193,7 +244,7 @@ export default function NuevaSolicitudForm({
           id="ticket-asunto"
           type="text"
           autoComplete="off"
-          placeholder="Por ejemplo: no me deja cerrar el turno"
+          placeholder={textos.asunto}
           className={cn(campo, 'h-[46px]')}
           ref={(el) => {
             asuntoRegisterRef(el)
@@ -205,11 +256,11 @@ export default function NuevaSolicitudForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="ticket-descripcion" className="text-sm font-semibold">Cuéntanos qué pasó</label>
+        <label htmlFor="ticket-descripcion" className="text-sm font-semibold">{textos.detalle}</label>
         <textarea
           id="ticket-descripcion"
           rows={5}
-          placeholder="Qué hacías, qué esperabas y qué salió"
+          placeholder={textos.ayuda}
           className={cn(campo, 'resize-y py-3')}
           {...register('descripcion')}
         />
@@ -234,7 +285,7 @@ export default function NuevaSolicitudForm({
           className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-foreground/15 text-sm font-semibold transition hover:bg-primary-foreground/25 focus-within:ring-2 focus-within:ring-brand"
         >
           <ImagePlus className="h-[18px] w-[18px]" />
-          Adjuntar captura de pantalla
+          {textos.adjuntar}
         </label>
       )}
       <input
