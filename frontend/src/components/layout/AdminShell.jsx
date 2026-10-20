@@ -79,7 +79,7 @@ const NAV_ITEMS = [
   { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: UserCog },
   { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: ScrollText },
   { key: 'soporte', label: 'Soporte', to: '/soporte', icon: LifeBuoy },
-  { key: 'planes', label: 'Planes', to: '/planes', icon: CreditCard },
+  { key: 'planes', label: 'Mi plan', to: '/plan', icon: CreditCard },
 ]
 
 const NAV_SECTIONS = [

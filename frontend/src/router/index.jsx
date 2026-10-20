@@ -25,6 +25,7 @@ const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
 const UsuariosPage = lazy(() => import('@/pages/UsuariosPage'))
 const AuditoriaPage = lazy(() => import('@/pages/AuditoriaPage'))
 const SoportePage = lazy(() => import('@/pages/SoportePage'))
+const MiPlanPage = lazy(() => import('@/pages/MiPlanPage'))
 const InventarioPage = lazy(() => import('@/pages/InventarioPage'))
 const FinanzasPage = lazy(() => import('@/pages/FinanzasPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
@@ -104,6 +105,7 @@ const router = createBrowserRouter([
           { path: '/usuarios', element: <Suspense fallback={<Loader />}><UsuariosPage /></Suspense> },
           { path: '/auditoria', element: <Suspense fallback={<Loader />}><AuditoriaPage /></Suspense> },
           { path: '/soporte', element: <Suspense fallback={<Loader />}><SoportePage /></Suspense> },
+          { path: '/plan', element: <Suspense fallback={<Loader />}><MiPlanPage /></Suspense> },
           { path: '/inventario', element: <Suspense fallback={<Loader />}><InventarioPage /></Suspense> },
           { path: '/caja', element: <Suspense fallback={<Loader />}><FinanzasPage modo="caja" /></Suspense> },
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage modo="finanzas" /></Suspense> },

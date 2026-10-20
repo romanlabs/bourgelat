@@ -46,6 +46,8 @@ export default function SoportePage() {
   // Cambia para remontar el formulario limpio (tras enviar o al llegar desde el menú).
   const [formKey, setFormKey] = useState(0)
   const [moduloInicial, setModuloInicial] = useState('')
+  const [asuntoInicial, setAsuntoInicial] = useState('')
+  const [categoriaInicial, setCategoriaInicial] = useState('error')
   const [enfocarForm, setEnfocarForm] = useState(false)
   const [confirmarCierre, setConfirmarCierre] = useState(false)
   const [solicitudAtendida, setSolicitudAtendida] = useState(null)
@@ -60,6 +62,8 @@ export default function SoportePage() {
   if (solicitudNueva && solicitudNueva !== solicitudAtendida) {
     setSolicitudAtendida(solicitudNueva)
     setModuloInicial(searchParams.get('desde') || '')
+    setAsuntoInicial(searchParams.get('asunto') || '')
+    setCategoriaInicial(searchParams.get('categoria') || 'error')
     setEnfocarForm(true)
     setFormKey((key) => key + 1)
   } else if (!solicitudNueva && solicitudAtendida) {
@@ -74,8 +78,7 @@ export default function SoportePage() {
   useEffect(() => {
     if (!solicitudNueva) return
     const siguientes = new URLSearchParams(searchParams)
-    siguientes.delete('nuevo')
-    siguientes.delete('desde')
+    for (const clave of ['nuevo', 'desde', 'asunto', 'categoria']) siguientes.delete(clave)
     setSearchParams(siguientes, { replace: true })
   }, [solicitudNueva, searchParams, setSearchParams])
 
@@ -99,6 +102,8 @@ export default function SoportePage() {
   const crearTicket = async (datos) => {
     const data = await crearMutation.mutateAsync(datos)
     setModuloInicial('')
+    setAsuntoInicial('')
+    setCategoriaInicial('error')
     setEnfocarForm(false)
     setFormKey((key) => key + 1)
     setFiltro('activos')
@@ -185,6 +190,8 @@ export default function SoportePage() {
         <NuevaSolicitudForm
           key={formKey}
           moduloInicial={moduloInicial}
+          asuntoInicial={asuntoInicial}
+          categoriaInicial={categoriaInicial}
           enfocar={enfocarForm}
           onSubmit={crearTicket}
           isPending={crearMutation.isPending}

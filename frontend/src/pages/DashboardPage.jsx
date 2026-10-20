@@ -508,7 +508,7 @@ export default function DashboardPage() {
         id: 'vigencia',
         title: 'Plan por vencer',
         detail: `Quedan ${diasRestantes} días para el cierre de la vigencia actual. Conviene resolverlo antes de que afecte la continuidad.`,
-        to: '/pagar',
+        to: '/plan',
         actionLabel: 'Renovar plan',
       })
     }
@@ -989,7 +989,7 @@ export default function DashboardPage() {
               Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <NavCtaLink to="/pagar" icon={ArrowRight}>
+              <NavCtaLink to="/plan" icon={ArrowRight}>
                 Pagar o renovar
               </NavCtaLink>
               <NavCtaLink to="/planes" icon={ArrowRight}>

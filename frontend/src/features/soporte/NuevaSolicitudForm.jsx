@@ -39,7 +39,14 @@ const validarCaptura = (archivo) => {
 
 // `moduloInicial` es la ruta desde la que la persona pidió ayuda: viaja en el
 // contexto del ticket. El padre lo remonta con una `key` nueva para limpiarlo.
-export default function NuevaSolicitudForm({ moduloInicial = '', enfocar = false, onSubmit, isPending }) {
+export default function NuevaSolicitudForm({
+  moduloInicial = '',
+  asuntoInicial = '',
+  categoriaInicial = 'error',
+  enfocar = false,
+  onSubmit,
+  isPending,
+}) {
   const usuario = useAuthStore((state) => state.usuario)
   const [captura, setCaptura] = useState(null)
   const [errorCaptura, setErrorCaptura] = useState('')
@@ -53,8 +60,8 @@ export default function NuevaSolicitudForm({ moduloInicial = '', enfocar = false
   } = useForm({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
-      asunto: '',
-      categoria: 'error',
+      asunto: asuntoInicial.slice(0, 150),
+      categoria: CATEGORIAS_TICKET.some((c) => c.value === categoriaInicial) ? categoriaInicial : 'error',
       prioridad: 'media',
       modulo: normalizarModulo(moduloInicial),
       descripcion: '',
@@ -64,8 +71,11 @@ export default function NuevaSolicitudForm({ moduloInicial = '', enfocar = false
   const { ref: asuntoRegisterRef, ...asuntoProps } = register('asunto')
 
   useEffect(() => {
-    if (enfocar) asuntoRef.current?.focus()
-  }, [enfocar])
+    if (!enfocar) return
+    // Con el asunto ya escrito, lo que falta es contar el detalle.
+    if (asuntoInicial) document.getElementById('ticket-descripcion')?.focus()
+    else asuntoRef.current?.focus()
+  }, [enfocar, asuntoInicial])
 
   const previewUrl = useMemo(() => (captura ? URL.createObjectURL(captura) : null), [captura])
 

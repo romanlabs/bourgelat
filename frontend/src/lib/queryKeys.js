@@ -135,6 +135,7 @@ export const DOMINIOS = {
     'agenda-bloqueos',
     'recepcion-consultorios',
     'suscripcion-activa',
+    'suscripcion-planes',
   ],
 }
 
