@@ -132,7 +132,7 @@ const validarVentanaAtencion = async ({ req, clinicaId, fecha, horaInicio, horaF
     accion: 'CITA_FUERA_DE_HORARIO',
     entidad: 'Cita',
     entidadId: null,
-    descripcion: `Cita agendada fuera del horario de atencion (${resultado.codigo}) el ${fecha} de ${horaInicio} a ${horaFin}`,
+    descripcion: `Cita agendada fuera del horario de atención (${resultado.codigo}) el ${fecha} de ${horaInicio} a ${horaFin}`,
     datosNuevos: { fecha, horaInicio, horaFin, codigo: resultado.codigo },
     req,
     resultado: 'exitoso',

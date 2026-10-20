@@ -137,7 +137,7 @@ const guardarConfiguracionFactus = async (req, res) => {
       accion: 'GUARDAR_CONFIG_FACTUS',
       entidad: 'IntegracionFacturacion',
       entidadId: integracion.id,
-      descripcion: `Configuracion de Factus ${existente ? 'actualizada' : 'creada'}`,
+      descripcion: `Configuración de facturación electrónica ${existente ? 'actualizada' : 'creada'}`,
       req,
       resultado: 'exitoso',
     })
@@ -315,7 +315,7 @@ const probarConexionFactus = async (req, res) => {
       accion: 'PROBAR_CONFIG_FACTUS',
       entidad: 'IntegracionFacturacion',
       entidadId: integracion?.id,
-      descripcion: `Prueba de autenticacion con Factus exitosa usando ${configuracionEfectiva.fuenteCredenciales}`,
+      descripcion: `Prueba de conexión de facturación electrónica exitosa usando ${configuracionEfectiva.fuenteCredenciales}`,
       req,
       resultado: 'exitoso',
     })
