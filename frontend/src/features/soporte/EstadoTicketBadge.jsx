@@ -7,8 +7,8 @@ export default function EstadoTicketBadge({ estado, size = 'md', className }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold',
-        size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs',
+        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md font-semibold',
+        size === 'sm' ? 'px-2 py-0.5 text-[13px]' : 'px-2.5 py-1 text-[13px]',
         config.tone,
         className
       )}

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
-import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
-import { PAYMENT_METHOD_ICONS, PAYMENT_METHOD_SHORT } from './finanzasConstants'
+import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacion'
+import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
 
+// Alias en mayúscula: la regla no-unused-vars no ve el uso dentro del JSX y
+// sin el import `motion` el carrito se caía al agregar el primer producto.
 const MotionDiv = motion.div
 
 const formatCOP = (value) =>
@@ -36,9 +38,12 @@ export default function CartSidebar({
   const hasItems = items.length > 0
   const itemCount = items.reduce((acc, it) => acc + Math.max(toAmount(it.cantidad), 0), 0)
   const hasObs = Boolean(invoiceForm?.observaciones?.trim())
+  const total = invoiceTotals?.total ?? 0
 
+  const opcionPago = PAYMENT_METHOD_OPTIONS.find((o) => o.value === metodoPago)
+  const falta = faltaParaCobrar(invoiceForm)
   const setMetodoPago = (value) => {
-    setInvoiceForm((f) => ({ ...f, metodoPago: value }))
+    setInvoiceForm((f) => ({ ...f, metodoPago: value, detallePago: '' }))
   }
 
   const incrementQty = (id, current) => {
@@ -53,25 +58,41 @@ export default function CartSidebar({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-card">
-      {/* ── Cliente: una sola fila delgada ── */}
-      <div className="relative shrink-0 border-b border-border">
+      {/* ── Encabezado y cliente ── */}
+      <div className="relative shrink-0 space-y-3 px-5 pt-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cuenta</h2>
+          {hasItems ? (
+            <span className="rounded-md bg-secondary px-2.5 py-1 text-[13px] font-semibold tabular-nums text-secondary-foreground">
+              {itemCount} {itemCount === 1 ? 'unidad' : 'unidades'}
+            </span>
+          ) : null}
+        </div>
+
         <button
           type="button"
           onClick={() => setClientPickerOpen((v) => !v)}
-          className="group flex w-full items-center gap-2.5 px-3 py-2 text-left transition hover:bg-primary/5"
+          className="flex w-full items-center gap-3 rounded-xl bg-secondary p-3 text-left transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <div
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-              selectedOwnerData ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold ${
+              selectedOwnerData ? 'bg-brand-muted text-brand-foreground' : 'bg-card text-muted-foreground'
             }`}
           >
-            {selectedOwnerData?.nombre?.charAt(0)?.toUpperCase() || <UserRound className="h-3.5 w-3.5" />}
-          </div>
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-            {selectedOwnerData?.nombre || 'Venta de mostrador'}
-          </p>
-          <span className="shrink-0 text-[11px] font-semibold text-primary">
-            {selectedOwnerData ? 'Cambiar' : '+ Cliente'}
+            {selectedOwnerData?.nombre?.charAt(0)?.toUpperCase() || <UserRound className="h-4 w-4" />}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-semibold text-foreground">
+              {selectedOwnerData?.nombre || 'Venta de mostrador'}
+            </span>
+            <span className="block truncate text-[13px] text-muted-foreground">
+              {selectedOwnerData
+                ? selectedOwnerData.numeroDocumento || selectedOwnerData.telefono || 'Cliente registrado'
+                : 'Sin cliente asociado'}
+            </span>
+          </span>
+          <span className="shrink-0 text-[13px] font-semibold text-primary">
+            {selectedOwnerData ? 'Cambiar' : 'Agregar cliente'}
           </span>
         </button>
 
@@ -86,7 +107,7 @@ export default function CartSidebar({
         />
 
         {invoiceForm?.historiaClinicaId || invoiceForm?.registroEstiloId ? (
-          <p className="mt-2 rounded-md bg-info-soft px-2 py-1 text-[11px] font-medium text-info">
+          <p className="rounded-lg bg-info-soft px-3 py-2 text-[13px] font-medium text-info">
             {invoiceForm.historiaClinicaId
               ? 'Cobrando una consulta: al vender queda marcada como facturada.'
               : 'Cobrando un servicio de estilos: al vender queda marcado como facturado.'}
@@ -95,220 +116,203 @@ export default function CartSidebar({
       </div>
 
       {/* ── Items: única zona con scroll ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-2">
         {!hasItems ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-            <ShoppingCart className="h-7 w-7 text-muted-foreground/30" />
-            <p className="text-xs text-muted-foreground">
-              Agrega productos o servicios
-              <br />
-              desde el panel izquierdo.
+          <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
+            <ShoppingCart className="h-7 w-7 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              Agrega productos o servicios desde el catálogo.
             </p>
           </div>
         ) : (
-          <>
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-card/95 px-3 py-1.5 backdrop-blur-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Carrito
-              </p>
-              <span className="rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-bold tabular-nums text-primary">
-                {itemCount}
-              </span>
-            </div>
-            <AnimatePresence initial={false}>
-              {items.map((item) => {
-                const qty = toAmount(item.cantidad)
-                const precio = toAmount(item.precioUnitario)
-                const precioMinimo = toAmount(item.precioMinimo)
-                const bajoCosto =
-                  item.tipo === 'producto' && precioMinimo > 0 && precio < precioMinimo
-                const subtotalItem = Math.max(qty * precio, 0)
+          <AnimatePresence initial={false}>
+            {items.map((item) => {
+              const qty = toAmount(item.cantidad)
+              const precio = toAmount(item.precioUnitario)
+              const precioMinimo = toAmount(item.precioMinimo)
+              const bajoCosto =
+                item.tipo === 'producto' && precioMinimo > 0 && precio < precioMinimo
+              const subtotalItem = Math.max(qty * precio, 0)
 
-                return (
-                  <MotionDiv
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: 16 }}
-                    transition={{ duration: 0.12 }}
-                    className="group border-b border-border/60 px-3 py-2"
-                  >
-                    {/* Fila 1: nombre + subtotal */}
-                    <div className="flex items-baseline justify-between gap-2">
-                      {item.tipo === 'servicio' && !item.descripcion ? (
-                        <input
-                          type="text"
-                          value={item.descripcion}
-                          onChange={(e) => updateInvoiceItem(item.id, 'descripcion', e.target.value)}
-                          placeholder="Descripción del servicio..."
-                          className="w-full border-b border-dashed border-border bg-transparent text-xs font-semibold text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="line-clamp-1 min-w-0 text-xs font-semibold text-foreground">
-                          {item.descripcion || 'Sin descripción'}
-                        </p>
-                      )}
-                      <span className="shrink-0 text-xs font-bold tabular-nums text-foreground">
-                        {formatCOP(subtotalItem)}
-                      </span>
-                    </div>
-
-                    {/* Fila 2: precio · stepper · eliminar */}
-                    <div className="mt-1 flex items-center gap-2">
-                      <div className="flex items-center gap-0.5">
-                        <span className="text-[11px] text-muted-foreground">$</span>
-                        <input
-                          type="number"
-                          value={item.precioUnitario}
-                          min={precioMinimo || undefined}
-                          onChange={(e) => updateInvoiceItem(item.id, 'precioUnitario', e.target.value)}
-                          className={`w-16 rounded border bg-background px-1 py-0.5 text-[11px] font-semibold tabular-nums focus:outline-none ${
-                            bajoCosto
-                              ? 'border-danger text-danger focus:border-danger '
-                              : 'border-border text-foreground focus:border-primary'
-                          }`}
-                          placeholder="0"
-                        />
-                      </div>
-
-                      <div className="ml-auto flex items-center overflow-hidden rounded-full border border-border bg-background">
-                        <button
-                          type="button"
-                          onClick={() => decrementQty(item.id, item.cantidad)}
-                          aria-label="Restar una unidad"
-                          className="flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-6 text-center text-[11px] font-bold tabular-nums text-foreground">
-                          {qty}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => incrementQty(item.id, item.cantidad)}
-                          aria-label="Sumar una unidad"
-                          className="flex h-6 w-6 items-center justify-center text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeInvoiceItem(item.id)}
-                        aria-label="Quitar del carrito"
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition hover:bg-danger-soft hover:text-danger"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-
-                    {bajoCosto && (
-                      <p className="mt-1 text-[10px] font-semibold text-danger">
-                        Mínimo {formatCOP(precioMinimo)} (costo)
+              return (
+                <MotionDiv
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: 16 }}
+                  transition={{ duration: 0.12 }}
+                  className="border-b border-border/60 py-3 last:border-b-0"
+                >
+                  {/* Fila 1: nombre + subtotal */}
+                  <div className="flex items-baseline justify-between gap-3">
+                    {item.tipo === 'servicio' && !item.descripcion ? (
+                      <input
+                        type="text"
+                        value={item.descripcion}
+                        onChange={(e) => updateInvoiceItem(item.id, 'descripcion', e.target.value)}
+                        placeholder="Descripción del servicio"
+                        aria-label="Descripción del servicio"
+                        className="h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm font-semibold text-foreground placeholder:font-normal placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-snug text-foreground">
+                        {item.descripcion || 'Sin descripción'}
                       </p>
                     )}
-                  </MotionDiv>
-                )
-              })}
-            </AnimatePresence>
-          </>
+                    <span className="shrink-0 text-[15px] font-semibold tabular-nums text-foreground">
+                      {formatCOP(subtotalItem)}
+                    </span>
+                  </div>
+
+                  {/* Fila 2: cantidad · precio unitario · quitar */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decrementQty(item.id, item.cantidad)}
+                      aria-label="Restar una unidad"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="min-w-[1.5rem] text-center text-sm font-semibold tabular-nums text-foreground">
+                      {qty}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => incrementQty(item.id, item.cantidad)}
+                      aria-label="Sumar una unidad"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+
+                    <label className="ml-1 flex items-center gap-1 text-[13px] text-muted-foreground">
+                      ×
+                      <span className="sr-only">Precio unitario</span>
+                      <span aria-hidden>$</span>
+                      <input
+                        type="number"
+                        value={item.precioUnitario}
+                        min={precioMinimo || undefined}
+                        onChange={(e) => updateInvoiceItem(item.id, 'precioUnitario', e.target.value)}
+                        className={`h-8 w-24 rounded-lg border bg-card px-2 text-[13px] font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          bajoCosto ? 'border-danger text-danger' : 'border-input text-foreground'
+                        }`}
+                        placeholder="0"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => removeInvoiceItem(item.id)}
+                      aria-label="Quitar del carrito"
+                      className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {bajoCosto && (
+                    <p className="mt-1.5 text-[13px] font-semibold text-danger">
+                      Mínimo {formatCOP(precioMinimo)} (costo)
+                    </p>
+                  )}
+                </MotionDiv>
+              )
+            })}
+          </AnimatePresence>
         )}
       </div>
 
-      {/* ── Pie fijo compacto ── */}
-      <div className="shrink-0 border-t border-border bg-muted/40">
-        {/* Metodo de pago en grilla: la fila deslizable cortaba "Transferencia"
-            a media palabra y escondia los métodos de la derecha. Cuando entre
-            una pasarela (Wompi), su metodo aparece aqui como una celda mas. */}
-        <div className="px-3 pt-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Método de pago
-            </span>
-            <button
-              type="button"
-              onClick={() => setObsOpen((v) => !v)}
-              aria-label="Observaciones"
-              title="Observaciones"
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition ${
-                obsOpen || hasObs
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <StickyNote className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {PAYMENT_METHOD_OPTIONS.map((opt) => {
-              const Icon = PAYMENT_METHOD_ICONS[opt.value]
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setMetodoPago(opt.value)}
-                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] font-semibold transition ${
-                    metodoPago === opt.value
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-card text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-                  <span className="truncate">{PAYMENT_METHOD_SHORT[opt.value] || opt.label}</span>
-                </button>
-              )
-            })}
-          </div>
+      {/* ── Pie fijo: método, total y cobro ── */}
+      <div className="shrink-0 space-y-4 border-t border-border px-5 pb-5 pt-4">
+        {/* Método de pago en una lista: siete opciones no merecen siete botones
+            en el pie. Cuando entre una pasarela (Wompi) será una opción más. */}
+        <div className="flex items-center gap-2">
+          <span className="shrink-0 text-sm font-semibold text-foreground">Pago</span>
+          <Select
+            variant="field"
+            aria-label="Método de pago"
+            className="h-10 min-w-0 flex-1"
+            value={metodoPago}
+            onValueChange={setMetodoPago}
+            options={PAYMENT_METHOD_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+          />
+          <button
+            type="button"
+            onClick={() => setObsOpen((v) => !v)}
+            aria-label="Observaciones"
+            title="Observaciones"
+            aria-pressed={obsOpen || hasObs}
+            className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              obsOpen || hasObs
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`}
+          >
+            <StickyNote className="h-3.5 w-3.5" />
+            Nota
+          </button>
         </div>
+
+        {/* Detalle del método: banco de la transferencia o cuál es «otro» */}
+        {opcionPago?.detalle ? (
+          <input
+            type="text"
+            value={invoiceForm?.detallePago ?? ''}
+            onChange={(e) => setInvoiceForm((f) => ({ ...f, detallePago: e.target.value }))}
+            maxLength={80}
+            aria-label={opcionPago.detalle.label}
+            placeholder={`${opcionPago.detalle.label}${opcionPago.detalle.requerido ? '' : ' (opcional)'}: ${opcionPago.detalle.placeholder}`}
+            className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        ) : null}
 
         {/* Observaciones (solo si está abierto) */}
         {obsOpen && (
-          <div className="relative px-3 pt-2">
+          <div className="relative">
             <textarea
               value={invoiceForm?.observaciones ?? ''}
               onChange={(e) => setInvoiceForm((f) => ({ ...f, observaciones: e.target.value }))}
               rows={2}
               autoFocus
-              placeholder="Notas internas sobre esta venta..."
-              className="w-full resize-none rounded-lg border border-border bg-card px-2.5 py-1.5 pr-7 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              aria-label="Observaciones de la venta"
+              placeholder="Notas internas sobre esta venta"
+              className="w-full resize-none rounded-lg border border-input bg-card px-3 py-2 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
               type="button"
               onClick={() => setObsOpen(false)}
               aria-label="Cerrar observaciones"
-              className="absolute right-5 top-3.5 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
-        {/* Total + cobrar en un bloque */}
-        <div className="space-y-2.5 px-3 pb-3 pt-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-xs font-semibold text-muted-foreground">
-              Total
-              {!selectedOwnerData && hasItems && (
-                <span className="ml-1.5 font-normal">· mostrador</span>
-              )}
-            </span>
-            <span className="text-2xl font-bold leading-none tracking-tight tabular-nums text-foreground">
-              {formatCOP(invoiceTotals?.total ?? 0)}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenPaymentModal}
-            disabled={!hasItems}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {!hasItems ? 'Agrega productos' : 'Cobrar'}
-          </button>
+        {/* Total + cobrar: la única acción primaria del carrito */}
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[17px] font-semibold text-foreground">
+            Total
+            {!selectedOwnerData && hasItems && (
+              <span className="ml-1.5 text-sm font-normal text-muted-foreground">· mostrador</span>
+            )}
+          </span>
+          <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
+            {formatCOP(total)}
+          </span>
         </div>
+        <button
+          type="button"
+          onClick={onOpenPaymentModal}
+          disabled={!hasItems || Boolean(falta)}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:brightness-100"
+        >
+          {!hasItems ? 'Agrega productos para cobrar' : falta ? falta : <span className="tabular-nums">Cobrar {formatCOP(total)}</span>}
+        </button>
       </div>
     </div>
   )

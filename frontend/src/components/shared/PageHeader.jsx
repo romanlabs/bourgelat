@@ -34,20 +34,20 @@ export function PageHeader({ title, description, actions, badge, back, className
         {back && (
           <Link
             to={back.to}
-            className="mb-2 inline-flex items-center gap-1 text-small text-muted-foreground transition-colors hover:text-foreground"
+            className="mb-2 inline-flex items-center gap-1 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-4 w-4" />
             {back.label}
           </Link>
         )}
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="heading-1 text-foreground">{title}</h1>
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.03em] text-foreground">{title}</h1>
           {badge}
         </div>
 
         {description && (
-          <p className="mt-1.5 max-w-2xl text-small text-muted-foreground">
+          <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}

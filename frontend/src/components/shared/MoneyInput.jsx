@@ -40,13 +40,13 @@ export default function MoneyInput({
         autoFocus={autoFocus}
         className={
           className ??
-          `h-11 w-full border bg-card text-sm tabular-nums text-foreground outline-none transition focus:border-primary ${
+          `h-11 w-full rounded-lg border bg-card text-[15px] tabular-nums text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring ${
             prefix ? 'pl-7' : 'pl-3'
-          } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-danger' : 'border-border'}`
+          } ${suffix ? 'pr-14' : 'pr-3'} ${hasError ? 'border-danger' : 'border-input'}`
         }
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">
           {suffix}
         </span>
       ) : null}

@@ -100,16 +100,16 @@ export function TutorPetSelector({
 
   return (
     <div className="space-y-4">
-      <div className="border border-border bg-muted px-4 py-4">
+      <div className="rounded-xl bg-muted px-4 py-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="flex items-center gap-2 text-[13px] font-semibold text-muted-foreground">
             <Search className="h-3.5 w-3.5" />
             Buscar tutor
           </div>
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Crear tutor
@@ -120,18 +120,19 @@ export function TutorPetSelector({
           value={ownerSearch}
           onChange={(event) => onOwnerSearchChange(event.target.value)}
           placeholder="Nombre, documento o teléfono"
-          className="mt-3 h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+          aria-label="Buscar tutor"
+          className="mt-3 h-11 w-full rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
 
         <div className="mt-4 space-y-2">
           {selectedOwner ? (
-            <div className="border border-success/30 bg-success-soft px-3 py-3 text-sm text-foreground">
+            <div className="rounded-xl bg-success-soft px-4 py-3 text-sm text-foreground">
               <p className="font-semibold text-foreground">{selectedOwner.nombre}</p>
               <p className="mt-1">{selectedOwner.telefono || 'Sin teléfono principal'}</p>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
-                className="mt-3 text-sm font-semibold text-success hover:text-success"
+                className="mt-2 rounded text-sm font-semibold text-success hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Cambiar tutor
               </button>
@@ -144,7 +145,7 @@ export function TutorPetSelector({
                   key={owner.id}
                   type="button"
                   onClick={() => onSelectOwner(owner)}
-                  className="flex w-full items-start justify-between border border-border bg-card px-3 py-3 text-left transition hover:bg-muted"
+                  className="flex w-full items-start justify-between rounded-xl bg-card px-3 py-3 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div>
                     <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
@@ -152,7 +153,7 @@ export function TutorPetSelector({
                       {owner.telefono || 'Sin teléfono principal'}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  <span className="text-[13px] font-semibold text-muted-foreground">
                     Seleccionar
                   </span>
                 </button>
@@ -160,12 +161,12 @@ export function TutorPetSelector({
             : null}
 
           {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
-            <div className="border border-dashed border-border bg-card px-3 py-3 text-sm leading-7 text-muted-foreground">
+            <div className="rounded-xl bg-card px-3 py-3 text-sm leading-7 text-muted-foreground">
               No encontramos un tutor con esa búsqueda.
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="ml-1 font-semibold text-primary hover:underline"
+                className="ml-1 rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Crearlo ahora
               </button>
@@ -191,7 +192,7 @@ export function TutorPetSelector({
       />
 
       {selectedOwner && mascotasDelTutor.length === 0 && !nuevaMascota ? (
-        <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
+        <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium leading-6 text-warning">
           Este tutor aún no tiene pacientes activos. Regístralo aquí mismo.
         </div>
       ) : null}
@@ -200,7 +201,7 @@ export function TutorPetSelector({
         <button
           type="button"
           onClick={() => setNuevaMascota({ nombre: '', especie: '' })}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          className="inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <PawPrint className="h-3.5 w-3.5" />
           Registrar paciente nuevo
@@ -208,8 +209,8 @@ export function TutorPetSelector({
       ) : null}
 
       {selectedOwner && nuevaMascota ? (
-        <div className="space-y-3 border border-border bg-muted px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="space-y-3 rounded-xl bg-muted px-4 py-4">
+          <p className="text-[13px] font-semibold text-muted-foreground">
             Paciente nuevo de {selectedOwner.nombre}
           </p>
           <input
@@ -218,7 +219,7 @@ export function TutorPetSelector({
             onChange={(event) => setNuevaMascota((prev) => ({ ...prev, nombre: event.target.value }))}
             placeholder="Nombre del paciente"
             aria-label="Nombre del paciente"
-            className="h-11 w-full border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           <Select
             variant="field"
@@ -229,7 +230,7 @@ export function TutorPetSelector({
             onValueChange={(value) => setNuevaMascota((prev) => ({ ...prev, especie: value }))}
             options={ESPECIE_OPCIONES_FORM}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground">
             Los demás datos (raza, sexo, peso, foto) se completan después en Pacientes.
           </p>
           <div className="flex gap-2">
@@ -237,14 +238,14 @@ export function TutorPetSelector({
               type="button"
               onClick={handleCreateMascota}
               disabled={crearMascotaMutation.isPending}
-              className="h-10 bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             >
-              {crearMascotaMutation.isPending ? 'Registrando...' : 'Registrar paciente'}
+              {crearMascotaMutation.isPending ? 'Registrando…' : 'Registrar paciente'}
             </button>
             <button
               type="button"
               onClick={() => setNuevaMascota(null)}
-              className="h-10 border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+              className="h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancelar
             </button>

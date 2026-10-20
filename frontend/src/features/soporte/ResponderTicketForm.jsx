@@ -20,6 +20,7 @@ export default function ResponderTicketForm({
   isPending = false,
   placeholder = 'Escribe tu respuesta…',
   submitLabel = 'Enviar',
+  accionSecundaria = null,
 }) {
   const {
     register,
@@ -53,18 +54,21 @@ export default function ResponderTicketForm({
           }
         }}
         className={cn(
-          'w-full resize-y rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary',
+          'w-full resize-y rounded-[10px] border-0 bg-muted px-3.5 py-3 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring',
           errors.mensaje && 'border-danger'
         )}
         {...register('mensaje')}
       />
       <FieldError message={errors.mensaje?.message} className="mt-0" />
       <div className="flex items-center justify-between gap-3">
-        <p className="hidden text-xs text-muted-foreground sm:block">Ctrl + Enter para enviar</p>
-        <LoadingButton type="submit" size="sm" loading={isPending} className="ml-auto">
-          <SendHorizontal />
-          {submitLabel}
-        </LoadingButton>
+        <p className="hidden text-[13px] text-muted-foreground sm:block">Ctrl + Enter para enviar</p>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {accionSecundaria}
+          <LoadingButton type="submit" loading={isPending}>
+            <SendHorizontal />
+            {submitLabel}
+          </LoadingButton>
+        </div>
       </div>
     </form>
   )

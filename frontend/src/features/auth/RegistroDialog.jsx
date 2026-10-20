@@ -17,9 +17,9 @@ import { turnstileHabilitado } from '@/lib/turnstile'
 import CodigoVerificacionPaso from './CodigoVerificacionPaso'
 import { useRegistro, useSesionVerificada } from './useAuth'
 
-// Misma paleta e identidad tipografica que LoginPage.jsx: los tokens de diseño
-// (primary, foreground, border) reemplazan los colores hardcoded. El modal se abre
-// desde LoginPage y desde la landing, y debe leerse como la misma superficie.
+// Misma composición que LoginPage.jsx (Google primero, campos altos con borde,
+// un solo botón petróleo). El modal se abre desde LoginPage y desde la landing,
+// y debe leerse como la misma superficie.
 
 const esquema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
@@ -40,9 +40,11 @@ const esquema = z.object({
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 
 const inputClass =
-  'h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary'
+  'h-11 w-full rounded-lg border border-input bg-card px-4 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
 
-const labelClass = 'mb-1.5 block text-sm font-medium text-foreground'
+const labelClass = 'mb-2 block text-sm font-semibold text-foreground'
+
+const ayudaClass = 'mt-1.5 text-[13px] text-muted-foreground'
 
 const obtenerMensajeError = (error) =>
   error?.response?.data?.errores?.[0]?.mensaje ||
@@ -106,7 +108,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
         onOpenChange(abierto)
       }}
     >
-      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[380px] overflow-y-auto rounded-2xl border-border shadow-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[480px] overflow-y-auto sm:p-8">
         {emailPendiente ? (
           <>
             <DialogHeader className="sr-only">
@@ -124,90 +126,105 @@ export default function RegistroDialog({ open, onOpenChange }) {
           </>
         ) : (
         <>
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-foreground">
-            Crea tu cuenta
+        <DialogHeader className="gap-2">
+          <DialogTitle className="text-[28px] font-semibold leading-tight tracking-[-0.035em] text-foreground">
+            Crea la cuenta de tu clínica
           </DialogTitle>
-          <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
-            Registra tu clínica y entra directo a la plataforma.
+          <DialogDescription className="text-[15px] text-muted-foreground">
+            Tú quedas como administrador.
           </DialogDescription>
         </DialogHeader>
 
+        <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-sm text-accent-foreground">
+          <span className="font-semibold">30 días con todo abierto, sin tarjeta.</span> Si te gusta, eliges
+          un plan al final de la prueba.
+        </p>
+
         {oauthHabilitado ? (
-          <div className="mt-4">
+          <div className="mt-5">
             <BotonesSociales contexto="registro" />
-            <div className="my-4 flex items-center gap-3">
+            <div className="mt-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="text-xs font-medium text-muted-foreground">
-                o regístrate con tu correo
-              </span>
+              <span className="text-[13px] text-muted-foreground">o con tu correo</span>
               <div className="h-px flex-1 bg-border" />
             </div>
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-3.5" autoComplete="off">
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4" autoComplete="off">
           <div>
-            <label className={labelClass}>Nombre de la clínica</label>
+            <label htmlFor="registro-nombre" className={labelClass}>Nombre de la clínica</label>
             <input
               {...nombreField}
+              id="registro-nombre"
               type="text"
               autoComplete="organization"
-              placeholder="Clínica Veterinaria Bourgelat"
+              placeholder="Veterinaria San Roque"
               className={`${inputClass} ${errors.nombre ? 'border-danger' : ''}`}
             />
-            {errors.nombre ? <p className="mt-1 text-sm text-danger">{errors.nombre.message}</p> : null}
+            {errors.nombre ? <p className="mt-1.5 text-sm text-danger">{errors.nombre.message}</p> : null}
           </div>
 
           <div>
-            <label className={labelClass}>Tu nombre</label>
+            <label htmlFor="registro-administrador" className={labelClass}>Tu nombre</label>
             <input
               {...nombreAdministradorField}
+              id="registro-administrador"
               type="text"
               autoComplete="name"
               placeholder="Nombre y apellido"
               className={`${inputClass} ${errors.nombreAdministrador ? 'border-danger' : ''}`}
             />
             {errors.nombreAdministrador ? (
-              <p className="mt-1 text-sm text-danger">{errors.nombreAdministrador.message}</p>
+              <p className="mt-1.5 text-sm text-danger">{errors.nombreAdministrador.message}</p>
             ) : null}
           </div>
 
           <div>
-            <label className={labelClass}>Correo</label>
+            <label htmlFor="registro-email" className={labelClass}>Correo</label>
             <input
               {...emailField}
+              id="registro-email"
               type="email"
               autoComplete="email"
               autoCapitalize="none"
               inputMode="email"
               spellCheck={false}
-              placeholder="tucorreo@ejemplo.com"
+              placeholder="tu@clinica.co"
               className={`${inputClass} ${errors.email ? 'border-danger' : ''}`}
             />
-            {errors.email ? <p className="mt-1 text-sm text-danger">{errors.email.message}</p> : null}
+            {errors.email ? (
+              <p className="mt-1.5 text-sm text-danger">{errors.email.message}</p>
+            ) : (
+              <p className={ayudaClass}>Te enviamos un código para confirmarlo.</p>
+            )}
           </div>
 
           <div>
-            <label className={labelClass}>Contraseña</label>
+            <label htmlFor="registro-password" className={labelClass}>Contraseña</label>
             <div className="relative">
               <input
                 {...passwordField}
+                id="registro-password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 placeholder="Crea una contraseña segura"
-                className={`${inputClass} pr-10 ${errors.password ? 'border-danger' : ''}`}
+                className={`${inputClass} pr-12 ${errors.password ? 'border-danger' : ''}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {errors.password ? <p className="mt-1 text-sm text-danger">{errors.password.message}</p> : null}
+            {errors.password ? (
+              <p className="mt-1.5 text-sm text-danger">{errors.password.message}</p>
+            ) : (
+              <p className={ayudaClass}>Mínimo 8 caracteres, con mayúscula, minúscula, número y un símbolo.</p>
+            )}
           </div>
 
           <ConsentimientoRegistro
@@ -236,9 +253,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
           <button
             type="submit"
             disabled={isPending || !aceptaTerminos || (turnstileHabilitado && !turnstileToken)}
-            className="mt-4 h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+            className="mt-2 h-12 w-full rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition hover:bg-primary/90 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
           >
-            {isPending ? 'Creando cuenta...' : 'Crear cuenta'}
+            {isPending ? 'Creando cuenta...' : 'Crear cuenta y empezar la prueba'}
           </button>
         </form>
         </>

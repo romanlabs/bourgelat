@@ -18,15 +18,15 @@ export function Skeleton({ className = '' }) {
 }
 
 /**
- * Marco de panel de gráfica en carga: conserva el radio, el borde y la altura
+ * Marco de panel de gráfica en carga: conserva el radio y la altura
  * del panel real para que el layout no salte cuando llegan los datos.
  */
 export function SkeletonPanel({ className = '', height = 'h-[300px]' }) {
   return (
-    <div className={cn('overflow-hidden rounded-[28px] border border-border bg-card shadow-panel', className)}>
-      <div className="border-b border-border px-5 py-4">
-        <Skeleton className="h-3 w-40 rounded" />
-        <Skeleton className="mt-3 h-3 w-64 rounded" />
+    <div className={cn('overflow-hidden rounded-2xl bg-card', className)}>
+      <div className="px-6 pt-6">
+        <Skeleton className="h-4 w-40 rounded-md" />
+        <Skeleton className="mt-3 h-3 w-64 rounded-md" />
       </div>
       <div className={cn('flex items-end gap-3 px-6 py-6', height)}>
         <Skeleton className="h-1/3 flex-1 rounded-lg" />

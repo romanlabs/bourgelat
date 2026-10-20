@@ -88,7 +88,7 @@ const crearTicket = async (req, res) => {
     );
 
     res.status(201).json({
-      message: `Recibimos tu ticket ${ticket.codigo}. Te avisaremos por correo cuando te respondamos.`,
+      message: `Recibimos tu solicitud ${ticket.codigo}. Te avisaremos por correo cuando te respondamos.`,
       ticket,
     });
   } catch (error) {
@@ -116,7 +116,7 @@ const agregarMensaje = async (req, res) => {
 const cerrarTicket = async (req, res) => {
   try {
     const ticket = await soporteService.cambiarEstado(actorDesdeReq(req), req.params.id, 'cerrado');
-    res.json({ message: `Cerraste el ticket ${ticket.codigo}`, ticket });
+    res.json({ message: `Cerraste la solicitud ${ticket.codigo}`, ticket });
   } catch (error) {
     responderError(res, error);
   }

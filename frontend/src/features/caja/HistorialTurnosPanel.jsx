@@ -6,9 +6,9 @@ import TurnoDetalleModal from './TurnoDetalleModal'
 import { CATEGORIA_DIFERENCIA_LABELS } from './cajaConstants'
 
 const getDiferenciaTone = (turno) => {
-  if (turno.requiereRevisionAdmin) return 'border-danger/30 bg-danger-soft text-danger '
-  if (Number(turno.diferencia) === 0) return 'border-success/30 bg-success-soft text-success '
-  return 'border-warning/30 bg-warning-soft text-warning '
+  if (turno.requiereRevisionAdmin) return 'bg-danger-soft text-danger tabular-nums'
+  if (Number(turno.diferencia) === 0) return 'bg-success-soft text-success tabular-nums'
+  return 'bg-warning-soft text-warning tabular-nums'
 }
 
 export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
@@ -42,13 +42,13 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
             render: (row) => (
               <StatusPill tone={getDiferenciaTone(row.diferencia)}>
                 {formatCurrency(row.diferencia.diferencia)}
-                {row.diferencia.requiereRevisionAdmin ? ' - Revisar' : ''}
+                {row.diferencia.requiereRevisionAdmin ? ' · Revisar' : ''}
               </StatusPill>
             ),
           },
           {
             key: 'categoria',
-            label: 'Categoria',
+            label: 'Categoría',
             render: (row) => CATEGORIA_DIFERENCIA_LABELS[row.categoria] || '-',
           },
           {
@@ -58,7 +58,7 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
               <button
                 type="button"
                 onClick={() => setTurnoSeleccionadoId(row.id)}
-                className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground transition hover:bg-muted"
+                className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
               >
                 Ver detalle
               </button>
@@ -71,7 +71,8 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
           <button
             type="button"
             onClick={() => setExpandido((curr) => !curr)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+            aria-expanded={expandido}
+            className="inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {expandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {expandido ? 'Ocultar' : `Ver historial (${turnosHistorial.length})`}
@@ -79,19 +80,19 @@ export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
         }
         filters={
           <>
-            <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Periodo</span>
+            <span className="text-[13px] font-semibold text-muted-foreground">Periodo</span>
             <input
               type="date"
               value={historialFiltros.fechaInicio}
               onChange={(event) => setHistorialFiltros((curr) => ({ ...curr, fechaInicio: event.target.value }))}
-              className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
+              className="h-10 w-[150px] rounded-lg border border-input bg-card px-2.5 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-            <span className="text-xs text-muted-foreground">a</span>
+            <span className="text-sm text-muted-foreground">a</span>
             <input
               type="date"
               value={historialFiltros.fechaFin}
               onChange={(event) => setHistorialFiltros((curr) => ({ ...curr, fechaFin: event.target.value }))}
-              className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
+              className="h-10 w-[150px] rounded-lg border border-input bg-card px-2.5 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </>
         }

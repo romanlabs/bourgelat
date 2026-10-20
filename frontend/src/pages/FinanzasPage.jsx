@@ -42,7 +42,7 @@ import {
 import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
 import PosModal from '@/features/finanzas/PosModal'
 import FacturaDetalleModal from '@/features/finanzas/FacturaDetalleModal'
-import GastosRentabilidadPanel from '@/features/finanzas/GastosRentabilidadPanel'
+import GastosRentabilidadPanel, { CuentasPorCobrarPanel, GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -54,13 +54,33 @@ import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
 import { Select } from '@/components/ui/select'
 
-const TABS = [
-  { id: 'resumen', label: 'Resumen' },
-  { id: 'facturacion', label: 'Venta' },
-  { id: 'gastos', label: 'Gastos y rentabilidad' },
-  { id: 'turnos', label: 'Turnos de caja' },
-  { id: 'historial', label: 'Historial' },
-]
+// Caja es el trabajo diario de recepción (vender, turno, ventas hechas);
+// Finanzas es la lectura del mes para administración.
+const MODOS = {
+  caja: {
+    moduleKey: 'caja',
+    titulo: 'Caja',
+    descripcion: 'Cobra ventas, lleva tu turno de caja y revisa las ventas hechas.',
+    tabInicial: 'facturacion',
+    tabs: [
+      { id: 'facturacion', label: 'Venta' },
+      { id: 'turnos', label: 'Turno de caja' },
+      { id: 'historial', label: 'Historial de ventas' },
+      // Fiado: recepción recibe los abonos (el backend se lo permite).
+      { id: 'cobrar', label: 'Por cobrar' },
+    ],
+  },
+  finanzas: {
+    moduleKey: 'finanzas',
+    titulo: 'Finanzas',
+    descripcion: 'Ingresos, gastos y rentabilidad del mes.',
+    tabInicial: 'resumen',
+    tabs: [
+      { id: 'resumen', label: 'Resumen' },
+      { id: 'gastos', label: 'Gastos y rentabilidad' },
+    ],
+  },
+}
 
 
 function RestrictedFinancePage() {
@@ -71,7 +91,7 @@ function RestrictedFinancePage() {
           title="Caja y facturación"
           subtitle="Esta sección se muestra a perfiles operativos y administrativos autorizados."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
             Tu acceso actual no tiene visibilidad financiera completa. Si necesitas revisar ingresos
             o facturas, solicita permisos al administrador principal o al facturador de la clínica.
           </div>
@@ -81,40 +101,30 @@ function RestrictedFinancePage() {
   )
 }
 
-export default function FinanzasPage() {
+export default function FinanzasPage({ modo = 'caja' }) {
+  const config = MODOS[modo] || MODOS.caja
+  const esCaja = config.moduleKey === 'caja'
+  const TABS = config.tabs
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const location = useLocation()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('facturacion')
-  const [posOpen, setPosOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState(config.tabInicial)
   const [ventaExitosa, setVentaExitosa] = useState(false)
   // Factura recién emitida: el POS la muestra sin salir del flujo de venta.
   const [facturaCreadaId, setFacturaCreadaId] = useState(null)
 
+  // La venta vive en la pestaña Venta: «Nueva venta» desde otra pestaña lleva
+  // allá. Sin turno abierto, esa pestaña muestra cómo abrirlo.
   const abrirPos = () => {
-    // Sin turno de caja (o con uno vencido de un dia anterior) no se puede
-    // facturar: llevamos al guard de la pestana.
-    if (!cajaHook.turnoActivo || cajaHook.turnoActivo.vencido) {
-      setActiveTab('facturacion')
-      return
-    }
-    setVentaExitosa(false)
-    setFacturaCreadaId(null)
-    setPosOpen(true)
-  }
-  const cerrarPos = () => {
-    setPosOpen(false)
-    setVentaExitosa(false)
-    setFacturaCreadaId(null)
-    facturacionHook.descartarCobroVinculado()
+    setActiveTab('facturacion')
   }
 
   useEffect(() => {
-    document.title = 'Caja y facturación | Bourgelat'
-  }, [])
+    document.title = `${config.titulo} | Bourgelat`
+  }, [config.titulo])
 
-  const rolPermitido = canAccessModule(usuario, 'finanzas')
+  const rolPermitido = canAccessModule(usuario, config.moduleKey)
   // Todos los planes traen caja, facturación interna, inventario y reportes.
   // La única funcionalidad que se compra aparte es la DIAN.
   const puedeVerFinanzas = rolPermitido
@@ -127,14 +137,15 @@ export default function FinanzasPage() {
   const esAdminCaja = hasAnyRole(usuario, ['admin', 'superadmin'])
   const emisionAutomaticaActiva = puedeEmitirElectronica
 
-  const resumenHook = useFinanzasResumen({ enabled: puedeVerFinanzas })
-  const historialHook = useFinanzasHistorial({ enabled: puedeVerFinanzas, puedeAnular, puedeEmitirElectronica })
-  const cajaHook = useCajaTurno({ enabled: puedeVerFinanzas, esAdmin: esAdminCaja })
+  // Cada módulo pide solo sus datos.
+  const resumenHook = useFinanzasResumen({ enabled: puedeVerFinanzas && !esCaja })
+  const historialHook = useFinanzasHistorial({ enabled: puedeVerFinanzas && esCaja, puedeAnular, puedeEmitirElectronica })
+  const cajaHook = useCajaTurno({ enabled: puedeVerFinanzas && esCaja, esAdmin: esAdminCaja })
   const facturacionHook = useFinanzasFacturacion({
-    enabled: puedeVerFinanzas,
+    enabled: puedeVerFinanzas && esCaja,
     puedeConsultarInventario,
     emisionAutomaticaActiva,
-    // La venta se cierra dentro del modal (paso de vuelto), no saltamos de tab.
+    // La venta se cierra dentro del punto de venta (paso de vuelto), no saltamos de tab.
     onFacturaCreada: (facturaId) => {
       setFacturaCreadaId(facturaId)
       setVentaExitosa(true)
@@ -146,7 +157,7 @@ export default function FinanzasPage() {
   const historiaAFacturar = location.state?.facturarHistoriaId || null
 
   useEffect(() => {
-    if (!historiaAFacturar || !puedeVerFinanzas) return
+    if (!historiaAFacturar || !puedeVerFinanzas || !esCaja) return
 
     let cancelado = false
 
@@ -155,11 +166,8 @@ export default function FinanzasPage() {
       .then((preliquidacion) => {
         if (cancelado) return
         facturacionHook.loadPreliquidacionHistoria(preliquidacion)
+        setVentaExitosa(false)
         setActiveTab('facturacion')
-        if (cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido) {
-          setVentaExitosa(false)
-          setPosOpen(true)
-        }
       })
       .catch((error) => {
         if (cancelado) return
@@ -185,7 +193,7 @@ export default function FinanzasPage() {
   const estiloAFacturar = location.state?.facturarEstiloId || null
 
   useEffect(() => {
-    if (!estiloAFacturar || !puedeVerFinanzas) return
+    if (!estiloAFacturar || !puedeVerFinanzas || !esCaja) return
 
     let cancelado = false
 
@@ -194,11 +202,8 @@ export default function FinanzasPage() {
       .then((preliquidacion) => {
         if (cancelado) return
         facturacionHook.loadPreliquidacionEstilo(preliquidacion)
+        setVentaExitosa(false)
         setActiveTab('facturacion')
-        if (cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido) {
-          setVentaExitosa(false)
-          setPosOpen(true)
-        }
       })
       .catch((error) => {
         if (cancelado) return
@@ -223,18 +228,64 @@ export default function FinanzasPage() {
 
   return (
     <AdminShell
-      currentKey="finanzas"
-      title="Caja y facturación"
-      description="Operación diaria de ventas, servicios, productos y control de facturas con una lectura más natural para recepción, auxiliares, médicos y facturación."
+      currentKey={config.moduleKey}
+      title={config.titulo}
+      // En Venta el punto de venta necesita el alto: encabezado compacto, sin
+      // frase ni etiqueta.
+      // Caja es de uso continuo: título corto, pestañas y una sola acción en la
+      // misma fila (sin frase, buscador global ni atajo a inventario).
+      description={esCaja ? undefined : config.descripcion}
+      compactHeader={esCaja}
+      hideSearch={esCaja}
       headerBadge={
-        <StatusPill tone="border-success/30 bg-success-soft text-success ">
-          Corte mensual activo
-        </StatusPill>
+        esCaja ? null : (
+          <StatusPill tone="bg-success-soft text-success">
+            Corte mensual activo
+          </StatusPill>
+        )
+      }
+      titleAside={
+      <div
+        role="tablist"
+        aria-label="Secciones de caja y facturación"
+        className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1"
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              activeTab === tab.id
+                ? 'bg-card font-semibold text-foreground'
+                : 'font-medium text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       }
       actions={
-        <NavCta to="/inventario" icon={Boxes}>
-          Abrir inventario
-        </NavCta>
+        <div className="flex flex-wrap items-center gap-2">
+        {esCaja && activeTab !== 'facturacion' ? (
+          <button
+            type="button"
+            onClick={abrirPos}
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva venta
+          </button>
+        ) : null}
+          {esCaja ? null : (
+            <NavCta to="/inventario" icon={Boxes}>
+              Abrir inventario
+            </NavCta>
+          )}
+        </div>
       }
       asideNote="Usa esta sección para buscar facturas, revisar estados, emitir electrónicamente y controlar anulaciones dejando historial."
     >
@@ -247,52 +298,25 @@ export default function FinanzasPage() {
         />
       ) : (
         <div className="space-y-5">
-          <div className="flex items-center justify-between gap-2 border-b border-border">
-            <div className="flex min-w-0 gap-0 overflow-x-auto">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold transition-colors sm:px-5 ${
-                    activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={abrirPos}
-              className="mr-1 inline-flex shrink-0 items-center gap-1.5 border border-primary bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Nueva venta
-            </button>
-          </div>
-
           {/* ── Tab: Resumen ── */}
           {activeTab === 'resumen' && (
             <div className="space-y-5">
               {resumenHook.ingresosQuery.isError || resumenHook.resumenQuery.isError ? (
                 <div className="grid gap-4">
                   {resumenHook.ingresosQuery.isError ? (
-                    <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+                    <div className="rounded-xl bg-warning-soft px-4 py-4 text-sm leading-6 text-warning">
                       No fue posible cargar el reporte de ingresos del periodo.
                     </div>
                   ) : null}
                   {resumenHook.resumenQuery.isError ? (
-                    <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
+                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
                       No fue posible cargar el resumen de facturas.
                     </div>
                   ) : null}
                 </div>
               ) : null}
 
-              <div className="grid gap-4 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <KpiCard
                   icon={Wallet}
                   label="Ingresos del mes"
@@ -316,7 +340,7 @@ export default function FinanzasPage() {
                 />
                 <KpiCard
                   icon={CircleAlert}
-                  label="Pendientes electronicos"
+                  label="Pendientes electrónicos"
                   value={formatNumber(resumenHook.pendientesElectronicos)}
                   helper="Facturas con emisión pendiente, rechazada o con error técnico."
                   tone="text-warning"
@@ -349,9 +373,9 @@ export default function FinanzasPage() {
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (
             cajaHook.turnoActivoQuery.isLoading ? (
-              <div className="h-40 animate-pulse rounded-[28px] border border-border bg-muted" />
+              <div className="h-40 animate-pulse rounded-2xl bg-card" />
             ) : !cajaHook.turnoActivo ? (
-              <div className="overflow-hidden rounded-[28px] border border-border bg-card shadow-panel">
+              <div className="overflow-hidden rounded-2xl bg-card">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
@@ -365,12 +389,12 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : cajaHook.turnoActivo.vencido ? (
-              <div className="overflow-hidden rounded-[28px] border border-warning/30 bg-warning-soft shadow-panel">
+              <div className="overflow-hidden rounded-2xl bg-warning-soft">
                 <EmptyState
                   icon={<Wallet />}
                   variant="primary"
-                  title="Tu turno de caja quedó abierto desde un dia anterior"
-                  description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo — asi el corte del dia queda correcto."
+                  title="Tu turno de caja quedó abierto desde un día anterior"
+                  description="No puedes facturar hasta cerrarlo. Ve a Turnos de caja, cuenta el efectivo y ciérralo: así el corte del día queda correcto."
                   action={
                     <NavCta onClick={() => setActiveTab('turnos')} icon={Wallet}>
                       Cerrar turno vencido
@@ -379,27 +403,52 @@ export default function FinanzasPage() {
                 />
               </div>
             ) : (
-              <div className="flex min-h-[24rem] items-center justify-center rounded-[28px] border border-dashed border-border bg-card px-6 py-12 shadow-panel">
-                <div className="max-w-sm text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Receipt className="h-8 w-8" />
+              <div className="space-y-3">
+                {/* Franja del turno: el cajero ve de un vistazo que puede cobrar. */}
+                <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-2 rounded-2xl bg-card px-5 py-2.5">
+                  <div className="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm">
+                    <span className="flex items-center gap-2 font-semibold text-success">
+                      <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                      Turno abierto
+                    </span>
+                    <span className="text-muted-foreground">
+                      Fondo{' '}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(cajaHook.turnoActivo.montoInicial)}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Ventas en efectivo{' '}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(cajaHook.turnoActivo.totalVentasEfectivo || 0)}
+                      </span>
+                    </span>
                   </div>
-                  <h2 className="mt-5 text-xl font-bold text-foreground">Registrar una venta</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Abre el punto de venta para armar la compra, cobrar y calcular el vuelto — todo
-                    en una sola ventana.
-                  </p>
                   <button
                     type="button"
-                    onClick={abrirPos}
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                    onClick={() => setActiveTab('turnos')}
+                    className="inline-flex h-9 items-center px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Plus className="h-4 w-4" />
-                    Nueva venta
+                    Ver turno de caja
                   </button>
-                  <p className="mt-4 text-[11px] text-muted-foreground">
-                    Turno de caja abierto · fondo {formatCurrency(cajaHook.turnoActivo.montoInicial)}
-                  </p>
+                </div>
+
+                {/* Punto de venta en la página: llena el alto disponible y deja
+                    ver el turno arriba. En celular alterna productos y cuenta. */}
+                <div className="h-[calc(100dvh-11rem)] min-h-[480px]">
+                  <PosModal
+                    embedded
+                    open
+                    onClose={() => {}}
+                    facturacionHook={facturacionHook}
+                    puedeConsultarInventario={puedeConsultarInventario}
+                    ventaExitosa={ventaExitosa}
+                    facturaCreadaId={facturaCreadaId}
+                    onNuevaVenta={() => {
+                      setVentaExitosa(false)
+                      setFacturaCreadaId(null)
+                    }}
+                  />
                 </div>
               </div>
             )
@@ -408,10 +457,19 @@ export default function FinanzasPage() {
           {/* ── Tab: Gastos y rentabilidad ── */}
           {activeTab === 'gastos' && <GastosRentabilidadPanel />}
 
+          {/* ── Tab: Por cobrar (fiado y abonos) ── */}
+          {activeTab === 'cobrar' && <CuentasPorCobrarPanel />}
+
           {/* ── Tab: Turnos de caja ── */}
           {activeTab === 'turnos' && (
             <div className="space-y-5">
               <TurnoActivoPanel cajaHook={cajaHook} />
+              {/* Gasto pagado desde la caja (o por otro medio): lo registra quien
+                  lleva el turno; el listado completo de gastos está en Finanzas. */}
+              <section aria-labelledby="caja-gasto" className="rounded-2xl bg-card p-5">
+                <h2 id="caja-gasto" className="mb-3 text-lg font-semibold tracking-[-0.02em] text-foreground">Registrar gasto</h2>
+                <GastoForm />
+              </section>
               {esAdminCaja ? <TurnosVencidosPanel cajaHook={cajaHook} /> : null}
               <HistorialTurnosPanel cajaHook={cajaHook} esAdmin={esAdminCaja} />
               {esAdminCaja ? <ReporteDescuadresPanel cajaHook={cajaHook} /> : null}
@@ -422,8 +480,8 @@ export default function FinanzasPage() {
           {activeTab === 'historial' && (
             <div className="space-y-5">
               {historialHook.facturasQuery.isError ? (
-                <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-                  No fue posible cargar la tabla administrativa de facturas.
+                <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
+                  No fue posible cargar la lista de facturas.
                 </div>
               ) : null}
 
@@ -453,7 +511,7 @@ export default function FinanzasPage() {
                       <button
                         type="button"
                         onClick={() => historialHook.seleccionarFactura(row.id)}
-                        className="border border-border bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-foreground hover:bg-muted"
+                        className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
                       >
                         Ver detalle
                       </button>
@@ -471,7 +529,8 @@ export default function FinanzasPage() {
                         value={historialHook.buscarInput}
                         onChange={(event) => historialHook.setBuscarInput(event.target.value)}
                         placeholder="Buscar factura o cliente"
-                        className="h-10 border border-border bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        aria-label="Buscar factura o cliente"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pl-10 pr-3"
                       />
                     </label>
                     <div className="flex items-center gap-2">
@@ -481,16 +540,16 @@ export default function FinanzasPage() {
                         max={historialHook.fechaFin}
                         onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
                         aria-label="Fecha inicial del filtro"
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
                       />
-                      <span className="text-xs text-muted-foreground">a</span>
+                      <span className="text-sm text-muted-foreground">a</span>
                       <input
                         type="date"
                         value={historialHook.fechaFin}
                         min={historialHook.fechaInicio}
                         onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
                         aria-label="Fecha final del filtro"
-                        className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
                       />
                     </div>
                     <Select
@@ -505,7 +564,7 @@ export default function FinanzasPage() {
                     />
                     <button
                       type="submit"
-                      className="border border-border bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:bg-foreground/90"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Buscar
                     </button>
@@ -514,9 +573,9 @@ export default function FinanzasPage() {
               />
 
               {(historialHook.facturasQuery.data?.paginas || 1) > 1 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-5 py-4 shadow-sm">
-                  <p className="text-sm text-muted-foreground">
-                    Pagina {historialHook.facturasQuery.data?.paginaActual || 1} de{' '}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card px-5 py-4">
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    Página {historialHook.facturasQuery.data?.paginaActual || 1} de{' '}
                     {historialHook.facturasQuery.data?.paginas || 1}
                   </p>
                   <div className="flex gap-3">
@@ -527,7 +586,7 @@ export default function FinanzasPage() {
                         historialHook.setPagina((curr) => Math.max(curr - 1, 1))
                       }}
                       disabled={(historialHook.facturasQuery.data?.paginaActual || 1) <= 1}
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Anterior
                     </button>
@@ -543,7 +602,7 @@ export default function FinanzasPage() {
                         (historialHook.facturasQuery.data?.paginaActual || 1) >=
                         (historialHook.facturasQuery.data?.paginas || 1)
                       }
-                      className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Siguiente
                     </button>
@@ -552,10 +611,10 @@ export default function FinanzasPage() {
               ) : null}
 
               {!puedeEmitirElectronica ? (
-                <div className="border border-border bg-card px-5 py-5 shadow-sm">
+                <div className="rounded-2xl bg-card px-5 py-5">
                   <div className="flex items-start gap-3">
                     <FileText className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                    <div className="text-sm leading-7 text-muted-foreground">
+                    <div className="text-sm leading-6 text-muted-foreground">
                       La configuración técnica de la facturación electrónica ya no se modifica desde la clínica.
                       Si necesitas activar o corregir la integración, se hace desde soporte central
                       con un perfil superadmin.
@@ -571,22 +630,6 @@ export default function FinanzasPage() {
         </div>
       )}
 
-      {/* Punto de venta: modal global, disponible desde cualquier pestana
-          mientras haya turno de caja abierto. */}
-      {cajaHook.turnoActivo ? (
-        <PosModal
-          open={posOpen}
-          onClose={cerrarPos}
-          facturacionHook={facturacionHook}
-          puedeConsultarInventario={puedeConsultarInventario}
-          ventaExitosa={ventaExitosa}
-          facturaCreadaId={facturaCreadaId}
-          onNuevaVenta={() => {
-            setVentaExitosa(false)
-            setFacturaCreadaId(null)
-          }}
-        />
-      ) : null}
     </AdminShell>
   )
 }

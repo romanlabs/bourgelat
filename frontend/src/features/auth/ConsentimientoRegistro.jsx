@@ -15,7 +15,7 @@ export default function ConsentimientoRegistro({
   error,
   className = '',
   textoClassName = 'text-muted-foreground',
-  linkClassName = 'font-medium text-foreground underline underline-offset-2',
+  linkClassName = 'font-semibold text-primary underline underline-offset-2 hover:no-underline',
   checkboxClassName = 'accent-primary',
 }) {
   const enlace = (to, texto) => (
@@ -26,10 +26,10 @@ export default function ConsentimientoRegistro({
 
   return (
     <div className={`space-y-2.5 ${className}`}>
-      <label className={`flex cursor-pointer items-start gap-2.5 text-[13px] leading-5 ${textoClassName}`}>
+      <label className={`flex cursor-pointer items-start gap-3 text-[13px] leading-5 ${textoClassName}`}>
         <input
           type="checkbox"
-          className={`mt-0.5 h-4 w-4 shrink-0 cursor-pointer ${checkboxClassName}`}
+          className={`mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer ${checkboxClassName}`}
           aria-invalid={error ? 'true' : undefined}
           {...terminosProps}
         />
@@ -40,10 +40,10 @@ export default function ConsentimientoRegistro({
       </label>
       {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-      <label className={`flex cursor-pointer items-start gap-2.5 text-[13px] leading-5 ${textoClassName}`}>
+      <label className={`flex cursor-pointer items-start gap-3 text-[13px] leading-5 ${textoClassName}`}>
         <input
           type="checkbox"
-          className={`mt-0.5 h-4 w-4 shrink-0 cursor-pointer ${checkboxClassName}`}
+          className={`mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer ${checkboxClassName}`}
           {...comunicacionesProps}
         />
         <span>Quiero recibir novedades, promociones y actualizaciones de Bourgelat por correo (opcional).</span>

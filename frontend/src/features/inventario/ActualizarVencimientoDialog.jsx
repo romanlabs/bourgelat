@@ -32,10 +32,10 @@ const hoyLocal = () => {
 }
 
 const fieldClass = (hasError) =>
-  `h-11 border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary ${
-    hasError ? 'border-danger' : 'border-border'
+  `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+    hasError ? 'border-danger' : 'border-input'
   }`
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground'
+const labelClass = 'text-[13px] font-semibold text-muted-foreground'
 
 const crearSchema = (stock) =>
   z
@@ -154,9 +154,9 @@ function ContenidoDialogo({ item, tipo, onClose }) {
             </button>
           </div>
           {errors.cantidadVencida ? (
-            <p className="text-xs text-danger">{errors.cantidadVencida.message}</p>
+            <p className="text-[13px] text-danger">{errors.cantidadVencida.message}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               En existencia: {formatNumber(stock)}{unidad}. Déjalo en 0 si solo quieres corregir la fecha.
             </p>
           )}
@@ -176,7 +176,7 @@ function ContenidoDialogo({ item, tipo, onClose }) {
                 {...register('nuevaFechaVencimiento')}
               />
               {errors.nuevaFechaVencimiento && (
-                <p className="text-xs text-danger">{errors.nuevaFechaVencimiento.message}</p>
+                <p className="text-[13px] text-danger">{errors.nuevaFechaVencimiento.message}</p>
               )}
             </div>
             <VencimientosSiguientes
@@ -189,7 +189,7 @@ function ContenidoDialogo({ item, tipo, onClose }) {
         )}
 
         {quedan <= 0 && (
-          <p className="border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+          <p className="rounded-xl bg-muted px-3 py-2 text-[13px] text-muted-foreground">
             Se retira todo el stock: el producto queda sin existencias y sin fecha de vencimiento. Cuando
             registres la próxima compra tomará la fecha de esa factura.
           </p>

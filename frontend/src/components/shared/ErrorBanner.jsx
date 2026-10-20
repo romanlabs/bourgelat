@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'
  */
 export function ErrorBanner({ message, onRetry, variant = 'red' }) {
   const styles = {
-    red:   'border-danger/30 bg-danger-soft text-danger',
-    amber: 'border-warning/30 bg-warning-soft text-warning',
+    red:   'bg-danger-soft text-danger',
+    amber: 'bg-warning-soft text-warning',
   }
   const btnStyles = {
     red:   'text-danger',
@@ -18,15 +18,15 @@ export function ErrorBanner({ message, onRetry, variant = 'red' }) {
   }
 
   return (
-    <div className={cn('flex items-start justify-between gap-4 border px-4 py-4 text-sm leading-7', styles[variant])}>
-      <span>{message}</span>
+    <div className={cn('flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-sm leading-relaxed sm:px-5', styles[variant])}>
+      <span className="min-w-0 flex-1">{message}</span>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className={cn('inline-flex shrink-0 items-center gap-1.5 font-semibold underline-offset-2 hover:underline', btnStyles[variant])}
+          className={cn('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-card px-3.5 font-semibold transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', btnStyles[variant])}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className="h-4 w-4" />
           Reintentar
         </button>
       ) : null}

@@ -1,30 +1,12 @@
-import { chartColors } from '@/lib/theme'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { Dialog, DropdownMenu } from 'radix-ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import {
-  CircleAlert,
-  Mail,
-  PencilLine,
-  Phone,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Stethoscope,
-  UserPlus,
-  Users,
-} from 'lucide-react'
+import { Check, CircleAlert, MoreHorizontal, Search, Sparkles, UserPlus, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
-import { EmptyState } from '@/components/shared/EmptyState'
-import {
-  DashboardPanel,
-  DataTable,
-  DonutCard,
-  KpiCard,
-  StatusPill,
-} from '@/features/dashboard/dashboardComponents'
-import { formatNumber, objectToChartData, toNumber } from '@/features/dashboard/dashboardUtils'
+import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
+import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
 
 /** '1 cupo disponible' / '2 cupos disponibles' */
 const textoCupos = (cantidad, singular = '', plural = '') => {
@@ -34,7 +16,8 @@ const textoCupos = (cantidad, singular = '', plural = '') => {
 }
 import { usuariosApi } from '@/features/usuarios/usuariosApi'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { MODULE_ACCESS, canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 
@@ -81,12 +64,18 @@ const getErrorMessage = (error, fallback) =>
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
 const normalizePhone = (value) => value.replace(/\D/g, '').slice(0, 10)
+// Un administrador ya tiene todos los permisos: de los roles adicionales solo
+// cuenta Veterinario, porque citas e historias exigen un usuario veterinario.
 const normalizeRoles = (roles, primaryRole) =>
-  [...new Set((Array.isArray(roles) ? roles : []).filter((role) => role && role !== primaryRole))]
+  [...new Set((Array.isArray(roles) ? roles : []).filter((role) => role && role !== primaryRole))].filter(
+    (role) => primaryRole !== 'admin' || role === 'veterinario'
+  )
+
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const CAMPO =
+  'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
 
 const getRoleLabel = (role) => ROLE_LABELS[role] || role || 'Sin rol'
-
-const hasAdminAccess = (user) => hasAnyRole(user, ['admin'])
 
 const hasVeterinaryAccess = (user) => hasAnyRole(user, ['veterinario'])
 
@@ -116,7 +105,29 @@ const formatLastAccess = (value, esSesionActual = false) => {
 function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
   const availableRoles = ROLE_OPTIONS.filter((role) => role.value !== primaryRole)
 
+  if (primaryRole === 'admin') {
+    const atiende = value.includes('veterinario')
+    return (
+      <label
+        className={cn(
+          'flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition focus-within:ring-2 focus-within:ring-ring',
+          atiende ? 'bg-accent text-primary' : 'bg-muted text-foreground hover:bg-secondary'
+        )}
+      >
+        <input
+          type="checkbox"
+          checked={atiende}
+          disabled={disabled}
+          onChange={() => onChange(atiende ? [] : ['veterinario'])}
+        />
+        También atiende consultas (veterinario)
+      </label>
+    )
+  }
+
   return (
+    <div className="grid gap-2">
+      <p className="text-[13px] font-medium text-muted-foreground">Roles adicionales</p>
     <div className="grid gap-2 sm:grid-cols-2">
       {availableRoles.map((role) => {
         const checked = value.includes(role.value)
@@ -124,12 +135,12 @@ function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
         return (
           <label
             key={role.value}
-            className={`flex items-center gap-3 border px-3 py-3 text-sm transition ${
+            className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition focus-within:ring-2 focus-within:ring-ring ${
               disabled
-                ? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
+                ? 'cursor-not-allowed bg-muted text-muted-foreground'
                 : checked
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-card text-foreground hover:bg-muted'
+                  ? 'cursor-pointer bg-accent text-primary'
+                  : 'cursor-pointer bg-muted text-foreground hover:bg-secondary'
             }`}
           >
             <input
@@ -148,24 +159,174 @@ function RoleChecklist({ primaryRole, value, onChange, disabled = false }) {
         )
       })}
     </div>
+    </div>
   )
 }
 
+function Campo({ label, children }) {
+  return (
+    <label className="grid gap-1.5">
+      <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+// Editar y activar/desactivar en un menú «⋯». La propia cuenta no se desactiva.
+function AccionesUsuario({ nombre, onEditar, onCambiarEstado, activo }) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`Acciones de ${nombre}`}
+          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
+        >
+          <MoreHorizontal className="h-[18px] w-[18px]" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 min-w-[180px] rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        >
+          <DropdownMenu.Item onSelect={onEditar} className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted">
+            Editar
+          </DropdownMenu.Item>
+          {onCambiarEstado ? (
+            <DropdownMenu.Item
+              onSelect={onCambiarEstado}
+              className={cn(
+                'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm outline-none transition hover:bg-muted focus:bg-muted',
+                activo ? 'text-danger' : 'text-foreground'
+              )}
+            >
+              {activo ? 'Desactivar' : 'Activar'}
+            </DropdownMenu.Item>
+          ) : null}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+// Panel lateral para crear o editar sin perder de vista la lista.
+function PanelLateral({ abierto, titulo, subtitulo, onCerrar, children }) {
+  return (
+    <Dialog.Root open={abierto} onOpenChange={(siguiente) => { if (!siguiente) onCerrar() }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Content className="fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-background shadow-2xl outline-none sm:w-[520px]">
+          <div className="flex items-start justify-between gap-4 bg-card px-6 py-5">
+            <div className="min-w-0">
+              <Dialog.Title className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{titulo}</Dialog.Title>
+              {subtitulo ? <Dialog.Description className="mt-1 text-sm text-muted-foreground">{subtitulo}</Dialog.Description> : null}
+            </div>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95', FOCO)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </Dialog.Close>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
+
+// Qué abre cada rol, leído de los mismos permisos que usa el menú. El
+// administrador entra a todo, así que no lleva columna.
+const MODULOS_MATRIZ = [
+  { key: 'agenda', label: 'Agenda' },
+  { key: 'pacientes', label: 'Pacientes' },
+  { key: 'historias', label: 'Historias clínicas' },
+  { key: 'antecedentes', label: 'Antecedentes' },
+  { key: 'caja', label: 'Caja' },
+  { key: 'inventario', label: 'Inventario' },
+  { key: 'finanzas', label: 'Finanzas' },
+  { key: 'usuarios', label: 'Usuarios y Clínica' },
+  { key: 'auditoria', label: 'Auditoría' },
+  { key: 'soporte', label: 'Soporte' },
+]
+const ROLES_MATRIZ = ROLE_OPTIONS.filter((rol) => rol.value !== 'admin')
+
+function MatrizRoles() {
+  return (
+    <section aria-labelledby="matriz-roles" className="rounded-2xl bg-card p-6">
+      <h2 id="matriz-roles" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Qué puede abrir cada rol</h2>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        El administrador entra a todo. Una persona puede tener más de un rol y suma lo que abre cada uno.
+      </p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="text-left text-[13px] text-muted-foreground">
+              <th scope="col" className="pb-2.5 pr-3 font-medium">Módulo</th>
+              {ROLES_MATRIZ.map((rol) => (
+                <th key={rol.value} scope="col" className="px-3 pb-2.5 text-center font-medium">{rol.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MODULOS_MATRIZ.map((modulo) => (
+              <tr key={modulo.key} className="border-t border-border">
+                <th scope="row" className="py-2.5 pr-3 text-left font-medium text-foreground">{modulo.label}</th>
+                {ROLES_MATRIZ.map((rol) => {
+                  const puede = (MODULE_ACCESS[modulo.key] || []).includes(rol.value)
+                  return (
+                    <td key={rol.value} className="px-3 py-2.5 text-center">
+                      {puede ? (
+                        <Check className="mx-auto h-4 w-4 text-success" aria-label="Sí" />
+                      ) : (
+                        <span className="text-muted-foreground" aria-label="No">—</span>
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+// Cada rol con su color, como en el resto de la app: administración en
+// petróleo, veterinario en agua, facturación en miel, recepción en lila.
+const TONO_ROL = {
+  admin: 'bg-primary text-primary-foreground',
+  superadmin: 'bg-primary text-primary-foreground',
+  veterinario: 'bg-accent text-primary',
+  facturador: 'bg-warning-soft text-warning',
+  recepcionista: 'bg-info-soft text-info',
+  auxiliar: 'bg-success-soft text-success',
+}
+
+const inicialesDe = (nombre = '') =>
+  nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() || '')
+    .join('') || '?'
+
 function RoleBadges({ user }) {
-  const roles = [user.rol, ...(Array.isArray(user.rolesAdicionales) ? user.rolesAdicionales : [])]
+  // A un administrador solo le suma Veterinario: los demás roles ya los tiene.
+  const roles = [user.rol, ...normalizeRoles(user.rolesAdicionales, user.rol)]
 
   return (
     <div className="flex flex-wrap gap-2">
       {roles.map((role, index) => (
         <StatusPill
           key={`${user.id}-${role}-${index}`}
-          tone={
-            role === 'admin'
-              ? 'border-info/30 bg-info-soft text-info '
-              : role === 'veterinario'
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-border bg-muted text-foreground'
-          }
+          tone={TONO_ROL[role] || 'bg-secondary text-secondary-foreground'}
         >
           {getRoleLabel(role)}
         </StatusPill>
@@ -186,15 +347,15 @@ function PasswordChecklist({ password, visible }) {
   ]
 
   return (
-    <div className="border border-border bg-muted px-3 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="rounded-xl bg-muted px-4 py-3.5">
+      <p className="text-sm font-semibold text-foreground">
         Requisitos de acceso
       </p>
       <div className="mt-3 grid gap-2">
         {rules.map((rule) => (
           <div key={rule.id} className="flex items-center justify-between gap-3 text-sm">
             <span className="text-muted-foreground">{rule.label}</span>
-            <span className={rule.valid ? 'text-success' : 'text-muted-foreground'}>
+            <span className={rule.valid ? 'font-semibold text-success' : 'text-muted-foreground'}>
               {rule.valid ? 'Cumple' : 'Pendiente'}
             </span>
           </div>
@@ -206,13 +367,13 @@ function PasswordChecklist({ password, visible }) {
 
 function RestrictedUsersPage() {
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <DashboardPanel
           title="Usuarios y roles"
           subtitle="Esta sección se reserva para la administración de la clínica."
         >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
             Tu acceso actual no tiene permisos para administrar usuarios, roles ni estados del equipo.
           </div>
         </DashboardPanel>
@@ -229,29 +390,14 @@ export default function UsuariosPage() {
   const [buscar, setBuscar] = useState('')
   const [estado, setEstado] = useState('todos')
   const [rolFiltro, setRolFiltro] = useState('todos')
-  const [activeSection, setActiveSection] = useState('equipo')
-  const operationalSectionRef = useRef(null)
-  const goToSection = (section) => {
-    setActiveSection(section)
-    operationalSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  // Crear y editar se abren en un panel lateral: null | 'crear' | 'editar'
+  const [panel, setPanel] = useState(null)
   const [selectedUserId, setSelectedUserId] = useState(null)
-  const editPanelRef = useRef(null)
-  // Al elegir un usuario el formulario queda fuera de la vista: lo llevamos ahi.
-  useEffect(() => {
-    if (activeSection !== 'editar' || !selectedUserId) return
-    editPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [activeSection, selectedUserId])
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
   const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
 
   const busquedaDiferida = useDeferredValue(buscar.trim().toLowerCase())
-  // Todos los planes incluyen roles del equipo, asi que este gate siempre pasa.
-  // Se conserva la constante porque el ternario que la consume abarca 570
-  // lineas de JSX y desanidarlo solo para borrar una rama muerta no compensa
-  // el riesgo. Limpieza pendiente.
-  const roleFeatureEnabled = true
   const rolPermitido = canAccessModule(usuario, 'usuarios')
   const puedeVerModulo = rolPermitido
 
@@ -272,7 +418,7 @@ export default function UsuariosPage() {
       toast.success(data?.message || 'Usuario creado exitosamente')
       setCreateForm(DEFAULT_CREATE_FORM)
       setShowPasswordChecklist(false)
-      setActiveSection('equipo')
+      setPanel(null)
       invalidarDominios(queryClient, 'equipo')
     },
     onError: (error) => {
@@ -347,10 +493,6 @@ export default function UsuariosPage() {
   }, [busquedaDiferida, estado, rolFiltro, usuarios])
 
   const activos = useMemo(() => usuarios.filter((item) => item.activo), [usuarios])
-  const totalAdministrativos = useMemo(
-    () => activos.filter((item) => hasAdminAccess(item)).length,
-    [activos]
-  )
   const totalVeterinarios = useMemo(
     () => activos.filter((item) => hasVeterinaryAccess(item)).length,
     [activos]
@@ -358,27 +500,6 @@ export default function UsuariosPage() {
   const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
   const cupoDisponible =
     limiteUsuarios === null ? null : Math.max(limiteUsuarios - activos.length, 0)
-
-  const roleDistribution = useMemo(() => {
-    const record = activos.reduce((acc, item) => {
-      acc[item.rol] = (acc[item.rol] || 0) + 1
-      return acc
-    }, {})
-    return objectToChartData(record, ROLE_LABELS)
-  }, [activos])
-
-  const statusDistribution = useMemo(
-    () => [
-      { key: 'activos', name: 'Activos', value: activos.length, color: chartColors.categorica[0] },
-      {
-        key: 'inactivos',
-        name: 'Inactivos',
-        value: Math.max(usuarios.length - activos.length, 0),
-        color: chartColors.vacio,
-      },
-    ],
-    [activos.length, usuarios.length]
-  )
 
   const tableRows = useMemo(
     () =>
@@ -484,586 +605,326 @@ export default function UsuariosPage() {
     return <RestrictedUsersPage />
   }
 
+  const abrirEditar = (user) => {
+    setSelectedUserId(user.id)
+    setEditForm(buildEditForm(user))
+    setPanel('editar')
+  }
+  const cerrarPanel = () => {
+    setPanel(null)
+    setShowPasswordChecklist(false)
+  }
+
+  const totalEquipo = activos.length
+  const titulo = usuariosQuery.isPending
+    ? 'Equipo'
+    : `${formatNumber(totalEquipo)} ${totalEquipo === 1 ? 'persona' : 'personas'} en el equipo`
+  const descripcion =
+    limiteUsuarios === null
+      ? 'Tu plan no limita la cantidad de usuarios.'
+      : `Tu plan incluye ${formatNumber(limiteUsuarios)} ${limiteUsuarios === 1 ? 'usuario' : 'usuarios'} · ${
+          cupoDisponible === 0 ? 'no quedan cupos' : textoCupos(cupoDisponible, 'libre', 'libres')
+        }`
+
   return (
     <AdminShell
       currentKey="usuarios"
-      title="Usuarios y roles"
-      description="Centro administrativo para crear equipo, ordenar permisos, revisar cupos del plan y mantener una estructura limpia de acceso por clínica."
-      headerBadge={
-        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Control del equipo
-        </StatusPill>
-      }
+      title={titulo}
+      description={descripcion}
+      hideSearch
       actions={
-        <NavCta to="/planes" icon={Sparkles}>
-          Revisar plan
-        </NavCta>
-      }
-      asideNote="Aquí se administra el equipo real de la clínica: altas, roles, estado activo y cupo disponible frente a la suscripción."
-    >
-      {!roleFeatureEnabled ? (
-        <EmptyState
-          icon={<Sparkles />}
-          title="Usuarios y roles no disponibles en el plan actual"
-          description="El control del equipo hace parte del flujo base del sistema. Si esta area no aparece habilitada, conviene revisar la configuración comercial de la clínica."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
-        />
-      ) : (
-        <div className="space-y-5">
-          {usuariosQuery.isError ? (
-            <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-              {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
-            </div>
-          ) : null}
-
-          <DashboardPanel
-            title="Organiza la administración del equipo"
-            subtitle="Separamos lectura, alta y edición para que cada tarea sea mas clara y no obligue a recorrer toda la pantalla."
-            action={
-              <StatusPill tone="border-border bg-muted text-foreground">
-                {limiteUsuarios === null
-                  ? 'Sin límite de usuarios'
-                  : textoCupos(cupoDisponible, 'disponible', 'disponibles')}
-              </StatusPill>
-            }
+        <div className="flex flex-wrap items-center gap-2">
+          <NavCta to="/planes" icon={Sparkles}>
+            Ver planes
+          </NavCta>
+          <button
+            type="button"
+            onClick={() => {
+              setCreateForm(DEFAULT_CREATE_FORM)
+              setPanel('crear')
+            }}
+            className={`inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px ${FOCO}`}
           >
-            <div className="grid gap-3 lg:grid-cols-3">
-              {[
-                {
-                  id: 'equipo',
-                  label: 'Equipo actual',
-                  helper: 'Tabla, filtros y lectura rápida del estado del equipo.',
-                },
-                {
-                  id: 'crear',
-                  label: 'Crear usuario',
-                  helper: 'Alta administrativa con rol, celular laboral y contraseña inicial.',
-                },
-                {
-                  id: 'editar',
-                  label: 'Editar usuario',
-                  helper: selectedUser
-                    ? `Editando a ${selectedUser.nombre}.`
-                    : 'Selecciona un colaborador desde la tabla para habilitar esta vista.',
-                },
-              ].map((section) => (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => goToSection(section.id)}
-                  className={`border px-4 py-4 text-left transition ${
-                    activeSection === section.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border bg-muted hover:border-border hover:bg-card'
-                  }`}
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {section.label}
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{section.helper}</p>
-                </button>
+            <UserPlus className="h-4 w-4" />
+            Invitar a alguien
+          </button>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        {usuariosQuery.isError ? (
+          <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
+            {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
+          </div>
+        ) : null}
+
+        {!usuariosQuery.isPending && totalVeterinarios === 0 ? (
+          <div role="alert" className="flex items-start gap-3 rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              No hay ningún veterinario activo. La agenda y las historias clínicas necesitan al menos uno: agrégale el rol a alguien o invita al médico.
+            </span>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+            <Search className="h-[18px] w-[18px] shrink-0" />
+            <input
+              type="search"
+              value={buscar}
+              onChange={(event) => setBuscar(event.target.value)}
+              placeholder="Buscar por nombre, correo o celular"
+              aria-label="Buscar en el equipo"
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+            />
+          </label>
+          <Select aria-label="Filtrar por estado" value={estado} onValueChange={setEstado} options={STATUS_OPTIONS} />
+          <Select
+            aria-label="Filtrar por rol"
+            value={rolFiltro}
+            onValueChange={setRolFiltro}
+            options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
+          />
+        </div>
+
+        <section aria-label="Equipo de la clínica" className="overflow-hidden rounded-2xl bg-card">
+          {usuariosQuery.isPending ? (
+            <div className="flex flex-col gap-1 p-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />
               ))}
             </div>
-          </DashboardPanel>
-
-          <div
-            ref={operationalSectionRef}
-            className={
-              activeSection === 'crear'
-                ? 'grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_420px]'
-                : 'grid gap-5'
-            }
-          >
-            <DashboardPanel
-              title="Equipo de la clínica"
-              subtitle="Tabla administrativa para buscar, filtrar, editar o activar y desactivar usuarios."
-              action={
-                <div className="flex flex-wrap gap-3">
-                  <div className="flex items-center border border-border bg-card px-3">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={buscar}
-                      onChange={(event) => setBuscar(event.target.value)}
-                      placeholder="Buscar por nombre, correo o celular"
-                      className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                    />
-                  </div>
-                  <Select
-                    aria-label="Filtrar por estado"
-                    value={estado}
-                    onValueChange={setEstado}
-                    options={STATUS_OPTIONS}
-                  />
-                  <Select
-                    aria-label="Filtrar por rol"
-                    value={rolFiltro}
-                    onValueChange={setRolFiltro}
-                    options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
-                  />
-                </div>
-              }
-            >
-              <DataTable
-                title="Usuarios"
-                subtitle="Vista operativa del equipo actual."
-                rows={tableRows}
-                columns={[
-                  {
-                    key: 'nombre',
-                    label: 'Colaborador',
-                    render: (row) => (
-                      <div>
-                        <p className="font-semibold text-foreground">{row.nombre}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{row.email}</p>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'roles',
-                    label: 'Rol',
-                    render: (row) => <RoleBadges user={row.raw} />,
-                  },
-                  {
-                    key: 'telefono',
-                    label: 'Contacto',
-                    render: (row) => (
-                      <div className="text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{row.telefono}</span>
-                        </div>
-                      </div>
-                    ),
-                  },
-                  {
-                    key: 'ultimoAcceso',
-                    label: 'Último acceso',
-                    render: (row) => (
-                      <span className="text-sm text-muted-foreground">{formatLastAccess(row.ultimoAcceso, row.raw.id === usuario?.id)}</span>
-                    ),
-                  },
-                  {
-                    key: 'activo',
-                    label: 'Estado',
-                    render: (row) => (
-                      <StatusPill
-                        tone={
-                          row.activo
-                            ? 'border-success/30 bg-success-soft text-success'
-                            : 'border-border bg-muted text-muted-foreground'
-                        }
-                      >
-                        {row.activo ? 'Activo' : 'Inactivo'}
-                      </StatusPill>
-                    ),
-                  },
-                  {
-                    key: 'acciones',
-                    label: 'Acciones',
-                    render: (row) => (
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedUserId(row.raw.id)
-                            setEditForm(buildEditForm(row.raw))
-                            goToSection('editar')
-                          }}
-                          className="text-sm font-semibold text-primary hover:text-primary"
-                        >
-                          Editar
-                        </button>
-                        {row.raw.id === usuario?.id ? (
-                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            Sesión actual
+          ) : tableRows.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-base font-semibold text-foreground">No hay personas para este filtro</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Ajusta la búsqueda o invita a alguien con el botón de arriba.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="text-left text-[13px] text-muted-foreground">
+                    <th scope="col" className="px-5 pb-3 pt-4 font-medium">Persona</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Roles</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Último acceso</th>
+                    <th scope="col" className="px-3 pb-3 pt-4 font-medium">Estado</th>
+                    <th scope="col" className="px-5 pb-3 pt-4"><span className="sr-only">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableRows.map((row) => {
+                    const esActual = row.raw.id === usuario?.id
+                    return (
+                      <tr key={row.id} className="border-t border-border transition hover:bg-muted">
+                        <td className="px-5 py-3.5">
+                          <span className="flex items-center gap-3">
+                            <span
+                              aria-hidden="true"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary"
+                            >
+                              {inicialesDe(row.nombre)}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block font-semibold text-foreground">
+                                {row.nombre}
+                                {esActual ? <span className="ml-1.5 text-[13px] font-normal text-muted-foreground">(tú)</span> : null}
+                              </span>
+                              <span className="block truncate text-[13px] text-muted-foreground">
+                                {[row.email, row.raw.telefono].filter(Boolean).join(' · ')}
+                              </span>
+                            </span>
                           </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => toggleUsuarioMutation.mutate({ id: row.raw.id })}
-                            disabled={toggleUsuarioMutation.isPending}
-                            className="text-sm font-semibold text-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {row.raw.activo ? 'Desactivar' : 'Activar'}
-                          </button>
-                        )}
-                      </div>
-                    ),
-                  },
-                ]}
-                emptyTitle="No hay usuarios para este filtro"
-                emptyBody="Ajusta la búsqueda o registra el primer colaborador desde la pestaña Crear usuario."
-                action={
-                  <StatusPill tone="border-border bg-muted text-foreground">
-                    {formatNumber(tableRows.length)} visibles
-                  </StatusPill>
-                }
-              />
-            </DashboardPanel>
+                        </td>
+                        <td className="px-3 py-3.5"><RoleBadges user={row.raw} /></td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-muted-foreground">
+                          {formatLastAccess(row.ultimoAcceso, esActual)}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <StatusPill tone={cn('whitespace-nowrap', row.activo ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground')}>
+                            {row.activo ? 'Activo' : 'Inactivo'}
+                          </StatusPill>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <AccionesUsuario
+                            nombre={row.nombre}
+                            onEditar={() => abrirEditar(row.raw)}
+                            onCambiarEstado={
+                              esActual ? null : () => toggleUsuarioMutation.mutate({ id: row.raw.id })
+                            }
+                            activo={row.activo}
+                          />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
-            {activeSection === 'crear' ? (
-            <DashboardPanel
-              title="Crear usuario"
-              subtitle="Alta administrativa del colaborador con rol principal, celular laboral y contraseña inicial."
-              action={<UserPlus className="h-4 w-4 text-primary" />}
-            >
-              <form className="grid gap-4" onSubmit={handleCreateUser}>
+        <MatrizRoles />
+      </div>
+
+      <PanelLateral
+        abierto={panel === 'crear'}
+        titulo="Invitar a alguien"
+        subtitulo="Crea su acceso con rol, celular laboral y una contraseña inicial que podrá cambiar."
+        onCerrar={cerrarPanel}
+      >
+        <form className="grid gap-4" onSubmit={handleCreateUser}>
+          <Campo label="Nombre completo">
+            <input
+              type="text"
+              value={createForm.nombre}
+              onChange={(event) => setCreateForm((current) => ({ ...current, nombre: event.target.value }))}
+              className={CAMPO}
+            />
+          </Campo>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo label="Correo">
+              <input
+                type="email"
+                autoComplete="off"
+                value={createForm.email}
+                onChange={(event) => setCreateForm((current) => ({ ...current, email: event.target.value }))}
+                placeholder="correo@clinica.co"
+                className={CAMPO}
+              />
+            </Campo>
+            <Campo label="Celular laboral (opcional)">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={createForm.telefono}
+                onChange={(event) => setCreateForm((current) => ({ ...current, telefono: normalizePhone(event.target.value) }))}
+                placeholder="3001234567"
+                className={CAMPO}
+              />
+            </Campo>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo label="Rol principal">
+              <Select
+                variant="field"
+                aria-label="Rol principal"
+                className="h-11"
+                value={createForm.rol}
+                onValueChange={(value) =>
+                  setCreateForm((current) => ({
+                    ...current,
+                    rol: value,
+                    rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
+                  }))
+                }
+                options={ROLE_OPTIONS}
+              />
+            </Campo>
+            <Campo label="Contraseña inicial">
+              <input
+                type="password"
+                // Es la clave de otra persona: que el navegador no ponga la guardada.
+                autoComplete="new-password"
+                value={createForm.password}
+                onFocus={() => setShowPasswordChecklist(true)}
+                onChange={(event) => setCreateForm((current) => ({ ...current, password: event.target.value }))}
+                className={CAMPO}
+              />
+            </Campo>
+          </div>
+          <PasswordChecklist password={createForm.password} visible={showPasswordChecklist || createForm.password.length > 0} />
+          <RoleChecklist
+            primaryRole={createForm.rol}
+            value={createForm.rolesAdicionales}
+            onChange={(rolesAdicionales) => setCreateForm((current) => ({ ...current, rolesAdicionales }))}
+          />
+          <button
+            type="submit"
+            disabled={crearUsuarioMutation.isPending}
+            className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
+          >
+            {crearUsuarioMutation.isPending ? 'Guardando…' : 'Crear acceso'}
+          </button>
+        </form>
+      </PanelLateral>
+
+      <PanelLateral
+        abierto={panel === 'editar' && Boolean(selectedUser)}
+        titulo={selectedUser ? `Editar a ${selectedUser.nombre}` : 'Editar'}
+        subtitulo={
+          selectedUser
+            ? `Último acceso: ${formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)} · ${selectedUser.activo ? 'Activo' : 'Inactivo'}`
+            : ''
+        }
+        onCerrar={cerrarPanel}
+      >
+        {selectedUser ? (
+          <form className="grid gap-4" onSubmit={handleUpdateUser}>
+            <Campo label="Nombre completo">
+              <input
+                type="text"
+                value={editForm.nombre}
+                onChange={(event) => setEditForm((current) => ({ ...current, nombre: event.target.value }))}
+                className={CAMPO}
+              />
+            </Campo>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Campo label="Correo">
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(event) => setEditForm((current) => ({ ...current, email: event.target.value }))}
+                  className={CAMPO}
+                />
+              </Campo>
+              <Campo label="Celular laboral (opcional)">
                 <input
                   type="text"
-                  value={createForm.nombre}
-                  onChange={(event) =>
-                    setCreateForm((current) => ({ ...current, nombre: event.target.value }))
-                  }
-                  placeholder="Nombre completo del colaborador"
-                  className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
+                  inputMode="numeric"
+                  value={editForm.telefono}
+                  onChange={(event) => setEditForm((current) => ({ ...current, telefono: normalizePhone(event.target.value) }))}
+                  className={CAMPO}
                 />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center border border-border bg-card px-3">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      value={createForm.email}
-                      onChange={(event) =>
-                        setCreateForm((current) => ({ ...current, email: event.target.value }))
-                      }
-                      placeholder="correo@clinica.co"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center border border-border bg-card px-3">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={createForm.telefono}
-                      onChange={(event) =>
-                        setCreateForm((current) => ({
-                          ...current,
-                          telefono: normalizePhone(event.target.value),
-                        }))
-                      }
-                      placeholder="Celular laboral"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Select
-                    variant="field"
-                    aria-label="Rol principal"
-                    className="h-11"
-                    value={createForm.rol}
-                    onValueChange={(value) =>
-                      setCreateForm((current) => ({
-                        ...current,
-                        rol: value,
-                        rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
-                      }))
-                    }
-                    options={ROLE_OPTIONS}
-                  />
-                  <input
-                    type="password"
-                    value={createForm.password}
-                    onFocus={() => setShowPasswordChecklist(true)}
-                    onChange={(event) =>
-                      setCreateForm((current) => ({ ...current, password: event.target.value }))
-                    }
-                    placeholder="Contraseña inicial"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                </div>
-                <PasswordChecklist
-                  password={createForm.password}
-                  visible={showPasswordChecklist || createForm.password.length > 0}
-                />
-                <div className="grid gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    Roles adicionales
-                  </p>
-                  <RoleChecklist
-                    primaryRole={createForm.rol}
-                    value={createForm.rolesAdicionales}
-                    onChange={(rolesAdicionales) =>
-                      setCreateForm((current) => ({ ...current, rolesAdicionales }))
-                    }
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={crearUsuarioMutation.isPending}
-                  className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {crearUsuarioMutation.isPending ? 'Guardando...' : 'Guardar usuario'}
-                </button>
-              </form>
-            </DashboardPanel>
-            ) : null}
-          </div>
-
-          {activeSection === 'editar' ? (
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <DashboardPanel
-              title="Resumen administrativo"
-              subtitle="Lectura concreta para coordinacion, seguridad y continuidad del acceso."
-            >
-              <DataTable
-                title="Controles clave"
-                subtitle="Lo que conviene revisar antes de cambiar permisos o estados."
-                rows={[
-                  {
-                    id: 'admins',
-                    criterio: 'Administradores activos',
-                    estado:
-                      totalAdministrativos > 1
-                        ? 'Cobertura estable'
-                        : 'Cobertura sensible',
-                    detalle:
-                      totalAdministrativos > 1
-                        ? 'La clínica tiene mas de un usuario con administración.'
-                        : 'Conviene tener al menos dos administradores para no depender de una sola cuenta.',
-                  },
-                  {
-                    id: 'vets',
-                    criterio: 'Equipo clínico',
-                    estado:
-                      totalVeterinarios > 0
-                        ? 'Listo para agenda'
-                        : 'Falta configuración',
-                    detalle:
-                      totalVeterinarios > 0
-                        ? 'Ya hay al menos un profesional con acceso clínico.'
-                        : 'La agenda y las historias necesitan al menos un veterinario activo.',
-                  },
-                  {
-                    id: 'capacity',
-                    criterio: 'Cupo del plan',
-                    estado:
-                      limiteUsuarios === null || cupoDisponible > 1
-                        ? 'Disponible'
-                        : 'Cupo bajo',
-                    detalle:
-                      limiteUsuarios === null
-                        ? 'La suscripción no limita usuarios activos.'
-                        : `${Math.max(cupoDisponible, 0) === 1 ? 'Queda' : 'Quedan'} ${textoCupos(cupoDisponible)} antes de exigir gestión comercial.`,
-                  },
-                ]}
-                columns={[
-                  { key: 'criterio', label: 'Criterio' },
-                  { key: 'estado', label: 'Estado' },
-                  { key: 'detalle', label: 'Detalle' },
-                ]}
-                emptyTitle="Sin controles"
-                emptyBody="No hay controles para mostrar."
+              </Campo>
+            </div>
+            <Campo label="Rol principal">
+              <Select
+                variant="field"
+                aria-label="Rol principal"
+                className="h-11 disabled:bg-muted"
+                value={editForm.rol}
+                disabled={esUsuarioActualSeleccionado}
+                onValueChange={(value) =>
+                  setEditForm((current) => ({
+                    ...current,
+                    rol: value,
+                    rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
+                  }))
+                }
+                options={ROLE_OPTIONS}
               />
-            </DashboardPanel>
-
-            <div ref={editPanelRef}>
-            <DashboardPanel
-              title="Editar usuario"
-              subtitle={
-                selectedUser
-                  ? 'Ajusta datos, rol principal y roles adicionales del usuario seleccionado.'
-                  : 'Selecciona primero un usuario desde la tabla para editarlo.'
-              }
-              action={<PencilLine className="h-4 w-4 text-primary" />}
+            </Campo>
+            <RoleChecklist
+              primaryRole={editForm.rol}
+              value={editForm.rolesAdicionales}
+              onChange={(rolesAdicionales) => setEditForm((current) => ({ ...current, rolesAdicionales }))}
+            />
+            {esUsuarioActualSeleccionado ? (
+              <p className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
+                En tu propia cuenta puedes agregar roles adicionales, por ejemplo Veterinario si atiendes pacientes. El rol principal lo cambia otra cuenta administrativa.
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={editarUsuarioMutation.isPending}
+              className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
             >
-              {!selectedUser ? (
-                <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-                  Esta vista se llena cuando eliges un colaborador desde la tabla principal.
-                </div>
-              ) : (
-                <form className="grid gap-4" onSubmit={handleUpdateUser}>
-                  <input
-                    type="text"
-                    value={editForm.nombre}
-                    onChange={(event) =>
-                      setEditForm((current) => ({ ...current, nombre: event.target.value }))
-                    }
-                    placeholder="Nombre del colaborador"
-                    className="h-11 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-                  />
-                  <div className="flex items-center border border-border bg-card px-3">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(event) =>
-                        setEditForm((current) => ({ ...current, email: event.target.value }))
-                      }
-                      placeholder="Correo del colaborador"
-                      className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Select
-                      variant="field"
-                      aria-label="Rol principal"
-                      className="h-11 disabled:bg-muted"
-                      value={editForm.rol}
-                      disabled={esUsuarioActualSeleccionado}
-                      onValueChange={(value) =>
-                        setEditForm((current) => ({
-                          ...current,
-                          rol: value,
-                          rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
-                        }))
-                      }
-                      options={ROLE_OPTIONS}
-                    />
-                    <div className="flex items-center border border-border bg-card px-3">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={editForm.telefono}
-                        onChange={(event) =>
-                          setEditForm((current) => ({
-                            ...current,
-                            telefono: normalizePhone(event.target.value),
-                          }))
-                        }
-                        placeholder="Celular laboral"
-                        className="h-11 w-full border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Roles adicionales
-                    </p>
-                    <RoleChecklist
-                      primaryRole={editForm.rol}
-                      value={editForm.rolesAdicionales}
-                      onChange={(rolesAdicionales) =>
-                        setEditForm((current) => ({ ...current, rolesAdicionales }))
-                      }
-                    />
-                  </div>
-
-                  {esUsuarioActualSeleccionado ? (
-                    <div className="border border-warning/30 bg-warning-soft px-3 py-3 text-sm leading-7 text-warning">
-                      En tu propia cuenta puedes agregar roles adicionales, por ejemplo Veterinario si atiendes pacientes. El rol principal y el permiso de administrador los cambia otra cuenta administrativa.
-                    </div>
-                  ) : null}
-
-                  <div className="border border-border bg-muted px-3 py-3 text-sm leading-6 text-muted-foreground">
-                    <p className="font-semibold text-foreground">{selectedUser.nombre}</p>
-                    <p className="mt-1">Ultimo acceso: {formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)}</p>
-                    <p className="mt-1">
-                      Estado actual: {selectedUser.activo ? 'Activo' : 'Inactivo'}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="submit"
-                      disabled={editarUsuarioMutation.isPending}
-                      className="border border-border bg-foreground px-4 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {editarUsuarioMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedUserId(null)
-                        setEditForm(DEFAULT_EDIT_FORM)
-                      }}
-                      className="border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
-                    >
-                      Limpiar selección
-                    </button>
-                  </div>
-                </form>
-              )}
-            </DashboardPanel>
-            </div>
-          </div>
-          ) : null}
-
-          <details className="group rounded-none border border-border bg-card">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-foreground">
-              Ver metricas del equipo
-              <span className="text-xs font-normal text-muted-foreground group-open:hidden">Mostrar</span>
-              <span className="hidden text-xs font-normal text-muted-foreground group-open:inline">Ocultar</span>
-            </summary>
-            <div className="space-y-5 border-t border-border px-4 py-5">
-              <div className="grid gap-4 xl:grid-cols-4">
-                <KpiCard
-                  icon={Users}
-                  label="Usuarios activos"
-                  value={formatNumber(activos.length)}
-                  helper="Equipo actualmente habilitado para ingresar al sistema."
-                  tone="text-primary"
-                />
-                <KpiCard
-                  icon={ShieldCheck}
-                  label="Acceso administrativo"
-                  value={formatNumber(totalAdministrativos)}
-                  helper="Usuarios activos con capacidad de administración."
-                  tone="text-info"
-                />
-                <KpiCard
-                  icon={Stethoscope}
-                  label="Equipo clínico"
-                  value={formatNumber(totalVeterinarios)}
-                  helper="Profesionales que pueden operar consulta y agenda médica."
-                  tone="text-success"
-                />
-                <KpiCard
-                  icon={CircleAlert}
-                  label="Cupo disponible"
-                  value={limiteUsuarios === null ? 'Sin límite' : formatNumber(cupoDisponible)}
-                  helper={
-                    limiteUsuarios === null
-                      ? 'La suscripción actual no limita usuarios activos.'
-                      : `${formatNumber(activos.length)} de ${formatNumber(limiteUsuarios)} usuarios en uso.`
-                  }
-                  tone="text-warning"
-                />
-              </div>
-
-              <div className="grid gap-5 2xl:grid-cols-[420px_420px_minmax(0,1fr)]">
-                <DonutCard
-                  title="Roles principales"
-                  subtitle="Composicion actual del equipo activo por cargo principal."
-                  data={roleDistribution}
-                  centerLabel="Activos"
-                  centerValue={formatNumber(activos.length)}
-                  formatter={formatNumber}
-                  emptyMessage="Aún no hay roles activos para mostrar."
-                />
-                <DonutCard
-                  title="Estado del equipo"
-                  subtitle="Lectura rápida entre usuarios activos e inactivos."
-                  data={statusDistribution}
-                  centerLabel="Total"
-                  centerValue={formatNumber(usuarios.length)}
-                  formatter={formatNumber}
-                  emptyMessage="Aún no hay estados para mostrar."
-                />
-                <DashboardPanel
-                  title="Criterio de control"
-                  subtitle="Lo importante en esta vista es sostener acceso util, sin sobrecargar el equipo ni romper el último admin de la clínica."
-                >
-                  <div className="grid gap-4">
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      Usa <span className="font-semibold text-foreground">Administrador</span> solo para quien realmente gestiona configuración, suscripción y equipo.
-                    </div>
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      Si un usuario necesita apoyar agenda o consulta, agrega <span className="font-semibold text-foreground">roles adicionales</span> en vez de crear cuentas duplicadas.
-                    </div>
-                    <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                      La plataforma ya bloquea desactivar o degradar al último administrador activo para evitar dejar la clínica sin control.
-                    </div>
-                  </div>
-                </DashboardPanel>
-              </div>
-            </div>
-          </details>
-        </div>
-      )}
+              {editarUsuarioMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </form>
+        ) : null}
+      </PanelLateral>
     </AdminShell>
   )
 }

@@ -11,7 +11,7 @@ export default function TicketHilo({ mensajes = [], perspectiva = 'clinica' }) {
     <ol className="space-y-4" aria-label="Conversación del ticket">
       {mensajes.map((mensaje) =>
         mensaje.autorTipo === 'sistema' ? (
-          <li key={mensaje.id} className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <li key={mensaje.id} className="flex items-center gap-3 text-[13px] text-muted-foreground">
             <span className="h-px flex-1 bg-border" aria-hidden />
             <span className="text-center">
               {mensaje.mensaje} · {formatearFechaTicket(mensaje.createdAt)}
@@ -33,7 +33,7 @@ function MensajeHilo({ mensaje, perspectiva }) {
   return (
     <li className={cn('flex', propio ? 'justify-end' : 'justify-start')}>
       <div className={cn('max-w-[85%] min-w-0', propio ? 'items-end text-right' : 'items-start')}>
-        <div className={cn('mb-1 flex items-center gap-1.5 text-xs', propio ? 'justify-end' : 'justify-start')}>
+        <div className={cn('mb-1 flex items-center gap-1.5 text-[13px]', propio ? 'justify-end' : 'justify-start')}>
           {esSoporte ? <LifeBuoy className="h-3.5 w-3.5 text-primary" aria-hidden /> : null}
           <span className="font-semibold text-foreground">
             {esSoporte ? `Equipo Bourgelat · ${mensaje.autorNombre}` : mensaje.autorNombre}
@@ -42,12 +42,12 @@ function MensajeHilo({ mensaje, perspectiva }) {
         </div>
         <div
           className={cn(
-            'whitespace-pre-wrap break-words rounded-2xl border px-4 py-3 text-left text-sm leading-relaxed text-foreground',
+            'whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-left text-[15px] leading-relaxed text-foreground',
             propio
-              ? 'rounded-tr-sm border-primary/20 bg-primary/10'
+              ? 'rounded-tr-sm bg-accent'
               : esSoporte
-                ? 'rounded-tl-sm border-border bg-card shadow-sm'
-                : 'rounded-tl-sm border-border bg-muted/60'
+                ? 'rounded-tl-sm bg-muted'
+                : 'rounded-tl-sm bg-muted'
           )}
         >
           {mensaje.mensaje}

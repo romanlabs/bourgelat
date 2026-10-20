@@ -18,7 +18,7 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
     <DataTable
       collapsed={!expandido}
       title="Reporte de descuadres por cajero"
-      subtitle="Conteo de diferencias de caja agrupadas por cajero y categoría en el periodo. Util para detectar patrones recurrentes."
+      subtitle="Conteo de diferencias de caja agrupadas por cajero y categoría en el periodo. Sirve para detectar patrones que se repiten."
       rows={filasOrdenadas.map((fila, index) => ({
         id: `${fila.usuarioId}-${fila.categoriaDiferencia}-${index}`,
         cajero: fila.usuarioNombre || 'Sin nombre',
@@ -30,18 +30,18 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
         { key: 'cajero', label: 'Cajero' },
         {
           key: 'categoria',
-          label: 'Categoria',
+          label: 'Categoría',
           render: (row) => CATEGORIA_DIFERENCIA_LABELS[row.categoria] || row.categoria,
         },
         {
           key: 'cantidadOcurrencias',
           label: 'Ocurrencias',
-          render: (row) => <span className="font-bold tabular-nums">{row.cantidadOcurrencias}</span>,
+          render: (row) => <span className="font-semibold tabular-nums">{row.cantidadOcurrencias}</span>,
         },
         {
           key: 'sumaDiferencias',
           label: 'Suma de diferencias',
-          render: (row) => formatCurrency(row.sumaDiferencias),
+          render: (row) => <span className="tabular-nums">{formatCurrency(row.sumaDiferencias)}</span>,
         },
       ]}
       emptyTitle="Sin descuadres en el periodo"
@@ -50,7 +50,8 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
         <button
           type="button"
           onClick={() => setExpandido((curr) => !curr)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-foreground transition hover:bg-muted"
+          aria-expanded={expandido}
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {expandido ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           {expandido ? 'Ocultar' : `Ver reporte (${filasOrdenadas.length})`}
@@ -58,19 +59,19 @@ export default function ReporteDescuadresPanel({ cajaHook }) {
       }
       filters={
         <>
-          <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Periodo</span>
+          <span className="text-[13px] font-semibold text-muted-foreground">Periodo</span>
           <input
             type="date"
             value={reporteFiltros.fechaInicio}
             onChange={(event) => setReporteFiltros((curr) => ({ ...curr, fechaInicio: event.target.value }))}
-            className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
+            className="h-10 w-[150px] rounded-lg border border-input bg-card px-2.5 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-          <span className="text-xs text-muted-foreground">a</span>
+          <span className="text-sm text-muted-foreground">a</span>
           <input
             type="date"
             value={reporteFiltros.fechaFin}
             onChange={(event) => setReporteFiltros((curr) => ({ ...curr, fechaFin: event.target.value }))}
-            className="h-8 w-[130px] rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-primary"
+            className="h-10 w-[150px] rounded-lg border border-input bg-card px-2.5 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </>
       }

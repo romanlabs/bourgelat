@@ -23,7 +23,7 @@ function Leyenda({ items }) {
   return (
     <div className="flex flex-wrap items-center gap-4">
       {items.map((item) => (
-        <span key={item.label} className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+        <span key={item.label} className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
           <span className="h-1 w-4 rounded-full" style={{ backgroundColor: item.color }} />
           {item.label}
         </span>
@@ -43,7 +43,7 @@ function BarraProporcion({ name, value, total, color }) {
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 truncate text-sm text-card-foreground">{name}</span>
-        <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+        <span className="shrink-0 text-[13px] font-semibold tabular-nums text-muted-foreground">
           {formatNumber(value)} · {Math.round(porcentaje)}%
         </span>
       </div>
@@ -151,16 +151,17 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
   ]
 
   const selectorPeriodo = (
-    <div className="flex overflow-hidden rounded-full border border-border bg-muted">
+    <div role="group" aria-label="Periodo" className="flex gap-1 rounded-xl bg-muted p-1">
       {PERIODO_PRESETS.map((opcion) => (
         <button
           key={opcion.id}
           type="button"
           onClick={() => setPreset(opcion.id)}
-          className={`px-4 py-1.5 text-sm font-semibold transition-colors ${
+          aria-pressed={preset === opcion.id}
+          className={`h-9 rounded-lg px-3.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             preset === opcion.id
-              ? 'bg-card text-primary shadow-panel'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-card font-semibold text-foreground'
+              : 'font-medium text-muted-foreground hover:text-foreground'
           }`}
         >
           {opcion.label}
@@ -173,10 +174,10 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
     <div className="space-y-5 pt-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
             Lectura del periodo
-          </p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          </h2>
+          <p className="mt-1.5 max-w-2xl text-[15px] leading-6 text-muted-foreground">
             Cuánto se agenda, cuánto se resuelve, cuánto se cae y a qué horas se satura la sala.
           </p>
         </div>
@@ -184,7 +185,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       </div>
 
       {query.isError && (
-        <div className="border border-warning/30 bg-warning-soft px-4 py-4 text-sm leading-7 text-warning">
+        <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm font-medium leading-6 text-warning">
           {getErrorMessage(query.error, 'No fue posible cargar la analítica de la agenda.')}
         </div>
       )}
@@ -270,7 +271,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                     ))}
                 </div>
               ) : (
-                <div className="flex h-[200px] items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-sm text-muted-foreground">
+                <div className="flex h-[200px] items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">
                   Aún no hay tipos de cita para mostrar.
                 </div>
               )}
@@ -318,7 +319,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                   ))}
                 </div>
               ) : (
-                <div className="flex h-[200px] items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-sm text-muted-foreground">
+                <div className="flex h-[200px] items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">
                   Aún no hay citas para medir la carga del equipo.
                 </div>
               )}
@@ -331,7 +332,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                     {topMotivosCancelacion.map((motivo) => (
                       <div
                         key={motivo.motivo}
-                        className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
+                        className="-mx-3 flex items-center justify-between gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-muted"
                       >
                         <span className="min-w-0 flex-1 text-sm capitalize text-card-foreground [overflow-wrap:anywhere]">
                           {motivo.motivo}
@@ -343,13 +344,13 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                  <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
                     No se registraron cancelaciones con motivo en el periodo.
                   </p>
                 )}
 
-                <div className="mt-auto rounded-2xl border border-border bg-muted px-4 py-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="mt-auto rounded-xl bg-muted px-4 py-4">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
                     Origen de la demanda
                   </p>
                   <div className="mt-3 flex flex-col gap-2">

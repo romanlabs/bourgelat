@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  CalendarPlus,
   BarChart3,
   Boxes,
   CalendarClock,
@@ -24,7 +25,7 @@ import {
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { ALL_QUICK_ACTIONS } from '@/components/layout/quickActions'
+import { cajaApi } from '@/features/caja/cajaApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import {
@@ -53,15 +54,15 @@ import {
   objectToChartData,
   toNumber,
 } from '@/features/dashboard/dashboardUtils'
+import JornadaHoy from '@/features/dashboard/JornadaHoy'
 import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
-import { etiquetaEspecie } from '@/lib/especies'
 
 const TABS = [
-  { id: 'resumen', label: 'Resumen del día', icon: LayoutDashboard },
+  { id: 'resumen', label: 'Hoy', icon: LayoutDashboard },
   { id: 'agenda', label: 'Agenda', icon: CalendarClock },
   { id: 'ingresos', label: 'Caja', icon: Wallet },
   { id: 'inventario', label: 'Inventario', icon: Boxes },
@@ -72,13 +73,10 @@ const TABS = [
 
 const EMPTY_LIST = []
 const EMPTY_RECORD = {}
-const PRIMARY_BUTTON =
-  'inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90'
-const SECONDARY_BUTTON =
-  'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted'
 
 const MODULE_ICONS = {
   '/agenda': CalendarClock,
+  '/caja': Wallet,
   '/finanzas': Wallet,
   '/inventario': Boxes,
   '/pacientes': PawPrint,
@@ -105,20 +103,6 @@ const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
 
 
-const formatTime = (value) => {
-  if (!value) return 'Sin hora'
-  return String(value).slice(0, 5)
-}
-
-const getAppointmentTone = (estado) => {
-  if (estado === 'completada') return 'border-success/30 bg-success-soft text-success'
-  if (estado === 'en_espera') return 'border-info/30 bg-info-soft text-info '
-  if (estado === 'cancelada' || estado === 'no_asistio') {
-    return 'border-danger/30 bg-danger-soft text-danger'
-  }
-  return 'border-warning/30 bg-warning-soft text-warning'
-}
-
 const buildCapacityChart = (used, limit, label) => {
   if (limit === null || limit === undefined) {
     return {
@@ -134,131 +118,6 @@ const buildCapacityChart = (used, limit, label) => {
       { key: 'disponible', name: 'Disponible', value: Math.max(limit - used, 0), color: chartColors.vacio },
     ],
   }
-}
-
-const buildHistoryHref = (appointment) =>
-  appointment?.mascota?.id
-    ? `/pacientes/${appointment.mascota.id}/historial`
-    : '/pacientes'
-
-const buildBillingHref = (appointment) =>
-  `/finanzas?propietarioId=${appointment?.propietario?.id || ''}&mascotaId=${appointment?.mascota?.id || ''}&citaId=${appointment?.id || ''}`
-
-function CommandPanel({ title, subtitle, action, className = '', children }) {
-  return (
-    <section className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-panel', className)}>
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
-          {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
-        </div>
-        {action}
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
-  )
-}
-
-/**
- * Bloque unico del dia: primero lo que puede romper la operacion (alertas
- * urgentes) y debajo el pulso compacto de hoy. A diferencia de la tira tactica
- * anterior, se renderiza siempre, porque aunque no haya alertas el resumen del
- * dia sigue siendo la razon de ser del Command Center.
- */
-function TodayAlerts({ alerts, summary }) {
-  const hayAlertas = alerts.length > 0
-  const chips = summary.filter(Boolean)
-
-  return (
-    <section
-      className={cn(
-        'overflow-hidden rounded-xl border',
-        hayAlertas ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card shadow-panel'
-      )}
-    >
-      {hayAlertas ? (
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-              <ShieldAlert className="h-3.5 w-3.5" />
-            </span>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-destructive">
-              Requiere acción hoy
-            </p>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2.5">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex min-w-[260px] flex-1 items-center gap-3 rounded-lg border border-destructive/20 bg-card/80 px-3.5 py-2.5"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-destructive">{alert.title}</p>
-                    <span className="shrink-0 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                      Urgente
-                    </span>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-destructive/70">{alert.detail}</p>
-                </div>
-                <NavCtaLink
-                  to={alert.to}
-                  tone="destructive"
-                  size="sm"
-                  icon={ArrowRight}
-                  className="shrink-0"
-                >
-                  {alert.actionLabel}
-                </NavCtaLink>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div
-        className={cn(
-          'flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3',
-          hayAlertas ? 'border-t border-destructive/20 bg-card/60' : ''
-        )}
-      >
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          Hoy
-        </p>
-
-        {chips.map((chip) => {
-          const Icon = chip.icon
-          const Wrapper = chip.to ? Link : 'div'
-          const wrapperProps = chip.to ? { to: chip.to } : {}
-
-          return (
-            <Wrapper
-              key={chip.id}
-              {...wrapperProps}
-              title={chip.helper}
-              className={cn(
-                'flex items-center gap-2.5 rounded-lg',
-                chip.to ? 'transition hover:opacity-70' : ''
-              )}
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="flex min-w-0 flex-col leading-tight">
-                <span className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                  {chip.label}
-                </span>
-                <span className="text-base font-bold tabular-nums text-card-foreground">
-                  {chip.value}
-                </span>
-              </span>
-            </Wrapper>
-          )
-        })}
-      </div>
-    </section>
-  )
 }
 
 function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
@@ -284,12 +143,12 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-1.5 shadow-panel">
+    <section className="self-start">
       <div
         role="tablist"
         aria-label="Secciones del panel de control"
         onKeyDown={handleKeyDown}
-        className="flex flex-wrap items-center gap-1"
+        className="inline-flex flex-wrap items-center gap-1 rounded-xl bg-secondary p-1"
       >
         {TABS.map((tab) => {
           const Icon = tab.icon
@@ -309,23 +168,21 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
               tabIndex={active ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+                'flex h-9 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm transition',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 active
-                  ? 'bg-foreground text-background shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'bg-card font-semibold text-foreground'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon
-                className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')}
-              />
+              <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
               <span>{tab.label}</span>
 
               {tabBadges[tab.id] ? (
                 <span
                   className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
-                    active ? 'bg-background/15 text-background' : 'bg-primary/10 text-primary'
+                    'rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
+                    active ? 'bg-brand text-foreground' : 'bg-card text-primary'
                   )}
                 >
                   {tabBadges[tab.id]}
@@ -339,93 +196,6 @@ function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
   )
 }
 
-function OperationalBridge({ rows, loading, canUseHistories, canUseBilling }) {
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[0, 1, 2, 3].map((item) => (
-          <div key={item} className="h-20 animate-pulse rounded-2xl border border-border bg-muted" />
-        ))}
-      </div>
-    )
-  }
-
-  if (rows.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-border bg-muted p-6">
-        <p className="text-sm font-semibold text-card-foreground">Sin citas pendientes para hoy</p>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Cuando entren pacientes a la agenda, aquí verás acciones directas para atenderlos y
-          cobrar sin dar vueltas.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="hidden grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] gap-4 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground md:grid">
-        <span>Hora</span>
-        <span>Paciente</span>
-        <span>Profesional</span>
-        <span>Estado</span>
-        <span className="text-right">Acciones</span>
-      </div>
-
-      {rows.map((appointment) => (
-        <div
-          key={appointment.id}
-          className="grid gap-4 rounded-2xl border border-border bg-card p-4 transition hover:bg-muted/50 md:grid-cols-[96px_minmax(0,1.25fr)_minmax(0,1fr)_110px_auto] md:items-center"
-        >
-          <div>
-            <p className="text-sm font-semibold text-card-foreground">{formatTime(appointment.horaInicio)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{appointment.tipoCita || 'Consulta'}</p>
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-card-foreground">
-              {appointment.mascota?.nombre || 'Paciente sin nombre'}
-            </p>
-            <p className="mt-1 truncate text-sm text-muted-foreground">
-              {appointment.propietario?.nombre || 'Tutor pendiente'} · {etiquetaEspecie(appointment.mascota?.especie) || 'Sin especie'}
-            </p>
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">
-              {appointment.veterinario?.nombre || 'Profesional por asignar'}
-            </p>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {appointment.motivo || 'Sin motivo registrado'}
-            </p>
-          </div>
-
-          <StatusPill tone={getAppointmentTone(appointment.estado)}>
-            {CITA_ESTADO_LABELS[appointment.estado] || appointment.estado || 'Programada'}
-          </StatusPill>
-
-          <div className="flex flex-wrap justify-end gap-2">
-            <Link
-              to={canUseHistories ? buildHistoryHref(appointment) : '/planes'}
-              className={PRIMARY_BUTTON}
-            >
-              <Stethoscope className="h-4 w-4" />
-              {canUseHistories ? 'Atender' : 'Activar historias'}
-            </Link>
-            <Link
-              to={canUseBilling ? buildBillingHref(appointment) : '/planes'}
-              className={SECONDARY_BUTTON}
-            >
-              <Receipt className="h-4 w-4" />
-              {canUseBilling ? 'Cobrar' : 'Activar caja'}
-            </Link>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // Dentro de AdminShell como el resto de la app: sin él, los roles no admin
 // entraban a una página sin menú, sin buscador y sin forma de cerrar sesión.
 // Accesos del panel para roles no admin, filtrados por permisos: antes la
@@ -435,54 +205,87 @@ const MODULOS_OPERATIVOS = [
   { key: 'agenda', to: '/agenda', icon: CalendarClock, titulo: 'Agenda', descripcion: 'Citas del día, sala de espera y recepción.' },
   { key: 'pacientes', to: '/pacientes', icon: PawPrint, titulo: 'Pacientes y tutores', descripcion: 'Fichas de pacientes y datos de sus tutores.' },
   { key: 'historias', to: '/historias', icon: Stethoscope, titulo: 'Historias clínicas', descripcion: 'Consultas, fórmulas y exámenes de cada paciente.' },
-  { key: 'finanzas', to: '/finanzas', icon: Wallet, titulo: 'Caja y facturación', descripcion: 'Ventas, cobros y tu turno de caja.' },
+  { key: 'caja', to: '/caja', icon: Wallet, titulo: 'Caja', descripcion: 'Ventas, cobros y tu turno de caja.' },
   { key: 'inventario', to: '/inventario', icon: Boxes, titulo: 'Inventario', descripcion: 'Productos, insumos y facturas de compra.' },
 ]
 
-function RestrictedDashboard({ nombreClinica, usuarioEmail, usuario }) {
+// Hoy para los roles que no administran: la misma jornada del admin, sin la
+// caja del día ni los reportes, y con accesos a sus módulos debajo.
+function RestrictedDashboard({ usuario }) {
+  const hoy = useMemo(() => serializeDate(new Date()), [])
+  const puedeVerAgenda = canAccessModule(usuario, 'agenda')
   const modulos = MODULOS_OPERATIVOS.filter((modulo) => canAccessModule(usuario, modulo.key))
+
+  const agendaHoyQuery = useQuery({
+    queryKey: ['dashboard-citas-hoy-detalle', hoy],
+    queryFn: () => agendaApi.obtenerCitas({ fecha: hoy, pagina: 1, limite: 40 }),
+    enabled: puedeVerAgenda,
+  })
+  const citas = agendaHoyQuery.data?.citas ?? EMPTY_LIST
+
+  // El veterinario ve sus pacientes y los que aún no tienen profesional.
+  const citasOrdenadas = useMemo(() => {
+    if (!usuario?.id || !hasAnyRole(usuario, ['veterinario'])) return citas
+    return citas.filter((c) => !c.veterinario?.id || c.veterinario.id === usuario.id)
+  }, [citas, usuario])
+
+  const enEspera = citasOrdenadas.filter((c) => c.estado === 'en_espera').length
+  const atendidas = citasOrdenadas.filter((c) => c.estado === 'completada').length
+  const total = citasOrdenadas.length
+  const fechaHoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const titulo = !puedeVerAgenda
+    ? `Hola, ${usuario?.nombre?.split(' ')[0] || 'bienvenido'}`
+    : total === 0
+      ? 'Sin citas hoy'
+      : total === 1
+        ? '1 cita hoy'
+        : `${formatNumber(total)} citas hoy`
+  const descripcion = [
+    fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1),
+    total > 0 ? `${formatNumber(atendidas)} ${atendidas === 1 ? 'atendida' : 'atendidas'}` : null,
+    enEspera > 0 ? `${formatNumber(enEspera)} en espera` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
-    <AdminShell currentKey="dashboard" title="Panel de control">
-      <div className="mx-auto max-w-5xl">
-        <section className="border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-6 py-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Panel de control
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold text-foreground">{nombreClinica}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Este panel de control está reservado para administración. Tu perfil puede seguir
-              trabajando en las secciones permitidas, pero el seguimiento financiero, los reportes y
-              las decisiones de plan se concentran aquí.
-            </p>
-          </div>
+    <AdminShell currentKey="dashboard" title={titulo} description={descripcion}>
+      {puedeVerAgenda ? (
+        <JornadaHoy
+          citas={citasOrdenadas}
+          loading={agendaHoyQuery.isLoading}
+          alertas={EMPTY_LIST}
+          puedeAtender={canAccessModule(usuario, 'historias')}
+          puedeCobrar={canAccessModule(usuario, 'caja')}
+          puedeVerCaja={false}
+        />
+      ) : null}
 
-          <div className="grid gap-4 p-6 md:grid-cols-2">
-            <div className="border border-border bg-muted px-4 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Acceso actual
-              </p>
-              <p className="mt-3 text-base font-semibold text-foreground">{usuarioEmail || 'Sin correo principal'}</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Si necesitas ver reportes o controles de plan, solicita acceso al administrador.
-              </p>
-            </div>
-
-            {modulos.map((modulo) => (
-              <div key={modulo.key} className="border border-border bg-muted px-4 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  Tu módulo
-                </p>
-                <p className="mt-3 text-base font-semibold text-foreground">{modulo.titulo}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{modulo.descripcion}</p>
-                <NavCta to={modulo.to} icon={modulo.icon} className="mt-4">
-                  Abrir módulo
-                </NavCta>
-              </div>
-            ))}
+      {modulos.length > 0 ? (
+        <section aria-labelledby="hoy-modulos" className="flex flex-col gap-3">
+          <h2 id="hoy-modulos" className="text-lg font-semibold tracking-[-0.01em]">
+            Tus módulos
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {modulos.map((modulo) => {
+              const Icon = modulo.icon
+              return (
+                <Link
+                  key={modulo.key}
+                  to={modulo.to}
+                  className="group flex flex-col gap-3 rounded-2xl bg-card p-5 transition hover:bg-accent active:translate-y-px"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary group-hover:bg-card">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-base font-semibold">{modulo.titulo}</span>
+                  <span className="text-sm leading-5 text-muted-foreground">{modulo.descripcion}</span>
+                </Link>
+              )
+            })}
           </div>
         </section>
-      </div>
+      ) : null}
     </AdminShell>
   )
 }
@@ -535,12 +338,6 @@ export default function DashboardPage() {
   // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
   const mostrarDian = puedeVerIngresos && tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
 
-  const quickActions = useMemo(() => {
-    const keys = ['agenda', 'paciente', 'historia', 'facturar']
-    if (puedeVerInventario) keys.splice(1, 0, 'inventario')
-    return keys.map((key) => ALL_QUICK_ACTIONS[key])
-  }, [puedeVerInventario])
-
   const ingresosQuery = useQuery({
     queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
     queryFn: () => dashboardApi.obtenerReporteIngresos(rangoMes),
@@ -591,7 +388,6 @@ export default function DashboardPage() {
   const propietariosActivos = resumen?.totales?.propietarios ?? 0
   const mascotasActivas = resumen?.totales?.mascotas ?? 0
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
-  const citasPendientesHoy = resumen?.hoy?.citasPendientes ?? 0
   // Los dos inventarios cuentan: quedarse sin un insumo clínico frena una
   // cirugía igual que quedarse sin un producto frena una venta.
   const productosBajoStock = resumen?.alertas?.productosbajoStock ?? 0
@@ -712,8 +508,8 @@ export default function DashboardPage() {
         id: 'vigencia',
         title: 'Plan por vencer',
         detail: `Quedan ${diasRestantes} días para el cierre de la vigencia actual. Conviene resolverlo antes de que afecte la continuidad.`,
-        to: '/planes',
-        actionLabel: 'Revisar plan',
+        to: '/plan',
+        actionLabel: 'Renovar plan',
       })
     }
 
@@ -737,7 +533,7 @@ export default function DashboardPage() {
         id: 'dian',
         title: 'Facturas con problema',
         detail: `${formatNumber(dianErrores)} facturas fueron rechazadas o no se pudieron enviar a la DIAN. Requieren revisión antes del siguiente corte.`,
-        to: '/finanzas',
+        to: '/caja',
         actionLabel: 'Abrir caja',
       })
     }
@@ -745,123 +541,86 @@ export default function DashboardPage() {
     return rows
   }, [alertasInventario, productosBajoStock, insumosBajoStock, dianErrores, diasRestantes, urgenciasSinHistoria])
 
-  const todayBridgeRows = useMemo(() => {
-    // Tope de 5 para que el Command Center entre sin scroll en 1366x768.
-    // "Ver agenda completa" es la salida cuando el dia trae mas pacientes.
-    const filtered = [...citasHoyRows]
-      .filter((appointment) => ['programada', 'en_espera'].includes(appointment.estado))
-      .slice(0, 5)
-
-    if (usuario?.rol === 'veterinario' && usuario?.id) {
-      return [
-        ...filtered.filter((c) => c.veterinario?.id === usuario.id),
-        ...filtered.filter((c) => c.veterinario?.id !== usuario.id),
-      ]
-    }
-    return filtered
-  }, [citasHoyRows, usuario])
-
-  const sinDocumentar = useMemo(
-    () =>
-      citasHoyRows.filter(
-        (c) => ['en_espera', 'completada'].includes(c.estado) && !c.historia?.id
-      ).length,
-    [citasHoyRows]
-  )
-
   const ingresosHoy = useMemo(() => {
     const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
     return entry?.total ?? 0
   }, [ingresosPorDia, hoy])
 
-  // Pulso del dia: el Command Center es el unico dueno de estas cifras.
-  const todaySummary = useMemo(
-    () => [
-      {
-        id: 'citas-hoy',
-        icon: CalendarClock,
-        label: 'Citas de hoy',
-        value: formatNumber(citasHoy),
-        helper: 'Citas agendadas para la fecha de hoy.',
-        to: puedeAbrirAgenda ? '/agenda' : null,
-      },
-      {
-        id: 'pendientes',
-        icon: CircleAlert,
-        label: 'Pendientes',
-        value: formatNumber(citasPendientesHoy),
-        helper: 'Atenciones de hoy aún marcadas como programadas.',
-        to: puedeAbrirAgenda ? '/agenda' : null,
-      },
-      puedeAbrirHistorias && {
-        id: 'sin-documentar',
-        icon: FileText,
-        label: 'Sin documentar',
-        value: formatNumber(sinDocumentar),
-        helper: 'Consultas de hoy sin historia clínica registrada.',
-        // Igual que la alerta de urgencias: la consulta se documenta desde su
-        // cita en la agenda; la bandeja de /historias solo lista historias ya
-        // creadas.
-        to: puedeAbrirAgenda ? '/agenda' : null,
-      },
-      {
-        id: 'stock-critico',
-        icon: Boxes,
-        label: 'Cantidad crítica',
-        value: formatNumber(alertasInventario),
-        helper: 'Productos por debajo del mínimo definido.',
-        to: puedeVerInventario ? '/inventario' : null,
-      },
-      puedeVerIngresos && {
-        id: 'ingresos-hoy',
-        icon: Wallet,
-        label: 'Ingresos de hoy',
-        value: formatCurrency(ingresosHoy),
-        helper: 'Facturado hoy en la sección de caja.',
-        to: puedeAbrirCaja ? '/finanzas' : null,
-      },
-    ],
-    [
-      alertasInventario,
-      citasHoy,
-      citasPendientesHoy,
-      ingresosHoy,
-      puedeAbrirAgenda,
-      puedeAbrirCaja,
-      puedeAbrirHistorias,
-      puedeVerIngresos,
-      puedeVerInventario,
-      sinDocumentar,
-    ]
-  )
+  const ingresosHoyQuery = useQuery({
+    queryKey: ['dashboard-ingresos', hoy, hoy],
+    queryFn: () => dashboardApi.obtenerReporteIngresos({ fechaInicio: hoy, fechaFin: hoy }),
+    enabled: puedeVerIngresos,
+  })
+
+  const turnoActivoQuery = useQuery({
+    queryKey: ['caja-turno-activo'],
+    queryFn: () => cajaApi.obtenerTurnoActivo(),
+    enabled: puedeVerIngresos,
+  })
+
+  const cajaHoy = useMemo(() => {
+    const porMetodo = Object.entries(ingresosHoyQuery.data?.ingresosPorMetodoPago || {})
+      .map(([key, valor]) => ({ key, label: PAYMENT_METHOD_LABELS[key] || key, valor: Number(valor) || 0 }))
+      .filter((metodo) => metodo.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
+    const apertura = turnoActivoQuery.data?.turno?.fechaApertura
+    return {
+      total: porMetodo.length ? porMetodo.reduce((suma, metodo) => suma + metodo.valor, 0) : ingresosHoy,
+      porMetodo,
+      turnoApertura: apertura
+        ? new Date(apertura).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+        : null,
+    }
+  }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoy])
+
+  // «Para revisar» nombra cada caso (el producto, el paciente) en vez de contar.
+  const alertasHoy = useMemo(() => {
+    const productosBajos = (inventarioQuery.data?.productos || [])
+      .filter((producto) => Number(producto.stock) <= Number(producto.stockMinimo))
+      .slice(0, 3)
+      .map((producto) => ({
+        id: `producto-${producto.id}`,
+        title: producto.nombre,
+        detail:
+          Number(producto.stock) <= 0
+            ? 'Agotado'
+            : `Quedan ${formatNumber(producto.stock)}, el mínimo es ${formatNumber(producto.stockMinimo)}`,
+        to: '/inventario',
+      }))
+    const historiasAbiertas = citasHoyRows
+      .filter((cita) => cita.estado === 'completada' && !cita.historia?.id)
+      .slice(0, 3)
+      .map((cita) => ({
+        id: `historia-${cita.id}`,
+        title: `Historia de ${cita.mascota?.nombre || 'un paciente'} sin cerrar`,
+        detail: `Consulta de las ${String(cita.horaInicio || '').slice(0, 5)}`,
+        to: '/agenda',
+      }))
+    const resto = tacticalAlerts.filter(
+      (alerta) =>
+        !(alerta.id === 'inventario' && productosBajos.length > 0) &&
+        !(alerta.id === 'urgencias-sin-historia' && historiasAbiertas.length > 0)
+    )
+    return [...historiasAbiertas, ...productosBajos, ...resto]
+  }, [inventarioQuery.data?.productos, citasHoyRows, tacticalAlerts])
 
   if (!esAdministrador) {
-    return <RestrictedDashboard nombreClinica={nombreClinica} usuarioEmail={usuario?.email} usuario={usuario} />
+    return <RestrictedDashboard usuario={usuario} />
   }
 
-  const renderSummaryOverview = () => {
-    return (
-      <div className="space-y-5">
-        <TodayAlerts alerts={tacticalAlerts} summary={todaySummary} />
-
-        <CommandPanel
-          className="ring-1 ring-primary/15 shadow-lg"
-          title="Puente operativo"
-          subtitle="Pacientes agendados para hoy con salida directa a consulta y caja."
-          action={
-            <NavCtaLink to="/agenda">Ver agenda completa</NavCtaLink>
-          }
-        >
-          <OperationalBridge
-            rows={todayBridgeRows}
-            loading={agendaHoyQuery.isLoading}
-            canUseHistories={puedeAbrirHistorias}
-            canUseBilling={puedeAbrirCaja}
-          />
-        </CommandPanel>
-      </div>
-    )
-  }
+  const renderSummaryOverview = () => (
+    <JornadaHoy
+      citas={citasHoyRows}
+      loading={agendaHoyQuery.isLoading}
+      cajaHoy={cajaHoy}
+      alertas={alertasHoy}
+      puedeAtender={puedeAbrirHistorias}
+      puedeCobrar={puedeAbrirCaja}
+      puedeVerCaja={puedeVerIngresos}
+      usuarioIdMios={hasAnyRole(usuario, ['veterinario']) ? usuario?.id : null}
+      onVerReportes={() => setActiveTab('agenda')}
+    />
+  )
 
   const renderAgendaTab = () => {
     if (!puedeVerAgenda) {
@@ -957,7 +716,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-5">
         <KpiGrid
-          action={<OpenModuleButton to="/finanzas" label="Abrir caja completa" />}
+          action={<OpenModuleButton to="/caja" label="Abrir caja completa" />}
           items={[
             {
               id: 'ingresos-periodo',
@@ -1027,7 +786,7 @@ export default function DashboardPage() {
           emptyTitle="No hay facturas registradas"
           emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
           action={
-            <NavCtaLink to="/finanzas">Abrir módulo</NavCtaLink>
+            <NavCtaLink to="/caja">Abrir módulo</NavCtaLink>
           }
         />
       </div>
@@ -1204,14 +963,14 @@ export default function DashboardPage() {
       >
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[13px] font-semibold text-muted-foreground">
               Clinica
             </p>
             <p className="mt-3 text-base font-semibold text-foreground">{nombreClinica}</p>
             <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicación pendiente'}</p>
           </div>
           <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[13px] font-semibold text-muted-foreground">
               Vigencia
             </p>
             <p className="mt-3 text-base font-semibold text-foreground">
@@ -1222,16 +981,21 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[13px] font-semibold text-muted-foreground">
               Acción recomendada
             </p>
             <p className="mt-3 text-base font-semibold text-foreground">Gestión comercial</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
             </p>
-            <NavCtaLink to="/planes" icon={ArrowRight} className="mt-4">
-              Revisar planes
-            </NavCtaLink>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <NavCtaLink to="/plan" icon={ArrowRight}>
+                Pagar o renovar
+              </NavCtaLink>
+              <NavCtaLink to="/planes" icon={ArrowRight}>
+                Revisar planes
+              </NavCtaLink>
+            </div>
           </div>
         </div>
       </DashboardPanel>
@@ -1283,6 +1047,23 @@ export default function DashboardPage() {
     }
   }
 
+  // El encabezado responde lo primero que se pregunta al llegar: cuántas citas
+  // hay y cómo va el día.
+  const atendidasHoy = citasHoyRows.filter((c) => c.estado === 'completada').length
+  const enEsperaHoy = citasHoyRows.filter((c) => c.estado === 'en_espera').length
+  const enConsultaHoy = citasHoyRows.find((c) => c.estado === 'en_atencion')
+  const tituloHoy =
+    citasHoy === 0 ? 'Sin citas hoy' : citasHoy === 1 ? '1 cita hoy' : `${formatNumber(citasHoy)} citas hoy`
+  const fechaHoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+  const descripcionHoy = [
+    fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1),
+    citasHoy > 0 ? `${formatNumber(atendidasHoy)} ${atendidasHoy === 1 ? 'atendida' : 'atendidas'}` : null,
+    enConsultaHoy?.mascota?.nombre ? `${enConsultaHoy.mascota.nombre} en consulta` : null,
+    enEsperaHoy > 0 ? `${formatNumber(enEsperaHoy)} en espera` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   const tabBadges = {
     resumen: tacticalAlerts.length > 0 ? `${tacticalAlerts.length}` : null,
     agenda: citasHoy > 0 ? `${citasHoy}` : null,
@@ -1324,24 +1105,37 @@ export default function DashboardPage() {
   return (
     <AdminShell
       currentKey="dashboard"
-      title="Panel de control"
-      description="Todo lo importante del día en un solo lugar: operación, caja, inventario y continuidad, sin perder tiempo en pantallas saturadas."
-      headerBadge={
-        <StatusPill tone="border-border bg-muted text-foreground">
-          Corte {formatShortDate(rangoMes.fechaFin)}
-        </StatusPill>
-      }
+      title={tituloHoy}
+      description={descripcionHoy}
       actions={
-        typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
-          <StatusPill tone="border-destructive/40 bg-destructive/10 text-destructive">
-            Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}
-          </StatusPill>
-        ) : null
+        <>
+          {typeof diasRestantes === 'number' && diasRestantes <= 5 ? (
+            <StatusPill tone="bg-danger-soft text-danger">
+              Tu plan vence en {diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}
+            </StatusPill>
+          ) : null}
+          <Link
+            to="/caja"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
+          >
+            <Receipt className="h-4 w-4" />
+            Cobrar
+          </Link>
+          <Link
+            to="/agenda?nueva=1"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Nueva cita
+          </Link>
+        </>
       }
-      showQuickActions
-      quickActions={quickActions}
     >
-      <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
+      {/* Hoy es la jornada; los reportes del mes quedan a un clic y se
+          navegan con pestañas solo cuando se abren. */}
+      {activeTab === 'resumen' ? null : (
+        <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
+      )}
 
       {queryErrors.length > 0 ? (
         <div className="space-y-3">

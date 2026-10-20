@@ -63,8 +63,8 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
 
   return (
     <div className={className}>
-      <h2 className="text-xl font-semibold text-foreground">Revisa tu correo</h2>
-      <p className="mt-1.5 text-sm text-muted-foreground">
+      <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Revisa tu correo</h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         Enviamos un código de 6 dígitos a{' '}
         <span className="break-all font-medium text-foreground">{email}</span>. Escríbelo aquí
         para continuar. Si no lo ves, mira también en spam. Si cierras esta ventana, puedes
@@ -72,14 +72,14 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
       </p>
 
       <form
-        className="mt-5 space-y-3.5"
+        className="mt-6 space-y-3"
         onSubmit={(e) => {
           e.preventDefault()
           enviar(codigo)
         }}
       >
         <div>
-          <label htmlFor="codigo-verificacion" className="mb-1.5 block text-sm font-medium text-foreground">
+          <label htmlFor="codigo-verificacion" className="mb-2 block text-sm font-semibold text-foreground">
             Código de verificación
           </label>
           <input
@@ -94,7 +94,7 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
             placeholder="000000"
             autoFocus
             aria-describedby="codigo-verificacion-estado"
-            className={`h-12 w-full rounded-lg border bg-background px-3 text-center font-mono text-2xl tracking-[0.5em] text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:border-primary focus:ring-1 focus:ring-primary ${
+            className={`h-14 w-full rounded-lg border bg-card px-4 text-center text-[26px] font-semibold tabular-nums tracking-[0.45em] text-foreground outline-none transition placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary ${
               verificar.isError ? 'border-danger' : 'border-input'
             }`}
           />
@@ -118,13 +118,13 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
         <button
           type="submit"
           disabled={codigo.length !== 6 || verificar.isPending}
-          className="h-10 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+          className="h-12 w-full rounded-lg bg-primary px-4 text-base font-semibold text-primary-foreground transition hover:bg-primary/90 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
         >
           {verificar.isPending ? 'Verificando...' : 'Verificar'}
         </button>
       </form>
 
-      <div className="mt-4 space-y-3 border-t border-border pt-4">
+      <div className="mt-5 space-y-3 rounded-xl bg-muted p-4">
         <TurnstileWidget resetKey={reinicio} onToken={setTokenReenvio} />
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <button
@@ -134,18 +134,18 @@ export default function CodigoVerificacionPaso({ email, onVerificado, onVolver, 
               setAviso('')
               reenviar.mutate({ email, turnstileToken: tokenReenvio })
             }}
-            className="font-medium text-primary hover:underline disabled:pointer-events-none disabled:text-muted-foreground"
+            className="rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:text-muted-foreground"
           >
             {reenviar.isPending ? 'Reenviando...' : 'Reenviar código'}
           </button>
-          <span aria-live="polite" className="text-muted-foreground">
+          <span aria-live="polite" className="tabular-nums text-muted-foreground">
             {segundos > 0 ? `Podrás pedir otro en ${segundos} s` : null}
           </span>
         </div>
         <button
           type="button"
           onClick={onVolver}
-          className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="rounded-sm text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           ¿Correo equivocado? Volver
         </button>

@@ -1,17 +1,15 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Camera, Eye, EyeOff, LogOut, ShieldCheck, Trash2 } from 'lucide-react'
+import { Camera, Eye, EyeOff, LogOut } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
-import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
-import { PLAN_META } from '@/features/dashboard/dashboardUtils'
-import { Button } from '@/components/ui/button'
-import { NavCtaLink } from '@/components/shared/NavCta'
 import { useAuthStore } from '@/store/authStore'
+import { useThemeStore } from '@/store/themeStore'
 import { hasRole } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
 import {
   useActualizarPerfil,
   useSubirFotoPerfil,
@@ -19,31 +17,32 @@ import {
 } from '@/features/perfil/usePerfil'
 import { perfilApi } from '@/features/perfil/perfilApi'
 
-const INPUT_CLASS =
-  'h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary'
-const LABEL_CLASS = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+const CAMPO =
+  'h-[46px] w-full rounded-lg border-0 bg-muted px-3.5 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary'
+const BTN_SECUNDARIO = cn('inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px disabled:opacity-60', FOCO)
+const BTN_PRIMARIO = cn('inline-flex h-11 items-center justify-center rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:opacity-60', FOCO)
 
-const ROLE_LABELS = {
-  admin: 'Administrador',
-  veterinario: 'Veterinario',
-  recepcionista: 'Recepcionista',
-  auxiliar: 'Auxiliar',
-  facturador: 'Facturador',
-  superadmin: 'Administrador de la plataforma',
+const ROLES = {
+  admin: { label: 'Administración', clase: 'bg-primary/10 text-primary' },
+  veterinario: { label: 'Veterinaria', clase: 'bg-info-soft text-info' },
+  recepcionista: { label: 'Recepción', clase: 'bg-success-soft text-success' },
+  auxiliar: { label: 'Auxiliar', clase: 'bg-muted text-muted-foreground' },
+  facturador: { label: 'Facturación', clase: 'bg-warning-soft text-warning' },
+  superadmin: { label: 'Plataforma', clase: 'bg-muted text-muted-foreground' },
 }
+
+const PROVEEDORES = { google: 'Google', microsoft: 'Microsoft' }
 
 const telefonoRegex = /^3\d{9}$/
 const passwordFuerteRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
-const esquemaIdentidad = z.object({
+const esquemaDatos = z.object({
   nombre: z.string().trim().min(3, 'Mínimo 3 caracteres').max(120),
   telefono: z
     .string()
     .trim()
-    .refine(
-      (v) => !v || telefonoRegex.test(v.replace(/\D/g, '')),
-      'Celular colombiano de 10 dígitos que empiece por 3'
-    )
+    .refine((v) => !v || telefonoRegex.test(v.replace(/\D/g, '')), 'Celular colombiano de 10 dígitos que empiece por 3')
     .optional()
     .or(z.literal('')),
   cargo: z.string().trim().max(120).optional().or(z.literal('')),
@@ -54,59 +53,36 @@ const esquemaPassword = z.object({
   passwordActual: z.string().min(1, 'Requerida'),
   passwordNueva: z
     .string()
-    .regex(
-      passwordFuerteRegex,
-      'Mínimo 8 caracteres con mayúscula, minúscula, número y carácter especial'
-    ),
+    .regex(passwordFuerteRegex, 'Mínimo 8 caracteres con mayúscula, minúscula, número y carácter especial'),
 })
 
-const inicialesDe = (usuario) => {
-  const base = usuario?.nombre || usuario?.email || ''
+const inicialesDe = (usuario) =>
+  (usuario?.nombre || usuario?.email || '')
+    .split(' ')
+    .slice(0, 2)
+    .map((p) => p.charAt(0))
+    .join('')
+    .toUpperCase() || '?'
+
+const mesAnio = (valor) =>
+  valor ? new Date(valor).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' }) : null
+
+function Campo({ id, label, ayuda, error, children }) {
   return (
-    base
-      .split(' ')
-      .slice(0, 2)
-      .map((p) => p.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-sm font-semibold text-foreground">{label}</label>
+      {children}
+      {error ? <span className="text-[13px] text-danger">{error}</span> : ayuda ? <span className="text-[13px] text-muted-foreground">{ayuda}</span> : null}
+    </div>
   )
 }
 
-const diasHasta = (fecha) => {
-  if (!fecha) return null
-  const diff = new Date(fecha).getTime() - Date.now()
-  return Math.ceil(diff / (24 * 60 * 60 * 1000))
-}
-
-function CardIdentidad({ usuario }) {
+function Encabezado({ usuario, clinica }) {
   const fileInputRef = useRef(null)
-  const { mutate: actualizar, isPending } = useActualizarPerfil()
+  const { mutate: actualizar } = useActualizarPerfil()
   const { mutateAsync: subirFoto, isPending: subiendoFoto } = useSubirFotoPerfil()
-  const esVeterinario = hasRole(usuario, 'veterinario')
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-  } = useForm({
-    resolver: zodResolver(esquemaIdentidad),
-    defaultValues: {
-      nombre: usuario?.nombre || '',
-      telefono: usuario?.telefono || '',
-      cargo: usuario?.cargo || '',
-      tarjetaProfesional: usuario?.tarjetaProfesional || '',
-    },
-  })
-
-  const onSubmit = (data) => {
-    const payload = {
-      nombre: data.nombre,
-      telefono: data.telefono || null,
-      cargo: data.cargo || null,
-    }
-    if (esVeterinario) payload.tarjetaProfesional = data.tarjetaProfesional || null
-    actualizar(payload)
-  }
+  const roles = [usuario?.rol, ...(usuario?.rolesAdicionales || [])].filter(Boolean)
+  const desde = mesAnio(usuario?.createdAt)
 
   const onSeleccionarFoto = async (event) => {
     const file = event.target.files?.[0]
@@ -116,144 +92,172 @@ function CardIdentidad({ usuario }) {
     actualizar({ foto })
   }
 
-  const roles = [usuario?.rol, ...(usuario?.rolesAdicionales || [])].filter(Boolean)
-  const metodoAcceso =
-    usuario?.proveedorAuth === 'google'
-      ? 'Google'
-      : usuario?.proveedorAuth === 'microsoft'
-        ? 'Microsoft'
-        : 'Correo y contraseña'
-
   return (
-    <DashboardPanel title="Identidad" subtitle="Como te ve tu equipo dentro de la clínica.">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative">
-            {usuario?.foto ? (
-              <img
-                src={usuario.foto}
-                alt="Foto de perfil"
-                className="h-24 w-24 rounded-full border border-border object-cover"
-              />
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-sidebar text-xl font-semibold text-sidebar-primary">
-                {inicialesDe(usuario)}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={subiendoFoto}
-              title="Cambiar foto"
-              aria-label="Cambiar foto de perfil"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-            >
-              <Camera className="h-4 w-4" />
-            </button>
-          </div>
+    <header className="flex flex-wrap items-center gap-6 lg:pt-6">
+      <div className="flex flex-col items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={subiendoFoto}
+          aria-label="Cambiar foto de perfil"
+          className={cn('group relative h-[104px] w-[104px] overflow-hidden rounded-[30px] bg-brand text-[40px] font-bold tracking-[-0.03em] text-tinta-800', FOCO)}
+        >
           {usuario?.foto ? (
-            <button
-              type="button"
-              onClick={() => actualizar({ foto: null })}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3" /> Quitar foto
-            </button>
-          ) : null}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={onSeleccionarFoto}
-          />
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="grid flex-1 gap-4 xl:grid-cols-2">
-          <div>
-            <label className={LABEL_CLASS}>Nombre</label>
-            <input {...register('nombre')} className={INPUT_CLASS} />
-            {errors.nombre ? (
-              <p className="mt-1 text-xs text-destructive">{errors.nombre.message}</p>
-            ) : null}
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Celular</label>
-            <input {...register('telefono')} className={INPUT_CLASS} placeholder="3001234567" />
-            {errors.telefono ? (
-              <p className="mt-1 text-xs text-destructive">{errors.telefono.message}</p>
-            ) : null}
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Cargo</label>
-            <input
-              {...register('cargo')}
-              className={INPUT_CLASS}
-              placeholder="Ej. Médica veterinaria — cirugía"
-            />
-          </div>
-          {esVeterinario ? (
-            <div>
-              <label className={LABEL_CLASS}>Tarjeta profesional</label>
-              <input
-                {...register('tarjetaProfesional')}
-                className={INPUT_CLASS}
-                placeholder="Número COMVEZCOL"
-              />
-            </div>
-          ) : null}
-          <div>
-            <label className={LABEL_CLASS}>Correo</label>
-            <input value={usuario?.email || ''} disabled className={`${INPUT_CLASS} opacity-60`} />
-          </div>
-          <div className="flex flex-wrap items-end gap-2 pb-1">
-            {roles.map((rol) => (
-              <StatusPill key={rol}>{ROLE_LABELS[rol] || rol}</StatusPill>
-            ))}
-            <StatusPill tone="border-border bg-accent text-foreground">
-              Acceso: {metodoAcceso}
-            </StatusPill>
-          </div>
-          <div className="xl:col-span-2">
-            <Button type="submit" disabled={isPending || !isDirty}>
-              {isPending ? 'Guardando...' : 'Guardar cambios'}
-            </Button>
-          </div>
-        </form>
+            <img src={usuario.foto} alt="" className="h-full w-full bg-card object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center">{inicialesDe(usuario)}</span>
+          )}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+            <Camera className="h-6 w-6" />
+          </span>
+        </button>
+        {usuario?.foto ? (
+          <button type="button" onClick={() => actualizar({ foto: null })} className="text-[13px] text-muted-foreground hover:text-danger">
+            Quitar foto
+          </button>
+        ) : null}
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onSeleccionarFoto} />
       </div>
-    </DashboardPanel>
+      <div className="flex min-w-0 flex-col gap-2.5">
+        <h1 className="break-words text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+          {usuario?.nombre || 'Mi perfil'}
+        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          {roles.map((rol) => {
+            const r = ROLES[rol] || { label: rol, clase: 'bg-muted text-muted-foreground' }
+            return <span key={rol} className={cn('rounded-[5px] px-2 py-1 text-[13px] font-semibold', r.clase)}>{r.label}</span>
+          })}
+          {desde ? (
+            <span className="text-[15px] text-muted-foreground">
+              En {clinica?.nombre || 'la clínica'} desde {desde}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </header>
   )
 }
 
-function CardSeguridad({ usuario }) {
-  const navigate = useNavigate()
-  const clearAuth = useAuthStore((s) => s.clearAuth)
-  const { mutate: cambiar, isPending } = useCambiarPassword()
-  const [verActual, setVerActual] = useState(false)
-  const [verNueva, setVerNueva] = useState(false)
-  const [cerrando, setCerrando] = useState(false)
-  const esLocal = !usuario?.proveedorAuth || usuario.proveedorAuth === 'local'
+function DatosPersonales({ usuario }) {
+  const { mutate: actualizar, isPending } = useActualizarPerfil()
+  const esVeterinario = hasRole(usuario, 'veterinario')
+  const proveedor = PROVEEDORES[usuario?.proveedorAuth]
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm({
-    resolver: zodResolver(esquemaPassword),
-    defaultValues: { passwordActual: '', passwordNueva: '' },
+    resolver: zodResolver(esquemaDatos),
+    defaultValues: {
+      nombre: usuario?.nombre || '',
+      telefono: usuario?.telefono || '',
+      cargo: usuario?.cargo || '',
+      tarjetaProfesional: usuario?.tarjetaProfesional || '',
+    },
   })
 
   const onSubmit = (data) => {
-    cambiar(data, { onSuccess: () => reset() })
+    const payload = { nombre: data.nombre, telefono: data.telefono || null, cargo: data.cargo || null }
+    if (esVeterinario) payload.tarjetaProfesional = data.tarjetaProfesional || null
+    actualizar(payload, { onSuccess: () => reset(data) })
   }
+
+  return (
+    <form aria-labelledby="p-datos" onSubmit={handleSubmit(onSubmit)} className="flex min-w-0 flex-col gap-[18px] rounded-2xl bg-card p-6">
+      <h2 id="p-datos" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Datos personales</h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Campo id="p-nombre" label="Nombre" error={errors.nombre?.message}>
+          <input id="p-nombre" {...register('nombre')} className={CAMPO} autoComplete="name" />
+        </Campo>
+        <Campo id="p-telefono" label="Celular" error={errors.telefono?.message}>
+          <input id="p-telefono" {...register('telefono')} className={CAMPO} placeholder="3001234567" inputMode="tel" autoComplete="tel" />
+        </Campo>
+        <Campo
+          id="p-correo"
+          label="Correo"
+          ayuda={proveedor ? `Lo administra tu cuenta de ${proveedor}` : 'Es tu usuario para entrar'}
+        >
+          <input id="p-correo" value={usuario?.email || ''} readOnly className={cn(CAMPO, 'bg-secondary text-muted-foreground')} />
+        </Campo>
+        <Campo id="p-cargo" label="Cargo">
+          <input id="p-cargo" {...register('cargo')} className={CAMPO} placeholder="Por ejemplo: médica veterinaria, cirugía" />
+        </Campo>
+        {esVeterinario ? (
+          <Campo id="p-tarjeta" label="Tarjeta profesional" ayuda="Sale en las fórmulas que firmas">
+            <input id="p-tarjeta" {...register('tarjetaProfesional')} className={CAMPO} placeholder="Número COMVEZCOL" />
+          </Campo>
+        ) : null}
+      </div>
+      <div className="flex justify-end gap-2.5">
+        <button type="button" onClick={() => reset()} disabled={!isDirty || isPending} className={BTN_SECUNDARIO}>
+          Descartar
+        </button>
+        <button type="submit" disabled={!isDirty || isPending} className={BTN_PRIMARIO}>
+          {isPending ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function CambiarPassword({ onListo }) {
+  const { mutate: cambiar, isPending } = useCambiarPassword()
+  const [verActual, setVerActual] = useState(false)
+  const [verNueva, setVerNueva] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ resolver: zodResolver(esquemaPassword), defaultValues: { passwordActual: '', passwordNueva: '' } })
+
+  const ojo = (visible, alternar, etiqueta) => (
+    <button
+      type="button"
+      onClick={alternar}
+      aria-label={visible ? `Ocultar ${etiqueta}` : `Mostrar ${etiqueta}`}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+    >
+      {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  )
+
+  return (
+    <form onSubmit={handleSubmit((data) => cambiar(data, { onSuccess: onListo }))} className="flex flex-col gap-3 rounded-xl bg-muted/60 p-4">
+      <Campo id="p-pass-actual" label="Contraseña actual" error={errors.passwordActual?.message}>
+        <div className="relative">
+          <input id="p-pass-actual" {...register('passwordActual')} type={verActual ? 'text' : 'password'} autoComplete="current-password" className={cn(CAMPO, 'bg-card pr-10')} />
+          {ojo(verActual, () => setVerActual((v) => !v), 'contraseña actual')}
+        </div>
+      </Campo>
+      <Campo id="p-pass-nueva" label="Contraseña nueva" error={errors.passwordNueva?.message} ayuda="Al cambiarla se cierran tus sesiones en otros dispositivos">
+        <div className="relative">
+          <input id="p-pass-nueva" {...register('passwordNueva')} type={verNueva ? 'text' : 'password'} autoComplete="new-password" className={cn(CAMPO, 'bg-card pr-10')} />
+          {ojo(verNueva, () => setVerNueva((v) => !v), 'contraseña nueva')}
+        </div>
+      </Campo>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onListo} className={BTN_SECUNDARIO}>Cancelar</button>
+        <button type="submit" disabled={isPending} className={BTN_PRIMARIO}>{isPending ? 'Guardando…' : 'Cambiar contraseña'}</button>
+      </div>
+    </form>
+  )
+}
+
+function Seguridad({ usuario }) {
+  const navigate = useNavigate()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+  const [cambiando, setCambiando] = useState(false)
+  const [cerrando, setCerrando] = useState(false)
+  const proveedor = PROVEEDORES[usuario?.proveedorAuth]
 
   const cerrarTodas = async () => {
     setCerrando(true)
     try {
       await perfilApi.cerrarTodasLasSesiones()
     } catch {
-      // La sesion local se limpia igual aunque falle el cierre remoto
+      // La sesión local se limpia igual aunque falle el cierre remoto.
     } finally {
       clearAuth()
       toast.info('Sesiones cerradas, vuelve a ingresar')
@@ -262,144 +266,105 @@ function CardSeguridad({ usuario }) {
   }
 
   return (
-    <DashboardPanel title="Seguridad" subtitle="Tu acceso a la plataforma.">
-      <div className="grid gap-6 xl:grid-cols-2">
-        {esLocal ? (
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
-            <div>
-              <label className={LABEL_CLASS}>Contraseña actual</label>
-              <div className="relative">
-                <input
-                  {...register('passwordActual')}
-                  type={verActual ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  className={`${INPUT_CLASS} pr-10`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setVerActual((v) => !v)}
-                  aria-label={verActual ? 'Ocultar contraseña actual' : 'Mostrar contraseña actual'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {verActual ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.passwordActual ? (
-                <p className="mt-1 text-xs text-destructive">{errors.passwordActual.message}</p>
-              ) : null}
-            </div>
-            <div>
-              <label className={LABEL_CLASS}>Contraseña nueva</label>
-              <div className="relative">
-                <input
-                  {...register('passwordNueva')}
-                  type={verNueva ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className={`${INPUT_CLASS} pr-10`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setVerNueva((v) => !v)}
-                  aria-label={verNueva ? 'Ocultar contraseña nueva' : 'Mostrar contraseña nueva'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {verNueva ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.passwordNueva ? (
-                <p className="mt-1 text-xs text-destructive">{errors.passwordNueva.message}</p>
-              ) : null}
-            </div>
-            <div>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Actualizando...' : 'Cambiar contraseña'}
-              </Button>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Al cambiarla se cierran tus sesiones en otros dispositivos.
-              </p>
-            </div>
-          </form>
-        ) : (
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Tu acceso es gestionado por{' '}
-                {usuario?.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                No tienes contraseña en Bourgelat; la seguridad de tu cuenta (verificación en dos
-                pasos, recuperación) se administra desde tu cuenta de{' '}
-                {usuario?.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'}.
-              </p>
-            </div>
-          </div>
-        )}
+    <section aria-labelledby="p-seg" className="flex flex-col gap-3.5 rounded-2xl bg-card p-6">
+      <h2 id="p-seg" className="text-lg font-semibold text-foreground">Seguridad</h2>
 
-        <div className="flex flex-col items-start justify-center gap-2 rounded-lg border border-border p-4">
-          <p className="text-sm font-medium text-foreground">Sesiones</p>
-          <p className="text-xs text-muted-foreground">
-            Si sospechas que alguien más entró con tu cuenta, cierra todas las sesiones abiertas.
-          </p>
-          <Button type="button" variant="outline" onClick={cerrarTodas} disabled={cerrando}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {cerrando ? 'Cerrando...' : 'Cerrar sesión en todos los dispositivos'}
-          </Button>
+      {proveedor ? (
+        <div className="flex items-center justify-between gap-3 py-1">
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="font-semibold text-foreground">Entras con {proveedor}</span>
+            <span className="truncate text-[13px] text-muted-foreground">{usuario?.email}</span>
+          </span>
+          <span className="rounded-[5px] bg-success-soft px-2 py-1 text-[13px] font-semibold text-success">Conectado</span>
         </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3 py-1">
+            <span className="flex flex-col gap-0.5">
+              <span className="font-semibold text-foreground">Contraseña</span>
+              <span className="text-[13px] text-muted-foreground">Entras con tu correo y contraseña</span>
+            </span>
+            {!cambiando ? (
+              <button type="button" onClick={() => setCambiando(true)} className={cn(BTN_SECUNDARIO, 'h-[38px] px-3 text-[13px]')}>
+                Cambiar
+              </button>
+            ) : null}
+          </div>
+          {cambiando ? <CambiarPassword onListo={() => setCambiando(false)} /> : null}
+        </>
+      )}
+
+      <div className="mt-1 flex flex-col gap-2 rounded-xl bg-muted/60 p-4">
+        <span className="font-semibold text-foreground">Sesiones abiertas</span>
+        <span className="text-[13px] text-muted-foreground">
+          Si dejaste la sesión abierta en otro equipo o crees que alguien entró con tu cuenta, ciérralas todas.
+        </span>
+        <button type="button" onClick={cerrarTodas} disabled={cerrando} className={cn(BTN_SECUNDARIO, 'mt-1 self-start text-danger')}>
+          <LogOut className="h-4 w-4" />
+          {cerrando ? 'Cerrando…' : 'Cerrar sesión en todos los dispositivos'}
+        </button>
       </div>
-    </DashboardPanel>
+    </section>
   )
 }
 
-function CardSuscripcion({ suscripcion }) {
-  const plan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
-  const dias = diasHasta(suscripcion?.fechaFin)
-  const porVencer = dias !== null && dias <= 5
+// Miniaturas fijas: muestran cómo se ve cada tema sin importar el actual.
+const TEMAS = [
+  { valor: false, label: 'Claro', fondo: 'bg-papel-100', barra: 'bg-tinta-800', hoja: 'bg-white' },
+  { valor: true, label: 'Oscuro', fondo: 'bg-tinta-900', barra: 'bg-tinta-700', hoja: 'bg-tinta-800' },
+]
+
+function Apariencia() {
+  const dark = useThemeStore((s) => s.dark)
+  const setDark = useThemeStore((s) => s.setDark)
 
   return (
-    <DashboardPanel
-      title="Suscripción"
-      subtitle="Estado del plan de tu clínica."
-      action={
-        porVencer ? (
-          <StatusPill tone="border-destructive/40 bg-destructive/10 text-destructive">
-            Vence en {dias} {dias === 1 ? 'día' : 'días'}
-          </StatusPill>
-        ) : null
-      }
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-foreground">
-          Plan <span className="font-semibold">{plan.nombre}</span>
-          {suscripcion?.fechaFin ? (
-            <span className="text-muted-foreground">
-              {' '}
-              · vence el{' '}
-              {new Date(suscripcion.fechaFin).toLocaleDateString('es-CO', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
-          ) : null}
-        </p>
-        <NavCtaLink to="/planes">Ver planes y renovación</NavCtaLink>
+    <section aria-labelledby="p-pref" className="flex flex-col gap-3.5 rounded-2xl bg-card p-6">
+      <h2 id="p-pref" className="text-lg font-semibold text-foreground">Apariencia</h2>
+      <div role="radiogroup" aria-label="Tema" className="grid grid-cols-2 gap-2">
+        {TEMAS.map((t) => {
+          const activo = dark === t.valor
+          return (
+            <button
+              key={t.label}
+              type="button"
+              role="radio"
+              aria-checked={activo}
+              onClick={() => setDark(t.valor)}
+              className={cn('flex flex-col gap-2 rounded-xl p-2.5 text-left text-foreground transition', activo ? 'bg-primary/10 ring-2 ring-inset ring-primary' : 'bg-muted hover:bg-muted/70', FOCO)}
+            >
+              <span className={cn('flex h-[54px] gap-1 rounded-lg p-1.5', t.fondo)} aria-hidden>
+                <span className={cn('w-3.5 rounded-[3px]', t.barra)} />
+                <span className={cn('flex-1 rounded-[3px]', t.hoja)} />
+              </span>
+              <span className={cn('text-[13px]', activo ? 'font-semibold' : 'font-medium')}>{t.label}</span>
+            </button>
+          )
+        })}
       </div>
-    </DashboardPanel>
+    </section>
   )
 }
 
 export default function PerfilPage() {
   const usuario = useAuthStore((s) => s.usuario)
-  const suscripcion = useAuthStore((s) => s.suscripcion)
-  const esAdmin = hasRole(usuario, 'admin')
+  const clinica = useAuthStore((s) => s.clinica)
+
+  useEffect(() => {
+    document.title = 'Mi perfil | Bourgelat'
+  }, [])
 
   return (
-    <AdminShell title="Mi perfil" description="Tus datos personales, tu seguridad y tu acceso.">
-      <div className="grid gap-6">
-        <CardIdentidad usuario={usuario} />
-        <CardSeguridad usuario={usuario} />
-        {esAdmin && suscripcion ? <CardSuscripcion suscripcion={suscripcion} /> : null}
+    <AdminShell title="Mi perfil" hidePageHeader hideSearch>
+      <div className="flex flex-col gap-6">
+        <Encabezado usuario={usuario} clinica={clinica} />
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+          <DatosPersonales key={usuario?.id} usuario={usuario} />
+          <div className="flex min-w-0 flex-col gap-6">
+            <Seguridad usuario={usuario} />
+            <Apariencia />
+          </div>
+        </div>
       </div>
     </AdminShell>
   )

@@ -2,15 +2,11 @@ import { useEffect, useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { motion as Motion } from 'motion/react'
 import { z } from 'zod'
-import { ArrowRight, Stethoscope } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Logo from '@/components/shared/Logo'
 import { useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
-
-// Caramelo de marca para texto (eyebrows y enlaces); sigue el tema.
-const ACCENT = 'hsl(var(--brand-foreground))'
 
 const esquema = z.object({
   nombreClinica: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
@@ -19,6 +15,9 @@ const esquema = z.object({
     .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
   aceptaComunicaciones: z.boolean(),
 })
+
+const inputClass =
+  'h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
 
 export default function CompletarRegistroPage() {
   const [token] = useState(() => {
@@ -57,101 +56,71 @@ export default function CompletarRegistroPage() {
     return <Navigate to="/login" replace />
   }
 
-  const inputClass =
-    'h-14 w-full rounded-none border-0 border-b border-input bg-transparent px-1 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-brand'
-
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
-      <Motion.header
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4 sm:px-8"
-      >
-        <Link to="/" className="group inline-flex items-center gap-3 text-foreground no-underline">
-          <span className="flex h-9 w-9 items-center justify-center bg-foreground text-background transition-colors duration-200 group-hover:bg-brand">
-            <Stethoscope className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block text-base font-semibold leading-none tracking-[-0.02em]">Bourgelat</span>
-            <span className="mt-1 block text-[10px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
-              acceso veterinario
-            </span>
-          </span>
+    <div className="flex min-h-[100dvh] flex-col bg-background px-4 py-5 text-foreground sm:px-8 sm:py-6">
+      <header>
+        <Link
+          to="/"
+          className="inline-flex rounded-lg no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Logo />
         </Link>
-      </Motion.header>
+      </header>
 
-      <main className="relative z-10 flex flex-1 items-center overflow-hidden pb-24 lg:pb-4">
-        <div className="w-full px-5 sm:px-8 lg:pl-[15%] lg:pr-8">
-          <div
-            className="w-full max-w-[400px] border border-foreground/10 bg-card/95 px-8 py-8 backdrop-blur-sm"
-            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 -6px 20px rgba(43,32,24,0.05), 0 2px 4px rgba(43,32,24,0.04), 0 8px 20px rgba(43,32,24,0.08), 0 24px 56px rgba(43,32,24,0.10), 0 48px 80px rgba(43,32,24,0.05)' }}
-          >
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.26em]"
-              style={{ color: ACCENT }}
-            >
-              Un último paso
+      <main className="flex flex-1 items-center justify-center py-10">
+        <div className="w-full max-w-[440px] rounded-2xl bg-card p-6 sm:p-8">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.035em] text-foreground">
+            ¿Cómo se llama tu clínica?
+          </h1>
+          <p className="mt-2 text-[15px] text-muted-foreground">Un último paso y entras a la plataforma.</p>
+
+          {tokenExpirado ? (
+            <p className="mt-5 rounded-lg bg-danger-soft px-4 py-3 text-[15px] leading-relaxed text-danger">
+              El enlace expiró, vuelve a intentarlo.{' '}
+              <Link
+                to="/login"
+                className="rounded-sm font-semibold underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Volver al inicio de sesión
+              </Link>
             </p>
-
-            <h1
-              className="mt-3 text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-foreground"
-              style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
-            >
-              ¿Cómo se llama tu clínica?
-            </h1>
-
-            {tokenExpirado ? (
-              <p className="mt-6 text-sm text-danger">
-                El enlace expiró, vuelve a intentarlo.{' '}
-                <Link to="/login" className="font-semibold underline" style={{ color: ACCENT }}>
-                  Volver al inicio de sesión
-                </Link>
-              </p>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" autoComplete="off">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Nombre de la clínica
-                  </label>
-                  <input
-                    {...nombreClinicaField}
-                    type="text"
-                    autoComplete="organization"
-                    placeholder="Clínica Veterinaria Bourgelat"
-                    className={`${inputClass} ${errors.nombreClinica ? 'border-danger' : ''}`}
-                  />
-                  {errors.nombreClinica ? (
-                    <p className="mt-1 text-sm text-danger">{errors.nombreClinica.message}</p>
-                  ) : null}
-                </div>
-
-                <ConsentimientoRegistro
-                  terminosProps={register('aceptaTerminos')}
-                  comunicacionesProps={register('aceptaComunicaciones')}
-                  error={errors.aceptaTerminos?.message}
-                  textoClassName="text-foreground/70"
-                  linkClassName="font-semibold text-foreground underline underline-offset-2"
-                  checkboxClassName="accent-brand"
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" autoComplete="off">
+              <div>
+                <label htmlFor="completar-nombre" className="mb-2 block text-sm font-semibold text-foreground">
+                  Nombre de la clínica
+                </label>
+                <input
+                  {...nombreClinicaField}
+                  id="completar-nombre"
+                  type="text"
+                  autoComplete="organization"
+                  placeholder="Veterinaria San Roque"
+                  aria-invalid={errors.nombreClinica ? 'true' : undefined}
+                  className={`${inputClass} ${errors.nombreClinica ? 'border-danger' : ''}`}
                 />
-
-                {isError && !tokenExpirado ? (
-                  <p className="text-sm text-danger">
-                    No pudimos completar el registro. Inténtalo de nuevo.
-                  </p>
+                {errors.nombreClinica ? (
+                  <p className="mt-1.5 text-sm text-danger">{errors.nombreClinica.message}</p>
                 ) : null}
+              </div>
 
-                <Button
-                  type="submit"
-                  disabled={isPending || !aceptaTerminos}
-                  className="group h-14 w-full rounded-none bg-primary px-6 text-sm font-semibold uppercase tracking-[0.12em] text-primary-foreground transition hover:bg-primary/90"
-                >
-                  {isPending ? 'Creando clínica...' : 'Entrar a la plataforma'}
-                  {!isPending ? <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /> : null}
-                </Button>
-              </form>
-            )}
-          </div>
+              <ConsentimientoRegistro
+                terminosProps={register('aceptaTerminos')}
+                comunicacionesProps={register('aceptaComunicaciones')}
+                error={errors.aceptaTerminos?.message}
+              />
+
+              {isError && !tokenExpirado ? (
+                <p role="alert" className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">
+                  No pudimos completar el registro. Inténtalo de nuevo.
+                </p>
+              ) : null}
+
+              <Button type="submit" disabled={isPending || !aceptaTerminos} className="h-12 w-full text-base">
+                {isPending ? 'Creando clínica...' : 'Entrar a la plataforma'}
+              </Button>
+            </form>
+          )}
         </div>
       </main>
     </div>

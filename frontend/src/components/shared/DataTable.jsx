@@ -9,8 +9,8 @@ function SkeletonRow({ columns }) {
   return (
     <tr>
       {columns.map((col) => (
-        <td key={col.key} className="px-4 py-3">
-          <div className="h-4 animate-pulse rounded bg-muted" style={{ width: col.skeletonWidth ?? '80%' }} />
+        <td key={col.key} className="px-4 py-4">
+          <div className="h-4 animate-pulse rounded-md bg-muted" style={{ width: col.skeletonWidth ?? '80%' }} />
         </td>
       ))}
     </tr>
@@ -20,10 +20,10 @@ function SkeletonRow({ columns }) {
 // ─── Sort icon ───────────────────────────────────────────────────────────────
 
 function SortIcon({ column, sortKey, sortDir }) {
-  if (sortKey !== column) return <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+  if (sortKey !== column) return <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground/60" />
   return sortDir === 'asc'
-    ? <ChevronUp className="h-3 w-3 text-primary" />
-    : <ChevronDown className="h-3 w-3 text-primary" />
+    ? <ChevronUp className="h-3.5 w-3.5 text-primary" />
+    : <ChevronDown className="h-3.5 w-3.5 text-primary" />
 }
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
@@ -34,8 +34,8 @@ function Pagination({ page, pageSize, totalCount, onPageChange }) {
   const to = Math.min(page * pageSize, totalCount)
 
   return (
-    <div className="flex items-center justify-between border-t border-border px-4 py-3">
-      <p className="text-caption text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4 pt-3">
+      <p className="text-[13px] tabular-nums text-muted-foreground">
         Mostrando <span className="font-semibold text-foreground">{from}–{to}</span>{' '}
         de <span className="font-semibold text-foreground">{totalCount}</span>
       </p>
@@ -44,19 +44,19 @@ function Pagination({ page, pageSize, totalCount, onPageChange }) {
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="px-2 text-caption tabular-nums text-muted-foreground">
+        <span className="px-2 text-[13px] tabular-nums text-muted-foreground">
           {page} / {totalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40"
           aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />
@@ -199,21 +199,21 @@ export function DataTable({
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-panel', className)}>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border text-sm">
+    <div className={cn('overflow-hidden rounded-2xl bg-card', className)}>
+      <div className="overflow-x-auto px-2 pb-2">
+        <table className="min-w-full border-separate border-spacing-0 text-sm">
 
           {/* Encabezado */}
-          <thead className="bg-muted/60">
+          <thead>
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   scope="col"
                   className={cn(
-                    'px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground',
+                    'border-b border-border px-4 pb-3 pt-4 text-[13px] font-medium text-muted-foreground',
                     alignClass[col.align ?? 'left'],
-                    col.sortable && 'cursor-pointer select-none hover:text-foreground'
+                    col.sortable && 'cursor-pointer select-none transition-colors hover:text-foreground'
                   )}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
@@ -229,7 +229,7 @@ export function DataTable({
           </thead>
 
           {/* Cuerpo */}
-          <tbody className="divide-y divide-border">
+          <tbody>
             {loading ? (
               Array.from({ length: skeletonRows }).map((_, i) => (
                 <SkeletonRow key={i} columns={columns} />
@@ -238,13 +238,13 @@ export function DataTable({
               processedRows.map((row) => (
                 <tr
                   key={row[keyField] ?? row.key}
-                  className="transition-colors hover:bg-muted/40"
+                  className="group/fila [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
                       className={cn(
-                        'px-4 py-3 align-middle text-foreground [overflow-wrap:anywhere]',
+                        'px-4 py-3.5 align-middle text-foreground transition-colors [overflow-wrap:anywhere] group-hover/fila:bg-muted',
                         alignClass[col.align ?? 'left']
                       )}
                     >
@@ -263,7 +263,7 @@ export function DataTable({
                     action={emptyAction}
                     size="sm"
                     bordered
-                    className="m-4"
+                    className="m-3"
                   />
                 </td>
               </tr>

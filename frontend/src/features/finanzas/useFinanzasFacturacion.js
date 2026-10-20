@@ -32,6 +32,8 @@ const getErrorMessage = mensajeDeError
 const buildInitialForm = () => ({
   propietarioId: '',
   metodoPago: 'efectivo',
+  // Banco o referencia de la transferencia, o cuál es el «otro» método.
+  detallePago: '',
   observaciones: '',
   items: [],
   // Cuando la factura cobra una consulta: marca la historia como facturada.
@@ -50,15 +52,36 @@ const buildInitialForm = () => ({
 // con tipo 'pasarela' y el POS ramifica sobre este campo, en vez de comparar
 // contra un value hardcodeado. Ojo: la lista de metodos validos tambien vive
 // duplicada en los validadores de backend/src/routes/facturaRoutes.js (3 sitios).
+// Transferencia cubre cualquier banco o app (Nequi, Daviplata, Bre-B…): el
+// banco va en `detalle`. Las ventas viejas con 'nequi' o 'daviplata' siguen
+// teniendo etiqueta en PAYMENT_METHOD_LABELS. 'credito' es venta fiada: el
+// backend la deja con saldo por cobrar y exige cliente.
 export const PAYMENT_METHOD_OPTIONS = [
   { value: 'efectivo', label: 'Efectivo', tipo: 'manual' },
+  {
+    value: 'transferencia',
+    label: 'Transferencia',
+    tipo: 'manual',
+    detalle: { label: 'Banco o referencia', placeholder: 'Bancolombia, Nequi, ref. 8841…', requerido: false },
+  },
   { value: 'tarjeta_debito', label: 'Tarjeta débito', tipo: 'manual' },
   { value: 'tarjeta_credito', label: 'Tarjeta crédito', tipo: 'manual' },
-  { value: 'transferencia', label: 'Transferencia', tipo: 'manual' },
-  { value: 'nequi', label: 'Nequi', tipo: 'manual' },
-  { value: 'daviplata', label: 'Daviplata', tipo: 'manual' },
-  { value: 'otro', label: 'Otro', tipo: 'manual' },
+  { value: 'credito', label: 'A crédito', tipo: 'manual', requiereCliente: true },
+  {
+    value: 'otro',
+    label: 'Otro',
+    tipo: 'manual',
+    detalle: { label: '¿Cuál?', placeholder: 'Bono, canje, convenio…', requerido: true, falta: 'Escribe cuál método se usó' },
+  },
 ]
+
+// Qué le falta al método elegido para poder cobrar (null si nada).
+export const faltaParaCobrar = (form) => {
+  const opcion = PAYMENT_METHOD_OPTIONS.find((o) => o.value === form?.metodoPago)
+  if (opcion?.requiereCliente && !form?.propietarioId) return 'Para vender a crédito asigna un cliente'
+  if (opcion?.detalle?.requerido && !String(form?.detallePago || '').trim()) return opcion.detalle.falta
+  return null
+}
 
 export function useFinanzasFacturacion({
   enabled,
@@ -372,12 +395,27 @@ export function useFinanzasFacturacion({
       return
     }
 
+    const falta = faltaParaCobrar(invoiceForm)
+    if (falta) {
+      toast.error(falta)
+      return
+    }
+
+    // El detalle del pago (banco, referencia, cuál «otro») viaja en la nota de
+    // la venta: así queda en el historial sin cambiar la base de datos.
+    const opcionPago = PAYMENT_METHOD_OPTIONS.find((o) => o.value === invoiceForm.metodoPago)
+    const detallePago = opcionPago?.detalle ? String(invoiceForm.detallePago || '').trim() : ''
+    const observaciones = [
+      detallePago ? `${opcionPago.label}: ${detallePago}` : '',
+      invoiceForm.observaciones.trim(),
+    ].filter(Boolean).join(' · ')
+
     // La emision electronica requiere cliente con datos fiscales;
     // las ventas de mostrador (sin tutor) siempre quedan como factura interna.
     crearFacturaMutation.mutate({
       propietarioId: invoiceForm.propietarioId || undefined,
       metodoPago: invoiceForm.metodoPago,
-      observaciones: invoiceForm.observaciones.trim() || undefined,
+      observaciones: observaciones || undefined,
       emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
       historiaClinicaId: invoiceForm.historiaClinicaId || undefined,
       registroEstiloId: invoiceForm.registroEstiloId || undefined,

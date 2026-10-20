@@ -30,7 +30,7 @@ function MesMini({ mes, getCitasDelDia, onVerDia }) {
 
   return (
     <div>
-      <p className="mb-2 text-sm font-medium capitalize text-foreground">
+      <p className="mb-2 text-[15px] font-semibold capitalize tracking-[-0.01em] text-foreground">
         {format(mes, 'MMMM', { locale: es })}
       </p>
 
@@ -38,7 +38,7 @@ function MesMini({ mes, getCitasDelDia, onVerDia }) {
         {DIAS_HEADER.map((dia, idx) => (
           <span
             key={`${dia}-${idx}`}
-            className="text-center text-[10px] font-medium text-muted-foreground"
+            className="text-center text-[13px] font-medium text-muted-foreground"
           >
             {dia}
           </span>
@@ -56,11 +56,11 @@ function MesMini({ mes, getCitasDelDia, onVerDia }) {
               onClick={() => onVerDia(dia)}
               aria-label={`${format(dia, "d 'de' MMMM", { locale: es })}${total ? ` — ${total} citas` : ''}`}
               className={cn(
-                'mx-auto flex h-6 w-6 items-center justify-center rounded-full text-[11px] transition',
+                'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[13px] tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 !delMes && 'text-muted-foreground/40',
                 delMes && 'text-foreground hover:bg-muted',
-                total > 0 && !esHoy && 'bg-primary/15 font-semibold text-primary',
-                esHoy && 'bg-primary font-semibold text-white hover:bg-primary'
+                total > 0 && !esHoy && 'bg-accent font-semibold text-accent-foreground',
+                esHoy && 'bg-primary font-semibold text-primary-foreground hover:bg-primary'
               )}
             >
               {format(dia, 'd')}
@@ -85,7 +85,7 @@ export function YearView({ fechaBase, getCitasDelDia, onVerDia, isLoading, inset
         {meses.map((mes) => (
           <div
             key={mes.toISOString()}
-            className="h-40 animate-pulse rounded-md bg-muted opacity-50"
+            className="h-40 animate-pulse rounded-xl bg-muted"
           />
         ))}
       </div>
@@ -95,7 +95,7 @@ export function YearView({ fechaBase, getCitasDelDia, onVerDia, isLoading, inset
   return (
     <div
       className={cn(
-        'grid grid-cols-2 gap-x-6 gap-y-7 overflow-y-auto p-4 md:grid-cols-3 lg:grid-cols-4',
+        'grid grid-cols-2 gap-x-6 gap-y-7 overflow-y-auto rounded-2xl bg-card p-5 md:grid-cols-3 lg:grid-cols-4',
         // deja libre el gutter donde flota el boton "Crear" cuando el panel esta cerrado
         insetLeft && 'pl-20'
       )}

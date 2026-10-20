@@ -57,8 +57,8 @@ export const ACCION_PRIMARIA = {
 
 /** Orden de lectura de la sala de espera: lo que esta pasando primero. */
 export const GRUPOS = [
-  { estado: 'en_atencion', label: 'En atención', dot: 'bg-info', text: 'text-info' },
-  { estado: 'en_espera', label: 'En espera', dot: 'bg-warning', text: 'text-warning' },
+  { estado: 'en_atencion', label: 'En atención', dot: 'bg-primary', text: 'text-primary' },
+  { estado: 'en_espera', label: 'En espera', dot: 'bg-brand', text: 'text-brand-foreground' },
   { estado: 'programada', label: 'Por llegar', dot: 'bg-muted-foreground', text: 'text-muted-foreground' },
 ]
 

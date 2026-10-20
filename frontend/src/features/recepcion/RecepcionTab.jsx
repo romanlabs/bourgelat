@@ -68,15 +68,15 @@ export function RecepcionTab({
               <button
                 type="button"
                 onClick={() => setDrawer('programar')}
-                className="flex h-10 items-center gap-2 border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+                className="flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <CalendarPlus className="h-4 w-4 text-muted-foreground" />
+                <CalendarPlus className="h-4 w-4" />
                 Programar cita
               </button>
               <button
                 type="button"
                 onClick={() => setDrawer('walk-in')}
-                className="flex h-10 items-center gap-2 border border-danger bg-danger px-4 text-sm font-semibold text-white transition hover:bg-danger"
+                className="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <UserPlus className="h-4 w-4" />
                 Ingreso directo

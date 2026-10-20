@@ -25,10 +25,12 @@ const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
 const UsuariosPage = lazy(() => import('@/pages/UsuariosPage'))
 const AuditoriaPage = lazy(() => import('@/pages/AuditoriaPage'))
 const SoportePage = lazy(() => import('@/pages/SoportePage'))
+const MiPlanPage = lazy(() => import('@/pages/MiPlanPage'))
 const InventarioPage = lazy(() => import('@/pages/InventarioPage'))
 const FinanzasPage = lazy(() => import('@/pages/FinanzasPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
+const PagarPage     = lazy(() => import('@/pages/PagarPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
 const PrivacidadPage = lazy(() => import('@/pages/PrivacidadPage'))
 const TerminosPage   = lazy(() => import('@/pages/TerminosPage'))
@@ -103,8 +105,10 @@ const router = createBrowserRouter([
           { path: '/usuarios', element: <Suspense fallback={<Loader />}><UsuariosPage /></Suspense> },
           { path: '/auditoria', element: <Suspense fallback={<Loader />}><AuditoriaPage /></Suspense> },
           { path: '/soporte', element: <Suspense fallback={<Loader />}><SoportePage /></Suspense> },
+          { path: '/plan', element: <Suspense fallback={<Loader />}><MiPlanPage /></Suspense> },
           { path: '/inventario', element: <Suspense fallback={<Loader />}><InventarioPage /></Suspense> },
-          { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage /></Suspense> },
+          { path: '/caja', element: <Suspense fallback={<Loader />}><FinanzasPage modo="caja" /></Suspense> },
+          { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage modo="finanzas" /></Suspense> },
           { path: '/perfil', element: <Suspense fallback={<Loader />}><PerfilPage /></Suspense> },
           { path: '/onboarding', element: <Suspense fallback={<Loader />}><OnboardingWizardPage /></Suspense> },
         ],
@@ -114,6 +118,7 @@ const router = createBrowserRouter([
       { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
+      { path: '/pagar', element: <Suspense fallback={<Loader />}><PagarPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
       { path: '/terminos', element: <Suspense fallback={<Loader />}><TerminosPage /></Suspense> },

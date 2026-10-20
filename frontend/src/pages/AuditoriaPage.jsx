@@ -1,456 +1,523 @@
-import { chartColors } from '@/lib/theme'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Activity, CircleAlert, ScanSearch, ShieldCheck, UserRoundCog } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
-import { NavCta } from '@/components/shared/NavCta'
-import {
-  DashboardPanel,
-  DataTable,
-  DonutCard,
-  KpiCard,
-  StatusPill,
-} from '@/features/dashboard/dashboardComponents'
-import {
-  formatNumber,
-  getCurrentMonthRange,
-  objectToChartData,
-} from '@/features/dashboard/dashboardUtils'
 import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { useAuthStore } from '@/store/authStore'
 import { canAccessModule } from '@/lib/permissions'
+import { cn } from '@/lib/utils'
 
-const RESULT_OPTIONS = [
-  { value: 'todos', label: 'Todos los resultados' },
-  { value: 'exitoso', label: 'Exitosos' },
-  { value: 'fallido', label: 'Fallidos' },
-]
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+const LIMITE = 30
 
-const ENTITY_LABELS = {
-  Usuario: 'Usuarios',
-  Factura: 'Facturas',
+const MODULOS = {
+  Factura: 'Ventas',
+  AbonoFactura: 'Abonos',
+  CajaTurno: 'Turnos de caja',
+  MovimientoCaja: 'Movimientos de caja',
+  Gasto: 'Gastos',
   Cita: 'Agenda',
+  BloqueoAgenda: 'Bloqueos de agenda',
   HistoriaClinica: 'Historias',
-  Antecedente: 'Antecedentes',
+  ExamenLaboratorio: 'Exámenes',
+  RegistroEstilo: 'Estilos',
+  Mascota: 'Pacientes',
+  Propietario: 'Tutores',
+  Producto: 'Inventario',
+  InsumoClinico: 'Insumos clínicos',
+  Usuario: 'Usuarios',
   Clinica: 'Clínica',
   IntegracionFacturacion: 'Facturación electrónica',
   TicketSoporte: 'Soporte',
-  Auth: 'Ingreso al sistema',
+  Auth: 'Inicio de sesión',
 }
 
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.message || fallback
-
-const formatAuditDate = (value) => {
-  if (!value) return 'Sin fecha'
-
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
+const VERBOS = {
+  CREAR_FACTURA: 'registró una venta',
+  ANULAR_FACTURA: 'anuló una venta',
+  REGISTRAR_PAGO_FACTURA: 'registró un pago',
+  REGISTRAR_ABONO_FACTURA: 'registró un abono',
+  ABRIR_TURNO_CAJA: 'abrió el turno de caja',
+  CERRAR_TURNO_CAJA: 'cerró el turno de caja',
+  CERRAR_TURNO_CAJA_ADMIN: 'cerró el turno de caja de otra persona',
+  REGISTRAR_MOVIMIENTO_CAJA: 'registró un movimiento de caja',
+  CREAR_GASTO: 'registró un gasto',
+  ANULAR_GASTO: 'anuló un gasto',
+  CREAR_HISTORIA_CLINICA: 'creó una historia clínica',
+  EDITAR_HISTORIA_CLINICA: 'editó una historia clínica',
+  BLOQUEAR_HISTORIA_CLINICA: 'cerró una historia clínica',
+  INTENTO_EDITAR_HISTORIA_BLOQUEADA: 'intentó editar una historia cerrada',
+  CREAR_EXAMEN_LABORATORIO: 'registró un examen',
+  EDITAR_EXAMEN_LABORATORIO: 'editó un examen',
+  ELIMINAR_EXAMEN_LABORATORIO: 'eliminó un examen',
+  CREAR_REGISTRO_ESTILO: 'registró un servicio de estilos',
+  EDITAR_REGISTRO_ESTILO: 'editó un servicio de estilos',
+  INTENTO_EDITAR_ESTILO_BLOQUEADO: 'intentó editar un servicio de estilos cerrado',
+  CREAR_MASCOTA: 'registró un paciente',
+  EDITAR_MASCOTA: 'editó un paciente',
+  DESACTIVAR_MASCOTA: 'desactivó un paciente',
+  ACTIVAR_MASCOTA: 'reactivó un paciente',
+  CREAR_PROPIETARIO: 'registró un tutor',
+  EDITAR_PROPIETARIO: 'editó un tutor',
+  CREAR_USUARIO: 'creó un usuario',
+  EDITAR_USUARIO: 'editó un usuario',
+  CANCELAR_CITA: 'canceló una cita',
+  CITA_FUERA_DE_HORARIO: 'agendó una cita fuera del horario',
+  CREAR_BLOQUEO_AGENDA: 'bloqueó días en la agenda',
+  ELIMINAR_BLOQUEO_AGENDA: 'quitó un bloqueo de la agenda',
+  ACTUALIZAR_CLINICA: 'cambió los datos de la clínica',
+  ACTUALIZAR_LOGO_CLINICA: 'cambió el logo de la clínica',
+  ACTUALIZAR_HORARIO_ATENCION: 'cambió el horario de atención',
+  ACTUALIZAR_RECORDATORIOS_CITA: 'cambió los recordatorios de citas',
+  ACTUALIZAR_PERFIL: 'actualizó su perfil',
+  RELEVAR_VENCIMIENTO_PRODUCTO: 'actualizó el vencimiento de un producto',
+  RELEVAR_VENCIMIENTO_INSUMO: 'actualizó el vencimiento de un insumo',
+  CREAR_TICKET_SOPORTE: 'escribió a soporte',
+  RESPONDER_TICKET_SOPORTE: 'respondió un caso de soporte',
+  CAMBIAR_ESTADO_TICKET_SOPORTE: 'cambió el estado de un caso de soporte',
+  GUARDAR_CONFIG_FACTUS: 'guardó la configuración de facturación electrónica',
+  PROBAR_CONFIG_FACTUS: 'probó la conexión de facturación electrónica',
+  SINCRONIZAR_FACTUS: 'sincronizó la facturación electrónica',
+  EMITIR_FACTURA_ELECTRONICA: 'emitió una factura electrónica',
+  DESCARGAR_FACTURA_ELECTRONICA: 'descargó una factura electrónica',
+  REGISTRO_CLINICA: 'registró la clínica',
+  COMPLETAR_ONBOARDING: 'terminó la configuración inicial',
+  LOGIN: 'entró al sistema',
+  LOGIN_FALLIDO: 'no pudo entrar al sistema',
+  LOGOUT_ALL: 'cerró todas sus sesiones',
+  PASSWORD_CAMBIADO: 'cambió su contraseña',
+  PASSWORD_RESET_SOLICITADO: 'pidió recuperar la contraseña',
+  PASSWORD_RESET_COMPLETADO: 'recuperó la contraseña',
+  EMAIL_VERIFICADO: 'verificó su correo',
+  REFRESH_TOKEN_REUSE: 'tuvo la sesión bloqueada por seguridad',
 }
 
-const formatActionLabel = (value) =>
-  String(value || 'SIN_ACCION')
-    .toLowerCase()
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+const TIPOS = {
+  crear: { label: 'Nuevo', clase: 'bg-success-soft text-success' },
+  editar: { label: 'Cambio', clase: 'bg-primary/10 text-primary' },
+  anular: { label: 'Anulado', clase: 'bg-danger-soft text-danger' },
+  sesion: { label: 'Sesión', clase: 'bg-muted text-muted-foreground' },
+  fallido: { label: 'Fallido', clase: 'bg-warning-soft text-warning' },
+  otro: { label: 'Sistema', clase: 'bg-muted text-muted-foreground' },
+}
 
-const formatEntityLabel = (value) => ENTITY_LABELS[value] || value || 'Sin sección'
+const AVATARES = [
+  'bg-primary/10 text-primary',
+  'bg-brand/20 text-foreground',
+  'bg-info-soft text-info',
+  'bg-success-soft text-success',
+  'bg-warning-soft text-warning',
+]
 
-function RestrictedAuditPage() {
+const RANGOS = [
+  { value: 'hoy', label: 'Hoy' },
+  { value: '7dias', label: 'Últimos 7 días' },
+  { value: 'mes', label: 'Este mes' },
+  { value: 'mesPasado', label: 'Mes pasado' },
+]
+
+const CAMPOS_OCULTOS = new Set(['id', 'clinicaId', 'createdAt', 'updatedAt', 'password', 'passwordHash'])
+
+const isoLocal = (fecha) => {
+  const y = fecha.getFullYear()
+  const m = String(fecha.getMonth() + 1).padStart(2, '0')
+  const d = String(fecha.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const rangoFechas = (rango) => {
+  const hoy = new Date()
+  if (rango === 'hoy') return { desde: isoLocal(hoy), hasta: isoLocal(hoy) }
+  if (rango === 'mes') return { desde: isoLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), hasta: isoLocal(hoy) }
+  if (rango === 'mesPasado') {
+    return {
+      desde: isoLocal(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)),
+      hasta: isoLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 0)),
+    }
+  }
+  const hace7 = new Date(hoy)
+  hace7.setDate(hoy.getDate() - 6)
+  return { desde: isoLocal(hace7), hasta: isoLocal(hoy) }
+}
+
+const formatoPesos = (texto) =>
+  String(texto || '').replace(/\$\s?(\d{4,})(?![\d.,])/g, (_, n) => `$${Number(n).toLocaleString('es-CO')}`)
+
+const humanizarAccion = (accion) => String(accion || 'acción').toLowerCase().replaceAll('_', ' ')
+
+const verbo = (log) => VERBOS[log.accion] || humanizarAccion(log.accion)
+
+const iniciales = (nombre) =>
+  String(nombre || '?')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase())
+    .join('') || '?'
+
+const colorAvatar = (id) => {
+  if (!id) return 'bg-muted text-muted-foreground'
+  const suma = [...id].reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return AVATARES[suma % AVATARES.length]
+}
+
+const hora = (valor) =>
+  new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit' }).format(new Date(valor))
+
+const diaLargo = (valor) =>
+  new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(valor))
+
+const tituloDia = (valor) => {
+  const fecha = new Date(valor)
+  const hoy = new Date()
+  const ayer = new Date()
+  ayer.setDate(hoy.getDate() - 1)
+  if (isoLocal(fecha) === isoLocal(hoy)) return `Hoy, ${diaLargo(fecha)}`
+  if (isoLocal(fecha) === isoLocal(ayer)) return `Ayer, ${diaLargo(fecha)}`
+  const texto = diaLargo(fecha)
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+const cuandoLargo = (valor) => {
+  const fecha = new Date(valor)
+  const dia = isoLocal(fecha) === isoLocal(new Date())
+    ? 'Hoy'
+    : new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(fecha)
+  return `${dia}, ${hora(fecha)}`
+}
+
+const navegador = (ua = '') => {
+  if (/Edg\//.test(ua)) return 'Edge'
+  if (/OPR\//.test(ua)) return 'Opera'
+  if (/Chrome\//.test(ua)) return 'Chrome'
+  if (/Firefox\//.test(ua)) return 'Firefox'
+  if (/Safari\//.test(ua)) return 'Safari'
+  return ''
+}
+
+const etiquetaCampo = (clave) => {
+  const texto = clave.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+const formatoValor = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return '—'
+  if (typeof valor === 'boolean') return valor ? 'Sí' : 'No'
+  if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(valor)) return cuandoLargo(valor)
+  return formatoPesos(String(valor))
+}
+
+const esObjeto = (valor) => valor && typeof valor === 'object' && !Array.isArray(valor)
+
+const cambiosDe = (log) => {
+  const antes = esObjeto(log?.datosAnteriores) ? log.datosAnteriores : null
+  const despues = esObjeto(log?.datosNuevos) ? log.datosNuevos : null
+  if (!antes && !despues) return null
+  const claves = [...new Set([...Object.keys(antes || {}), ...Object.keys(despues || {})])]
+    .filter((clave) => !CAMPOS_OCULTOS.has(clave) && !/Id$/.test(clave))
+    // Horarios y listas no se leen bien en una celda: el detalle ya los resume.
+    .filter((clave) => ![antes?.[clave], despues?.[clave]].some((v) => v && typeof v === 'object'))
+    .filter((clave) => !antes || !despues || JSON.stringify(antes[clave]) !== JSON.stringify(despues[clave]))
+    .slice(0, 12)
+  if (!claves.length) return null
+  return {
+    conAntes: Boolean(antes),
+    conDespues: Boolean(despues),
+    filas: claves.map((clave) => ({
+      clave,
+      campo: etiquetaCampo(clave),
+      antes: antes ? formatoValor(antes[clave]) : null,
+      despues: despues ? formatoValor(despues[clave]) : null,
+    })),
+  }
+}
+
+function Filtro({ label, children }) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <DashboardPanel
-          title="Auditoría y actividad"
-          subtitle="Esta sección se reserva para la administración principal."
-        >
-          <div className="border border-border bg-muted px-4 py-5 text-sm leading-7 text-muted-foreground">
-            Tu acceso actual no tiene permisos para consultar el historial de cambios delicados ni la actividad del sistema.
-          </div>
-        </DashboardPanel>
-      </div>
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[13px] text-muted-foreground">{label}</span>
+      {children}
     </div>
+  )
+}
+
+function Chip({ tipo }) {
+  const t = TIPOS[tipo] || TIPOS.otro
+  return <span className={cn('whitespace-nowrap rounded-[5px] px-2 py-1 text-[13px] font-semibold', t.clase)}>{t.label}</span>
+}
+
+function Detalle({ log }) {
+  if (!log) return null
+  const quien = log.responsable?.nombre || 'Alguien'
+  const cambios = cambiosDe(log)
+  const desde = [log.ip, navegador(log.userAgent)].filter(Boolean).join(' · ') || '—'
+  const fallido = log.resultado === 'fallido'
+
+  return (
+    <section aria-labelledby="au-det" className="flex flex-col gap-4 rounded-2xl bg-card p-6 lg:sticky lg:top-6 lg:mt-8">
+      <span className="self-start"><Chip tipo={log.tipo} /></span>
+      <h2 id="au-det" className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
+        {quien} {verbo(log)}
+      </h2>
+      <dl className="grid grid-cols-2 gap-x-5 gap-y-3.5 text-sm">
+        <div><dt className="text-[13px] text-muted-foreground">Cuándo</dt><dd className="mt-1 font-medium">{cuandoLargo(log.createdAt)}</dd></div>
+        <div><dt className="text-[13px] text-muted-foreground">Desde</dt><dd className="mt-1 break-words font-medium">{desde}</dd></div>
+        <div><dt className="text-[13px] text-muted-foreground">Módulo</dt><dd className="mt-1 font-medium">{MODULOS[log.entidad] || log.entidad || '—'}</dd></div>
+        <div>
+          <dt className="text-[13px] text-muted-foreground">Resultado</dt>
+          <dd className={cn('mt-1 font-medium', fallido ? 'text-danger' : 'text-success')}>{fallido ? 'Fallido' : 'Exitoso'}</dd>
+        </div>
+      </dl>
+
+      {log.descripcion ? (
+        <div className="flex flex-col gap-1 rounded-xl bg-muted px-4 py-3.5">
+          <span className="text-[13px] text-muted-foreground">Detalle</span>
+          <span className="text-[15px] leading-normal text-foreground">{formatoPesos(log.descripcion)}</span>
+        </div>
+      ) : null}
+
+      {cambios ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">Qué cambió</span>
+          <div className="overflow-hidden rounded-xl border border-border text-sm">
+            <table className="w-full border-collapse">
+              <thead className="bg-muted/60 text-left text-[13px] text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-3 py-2.5 font-normal">Campo</th>
+                  {cambios.conAntes ? <th scope="col" className="px-3 py-2.5 font-normal">Antes</th> : null}
+                  {cambios.conDespues ? <th scope="col" className="px-3 py-2.5 font-normal">{cambios.conAntes ? 'Después' : 'Valor'}</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {cambios.filas.map((fila) => (
+                  <tr key={fila.clave} className="border-t border-border align-top">
+                    <td className="px-3 py-2.5 font-medium">{fila.campo}</td>
+                    {cambios.conAntes ? <td className="break-words px-3 py-2.5">{fila.antes}</td> : null}
+                    {cambios.conDespues ? (
+                      <td className={cn('break-words px-3 py-2.5', cambios.conAntes && 'bg-primary/5 font-semibold')}>{fila.despues}</td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </section>
   )
 }
 
 export default function AuditoriaPage() {
   const usuario = useAuthStore((state) => state.usuario)
-  const [buscar, setBuscar] = useState('')
-  const [resultado, setResultado] = useState('todos')
-  const [entidad, setEntidad] = useState('todas')
-  const [accion, setAccion] = useState('todas')
+  const [persona, setPersona] = useState('todas')
+  const [modulo, setModulo] = useState('todos')
+  const [tipo, setTipo] = useState('todas')
+  const [rango, setRango] = useState('7dias')
   const [pagina, setPagina] = useState(1)
-
-  const rangoMes = useMemo(() => getCurrentMonthRange(), [])
-  const [desde, setDesde] = useState(rangoMes.fechaInicio)
-  const [hasta, setHasta] = useState(rangoMes.fechaFin)
+  const [seleccionId, setSeleccionId] = useState(null)
 
   const rolPermitido = canAccessModule(usuario, 'auditoria')
+  const { desde, hasta } = useMemo(() => rangoFechas(rango), [rango])
 
   useEffect(() => {
     document.title = 'Auditoría | Bourgelat'
   }, [])
 
   const auditoriaQuery = useQuery({
-    queryKey: ['auditoria', pagina, buscar, resultado, entidad, accion, desde, hasta],
+    queryKey: ['auditoria', pagina, persona, modulo, tipo, desde, hasta],
     queryFn: () =>
       auditoriaApi.obtenerLogs({
         pagina,
-        limite: 14,
-        buscar: buscar.trim() || undefined,
-        resultado: resultado !== 'todos' ? resultado : undefined,
-        entidad: entidad !== 'todas' ? entidad : undefined,
-        accion: accion !== 'todas' ? accion : undefined,
+        limite: LIMITE,
+        usuarioId: persona !== 'todas' ? persona : undefined,
+        entidad: modulo !== 'todos' ? modulo : undefined,
+        tipo: tipo !== 'todas' ? tipo : undefined,
         desde,
         hasta,
       }),
     enabled: rolPermitido,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previo) => previo,
   })
 
-  const logsRows = useMemo(
-    () =>
-      (auditoriaQuery.data?.logs || []).map((log) => ({
-        id: log.id,
-        fecha: formatAuditDate(log.createdAt),
-        accion: formatActionLabel(log.accion),
-        entidad: formatEntityLabel(log.entidad),
-        responsable: log.responsable?.nombre || 'Sistema',
-        responsableEmail: log.responsable?.email || '',
-        resultado: log.resultado,
-        descripcion: log.descripcion || 'Sin descripción adicional',
-      })),
-    [auditoriaQuery.data?.logs]
-  )
+  const logs = useMemo(() => auditoriaQuery.data?.logs || [], [auditoriaQuery.data?.logs])
+  const seleccionado = logs.find((log) => log.id === seleccionId) || logs[0] || null
 
-  const resultData = useMemo(
-    () => [
-      {
-        key: 'exitoso',
-        name: 'Exitosos',
-        value: Number(auditoriaQuery.data?.resumen?.totalExitosos || 0),
-        color: chartColors.categorica[0],
-      },
-      {
-        key: 'fallido',
-        name: 'Fallidos',
-        value: Number(auditoriaQuery.data?.resumen?.totalFallidos || 0),
-        color: chartColors.estados.danger,
-      },
-    ],
-    [auditoriaQuery.data?.resumen?.totalExitosos, auditoriaQuery.data?.resumen?.totalFallidos]
-  )
+  const grupos = useMemo(() => {
+    const porDia = new Map()
+    for (const log of logs) {
+      const clave = isoLocal(new Date(log.createdAt))
+      if (!porDia.has(clave)) porDia.set(clave, { clave, titulo: tituloDia(log.createdAt), eventos: [] })
+      porDia.get(clave).eventos.push(log)
+    }
+    return [...porDia.values()]
+  }, [logs])
 
-  const entityData = useMemo(
-    () => objectToChartData(auditoriaQuery.data?.resumen?.porEntidad, ENTITY_LABELS),
-    [auditoriaQuery.data?.resumen?.porEntidad]
-  )
+  const cambiarFiltro = (setter) => (valor) => {
+    setter(valor)
+    setPagina(1)
+    setSeleccionId(null)
+  }
 
-  const topActionRows = useMemo(
-    () =>
-      Object.entries(auditoriaQuery.data?.resumen?.porAccion || {})
-        .slice(0, 8)
-        .map(([key, value]) => ({
-          id: key,
-          accion: formatActionLabel(key),
-          total: formatNumber(value),
-        })),
-    [auditoriaQuery.data?.resumen?.porAccion]
-  )
+  const irAPagina = (siguiente) => {
+    setPagina(siguiente)
+    setSeleccionId(null)
+  }
 
-  const accionesDisponibles = auditoriaQuery.data?.accionesDisponibles || []
-  const entidadesDisponibles = auditoriaQuery.data?.entidadesDisponibles || []
+  const personas = auditoriaQuery.data?.personas || []
+  const total = auditoriaQuery.data?.total || 0
+  const paginaActual = auditoriaQuery.data?.paginaActual || 1
+  const paginas = auditoriaQuery.data?.paginas || 1
 
   if (!rolPermitido) {
-    return <RestrictedAuditPage />
+    return (
+      <AdminShell currentKey="auditoria" title="Quién cambió qué">
+        <p className="rounded-2xl bg-card px-6 py-5 text-sm text-muted-foreground">
+          Solo la administración de la clínica puede ver el registro de cambios.
+        </p>
+      </AdminShell>
+    )
   }
 
   return (
     <AdminShell
       currentKey="auditoria"
-      title="Auditoría y actividad"
-      description="Vista para seguir cambios delicados del sistema, responsables, intentos fallidos y el historial de la operación de la clínica."
-      headerBadge={
-        <StatusPill tone="border-primary/30 bg-primary/10 text-primary">
-          Historial activo
-        </StatusPill>
-      }
-      actions={
-        <NavCta to="/usuarios" icon={UserRoundCog}>
-          Abrir usuarios
-        </NavCta>
-      }
-      asideNote="Usa esta vista para seguir cambios de acceso, caja, historias e inventario sin depender de memoria o revisiones manuales."
+      title="Quién cambió qué"
+      description="Cada cambio en la clínica queda registrado con la persona, la hora y lo que había antes"
     >
+      <div className="flex flex-wrap gap-2.5">
+        <Filtro label="Persona">
+          <Select
+            variant="field"
+            className="min-w-[180px] border-0"
+            aria-label="Persona"
+            value={persona}
+            onValueChange={cambiarFiltro(setPersona)}
+            options={[{ value: 'todas', label: 'Todo el equipo' }, ...personas.map((p) => ({ value: p.id, label: p.nombre }))]}
+          />
+        </Filtro>
+        <Filtro label="Módulo">
+          <Select
+            variant="field"
+            className="min-w-[180px] border-0"
+            aria-label="Módulo"
+            value={modulo}
+            onValueChange={cambiarFiltro(setModulo)}
+            options={[{ value: 'todos', label: 'Todos' }, ...Object.entries(MODULOS).map(([value, label]) => ({ value, label }))]}
+          />
+        </Filtro>
+        <Filtro label="Acción">
+          <Select
+            variant="field"
+            className="min-w-[160px] border-0"
+            aria-label="Acción"
+            value={tipo}
+            onValueChange={cambiarFiltro(setTipo)}
+            options={[
+              { value: 'todas', label: 'Todas' },
+              { value: 'crear', label: 'Nuevos' },
+              { value: 'editar', label: 'Cambios' },
+              { value: 'anular', label: 'Anulados o borrados' },
+              { value: 'sesion', label: 'Inicio de sesión' },
+              { value: 'fallido', label: 'Fallidos' },
+            ]}
+          />
+        </Filtro>
+        <Filtro label="Fechas">
+          <Select
+            variant="field"
+            className="min-w-[160px] border-0"
+            aria-label="Fechas"
+            value={rango}
+            onValueChange={cambiarFiltro(setRango)}
+            options={RANGOS}
+          />
+        </Filtro>
+      </div>
+
       {auditoriaQuery.isError ? (
-        <div className="border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger">
-          {getErrorMessage(auditoriaQuery.error, 'No fue posible cargar la auditoría de la clínica.')}
-        </div>
+        <p className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm text-danger">
+          No fue posible cargar el registro de cambios. Intenta de nuevo en un momento.
+        </p>
       ) : null}
 
-      <div className="space-y-5">
-        <div className="grid gap-4 xl:grid-cols-4">
-          <KpiCard
-            icon={Activity}
-            label="Eventos del filtro"
-            value={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
-            helper="Total de movimientos según el rango y los filtros activos."
-            tone="text-primary"
-          />
-          <KpiCard
-            icon={ShieldCheck}
-            label="Exitosos"
-            value={formatNumber(auditoriaQuery.data?.resumen?.totalExitosos || 0)}
-            helper="Cambios o accesos registrados sin error."
-            tone="text-success"
-          />
-          <KpiCard
-            icon={CircleAlert}
-            label="Fallidos"
-            value={formatNumber(auditoriaQuery.data?.resumen?.totalFallidos || 0)}
-            helper="Intentos con error o resultado no exitoso."
-            tone="text-danger"
-          />
-          <KpiCard
-            icon={UserRoundCog}
-            label="Usuarios involucrados"
-            value={formatNumber(auditoriaQuery.data?.resumen?.usuariosInvolucrados || 0)}
-            helper="Cantidad de cuentas distintas presentes en el corte."
-            tone="text-info"
-          />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <DonutCard
-            title="Resultado del evento"
-            subtitle="Lectura rápida entre acciones exitosas y fallidas."
-            data={resultData}
-            centerLabel="Eventos"
-            centerValue={formatNumber(auditoriaQuery.data?.resumen?.totalEventos || 0)}
-            formatter={formatNumber}
-            emptyMessage="Aún no hay datos para mostrar."
-            chartSize={140}
-          />
-          <DonutCard
-            title="Distribución por sección"
-            subtitle="Qué sección generó más movimientos en el corte."
-            data={entityData}
-            centerLabel="Secciones"
-            centerValue={formatNumber(entityData.length)}
-            formatter={formatNumber}
-            emptyMessage="Aún no hay secciones para mostrar."
-            chartSize={140}
-          />
-        </div>
-
-        <DashboardPanel
-          title="Criterio de seguimiento"
-          subtitle="La auditoría sirve para reconstruir qué pasó, quién lo hizo y si el sistema aceptó o rechazó la acción."
-        >
-          <div className="grid gap-3 lg:grid-cols-3">
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Prioriza eventos <span className="font-semibold text-foreground">fallidos</span> en autenticación, cambios de usuarios, anulaciones y bloqueos clínicos.
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        <section aria-label="Registro" className="flex min-w-0 flex-col gap-5">
+          {auditoriaQuery.isPending ? (
+            <div className="h-64 animate-pulse rounded-2xl bg-card" />
+          ) : grupos.length === 0 ? (
+            <div className="rounded-2xl bg-card px-6 py-10 text-center">
+              <p className="font-semibold text-foreground">No hay cambios con estos filtros</p>
+              <p className="mt-1 text-sm text-muted-foreground">Prueba con otras fechas o con todo el equipo.</p>
             </div>
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Cuando una acción afecte caja, historias o permisos, esta vista te da responsable, momento y descripción en un solo lugar.
-            </div>
-            <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-              Mantener activo este seguimiento ayuda a soporte, control interno y decisiones de operación sin depender de capturas o recuerdos.
-            </div>
-          </div>
-        </DashboardPanel>
-
-        <DashboardPanel
-          title="Actividad registrada"
-          subtitle="Filtra los eventos recientes por sección, resultado o responsable."
-          action={
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center border border-border bg-card px-3">
-                <ScanSearch className="h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={buscar}
-                  onChange={(event) => {
-                    setBuscar(event.target.value)
-                    setPagina(1)
-                  }}
-                  placeholder="Buscar por acción o descripción"
-                  className="h-10 w-[220px] border-0 bg-transparent px-3 text-sm text-foreground outline-none"
-                />
+          ) : (
+            grupos.map((grupo) => (
+              <div key={grupo.clave} className="flex flex-col gap-2">
+                <h2 className="text-base font-semibold text-muted-foreground">{grupo.titulo}</h2>
+                <div className="rounded-2xl bg-card p-1.5">
+                  {grupo.eventos.map((log) => {
+                    const activo = seleccionado?.id === log.id
+                    const nombre = log.responsable?.nombre || 'Alguien'
+                    return (
+                      <button
+                        key={log.id}
+                        type="button"
+                        onClick={() => setSeleccionId(log.id)}
+                        aria-pressed={activo}
+                        className={cn(
+                          'grid w-full grid-cols-[64px_36px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-xl px-3.5 py-3 text-left transition-colors sm:grid-cols-[76px_36px_minmax(0,1fr)_auto]',
+                          activo ? 'bg-primary/10' : 'hover:bg-muted/60',
+                          FOCO
+                        )}
+                      >
+                        <span className="whitespace-nowrap text-sm font-semibold text-muted-foreground">{hora(log.createdAt)}</span>
+                        <span className={cn('flex h-9 w-9 items-center justify-center rounded-[11px] text-[13px] font-bold', colorAvatar(log.usuarioId))}>
+                          {log.responsable ? iniciales(nombre) : '?'}
+                        </span>
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-[15px] text-foreground">
+                            <span className="font-semibold">{nombre}</span> {verbo(log)}
+                          </span>
+                          <span className="truncate text-[13px] text-muted-foreground">
+                            {[MODULOS[log.entidad] || log.entidad, formatoPesos(log.descripcion)].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                        <Chip tipo={log.tipo} />
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <Select
-                aria-label="Filtrar por resultado"
-                value={resultado}
-                onValueChange={(value) => {
-                  setResultado(value)
-                  setPagina(1)
-                }}
-                options={RESULT_OPTIONS}
-              />
-              <Select
-                aria-label="Filtrar por sección"
-                value={entidad}
-                onValueChange={(value) => {
-                  setEntidad(value)
-                  setPagina(1)
-                }}
-                options={[
-                  { value: 'todas', label: 'Todas las secciones' },
-                  ...entidadesDisponibles.map((item) => ({
-                    value: item,
-                    label: formatEntityLabel(item),
-                  })),
-                ]}
-              />
-              <Select
-                aria-label="Filtrar por acción"
-                value={accion}
-                onValueChange={(value) => {
-                  setAccion(value)
-                  setPagina(1)
-                }}
-                options={[
-                  { value: 'todas', label: 'Todas las acciones' },
-                  ...accionesDisponibles.map((item) => ({
-                    value: item,
-                    label: formatActionLabel(item),
-                  })),
-                ]}
-              />
-              <input
-                type="date"
-                value={desde}
-                onChange={(event) => {
-                  setDesde(event.target.value)
-                  setPagina(1)
-                }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              />
-              <input
-                type="date"
-                value={hasta}
-                onChange={(event) => {
-                  setHasta(event.target.value)
-                  setPagina(1)
-                }}
-                className="h-10 border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
-              />
-            </div>
-          }
-        >
-          <DataTable
-            title="Eventos"
-            subtitle="Detalle cronologico del sistema para el corte actual."
-            rows={logsRows}
-            columns={[
-              { key: 'fecha', label: 'Fecha' },
-              { key: 'accion', label: 'Acción' },
-              { key: 'entidad', label: 'Sección' },
-              {
-                key: 'responsable',
-                label: 'Responsable',
-                render: (row) => (
-                  <div>
-                    <p className="font-medium text-foreground">{row.responsable}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{row.responsableEmail || 'Sin correo asociado'}</p>
-                  </div>
-                ),
-              },
-              {
-                key: 'resultado',
-                label: 'Resultado',
-                render: (row) => (
-                  <StatusPill
-                    tone={
-                      row.resultado === 'fallido'
-                        ? 'border-danger/30 bg-danger-soft text-danger'
-                        : 'border-success/30 bg-success-soft text-success'
-                    }
-                  >
-                    {row.resultado}
-                  </StatusPill>
-                ),
-              },
-              {
-                key: 'descripcion',
-                label: 'Descripción',
-                render: (row) => <span className="text-sm text-muted-foreground">{row.descripcion}</span>,
-              },
-            ]}
-            emptyTitle="No hay eventos para este filtro"
-            emptyBody="Ajusta fechas o filtros para revisar otra parte del historial."
-            action={
-              <StatusPill tone="border-border bg-muted text-foreground">
-                Página {auditoriaQuery.data?.paginaActual || 1}
-              </StatusPill>
-            }
-          />
+            ))
+          )}
 
-          {(auditoriaQuery.data?.paginas || 1) > 1 ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <p className="text-sm text-muted-foreground">
-                Página {auditoriaQuery.data?.paginaActual || 1} de {auditoriaQuery.data?.paginas || 1}
-              </p>
-              <div className="flex gap-3">
+          {paginas > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">
+                {(paginaActual - 1) * LIMITE + 1} a {Math.min(paginaActual * LIMITE, total)} de {total.toLocaleString('es-CO')}
+              </span>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setPagina((current) => Math.max(current - 1, 1))}
-                  disabled={(auditoriaQuery.data?.paginaActual || 1) <= 1}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => irAPagina(Math.max(paginaActual - 1, 1))}
+                  disabled={paginaActual <= 1}
+                  className={cn('h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
                 >
                   Anterior
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setPagina((current) => Math.min(current + 1, auditoriaQuery.data?.paginas || 1))
-                  }
-                  disabled={(auditoriaQuery.data?.paginaActual || 1) >= (auditoriaQuery.data?.paginas || 1)}
-                  className="border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => irAPagina(Math.min(paginaActual + 1, paginas))}
+                  disabled={paginaActual >= paginas}
+                  className={cn('h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
                 >
                   Siguiente
                 </button>
               </div>
             </div>
           ) : null}
-        </DashboardPanel>
+        </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <DataTable
-            title="Acciones mas frecuentes"
-            subtitle="Las acciones que más movimiento registraron en el corte."
-            rows={topActionRows}
-            columns={[
-              { key: 'accion', label: 'Accion' },
-              { key: 'total', label: 'Eventos' },
-            ]}
-            emptyTitle="Sin acciones agrupadas"
-            emptyBody="Todavía no hay suficientes movimientos para construir este resumen."
-          />
-
-          <DashboardPanel
-            title="Uso recomendado"
-            subtitle="Dónde aporta más valor esta pantalla dentro de la operación diaria."
-          >
-            <div className="grid gap-4 xl:grid-cols-3">
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Revisar altas, cambios de rol y desactivaciones de usuarios cuando el equipo cambie turnos o permisos.
-              </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Auditar anulaciones, errores de caja o validaciones fallidas cuando el cierre administrativo no cuadre.
-              </div>
-              <div className="border border-border bg-muted px-4 py-4 text-sm leading-7 text-muted-foreground">
-                Seguir bloqueos, historias o integraciones para soporte interno sin tener que revisar los datos uno por uno.
-              </div>
-            </div>
-          </DashboardPanel>
-        </div>
+        <Detalle log={seleccionado} />
       </div>
     </AdminShell>
   )
