@@ -93,9 +93,9 @@ const VERBOS = {
 }
 
 const TIPOS = {
-  crear: { label: 'Crear', clase: 'bg-success-soft text-success' },
-  editar: { label: 'Editar', clase: 'bg-primary/10 text-primary' },
-  anular: { label: 'Anular', clase: 'bg-danger-soft text-danger' },
+  crear: { label: 'Nuevo', clase: 'bg-success-soft text-success' },
+  editar: { label: 'Cambio', clase: 'bg-primary/10 text-primary' },
+  anular: { label: 'Anulado', clase: 'bg-danger-soft text-danger' },
   sesion: { label: 'Sesión', clase: 'bg-muted text-muted-foreground' },
   fallido: { label: 'Fallido', clase: 'bg-warning-soft text-warning' },
   otro: { label: 'Sistema', clase: 'bg-muted text-muted-foreground' },
@@ -254,7 +254,7 @@ function Detalle({ log }) {
   const fallido = log.resultado === 'fallido'
 
   return (
-    <section aria-labelledby="au-det" className="flex flex-col gap-4 rounded-2xl bg-card p-6 lg:sticky lg:top-6">
+    <section aria-labelledby="au-det" className="flex flex-col gap-4 rounded-2xl bg-card p-6 lg:sticky lg:top-6 lg:mt-8">
       <span className="self-start"><Chip tipo={log.tipo} /></span>
       <h2 id="au-det" className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
         {quien} {verbo(log)}
@@ -414,9 +414,9 @@ export default function AuditoriaPage() {
             onValueChange={cambiarFiltro(setTipo)}
             options={[
               { value: 'todas', label: 'Todas' },
-              { value: 'crear', label: 'Crear' },
-              { value: 'editar', label: 'Editar' },
-              { value: 'anular', label: 'Anular o borrar' },
+              { value: 'crear', label: 'Nuevos' },
+              { value: 'editar', label: 'Cambios' },
+              { value: 'anular', label: 'Anulados o borrados' },
               { value: 'sesion', label: 'Inicio de sesión' },
               { value: 'fallido', label: 'Fallidos' },
             ]}
