@@ -45,7 +45,7 @@ export function useSoporteMutaciones() {
       toast.success(data?.message || 'Ticket enviado')
       aplicarTicket(data)
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible enviar el ticket.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible enviar la solicitud.')),
   })
 
   const responderMutation = useMutation({
@@ -57,10 +57,10 @@ export function useSoporteMutaciones() {
   const cerrarMutation = useMutation({
     mutationFn: (ticketId) => soporteApi.cerrar(ticketId),
     onSuccess: (data) => {
-      toast.success(data?.message || 'Ticket cerrado')
+      toast.success(data?.message || 'Solicitud cerrada')
       aplicarTicket(data)
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cerrar el ticket.')),
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible cerrar la solicitud.')),
   })
 
   return { crearMutation, responderMutation, cerrarMutation }
