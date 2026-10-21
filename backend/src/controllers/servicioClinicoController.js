@@ -16,8 +16,9 @@ const normalizarNumero = (valor, valorPorDefecto = 0) => {
 };
 
 const validarRecetaInsumos = async (insumos, clinicaId, transaction) => {
-  if (!Array.isArray(insumos) || insumos.length === 0) {
-    return { error: 'El servicio debe tener al menos un insumo en su receta' };
+  // Una receta vacia es valida: el servicio se factura sin descontar inventario.
+  if (!Array.isArray(insumos)) {
+    return { error: 'Los insumos de la receta deben ser una lista' };
   }
 
   const filasValidas = [];
@@ -82,10 +83,12 @@ const crearServicio = async (req, res) => {
       clinicaId,
     }, { transaction });
 
-    await ServicioClinicoInsumo.bulkCreate(
-      filasValidas.map((fila) => ({ ...fila, servicioClinicoId: servicio.id, clinicaId })),
-      { transaction }
-    );
+    if (filasValidas.length > 0) {
+      await ServicioClinicoInsumo.bulkCreate(
+        filasValidas.map((fila) => ({ ...fila, servicioClinicoId: servicio.id, clinicaId })),
+        { transaction }
+      );
+    }
 
     await transaction.commit();
 
@@ -201,10 +204,12 @@ const editarServicio = async (req, res) => {
       }
 
       await ServicioClinicoInsumo.destroy({ where: { servicioClinicoId: id, clinicaId }, transaction });
-      await ServicioClinicoInsumo.bulkCreate(
-        filasValidas.map((fila) => ({ ...fila, servicioClinicoId: id, clinicaId })),
-        { transaction }
-      );
+      if (filasValidas.length > 0) {
+        await ServicioClinicoInsumo.bulkCreate(
+          filasValidas.map((fila) => ({ ...fila, servicioClinicoId: id, clinicaId })),
+          { transaction }
+        );
+      }
     }
 
     await servicio.update({

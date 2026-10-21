@@ -27,8 +27,10 @@ const validarConsultaServicios = [
   validar,
 ]
 
+// La receta puede ir vacia: hay servicios (certificados, telemedicina, consultas
+// cuyos insumos se registran en la historia) que no descuentan inventario.
 const validarInsumosReceta = [
-  body('insumos').isArray({ min: 1 }).withMessage('El servicio debe tener al menos un insumo en su receta'),
+  body('insumos').isArray().withMessage('Los insumos de la receta deben ser una lista'),
   body('insumos.*.insumoClinicoId').isUUID().withMessage('insumoClinicoId no valido'),
   body('insumos.*.cantidadConsumida').isFloat({ min: 0.01 }).withMessage('La cantidad consumida debe ser mayor a 0'),
 ]
@@ -48,7 +50,7 @@ const validarEdicionServicio = [
   body('descripcion').optional({ nullable: true }).trim().isLength({ max: 1000 }),
   body('categoria').optional({ nullable: true }).trim().isLength({ max: 80 }),
   body('precioVenta').optional().isFloat({ min: 0 }).withMessage('El precio de venta debe ser mayor o igual a 0'),
-  body('insumos').optional().isArray({ min: 1 }).withMessage('El servicio debe tener al menos un insumo en su receta'),
+  body('insumos').optional().isArray().withMessage('Los insumos de la receta deben ser una lista'),
   body('insumos.*.insumoClinicoId').optional().isUUID().withMessage('insumoClinicoId no valido'),
   body('insumos.*.cantidadConsumida').optional().isFloat({ min: 0.01 }).withMessage('La cantidad consumida debe ser mayor a 0'),
   validar,
