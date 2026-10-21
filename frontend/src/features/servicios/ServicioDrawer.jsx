@@ -25,6 +25,7 @@ const buildInitialForm = () => ({
   categoria: '',
   descripcion: '',
   precioVenta: '',
+  consumeInsumos: true,
   insumos: [buildBlankRow()],
 })
 
@@ -34,16 +35,21 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
   useEffect(() => {
     if (!open) return
     if (editingServicio) {
+      const receta = editingServicio.insumos || []
       setForm({
         nombre: editingServicio.nombre || '',
         categoria: editingServicio.categoria || '',
         descripcion: editingServicio.descripcion || '',
         precioVenta: editingServicio.precioVenta ?? '',
-        insumos: (editingServicio.insumos || []).map((i) => ({
-          rowId: i.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          insumoClinicoId: i.insumoClinicoId,
-          cantidadConsumida: i.cantidadConsumida,
-        })),
+        // Sin columna propia: un servicio consume insumos si su receta tiene filas.
+        consumeInsumos: receta.length > 0,
+        insumos: receta.length > 0
+          ? receta.map((i) => ({
+            rowId: i.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            insumoClinicoId: i.insumoClinicoId,
+            cantidadConsumida: i.cantidadConsumida,
+          }))
+          : [buildBlankRow()],
       })
     } else {
       setForm(buildInitialForm())
@@ -80,8 +86,13 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
     return acc + Number(insumo.precioUnitarioBase || 0) * Number(row.cantidadConsumida || 0)
   }, 0)
 
-  const filasValidas = form.insumos.filter((row) => row.insumoClinicoId && Number(row.cantidadConsumida) > 0)
-  const formularioValido = form.nombre.trim() && Number(form.precioVenta) >= 0 && filasValidas.length > 0
+  // Apagar el interruptor es una decisión explícita: así una cirugía no queda
+  // sin receta por olvido y deja de descontar inventario sin que nadie lo note.
+  const filasValidas = form.consumeInsumos
+    ? form.insumos.filter((row) => row.insumoClinicoId && Number(row.cantidadConsumida) > 0)
+    : []
+  const formularioValido =
+    form.nombre.trim() && Number(form.precioVenta) >= 0 && (!form.consumeInsumos || filasValidas.length > 0)
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -124,7 +135,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           <div>
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Define el precio de venta y los insumos clínicos que consume cada vez que se factura.
+              Define el precio de venta y, si aplica, los insumos clínicos que consume cada vez que se factura.
             </p>
           </div>
           <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Cerrar">
@@ -179,75 +190,99 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           </div>
 
           <div className="border-t border-border pt-5">
-            <div className="flex items-center justify-between">
-              <p className="text-[13px] font-semibold text-muted-foreground">
-                Insumos que consume
-              </p>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={agregarFila}
-                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline"
+                role="switch"
+                aria-checked={form.consumeInsumos}
+                aria-label="Consume insumos del inventario clínico"
+                onClick={() => setForm((f) => ({ ...f, consumeInsumos: !f.consumeInsumos }))}
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+                  form.consumeInsumos ? 'bg-primary' : 'bg-muted-foreground/25'
+                }`}
               >
-                <Plus className="h-3.5 w-3.5" />
-                Agregar insumo
+                <span className={`inline-block h-5 w-5 rounded-full bg-card transition-transform ${form.consumeInsumos ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
+              <p className="text-sm font-semibold text-foreground">Consume insumos del inventario clínico</p>
             </div>
 
-            <div className="mt-3 space-y-3">
-              {form.insumos.map((row) => {
-                const insumo = insumoPorId(row.insumoClinicoId)
-                return (
-                  <div key={row.rowId} className="flex items-start gap-2 rounded-xl bg-muted/40 p-3">
-                    <Select
-                      variant="field"
-                      aria-label="Insumo"
-                      className="flex-1"
-                      placeholder="Selecciona un insumo"
-                      value={row.insumoClinicoId}
-                      onValueChange={(value) => actualizarFila(row.rowId, 'insumoClinicoId', value)}
-                      options={insumosDisponibles.map((i) => ({
-                        value: i.id,
-                        label: `${i.nombre} (${i.unidadBase})`,
-                      }))}
-                    />
-                    <div className="flex w-32 flex-col gap-1">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="Cantidad"
-                        className={fieldClass(false)}
-                        value={row.cantidadConsumida}
-                        onChange={(e) => actualizarFila(row.rowId, 'cantidadConsumida', e.target.value)}
-                      />
-                      {insumo && (
-                        <span className="text-[13px] text-muted-foreground">{insumo.unidadBase}</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => eliminarFila(row.rowId)}
-                      className="mt-1 text-muted-foreground hover:text-danger"
-                      aria-label="Quitar insumo"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+            {form.consumeInsumos ? (
+              <>
+                <div className="mt-5 flex items-center justify-between">
+                  <p className="text-[13px] font-semibold text-muted-foreground">
+                    Insumos que consume
+                  </p>
+                  <button
+                    type="button"
+                    onClick={agregarFila}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Agregar insumo
+                  </button>
+                </div>
 
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-[13px]">
-              <span className="text-muted-foreground">Costo estimado de insumos</span>
-              <span className="font-semibold text-foreground">
-                {formatCOP(costoEstimado)}
-                {Number(form.precioVenta) > 0 && (
-                  <span className="ml-1.5 text-primary">
-                    ({(((Number(form.precioVenta) - costoEstimado) / Number(form.precioVenta)) * 100).toFixed(0)}% margen)
+                <div className="mt-3 space-y-3">
+                  {form.insumos.map((row) => {
+                    const insumo = insumoPorId(row.insumoClinicoId)
+                    return (
+                      <div key={row.rowId} className="flex items-start gap-2 rounded-xl bg-muted/40 p-3">
+                        <Select
+                          variant="field"
+                          aria-label="Insumo"
+                          className="flex-1"
+                          placeholder="Selecciona un insumo"
+                          value={row.insumoClinicoId}
+                          onValueChange={(value) => actualizarFila(row.rowId, 'insumoClinicoId', value)}
+                          options={insumosDisponibles.map((i) => ({
+                            value: i.id,
+                            label: `${i.nombre} (${i.unidadBase})`,
+                          }))}
+                        />
+                        <div className="flex w-32 flex-col gap-1">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="Cantidad"
+                            className={fieldClass(false)}
+                            value={row.cantidadConsumida}
+                            onChange={(e) => actualizarFila(row.rowId, 'cantidadConsumida', e.target.value)}
+                          />
+                          {insumo && (
+                            <span className="text-[13px] text-muted-foreground">{insumo.unidadBase}</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => eliminarFila(row.rowId)}
+                          className="mt-1 text-muted-foreground hover:text-danger"
+                          aria-label="Quitar insumo"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-[13px]">
+                  <span className="text-muted-foreground">Costo estimado de insumos</span>
+                  <span className="font-semibold text-foreground">
+                    {formatCOP(costoEstimado)}
+                    {Number(form.precioVenta) > 0 && (
+                      <span className="ml-1.5 text-primary">
+                        ({(((Number(form.precioVenta) - costoEstimado) / Number(form.precioVenta)) * 100).toFixed(0)}% margen)
+                      </span>
+                    )}
                   </span>
-                )}
-              </span>
-            </div>
+                </div>
+              </>
+            ) : (
+              <p className="mt-3 rounded-xl bg-muted px-3 py-2.5 text-[13px] leading-5 text-muted-foreground">
+                Al facturarlo no se descontará nada del inventario. Lo que uses en consulta regístralo en la historia clínica.
+              </p>
+            )}
           </div>
         </form>
 
