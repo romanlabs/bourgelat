@@ -919,7 +919,7 @@ export default function InventarioPage() {
 
               <TablaInventario
                 title="Catálogo de servicios"
-                subtitle="Al facturar un servicio se descuentan solos los insumos clínicos que consume."
+                subtitle="Al facturar un servicio se descuentan solos los insumos de su receta, si la tiene."
                 rows={serviciosHook.serviciosRows}
                 columns={[
                   {
@@ -933,8 +933,17 @@ export default function InventarioPage() {
                     align: 'right',
                     render: (row) => <span className="font-semibold">{row.precioVenta}</span>,
                   },
-                  { key: 'costoEstimado', label: 'Costo estimado', align: 'right' },
-                  { key: 'insumos', label: 'Insumos en receta' },
+                  {
+                    key: 'costoEstimado',
+                    label: 'Costo estimado',
+                    align: 'right',
+                    render: (row) => (row.insumos > 0 ? row.costoEstimado : <span className="text-muted-foreground">—</span>),
+                  },
+                  {
+                    key: 'insumos',
+                    label: 'Insumos en receta',
+                    render: (row) => (row.insumos > 0 ? row.insumos : <span className="text-muted-foreground">Sin insumos</span>),
+                  },
                   {
                     key: 'accion',
                     label: 'Acciones',
