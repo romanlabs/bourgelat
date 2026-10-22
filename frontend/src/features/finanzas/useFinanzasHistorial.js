@@ -15,7 +15,8 @@ import { mensajeDeError } from '@/lib/errores'
 
 export const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
-  { value: 'emitida', label: 'Emitidas' },
+  { value: 'emitida', label: 'Por cobrar' },
+  { value: 'parcial', label: 'Con abono parcial' },
   { value: 'pagada', label: 'Pagadas' },
   { value: 'anulada', label: 'Anuladas' },
   { value: 'borrador', label: 'Borradores' },
@@ -28,7 +29,9 @@ export const PAYMENT_FORM_OPTIONS = [
 
 export const ESTADO_LABELS = {
   borrador: 'Borrador',
-  emitida: 'Emitida',
+  // Solo el crédito queda emitida: de contado la venta nace pagada.
+  emitida: 'Por cobrar',
+  parcial: 'Abono parcial',
   pagada: 'Pagada',
   anulada: 'Anulada',
 }
@@ -46,6 +49,7 @@ export const getEstadoTone = (estado) => {
   if (estado === 'pagada') return 'border-success/30 bg-success-soft text-success'
   if (estado === 'anulada') return 'border-danger/30 bg-danger-soft text-danger'
   if (estado === 'borrador') return 'border-border bg-muted text-foreground'
+  if (estado === 'emitida' || estado === 'parcial') return 'border-warning/30 bg-warning-soft text-warning'
   return 'border-primary/30 bg-primary/10 text-primary'
 }
 
@@ -80,7 +84,6 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const [selectedFacturaId, setSelectedFacturaId] = useState(null)
   const [motivoAnulacion, setMotivoAnulacion] = useState('')
   const [emisionForm, setEmisionForm] = useState(RESET_EMISION)
-  const [pagoMetodo, setPagoMetodo] = useState('')
 
   const resetSeleccion = () => {
     setSelectedFacturaId(null)
@@ -145,18 +148,6 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     },
   })
 
-  const registrarPagoMutation = useMutation({
-    mutationFn: ({ facturaId, metodoPago }) => finanzasApi.registrarPago(facturaId, { metodoPago }),
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Pago registrado exitosamente')
-      setPagoMetodo('')
-      invalidarDominios(queryClient, 'facturacion')
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible registrar el pago.'))
-    },
-  })
-
   const anularFacturaMutation = useMutation({
     mutationFn: ({ facturaId, motivo }) => finanzasApi.anularFactura(facturaId, motivo),
     onSuccess: (data) => {
@@ -209,14 +200,6 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
         fechaVencimientoPago:
           emisionForm.formaPagoCodigo === '2' ? emisionForm.fechaVencimientoPago : undefined,
       },
-    })
-  }
-
-  const handleRegistrarPago = () => {
-    if (!facturaSeleccionada) return
-    registrarPagoMutation.mutate({
-      facturaId: facturaSeleccionada.id,
-      metodoPago: pagoMetodo || undefined,
     })
   }
 
@@ -274,9 +257,11 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     facturaSeleccionada.estadoElectronico !== 'validada' &&
     facturaSeleccionada.estado !== 'anulada'
 
-  const canRegisterPayment =
-    facturaSeleccionada &&
-    facturaSeleccionada.estado === 'emitida'
+  // Solo las ventas a crédito con saldo se cobran desde el historial.
+  const canAbonar =
+    Boolean(facturaSeleccionada) &&
+    ['emitida', 'parcial'].includes(facturaSeleccionada.estado) &&
+    Number(facturaSeleccionada.saldoPendiente) > 0
 
   const canVoidInvoice =
     puedeAnular &&
@@ -299,8 +284,6 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     setMotivoAnulacion,
     emisionForm,
     setEmisionForm,
-    pagoMetodo,
-    setPagoMetodo,
     currentFacturaId,
     facturaSeleccionada,
     facturasRows,
@@ -308,16 +291,14 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     facturaDetalleQuery,
     emitirFacturaMutation,
     anularFacturaMutation,
-    registrarPagoMutation,
     canEmitInvoice,
     canVoidInvoice,
-    canRegisterPayment,
+    canAbonar,
     ESTADO_LABELS,
     ESTADO_ELECTRONICO_LABELS,
     handleBuscar,
     handleEmitirFactura,
     handleAnularFactura,
-    handleRegistrarPago,
     handlePrintReceipt,
     exportCurrentCut,
     seleccionarFactura,

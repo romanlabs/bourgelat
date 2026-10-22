@@ -326,16 +326,19 @@ export default function FinanzasPage({ modo = 'caja' }) {
                 />
                 <KpiCard
                   icon={Receipt}
-                  label="Facturas emitidas"
-                  value={formatNumber(resumenHook.resumenEstados.emitida?.cantidad || 0)}
-                  helper="Documentos listos para cobro o seguimiento financiero."
-                  tone="text-info"
+                  label="Ventas por cobrar"
+                  value={formatNumber(
+                    (resumenHook.resumenEstados.emitida?.cantidad || 0) +
+                      (resumenHook.resumenEstados.parcial?.cantidad || 0)
+                  )}
+                  helper="Ventas a crédito con saldo pendiente. Se cobran con abonos."
+                  tone="text-warning"
                 />
                 <KpiCard
                   icon={ShieldCheck}
                   label="Facturas pagadas"
                   value={formatNumber(resumenHook.resumenEstados.pagada?.cantidad || 0)}
-                  helper="Documentos ya cerrados dentro del periodo actual."
+                  helper="Ventas de contado y créditos ya saldados en el periodo."
                   tone="text-success"
                 />
                 <KpiCard
