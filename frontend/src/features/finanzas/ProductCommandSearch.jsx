@@ -2,6 +2,7 @@ import { createElement, useRef, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import { Barcode, Check, ClipboardList, Filter, ImageOff, Package, Plus, Scan, Stethoscope, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { estadoVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { PRODUCT_CATEGORIES } from './finanzasConstants'
 
 const formatCOP = (value) =>
@@ -70,6 +71,7 @@ export default function ProductCommandSearch({
   serviciosQuery,
   addProductToInvoice,
   addServiceFromCatalog,
+  onProductoVencido,
   puedeConsultarInventario,
   barcodeInput,
   setBarcodeInput,
@@ -84,9 +86,15 @@ export default function ProductCommandSearch({
   const barcodeRef = useRef(null)
   const categoriaActiva = PRODUCT_CATEGORIES.find((c) => c.value === categoriaFiltro)
 
+  // Un vencido no entra al carrito: se abre el aviso para revisar su fecha.
+  const elegirProducto = (product) => {
+    if (estadoVencimiento(product) === 'vencido') onProductoVencido?.(product)
+    else addProductToInvoice(product)
+  }
+
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Enter' && productosDisponibles.length > 0) {
-      addProductToInvoice(productosDisponibles[0])
+      elegirProducto(productosDisponibles[0])
       setProductSearch('')
     }
   }
@@ -274,20 +282,28 @@ export default function ProductCommandSearch({
               <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
                 {productosDisponibles.map((product) => {
                   const sinStock = product.stock !== null && product.stock !== undefined && product.stock <= 0
+                  const vencimiento = estadoVencimiento(product)
+                  const vencido = vencimiento === 'vencido'
                   return (
                     <button
                       key={product.id}
                       type="button"
-                      onClick={() => !sinStock && addProductToInvoice(product)}
+                      onClick={() => !sinStock && elegirProducto(product)}
                       disabled={sinStock}
+                      aria-label={vencido ? `${product.nombre}, vencido: revisar vencimiento` : undefined}
                       className={`group relative flex flex-col gap-2 rounded-xl p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         sinStock
                           ? 'cursor-not-allowed bg-muted opacity-60'
-                          : 'bg-card hover:bg-accent active:translate-y-px'
+                          : vencido
+                            ? 'bg-muted hover:bg-danger-soft active:translate-y-px'
+                            : 'bg-card hover:bg-accent active:translate-y-px'
                       }`}
                     >
                       {/* La imagen manda: es lo que el cajero reconoce de un vistazo */}
-                      <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted">
+                      <div className={cn(
+                        'flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-muted',
+                        vencido && 'opacity-60'
+                      )}>
                         {product.imagenUrl
                           ? (
                             <img
@@ -300,6 +316,17 @@ export default function ProductCommandSearch({
                           : <ImageOff className="h-7 w-7 text-muted-foreground/40" />
                         }
                       </div>
+                      {/* Fuera de la imagen atenuada, para que el aviso se lea completo */}
+                      {vencimiento && !sinStock && (
+                        <span
+                          className={cn(
+                            'absolute left-4 top-4 rounded-md px-2 py-0.5 text-[12px] font-semibold',
+                            vencido ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning'
+                          )}
+                        >
+                          {textoVencimiento(product.fechaVencimiento)}
+                        </span>
+                      )}
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
                           {product.nombre}
@@ -320,7 +347,7 @@ export default function ProductCommandSearch({
                           </span>
                         )}
                       </div>
-                      {!sinStock && (
+                      {!sinStock && !vencido && (
                         <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
                           <Plus className="h-3.5 w-3.5" />
                         </span>

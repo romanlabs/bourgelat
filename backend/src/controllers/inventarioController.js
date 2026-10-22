@@ -648,9 +648,12 @@ const obtenerProductoPorBarcode = async (req, res) => {
         'id',
         'nombre',
         'precioVenta',
+        // El POS pone el piso de precio con el costo y avisa si el producto vencio.
+        'precioCompra',
         'stock',
         'categoria',
-        'requiereFormula'
+        'requiereFormula',
+        'fechaVencimiento'
       ]
     });
 
