@@ -22,6 +22,7 @@ import {
   getEstadoTone,
   getEstadoElectronicoTone,
 } from './useFinanzasHistorial'
+import FormAbono from './FormAbono'
 
 export default function FacturaDetalleModal({ historialHook }) {
   const {
@@ -31,19 +32,15 @@ export default function FacturaDetalleModal({ historialHook }) {
     facturaSeleccionada,
     handlePrintReceipt,
     canEmitInvoice,
-    canRegisterPayment,
+    canAbonar,
     canVoidInvoice,
     emisionForm,
     setEmisionForm,
-    pagoMetodo,
-    setPagoMetodo,
     motivoAnulacion,
     setMotivoAnulacion,
     handleEmitirFactura,
-    handleRegistrarPago,
     handleAnularFactura,
     emitirFacturaMutation,
-    registrarPagoMutation,
     anularFacturaMutation,
   } = historialHook
 
@@ -56,7 +53,7 @@ export default function FacturaDetalleModal({ historialHook }) {
         <DialogHeader>
           <DialogTitle>Detalle de factura</DialogTitle>
           <DialogDescription>
-            Revisa la venta, imprime la tirilla o registra el pago.
+            Revisa la venta, imprime la tirilla o cobra el saldo si fue a crédito.
           </DialogDescription>
         </DialogHeader>
 
@@ -109,6 +106,15 @@ export default function FacturaDetalleModal({ historialHook }) {
                   {formatCurrency(facturaSeleccionada.total)}
                 </p>
               </div>
+
+              {canAbonar ? (
+                <div className="flex items-baseline justify-between gap-3 rounded-xl bg-warning-soft px-5 py-3">
+                  <p className="text-[15px] font-semibold text-warning">Saldo pendiente</p>
+                  <p className="text-[22px] font-semibold tabular-nums text-warning">
+                    {formatCurrency(facturaSeleccionada.saldoPendiente)}
+                  </p>
+                </div>
+              ) : null}
 
               <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <div className="rounded-xl bg-muted px-4 py-3">
@@ -293,35 +299,17 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : null}
 
-              {canRegisterPayment ? (
+              {canAbonar ? (
                 <div className="space-y-4 border-t border-border/60 pt-5">
                   <div className="flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold text-foreground">Registrar pago</p>
+                    <p className="text-sm font-semibold text-foreground">Cobrar venta a crédito</p>
                   </div>
-                  <Select
-                    variant="field"
-                    aria-label="Método de pago"
-                    placeholder="Método de pago (opcional)"
-                    value={pagoMetodo}
-                    onValueChange={setPagoMetodo}
-                    options={[
-                      { value: 'efectivo', label: 'Efectivo' },
-                      { value: 'transferencia', label: 'Transferencia' },
-                      { value: 'tarjeta_debito', label: 'Tarjeta débito' },
-                      { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-                      { value: 'otro', label: 'Otro' },
-                    ]}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRegistrarPago}
-                    disabled={registrarPagoMutation.isPending}
-                    className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    {registrarPagoMutation.isPending ? 'Registrando...' : 'Marcar como pagada'}
-                  </button>
+                  <p className="text-sm text-muted-foreground">
+                    Registra un abono o paga el saldo completo. El efectivo entra a tu turno de caja.
+                  </p>
+                  {/* key: al cambiar de factura el formulario arranca vacío. */}
+                  <FormAbono key={facturaSeleccionada.id} factura={facturaSeleccionada} />
                 </div>
               ) : null}
 

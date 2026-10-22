@@ -31,11 +31,6 @@ export const finanzasApi = {
     return data
   },
 
-  async registrarPago(facturaId, { metodoPago, observaciones } = {}) {
-    const { data } = await api.patch(`/facturas/${facturaId}/pagar`, { metodoPago, observaciones })
-    return data
-  },
-
   async anularFactura(facturaId, motivoAnulacion) {
     const { data } = await api.patch(`/facturas/${facturaId}/anular`, { motivoAnulacion })
     return data
