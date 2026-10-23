@@ -9,9 +9,21 @@ const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
 const InsumoClinico = require('../models/InsumoClinico');
 const Gasto = require('../models/Gasto');
+const ServicioClinico = require('../models/ServicioClinico');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 const { tenantWhere } = require('../utils/tenant');
 const { clasificarVencimiento, hoyISO } = require('../utils/vencimiento');
+const {
+  validarRango,
+  granularidadDe,
+  periodoAnterior,
+  clavesDelPeriodo,
+  armarSerie,
+  calcularDestacados,
+  margenDe,
+  ticketPromedioDe,
+  redondearPesos,
+} = require('../utils/finanzasPeriodo');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -486,4 +498,221 @@ const reporteAgenda = async (req, res) => {
   }
 };
 
-module.exports = { reporteIngresos, reporteCitas, reporteAgenda, reporteInventario, dashboardGeneral, reporteRentabilidad };
+// ── Análisis financiero del periodo ──────────────────────────────────────────
+// La lectura larga de Finanzas (un año, un trimestre, un rango libre). Usa los
+// mismos criterios que `reporteRentabilidad` —ingreso = facturas emitidas,
+// parciales o pagadas; gasto = gastos no anulados— pero agrega en Postgres en
+// vez de traer filas: un año de una clínica grande son miles de facturas.
+// Los métodos de pago no van aquí: `metodoPago` está cifrado y no se agrupa en SQL.
+const ESTADOS_INGRESO = ['emitida', 'pagada', 'parcial'];
+const TOP_LINEAS = 5;
+
+const sumaDe = (columna) => sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col(columna)), 0);
+
+const topPorLinea = (columnaId, whereFactura) =>
+  FacturaItem.findAll({
+    attributes: [
+      [sequelize.col(`FacturaItem.${columnaId}`), 'id'],
+      [sequelize.fn('SUM', sequelize.col('FacturaItem.cantidad')), 'cantidad'],
+      [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total'],
+    ],
+    where: { [columnaId]: { [Op.ne]: null } },
+    include: [{ model: Factura, as: 'factura', attributes: [], where: whereFactura }],
+    group: [`FacturaItem.${columnaId}`],
+    order: [[sequelize.literal('total'), 'DESC']],
+    limit: TOP_LINEAS,
+    raw: true,
+  });
+
+// La descripción de la línea está cifrada: el nombre sale del catálogo, que
+// además es el vigente si el producto se renombró después de venderlo.
+const conNombres = async (req, filas, Modelo) => {
+  if (filas.length === 0) return [];
+  const catalogo = await Modelo.findAll({
+    attributes: ['id', 'nombre'],
+    where: tenantWhere(req, { id: filas.map((fila) => fila.id) }),
+    raw: true,
+  });
+  const nombres = new Map(catalogo.map((item) => [item.id, item.nombre]));
+  return filas.map((fila) => ({
+    id: fila.id,
+    nombre: nombres.get(fila.id) || 'Sin nombre',
+    cantidad: Number(fila.cantidad || 0),
+    total: redondearPesos(fila.total),
+  }));
+};
+
+const reporteFinanzasPeriodo = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    const errorRango = validarRango(fechaInicio, fechaFin);
+    if (errorRango) return res.status(400).json({ message: errorRango });
+
+    const granularidad = granularidadDe(fechaInicio, fechaFin);
+    const anterior = periodoAnterior(fechaInicio, fechaFin);
+    const tramo = sequelize.literal(
+      granularidad === 'mes' ? `to_char("fecha", 'YYYY-MM')` : `to_char("fecha", 'YYYY-MM-DD')`
+    );
+
+    const whereFacturas = (inicio, fin) =>
+      tenantWhere(req, {
+        estado: { [Op.in]: ESTADOS_INGRESO },
+        fecha: { [Op.between]: [inicio, fin] },
+      });
+    const whereGastos = (inicio, fin) =>
+      tenantWhere(req, { anulado: false, fecha: { [Op.between]: [inicio, fin] } });
+
+    const facturasPeriodo = whereFacturas(fechaInicio, fechaFin);
+    const gastosPeriodo = whereGastos(fechaInicio, fechaFin);
+
+    const [
+      facturasPorTramo,
+      gastosPorTramo,
+      porCategoria,
+      porTipo,
+      topServiciosFilas,
+      topProductosFilas,
+      sinCatalogoFilas,
+      [porCobrarFila],
+      [facturasAnterior],
+      [gastosAnterior],
+    ] = await Promise.all([
+      Factura.findAll({
+        attributes: [
+          [tramo, 'periodo'],
+          [sumaDe('total'), 'ingresos'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
+        ],
+        where: facturasPeriodo,
+        group: [tramo],
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: [[tramo, 'periodo'], [sumaDe('monto'), 'gastos']],
+        where: gastosPeriodo,
+        group: [tramo],
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: ['categoria', [sumaDe('monto'), 'total']],
+        where: gastosPeriodo,
+        group: ['categoria'],
+        raw: true,
+      }),
+
+      FacturaItem.findAll({
+        attributes: ['tipo', [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total']],
+        include: [{ model: Factura, as: 'factura', attributes: [], where: facturasPeriodo }],
+        group: ['FacturaItem.tipo'],
+        raw: true,
+      }),
+
+      topPorLinea('servicioClinicoId', facturasPeriodo),
+      topPorLinea('productoId', facturasPeriodo),
+
+      // Líneas escritas a mano, sin producto ni servicio del catálogo: no entran
+      // en los top (su descripción está cifrada y no se agrupa), pero su total
+      // se informa para que los top cuadren con «Ventas por tipo».
+      FacturaItem.findAll({
+        attributes: ['tipo', [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total']],
+        where: { servicioClinicoId: null, productoId: null },
+        include: [{ model: Factura, as: 'factura', attributes: [], where: facturasPeriodo }],
+        group: ['FacturaItem.tipo'],
+        raw: true,
+      }),
+
+      // Lo que de lo facturado en el periodo todavía no se ha cobrado (fiado).
+      Factura.findAll({
+        attributes: [[sumaDe('saldoPendiente'), 'porCobrar']],
+        where: facturasPeriodo,
+        raw: true,
+      }),
+
+      Factura.findAll({
+        attributes: [
+          [sumaDe('total'), 'ingresos'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
+        ],
+        where: whereFacturas(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: [[sumaDe('monto'), 'gastos']],
+        where: whereGastos(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+    ]);
+
+    const [topServicios, topProductos] = await Promise.all([
+      conNombres(req, topServiciosFilas, ServicioClinico),
+      conNombres(req, topProductosFilas, Producto),
+    ]);
+
+    const serie = armarSerie(
+      clavesDelPeriodo(fechaInicio, fechaFin, granularidad),
+      facturasPorTramo,
+      gastosPorTramo
+    );
+
+    const ingresos = redondearPesos(serie.reduce((suma, fila) => suma + fila.ingresos, 0));
+    const gastos = redondearPesos(serie.reduce((suma, fila) => suma + fila.gastos, 0));
+    const ventas = serie.reduce((suma, fila) => suma + fila.ventas, 0);
+    const ganancia = redondearPesos(ingresos - gastos);
+
+    const ingresosAnterior = redondearPesos(facturasAnterior?.ingresos);
+    const gastosAnteriorTotal = redondearPesos(gastosAnterior?.gastos);
+    const ventasAnterior = Number(facturasAnterior?.ventas || 0);
+
+    const tipos = aRecord(porTipo, 'tipo');
+    const sinCatalogo = aRecord(sinCatalogoFilas, 'tipo');
+
+    res.json({
+      periodo: { fechaInicio, fechaFin, granularidad, anterior },
+      resumen: {
+        ingresos,
+        gastos,
+        ganancia,
+        margen: margenDe(ingresos, ganancia),
+        ventas,
+        ticketPromedio: ticketPromedioDe(ingresos, ventas),
+        porCobrar: redondearPesos(porCobrarFila?.porCobrar),
+      },
+      anterior: {
+        ingresos: ingresosAnterior,
+        gastos: gastosAnteriorTotal,
+        ganancia: redondearPesos(ingresosAnterior - gastosAnteriorTotal),
+        ventas: ventasAnterior,
+        ticketPromedio: ticketPromedioDe(ingresosAnterior, ventasAnterior),
+      },
+      serie,
+      destacados: calcularDestacados(serie),
+      gastosPorCategoria: aRecord(porCategoria, 'categoria'),
+      ingresosPorTipo: {
+        servicio: redondearPesos(tipos.servicio),
+        producto: redondearPesos(tipos.producto),
+      },
+      topServicios,
+      topProductos,
+      sinCatalogo: {
+        servicio: redondearPesos(sinCatalogo.servicio),
+        producto: redondearPesos(sinCatalogo.producto),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+module.exports = {
+  reporteIngresos,
+  reporteCitas,
+  reporteAgenda,
+  reporteInventario,
+  dashboardGeneral,
+  reporteRentabilidad,
+  reporteFinanzasPeriodo,
+};

@@ -7,8 +7,11 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  Line,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -446,6 +449,110 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
               <Tooltip content={<ChartTooltip formatter={formatter} />} cursor={{ fill: 'hsl(var(--muted))' }} />
               <Bar dataKey={dataKey} fill={`url(#${gradientId})`} radius={[4, 4, 0, 0]} maxBarSize={48} shape={<GradientBar fill={`url(#${gradientId})`} />} />
             </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-sm text-muted-foreground">
+            {emptyMessage}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Barras agrupadas con una línea encima, todo sobre un solo eje (las series
+ * deben compartir unidad: p. ej. ingresos, gastos y ganancia en pesos).
+ * `barras`: [{ dataKey, name, color }] · `linea`: { dataKey, name, color } opcional.
+ * La leyenda siempre está visible, así la serie no se identifica solo por color.
+ */
+export function ComparativoPanel({
+  title,
+  subtitle,
+  data,
+  xKey = 'name',
+  barras,
+  linea,
+  formatter,
+  axisFormatter,
+  emptyMessage,
+  action,
+  height = 'h-[320px]',
+}) {
+  const series = linea ? [...barras, linea] : barras
+  const hasData = data.some((item) => series.some((serie) => Number(item[serie.dataKey] || 0) !== 0))
+  const hayNegativos = data.some((item) => series.some((serie) => Number(item[serie.dataKey] || 0) < 0))
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-card">
+      <div className="flex flex-col gap-3 px-6 pt-6 pb-1 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
+          {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {action}
+      </div>
+      {hasData ? (
+        <ul className="flex flex-wrap gap-x-5 gap-y-1.5 px-6 pt-3" aria-label="Leyenda">
+          {series.map((serie) => (
+            <li key={serie.dataKey} className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span
+                aria-hidden
+                className={serie === linea ? 'h-0.5 w-4 rounded-full' : 'h-2.5 w-2.5 rounded-sm'}
+                style={{ backgroundColor: serie.color }}
+              />
+              {serie.name}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className={`${height} px-2 py-4`}>
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
+            <ComposedChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barGap={2} barCategoryGap="24%">
+              <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
+              <XAxis
+                dataKey={xKey}
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                dy={6}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tickFormatter={(value) => (axisFormatter || formatter ? (axisFormatter || formatter)(value) : value)}
+                width={64}
+              />
+              {hayNegativos ? <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} /> : null}
+              <Tooltip content={<ChartTooltip formatter={formatter} />} cursor={{ fill: 'hsl(var(--muted))' }} />
+              {barras.map((barra) => (
+                <Bar
+                  key={barra.dataKey}
+                  dataKey={barra.dataKey}
+                  name={barra.name}
+                  fill={barra.color}
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
+                />
+              ))}
+              {linea ? (
+                <Line
+                  // Recta entre puntos: una curva suavizada se sale de los
+                  // valores reales y sugiere cifras que no existen.
+                  type="linear"
+                  dataKey={linea.dataKey}
+                  name={linea.name}
+                  stroke={linea.color}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: linea.color, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+                  activeDot={{ r: 5, fill: linea.color, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+                />
+              ) : null}
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-sm text-muted-foreground">

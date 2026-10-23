@@ -43,6 +43,7 @@ import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
 import PosModal from '@/features/finanzas/PosModal'
 import FacturaDetalleModal from '@/features/finanzas/FacturaDetalleModal'
 import GastosRentabilidadPanel, { CuentasPorCobrarPanel, GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
+import AnalisisPeriodoPanel from '@/features/finanzas/AnalisisPeriodoPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -73,11 +74,12 @@ const MODOS = {
   finanzas: {
     moduleKey: 'finanzas',
     titulo: 'Finanzas',
-    descripcion: 'Ingresos, gastos y rentabilidad del mes.',
+    descripcion: 'Ingresos, gastos y rentabilidad del mes y del año.',
     tabInicial: 'resumen',
     tabs: [
       { id: 'resumen', label: 'Resumen' },
       { id: 'gastos', label: 'Gastos y rentabilidad' },
+      { id: 'analisis', label: 'Análisis del periodo' },
     ],
   },
 }
@@ -456,6 +458,9 @@ export default function FinanzasPage({ modo = 'caja' }) {
 
           {/* ── Tab: Gastos y rentabilidad ── */}
           {activeTab === 'gastos' && <GastosRentabilidadPanel />}
+
+          {/* ── Tab: Análisis del periodo (año, trimestre, rango libre) ── */}
+          {activeTab === 'analisis' && <AnalisisPeriodoPanel />}
 
           {/* ── Tab: Por cobrar (fiado y abonos) ── */}
           {activeTab === 'cobrar' && <CuentasPorCobrarPanel />}
