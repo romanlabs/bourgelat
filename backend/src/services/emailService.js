@@ -24,9 +24,13 @@ const obtenerTransporter = () => {
 
 const enviarEmail = async ({ para, asunto, html, texto, responderA = null }) => {
   if (!smtpConfigurado()) {
+    // En local el contenido sirve para abrir los enlaces sin SMTP. En
+    // producción esos enlaces (invitación, restablecer clave) siguen vigentes:
+    // dejarlos en los logs equivale a entregarlos a quien lea los logs.
+    const contenido = process.env.NODE_ENV === 'production' ? '' : ` | Contenido: ${texto}`
     logger.warn({
       contexto: 'email',
-      mensaje: `SMTP no configurado; email no enviado. Para: ${para} | Asunto: ${asunto} | Contenido: ${texto}`,
+      mensaje: `SMTP no configurado; email no enviado. Para: ${para} | Asunto: ${asunto}${contenido}`,
     })
     return { enviado: false }
   }
@@ -58,7 +62,7 @@ const enviarEmailRecuperacionPassword = async ({ para, nombre, urlReset }) => {
   const html = `
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
       <h2 style="color: #112739;">Restablece tu contraseña</h2>
-      <p>Hola ${nombre},</p>
+      <p>Hola ${escaparHtml(nombre)},</p>
       <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en Bourgelat.</p>
       <p style="margin: 24px 0;">
         <a href="${urlReset}"
@@ -120,7 +124,7 @@ const enviarEmailVerificacion = async ({ para, nombre, urlVerificacion, urlFront
   const html = `
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
       <h2 style="color: #112739;">Verifica tu correo</h2>
-      <p>Hola ${nombre},</p>
+      <p>Hola ${escaparHtml(nombre)},</p>
       <p>Confirma que este correo es tuyo para terminar de asegurar tu cuenta en Bourgelat.</p>
       <p style="margin: 24px 0;">
         <a href="${urlVerificacion}"
@@ -158,6 +162,58 @@ Vence en 10 minutos. Si no fuiste tú, ignora este correo.${pie.texto}`
   `
   return enviarEmail({ para, asunto, html, texto })
 }
+
+// Invitación a unirse al equipo de una clínica. El nombre de la clínica y del
+// administrador los escribe el cliente: van escapados, recortados y nunca en el
+// asunto ni como enlace, para que una cuenta maliciosa no pueda usar este
+// correo como phishing con la marca de Bourgelat.
+const recortar = (valor, maximo) => {
+  const texto = String(valor ?? '').replace(/\s+/g, ' ').trim()
+  return texto.length > maximo ? `${texto.slice(0, maximo - 1)}…` : texto
+}
+
+const armarEmailInvitacion = ({ nombre, nombreClinica, nombreAdmin, urlAceptar }) => {
+  const asunto = 'Te invitaron a unirte a un equipo en Bourgelat'
+  const clinica = recortar(nombreClinica, 80)
+  const admin = recortar(nombreAdmin, 80)
+  const persona = recortar(nombre, 80)
+  const quienInvita = admin ? `${admin}, de ${clinica},` : clinica
+  const urlRechazar = `${urlAceptar}&rechazar=1`
+  const texto = `Hola ${persona},
+
+${quienInvita} te invitó a unirte a su equipo en Bourgelat.
+
+Crea tu contraseña desde este enlace (válido por 72 horas y de un solo uso):
+${urlAceptar}
+
+Nadie más conoce tu contraseña: la defines tú.
+
+Si no reconoces esta invitación, ábrela aquí para rechazarla y borrar la cuenta:
+${urlRechazar}`
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">Te invitaron a Bourgelat</h2>
+      <p>Hola ${escaparHtml(persona)},</p>
+      <p>${escaparHtml(quienInvita)} te invitó a unirte a su equipo en Bourgelat.</p>
+      <p style="margin: 24px 0;">
+        <a href="${escaparHtml(urlAceptar)}"
+           style="background: #10b981; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          Crear mi contraseña
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #51697d;">El enlace es válido por 72 horas y solo puede usarse una vez. Nadie más conoce tu contraseña: la defines tú.</p>
+      <p style="font-size: 13px; color: #51697d;">
+        ¿No reconoces esta invitación?
+        <a href="${escaparHtml(urlRechazar)}" style="color: #3a6d87;">Recházala aquí</a>
+        y borraremos la cuenta creada con tu correo.
+      </p>
+    </div>
+  `
+  return { asunto, html, texto }
+}
+
+const enviarEmailInvitacion = ({ para, ...datos }) =>
+  enviarEmail({ para, ...armarEmailInvitacion(datos) })
 
 // Aviso al profesional asignado antes de su cita (job recordatoriosCita).
 // Solo datos de agenda: nada de la historia clínica.
@@ -212,5 +268,7 @@ module.exports = {
   enviarEmailRecuperacionPassword,
   enviarEmailVerificacion,
   enviarEmailBienvenida,
+  armarEmailInvitacion,
+  enviarEmailInvitacion,
   smtpConfigurado,
 }

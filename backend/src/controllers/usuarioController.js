@@ -1,8 +1,10 @@
-const bcrypt = require('bcryptjs')
 const { Op } = require('sequelize')
 const Usuario = require('../models/Usuario')
+const Clinica = require('../models/Clinica')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { ejecutarConCupo } = require('../services/suscripcionService')
+const invitacionService = require('../services/invitacionService')
+const logger = require('../utils/logger')
 
 const cupoUsuariosActivos = (clinicaId) => ({
   clinicaId,
@@ -20,8 +22,6 @@ const respuestaLimiteUsuarios = (cupo) => ({
   usoActual: cupo.usoActual,
 })
 
-const passwordFuerteRegex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 const telefonoColombiaRegex = /^3\d{9}$/
 const ROLES_VALIDOS = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
@@ -50,13 +50,22 @@ const tienePermisoAdmin = ({ rol, rolesAdicionales = [], activo = true }) =>
     ROLES_CON_PERMISO_ADMIN.includes(rol) || rolesAdicionales.includes('admin')
   )
 
+// Quien no ha aceptado su invitación todavía no puede entrar: no aparece para
+// asignarle citas ni cuenta como el administrador que la clínica debe conservar.
+const accesoActivado = { [Op.not]: invitacionService.wherePendiente }
+
 const contarAdminsActivos = async ({ clinicaId, excludeUsuarioId = null }) => {
   const where = {
     clinicaId,
     activo: true,
-    [Op.or]: [
-      { rol: { [Op.in]: ROLES_CON_PERMISO_ADMIN } },
-      { rolesAdicionales: { [Op.contains]: ['admin'] } },
+    [Op.and]: [
+      {
+        [Op.or]: [
+          { rol: { [Op.in]: ROLES_CON_PERMISO_ADMIN } },
+          { rolesAdicionales: { [Op.contains]: ['admin'] } },
+        ],
+      },
+      accesoActivado,
     ],
   }
 
@@ -73,9 +82,52 @@ const validarTelefonoLaboral = (telefono) =>
 const responderErrorInterno = (res) =>
   res.status(500).json({ message: 'Error en el servidor' })
 
+// Solo invita quien probó que su propio correo es suyo: así una cuenta con un
+// correo inventado no puede usar Bourgelat para enviar correos a terceros.
+const adminPuedeInvitar = async (req) => {
+  const admin = await Usuario.findOne({
+    where: { id: req.usuario.id, clinicaId: req.usuario.clinicaId },
+    attributes: ['id', 'emailVerificado'],
+  })
+  return Boolean(admin?.emailVerificado)
+}
+
+const MENSAJE_ADMIN_SIN_VERIFICAR =
+  'Verifica tu correo antes de invitar a tu equipo. Usa el aviso «Reenviar verificación» de la parte superior.'
+
+// Envía el correo después del commit: si el SMTP falla, la cuenta queda creada
+// y el administrador puede reenviar la invitación.
+const enviarInvitacionSegura = async ({ usuario, token, req }) => {
+  try {
+    const clinica = await Clinica.findByPk(usuario.clinicaId, { attributes: ['id', 'nombre'] })
+    await invitacionService.enviarInvitacion({
+      usuario,
+      clinica,
+      token,
+      nombreAdmin: req.usuario?.nombre,
+    })
+    return true
+  } catch (error) {
+    logger.error({ contexto: 'invitacion-usuario', mensaje: `Envio fallido: ${error.message}` })
+    return false
+  }
+}
+
+const serializarUsuarioEquipo = (usuario) => ({
+  id: usuario.id,
+  nombre: usuario.nombre,
+  email: usuario.email,
+  rol: usuario.rol,
+  rolesAdicionales: usuario.rolesAdicionales,
+  telefono: usuario.telefono,
+  activo: usuario.activo,
+  ultimoAcceso: usuario.ultimoAcceso,
+  invitacionPendiente: invitacionService.estaPendiente(usuario),
+})
+
 const crearUsuario = async (req, res) => {
   try {
-    const { nombre, email, password, rol, rolesAdicionales, telefono } = req.body
+    const { nombre, email, rol, rolesAdicionales, telefono } = req.body
     const { clinicaId } = req.usuario
 
     const nombreNormalizado = normalizarTexto(nombre)
@@ -87,15 +139,8 @@ const crearUsuario = async (req, res) => {
       rolNormalizado
     )
 
-    if (!nombreNormalizado || !emailNormalizado || !password || !rolNormalizado) {
-      return res.status(400).json({ message: 'Nombre, email, password y rol son obligatorios' })
-    }
-
-    if (!passwordFuerteRegex.test(password)) {
-      return res.status(400).json({
-        message:
-          'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial',
-      })
+    if (!nombreNormalizado || !emailNormalizado || !rolNormalizado) {
+      return res.status(400).json({ message: 'Nombre, email y rol son obligatorios' })
     }
 
     if (!ROLES_VALIDOS.includes(rolNormalizado)) {
@@ -108,60 +153,125 @@ const crearUsuario = async (req, res) => {
       })
     }
 
+    if (!(await adminPuedeInvitar(req))) {
+      return res.status(403).json({ message: MENSAJE_ADMIN_SIN_VERIFICAR, code: 'EMAIL_NOT_VERIFIED' })
+    }
+
     const usuarioExiste = await Usuario.findOne({ where: { email: emailNormalizado }, sinTenant: true })
     if (usuarioExiste) {
       return res.status(400).json({ message: 'El email ya está registrado' })
     }
 
-    // El hash va antes del lock para no retener a las demas altas de la clinica.
-    const salt = await bcrypt.genSalt(12)
-    const passwordHash = await bcrypt.hash(password, salt)
+    const topes = await invitacionService.verificarTopes({ clinicaId })
+    if (!topes.permitido) {
+      return res.status(429).json({ message: topes.message, code: 'INVITACIONES_TOPE' })
+    }
 
-    const { cupo: cupoUsuarios, resultado: usuario } = await ejecutarConCupo(
+    // Sin contraseña: la define la persona invitada desde su correo. Hasta
+    // entonces la cuenta no puede iniciar sesión, pero ocupa cupo del plan.
+    const { cupo: cupoUsuarios, resultado } = await ejecutarConCupo(
       cupoUsuariosActivos(clinicaId),
-      (transaction) => Usuario.create({
-        nombre: nombreNormalizado,
-        email: emailNormalizado,
-        password: passwordHash,
-        rol: rolNormalizado,
-        rolesAdicionales: rolesAdicionalesNormalizados,
-        telefono: telefonoNormalizado || null,
-        clinicaId,
-      }, { transaction })
+      async (transaction) => {
+        const nuevo = await Usuario.create({
+          nombre: nombreNormalizado,
+          email: emailNormalizado,
+          password: null,
+          proveedorAuth: 'local',
+          emailVerificado: false,
+          rol: rolNormalizado,
+          rolesAdicionales: rolesAdicionalesNormalizados,
+          telefono: telefonoNormalizado || null,
+          clinicaId,
+        }, { transaction })
+        const token = await invitacionService.emitirInvitacion({
+          usuario: nuevo,
+          creadoPorId: req.usuario.id,
+          transaction,
+        })
+        return { usuario: nuevo, token }
+      }
     )
 
     if (!cupoUsuarios.permitido) {
       return res.status(403).json(respuestaLimiteUsuarios(cupoUsuarios))
     }
 
+    const { usuario, token } = resultado
+    const invitacionEnviada = await enviarInvitacionSegura({ usuario, token, req })
+
     await registrarAuditoria({
-      accion: 'CREAR_USUARIO',
+      accion: 'INVITAR_USUARIO',
       entidad: 'Usuario',
       entidadId: usuario.id,
-      descripcion: `Usuario ${usuario.email} creado con rol ${usuario.rol}`,
+      descripcion: `Invitación enviada a ${usuario.email} con rol ${usuario.rol}`,
       datosNuevos: {
         email: usuario.email,
         rol: usuario.rol,
         rolesAdicionales: usuario.rolesAdicionales,
         telefono: usuario.telefono,
+        invitacionEnviada,
       },
       req,
       resultado: 'exitoso',
     })
 
     res.status(201).json({
-      message: 'Usuario creado exitosamente',
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
-        rolesAdicionales: usuario.rolesAdicionales,
-        telefono: usuario.telefono,
-        activo: usuario.activo,
-        ultimoAcceso: usuario.ultimoAcceso,
-      },
+      message: invitacionEnviada
+        ? `Invitación enviada a ${usuario.email}`
+        : 'El usuario quedó creado, pero no pudimos enviar el correo. Reenvía la invitación en unos minutos.',
+      invitacionEnviada,
+      usuario: serializarUsuarioEquipo(usuario),
     })
+  } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
+const reenviarInvitacion = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+
+    const usuario = await Usuario.findOne({ where: { id, clinicaId } })
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    if (!invitacionService.estaPendiente(usuario)) {
+      return res.status(400).json({ message: 'Esta persona ya creó su contraseña; no necesita invitación.' })
+    }
+
+    if (!usuario.activo) {
+      return res.status(400).json({ message: 'Activa el usuario antes de reenviarle la invitación.' })
+    }
+
+    if (!(await adminPuedeInvitar(req))) {
+      return res.status(403).json({ message: MENSAJE_ADMIN_SIN_VERIFICAR, code: 'EMAIL_NOT_VERIFIED' })
+    }
+
+    const topes = await invitacionService.verificarTopes({ clinicaId, usuarioId: usuario.id })
+    if (!topes.permitido) {
+      return res.status(429).json({ message: topes.message, code: 'INVITACIONES_TOPE' })
+    }
+
+    const token = await invitacionService.emitirInvitacion({ usuario, creadoPorId: req.usuario.id })
+    const invitacionEnviada = await enviarInvitacionSegura({ usuario, token, req })
+
+    await registrarAuditoria({
+      accion: 'REENVIAR_INVITACION',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion: `Invitación reenviada a ${usuario.email}`,
+      datosNuevos: { invitacionEnviada },
+      req,
+      resultado: invitacionEnviada ? 'exitoso' : 'fallido',
+    })
+
+    if (!invitacionEnviada) {
+      return res.status(502).json({ message: 'No pudimos enviar el correo. Intenta de nuevo en unos minutos.' })
+    }
+
+    res.json({ message: `Invitación reenviada a ${usuario.email}`, invitacionEnviada })
   } catch (error) {
     responderErrorInterno(res)
   }
@@ -173,7 +283,10 @@ const obtenerUsuarios = async (req, res) => {
 
     const usuarios = await Usuario.findAll({
       where: { clinicaId },
-      attributes: { exclude: ['password'] },
+      attributes: {
+        exclude: ['password'],
+        include: [invitacionService.atributoInvitacionPendiente()],
+      },
       order: [['createdAt', 'DESC']],
     })
 
@@ -191,9 +304,14 @@ const obtenerEquipoAgenda = async (req, res) => {
       where: {
         clinicaId,
         activo: true,
-        [Op.or]: [
-          { rol: 'veterinario' },
-          { rolesAdicionales: { [Op.contains]: ['veterinario'] } },
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { rol: 'veterinario' },
+              { rolesAdicionales: { [Op.contains]: ['veterinario'] } },
+            ],
+          },
+          accesoActivado,
         ],
       },
       attributes: ['id', 'nombre', 'email', 'telefono', 'rol', 'rolesAdicionales'],
@@ -218,9 +336,14 @@ const obtenerEquipoClinica = async (req, res) => {
       where: {
         clinicaId,
         activo: true,
-        [Op.or]: [
-          { rol: { [Op.in]: rolesEquipo } },
-          { rolesAdicionales: { [Op.overlap]: rolesEquipo } },
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { rol: { [Op.in]: rolesEquipo } },
+              { rolesAdicionales: { [Op.overlap]: rolesEquipo } },
+            ],
+          },
+          accesoActivado,
         ],
       },
       attributes: ['id', 'nombre', 'rol'],
@@ -240,7 +363,10 @@ const obtenerUsuario = async (req, res) => {
 
     const usuario = await Usuario.findOne({
       where: { id, clinicaId },
-      attributes: { exclude: ['password'] },
+      attributes: {
+        exclude: ['password'],
+        include: [invitacionService.atributoInvitacionPendiente()],
+      },
     })
 
     if (!usuario) {
@@ -334,7 +460,32 @@ const editarUsuario = async (req, res) => {
       }
     }
 
-    if (emailNormalizado && emailNormalizado !== usuario.email) {
+    const cambiaEmail = Boolean(emailNormalizado) && emailNormalizado !== usuario.email
+    const invitacionPendiente = invitacionService.estaPendiente(usuario)
+
+    // El correo de una cuenta ya activada es su llave de recuperación: si el
+    // administrador pudiera cambiarlo, pondría el suyo, pediría «Olvidé mi
+    // contraseña» y entraría como esa persona. Mientras la invitación está
+    // pendiente sí se corrige (un error de tipeo) y se reenvía al correo nuevo.
+    if (cambiaEmail && !invitacionPendiente && !esPropiaCuenta) {
+      return res.status(400).json({
+        message:
+          'El correo de una cuenta activa no se puede cambiar desde aquí. Si la persona ya no usa ese correo, desactívala e invítala con el nuevo.',
+        code: 'EMAIL_CUENTA_ACTIVA',
+      })
+    }
+
+    if (cambiaEmail && invitacionPendiente) {
+      if (!(await adminPuedeInvitar(req))) {
+        return res.status(403).json({ message: MENSAJE_ADMIN_SIN_VERIFICAR, code: 'EMAIL_NOT_VERIFIED' })
+      }
+      const topes = await invitacionService.verificarTopes({ clinicaId, usuarioId: usuario.id })
+      if (!topes.permitido) {
+        return res.status(429).json({ message: topes.message, code: 'INVITACIONES_TOPE' })
+      }
+    }
+
+    if (cambiaEmail) {
       const emailEnUso = await Usuario.findOne({
         where: {
           email: emailNormalizado,
@@ -360,11 +511,20 @@ const editarUsuario = async (req, res) => {
 
     if (nombre !== undefined) datosActualizar.nombre = nombreNormalizado
     if (email !== undefined) datosActualizar.email = emailNormalizado
+    // Un correo nuevo aún no está probado: vuelve a pedir verificación.
+    if (cambiaEmail) datosActualizar.emailVerificado = false
     if (telefono !== undefined) datosActualizar.telefono = telefonoNormalizado || null
     if (rol !== undefined) datosActualizar.rol = siguienteRol
     if (rolesAdicionales !== undefined) datosActualizar.rolesAdicionales = siguientesRolesAdicionales
 
     await usuario.update(datosActualizar)
+
+    // La invitación anterior iba al correo equivocado: se anula y sale otra.
+    let invitacionEnviada = null
+    if (cambiaEmail && invitacionPendiente) {
+      const token = await invitacionService.emitirInvitacion({ usuario, creadoPorId: usuarioActualId })
+      invitacionEnviada = await enviarInvitacionSegura({ usuario, token, req })
+    }
 
     await registrarAuditoria({
       accion: 'EDITAR_USUARIO',
@@ -378,24 +538,19 @@ const editarUsuario = async (req, res) => {
         telefono: usuario.telefono,
         rol: usuario.rol,
         rolesAdicionales: usuario.rolesAdicionales,
+        ...(invitacionEnviada === null ? {} : { invitacionEnviada }),
       },
       req,
       resultado: 'exitoso',
     })
 
-    res.json({
-      message: 'Usuario actualizado exitosamente',
-      usuario: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
-        rolesAdicionales: usuario.rolesAdicionales,
-        telefono: usuario.telefono,
-        activo: usuario.activo,
-        ultimoAcceso: usuario.ultimoAcceso,
-      },
-    })
+    let message = 'Usuario actualizado exitosamente'
+    if (invitacionEnviada === true) message = `Usuario actualizado. Enviamos la invitación a ${usuario.email}`
+    if (invitacionEnviada === false) {
+      message = 'Usuario actualizado, pero no pudimos enviar la invitación al correo nuevo. Reenvíala en unos minutos.'
+    }
+
+    res.json({ message, usuario: serializarUsuarioEquipo(usuario) })
   } catch (error) {
     responderErrorInterno(res)
   }
@@ -622,6 +777,7 @@ const subirFotoMiPerfil = async (req, res) => {
 
 module.exports = {
   crearUsuario,
+  reenviarInvitacion,
   obtenerUsuarios,
   obtenerEquipoAgenda,
   obtenerEquipoClinica,

@@ -93,7 +93,8 @@ export default function LoginPage() {
   })
 
   useEffect(() => {
-    reset({ email: '', password: '' })
+    // Tras aceptar una invitación llega con su correo para que solo escriba la clave.
+    reset({ email: location.state?.email || '', password: '' })
   }, [location.key, location.state, reset])
 
   const emailField = register('email')
@@ -173,6 +174,12 @@ export default function LoginPage() {
           {searchParams.get('error') === 'oauth' ? (
             <p role="alert" className="mt-6 rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">
               No pudimos iniciar sesión con tu cuenta. Intenta de nuevo o usa tu correo y contraseña.
+            </p>
+          ) : null}
+
+          {searchParams.get('error') === 'invitacion' ? (
+            <p role="alert" className="mt-6 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
+              Tienes una invitación pendiente. Ábrela desde el enlace que llegó a tu correo para crear tu contraseña.
             </p>
           ) : null}
 

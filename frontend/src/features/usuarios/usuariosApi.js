@@ -16,6 +16,11 @@ export const usuariosApi = {
     return data
   },
 
+  async reenviarInvitacion(id) {
+    const { data } = await api.post(`/usuarios/${id}/reenviar-invitacion`)
+    return data
+  },
+
   async toggleUsuario(id) {
     const { data } = await api.patch(`/usuarios/${id}/toggle`)
     return data
