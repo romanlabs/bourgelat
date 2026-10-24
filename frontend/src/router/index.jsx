@@ -12,6 +12,7 @@ const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage')
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
 const VerificarEmailPage = lazy(() => import('@/pages/VerificarEmailPage'))
+const AceptarInvitacionPage = lazy(() => import('@/pages/AceptarInvitacionPage'))
 const OAuthPopupCallbackPage = lazy(() => import('@/pages/OAuthPopupCallbackPage'))
 const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
 const OnboardingWizardPage = lazy(() => import('@/pages/OnboardingWizardPage'))
@@ -117,6 +118,9 @@ const router = createBrowserRouter([
       { path: '/',       element: <HostAwareHome /> },
       { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
+      // Fuera de PublicOnlyRoute: si el enlace se abre en un equipo con otra
+      // sesión iniciada (el del administrador), igual debe mostrarse.
+      { path: '/aceptar-invitacion', element: <Suspense fallback={<Loader />}><AceptarInvitacionPage /></Suspense> },
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
       { path: '/pagar', element: <Suspense fallback={<Loader />}><PagarPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
