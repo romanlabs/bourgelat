@@ -18,6 +18,7 @@ const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
 const { vencimientoCredito } = require('../utils/plazoCredito')
+const { RAZONES_SIN_REINGRESO, leerSinReingreso } = require('../utils/reingresoAnulacion')
 const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta, validarRangoNumeracion } = require('../utils/emisionElectronica')
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
@@ -1532,7 +1533,7 @@ const anularFactura = async (req, res) => {
   try {
     const { id } = req.params
     const { clinicaId } = req.usuario
-    const { motivoAnulacion } = req.body
+    const { motivoAnulacion, noVuelven } = req.body
 
     if (!motivoAnulacion) {
       await transaction.rollback()
@@ -1590,6 +1591,12 @@ const anularFactura = async (req, res) => {
       })
     }
 
+    const sinReingreso = leerSinReingreso(factura.items, noVuelven)
+    if (sinReingreso.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: sinReingreso.error, code: 'REINGRESO_INVALIDO' })
+    }
+
     for (const item of factura.items) {
       if (item.tipo === 'producto' && item.productoId) {
         const producto = await Producto.findOne({
@@ -1620,6 +1627,26 @@ const anularFactura = async (req, res) => {
             usuarioId: req.usuario.id,
             clinicaId,
           }, { transaction })
+
+          // No volvió a la bodega: sale enseguida con su motivo, así el stock
+          // queda como estaba y el kardex dice por qué.
+          const razon = sinReingreso.porItem.get(String(item.id))
+          if (razon) {
+            const { motivo, texto } = RAZONES_SIN_REINGRESO[razon]
+            await producto.update({ stock: stockAnterior }, { transaction })
+            await MovimientoInventario.create({
+              tipo: 'salida',
+              cantidad,
+              stockAnterior: stockNuevo,
+              stockNuevo: stockAnterior,
+              motivo,
+              observaciones: `No volvio a bodega (${texto}) al anular la factura ${factura.numero}`,
+              precioUnitario: item.precioUnitario,
+              productoId: producto.id,
+              usuarioId: req.usuario.id,
+              clinicaId,
+            }, { transaction })
+          }
         }
       }
     }
@@ -1739,7 +1766,13 @@ const anularFactura = async (req, res) => {
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} anulada. Motivo: ${motivoAnulacion}`,
       datosAnteriores: { estado: estadoAnterior },
-      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada, movimientoDevolucionId },
+      datosNuevos: {
+        estado: 'anulada',
+        motivoAnulacion,
+        cajaAjustada,
+        movimientoDevolucionId,
+        productosSinReingreso: Object.fromEntries(sinReingreso.porItem),
+      },
       req,
       resultado: 'exitoso',
     })
