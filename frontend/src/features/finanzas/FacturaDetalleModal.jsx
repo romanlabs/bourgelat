@@ -24,6 +24,42 @@ import {
 } from './useFinanzasHistorial'
 import FormAbono from './FormAbono'
 
+// Al anular, cada producto vuelve a la bodega salvo que se diga lo contrario.
+const DESTINOS_PRODUCTO = [
+  { value: 'vuelve', label: 'Vuelve a la bodega' },
+  { value: 'entregado', label: 'No vuelve: se entregó al cliente' },
+  { value: 'danado', label: 'No vuelve: se dañó' },
+  { value: 'vencido', label: 'No vuelve: venció' },
+]
+
+function ProductosAlAnular({ items, noVuelven, onCambiar }) {
+  const productos = items.filter((item) => item.tipo === 'producto' && item.productoId)
+  if (!productos.length) return null
+  return (
+    <div role="group" aria-labelledby="anular-productos" className="space-y-2 rounded-xl bg-muted p-4">
+      <p id="anular-productos" className="text-sm font-semibold text-foreground">¿Qué pasa con los productos?</p>
+      <p className="text-[13px] text-muted-foreground">
+        Lo que vuelve suma al inventario. Lo que no vuelve queda registrado como salida con su motivo.
+      </p>
+      {productos.map((item) => (
+        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <span className="text-sm text-foreground">
+            {item.descripcion} <span className="text-muted-foreground">× {Number(item.cantidad)}</span>
+          </span>
+          <Select
+            variant="field"
+            aria-label={`Qué pasa con ${item.descripcion}`}
+            className="h-10 w-64"
+            value={noVuelven[item.id] || 'vuelve'}
+            onValueChange={(valor) => onCambiar(item.id, valor)}
+            options={DESTINOS_PRODUCTO}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function FacturaDetalleModal({ historialHook }) {
   const {
     currentFacturaId,
@@ -38,6 +74,8 @@ export default function FacturaDetalleModal({ historialHook }) {
     setEmisionForm,
     motivoAnulacion,
     setMotivoAnulacion,
+    noVuelven,
+    setNoVuelven,
     handleEmitirFactura,
     handleAnularFactura,
     emitirFacturaMutation,
@@ -319,6 +357,18 @@ export default function FacturaDetalleModal({ historialHook }) {
                     <Ban className="h-4 w-4 text-danger" />
                     <p className="text-sm font-semibold text-foreground">Anular factura</p>
                   </div>
+                  <ProductosAlAnular
+                    items={facturaSeleccionada.items || []}
+                    noVuelven={noVuelven}
+                    onCambiar={(itemId, valor) =>
+                      setNoVuelven((actual) => {
+                        const siguiente = { ...actual }
+                        if (valor === 'vuelve') delete siguiente[itemId]
+                        else siguiente[itemId] = valor
+                        return siguiente
+                      })
+                    }
+                  />
                   <textarea
                     value={motivoAnulacion}
                     onChange={(event) => setMotivoAnulacion(event.target.value)}

@@ -83,17 +83,21 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   const [buscar, setBuscar] = useState('')
   const [selectedFacturaId, setSelectedFacturaId] = useState(null)
   const [motivoAnulacion, setMotivoAnulacion] = useState('')
+  // facturaItemId → razón, para los productos que no vuelven a la bodega.
+  const [noVuelven, setNoVuelven] = useState({})
   const [emisionForm, setEmisionForm] = useState(RESET_EMISION)
 
   const resetSeleccion = () => {
     setSelectedFacturaId(null)
     setMotivoAnulacion('')
+    setNoVuelven({})
     setEmisionForm(RESET_EMISION)
   }
 
   const seleccionarFactura = (id) => {
     setSelectedFacturaId(id)
     setMotivoAnulacion('')
+    setNoVuelven({})
     setEmisionForm(RESET_EMISION)
   }
 
@@ -149,10 +153,11 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
   })
 
   const anularFacturaMutation = useMutation({
-    mutationFn: ({ facturaId, motivo }) => finanzasApi.anularFactura(facturaId, motivo),
+    mutationFn: ({ facturaId, motivo, sinReingreso }) => finanzasApi.anularFactura(facturaId, motivo, sinReingreso),
     onSuccess: (data) => {
       toast.success(data?.message || 'Factura anulada exitosamente')
       setMotivoAnulacion('')
+      setNoVuelven({})
       // La anulacion revierte el efectivo del turno de caja abierto y devuelve
       // el stock de los items de producto (ver facturaController.anularFactura).
       // También suelta la consulta o el servicio de estilos que cobraba.
@@ -212,6 +217,7 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     anularFacturaMutation.mutate({
       facturaId: facturaSeleccionada.id,
       motivo: motivoAnulacion.trim(),
+      sinReingreso: Object.entries(noVuelven).map(([facturaItemId, razon]) => ({ facturaItemId, razon })),
     })
   }
 
@@ -282,6 +288,8 @@ export function useFinanzasHistorial({ enabled, puedeAnular, puedeEmitirElectron
     setBuscarInput,
     motivoAnulacion,
     setMotivoAnulacion,
+    noVuelven,
+    setNoVuelven,
     emisionForm,
     setEmisionForm,
     currentFacturaId,

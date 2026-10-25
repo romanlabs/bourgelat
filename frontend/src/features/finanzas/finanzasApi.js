@@ -31,8 +31,9 @@ export const finanzasApi = {
     return data
   },
 
-  async anularFactura(facturaId, motivoAnulacion) {
-    const { data } = await api.patch(`/facturas/${facturaId}/anular`, { motivoAnulacion })
+  // noVuelven: [{ facturaItemId, razon }] productos que no regresan a la bodega.
+  async anularFactura(facturaId, motivoAnulacion, noVuelven = []) {
+    const { data } = await api.patch(`/facturas/${facturaId}/anular`, { motivoAnulacion, noVuelven })
     return data
   },
 }

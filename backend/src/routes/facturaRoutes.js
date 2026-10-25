@@ -154,6 +154,7 @@ router.patch(
       .notEmpty()
       .withMessage('El motivo de anulacion es obligatorio')
       .trim(),
+    body('noVuelven').optional().isArray({ max: 200 }).withMessage('noVuelven debe ser una lista'),
     validar,
   ],
   anularFactura
