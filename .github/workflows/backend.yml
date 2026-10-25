@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22 # igual que el Dockerfile (node:22-alpine)
+          node-version: 22.23.4 # igual que el Dockerfile (node:22.23.4-alpine)
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
@@ -35,10 +35,8 @@ jobs:
       - name: Pruebas
         run: npm test
 
-  # Informativo mientras se actualizan multer, sharp y nodemailer (ver
-  # PENDIENTES): deja un aviso en el PR pero no lo pone en rojo. Cuando
-  # `npm audit --omit=dev --audit-level=high` quede limpio, quitar
-  # `continue-on-error` para que bloquee. NUNCA `npm audit fix --force`.
+  # Bloquea el PR si una dependencia de producción tiene una vulnerabilidad
+  # alta o crítica. NUNCA `npm audit fix --force` (baja Sequelize a la v3).
   auditoria:
     runs-on: ubuntu-latest
     defaults:
@@ -49,13 +47,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 22.23.4
 
       - name: Dependencias con vulnerabilidades altas
-        id: audit
-        continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
-
-      - name: Avisar si hay vulnerabilidades
-        if: steps.audit.outcome == 'failure'
-        run: echo "::warning title=npm audit::El backend tiene dependencias con vulnerabilidades altas o críticas. Ver el paso anterior."
