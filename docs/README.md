@@ -11,3 +11,4 @@ Esta carpeta concentra la documentacion operativa del proyecto para mantener la 
 - `docker-local.md`: entorno local con Docker Compose.
 - `roadmap.md`: fases de producto.
 - `secrets-rotation.md`: rotacion y manejo de secretos.
+- `seguridad-actualizaciones-2026-10.md`: vulnerabilidades de octubre 2026 y actualizaciones pendientes.
