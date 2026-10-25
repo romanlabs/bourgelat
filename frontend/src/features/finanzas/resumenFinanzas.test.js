@@ -5,6 +5,8 @@ import {
   curvaAcumulada,
   diasDesde,
   enlaceWhatsApp,
+  estadoVencimiento,
+  sumarDias,
   tramoDe,
   estadoMes,
   mesAnterior,
@@ -127,6 +129,20 @@ describe('antiguedadCartera', () => {
   it('el día 30 todavía es reciente', () => {
     expect(tramoDe(30).id).toBe('reciente')
     expect(tramoDe(31).id).toBe('mes')
+  })
+})
+
+describe('plazo del crédito', () => {
+  it('suma días cruzando el mes', () => {
+    expect(sumarDias('2026-10-25', 15)).toBe('2026-11-09')
+  })
+
+  it('clasifica el vencimiento frente a hoy', () => {
+    expect(estadoVencimiento(null, '2026-10-25')).toBe(null)
+    expect(estadoVencimiento('2026-10-20', '2026-10-25')).toEqual({ tipo: 'vencida', dias: 5 })
+    expect(estadoVencimiento('2026-10-25', '2026-10-25')).toEqual({ tipo: 'pronto', dias: 0 })
+    expect(estadoVencimiento('2026-10-28', '2026-10-25')).toEqual({ tipo: 'pronto', dias: 3 })
+    expect(estadoVencimiento('2026-11-09', '2026-10-25')).toEqual({ tipo: 'alDia', dias: 15 })
   })
 })
 

@@ -8,6 +8,7 @@ import {
   antiguedadCartera,
   diasDesde,
   enlaceWhatsApp,
+  estadoVencimiento,
   tramoDe,
 } from '@/features/finanzas/resumenFinanzas'
 import { hoyLocal } from '@/lib/fecha'
@@ -23,6 +24,17 @@ const segmento = (activo) =>
   `h-8 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
     activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
   }`
+
+// Texto y tono del vencimiento de una venta con plazo.
+const VENCIMIENTO = {
+  vencida: (d) => ({ texto: `Vencida hace ${d} ${d === 1 ? 'día' : 'días'}`, tono: 'bg-danger-soft text-danger' }),
+  pronto: (d) => ({ texto: d === 0 ? 'Vence hoy' : `Vence en ${d} ${d === 1 ? 'día' : 'días'}`, tono: 'bg-warning-soft text-warning' }),
+  alDia: (d) => ({ texto: `Vence en ${d} días`, tono: 'bg-muted text-muted-foreground' }),
+}
+const textoVencimiento = (fecha, hoy) => {
+  const estado = estadoVencimiento(fecha, hoy)
+  return estado ? VENCIMIENTO[estado.tipo](estado.dias) : null
+}
 
 const hace = (dias) => (dias === 0 ? 'hoy' : dias === 1 ? 'hace 1 día' : `hace ${dias} días`)
 
@@ -40,6 +52,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden }) {
   const dias = diasDesde(cliente.facturaMasAntigua, hoy)
   const tono = TONOS[tramoDe(dias).tono]
   const ventas = cliente.facturas.length
+  const vencidas = cliente.facturas.filter((f) => estadoVencimiento(f.fechaVencimientoCredito, hoy)?.tipo === 'vencida').length
   const whatsapp = enlaceWhatsApp(
     cliente.telefono,
     `Hola ${cliente.nombre}, te escribimos de ${nombreClinica}. Tienes un saldo pendiente de ${formatCurrency(cliente.totalDeuda)}. Puedes pagarlo en la clínica o por transferencia. ¡Gracias!`
@@ -60,6 +73,11 @@ function Cliente({ cliente, hoy, nombreClinica, orden }) {
               {formatNumber(ventas)} {ventas === 1 ? 'venta' : 'ventas'} · desde el {formatShortDate(cliente.facturaMasAntigua)}
             </span>
             <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${tono.chip}`}>{hace(dias)}</span>
+            {vencidas ? (
+              <span className="rounded-md bg-danger-soft px-1.5 py-0.5 text-[11px] font-semibold text-danger">
+                {vencidas === 1 ? '1 vencida' : `${vencidas} vencidas`}
+              </span>
+            ) : null}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-3">
@@ -78,9 +96,14 @@ function Cliente({ cliente, hoy, nombreClinica, orden }) {
                     <span className="flex items-center gap-2 text-sm font-semibold text-card-foreground">
                       {f.numero}
                       {f.estado === 'parcial' ? <StatusPill tone="bg-info-soft text-info">Con abonos</StatusPill> : null}
+                      {(() => {
+                        const v = textoVencimiento(f.fechaVencimientoCredito, hoy)
+                        return v ? <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${v.tono}`}>{v.texto}</span> : null
+                      })()}
                     </span>
                     <span className="text-[13px] text-muted-foreground">
                       {formatShortDate(f.fecha)} · {hace(diasDesde(f.fecha, hoy))} · de {formatCurrency(f.total)}
+                      {f.fechaVencimientoCredito ? ` · paga el ${formatShortDate(f.fechaVencimientoCredito)}` : ' · sin plazo'}
                     </span>
                   </span>
                   <span className="flex items-center gap-3">
@@ -211,6 +234,10 @@ export default function PorCobrarPanel() {
   }, [clientes, buscar, tramo, orden, hoy])
 
   const total = data?.totalPorCobrar || 0
+  const vencido = clientes.reduce(
+    (suma, c) => suma + c.facturas.reduce((s2, f) => (estadoVencimiento(f.fechaVencimientoCredito, hoy)?.tipo === 'vencida' ? s2 + Number(f.saldoPendiente || 0) : s2), 0),
+    0
+  )
 
   return (
     <div className="space-y-5">
@@ -224,6 +251,11 @@ export default function PorCobrarPanel() {
             {total > 0
               ? `${formatNumber(data.totalFacturas)} ${data.totalFacturas === 1 ? 'venta' : 'ventas'} a crédito de ${formatNumber(data.totalClientes)} ${data.totalClientes === 1 ? 'cliente' : 'clientes'} · la más antigua de ${hace(diasDesde(masAntigua, hoy))}`
               : 'Nadie te debe: el fiado está al día.'}
+            {vencido > 0 ? (
+              <span className="ml-2 inline-flex items-center rounded-md bg-danger-soft px-2 py-0.5 text-[13px] font-semibold text-danger">
+                {formatCurrency(vencido)} vencidos
+              </span>
+            ) : null}
           </p>
         </header>
       ) : (

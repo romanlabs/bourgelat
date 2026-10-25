@@ -188,6 +188,24 @@ export const antiguedadCartera = (clientes = [], hoy = fechaLocal()) => {
   return tramos
 }
 
+// Plazo del crédito. Opciones rápidas del punto de venta ('' = sin plazo).
+export const PLAZOS_CREDITO = [8, 15, 30, 60]
+
+export const sumarDias = (fechaISO, dias) => {
+  const [anio, mes, dia] = partes(fechaISO)
+  return fechaLocal(new Date(anio, mes - 1, dia + Number(dias)))
+}
+
+// Cómo va una venta a crédito frente a su plazo: vencida, vence en los próximos
+// 3 días, o al día. Sin plazo no hay estado.
+export const estadoVencimiento = (fechaVencimiento, hoy = fechaLocal()) => {
+  if (!fechaVencimiento) return null
+  const dias = diasDesde(hoy, fechaVencimiento)
+  if (dias < 0) return { tipo: 'vencida', dias: -dias }
+  if (dias <= 3) return { tipo: 'pronto', dias }
+  return { tipo: 'alDia', dias }
+}
+
 // Enlace de WhatsApp con el mensaje escrito; lo envía la persona, no la app.
 // Un celular colombiano de 10 dígitos (3xx) lleva el indicativo 57.
 export const enlaceWhatsApp = (telefono, mensaje) => {
