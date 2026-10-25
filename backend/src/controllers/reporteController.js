@@ -19,11 +19,14 @@ const {
   periodoAnterior,
   clavesDelPeriodo,
   armarSerie,
+  limitesBogota,
+  recortarABasico,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
   redondearPesos,
 } = require('../utils/finanzasPeriodo');
+const AbonoFactura = require('../models/AbonoFactura');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -542,6 +545,15 @@ const conNombres = async (req, filas, Modelo) => {
   }));
 };
 
+// Lo que la venta trajo de contado: total menos lo que se debe y menos lo que
+// entró por abonos (esos se cuentan el día en que se recibieron). De contado da
+// el total; a crédito da 0 porque saldo + abonos = total.
+const COBRADO_DE_CONTADO = sequelize.literal(`COALESCE(SUM(
+  "Factura"."total"
+  - COALESCE("Factura"."saldoPendiente", 0)
+  - COALESCE((SELECT SUM(a."monto") FROM "abonos_factura" a WHERE a."facturaId" = "Factura"."id"), 0)
+), 0)`);
+
 const reporteFinanzasPeriodo = async (req, res) => {
   try {
     const { fechaInicio, fechaFin } = req.query;
@@ -551,9 +563,17 @@ const reporteFinanzasPeriodo = async (req, res) => {
 
     const granularidad = granularidadDe(fechaInicio, fechaFin);
     const anterior = periodoAnterior(fechaInicio, fechaFin);
-    const tramo = sequelize.literal(
-      granularidad === 'mes' ? `to_char("fecha", 'YYYY-MM')` : `to_char("fecha", 'YYYY-MM-DD')`
+    const formato = granularidad === 'mes' ? 'YYYY-MM' : 'YYYY-MM-DD';
+    const tramo = sequelize.literal(`to_char("fecha", '${formato}')`);
+    const tramoAbono = sequelize.literal(
+      `to_char(("AbonoFactura"."createdAt" AT TIME ZONE 'America/Bogota'), '${formato}')`
     );
+
+    // Los abonos de una factura anulada no existen: anular exige que no tenga abonos.
+    const whereAbonos = (inicio, fin) => {
+      const { desde, hasta } = limitesBogota(inicio, fin);
+      return tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } });
+    };
 
     const whereFacturas = (inicio, fin) =>
       tenantWhere(req, {
@@ -574,14 +594,17 @@ const reporteFinanzasPeriodo = async (req, res) => {
       topServiciosFilas,
       topProductosFilas,
       sinCatalogoFilas,
-      [porCobrarFila],
+      [carteraFila],
       [facturasAnterior],
       [gastosAnterior],
+      abonosPorTramo,
+      [abonosAnterior],
     ] = await Promise.all([
       Factura.findAll({
         attributes: [
           [tramo, 'periodo'],
-          [sumaDe('total'), 'ingresos'],
+          [COBRADO_DE_CONTADO, 'cobrado'],
+          [sumaDe('total'), 'vendido'],
           [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
         ],
         where: facturasPeriodo,
@@ -624,16 +647,24 @@ const reporteFinanzasPeriodo = async (req, res) => {
         raw: true,
       }),
 
-      // Lo que de lo facturado en el periodo todavía no se ha cobrado (fiado).
+      // Cartera: todo el fiado que se debe hoy, sin importar cuándo se vendió.
       Factura.findAll({
-        attributes: [[sumaDe('saldoPendiente'), 'porCobrar']],
-        where: facturasPeriodo,
+        attributes: [
+          [sumaDe('saldoPendiente'), 'porCobrar'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'creditos'],
+          [sequelize.fn('MIN', sequelize.col('fecha')), 'masAntiguo'],
+        ],
+        where: tenantWhere(req, {
+          estado: { [Op.in]: ['emitida', 'parcial'] },
+          saldoPendiente: { [Op.gt]: 0 },
+        }),
         raw: true,
       }),
 
       Factura.findAll({
         attributes: [
-          [sumaDe('total'), 'ingresos'],
+          [COBRADO_DE_CONTADO, 'cobrado'],
+          [sumaDe('total'), 'vendido'],
           [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
         ],
         where: whereFacturas(anterior.fechaInicio, anterior.fechaFin),
@@ -643,6 +674,19 @@ const reporteFinanzasPeriodo = async (req, res) => {
       Gasto.findAll({
         attributes: [[sumaDe('monto'), 'gastos']],
         where: whereGastos(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+
+      AbonoFactura.findAll({
+        attributes: [[tramoAbono, 'periodo'], [sumaDe('monto'), 'cobrado']],
+        where: whereAbonos(fechaInicio, fechaFin),
+        group: [tramoAbono],
+        raw: true,
+      }),
+
+      AbonoFactura.findAll({
+        attributes: [[sumaDe('monto'), 'cobrado']],
+        where: whereAbonos(anterior.fechaInicio, anterior.fechaFin),
         raw: true,
       }),
     ]);
@@ -655,38 +699,52 @@ const reporteFinanzasPeriodo = async (req, res) => {
     const serie = armarSerie(
       clavesDelPeriodo(fechaInicio, fechaFin, granularidad),
       facturasPorTramo,
-      gastosPorTramo
+      gastosPorTramo,
+      abonosPorTramo
     );
 
-    const ingresos = redondearPesos(serie.reduce((suma, fila) => suma + fila.ingresos, 0));
-    const gastos = redondearPesos(serie.reduce((suma, fila) => suma + fila.gastos, 0));
+    const sumar = (campo) => redondearPesos(serie.reduce((suma, fila) => suma + fila[campo], 0));
+    const ingresos = sumar('ingresos');
+    const vendido = sumar('vendido');
+    const gastos = sumar('gastos');
     const ventas = serie.reduce((suma, fila) => suma + fila.ventas, 0);
     const ganancia = redondearPesos(ingresos - gastos);
+    const abonos = redondearPesos(abonosPorTramo.reduce((suma, fila) => suma + Number(fila.cobrado || 0), 0));
 
-    const ingresosAnterior = redondearPesos(facturasAnterior?.ingresos);
+    const ingresosAnterior = redondearPesos(
+      Number(facturasAnterior?.cobrado || 0) + Number(abonosAnterior?.cobrado || 0)
+    );
+    const vendidoAnterior = redondearPesos(facturasAnterior?.vendido);
     const gastosAnteriorTotal = redondearPesos(gastosAnterior?.gastos);
     const ventasAnterior = Number(facturasAnterior?.ventas || 0);
 
     const tipos = aRecord(porTipo, 'tipo');
     const sinCatalogo = aRecord(sinCatalogoFilas, 'tipo');
 
-    res.json({
+    const reporte = {
+      alcance: 'completo',
       periodo: { fechaInicio, fechaFin, granularidad, anterior },
       resumen: {
         ingresos,
+        vendido,
+        abonos,
         gastos,
         ganancia,
         margen: margenDe(ingresos, ganancia),
         ventas,
-        ticketPromedio: ticketPromedioDe(ingresos, ventas),
-        porCobrar: redondearPesos(porCobrarFila?.porCobrar),
+        // El ticket mide cuánto vale una venta, se haya cobrado o no.
+        ticketPromedio: ticketPromedioDe(vendido, ventas),
+        porCobrar: redondearPesos(carteraFila?.porCobrar),
+        creditosPendientes: Number(carteraFila?.creditos || 0),
+        creditoMasAntiguo: carteraFila?.masAntiguo || null,
       },
       anterior: {
         ingresos: ingresosAnterior,
+        vendido: vendidoAnterior,
         gastos: gastosAnteriorTotal,
         ganancia: redondearPesos(ingresosAnterior - gastosAnteriorTotal),
         ventas: ventasAnterior,
-        ticketPromedio: ticketPromedioDe(ingresosAnterior, ventasAnterior),
+        ticketPromedio: ticketPromedioDe(vendidoAnterior, ventasAnterior),
       },
       serie,
       destacados: calcularDestacados(serie),
@@ -701,7 +759,10 @@ const reporteFinanzasPeriodo = async (req, res) => {
         servicio: redondearPesos(sinCatalogo.servicio),
         producto: redondearPesos(sinCatalogo.producto),
       },
-    });
+    };
+
+    // La ruta decide el alcance (rol y plan); por defecto, el básico.
+    res.json(req.analisisCompleto === true ? reporte : recortarABasico(reporte));
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
