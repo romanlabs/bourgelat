@@ -52,6 +52,10 @@ router.post(
       .optional({ values: 'falsy' })
       .isUUID()
       .withMessage('Clave de idempotencia no valida'),
+    body('plazoCreditoDias')
+      .optional({ values: 'falsy' })
+      .isInt({ min: 1, max: 365 })
+      .withMessage('El plazo del crédito debe ser de 1 a 365 días'),
     body('metodoPago')
       .optional()
       .isIn([

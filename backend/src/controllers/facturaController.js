@@ -17,6 +17,7 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
+const { vencimientoCredito } = require('../utils/plazoCredito')
 const { RAZONES_SIN_REINGRESO, leerSinReingreso } = require('../utils/reingresoAnulacion')
 const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta, validarRangoNumeracion } = require('../utils/emisionElectronica')
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
@@ -480,6 +481,7 @@ const crearFactura = async (req, res) => {
       rangoNumeracionId = null,
       historiaClinicaId = null,
       registroEstiloId = null,
+      plazoCreditoDias,
     } = req.body
     const { clinicaId } = req.usuario
 
@@ -775,6 +777,13 @@ const crearFactura = async (req, res) => {
       })
     }
 
+    // Plazo opcional del crédito; en una venta de contado no aplica.
+    const plazo = esCredito ? vencimientoCredito(plazoCreditoDias) : { fecha: null }
+    if (plazo.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: plazo.error, code: 'PLAZO_CREDITO_INVALIDO' })
+    }
+
     const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
@@ -784,6 +793,7 @@ const crearFactura = async (req, res) => {
       // emitida, con todo el total por cobrar mediante abonos.
       estado: esCredito ? 'emitida' : 'pagada',
       saldoPendiente: esCredito ? total : 0,
+      fechaVencimientoCredito: plazo.fecha,
       subtotal,
       descuento,
       impuesto,
@@ -1463,7 +1473,7 @@ const listarCuentasPorCobrar = async (req, res) => {
         estado: { [Op.in]: ['emitida', 'parcial'] },
         saldoPendiente: { [Op.gt]: 0 },
       },
-      attributes: ['id', 'numero', 'fecha', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
+      attributes: ['id', 'numero', 'fecha', 'fechaVencimientoCredito', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
       include: [{
         model: Propietario,
         as: 'propietario',
@@ -1495,6 +1505,7 @@ const listarCuentasPorCobrar = async (req, res) => {
         id: f.id,
         numero: f.numero,
         fecha: f.fecha,
+        fechaVencimientoCredito: f.fechaVencimientoCredito,
         total: f.total,
         saldoPendiente: f.saldoPendiente,
         estado: f.estado,

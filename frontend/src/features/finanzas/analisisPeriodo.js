@@ -3,17 +3,23 @@
 import { fechaLocal } from '@/lib/fecha'
 
 const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const MESES_LARGOS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
 
 // Cuántos años ofrece el selector, contando el actual.
 const ANIOS_EN_SELECTOR = 6
 
 const ultimoDia = (anio, mesIndice) => fechaLocal(new Date(anio, mesIndice + 1, 0))
 
+// `largo`: necesita el análisis completo (admin con plan Clínica).
 export const PRESETS_ANALISIS = [
-  { id: 'anio', label: 'Año' },
-  { id: '12m', label: 'Últimos 12 meses' },
-  { id: 'trimestre', label: 'Trimestre' },
-  { id: 'personalizado', label: 'Personalizado' },
+  { id: 'mes', label: 'Mes', largo: false },
+  { id: 'trimestre', label: 'Trimestre', largo: true },
+  { id: 'anio', label: 'Año', largo: true },
+  { id: '12m', label: 'Últimos 12 meses', largo: true },
+  { id: 'personalizado', label: 'Personalizado', largo: true },
 ]
 
 export const rangoDelAnio = (anio) => ({
@@ -58,6 +64,13 @@ export const etiquetaPeriodo = (periodo) => {
 // Cómo se nombra el periodo de comparación en los KPIs. Lo decide el atajo, no
 // las fechas: un rango libre de enero a marzo también empieza un 1 de enero.
 export const etiquetaAnterior = (preset, anterior) => {
+  if (preset === 'mes' && anterior?.fechaInicio) {
+    const [anio, mes] = anterior.fechaInicio.split('-').map(Number)
+    const nombre = MESES_LARGOS[mes - 1]
+    // El mes en curso se compara con el anterior hasta el mismo día.
+    const completo = anterior.fechaFin === ultimoDia(anio, mes - 1)
+    return completo ? nombre : `${nombre} a esta fecha`
+  }
   if (preset === 'anio' && anterior?.fechaInicio) return anterior.fechaInicio.slice(0, 4)
   if (preset === '12m') return 'los 12 meses previos'
   if (preset === 'trimestre') return 'el trimestre anterior'

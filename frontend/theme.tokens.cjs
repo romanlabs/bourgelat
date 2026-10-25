@@ -167,6 +167,15 @@ const colors = {
       dangerSuave: '#d9826f', // no asistió
     },
     vacio: '#e1ebee', // parte "libre" de medidores y donas (uso vs. límite)
+    // Modo oscuro: el petróleo y la tinta de la categórica se pierden sobre la
+    // noche (#11272f). Validados con el ámbar: ΔE 17,5 para daltónicos, ≥3:1.
+    oscuro: {
+      petroleo: '#5fb0c0',
+      tinta: '#e4eef1',
+      neutro: '#5d727a', // mes anterior junto al petróleo: ΔE 17 (deutan)
+      exito: '#5fbf96',
+      peligro: '#e8806c',
+    },
     categorica: [
       '#0f4c5c', // petróleo
       '#f2a93b', // ámbar

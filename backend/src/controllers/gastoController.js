@@ -135,14 +135,36 @@ const listarGastos = async (req, res) => {
       offset,
     })
 
-    // Total del filtro actual (solo no anulados) para la cabecera de la lista.
-    const totalMonto = await Gasto.sum('monto', {
-      where: { ...where, anulado: false },
-    })
+    // Total del filtro actual (solo no anulados) para la cabecera de la lista, y
+    // el desglose por categoría del periodo sin el filtro de categoría: así los
+    // chips de filtro muestran todas aunque se esté viendo una.
+    const { categoria: _categoriaFiltrada, ...sinCategoria } = where
+    const [totalMonto, porCategoriaFilas] = await Promise.all([
+      Gasto.sum('monto', { where: { ...where, anulado: false } }),
+      Gasto.findAll({
+        attributes: [
+          'categoria',
+          [sequelize.fn('SUM', sequelize.col('monto')), 'total'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'cantidad'],
+        ],
+        where: { ...sinCategoria, anulado: false },
+        group: ['categoria'],
+        raw: true,
+      }),
+    ])
+
+    const porCategoria = porCategoriaFilas
+      .map((fila) => ({
+        categoria: fila.categoria,
+        total: convertirANumero(fila.total),
+        cantidad: Number(fila.cantidad || 0),
+      }))
+      .sort((a, b) => b.total - a.total)
 
     res.json({
       total: count,
       totalMonto: convertirANumero(totalMonto),
+      porCategoria,
       paginas: Math.ceil(count / limite),
       paginaActual: pagina,
       gastos: rows,

@@ -84,5 +84,8 @@ describe('etiquetas', () => {
     expect(etiquetaAnterior('anio', { fechaInicio: '2025-01-01', fechaFin: '2025-10-23' })).toBe('2025')
     expect(etiquetaAnterior('trimestre')).toBe('el trimestre anterior')
     expect(etiquetaAnterior('personalizado', { fechaInicio: '2026-01-01' })).toBe('el periodo anterior')
+    // El mes en curso se compara con el anterior hasta el mismo día.
+    expect(etiquetaAnterior('mes', { fechaInicio: '2026-09-01', fechaFin: '2026-09-25' })).toBe('septiembre a esta fecha')
+    expect(etiquetaAnterior('mes', { fechaInicio: '2026-09-01', fechaFin: '2026-09-30' })).toBe('septiembre')
   })
 })

@@ -93,22 +93,37 @@ const clavesDelPeriodo = (fechaInicio, fechaFin, granularidad) => {
 
 const redondearPesos = (valor) => Math.round(Number(valor || 0) * 100) / 100
 
-const armarSerie = (claves, filasFacturas, filasGastos) => {
+// `ingresos` es dinero que entró: lo cobrado de contado en las ventas del tramo
+// más los abonos recibidos en él, aunque el crédito se haya vendido antes.
+// `vendido` es lo facturado (incluye el fiado que aún se debe).
+const armarSerie = (claves, filasFacturas, filasGastos, filasAbonos = []) => {
   const facturas = new Map(filasFacturas.map((fila) => [fila.periodo, fila]))
   const gastos = new Map(filasGastos.map((fila) => [fila.periodo, fila]))
+  const abonos = new Map(filasAbonos.map((fila) => [fila.periodo, fila]))
 
   return claves.map((periodo) => {
-    const ingresos = redondearPesos(facturas.get(periodo)?.ingresos)
+    const ingresos = redondearPesos(
+      Number(facturas.get(periodo)?.cobrado || 0) + Number(abonos.get(periodo)?.cobrado || 0)
+    )
     const gasto = redondearPesos(gastos.get(periodo)?.gastos)
     return {
       periodo,
       ingresos,
+      vendido: redondearPesos(facturas.get(periodo)?.vendido),
       gastos: gasto,
       ganancia: redondearPesos(ingresos - gasto),
       ventas: Number(facturas.get(periodo)?.ventas || 0),
     }
   })
 }
+
+// Colombia es UTC−5 todo el año: un día local va de 00:00−05:00 a 00:00−05:00
+// del siguiente. Se filtra el timestamp crudo para usar el índice (clinicaId, createdAt).
+const OFFSET_BOGOTA = '-05:00'
+const limitesBogota = (fechaInicio, fechaFin) => ({
+  desde: `${fechaInicio}T00:00:00${OFFSET_BOGOTA}`,
+  hasta: `${sumarDiasISO(fechaFin, 1)}T00:00:00${OFFSET_BOGOTA}`,
+})
 
 // Mejor y peor tramo por ganancia, y el de más gasto. Solo cuentan los tramos
 // con movimiento: los meses que aún no llegan no son «el peor mes».
@@ -131,6 +146,49 @@ const calcularDestacados = (serie) => {
   }
 }
 
+// El resumen de un mes lo ven todos los que entran a Finanzas; los periodos
+// largos son del análisis completo (admin con plan Clínica).
+const esUnSoloMes = (fechaInicio, fechaFin) =>
+  String(fechaInicio).slice(0, 7) === String(fechaFin).slice(0, 7)
+
+// Completo = admin con la funcionalidad del plan. Sin eso solo se permite un mes.
+const alcanceAnalisis = ({ roles = [], tieneReportesCompletos, fechaInicio, fechaFin }) => {
+  const esAdmin = roles.some((rol) => rol === 'admin' || rol === 'superadmin')
+  const completo = esAdmin && Boolean(tieneReportesCompletos)
+  if (completo || esUnSoloMes(fechaInicio, fechaFin)) return { permitido: true, completo }
+  return {
+    permitido: false,
+    completo: false,
+    message: esAdmin
+      ? 'El análisis de periodos largos (trimestre, año o rango libre) es del plan Clínica.'
+      : 'El análisis de periodos largos es solo para administración.',
+  }
+}
+
+// Sin análisis completo se responde solo lo que entró y lo que se debe: nada de
+// gastos ni ganancia (la rentabilidad es del dueño) ni de rankings de ventas.
+const recortarABasico = (reporte) => ({
+  alcance: 'basico',
+  periodo: reporte.periodo,
+  resumen: {
+    ingresos: reporte.resumen.ingresos,
+    vendido: reporte.resumen.vendido,
+    abonos: reporte.resumen.abonos,
+    ventas: reporte.resumen.ventas,
+    ticketPromedio: reporte.resumen.ticketPromedio,
+    porCobrar: reporte.resumen.porCobrar,
+    creditosPendientes: reporte.resumen.creditosPendientes,
+    creditoMasAntiguo: reporte.resumen.creditoMasAntiguo,
+  },
+  anterior: {
+    ingresos: reporte.anterior.ingresos,
+    vendido: reporte.anterior.vendido,
+    ventas: reporte.anterior.ventas,
+    ticketPromedio: reporte.anterior.ticketPromedio,
+  },
+  serie: reporte.serie.map(({ periodo, ingresos, vendido, ventas }) => ({ periodo, ingresos, vendido, ventas })),
+})
+
 const margenDe = (ingresos, ganancia) =>
   ingresos > 0 ? Number(((ganancia / ingresos) * 100).toFixed(1)) : null
 
@@ -144,6 +202,10 @@ module.exports = {
   periodoAnterior,
   clavesDelPeriodo,
   armarSerie,
+  limitesBogota,
+  esUnSoloMes,
+  alcanceAnalisis,
+  recortarABasico,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
