@@ -26,7 +26,15 @@ const segmento = (activo) =>
 
 const hace = (dias) => (dias === 0 ? 'hoy' : dias === 1 ? 'hace 1 día' : `hace ${dias} días`)
 
-function Cliente({ cliente, hoy, nombreClinica }) {
+// El mismo orden de la lista aplica a las ventas del cliente.
+const ordenarVentas = (facturas, orden) =>
+  [...facturas].sort((a, b) =>
+    orden === 'antigua'
+      ? String(a.fecha).localeCompare(String(b.fecha))
+      : Number(b.saldoPendiente) - Number(a.saldoPendiente)
+  )
+
+function Cliente({ cliente, hoy, nombreClinica, orden }) {
   const [abierto, setAbierto] = useState(false)
   const [abonando, setAbonando] = useState(null)
   const dias = diasDesde(cliente.facturaMasAntigua, hoy)
@@ -63,7 +71,7 @@ function Cliente({ cliente, hoy, nombreClinica }) {
       {abierto ? (
         <div className="flex flex-col gap-3 bg-muted/50 px-5 pb-5 pt-1 sm:px-6">
           <ul className="flex flex-col divide-y divide-border rounded-xl bg-card">
-            {cliente.facturas.map((f) => (
+            {ordenarVentas(cliente.facturas, orden).map((f) => (
               <li key={f.id} className="flex flex-col gap-3 px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <span className="flex flex-col gap-0.5">
@@ -234,6 +242,7 @@ export default function PorCobrarPanel() {
             <h2 id="c-clientes" className="text-lg font-semibold text-card-foreground">
               {tramo ? TRAMOS_ANTIGUEDAD.find((t) => t.id === tramo)?.label : 'Quién debe'}
             </h2>
+            {(data?.totalFacturas || 0) > 1 ? (
             <div role="group" aria-label="Ordenar" className="flex gap-1 rounded-lg bg-secondary p-1">
               <button type="button" aria-pressed={orden === 'deuda'} onClick={() => setOrden('deuda')} className={segmento(orden === 'deuda')}>
                 Mayor deuda
@@ -242,6 +251,7 @@ export default function PorCobrarPanel() {
                 Más antigua
               </button>
             </div>
+            ) : null}
           </div>
           {clientes.length > 3 ? (
             <div className="px-5 pb-3 sm:px-6">
@@ -261,7 +271,7 @@ export default function PorCobrarPanel() {
           {visibles.length ? (
             <ul className="border-t border-border">
               {visibles.map((cliente) => (
-                <Cliente key={cliente.propietarioId || 'mostrador'} cliente={cliente} hoy={hoy} nombreClinica={nombreClinica} />
+                <Cliente key={cliente.propietarioId || 'mostrador'} cliente={cliente} hoy={hoy} nombreClinica={nombreClinica} orden={orden} />
               ))}
             </ul>
           ) : (
