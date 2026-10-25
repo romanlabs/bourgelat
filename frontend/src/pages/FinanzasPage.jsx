@@ -61,7 +61,8 @@ const MODOS = {
     tabInicial: 'resumen',
     tabs: [
       { id: 'resumen', label: 'Resumen' },
-      { id: 'gastos', label: 'Gastos y rentabilidad' },
+      { id: 'gastos', label: 'Gastos' },
+      { id: 'cobrar', label: 'Por cobrar' },
     ],
   },
 }
@@ -274,7 +275,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
       ) : (
         <div className="space-y-5">
           {/* ── Tab: Resumen ── */}
-          {activeTab === 'resumen' && <ResumenFinanzasPanel />}
+          {activeTab === 'resumen' && <ResumenFinanzasPanel onVerCuentas={() => setActiveTab('cobrar')} />}
 
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (

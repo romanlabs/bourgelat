@@ -698,7 +698,7 @@ function ListaTop({ id, titulo, filas, sinCatalogo, etiquetaSinCatalogo }) {
   )
 }
 
-export default function ResumenFinanzasPanel() {
+export default function ResumenFinanzasPanel({ onVerCuentas }) {
   const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
@@ -855,7 +855,7 @@ export default function ResumenFinanzasPanel() {
                 />
               ) : null}
               {verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} /> : null}
-              <PorCobrar resumen={resumen} onVerCuentas={puedeVerCaja ? () => irACaja('cobrar') : null} />
+              <PorCobrar resumen={resumen} onVerCuentas={onVerCuentas || (puedeVerCaja ? () => irACaja('cobrar') : null)} />
             </div>
           </div>
 
