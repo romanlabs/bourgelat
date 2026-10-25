@@ -56,8 +56,8 @@ const ORDENES = [
   ['reciente', 'Más reciente'],
 ]
 
-function Cliente({ cliente, hoy, nombreClinica, orden }) {
-  const [abierto, setAbierto] = useState(false)
+function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false }) {
+  const [abierto, setAbierto] = useState(abiertoAlInicio)
   const [abonando, setAbonando] = useState(null)
   const dias = diasDesde(cliente.facturaMasAntigua, hoy)
   const tono = TONOS[tramoDe(dias).tono]
@@ -65,7 +65,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden }) {
   const vencidas = cliente.facturas.filter((f) => estadoVencimiento(f.fechaVencimientoCredito, hoy)?.tipo === 'vencida').length
   const whatsapp = enlaceWhatsApp(
     cliente.telefono,
-    `Hola ${cliente.nombre}, te escribimos de ${nombreClinica}. Tienes un saldo pendiente de ${formatCurrency(cliente.totalDeuda)}. Puedes pagarlo en la clínica o por transferencia. ¡Gracias!`
+    `Hola ${cliente.nombre}, te escribimos de ${nombreClinica}. Tienes un saldo pendiente de ${formatCurrency(cliente.totalGeneral ?? cliente.totalDeuda)}. Puedes pagarlo en la clínica o por transferencia. ¡Gracias!`
   )
 
   return (
@@ -235,7 +235,20 @@ export default function PorCobrarPanel() {
     const texto = buscar.trim().toLowerCase()
     return clientes
       .filter((c) => !texto || c.nombre.toLowerCase().includes(texto) || (c.telefono || '').includes(texto))
-      .filter((c) => !tramo || c.facturas.some((f) => tramoDe(diasDesde(f.fecha, hoy)).id === tramo))
+      // Con un tramo elegido, cada cliente muestra solo sus ventas de ese tramo.
+      .map((c) => {
+        if (!tramo) return c
+        const facturas = c.facturas.filter((f) => tramoDe(diasDesde(f.fecha, hoy)).id === tramo)
+        return {
+          ...c,
+          // El recordatorio por WhatsApp habla de toda la deuda, no solo del tramo.
+          totalGeneral: c.totalDeuda,
+          facturas,
+          totalDeuda: facturas.reduce((suma, f) => suma + Number(f.saldoPendiente || 0), 0),
+          facturaMasAntigua: facturas.reduce((vieja, f) => (!vieja || f.fecha < vieja ? f.fecha : vieja), null),
+        }
+      })
+      .filter((c) => c.facturas.length > 0)
       .sort((a, b) => {
         if (orden === 'antigua') return String(a.facturaMasAntigua).localeCompare(String(b.facturaMasAntigua))
         if (orden === 'reciente') return ultimaVenta(b).localeCompare(ultimaVenta(a))
@@ -312,7 +325,14 @@ export default function PorCobrarPanel() {
           {visibles.length ? (
             <ul className="border-t border-border">
               {visibles.map((cliente) => (
-                <Cliente key={cliente.propietarioId || 'mostrador'} cliente={cliente} hoy={hoy} nombreClinica={nombreClinica} orden={orden} />
+                <Cliente
+                  key={`${cliente.propietarioId || 'mostrador'}-${tramo || 'todos'}`}
+                  cliente={cliente}
+                  hoy={hoy}
+                  nombreClinica={nombreClinica}
+                  orden={orden}
+                  abiertoAlInicio={Boolean(tramo)}
+                />
               ))}
             </ul>
           ) : (
