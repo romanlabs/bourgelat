@@ -8,7 +8,6 @@ const {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
-  registrarPago,
   registrarAbono,
   listarCuentasPorCobrar,
 } = require('../controllers/facturaController')
@@ -53,6 +52,10 @@ router.post(
       .optional({ values: 'falsy' })
       .isUUID()
       .withMessage('Clave de idempotencia no valida'),
+    body('plazoCreditoDias')
+      .optional({ values: 'falsy' })
+      .isInt({ min: 1, max: 365 })
+      .withMessage('El plazo del crédito debe ser de 1 a 365 días'),
     body('metodoPago')
       .optional()
       .isIn([
@@ -128,22 +131,6 @@ router.get(
   descargarFacturaElectronica
 )
 
-router.patch(
-  '/:id/pagar',
-  verificarToken,
-  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
-  requerirEscritura,
-  [
-    body('metodoPago')
-      .optional()
-      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
-      .withMessage('Metodo de pago no valido'),
-    body('observaciones').optional().trim(),
-    validar,
-  ],
-  registrarPago
-)
-
 router.post(
   '/:id/abonos',
   verificarToken,
@@ -171,6 +158,7 @@ router.patch(
       .notEmpty()
       .withMessage('El motivo de anulacion es obligatorio')
       .trim(),
+    body('noVuelven').optional().isArray({ max: 200 }).withMessage('noVuelven debe ser una lista'),
     validar,
   ],
   anularFactura

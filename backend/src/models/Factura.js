@@ -176,6 +176,11 @@ const Factura = sequelize.define('Factura', {
     type: DataTypes.UUID,
     allowNull: true,
   },
+  // Solo ventas a crédito con plazo: fecha en que el cliente queda en pagar.
+  fechaVencimientoCredito: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
 }, {
   tableName: 'facturas',
   timestamps: true,

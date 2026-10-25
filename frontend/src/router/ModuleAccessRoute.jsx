@@ -30,5 +30,9 @@ export default function ModuleAccessRoute() {
   }, [bloqueado, usuario, moduleKey])
 
   if (bloqueado) return <Navigate to="/dashboard" replace />
-  return <Outlet />
+  // Cada ruta monta su página de cero. Sin la key, React reusa la instancia
+  // cuando dos rutas tienen la misma forma: /caja y /finanzas (mismo
+  // FinanzasPage) se pasaban la pestaña abierta, y el <Suspense> de cada ruta,
+  // ya revelado, dejaba ver la página anterior mientras cargaba la nueva.
+  return <Outlet key={pathname} />
 }

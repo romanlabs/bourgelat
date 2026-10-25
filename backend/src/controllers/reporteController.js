@@ -9,9 +9,24 @@ const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
 const InsumoClinico = require('../models/InsumoClinico');
 const Gasto = require('../models/Gasto');
+const ServicioClinico = require('../models/ServicioClinico');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 const { tenantWhere } = require('../utils/tenant');
 const { clasificarVencimiento, hoyISO } = require('../utils/vencimiento');
+const {
+  validarRango,
+  granularidadDe,
+  periodoAnterior,
+  clavesDelPeriodo,
+  armarSerie,
+  limitesBogota,
+  recortarABasico,
+  calcularDestacados,
+  margenDe,
+  ticketPromedioDe,
+  redondearPesos,
+} = require('../utils/finanzasPeriodo');
+const AbonoFactura = require('../models/AbonoFactura');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -486,4 +501,279 @@ const reporteAgenda = async (req, res) => {
   }
 };
 
-module.exports = { reporteIngresos, reporteCitas, reporteAgenda, reporteInventario, dashboardGeneral, reporteRentabilidad };
+// ── Análisis financiero del periodo ──────────────────────────────────────────
+// La lectura larga de Finanzas (un año, un trimestre, un rango libre). Usa los
+// mismos criterios que `reporteRentabilidad` —ingreso = facturas emitidas,
+// parciales o pagadas; gasto = gastos no anulados— pero agrega en Postgres en
+// vez de traer filas: un año de una clínica grande son miles de facturas.
+// Los métodos de pago no van aquí: `metodoPago` está cifrado y no se agrupa en SQL.
+const ESTADOS_INGRESO = ['emitida', 'pagada', 'parcial'];
+const TOP_LINEAS = 5;
+
+const sumaDe = (columna) => sequelize.fn('COALESCE', sequelize.fn('SUM', sequelize.col(columna)), 0);
+
+const topPorLinea = (columnaId, whereFactura) =>
+  FacturaItem.findAll({
+    attributes: [
+      [sequelize.col(`FacturaItem.${columnaId}`), 'id'],
+      [sequelize.fn('SUM', sequelize.col('FacturaItem.cantidad')), 'cantidad'],
+      [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total'],
+    ],
+    where: { [columnaId]: { [Op.ne]: null } },
+    include: [{ model: Factura, as: 'factura', attributes: [], where: whereFactura }],
+    group: [`FacturaItem.${columnaId}`],
+    order: [[sequelize.literal('total'), 'DESC']],
+    limit: TOP_LINEAS,
+    raw: true,
+  });
+
+// La descripción de la línea está cifrada: el nombre sale del catálogo, que
+// además es el vigente si el producto se renombró después de venderlo.
+const conNombres = async (req, filas, Modelo) => {
+  if (filas.length === 0) return [];
+  const catalogo = await Modelo.findAll({
+    attributes: ['id', 'nombre'],
+    where: tenantWhere(req, { id: filas.map((fila) => fila.id) }),
+    raw: true,
+  });
+  const nombres = new Map(catalogo.map((item) => [item.id, item.nombre]));
+  return filas.map((fila) => ({
+    id: fila.id,
+    nombre: nombres.get(fila.id) || 'Sin nombre',
+    cantidad: Number(fila.cantidad || 0),
+    total: redondearPesos(fila.total),
+  }));
+};
+
+// Lo que la venta trajo de contado: total menos lo que se debe y menos lo que
+// entró por abonos (esos se cuentan el día en que se recibieron). De contado da
+// el total; a crédito da 0 porque saldo + abonos = total.
+const COBRADO_DE_CONTADO = sequelize.literal(`COALESCE(SUM(
+  "Factura"."total"
+  - COALESCE("Factura"."saldoPendiente", 0)
+  - COALESCE((SELECT SUM(a."monto") FROM "abonos_factura" a WHERE a."facturaId" = "Factura"."id"), 0)
+), 0)`);
+
+const reporteFinanzasPeriodo = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    const errorRango = validarRango(fechaInicio, fechaFin);
+    if (errorRango) return res.status(400).json({ message: errorRango });
+
+    const granularidad = granularidadDe(fechaInicio, fechaFin);
+    const anterior = periodoAnterior(fechaInicio, fechaFin);
+    const formato = granularidad === 'mes' ? 'YYYY-MM' : 'YYYY-MM-DD';
+    const tramo = sequelize.literal(`to_char("fecha", '${formato}')`);
+    const tramoAbono = sequelize.literal(
+      `to_char(("AbonoFactura"."createdAt" AT TIME ZONE 'America/Bogota'), '${formato}')`
+    );
+
+    // Los abonos de una factura anulada no existen: anular exige que no tenga abonos.
+    const whereAbonos = (inicio, fin) => {
+      const { desde, hasta } = limitesBogota(inicio, fin);
+      return tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } });
+    };
+
+    const whereFacturas = (inicio, fin) =>
+      tenantWhere(req, {
+        estado: { [Op.in]: ESTADOS_INGRESO },
+        fecha: { [Op.between]: [inicio, fin] },
+      });
+    const whereGastos = (inicio, fin) =>
+      tenantWhere(req, { anulado: false, fecha: { [Op.between]: [inicio, fin] } });
+
+    const facturasPeriodo = whereFacturas(fechaInicio, fechaFin);
+    const gastosPeriodo = whereGastos(fechaInicio, fechaFin);
+
+    const [
+      facturasPorTramo,
+      gastosPorTramo,
+      porCategoria,
+      porTipo,
+      topServiciosFilas,
+      topProductosFilas,
+      sinCatalogoFilas,
+      [carteraFila],
+      [facturasAnterior],
+      [gastosAnterior],
+      abonosPorTramo,
+      [abonosAnterior],
+    ] = await Promise.all([
+      Factura.findAll({
+        attributes: [
+          [tramo, 'periodo'],
+          [COBRADO_DE_CONTADO, 'cobrado'],
+          [sumaDe('total'), 'vendido'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
+        ],
+        where: facturasPeriodo,
+        group: [tramo],
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: [[tramo, 'periodo'], [sumaDe('monto'), 'gastos']],
+        where: gastosPeriodo,
+        group: [tramo],
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: ['categoria', [sumaDe('monto'), 'total']],
+        where: gastosPeriodo,
+        group: ['categoria'],
+        raw: true,
+      }),
+
+      FacturaItem.findAll({
+        attributes: ['tipo', [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total']],
+        include: [{ model: Factura, as: 'factura', attributes: [], where: facturasPeriodo }],
+        group: ['FacturaItem.tipo'],
+        raw: true,
+      }),
+
+      topPorLinea('servicioClinicoId', facturasPeriodo),
+      topPorLinea('productoId', facturasPeriodo),
+
+      // Líneas escritas a mano, sin producto ni servicio del catálogo: no entran
+      // en los top (su descripción está cifrada y no se agrupa), pero su total
+      // se informa para que los top cuadren con «Ventas por tipo».
+      FacturaItem.findAll({
+        attributes: ['tipo', [sequelize.fn('SUM', sequelize.col('FacturaItem.subtotal')), 'total']],
+        where: { servicioClinicoId: null, productoId: null },
+        include: [{ model: Factura, as: 'factura', attributes: [], where: facturasPeriodo }],
+        group: ['FacturaItem.tipo'],
+        raw: true,
+      }),
+
+      // Cartera: todo el fiado que se debe hoy, sin importar cuándo se vendió.
+      Factura.findAll({
+        attributes: [
+          [sumaDe('saldoPendiente'), 'porCobrar'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'creditos'],
+          [sequelize.fn('MIN', sequelize.col('fecha')), 'masAntiguo'],
+        ],
+        where: tenantWhere(req, {
+          estado: { [Op.in]: ['emitida', 'parcial'] },
+          saldoPendiente: { [Op.gt]: 0 },
+        }),
+        raw: true,
+      }),
+
+      Factura.findAll({
+        attributes: [
+          [COBRADO_DE_CONTADO, 'cobrado'],
+          [sumaDe('total'), 'vendido'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'ventas'],
+        ],
+        where: whereFacturas(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+
+      Gasto.findAll({
+        attributes: [[sumaDe('monto'), 'gastos']],
+        where: whereGastos(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+
+      AbonoFactura.findAll({
+        attributes: [[tramoAbono, 'periodo'], [sumaDe('monto'), 'cobrado']],
+        where: whereAbonos(fechaInicio, fechaFin),
+        group: [tramoAbono],
+        raw: true,
+      }),
+
+      AbonoFactura.findAll({
+        attributes: [[sumaDe('monto'), 'cobrado']],
+        where: whereAbonos(anterior.fechaInicio, anterior.fechaFin),
+        raw: true,
+      }),
+    ]);
+
+    const [topServicios, topProductos] = await Promise.all([
+      conNombres(req, topServiciosFilas, ServicioClinico),
+      conNombres(req, topProductosFilas, Producto),
+    ]);
+
+    const serie = armarSerie(
+      clavesDelPeriodo(fechaInicio, fechaFin, granularidad),
+      facturasPorTramo,
+      gastosPorTramo,
+      abonosPorTramo
+    );
+
+    const sumar = (campo) => redondearPesos(serie.reduce((suma, fila) => suma + fila[campo], 0));
+    const ingresos = sumar('ingresos');
+    const vendido = sumar('vendido');
+    const gastos = sumar('gastos');
+    const ventas = serie.reduce((suma, fila) => suma + fila.ventas, 0);
+    const ganancia = redondearPesos(ingresos - gastos);
+    const abonos = redondearPesos(abonosPorTramo.reduce((suma, fila) => suma + Number(fila.cobrado || 0), 0));
+
+    const ingresosAnterior = redondearPesos(
+      Number(facturasAnterior?.cobrado || 0) + Number(abonosAnterior?.cobrado || 0)
+    );
+    const vendidoAnterior = redondearPesos(facturasAnterior?.vendido);
+    const gastosAnteriorTotal = redondearPesos(gastosAnterior?.gastos);
+    const ventasAnterior = Number(facturasAnterior?.ventas || 0);
+
+    const tipos = aRecord(porTipo, 'tipo');
+    const sinCatalogo = aRecord(sinCatalogoFilas, 'tipo');
+
+    const reporte = {
+      alcance: 'completo',
+      periodo: { fechaInicio, fechaFin, granularidad, anterior },
+      resumen: {
+        ingresos,
+        vendido,
+        abonos,
+        gastos,
+        ganancia,
+        margen: margenDe(ingresos, ganancia),
+        ventas,
+        // El ticket mide cuánto vale una venta, se haya cobrado o no.
+        ticketPromedio: ticketPromedioDe(vendido, ventas),
+        porCobrar: redondearPesos(carteraFila?.porCobrar),
+        creditosPendientes: Number(carteraFila?.creditos || 0),
+        creditoMasAntiguo: carteraFila?.masAntiguo || null,
+      },
+      anterior: {
+        ingresos: ingresosAnterior,
+        vendido: vendidoAnterior,
+        gastos: gastosAnteriorTotal,
+        ganancia: redondearPesos(ingresosAnterior - gastosAnteriorTotal),
+        ventas: ventasAnterior,
+        ticketPromedio: ticketPromedioDe(vendidoAnterior, ventasAnterior),
+      },
+      serie,
+      destacados: calcularDestacados(serie),
+      gastosPorCategoria: aRecord(porCategoria, 'categoria'),
+      ingresosPorTipo: {
+        servicio: redondearPesos(tipos.servicio),
+        producto: redondearPesos(tipos.producto),
+      },
+      topServicios,
+      topProductos,
+      sinCatalogo: {
+        servicio: redondearPesos(sinCatalogo.servicio),
+        producto: redondearPesos(sinCatalogo.producto),
+      },
+    };
+
+    // La ruta decide el alcance (rol y plan); por defecto, el básico.
+    res.json(req.analisisCompleto === true ? reporte : recortarABasico(reporte));
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
+module.exports = {
+  reporteIngresos,
+  reporteCitas,
+  reporteAgenda,
+  reporteInventario,
+  dashboardGeneral,
+  reporteRentabilidad,
+  reporteFinanzasPeriodo,
+};

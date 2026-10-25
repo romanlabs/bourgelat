@@ -11,6 +11,56 @@ import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import { descargarFacturaPdf } from './facturaPdf'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { useAuthStore } from '@/store/authStore'
+import { formatShortDate } from '@/features/dashboard/dashboardUtils'
+import { PLAZOS_CREDITO, sumarDias } from './resumenFinanzas'
+import { hoyLocal } from '@/lib/fecha'
+
+// Plazo opcional del crédito: rápido con botones o escrito a mano. Sin plazo el
+// fiado no vence (como siempre); con plazo, Por cobrar avisa cuando se pase.
+function PlazoCredito({ plazo, onPlazo, cliente }) {
+  const escrito = plazo !== '' && !PLAZOS_CREDITO.includes(Number(plazo))
+  const opcion = (activa) =>
+    `h-10 rounded-lg px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+      activa ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:brightness-95'
+    }`
+  return (
+    <div className="mt-6 flex flex-col gap-3 rounded-xl bg-muted/60 p-4">
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-sm font-semibold text-foreground">¿En cuántos días paga?</legend>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" aria-pressed={plazo === ''} onClick={() => onPlazo('')} className={opcion(plazo === '')}>
+            Sin plazo
+          </button>
+          {PLAZOS_CREDITO.map((dias) => (
+            <button key={dias} type="button" aria-pressed={Number(plazo) === dias} onClick={() => onPlazo(String(dias))} className={opcion(Number(plazo) === dias)}>
+              {dias} días
+            </button>
+          ))}
+          <label className={`flex h-10 items-center gap-2 rounded-lg px-3 text-sm ${escrito ? 'bg-primary/10 ring-2 ring-primary' : 'bg-card'}`}>
+            <span className="text-muted-foreground">Otro</span>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              inputMode="numeric"
+              value={escrito ? plazo : ''}
+              onChange={(e) => onPlazo(e.target.value.replace(/\D/g, '').slice(0, 3))}
+              aria-label="Plazo en días"
+              placeholder="días"
+              className="w-14 bg-transparent text-right font-semibold tabular-nums text-foreground outline-none"
+            />
+          </label>
+        </div>
+      </fieldset>
+      <p className="text-sm text-muted-foreground">
+        {plazo
+          ? <>Queda en pagar <span className="font-semibold text-foreground">el {formatShortDate(sumarDias(hoyLocal(), plazo))}</span>. </>
+          : 'Sin fecha de pago. '}
+        Queda por cobrar a {cliente || 'el cliente'}; los abonos se registran en Por cobrar.
+      </p>
+    </div>
+  )
+}
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -405,11 +455,15 @@ export default function PosModal({
                       </span>
                     </div>
                   </div>
+                ) : esCredito ? (
+                  <PlazoCredito
+                    plazo={invoiceForm?.plazoCreditoDias || ''}
+                    onPlazo={(valor) => setInvoiceForm((curr) => ({ ...curr, plazoCreditoDias: valor }))}
+                    cliente={selectedOwnerData?.nombre}
+                  />
                 ) : (
                   <p className="mt-6 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-                    {esCredito
-                      ? `Queda por cobrar a ${selectedOwnerData?.nombre || 'el cliente'}. Los abonos se registran en Caja, pestaña Por cobrar.`
-                      : `Pago con ${metodoLabel.toLowerCase()} — sin vuelto.`}
+                    {`Pago con ${metodoLabel.toLowerCase()} — sin vuelto.`}
                   </p>
                 )}
 

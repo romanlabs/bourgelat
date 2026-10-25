@@ -1,37 +1,23 @@
-import { chartColors } from '@/lib/theme'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { estilosApi } from '@/features/estilos/estilosApi'
 import {
-  Boxes,
-  CircleAlert,
-  Download,
   FileText,
   Plus,
-  Receipt,
   Search,
-  ShieldCheck,
   Sparkles,
   Wallet,
-  X,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import {
   DashboardPanel,
   DataTable,
-  DonutCard,
-  KpiCard,
-  LinePanel,
   StatusPill,
 } from '@/features/dashboard/dashboardComponents'
-import {
-  formatCurrency,
-  formatNumber,
-  formatShortDate,
-} from '@/features/dashboard/dashboardUtils'
+import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturacion'
 import {
   useFinanzasHistorial,
@@ -39,10 +25,11 @@ import {
   ESTADO_LABELS,
   getEstadoTone,
 } from '@/features/finanzas/useFinanzasHistorial'
-import { useFinanzasResumen } from '@/features/finanzas/useFinanzasResumen'
 import PosModal from '@/features/finanzas/PosModal'
 import FacturaDetalleModal from '@/features/finanzas/FacturaDetalleModal'
-import GastosRentabilidadPanel, { CuentasPorCobrarPanel, GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
+import GastosRentabilidadPanel, { GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
+import PorCobrarPanel from '@/features/finanzas/PorCobrarPanel'
+import ResumenFinanzasPanel from '@/features/finanzas/ResumenFinanzasPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -60,7 +47,6 @@ const MODOS = {
   caja: {
     moduleKey: 'caja',
     titulo: 'Caja',
-    descripcion: 'Cobra ventas, lleva tu turno de caja y revisa las ventas hechas.',
     tabInicial: 'facturacion',
     tabs: [
       { id: 'facturacion', label: 'Venta' },
@@ -73,11 +59,11 @@ const MODOS = {
   finanzas: {
     moduleKey: 'finanzas',
     titulo: 'Finanzas',
-    descripcion: 'Ingresos, gastos y rentabilidad del mes.',
     tabInicial: 'resumen',
     tabs: [
       { id: 'resumen', label: 'Resumen' },
-      { id: 'gastos', label: 'Gastos y rentabilidad' },
+      { id: 'gastos', label: 'Gastos' },
+      { id: 'cobrar', label: 'Por cobrar' },
     ],
   },
 }
@@ -109,7 +95,10 @@ export default function FinanzasPage({ modo = 'caja' }) {
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const location = useLocation()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState(config.tabInicial)
+  // Otra pantalla puede abrir una pestaña concreta («Ver cuentas» → Por cobrar).
+  const [activeTab, setActiveTab] = useState(() =>
+    config.tabs.some((tab) => tab.id === location.state?.tab) ? location.state.tab : config.tabInicial
+  )
   const [ventaExitosa, setVentaExitosa] = useState(false)
   // Factura recién emitida: el POS la muestra sin salir del flujo de venta.
   const [facturaCreadaId, setFacturaCreadaId] = useState(null)
@@ -138,7 +127,6 @@ export default function FinanzasPage({ modo = 'caja' }) {
   const emisionAutomaticaActiva = puedeEmitirElectronica
 
   // Cada módulo pide solo sus datos.
-  const resumenHook = useFinanzasResumen({ enabled: puedeVerFinanzas && !esCaja })
   const historialHook = useFinanzasHistorial({ enabled: puedeVerFinanzas && esCaja, puedeAnular, puedeEmitirElectronica })
   const cajaHook = useCajaTurno({ enabled: puedeVerFinanzas && esCaja, esAdmin: esAdminCaja })
   const facturacionHook = useFinanzasFacturacion({
@@ -234,16 +222,10 @@ export default function FinanzasPage({ modo = 'caja' }) {
       // frase ni etiqueta.
       // Caja es de uso continuo: título corto, pestañas y una sola acción en la
       // misma fila (sin frase, buscador global ni atajo a inventario).
-      description={esCaja ? undefined : config.descripcion}
-      compactHeader={esCaja}
-      hideSearch={esCaja}
-      headerBadge={
-        esCaja ? null : (
-          <StatusPill tone="bg-success-soft text-success">
-            Corte mensual activo
-          </StatusPill>
-        )
-      }
+      // Las dos pantallas usan encabezado compacto: título, pestañas y acción en
+      // una fila. En Finanzas la cifra del periodo hace de titular.
+      compactHeader
+      hideSearch
       titleAside={
       <div
         role="tablist"
@@ -280,11 +262,6 @@ export default function FinanzasPage({ modo = 'caja' }) {
             Nueva venta
           </button>
         ) : null}
-          {esCaja ? null : (
-            <NavCta to="/inventario" icon={Boxes}>
-              Abrir inventario
-            </NavCta>
-          )}
         </div>
       }
       asideNote="Usa esta sección para buscar facturas, revisar estados, emitir electrónicamente y controlar anulaciones dejando historial."
@@ -299,76 +276,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
       ) : (
         <div className="space-y-5">
           {/* ── Tab: Resumen ── */}
-          {activeTab === 'resumen' && (
-            <div className="space-y-5">
-              {resumenHook.ingresosQuery.isError || resumenHook.resumenQuery.isError ? (
-                <div className="grid gap-4">
-                  {resumenHook.ingresosQuery.isError ? (
-                    <div className="rounded-xl bg-warning-soft px-4 py-4 text-sm leading-6 text-warning">
-                      No fue posible cargar el reporte de ingresos del periodo.
-                    </div>
-                  ) : null}
-                  {resumenHook.resumenQuery.isError ? (
-                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-                      No fue posible cargar el resumen de facturas.
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <KpiCard
-                  icon={Wallet}
-                  label="Ingresos del mes"
-                  value={formatCurrency(resumenHook.totalIngresos)}
-                  helper="Suma total del periodo en curso para el cierre administrativo."
-                  tone="text-success"
-                />
-                <KpiCard
-                  icon={Receipt}
-                  label="Facturas emitidas"
-                  value={formatNumber(resumenHook.resumenEstados.emitida?.cantidad || 0)}
-                  helper="Documentos listos para cobro o seguimiento financiero."
-                  tone="text-info"
-                />
-                <KpiCard
-                  icon={ShieldCheck}
-                  label="Facturas pagadas"
-                  value={formatNumber(resumenHook.resumenEstados.pagada?.cantidad || 0)}
-                  helper="Documentos ya cerrados dentro del periodo actual."
-                  tone="text-success"
-                />
-                <KpiCard
-                  icon={CircleAlert}
-                  label="Pendientes electrónicos"
-                  value={formatNumber(resumenHook.pendientesElectronicos)}
-                  helper="Facturas con emisión pendiente, rechazada o con error técnico."
-                  tone="text-warning"
-                />
-              </div>
-
-              <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.45fr)_380px]">
-                <LinePanel
-                  title="Evolución diaria del ingreso"
-                  subtitle={`Lectura del ${formatShortDate(resumenHook.rangoMes.fechaInicio)} al ${formatShortDate(resumenHook.rangoMes.fechaFin)}.`}
-                  data={resumenHook.ingresosPorDia}
-                  dataKey="total"
-                  color={chartColors.categorica[1]}
-                  formatter={formatCurrency}
-                  emptyMessage="Aún no hay ingresos registrados para el periodo actual."
-                />
-                <DonutCard
-                  title="Métodos de pago"
-                  subtitle="Distribución del ingreso según la forma de pago registrada."
-                  data={resumenHook.metodosPago}
-                  centerLabel="Ingreso total"
-                  centerValue={formatCurrency(resumenHook.totalIngresos)}
-                  formatter={formatCurrency}
-                  emptyMessage="No hay métodos de pago disponibles para mostrar."
-                />
-              </div>
-            </div>
-          )}
+          {activeTab === 'resumen' && <ResumenFinanzasPanel onVerCuentas={() => setActiveTab('cobrar')} />}
 
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (
@@ -458,7 +366,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           {activeTab === 'gastos' && <GastosRentabilidadPanel />}
 
           {/* ── Tab: Por cobrar (fiado y abonos) ── */}
-          {activeTab === 'cobrar' && <CuentasPorCobrarPanel />}
+          {activeTab === 'cobrar' && <PorCobrarPanel />}
 
           {/* ── Tab: Turnos de caja ── */}
           {activeTab === 'turnos' && (

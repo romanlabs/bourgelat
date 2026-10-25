@@ -35,9 +35,9 @@ export const administracionApi = {
     return data
   },
 
-  // Rentabilidad del periodo
-  async obtenerRentabilidad({ fechaInicio, fechaFin }) {
-    const { data } = await api.get('/reportes/rentabilidad', {
+  // Análisis de un periodo largo (año, trimestre, rango libre)
+  async obtenerAnalisisPeriodo({ fechaInicio, fechaFin }) {
+    const { data } = await api.get('/reportes/finanzas-periodo', {
       params: { fechaInicio, fechaFin },
     })
     return data

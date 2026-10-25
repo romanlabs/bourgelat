@@ -17,6 +17,8 @@ const MovimientoCaja = require('../models/MovimientoCaja')
 const { esTurnoVencido } = require('../utils/turnoCaja')
 const { clasificarVencimiento } = require('../utils/vencimiento')
 const { leerDescuento } = require('../utils/descuentoVenta')
+const { vencimientoCredito } = require('../utils/plazoCredito')
+const { RAZONES_SIN_REINGRESO, leerSinReingreso } = require('../utils/reingresoAnulacion')
 const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, respuestaValidacionCompleta, validarRangoNumeracion } = require('../utils/emisionElectronica')
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
@@ -479,6 +481,7 @@ const crearFactura = async (req, res) => {
       rangoNumeracionId = null,
       historiaClinicaId = null,
       registroEstiloId = null,
+      plazoCreditoDias,
     } = req.body
     const { clinicaId } = req.usuario
 
@@ -774,13 +777,23 @@ const crearFactura = async (req, res) => {
       })
     }
 
+    // Plazo opcional del crédito; en una venta de contado no aplica.
+    const plazo = esCredito ? vencimientoCredito(plazoCreditoDias) : { fecha: null }
+    if (plazo.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: plazo.error, code: 'PLAZO_CREDITO_INVALIDO' })
+    }
+
     const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
       numero,
       fecha: new Date(),
-      estado: 'emitida',
+      // De contado el dinero ya entró: nace pagada. Solo el crédito queda
+      // emitida, con todo el total por cobrar mediante abonos.
+      estado: esCredito ? 'emitida' : 'pagada',
       saldoPendiente: esCredito ? total : 0,
+      fechaVencimientoCredito: plazo.fecha,
       subtotal,
       descuento,
       impuesto,
@@ -1321,96 +1334,6 @@ const emitirFacturaElectronica = async (req, res) => {
   }
 }
 
-const registrarPago = async (req, res) => {
-  // Transacción con lock: sin ella, un pago simultáneo con una anulación podía
-  // dejar como «pagada» una factura ya anulada.
-  const transaction = await sequelize.transaction()
-
-  try {
-    const { id } = req.params
-    const { clinicaId } = req.usuario
-    const { metodoPago, observaciones } = req.body
-
-    const factura = await Factura.findOne({
-      where: { id, clinicaId },
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    })
-
-    if (!factura) {
-      await transaction.rollback()
-      return res.status(404).json({ message: 'Factura no encontrada' })
-    }
-
-    if (factura.estado !== 'emitida') {
-      await transaction.rollback()
-      return res.status(400).json({
-        message: `Solo se pueden marcar como pagadas facturas en estado "emitida". Estado actual: ${factura.estado}`,
-      })
-    }
-
-    // Ventas a crédito se saldan con abonos (que actualizan saldo y caja),
-    // no con un marcado directo que dejaría el cobro sin rastro.
-    if (convertirANumero(factura.saldoPendiente) > 0) {
-      await transaction.rollback()
-      return res.status(409).json({
-        message: 'Esta factura tiene saldo pendiente. Registra el cobro como abono.',
-        code: 'USAR_ABONOS',
-      })
-    }
-
-    const estadoAnterior = factura.estado
-    const metodoPagoAnterior = factura.metodoPago
-
-    // El efectivo de la venta ya se sumó (o no) a la caja al crearla. Cambiar
-    // desde o hacia efectivo aquí descuadraba el turno, y al anular se restaba
-    // efectivo que nunca entró. Ese cambio se hace anulando y volviendo a vender.
-    const cambiaEfectivo = metodoPago && metodoPago !== metodoPagoAnterior &&
-      (metodoPago === 'efectivo' || metodoPagoAnterior === 'efectivo')
-    if (cambiaEfectivo) {
-      await transaction.rollback()
-      return res.status(409).json({
-        message: 'No se puede cambiar el pago desde o hacia efectivo porque afectaría la caja. Anula la venta y regístrala de nuevo con el método correcto.',
-        code: 'CAMBIO_EFECTIVO_NO_PERMITIDO',
-      })
-    }
-
-    await factura.update({
-      estado: 'pagada',
-      ...(metodoPago ? { metodoPago } : {}),
-      ...(observaciones ? { observaciones } : {}),
-    }, { transaction })
-    await transaction.commit()
-
-    await registrarAuditoria({
-      accion: 'REGISTRAR_PAGO_FACTURA',
-      entidad: 'Factura',
-      entidadId: factura.id,
-      descripcion: `Factura ${factura.numero} marcada como pagada. Método: ${metodoPago || metodoPagoAnterior || 'no especificado'}`,
-      datosAnteriores: { estado: estadoAnterior, metodoPago: metodoPagoAnterior },
-      datosNuevos: { estado: 'pagada', metodoPago: metodoPago || metodoPagoAnterior },
-      req,
-      resultado: 'exitoso',
-    })
-
-    let facturaActualizada
-    try {
-      facturaActualizada = await obtenerFacturaDetallada(factura.id, clinicaId)
-    } catch (error) {
-      logger.error({ contexto: 'registrar-pago', mensaje: 'Pago guardado pero falló la relectura', facturaId: factura.id, error: error.message })
-      facturaActualizada = factura.toJSON()
-    }
-
-    res.json({
-      message: 'Pago registrado exitosamente',
-      factura: facturaActualizada,
-    })
-  } catch (error) {
-    if (!transaction.finished) await transaction.rollback()
-    res.status(500).json({ message: 'Error en el servidor', error: error.message })
-  }
-}
-
 // Registra un abono (pago parcial o total) a una factura con saldo pendiente.
 // Si el abono es en efectivo y el cobrador tiene turno abierto, el monto entra
 // a la caja del turno (mismo contador que las ventas de contado de Sergio).
@@ -1550,7 +1473,7 @@ const listarCuentasPorCobrar = async (req, res) => {
         estado: { [Op.in]: ['emitida', 'parcial'] },
         saldoPendiente: { [Op.gt]: 0 },
       },
-      attributes: ['id', 'numero', 'fecha', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
+      attributes: ['id', 'numero', 'fecha', 'fechaVencimientoCredito', 'total', 'saldoPendiente', 'estado', 'propietarioId'],
       include: [{
         model: Propietario,
         as: 'propietario',
@@ -1582,6 +1505,7 @@ const listarCuentasPorCobrar = async (req, res) => {
         id: f.id,
         numero: f.numero,
         fecha: f.fecha,
+        fechaVencimientoCredito: f.fechaVencimientoCredito,
         total: f.total,
         saldoPendiente: f.saldoPendiente,
         estado: f.estado,
@@ -1609,7 +1533,7 @@ const anularFactura = async (req, res) => {
   try {
     const { id } = req.params
     const { clinicaId } = req.usuario
-    const { motivoAnulacion } = req.body
+    const { motivoAnulacion, noVuelven } = req.body
 
     if (!motivoAnulacion) {
       await transaction.rollback()
@@ -1667,6 +1591,12 @@ const anularFactura = async (req, res) => {
       })
     }
 
+    const sinReingreso = leerSinReingreso(factura.items, noVuelven)
+    if (sinReingreso.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: sinReingreso.error, code: 'REINGRESO_INVALIDO' })
+    }
+
     for (const item of factura.items) {
       if (item.tipo === 'producto' && item.productoId) {
         const producto = await Producto.findOne({
@@ -1697,6 +1627,26 @@ const anularFactura = async (req, res) => {
             usuarioId: req.usuario.id,
             clinicaId,
           }, { transaction })
+
+          // No volvió a la bodega: sale enseguida con su motivo, así el stock
+          // queda como estaba y el kardex dice por qué.
+          const razon = sinReingreso.porItem.get(String(item.id))
+          if (razon) {
+            const { motivo, texto } = RAZONES_SIN_REINGRESO[razon]
+            await producto.update({ stock: stockAnterior }, { transaction })
+            await MovimientoInventario.create({
+              tipo: 'salida',
+              cantidad,
+              stockAnterior: stockNuevo,
+              stockNuevo: stockAnterior,
+              motivo,
+              observaciones: `No volvio a bodega (${texto}) al anular la factura ${factura.numero}`,
+              precioUnitario: item.precioUnitario,
+              productoId: producto.id,
+              usuarioId: req.usuario.id,
+              clinicaId,
+            }, { transaction })
+          }
         }
       }
     }
@@ -1806,6 +1756,7 @@ const anularFactura = async (req, res) => {
       { where: { facturaId: factura.id, clinicaId }, transaction }
     )
 
+    const estadoAnterior = factura.estado
     await factura.update({ estado: 'anulada', motivoAnulacion }, { transaction })
     await transaction.commit()
 
@@ -1814,8 +1765,14 @@ const anularFactura = async (req, res) => {
       entidad: 'Factura',
       entidadId: factura.id,
       descripcion: `Factura ${factura.numero} anulada. Motivo: ${motivoAnulacion}`,
-      datosAnteriores: { estado: 'emitida' },
-      datosNuevos: { estado: 'anulada', motivoAnulacion, cajaAjustada, movimientoDevolucionId },
+      datosAnteriores: { estado: estadoAnterior },
+      datosNuevos: {
+        estado: 'anulada',
+        motivoAnulacion,
+        cajaAjustada,
+        movimientoDevolucionId,
+        productosSinReingreso: Object.fromEntries(sinReingreso.porItem),
+      },
       req,
       resultado: 'exitoso',
     })
@@ -1927,7 +1884,6 @@ module.exports = {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
-  registrarPago,
   registrarAbono,
   listarCuentasPorCobrar,
 }
