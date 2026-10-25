@@ -8,6 +8,7 @@ const {
   reporteInventario,
   dashboardGeneral,
   reporteRentabilidad,
+  reporteFinanzasPeriodo,
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -33,6 +34,21 @@ router.get(
   verificarRol('admin', 'superadmin'),
   requiereReportesCompletos,
   reporteRentabilidad
+)
+
+// Análisis de un periodo largo (año, trimestre, rango libre): como la
+// rentabilidad, es lectura del dueño/admin.
+router.get(
+  '/finanzas-periodo',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requiereReportesCompletos,
+  [
+    query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
+    query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
+    validar,
+  ],
+  reporteFinanzasPeriodo
 )
 
 router.get(

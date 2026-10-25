@@ -6,6 +6,7 @@ const KEYS = {
   gastos: (filtros) => ['administracion', 'gastos', filtros],
   cuentasPorCobrar: ['administracion', 'cuentas-por-cobrar'],
   rentabilidad: (periodo) => ['administracion', 'rentabilidad', periodo],
+  analisisPeriodo: (periodo) => ['administracion', 'analisis-periodo', periodo],
 }
 
 export function useGastos(filtros = {}) {
@@ -61,5 +62,16 @@ export function useRentabilidad(periodo, { enabled = true } = {}) {
     queryKey: KEYS.rentabilidad(periodo),
     queryFn: () => administracionApi.obtenerRentabilidad(periodo),
     enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
+  })
+}
+
+// Cuelga de la raíz 'administracion': la refrescan las mutaciones de gastos y
+// todo el dominio 'facturacion' (ventas, abonos, anulaciones).
+export function useAnalisisPeriodo(periodo, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: KEYS.analisisPeriodo(periodo),
+    queryFn: () => administracionApi.obtenerAnalisisPeriodo(periodo),
+    enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
+    placeholderData: (previousData) => previousData,
   })
 }

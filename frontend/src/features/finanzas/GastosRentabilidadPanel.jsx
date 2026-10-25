@@ -22,19 +22,8 @@ import { mesLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
+import { CATEGORIAS_GASTO as CATEGORIAS } from '@/features/finanzas/finanzasConstants'
 import FormAbono from './FormAbono'
-
-const CATEGORIAS = [
-  { value: 'nomina', label: 'Nómina' },
-  { value: 'arriendo', label: 'Arriendo' },
-  { value: 'servicios_publicos', label: 'Servicios públicos' },
-  { value: 'insumos', label: 'Insumos' },
-  { value: 'proveedor', label: 'Proveedor' },
-  { value: 'mantenimiento', label: 'Mantenimiento' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'impuestos', label: 'Impuestos' },
-  { value: 'otros', label: 'Otros' },
-]
 
 const METODOS_GASTO = [
   { value: 'efectivo', label: 'Efectivo' },
