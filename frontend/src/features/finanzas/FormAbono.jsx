@@ -50,7 +50,7 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
         <Select
           variant="field"
           aria-label="Método del abono"
-          className="h-10"
+          className="h-10 w-44"
           value={metodoPago}
           onValueChange={setMetodoPago}
           options={METODOS_ABONO}

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { fechaCorta } from '@/features/pacientes/fichaSaludUtils'
 import { toast } from 'sonner'
-import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
+import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber, formatShortDate } from '@/features/dashboard/dashboardUtils'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -9,7 +8,6 @@ import { Select } from '@/components/ui/select'
 import {
   useAnularGasto,
   useCrearGasto,
-  useCuentasPorCobrar,
   useGastos,
 } from '@/features/finanzas/useAdministracion'
 import { badgeVariacion, variacion } from '@/features/finanzas/analisisPeriodo'
@@ -18,7 +16,6 @@ import { hasAnyRole } from '@/lib/permissions'
 import { hoyLocal, mesLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { CATEGORIAS_GASTO as CATEGORIAS } from '@/features/finanzas/finanzasConstants'
-import FormAbono from './FormAbono'
 
 const METODOS_GASTO = [
   { value: 'efectivo', label: 'Efectivo' },
@@ -399,91 +396,6 @@ function HistorialGastos({ data, cargando, filtro, onFiltrar, onVerMas, limite }
       ) : null}
       <AnularGasto gasto={anulando} onCerrar={() => setAnulando(null)} />
     </section>
-  )
-}
-
-function FilaDeudor({ cliente }) {
-  const [facturaAbono, setFacturaAbono] = useState(null)
-  const [abierto, setAbierto] = useState(false)
-
-  return (
-    <div className="rounded-xl">
-      <button
-        type="button"
-        onClick={() => setAbierto((v) => !v)}
-        aria-expanded={abierto}
-        className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <span className="min-w-0">
-          <span className="block truncate text-[15px] font-semibold text-foreground">{cliente.nombre}</span>
-          <span className="block text-[13px] text-muted-foreground">
-            debe desde {fechaCorta(cliente.facturaMasAntigua)}{cliente.telefono ? ` · ${cliente.telefono}` : ''}
-          </span>
-        </span>
-        <span className="flex shrink-0 items-center gap-3">
-          <span className="font-semibold tabular-nums text-danger">{formatCurrency(cliente.totalDeuda)}</span>
-          <span aria-hidden className="text-[13px] text-muted-foreground">{abierto ? '▲' : '▼'}</span>
-        </span>
-      </button>
-
-      {abierto ? (
-        <div className="space-y-2 rounded-xl bg-muted px-4 pb-4">
-          {cliente.facturas.map((f) => (
-            <div key={f.id} className="flex flex-wrap items-center gap-3 pt-3 text-sm">
-              <span className="text-muted-foreground">#{f.numero} · {fechaCorta(f.fecha)}</span>
-              <span className="text-muted-foreground">de {formatCurrency(f.total)} quedan</span>
-              <span className="font-semibold tabular-nums text-danger">{formatCurrency(f.saldoPendiente)}</span>
-              {facturaAbono === f.id ? (
-                <FormAbono
-                  autoFocus
-                  factura={f}
-                  onListo={() => setFacturaAbono(null)}
-                  onCancelar={() => setFacturaAbono(null)}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setFacturaAbono(f.id)}
-                  className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
-                >
-                  Registrar abono
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-export function CuentasPorCobrarPanel() {
-  const { data, isLoading } = useCuentasPorCobrar()
-
-  return (
-    <DashboardPanel
-      title="Cuentas por cobrar"
-      subtitle={
-        data?.totalClientes
-          ? `${data.totalClientes === 1 ? 'Un cliente debe' : `${data.totalClientes} clientes deben`} ${formatCurrency(data.totalPorCobrar)} en total.`
-          : 'Clientes con saldo de fiado pendiente.'
-      }
-    >
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Revisando deudas…</p>
-      ) : !data?.clientes?.length ? (
-        <div className="rounded-xl bg-muted px-4 py-6">
-          <p className="text-sm font-semibold text-card-foreground">Nadie debe</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">El fiado está al día.</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {data.clientes.map((cliente) => (
-            <FilaDeudor key={cliente.propietarioId || 'mostrador'} cliente={cliente} />
-          ))}
-        </div>
-      )}
-    </DashboardPanel>
   )
 }
 

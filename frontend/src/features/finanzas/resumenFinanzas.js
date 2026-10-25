@@ -163,6 +163,40 @@ export const mesAnterior = (anioMes) => {
   return fechaLocal(new Date(anio, mes - 2, 1)).slice(0, 7)
 }
 
+// Antigüedad de la cartera: tramos fijos en orden, cada uno con su tono de
+// estado (lo viejo es más grave). `hasta` en días, inclusive.
+export const TRAMOS_ANTIGUEDAD = [
+  { id: 'reciente', label: '0 a 30 días', hasta: 30, tono: 'warning' },
+  { id: 'mes', label: '31 a 60 días', hasta: 60, tono: 'warning' },
+  { id: 'dosMeses', label: '61 a 90 días', hasta: 90, tono: 'danger' },
+  { id: 'vieja', label: 'Más de 90 días', hasta: Infinity, tono: 'danger' },
+]
+
+export const tramoDe = (dias) => TRAMOS_ANTIGUEDAD.find((tramo) => dias <= tramo.hasta) || TRAMOS_ANTIGUEDAD.at(-1)
+
+// Suma por tramo el saldo de cada venta según su fecha (no la del cliente:
+// un cliente puede tener una deuda vieja y otra de ayer).
+export const antiguedadCartera = (clientes = [], hoy = fechaLocal()) => {
+  const tramos = TRAMOS_ANTIGUEDAD.map((tramo) => ({ ...tramo, total: 0, ventas: 0 }))
+  for (const cliente of clientes) {
+    for (const factura of cliente.facturas || []) {
+      const tramo = tramos.find((t) => t.id === tramoDe(diasDesde(factura.fecha, hoy)).id)
+      tramo.total += Number(factura.saldoPendiente || 0)
+      tramo.ventas += 1
+    }
+  }
+  return tramos
+}
+
+// Enlace de WhatsApp con el mensaje escrito; lo envía la persona, no la app.
+// Un celular colombiano de 10 dígitos (3xx) lleva el indicativo 57.
+export const enlaceWhatsApp = (telefono, mensaje) => {
+  let digitos = String(telefono || '').replace(/\D/g, '')
+  if (digitos.length === 10 && digitos.startsWith('3')) digitos = `57${digitos}`
+  if (digitos.length < 10) return null
+  return `https://wa.me/${digitos}?text=${encodeURIComponent(mensaje)}`
+}
+
 // Estado de un mes en la cuadrícula del año.
 export const estadoMes = (fila, mesActual = fechaLocal().slice(0, 7)) => {
   if (fila.periodo > mesActual) return 'futuro'

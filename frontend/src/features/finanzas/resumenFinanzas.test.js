@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   agruparMetodosPago,
+  antiguedadCartera,
   curvaAcumulada,
   diasDesde,
+  enlaceWhatsApp,
+  tramoDe,
   estadoMes,
   mesAnterior,
   hastaHoy,
@@ -103,6 +106,39 @@ describe('curvaAcumulada', () => {
     expect(curva.filas.map((f) => f.ingresos)).toEqual([10, 30, 60])
     expect(curva.cierre).toBe(null)
     expect(curva.filas.every((f) => f.proyeccion === null)).toBe(true)
+  })
+})
+
+describe('antiguedadCartera', () => {
+  it('reparte el saldo de cada venta según su propia fecha', () => {
+    const clientes = [
+      { facturas: [{ fecha: '2026-10-20', saldoPendiente: '100' }, { fecha: '2026-07-01', saldoPendiente: '50' }] },
+      { facturas: [{ fecha: '2026-09-15', saldoPendiente: '30' }] },
+    ]
+    const tramos = antiguedadCartera(clientes, '2026-10-25')
+    expect(tramos.map((t) => [t.id, t.total, t.ventas])).toEqual([
+      ['reciente', 100, 1],
+      ['mes', 30, 1],
+      ['dosMeses', 0, 0],
+      ['vieja', 50, 1],
+    ])
+  })
+
+  it('el día 30 todavía es reciente', () => {
+    expect(tramoDe(30).id).toBe('reciente')
+    expect(tramoDe(31).id).toBe('mes')
+  })
+})
+
+describe('enlaceWhatsApp', () => {
+  it('agrega el indicativo a un celular colombiano y escribe el mensaje', () => {
+    expect(enlaceWhatsApp('321 894 3533', 'Hola')).toBe('https://wa.me/573218943533?text=Hola')
+    expect(enlaceWhatsApp('+57 321 894 3533', 'Hola')).toBe('https://wa.me/573218943533?text=Hola')
+  })
+
+  it('sin un número usable no hay enlace', () => {
+    expect(enlaceWhatsApp(null, 'Hola')).toBe(null)
+    expect(enlaceWhatsApp('8765', 'Hola')).toBe(null)
   })
 })
 

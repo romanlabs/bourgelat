@@ -27,7 +27,8 @@ import {
 } from '@/features/finanzas/useFinanzasHistorial'
 import PosModal from '@/features/finanzas/PosModal'
 import FacturaDetalleModal from '@/features/finanzas/FacturaDetalleModal'
-import GastosRentabilidadPanel, { CuentasPorCobrarPanel, GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
+import GastosRentabilidadPanel, { GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
+import PorCobrarPanel from '@/features/finanzas/PorCobrarPanel'
 import ResumenFinanzasPanel from '@/features/finanzas/ResumenFinanzasPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
@@ -365,7 +366,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           {activeTab === 'gastos' && <GastosRentabilidadPanel />}
 
           {/* ── Tab: Por cobrar (fiado y abonos) ── */}
-          {activeTab === 'cobrar' && <CuentasPorCobrarPanel />}
+          {activeTab === 'cobrar' && <PorCobrarPanel />}
 
           {/* ── Tab: Turnos de caja ── */}
           {activeTab === 'turnos' && (
