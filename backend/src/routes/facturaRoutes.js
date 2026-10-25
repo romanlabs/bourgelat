@@ -8,7 +8,6 @@ const {
   emitirFacturaElectronica,
   descargarFacturaElectronica,
   anularFactura,
-  registrarPago,
   registrarAbono,
   listarCuentasPorCobrar,
 } = require('../controllers/facturaController')
@@ -126,22 +125,6 @@ router.get(
   verificarRol('admin', 'superadmin', 'recepcionista', 'facturador', 'auxiliar', 'veterinario'),
   requiereFacturacionElectronica,
   descargarFacturaElectronica
-)
-
-router.patch(
-  '/:id/pagar',
-  verificarToken,
-  verificarRol('admin', 'superadmin', 'facturador', 'recepcionista'),
-  requerirEscritura,
-  [
-    body('metodoPago')
-      .optional()
-      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
-      .withMessage('Metodo de pago no valido'),
-    body('observaciones').optional().trim(),
-    validar,
-  ],
-  registrarPago
 )
 
 router.post(
