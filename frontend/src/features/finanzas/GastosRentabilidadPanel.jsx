@@ -16,14 +16,13 @@ import {
   useCrearGasto,
   useCuentasPorCobrar,
   useGastos,
-  useRegistrarAbono,
   useRentabilidad,
 } from '@/features/finanzas/useAdministracion'
 import { mesLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { FuncionNoIncluida } from '@/components/shared/FuncionNoIncluida'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
-import { mensajeDeError } from '@/lib/errores'
+import FormAbono from './FormAbono'
 
 const CATEGORIAS = [
   { value: 'nomina', label: 'Nómina' },
@@ -41,15 +40,6 @@ const METODOS_GASTO = [
   { value: 'efectivo', label: 'Efectivo' },
   { value: 'transferencia', label: 'Transferencia' },
   { value: 'tarjeta', label: 'Tarjeta' },
-  { value: 'otro', label: 'Otro' },
-]
-
-// Igual que la venta: Nequi, Daviplata y cualquier banco van como transferencia.
-const METODOS_ABONO = [
-  { value: 'efectivo', label: 'Efectivo' },
-  { value: 'transferencia', label: 'Transferencia' },
-  { value: 'tarjeta_debito', label: 'Tarjeta débito' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
   { value: 'otro', label: 'Otro' },
 ]
 
@@ -259,22 +249,7 @@ function GastosTable({ periodo, mes, onMesChange }) {
 
 function FilaDeudor({ cliente }) {
   const [facturaAbono, setFacturaAbono] = useState(null)
-  const [monto, setMonto] = useState('')
-  const [metodoPago, setMetodoPago] = useState('efectivo')
-  const [error, setError] = useState(null)
   const [abierto, setAbierto] = useState(false)
-  const registrarAbono = useRegistrarAbono()
-
-  const cobrar = async (factura) => {
-    setError(null)
-    try {
-      await registrarAbono.mutateAsync({ facturaId: factura.id, monto: Number(monto), metodoPago })
-      setFacturaAbono(null)
-      setMonto('')
-    } catch (err) {
-      setError(mensajeDeError(err, 'No se pudo registrar el abono'))
-    }
-  }
 
   return (
     <div className="rounded-xl">
@@ -304,42 +279,16 @@ function FilaDeudor({ cliente }) {
               <span className="text-muted-foreground">de {formatCurrency(f.total)} quedan</span>
               <span className="font-semibold tabular-nums text-danger">{formatCurrency(f.saldoPendiente)}</span>
               {facturaAbono === f.id ? (
-                <span className="flex flex-wrap items-center gap-2">
-                  <MoneyInput
-                    autoFocus
-                    value={monto}
-                    onChange={(value) => setMonto(value === 0 ? '' : String(value))}
-                    placeholder="valor"
-                    className={`${inputClass} h-10 w-32 text-right tabular-nums`}
-                  />
-                  <Select
-                    variant="field"
-                    aria-label="Método del abono"
-                    className="h-10"
-                    value={metodoPago}
-                    onValueChange={setMetodoPago}
-                    options={METODOS_ABONO}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => cobrar(f)}
-                    disabled={registrarAbono.isPending || !monto}
-                    className="h-10 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Abonar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setFacturaAbono(null); setMonto('') }}
-                    className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    Cancelar
-                  </button>
-                </span>
+                <FormAbono
+                  autoFocus
+                  factura={f}
+                  onListo={() => setFacturaAbono(null)}
+                  onCancelar={() => setFacturaAbono(null)}
+                />
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setFacturaAbono(f.id); setMonto('') }}
+                  onClick={() => setFacturaAbono(f.id)}
                   className="inline-flex h-9 items-center px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[13px]"
                 >
                   Registrar abono
@@ -347,7 +296,6 @@ function FilaDeudor({ cliente }) {
               )}
             </div>
           ))}
-          {error ? <p className="text-[13px] text-danger">{error}</p> : null}
         </div>
       ) : null}
     </div>
