@@ -11,6 +11,9 @@ const {
   clavesDelPeriodo,
   armarSerie,
   limitesBogota,
+  esUnSoloMes,
+  alcanceAnalisis,
+  recortarABasico,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
@@ -129,6 +132,46 @@ assert.deepStrictEqual(
   { mejor: { periodo: '2026-01', valor: 10 }, peor: null, masGasto: null },
   'con un solo tramo no se repite como peor, y sin gastos no hay mes de más gasto'
 )
+
+// esUnSoloMes
+assert.strictEqual(esUnSoloMes('2026-10-01', '2026-10-31'), true)
+assert.strictEqual(esUnSoloMes('2026-10-05', '2026-10-05'), true)
+assert.strictEqual(esUnSoloMes('2026-09-25', '2026-10-24'), false, 'un mes corrido que cruza meses es periodo largo')
+
+// alcanceAnalisis: admin + plan Clínica = completo; el resto, solo un mes.
+const mes = { fechaInicio: '2026-10-01', fechaFin: '2026-10-31' }
+const anio = { fechaInicio: '2026-01-01', fechaFin: '2026-12-31' }
+assert.deepStrictEqual(alcanceAnalisis({ roles: ['admin'], tieneReportesCompletos: true, ...anio }), { permitido: true, completo: true })
+assert.deepStrictEqual(alcanceAnalisis({ roles: ['admin'], tieneReportesCompletos: false, ...mes }), { permitido: true, completo: false })
+assert.deepStrictEqual(alcanceAnalisis({ roles: ['facturador'], tieneReportesCompletos: true, ...mes }), { permitido: true, completo: false })
+assert.strictEqual(alcanceAnalisis({ roles: ['admin'], tieneReportesCompletos: false, ...anio }).permitido, false)
+assert.match(alcanceAnalisis({ roles: ['admin'], tieneReportesCompletos: false, ...anio }).message, /plan Clínica/)
+assert.match(alcanceAnalisis({ roles: ['facturador'], tieneReportesCompletos: true, ...anio }).message, /administración/)
+assert.strictEqual(
+  alcanceAnalisis({ roles: ['facturador', 'admin'], tieneReportesCompletos: true, ...anio }).completo,
+  true,
+  'cuenta el rol adicional'
+)
+
+// recortarABasico: sin gastos, ganancia, destacados ni rankings.
+const basico = recortarABasico({
+  periodo: { fechaInicio: '2026-10-01', fechaFin: '2026-10-31', granularidad: 'dia', anterior: {} },
+  resumen: {
+    ingresos: 10, vendido: 12, abonos: 1, gastos: 5, ganancia: 5, margen: 50, ventas: 2,
+    ticketPromedio: 6, porCobrar: 2, creditosPendientes: 1, creditoMasAntiguo: '2026-10-02',
+  },
+  anterior: { ingresos: 8, vendido: 8, gastos: 1, ganancia: 7, ventas: 1, ticketPromedio: 8 },
+  serie: [{ periodo: '2026-10-01', ingresos: 10, vendido: 12, gastos: 5, ganancia: 5, ventas: 2 }],
+  destacados: { mejor: null },
+  gastosPorCategoria: { nomina: 5 },
+  topServicios: [],
+})
+assert.strictEqual(basico.alcance, 'basico')
+assert.deepStrictEqual(Object.keys(basico).sort(), ['alcance', 'anterior', 'periodo', 'resumen', 'serie'])
+for (const bloque of [basico.resumen, basico.anterior, basico.serie[0]]) {
+  assert.ok(!('gastos' in bloque) && !('ganancia' in bloque) && !('margen' in bloque), 'no expone la rentabilidad')
+}
+assert.deepStrictEqual(basico.serie[0], { periodo: '2026-10-01', ingresos: 10, vendido: 12, ventas: 2 })
 
 // margenDe y ticketPromedioDe
 assert.strictEqual(margenDe(0, -50000), null, 'sin ingresos el margen no se calcula')

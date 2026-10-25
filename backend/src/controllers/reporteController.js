@@ -20,6 +20,7 @@ const {
   clavesDelPeriodo,
   armarSerie,
   limitesBogota,
+  recortarABasico,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
@@ -720,7 +721,8 @@ const reporteFinanzasPeriodo = async (req, res) => {
     const tipos = aRecord(porTipo, 'tipo');
     const sinCatalogo = aRecord(sinCatalogoFilas, 'tipo');
 
-    res.json({
+    const reporte = {
+      alcance: 'completo',
       periodo: { fechaInicio, fechaFin, granularidad, anterior },
       resumen: {
         ingresos,
@@ -757,7 +759,10 @@ const reporteFinanzasPeriodo = async (req, res) => {
         servicio: redondearPesos(sinCatalogo.servicio),
         producto: redondearPesos(sinCatalogo.producto),
       },
-    });
+    };
+
+    // La ruta decide el alcance (rol y plan); por defecto, el básico.
+    res.json(req.analisisCompleto === true ? reporte : recortarABasico(reporte));
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }

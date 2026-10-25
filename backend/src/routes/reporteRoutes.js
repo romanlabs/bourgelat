@@ -12,7 +12,9 @@ const {
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
-const { requerirFuncionalidades } = require('../middlewares/suscripcionMiddleware')
+const { requerirFuncionalidades, cargarSuscripcionActiva } = require('../middlewares/suscripcionMiddleware')
+const { suscripcionTieneFuncionalidad } = require('../services/suscripcionService')
+const { alcanceAnalisis } = require('../utils/finanzasPeriodo')
 
 const requiereReportesCompletos = requerirFuncionalidades('reportes_completos')
 
@@ -36,18 +38,34 @@ router.get(
   reporteRentabilidad
 )
 
-// Análisis de un periodo largo (año, trimestre, rango libre): como la
-// rentabilidad, es lectura del dueño/admin.
+// El resumen de un mes lo ve todo el que entra a Finanzas (sin gastos ni
+// ganancia). Los periodos largos y la rentabilidad son del admin con plan Clínica.
+const definirAlcanceAnalisis = (req, res, next) => {
+  const { rol, rolesAdicionales = [] } = req.auth || req.usuario
+  const alcance = alcanceAnalisis({
+    roles: [rol, ...rolesAdicionales],
+    tieneReportesCompletos: suscripcionTieneFuncionalidad(req.suscripcion, 'reportes_completos'),
+    fechaInicio: req.query.fechaInicio,
+    fechaFin: req.query.fechaFin,
+  })
+  if (!alcance.permitido) {
+    return res.status(403).json({ message: alcance.message, code: 'PLAN_FEATURE_REQUIRED' })
+  }
+  req.analisisCompleto = alcance.completo
+  next()
+}
+
 router.get(
   '/finanzas-periodo',
   verificarToken,
-  verificarRol('admin', 'superadmin'),
-  requiereReportesCompletos,
+  verificarRol('admin', 'superadmin', 'facturador'),
   [
     query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
     query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
     validar,
   ],
+  cargarSuscripcionActiva,
+  definirAlcanceAnalisis,
   reporteFinanzasPeriodo
 )
 

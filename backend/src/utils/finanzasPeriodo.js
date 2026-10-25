@@ -146,6 +146,49 @@ const calcularDestacados = (serie) => {
   }
 }
 
+// El resumen de un mes lo ven todos los que entran a Finanzas; los periodos
+// largos son del análisis completo (admin con plan Clínica).
+const esUnSoloMes = (fechaInicio, fechaFin) =>
+  String(fechaInicio).slice(0, 7) === String(fechaFin).slice(0, 7)
+
+// Completo = admin con la funcionalidad del plan. Sin eso solo se permite un mes.
+const alcanceAnalisis = ({ roles = [], tieneReportesCompletos, fechaInicio, fechaFin }) => {
+  const esAdmin = roles.some((rol) => rol === 'admin' || rol === 'superadmin')
+  const completo = esAdmin && Boolean(tieneReportesCompletos)
+  if (completo || esUnSoloMes(fechaInicio, fechaFin)) return { permitido: true, completo }
+  return {
+    permitido: false,
+    completo: false,
+    message: esAdmin
+      ? 'El análisis de periodos largos (trimestre, año o rango libre) es del plan Clínica.'
+      : 'El análisis de periodos largos es solo para administración.',
+  }
+}
+
+// Sin análisis completo se responde solo lo que entró y lo que se debe: nada de
+// gastos ni ganancia (la rentabilidad es del dueño) ni de rankings de ventas.
+const recortarABasico = (reporte) => ({
+  alcance: 'basico',
+  periodo: reporte.periodo,
+  resumen: {
+    ingresos: reporte.resumen.ingresos,
+    vendido: reporte.resumen.vendido,
+    abonos: reporte.resumen.abonos,
+    ventas: reporte.resumen.ventas,
+    ticketPromedio: reporte.resumen.ticketPromedio,
+    porCobrar: reporte.resumen.porCobrar,
+    creditosPendientes: reporte.resumen.creditosPendientes,
+    creditoMasAntiguo: reporte.resumen.creditoMasAntiguo,
+  },
+  anterior: {
+    ingresos: reporte.anterior.ingresos,
+    vendido: reporte.anterior.vendido,
+    ventas: reporte.anterior.ventas,
+    ticketPromedio: reporte.anterior.ticketPromedio,
+  },
+  serie: reporte.serie.map(({ periodo, ingresos, vendido, ventas }) => ({ periodo, ingresos, vendido, ventas })),
+})
+
 const margenDe = (ingresos, ganancia) =>
   ingresos > 0 ? Number(((ganancia / ingresos) * 100).toFixed(1)) : null
 
@@ -160,6 +203,9 @@ module.exports = {
   clavesDelPeriodo,
   armarSerie,
   limitesBogota,
+  esUnSoloMes,
+  alcanceAnalisis,
+  recortarABasico,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,

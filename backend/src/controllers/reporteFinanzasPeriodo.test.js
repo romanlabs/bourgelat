@@ -65,7 +65,7 @@ const respuestas = () => ({
   Producto: [[{ id: 'prod-1', nombre: 'Antipulgas' }]],
 })
 
-const ejecutar = async (query) => {
+const ejecutar = async (query, { analisisCompleto = true } = {}) => {
   const pendientes = respuestas()
   const llamadas = []
 
@@ -89,7 +89,7 @@ const ejecutar = async (query) => {
     },
   }
 
-  await reporteFinanzasPeriodo({ usuario: { clinicaId: 'clinica-1' }, query }, res)
+  await reporteFinanzasPeriodo({ usuario: { clinicaId: 'clinica-1' }, query, analisisCompleto }, res)
   return { payload, status, llamadas }
 }
 
@@ -198,6 +198,17 @@ const run = async () => {
   const muyLargo = await ejecutar({ fechaInicio: '2020-01-01', fechaFin: '2025-12-31' })
   assert.strictEqual(muyLargo.status, 400)
   assert.match(muyLargo.payload.message, /24 meses/)
+
+  // Sin análisis completo (Esencial o facturador) no viaja la rentabilidad.
+  const basico = await ejecutar(
+    { fechaInicio: '2025-01-01', fechaFin: '2025-01-31' },
+    { analisisCompleto: false }
+  )
+  assert.strictEqual(basico.payload.alcance, 'basico')
+  assert.strictEqual(basico.payload.resumen.gastos, undefined)
+  assert.strictEqual(basico.payload.gastosPorCategoria, undefined)
+  assert.strictEqual(basico.payload.topProductos, undefined)
+  assert.strictEqual(payload.alcance, 'completo')
 
   // Un rango corto se agrupa por día.
   const corto = await ejecutar({ fechaInicio: '2025-01-01', fechaFin: '2025-01-31' })
