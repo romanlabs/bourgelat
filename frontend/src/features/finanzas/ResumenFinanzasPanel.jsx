@@ -321,7 +321,7 @@ function BarraGanancia(props) {
   )
 }
 
-function TarjetaMes({ fila, mayor, onAbrir }) {
+function TarjetaMes({ fila, mayor, onAbrir, marcas = [] }) {
   const estado = estadoMes(fila)
   const futuro = estado === 'futuro'
   const apagado = futuro || estado === 'sinMovimiento'
@@ -346,9 +346,14 @@ function TarjetaMes({ fila, mayor, onAbrir }) {
       >
         <span className="flex items-center justify-between gap-2">
           <span className={`text-sm font-semibold capitalize ${apagado ? 'text-muted-foreground' : 'text-card-foreground'}`}>{nombre}</span>
-          {estado === 'actual' ? (
-            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">En curso</span>
-          ) : null}
+          <span className="flex flex-wrap justify-end gap-1">
+            {estado === 'actual' ? (
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-semibold text-primary">En curso</span>
+            ) : null}
+            {marcas.map((marca) => (
+              <span key={marca.texto} className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${marca.tono}`}>{marca.texto}</span>
+            ))}
+          </span>
         </span>
         {futuro ? (
           <span className="text-sm text-muted-foreground">Aún no llega</span>
@@ -373,7 +378,14 @@ function TarjetaMes({ fila, mayor, onAbrir }) {
   )
 }
 
-function PeriodoPorMes({ serie, onAbrirMes }) {
+// Los destacados del periodo van como marca en su mes, no en tarjetas aparte.
+const MARCAS = [
+  ['mejor', 'Mejor mes', 'bg-success-soft text-success'],
+  ['peor', 'Más flojo', 'bg-warning-soft text-warning'],
+  ['masGasto', 'Más gasto', 'bg-danger-soft text-danger'],
+]
+
+function PeriodoPorMes({ serie, destacados, onAbrirMes }) {
   const [vista, setVista] = useState('meses')
   const pasados = useMemo(() => hastaHoy(serie), [serie])
   const mayor = Math.max(1, ...serie.map((f) => f.ingresos))
@@ -382,6 +394,14 @@ function PeriodoPorMes({ serie, onAbrirMes }) {
     () => pasados.map((f) => ({ ...f, ganancia: f.ingresos || f.gastos ? f.ganancia : null })),
     [pasados]
   )
+  const marcasPorMes = useMemo(() => {
+    const porMes = {}
+    for (const [clave, texto, tono] of MARCAS) {
+      const periodo = destacados?.[clave]?.periodo
+      if (periodo) (porMes[periodo] ||= []).push({ texto, tono })
+    }
+    return porMes
+  }, [destacados])
   const columnas = serie.length <= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-3 lg:grid-cols-4'
 
   return (
@@ -409,7 +429,7 @@ function PeriodoPorMes({ serie, onAbrirMes }) {
       {vista === 'meses' ? (
         <ol className={`grid grid-cols-2 gap-3 ${columnas}`}>
           {serie.map((fila) => (
-            <TarjetaMes key={fila.periodo} fila={fila} mayor={mayor} onAbrir={onAbrirMes} />
+            <TarjetaMes key={fila.periodo} fila={fila} mayor={mayor} onAbrir={onAbrirMes} marcas={marcasPorMes[fila.periodo]} />
           ))}
         </ol>
       ) : vista === 'tabla' ? (
@@ -484,7 +504,7 @@ function LoQueQueda({ titulo, resumen, gastosPorCategoria }) {
   const mayor = principales[0]?.valor || 1
 
   return (
-    <section aria-labelledby="f-queda" className="flex min-w-0 flex-col gap-4 self-start rounded-2xl bg-primary p-5 text-primary-foreground sm:p-6">
+    <section aria-labelledby="f-queda" className="flex h-fit min-w-0 flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground sm:p-6">
       <h2 id="f-queda" className="text-lg font-semibold">{titulo}</h2>
       <div className="flex flex-col gap-1">
         <span className="text-[40px] font-semibold leading-none tracking-[-0.04em]">{formatCurrency(ganancia)}</span>
@@ -640,33 +660,6 @@ function VentasRecientes({ facturas, cargando, onVerHistorial }) {
         </p>
       )}
     </section>
-  )
-}
-
-function Destacados({ destacados }) {
-  const items = [
-    { id: 'mejor', label: 'Mejor mes', dato: destacados?.mejor, ayuda: 'de ganancia' },
-    { id: 'peor', label: 'Mes más flojo', dato: destacados?.peor, ayuda: 'de ganancia' },
-    { id: 'gasto', label: 'Mes de más gasto', dato: destacados?.masGasto, ayuda: 'gastados' },
-  ]
-  return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {items.map((item) => (
-        <div key={item.id} className={`${tarjeta} flex flex-col gap-1`}>
-          <span className="text-sm text-muted-foreground">{item.label}</span>
-          <span className="text-xl font-semibold capitalize text-card-foreground">
-            {item.dato ? etiquetaPeriodo(item.dato.periodo) : '—'}
-          </span>
-          {item.dato ? (
-            <span className="text-[13px] text-muted-foreground">
-              {item.dato.valor < 0 && item.ayuda === 'de ganancia'
-                ? `${formatCurrency(Math.abs(item.dato.valor))} de pérdida`
-                : `${formatCurrency(item.dato.valor)} ${item.ayuda}`}
-            </span>
-          ) : null}
-        </div>
-      ))}
-    </div>
   )
 }
 
@@ -831,7 +824,7 @@ export default function ResumenFinanzasPanel() {
         <>
           <div className={porMes ? 'space-y-5' : 'grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'}>
             {porMes ? (
-              <PeriodoPorMes serie={data.serie} onAbrirMes={abrirMes} />
+              <PeriodoPorMes serie={data.serie} destacados={verCompleto ? data.destacados : null} onAbrirMes={abrirMes} />
             ) : (
               <CobradoAcumulado
                 serie={data.serie}
@@ -846,16 +839,6 @@ export default function ResumenFinanzasPanel() {
             {!verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} /> : null}
           </div>
 
-          {verCompleto && porMes ? (
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-              <Destacados destacados={data.destacados} />
-              <LoQueQueda
-                titulo={`Lo que queda ${preset === 'anio' ? 'del año' : preset === 'trimestre' ? 'del trimestre' : 'del periodo'}`}
-                resumen={resumen}
-                gastosPorCategoria={data.gastosPorCategoria}
-              />
-            </div>
-          ) : null}
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <VentasRecientes
@@ -864,6 +847,13 @@ export default function ResumenFinanzasPanel() {
               onVerHistorial={puedeVerCaja ? () => irACaja('historial') : null}
             />
             <div className="flex flex-col gap-5">
+              {verCompleto && porMes ? (
+                <LoQueQueda
+                  titulo={`Lo que queda ${preset === 'anio' ? 'del año' : preset === 'trimestre' ? 'del trimestre' : 'del periodo'}`}
+                  resumen={resumen}
+                  gastosPorCategoria={data.gastosPorCategoria}
+                />
+              ) : null}
               {verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} /> : null}
               <PorCobrar resumen={resumen} onVerCuentas={puedeVerCaja ? () => irACaja('cobrar') : null} />
             </div>
