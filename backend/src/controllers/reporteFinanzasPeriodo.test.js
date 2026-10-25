@@ -5,6 +5,7 @@
 // controlador lanza sus agregaciones sobre ese modelo.
 
 const assert = require('assert')
+const AbonoFactura = require('../models/AbonoFactura')
 const Factura = require('../models/Factura')
 const FacturaItem = require('../models/FacturaItem')
 const Gasto = require('../models/Gasto')
@@ -12,7 +13,7 @@ const Producto = require('../models/Producto')
 const ServicioClinico = require('../models/ServicioClinico')
 const { reporteFinanzasPeriodo } = require('./reporteController')
 
-const MODELOS = { Factura, FacturaItem, Gasto, Producto, ServicioClinico }
+const MODELOS = { AbonoFactura, Factura, FacturaItem, Gasto, Producto, ServicioClinico }
 const originales = Object.fromEntries(
   Object.entries(MODELOS).map(([nombre, modelo]) => [nombre, modelo.findAll])
 )
@@ -20,15 +21,21 @@ const originales = Object.fromEntries(
 // Mismo orden, por modelo, que el Promise.all del controlador.
 const respuestas = () => ({
   Factura: [
-    // serie por mes
+    // serie por mes: junio vendió 300.000 a crédito que aún no se cobran
     [
-      { periodo: '2025-01', ingresos: '2000000', ventas: '40' },
-      { periodo: '2025-06', ingresos: '1000000', ventas: '10' },
+      { periodo: '2025-01', cobrado: '2000000', vendido: '2000000', ventas: '40' },
+      { periodo: '2025-06', cobrado: '700000', vendido: '1000000', ventas: '10' },
     ],
-    // por cobrar
-    [{ porCobrar: '150000' }],
+    // cartera por cobrar (total, sin filtro de fecha)
+    [{ porCobrar: '150000', creditos: '3', masAntiguo: '2025-03-04' }],
     // periodo anterior
-    [{ ingresos: '2400000', ventas: '60' }],
+    [{ cobrado: '2300000', vendido: '2400000', ventas: '60' }],
+  ],
+  AbonoFactura: [
+    // abonos del periodo (de créditos vendidos antes o durante)
+    [{ periodo: '2025-06', cobrado: '300000' }],
+    // abonos del periodo anterior
+    [{ cobrado: '100000' }],
   ],
   Gasto: [
     [
@@ -112,27 +119,50 @@ const run = async () => {
   assert.deepStrictEqual(payload.serie[1], {
     periodo: '2025-02',
     ingresos: 0,
+    vendido: 0,
     gastos: 0,
     ganancia: 0,
     ventas: 0,
   })
+  assert.deepStrictEqual(payload.serie[5], {
+    periodo: '2025-06',
+    ingresos: 1000000,
+    vendido: 1000000,
+    gastos: 1300000,
+    ganancia: -300000,
+    ventas: 10,
+  }, 'junio: 700.000 de contado + 300.000 de abonos')
 
+  // Ingresos = cobrado (contado + abonos); el ticket se calcula sobre lo vendido.
   assert.deepStrictEqual(payload.resumen, {
     ingresos: 3000000,
+    vendido: 3000000,
+    abonos: 300000,
     gastos: 1800000,
     ganancia: 1200000,
     margen: 40,
     ventas: 50,
     ticketPromedio: 60000,
     porCobrar: 150000,
+    creditosPendientes: 3,
+    creditoMasAntiguo: '2025-03-04',
   })
   assert.deepStrictEqual(payload.anterior, {
     ingresos: 2400000,
+    vendido: 2400000,
     gastos: 1000000,
     ganancia: 1400000,
     ventas: 60,
     ticketPromedio: 40000,
   })
+
+  // La cartera es toda la deuda vigente, no solo la de ventas del periodo.
+  const cartera = llamadas.filter((llamada) => llamada.modelo === 'Factura')[1]
+  assert.strictEqual(cartera.opciones.where.fecha, undefined, 'la cartera no filtra por fecha')
+
+  // Los abonos se filtran por el día local de Colombia sobre createdAt.
+  const abonos = llamadas.find((llamada) => llamada.modelo === 'AbonoFactura')
+  assert.ok(abonos.opciones.where.createdAt, 'los abonos se filtran por createdAt')
 
   assert.deepStrictEqual(payload.destacados, {
     mejor: { periodo: '2025-01', valor: 1500000 },

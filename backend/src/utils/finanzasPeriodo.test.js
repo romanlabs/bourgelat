@@ -10,6 +10,7 @@ const {
   periodoAnterior,
   clavesDelPeriodo,
   armarSerie,
+  limitesBogota,
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
@@ -83,24 +84,34 @@ assert.deepStrictEqual(clavesDelPeriodo('2026-02-27', '2026-03-02', 'dia'), [
 
 // armarSerie: rellena con 0 los tramos sin movimiento y convierte los textos
 // numéricos que devuelve Postgres.
+// Ingreso = lo cobrado de contado en el tramo + los abonos recibidos en él
+// (aunque la venta a crédito sea de otro tramo). `vendido` es lo facturado.
 const serie = armarSerie(
   ['2026-01', '2026-02', '2026-03', '2026-04'],
   [
-    { periodo: '2026-01', ingresos: '1000000.00', ventas: '20' },
-    { periodo: '2026-03', ingresos: '500000.50', ventas: '8' },
+    { periodo: '2026-01', cobrado: '1000000.00', vendido: '1200000', ventas: '20' },
+    { periodo: '2026-03', cobrado: '500000.50', vendido: '500000.50', ventas: '8' },
   ],
   [
     { periodo: '2026-01', gastos: '300000' },
     { periodo: '2026-02', gastos: '120000' },
     { periodo: '2026-03', gastos: '700000' },
-  ]
+  ],
+  [{ periodo: '2026-02', cobrado: '150000' }]
 )
 assert.deepStrictEqual(serie, [
-  { periodo: '2026-01', ingresos: 1000000, gastos: 300000, ganancia: 700000, ventas: 20 },
-  { periodo: '2026-02', ingresos: 0, gastos: 120000, ganancia: -120000, ventas: 0 },
-  { periodo: '2026-03', ingresos: 500000.5, gastos: 700000, ganancia: -199999.5, ventas: 8 },
-  { periodo: '2026-04', ingresos: 0, gastos: 0, ganancia: 0, ventas: 0 },
+  { periodo: '2026-01', ingresos: 1000000, vendido: 1200000, gastos: 300000, ganancia: 700000, ventas: 20 },
+  { periodo: '2026-02', ingresos: 150000, vendido: 0, gastos: 120000, ganancia: 30000, ventas: 0 },
+  { periodo: '2026-03', ingresos: 500000.5, vendido: 500000.5, gastos: 700000, ganancia: -199999.5, ventas: 8 },
+  { periodo: '2026-04', ingresos: 0, vendido: 0, gastos: 0, ganancia: 0, ventas: 0 },
 ])
+
+// limitesBogota: los abonos se fechan con createdAt (timestamptz); el día
+// local va de medianoche a medianoche en Colombia (UTC−5, sin horario de verano).
+assert.deepStrictEqual(limitesBogota('2026-10-01', '2026-10-31'), {
+  desde: '2026-10-01T00:00:00-05:00',
+  hasta: '2026-11-01T00:00:00-05:00',
+})
 
 // calcularDestacados: el mes sin movimiento (abril) no es «el peor».
 assert.deepStrictEqual(calcularDestacados(serie), {
@@ -109,7 +120,7 @@ assert.deepStrictEqual(calcularDestacados(serie), {
   masGasto: { periodo: '2026-03', valor: 700000 },
 })
 assert.deepStrictEqual(
-  calcularDestacados([{ periodo: '2026-01', ingresos: 0, gastos: 0, ganancia: 0, ventas: 0 }]),
+  calcularDestacados([{ periodo: '2026-01', ingresos: 0, vendido: 0, gastos: 0, ganancia: 0, ventas: 0 }]),
   { mejor: null, peor: null, masGasto: null },
   'sin movimiento no hay destacados'
 )
