@@ -40,11 +40,21 @@ const hace = (dias) => (dias === 0 ? 'hoy' : dias === 1 ? 'hace 1 día' : `hace 
 
 // El mismo orden de la lista aplica a las ventas del cliente.
 const ordenarVentas = (facturas, orden) =>
-  [...facturas].sort((a, b) =>
-    orden === 'antigua'
-      ? String(a.fecha).localeCompare(String(b.fecha))
-      : Number(b.saldoPendiente) - Number(a.saldoPendiente)
-  )
+  [...facturas].sort((a, b) => {
+    if (orden === 'antigua') return String(a.fecha).localeCompare(String(b.fecha))
+    if (orden === 'reciente') return String(b.fecha).localeCompare(String(a.fecha))
+    return Number(b.saldoPendiente) - Number(a.saldoPendiente)
+  })
+
+// Fecha de la última venta a crédito del cliente (para «Más reciente»).
+const ultimaVenta = (cliente) =>
+  cliente.facturas.reduce((max, f) => (String(f.fecha) > max ? String(f.fecha) : max), '')
+
+const ORDENES = [
+  ['deuda', 'Mayor deuda'],
+  ['antigua', 'Más antigua'],
+  ['reciente', 'Más reciente'],
+]
 
 function Cliente({ cliente, hoy, nombreClinica, orden }) {
   const [abierto, setAbierto] = useState(false)
@@ -226,11 +236,11 @@ export default function PorCobrarPanel() {
     return clientes
       .filter((c) => !texto || c.nombre.toLowerCase().includes(texto) || (c.telefono || '').includes(texto))
       .filter((c) => !tramo || c.facturas.some((f) => tramoDe(diasDesde(f.fecha, hoy)).id === tramo))
-      .sort((a, b) =>
-        orden === 'antigua'
-          ? String(a.facturaMasAntigua).localeCompare(String(b.facturaMasAntigua))
-          : b.totalDeuda - a.totalDeuda
-      )
+      .sort((a, b) => {
+        if (orden === 'antigua') return String(a.facturaMasAntigua).localeCompare(String(b.facturaMasAntigua))
+        if (orden === 'reciente') return ultimaVenta(b).localeCompare(ultimaVenta(a))
+        return b.totalDeuda - a.totalDeuda
+      })
   }, [clientes, buscar, tramo, orden, hoy])
 
   const total = data?.totalPorCobrar || 0
@@ -276,12 +286,11 @@ export default function PorCobrarPanel() {
             </h2>
             {(data?.totalFacturas || 0) > 1 ? (
             <div role="group" aria-label="Ordenar" className="flex gap-1 rounded-lg bg-secondary p-1">
-              <button type="button" aria-pressed={orden === 'deuda'} onClick={() => setOrden('deuda')} className={segmento(orden === 'deuda')}>
-                Mayor deuda
-              </button>
-              <button type="button" aria-pressed={orden === 'antigua'} onClick={() => setOrden('antigua')} className={segmento(orden === 'antigua')}>
-                Más antigua
-              </button>
+              {ORDENES.map(([id, label]) => (
+                <button key={id} type="button" aria-pressed={orden === id} onClick={() => setOrden(id)} className={segmento(orden === id)}>
+                  {label}
+                </button>
+              ))}
             </div>
             ) : null}
           </div>
