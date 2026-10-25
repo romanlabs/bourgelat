@@ -263,13 +263,13 @@ function LoQueQueda({ titulo, resumen, gastosPorCategoria }) {
   const mayor = principales[0]?.valor || 1
 
   return (
-    <section aria-labelledby="f-queda" className="flex min-w-0 flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground sm:p-6">
+    <section aria-labelledby="f-queda" className="flex min-w-0 flex-col gap-4 self-start rounded-2xl bg-primary p-5 text-primary-foreground sm:p-6">
       <h2 id="f-queda" className="text-lg font-semibold">{titulo}</h2>
       <div className="flex flex-col gap-1">
         <span className="text-[40px] font-semibold leading-none tracking-[-0.04em]">{formatCurrency(ganancia)}</span>
         <span className="text-sm text-primary-foreground/80">
-          {ganancia >= 0 ? 'Ganancia' : 'Pérdida'}
-          {resumen.margen !== null && resumen.margen !== undefined
+          {ganancia >= 0 ? 'Ganancia' : 'Pérdida: los gastos superan lo cobrado'}
+          {ganancia >= 0 && resumen.margen !== null && resumen.margen !== undefined
             ? ` · ${resumen.margen.toLocaleString('es-CO')} % de lo cobrado`
             : ''}
         </span>
@@ -281,7 +281,7 @@ function LoQueQueda({ titulo, resumen, gastosPorCategoria }) {
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-primary-foreground/80">Gastos</dt>
-          <dd className="font-semibold">−{formatCurrency(resumen.gastos)}</dd>
+          <dd className="font-semibold">{resumen.gastos > 0 ? '−' : ''}{formatCurrency(resumen.gastos)}</dd>
         </div>
       </dl>
       {principales.length ? (
@@ -327,7 +327,7 @@ function ComoPagan({ grupos, cargando }) {
                   {g.label}
                 </span>
                 <span className="font-semibold tabular-nums text-foreground">
-                  {g.porcentaje} % · {formatCurrency(g.valor)}
+                  {g.porcentaje === 0 ? '<1' : g.porcentaje} % · {formatCurrency(g.valor)}
                 </span>
               </li>
             ))}
@@ -439,7 +439,9 @@ function Destacados({ destacados, porMes }) {
           </span>
           {item.dato ? (
             <span className="text-[13px] text-muted-foreground">
-              {formatCurrency(item.dato.valor)} {item.ayuda}
+              {item.dato.valor < 0 && item.ayuda === 'de ganancia'
+                ? `${formatCurrency(Math.abs(item.dato.valor))} de pérdida`
+                : `${formatCurrency(item.dato.valor)} ${item.ayuda}`}
             </span>
           ) : null}
         </div>
@@ -567,9 +569,12 @@ export default function ResumenFinanzasPanel() {
         </div>
       ) : null}
 
+      {!data ? (
+        <div aria-hidden className="h-[76px] w-full max-w-md animate-pulse rounded-2xl bg-card" />
+      ) : (
       <header className="flex flex-col gap-2">
         <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
-          {data ? formatCurrency(resumen.ingresos) : '—'}
+          {formatCurrency(resumen.ingresos)}
           <span className="ml-3 text-xl font-medium tracking-[-0.01em] text-muted-foreground sm:text-2xl">
             cobrados en {nombrePeriodo}
           </span>
@@ -591,6 +596,7 @@ export default function ResumenFinanzasPanel() {
           ) : null}
         </div>
       </header>
+      )}
 
       {!data && analisis.isLoading ? <div className="h-72 animate-pulse rounded-2xl bg-card" /> : null}
 
@@ -616,7 +622,7 @@ export default function ResumenFinanzasPanel() {
             )}
             {verCompleto ? (
               <LoQueQueda
-                titulo={preset === 'mes' ? 'Lo que queda del mes' : 'Lo que queda del periodo'}
+                titulo={`Lo que queda ${preset === 'mes' ? 'del mes' : preset === 'anio' ? 'del año' : preset === 'trimestre' ? 'del trimestre' : 'del periodo'}`}
                 resumen={resumen}
                 gastosPorCategoria={data.gastosPorCategoria}
               />
