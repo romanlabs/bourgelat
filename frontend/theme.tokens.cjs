@@ -172,6 +172,9 @@ const colors = {
     oscuro: {
       petroleo: '#5fb0c0',
       tinta: '#e4eef1',
+      neutro: '#5d727a', // mes anterior junto al petróleo: ΔE 17 (deutan)
+      exito: '#5fbf96',
+      peligro: '#e8806c',
     },
     categorica: [
       '#0f4c5c', // petróleo

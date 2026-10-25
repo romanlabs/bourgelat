@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { estilosApi } from '@/features/estilos/estilosApi'
 import {
-  Boxes,
   FileText,
   Plus,
   Search,
@@ -47,7 +46,6 @@ const MODOS = {
   caja: {
     moduleKey: 'caja',
     titulo: 'Caja',
-    descripcion: 'Cobra ventas, lleva tu turno de caja y revisa las ventas hechas.',
     tabInicial: 'facturacion',
     tabs: [
       { id: 'facturacion', label: 'Venta' },
@@ -60,7 +58,6 @@ const MODOS = {
   finanzas: {
     moduleKey: 'finanzas',
     titulo: 'Finanzas',
-    descripcion: 'Lo que entró, lo que se gastó y lo que te deben.',
     tabInicial: 'resumen',
     tabs: [
       { id: 'resumen', label: 'Resumen' },
@@ -223,9 +220,10 @@ export default function FinanzasPage({ modo = 'caja' }) {
       // frase ni etiqueta.
       // Caja es de uso continuo: título corto, pestañas y una sola acción en la
       // misma fila (sin frase, buscador global ni atajo a inventario).
-      description={esCaja ? undefined : config.descripcion}
-      compactHeader={esCaja}
-      hideSearch={esCaja}
+      // Las dos pantallas usan encabezado compacto: título, pestañas y acción en
+      // una fila. En Finanzas la cifra del periodo hace de titular.
+      compactHeader
+      hideSearch
       titleAside={
       <div
         role="tablist"
@@ -262,11 +260,6 @@ export default function FinanzasPage({ modo = 'caja' }) {
             Nueva venta
           </button>
         ) : null}
-          {esCaja ? null : (
-            <NavCta to="/inventario" icon={Boxes}>
-              Abrir inventario
-            </NavCta>
-          )}
         </div>
       }
       asideNote="Usa esta sección para buscar facturas, revisar estados, emitir electrónicamente y controlar anulaciones dejando historial."

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   agruparMetodosPago,
+  curvaAcumulada,
   diasDesde,
+  estadoMes,
+  mesAnterior,
+  hastaHoy,
   leerSerieDiaria,
   nombreDia,
   nombreMes,
@@ -65,6 +69,56 @@ describe('agruparMetodosPago', () => {
     const completo = agruparMetodosPago({ transferencia: 99, efectivo: 10 })
     expect(solo.find((g) => g.id === 'otro').valor).toBe(5)
     expect(solo.find((g) => g.id === 'efectivo').color).toBe(completo.find((g) => g.id === 'efectivo').color)
+  })
+})
+
+describe('hastaHoy', () => {
+  it('corta los días y los meses que no han pasado', () => {
+    const dias = [{ periodo: '2026-10-24' }, { periodo: '2026-10-25' }, { periodo: '2026-10-26' }]
+    expect(hastaHoy(dias, '2026-10-25').map((f) => f.periodo)).toEqual(['2026-10-24', '2026-10-25'])
+    const meses = [{ periodo: '2026-09' }, { periodo: '2026-10' }, { periodo: '2026-11' }]
+    expect(hastaHoy(meses, '2026-10-25').map((f) => f.periodo)).toEqual(['2026-09', '2026-10'])
+  })
+})
+
+describe('curvaAcumulada', () => {
+  const mes = (n, valores) =>
+    Array.from({ length: n }, (_, i) => ({ periodo: `2026-10-${String(i + 1).padStart(2, '0')}`, ingresos: valores[i] || 0 }))
+
+  it('acumula, compara con el mes anterior y proyecta al ritmo del mes en curso', () => {
+    const octubre = mes(4, [100, 0, 200, 50])
+    const septiembre = mes(3, [50, 50, 50])
+    const curva = curvaAcumulada(octubre, septiembre, '2026-10-02')
+    expect(curva.filas.map((f) => f.ingresos)).toEqual([100, 100, null, null])
+    // el mes anterior era más corto: sin valor el día 4
+    expect(curva.filas.map((f) => f.anterior)).toEqual([50, 100, 150, null])
+    // ritmo 50/día desde el día 2 (100 llevados)
+    expect(curva.filas.map((f) => f.proyeccion)).toEqual([null, 100, 150, 200])
+    expect(curva.cierre).toBe(200)
+    expect(curva.anteriorALaFecha).toBe(100)
+  })
+
+  it('un mes ya cerrado no proyecta', () => {
+    const curva = curvaAcumulada(mes(3, [10, 20, 30]), [], '2026-11-05')
+    expect(curva.filas.map((f) => f.ingresos)).toEqual([10, 30, 60])
+    expect(curva.cierre).toBe(null)
+    expect(curva.filas.every((f) => f.proyeccion === null)).toBe(true)
+  })
+})
+
+describe('mesAnterior', () => {
+  it('retrocede también entre años', () => {
+    expect(mesAnterior('2026-10')).toBe('2026-09')
+    expect(mesAnterior('2026-01')).toBe('2025-12')
+  })
+})
+
+describe('estadoMes', () => {
+  it('distingue el futuro, el mes en curso y los meses sin movimiento', () => {
+    expect(estadoMes({ periodo: '2026-11', ingresos: 0 }, '2026-10')).toBe('futuro')
+    expect(estadoMes({ periodo: '2026-10', ingresos: 0 }, '2026-10')).toBe('actual')
+    expect(estadoMes({ periodo: '2026-08', ingresos: 0, gastos: 0, ventas: 0 }, '2026-10')).toBe('sinMovimiento')
+    expect(estadoMes({ periodo: '2026-07', ingresos: 0, gastos: 200, ventas: 0 }, '2026-10')).toBe('cerrado')
   })
 })
 

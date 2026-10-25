@@ -100,10 +100,72 @@ export const diasDesde = (fechaISO, hoy = fechaLocal()) => {
   return Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 86400000)
 }
 
-// Ingresos y gastos: petróleo y ámbar, validados para daltónicos en los dos
-// modos. En claro el ámbar oscuro queda en 2,9:1 sobre blanco: por eso la
-// gráfica lleva leyenda y vista de tabla.
-export const coloresSerie = (oscuro) =>
-  oscuro
-    ? { ingresos: chartColors.oscuro.petroleo, gastos: chartColors.categorica[1], resalte: chartColors.categorica[1], ganancia: chartColors.oscuro.tinta }
-    : { ingresos: chartColors.categorica[0], gastos: chartColors.categorica[8], resalte: chartColors.categorica[1], ganancia: chartColors.categorica[9] }
+// Config de ChartContainer (shadcn): cada serie expone `--color-<clave>` por
+// tema. Cobrado y gastos: petróleo y ámbar, validados para daltónicos en los
+// dos modos; en claro el ámbar oscuro queda en 2,9:1, por eso hay leyenda y tabla.
+export const CONFIG_SERIE = {
+  ingresos: { label: 'Cobrado', theme: { light: chartColors.categorica[0], dark: chartColors.oscuro.petroleo } },
+  gastos: { label: 'Gastos', theme: { light: chartColors.categorica[8], dark: chartColors.categorica[1] } },
+  resalte: { label: 'Hoy', theme: { light: chartColors.categorica[1], dark: chartColors.categorica[1] } },
+  anterior: { label: 'Mes anterior', theme: { light: chartColors.estados.neutro, dark: chartColors.oscuro.neutro } },
+  proyeccion: { label: 'Al ritmo actual', theme: { light: chartColors.categorica[0], dark: chartColors.oscuro.petroleo } },
+  // Ganancia y pérdida son estado (bueno/malo), no identidad: además del color
+  // las separa la dirección de la barra y el signo de la cifra.
+  positivo: { label: 'Ganancia', theme: { light: chartColors.estados.success, dark: chartColors.oscuro.exito } },
+  negativo: { label: 'Pérdida', theme: { light: chartColors.estados.danger, dark: chartColors.oscuro.peligro } },
+}
+
+// Lo que no ha pasado no se dibuja en cero: un mes que no llega no es un mes malo.
+export const hastaHoy = (serie = [], hoy = fechaLocal()) =>
+  serie.filter((fila) => fila.periodo <= (fila.periodo.length === 7 ? hoy.slice(0, 7) : hoy))
+
+// Curva del mes: lo cobrado acumulado día a día, el del mes anterior en el
+// mismo día y, en el mes en curso, la proyección al ritmo que va (promedio por
+// día transcurrido). Los días que no han pasado no tienen valor real.
+export const curvaAcumulada = (serieMes = [], serieAnterior = [], hoy = fechaLocal()) => {
+  if (!serieMes.length) return { filas: [], cierre: null, ritmo: 0 }
+  const acumular = (serie) => {
+    let suma = 0
+    return serie.map((fila) => (suma += Number(fila.ingresos || 0)))
+  }
+  const actual = acumular(serieMes)
+  const anterior = acumular(serieAnterior)
+  const transcurridos = serieMes.filter((fila) => fila.periodo <= hoy).length
+  const enCurso = transcurridos > 0 && transcurridos < serieMes.length
+  const llevado = transcurridos ? actual[transcurridos - 1] : 0
+  const ritmo = transcurridos ? llevado / transcurridos : 0
+
+  const filas = serieMes.map((fila, i) => {
+    const dia = i + 1
+    const pasado = dia <= transcurridos
+    return {
+      dia,
+      periodo: fila.periodo,
+      ingresos: pasado ? actual[i] : null,
+      anterior: i < anterior.length ? anterior[i] : null,
+      // La proyección arranca en hoy para que la línea salga de la curva real.
+      proyeccion: enCurso && dia >= transcurridos ? Math.round(llevado + ritmo * (dia - transcurridos)) : null,
+    }
+  })
+
+  return {
+    filas,
+    ritmo: Math.round(ritmo),
+    cierre: enCurso ? Math.round(ritmo * serieMes.length) : null,
+    llevado,
+    anteriorALaFecha: transcurridos && anterior.length ? anterior[Math.min(transcurridos, anterior.length) - 1] : null,
+  }
+}
+
+// '2026-10' → '2026-09'
+export const mesAnterior = (anioMes) => {
+  const [anio, mes] = partes(`${anioMes}-01`)
+  return fechaLocal(new Date(anio, mes - 2, 1)).slice(0, 7)
+}
+
+// Estado de un mes en la cuadrícula del año.
+export const estadoMes = (fila, mesActual = fechaLocal().slice(0, 7)) => {
+  if (fila.periodo > mesActual) return 'futuro'
+  if (fila.periodo === mesActual) return 'actual'
+  return fila.ingresos || fila.gastos || fila.ventas ? 'cerrado' : 'sinMovimiento'
+}
