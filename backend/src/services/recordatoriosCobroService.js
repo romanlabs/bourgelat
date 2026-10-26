@@ -68,7 +68,13 @@ const procesarRecordatorios = async ({
         estado: { [Op.in]: ESTADOS_CANDIDATOS },
         fechaFin: { [Op.between]: [sumarDiasISO(hoy, -3), sumarDiasISO(hoy, 7)] },
       },
-      include: [{ model: Clinica, as: 'clinica', attributes: ['id', 'nombre', 'telefono'] }],
+      include: [{
+        model: Clinica,
+        as: 'clinica',
+        attributes: ['id', 'nombre', 'telefono'],
+        where: { activo: true },
+        required: true,
+      }],
       order: [['fechaFin', 'ASC']],
       sinTenant: true,
     })
@@ -100,7 +106,13 @@ const procesarRecordatorios = async ({
         if (enviadas.has(`${suscripcion.id}:${tipo}`)) continue
 
         const admins = await Usuario.findAll({
-          where: { clinicaId: suscripcion.clinicaId, rol: 'admin', activo: true },
+          where: {
+            clinicaId: suscripcion.clinicaId,
+            rol: 'admin',
+            activo: true,
+            // Misma condición que bloquea el login: cuenta registrada y nunca verificada.
+            [Op.not]: { requiereVerificacionCodigo: true, emailVerificado: false },
+          },
           attributes: ['nombre', 'email'],
         })
         if (admins.length === 0) continue
