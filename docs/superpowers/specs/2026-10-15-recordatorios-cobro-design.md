@@ -1,6 +1,6 @@
 # Recordatorios de cobro por correo — diseño
 
-Fecha: 2026-10-15 · Estado: aprobado en chat, pendiente de revisión escrita
+Fecha: 2026-10-15 · Estado: revisada por Roman el 2026-10-26 (ver «Ajustes de la revisión»)
 
 ## Objetivo
 
@@ -21,8 +21,27 @@ Fuera de alcance (proyectos aparte):
 - Destinatarios: usuarios `admin` activos de la clínica.
 - Resumen diario a `soporte@bourgelat.co` con botón «Enviar WhatsApp» (enlace `wa.me`
   con mensaje y link a `/pagar` ya escritos) por clínica. Solo si hubo envíos ese día.
-- Excluidas: suscripciones de cortesía (`fechaFin` = `CORTESIA_END_DATE`) y `personalizado`
-  sin precio.
+- Excluidas: suscripciones de cortesía (plan `cortesia` o `fechaFin` = `CORTESIA_END_DATE`)
+  y `personalizado` sin precio.
+
+## Ajustes de la revisión (Roman, 2026-10-26)
+
+- Ningún precio escrito en el correo: se leen del código para que sigan a `planes.js`
+  cuando cambien (Roman fijó Esencial $89k y Clínica $120k, aplicado en el PR #309).
+  - Plan pago o `personalizado` con precio: `suscripcion.precio` (lo que la clínica paga
+    de verdad, incluye el add-on DIAN si lo compró).
+  - Prueba: los planes pagos de `planes.js` con su precio mensual (hoy Esencial y Clínica);
+    la clínica elige en `/pagar`. Sin mención a la DIAN (en v1 es «Próximamente»).
+  - Precio respetado: si la suscripción de prueba tiene `precio > 0`, el correo muestra
+    solo ese precio y no los de `planes.js`. Es el caso de Agropatitas, que conserva el
+    precio anterior (Esencial $49k / Clínica $89k): antes de activar los correos se le
+    pone ese precio a su suscripción por CLI.
+- Tope de cobro **30** correos por ejecución (no 100): los recordatorios de citas ya usan
+  hasta 150/día del mismo plan de Brevo (300/día).
+- Registrar antes de enviar, como `jobs/recordatoriosCita.js`: insertar la fila (el índice
+  único hace de candado), enviar, y si falla borrarla para reintentar mañana. Así dos
+  instancias no duplican el correo.
+- Fechas con `hoyISO` / `sumarDiasISO` de `utils/vencimiento.js`, igual que el job de citas.
 
 ## Tipos de recordatorio
 
@@ -51,7 +70,7 @@ Al procesar una `vencida` en estado `prueba`/`activa`, el job la pasa a `solo_le
    `destinatarios` INTEGER. Índice único `(suscripcionId, tipo)`: cada recordatorio sale una
    sola vez por suscripción; renovar crea otra suscripción (ver `gestionarSuscripcion.js`),
    así que el ciclo siguiente vuelve a recibirlos. Queries con `sinTenant: true` (job global).
-3. **`services/recordatoriosCobroService.js`**: `procesarRecordatorios({ simular = false, tope = 100 })`
+3. **`services/recordatoriosCobroService.js`**: `procesarRecordatorios({ simular = false, tope = 30 })`
    - busca suscripciones candidatas (una query con `fechaFin` entre `hoy-3` y `hoy+7`),
    - descarta las ya registradas en `recordatorios_suscripcion`,
    - por cada una: admins activos → `emailService.enviarEmailRecordatorioCobro` → si se
@@ -83,10 +102,10 @@ Al procesar una `vencida` en estado `prueba`/`activa`, el job la pasa a `solo_le
 
 - Fallo de Brevo en un correo: se registra en el log, no se marca, se reintenta mañana.
 - Fallo de BD en el job: catch con log (`contexto: 'recordatorios-cobro'`), el servidor sigue.
-- Tope 100 correos de recordatorio por ejecución: deja margen de los 300/día de Brevo para
+- Tope 30 correos de recordatorio por ejecución: con los 150 de citas deja margen de los 300/día de Brevo para
   recuperar contraseña, verificación y soporte.
-- Dos instancias del servidor a la vez (deploy): el índice único evita el doble registro;
-  como mucho podría duplicarse un correo en esa ventana. Aceptado.
+- Dos instancias del servidor a la vez (deploy): se registra antes de enviar y el índice único
+  hace de candado, así que el correo no se duplica.
 
 ## Pruebas
 

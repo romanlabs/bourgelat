@@ -52,12 +52,18 @@ export const legalDraftNotice =
   'Este contenido es un borrador operativo para el sitio mientras se completa la revisión legal final en Colombia.'
 
 // Cobro manual (sin pasarela): QR Bre-B de Bancolombia + comprobante + activación
-// manual con `npm run suscripcion:asignar`. Precios: mismos de PlanesPage/planes.js.
+// manual con `npm run suscripcion:asignar`.
+// Precios de los planes pagos para las páginas públicas (landing, /planes, /pagar).
+// Deben coincidir con backend/src/config/planes.js; precioAnual es el valor por mes
+// pagando el año.
+export const PRECIOS_PLANES = {
+  esencial: { nombre: 'Esencial', precioMensual: 89000, precioAnual: 75000 },
+  activo: { nombre: 'Clínica', precioMensual: 120000, precioAnual: 100000 },
+}
+
 export const pagoManual = {
   llaveBreB: '0093458902',
   destinatario: 'bourgelat',
-  precioMensual: 89000,
-  precioAnualPorMes: 75000,
   // Número de WhatsApp de Bourgelat (formato internacional sin +). También lo usa
   // el botón flotante de la landing.
   whatsapp: '573102047057',

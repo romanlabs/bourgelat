@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Check, Copy, Download, Mail, MessageCircle } from 'lucide-react'
 import PublicPageShell from '@/components/shared/PublicPageShell'
-import { pagoManual } from '@/content/publicSiteContent'
+import { PRECIOS_PLANES, pagoManual } from '@/content/publicSiteContent'
 import { useAuthStore } from '@/store/authStore'
 import qrBourgelat from '@/assets/pagos/qr-bourgelat.svg'
 
@@ -145,22 +145,28 @@ export default function PagarPage() {
           <section className="rounded-3xl border border-papel-300 bg-papel-50 p-6 sm:p-8">
             <h2 className="mb-5 text-2xl font-semibold tracking-tight text-tinta-800">Cuánto pagar</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-papel-300 bg-papel-100 p-5">
-                <p className="text-sm font-semibold text-tinta-600">Mensual</p>
-                <p className="mt-1 text-3xl font-semibold text-tinta-800">
-                  {formatoPesos(pagoManual.precioMensual)}
-                </p>
-                <p className="mt-1 text-sm text-tinta-500">cada mes</p>
-              </div>
-              <div className="rounded-2xl border border-clinical-200 bg-clinical-50 p-5">
-                <p className="text-sm font-semibold text-tinta-600">Anual</p>
-                <p className="mt-1 text-3xl font-semibold text-tinta-800">
-                  {formatoPesos(pagoManual.precioAnualPorMes * 12)}
-                </p>
-                <p className="mt-1 text-sm text-tinta-500">
-                  un solo pago ({formatoPesos(pagoManual.precioAnualPorMes)} al mes)
-                </p>
-              </div>
+              {Object.entries(PRECIOS_PLANES).map(([key, plan]) => {
+                const esSuPlan = Boolean(nombreClinica) && suscripcion?.plan === key
+                return (
+                  <div
+                    key={key}
+                    className={`rounded-2xl border p-5 ${esSuPlan ? 'border-clinical-200 bg-clinical-50' : 'border-papel-300 bg-papel-100'}`}
+                  >
+                    <p className="text-sm font-semibold text-tinta-600">
+                      {plan.nombre}
+                      {esSuPlan ? ' · tu plan' : ''}
+                    </p>
+                    <p className="mt-1 text-3xl font-semibold text-tinta-800">
+                      {formatoPesos(plan.precioMensual)}
+                    </p>
+                    <p className="mt-1 text-sm text-tinta-500">cada mes</p>
+                    <p className="mt-3 text-sm text-tinta-600">
+                      O {formatoPesos(plan.precioAnual * 12)} por el año en un solo pago
+                      ({formatoPesos(plan.precioAnual)} al mes)
+                    </p>
+                  </div>
+                )
+              })}
             </div>
           </section>
 

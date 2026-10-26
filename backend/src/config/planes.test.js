@@ -47,14 +47,14 @@ for (const [key, plan] of Object.entries(PLANES)) {
 }
 
 // ── Precios y cupos acordados ─────────────────────────────────────────────
-assert.strictEqual(PLANES.activo.precioMensual, 89000)
-assert.strictEqual(PLANES.activo.precioAnual, 75000)
+assert.strictEqual(PLANES.activo.precioMensual, 120000)
+assert.strictEqual(PLANES.activo.precioAnual, 100000)
 assert.strictEqual(PLANES.activo.limiteUsuarios, USUARIOS_BASE)
 assert.strictEqual(USUARIOS_BASE, 3)
 assert.strictEqual(PLANES.activo.almacenamientoMB, 20480)
 
-assert.strictEqual(PLANES.esencial.precioMensual, 49000)
-assert.strictEqual(PLANES.esencial.precioAnual, 41000)
+assert.strictEqual(PLANES.esencial.precioMensual, 89000)
+assert.strictEqual(PLANES.esencial.precioAnual, 75000)
 assert.strictEqual(PLANES.esencial.limiteUsuarios, 1)
 assert.strictEqual(PLANES.esencial.almacenamientoMB, 5120)
 assert.ok(PLANES.esencial.precioMensual < PLANES.activo.precioMensual)
@@ -104,10 +104,10 @@ assert.strictEqual(PLANES_PUBLICOS.activo.nombre, 'Clinica')
 assert.strictEqual(PLANES_PUBLICOS.esencial.nombre, 'Esencial')
 
 // ── Totales anuales derivados ─────────────────────────────────────────────
-assert.strictEqual(PLANES_PUBLICOS.activo.precioAnualTotal, 900000)
-assert.strictEqual(PLANES_PUBLICOS.activo.ahorroAnual, 168000)
-assert.strictEqual(PLANES_PUBLICOS.esencial.precioAnualTotal, 492000)
-assert.strictEqual(PLANES_PUBLICOS.esencial.ahorroAnual, 96000)
+assert.strictEqual(PLANES_PUBLICOS.activo.precioAnualTotal, 1200000)
+assert.strictEqual(PLANES_PUBLICOS.activo.ahorroAnual, 240000)
+assert.strictEqual(PLANES_PUBLICOS.esencial.precioAnualTotal, 900000)
+assert.strictEqual(PLANES_PUBLICOS.esencial.ahorroAnual, 168000)
 assert.strictEqual(PLANES_PUBLICOS.prueba.ahorroAnual, 0)
 
 console.log('planes.test.js: todos los tests pasaron ✔')

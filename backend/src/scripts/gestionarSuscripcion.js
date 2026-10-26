@@ -55,7 +55,7 @@ Planes disponibles: ${Object.keys(PLANES_PUBLICOS).join(', ')}
 Asignar un plan (cancela la suscripcion vigente y crea la nueva):
   npm run suscripcion:asignar -- --email admin@laclinica.com --plan activo
   npm run suscripcion:asignar -- --clinica-id <uuid> --plan activo \\
-      --fecha-fin 2027-01-31 --precio 89000 --metodo-pago transferencia
+      --fecha-fin 2027-01-31 --precio 120000 --metodo-pago transferencia
 
   Opcionales: --estado (activa por defecto), --fecha-inicio (hoy),
   --fecha-fin (un mes desde el inicio), --precio y los limites los toma del plan.
