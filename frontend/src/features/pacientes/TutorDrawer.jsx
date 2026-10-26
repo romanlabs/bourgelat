@@ -19,6 +19,7 @@ const tutorSchema = z.object({
     .refine(esCelularValido, 'Ese número no es válido para el país elegido'),
   email: z.string().email('Correo inválido').optional().or(z.literal('')),
   ciudad: z.string().optional(),
+  barrio: z.string().max(120, 'Máximo 120 caracteres').optional(),
 })
 
 const DEFAULT_VALUES = {
@@ -28,6 +29,7 @@ const DEFAULT_VALUES = {
   telefono: '',
   email: '',
   ciudad: '',
+  barrio: '',
 }
 
 const fieldClass =
@@ -56,6 +58,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             telefono: celularE164(editingTutor.telefono),
             email: editingTutor.email || '',
             ciudad: editingTutor.ciudad || '',
+            barrio: editingTutor.barrio || '',
           }
         : DEFAULT_VALUES
     )
@@ -182,11 +185,20 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
               </div>
             </div>
 
-            <div className="grid gap-1.5">
-              <label htmlFor="t-ciudad" className="text-[13px] font-medium text-muted-foreground">
-                Ciudad o municipio <span className="font-normal text-muted-foreground">(opcional)</span>
-              </label>
-              <input id="t-ciudad" type="text" placeholder="Ciudad principal" className={fieldClass} {...register('ciudad')} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="t-ciudad" className="text-[13px] font-medium text-muted-foreground">
+                  Ciudad o municipio <span className="font-normal text-muted-foreground">(opcional)</span>
+                </label>
+                <input id="t-ciudad" type="text" placeholder="Ciudad principal" className={fieldClass} {...register('ciudad')} />
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="t-barrio" className="text-[13px] font-medium text-muted-foreground">
+                  Barrio <span className="font-normal text-muted-foreground">(opcional)</span>
+                </label>
+                <input id="t-barrio" type="text" placeholder="Barrio" className={`${fieldClass} ${errors.barrio ? 'border-danger' : ''}`} {...register('barrio')} />
+                {errors.barrio && <p className="text-[13px] text-danger">{errors.barrio.message}</p>}
+              </div>
             </div>
           </form>
         </div>

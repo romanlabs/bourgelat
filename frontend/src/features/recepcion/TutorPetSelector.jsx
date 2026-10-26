@@ -96,6 +96,7 @@ export function TutorPetSelector({
       telefono: formData.telefono,
       email: formData.email?.trim().toLowerCase() || undefined,
       ciudad: formData.ciudad?.trim() || undefined,
+      barrio: formData.barrio?.trim() || undefined,
     })
   }
 

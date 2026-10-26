@@ -758,6 +758,12 @@ function TutorDetalle({
             <dt className="text-[13px] opacity-75">Ciudad</dt>
             <dd className="mt-0.5 font-semibold">{tutor.ciudad}</dd>
           </div>
+          {tutor.raw?.barrio ? (
+            <div className="min-w-0">
+              <dt className="text-[13px] opacity-75">Barrio</dt>
+              <dd className="mt-0.5 font-semibold [overflow-wrap:anywhere]">{tutor.raw.barrio}</dd>
+            </div>
+          ) : null}
           {tutor.raw?.direccion ? (
             <div className="min-w-0">
               <dt className="text-[13px] opacity-75">Dirección</dt>
