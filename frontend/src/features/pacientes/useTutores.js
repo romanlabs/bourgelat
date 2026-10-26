@@ -5,6 +5,7 @@ import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
+import { formatearCelular } from '@/lib/celular'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -112,7 +113,7 @@ export function useTutores({ enabled }) {
         id: t.id,
         nombre: t.nombre,
         documento: t.numeroDocumento ? `${t.tipoDocumento || ''} ${t.numeroDocumento}`.trim() : 'Sin documento',
-        telefono: t.telefono || 'Sin teléfono',
+        telefono: formatearCelular(t.telefono) || 'Sin teléfono',
         email: t.email || '—',
         ciudad: t.ciudad || '—',
         raw: t,
@@ -136,15 +137,16 @@ export function useTutores({ enabled }) {
   }
 
   function handleDrawerSubmit(formData) {
-    // Al editar, vaciar correo o ciudad manda null para que se borre.
+    // Al editar, vaciar correo, ciudad o barrio manda null para que se borre.
     const vacio = editingTutor ? null : undefined
     const payload = {
       nombre: formData.nombre.trim(),
       tipoDocumento: formData.tipoDocumento,
       numeroDocumento: formData.numeroDocumento.trim(),
-      telefono: formData.telefono.replace(/\D/g, ''),
+      telefono: formData.telefono,
       email: formData.email?.trim().toLowerCase() || vacio,
       ciudad: formData.ciudad?.trim() || vacio,
+      barrio: formData.barrio?.trim() || vacio,
     }
 
     if (editingTutor) {

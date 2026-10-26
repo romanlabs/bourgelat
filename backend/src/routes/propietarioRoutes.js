@@ -16,6 +16,7 @@ router.post('/', verificarToken, verificarRol('admin', 'superadmin', 'recepcioni
   body('telefono').notEmpty().withMessage('El teléfono es obligatorio').trim(),
   body('email').optional().isEmail().withMessage('Email inválido').normalizeEmail(),
   body('tipoDocumento').optional().isIn(['CC', 'CE', 'NIT', 'PP']).withMessage('Tipo de documento no válido'),
+  body('barrio').optional({ nullable: true }).trim().isLength({ max: 120 }).withMessage('El barrio es muy largo'),
   validar,
 ], crearPropietario)
 
@@ -49,6 +50,7 @@ router.put('/:id', verificarToken, verificarRol('admin', 'superadmin', 'recepcio
   body('email').optional({ values: 'null' }).isEmail().withMessage('Email inválido').normalizeEmail(),
   body('telefono').optional().notEmpty().withMessage('El teléfono no puede estar vacío').trim(),
   body('tipoDocumento').optional().isIn(['CC', 'CE', 'NIT', 'PP']).withMessage('Tipo de documento no válido'),
+  body('barrio').optional({ nullable: true }).trim().isLength({ max: 120 }).withMessage('El barrio es muy largo'),
   body('numeroDocumento').optional().notEmpty().withMessage('El número de documento no puede estar vacío').trim(),
   body('tipoPersona').optional().isIn(['persona_natural', 'persona_juridica']).withMessage('Tipo de persona no válido'),
   validar,

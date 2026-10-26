@@ -6,6 +6,7 @@ import { ArrowRight, CalendarPlus, Phone, Receipt, Stethoscope } from 'lucide-re
 import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
 import { formatCurrency } from './dashboardUtils'
+import { formatearCelular } from '@/lib/celular'
 
 // Etiqueta y tono de cada estado de cita, en singular y en el lenguaje de la
 // recepción («Atendida», no «Completadas»).
@@ -104,7 +105,7 @@ function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
             {cita.propietario?.telefono ? (
               <a href={`tel:${cita.propietario.telefono}`} className="inline-flex items-center gap-1.5 hover:text-primary">
                 <Phone className="h-3.5 w-3.5" />
-                {cita.propietario.telefono}
+                {formatearCelular(cita.propietario.telefono)}
               </a>
             ) : (
               'Sin teléfono'

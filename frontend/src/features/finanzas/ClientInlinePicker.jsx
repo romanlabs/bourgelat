@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, UserPlus } from 'lucide-react'
+import { formatearCelular } from '@/lib/celular'
 
 export default function ClientInlinePicker({
   open,
@@ -84,7 +85,7 @@ export default function ClientInlinePicker({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">{p.nombre}</p>
                 <p className="truncate text-[13px] text-muted-foreground">
-                  {p.email || p.telefono || p.numeroDocumento || '—'}
+                  {p.email || formatearCelular(p.telefono) || p.numeroDocumento || '—'}
                 </p>
               </div>
               {p.id === selectedId && (

@@ -14,6 +14,7 @@ import {
 import { hoyLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import FormAbono from './FormAbono'
+import { formatearCelular } from '@/lib/celular'
 
 const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
 const TONOS = {
@@ -141,7 +142,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false }
           {cliente.telefono ? (
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <a href={`tel:${cliente.telefono}`} className="font-semibold text-primary hover:underline">
-                Llamar al {cliente.telefono}
+                Llamar al {formatearCelular(cliente.telefono)}
               </a>
               {whatsapp ? (
                 <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
