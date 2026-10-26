@@ -27,7 +27,7 @@ Fuera de alcance (proyectos aparte):
 ## Ajustes de la revisión (Roman, 2026-10-26)
 
 - Ningún precio escrito en el correo: se leen del código para que sigan a `planes.js`
-  cuando cambien (Roman fijó Esencial $89k y Clínica $120k, aún no aplicado: es otro PR).
+  cuando cambien (Roman fijó Esencial $89k y Clínica $120k, aplicado en el PR #309).
   - Plan pago o `personalizado` con precio: `suscripcion.precio` (lo que la clínica paga
     de verdad, incluye el add-on DIAN si lo compró).
   - Prueba: los planes pagos de `planes.js` con su precio mensual (hoy Esencial y Clínica);
