@@ -42,10 +42,13 @@ api.interceptors.response.use(
       refrescando = true
 
       try {
+        // Con timeout propio: estas llamadas no pasan por la instancia `api`, y
+        // sin él un refresh colgado dejaba `refrescando` en true y toda petición
+        // posterior esperando en la cola hasta recargar la página.
         await axios.post(
           `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true, timeout: 15000 }
         )
 
         // Respaldo: si otra pestaña inició sesión con otra cuenta, la cookie ya es de
@@ -54,6 +57,7 @@ api.interceptors.response.use(
         const sesionActual = await axios
           .get(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/me`, {
             withCredentials: true,
+            timeout: 15000,
           })
           .then((r) => r.data)
           .catch(() => null)
