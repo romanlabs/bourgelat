@@ -18,6 +18,7 @@ export function RecepcionTab({
   puedeProgramar,
   puedeGestionarEstado,
   onCitaProgramada,
+  citaInicialId = null,
 }) {
   const tienePrefill = Boolean(prefill?.fecha || prefill?.horaInicio)
   const [drawer, setDrawer] = useState(() => (tienePrefill ? 'programar' : null))
@@ -61,6 +62,7 @@ export function RecepcionTab({
         errorMessage={getErrorMessage(salaEsperaQuery.error, 'No fue posible cargar la sala de espera.')}
         puedeGestionarEstado={puedeGestionarEstado}
         actualizarEstadoMutation={actualizarEstadoMutation}
+        citaInicialId={citaInicialId}
         lastUpdatedAt={lastUpdatedAt}
         headerActions={
           puedeProgramar ? (

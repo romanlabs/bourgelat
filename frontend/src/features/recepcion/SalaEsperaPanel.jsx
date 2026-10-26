@@ -274,12 +274,13 @@ export function SalaEsperaPanel({
   actualizarEstadoMutation,
   lastUpdatedAt,
   headerActions,
+  citaInicialId = null,
 }) {
   const [search, setSearch] = useState('')
   const [cancelTarget, setCancelTarget] = useState(null)
   const [motivoCancelacion, setMotivoCancelacion] = useState('')
   const [mostrarResueltas, setMostrarResueltas] = useState(false)
-  const [citaSeleccionadaId, setCitaSeleccionadaId] = useState(null)
+  const [citaSeleccionadaId, setCitaSeleccionadaId] = useState(citaInicialId)
   const [ahoraMinutos, setAhoraMinutos] = useState(() => horaAMinutos(new Date().toTimeString()))
 
   useEffect(() => {

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { canAccessModule } from '@/lib/permissions'
+import { useAuthStore } from '@/store/authStore'
 import { ArrowRight, CalendarPlus, Phone, Receipt, Stethoscope } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
@@ -34,8 +36,9 @@ const minutosDelDia = (valor) => {
 
 const historiaHref = (cita) => (cita?.mascota?.id ? `/pacientes/${cita.mascota.id}/historial` : '/pacientes')
 
-const cobroHref = (cita) =>
-  `/finanzas?propietarioId=${cita?.propietario?.id || ''}&mascotaId=${cita?.mascota?.id || ''}&citaId=${cita?.id || ''}`
+// Se cobra en Caja. Con historia, Caja precarga sus insumos (igual que el botón
+// de cobrar dentro de la historia clínica).
+const cobroEstado = (cita) => (cita?.historia?.id ? { facturarHistoriaId: cita.historia.id } : undefined)
 
 function ChipEstado({ estado }) {
   const config = ESTADOS[estado] || ESTADOS.programada
@@ -137,7 +140,8 @@ function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
         ) : null}
         {puedeCobrar ? (
           <Link
-            to={cobroHref(cita)}
+            to="/caja"
+            state={cobroEstado(cita)}
             className="inline-flex h-12 flex-1 basis-32 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
           >
             <Receipt className="h-4 w-4" />
@@ -170,6 +174,13 @@ export default function JornadaHoy({
   const [consultorio, setConsultorio] = useState('todos')
   const [soloMios, setSoloMios] = useState(false)
   const [seleccionId, setSeleccionId] = useState(null)
+  const navigate = useNavigate()
+  const usuario = useAuthStore((state) => state.usuario)
+  // Tocar una cita lleva a Recepción con esa cita abierta, donde se cambia su
+  // estado. Quien no entra a Agenda solo la ve en el panel de la derecha.
+  const veRecepcion = canAccessModule(usuario, 'agenda')
+  const abrirCita = (cita) =>
+    veRecepcion ? navigate(`/agenda?tab=recepcion&cita=${cita.id}`) : setSeleccionId(cita.id)
 
   const ordenadas = useMemo(
     () => [...citas].sort((a, b) => minutosDelDia(a.horaInicio) - minutosDelDia(b.horaInicio)),
@@ -292,7 +303,8 @@ export default function JornadaHoy({
                   {indice === indiceAhora ? <LineaAhora etiqueta={etiquetaAhora} /> : null}
                   <button
                     type="button"
-                    onClick={() => setSeleccionId(cita.id)}
+                    onClick={() => abrirCita(cita)}
+                    title={veRecepcion ? 'Abrir en Recepción para cambiar su estado' : undefined}
                     aria-pressed={activa}
                     className={cn(
                       'grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors',

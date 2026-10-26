@@ -108,7 +108,11 @@ export default function AgendaPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState('agenda')
+  // Hoy abre ?tab=recepcion&cita=<id> para cambiar el estado de una cita.
+  const [parametrosIniciales] = useState(() => new URLSearchParams(window.location.search))
+  const [activeTab, setActiveTab] = useState(() =>
+    TABS.some((tab) => tab.id === parametrosIniciales.get('tab')) ? parametrosIniciales.get('tab') : 'agenda'
+  )
   const [vistaAgenda, setVistaAgenda] = useState('calendario')
   const [fecha, setFecha] = useState(hoyLocal())
   const [estado, setEstado] = useState('todos')
@@ -575,6 +579,7 @@ export default function AgendaPage() {
           {activeTab === 'recepcion' && (
             <RecepcionTab
               fecha={fecha}
+              citaInicialId={parametrosIniciales.get('cita')}
               usuario={usuario}
               puedeProgramar={puedeProgramar}
               puedeGestionarEstado={puedeGestionarEstado}
