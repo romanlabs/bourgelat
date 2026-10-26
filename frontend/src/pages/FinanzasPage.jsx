@@ -252,6 +252,27 @@ export default function FinanzasPage({ modo = 'caja' }) {
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
+        {/* En Venta el turno se ve como etiqueta en el encabezado: el punto de
+            venta gana el alto y la pestaña Turno de caja ya lleva al detalle. */}
+        {esCaja && activeTab === 'facturacion' && cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido ? (
+          <button
+            type="button"
+            onClick={() => setActiveTab('turnos')}
+            title="Ver el turno de caja"
+            className="inline-flex h-10 items-center gap-x-3 rounded-lg bg-card px-3.5 text-[13px] text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="flex items-center gap-1.5 font-semibold text-success">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+              Turno abierto
+            </span>
+            <span>
+              Fondo <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cajaHook.turnoActivo.montoInicial)}</span>
+            </span>
+            <span>
+              Efectivo <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cajaHook.turnoActivo.totalVentasEfectivo || 0)}</span>
+            </span>
+          </button>
+        ) : null}
         {esCaja && activeTab !== 'facturacion' ? (
           <button
             type="button"
@@ -312,38 +333,9 @@ export default function FinanzasPage({ modo = 'caja' }) {
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Franja del turno: el cajero ve de un vistazo que puede cobrar. */}
-                <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-2 rounded-2xl bg-card px-5 py-2.5">
-                  <div className="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm">
-                    <span className="flex items-center gap-2 font-semibold text-success">
-                      <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
-                      Turno abierto
-                    </span>
-                    <span className="text-muted-foreground">
-                      Fondo{' '}
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {formatCurrency(cajaHook.turnoActivo.montoInicial)}
-                      </span>
-                    </span>
-                    <span className="text-muted-foreground">
-                      Ventas en efectivo{' '}
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {formatCurrency(cajaHook.turnoActivo.totalVentasEfectivo || 0)}
-                      </span>
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('turnos')}
-                    className="inline-flex h-9 items-center px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    Ver turno de caja
-                  </button>
-                </div>
-
-                {/* Punto de venta en la página: llena el alto disponible y deja
-                    ver el turno arriba. En celular alterna productos y cuenta. */}
-                <div className="h-[calc(100dvh-11rem)] min-h-[480px]">
+                {/* Punto de venta en la página: llena el alto disponible. En
+                    celular alterna productos y cuenta. */}
+                <div className="h-[calc(100dvh-8rem)] min-h-[480px]">
                   <PosModal
                     embedded
                     open
