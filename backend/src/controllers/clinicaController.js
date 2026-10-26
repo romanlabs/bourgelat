@@ -11,9 +11,8 @@ const {
 } = require('../config/uploads')
 const { registrarUsoAlmacenamiento } = require('../services/almacenamientoService')
 
-const telefonoColombiaRegex = /^3\d{9}$/
 
-const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano, normalizarNit } = require('../utils/normalizar')
+const { limpiarTexto, normalizarEmail, normalizarCelular, esCelularValido, MENSAJE_CELULAR_INVALIDO, normalizarNit } = require('../utils/normalizar')
 const { normalizarHorario, HorarioInvalidoError } = require('../services/horarioAtencionService')
 
 const serializarClinica = (clinica) => {
@@ -103,7 +102,7 @@ const actualizarClinicaActual = async (req, res) => {
     const nombre = req.body.nombre === undefined ? undefined : limpiarTexto(req.body.nombre)
     const email = req.body.email === undefined ? undefined : normalizarEmail(req.body.email)
     const telefono =
-      req.body.telefono === undefined ? undefined : normalizarTelefonoColombiano(req.body.telefono)
+      req.body.telefono === undefined ? undefined : normalizarCelular(req.body.telefono)
     const direccion =
       req.body.direccion === undefined ? undefined : limpiarTexto(req.body.direccion)
     const ciudad = req.body.ciudad === undefined ? undefined : limpiarTexto(req.body.ciudad)
@@ -140,9 +139,9 @@ const actualizarClinicaActual = async (req, res) => {
       req.body.tributoId === undefined ? undefined : limpiarTexto(req.body.tributoId)
     const logo = req.body.logo === undefined ? undefined : limpiarTexto(req.body.logo)
 
-    if (telefono !== undefined && telefono && !telefonoColombiaRegex.test(telefono)) {
+    if (limpiarTexto(req.body.telefono) && !esCelularValido(req.body.telefono)) {
       return res.status(400).json({
-        message: 'El teléfono debe ser un celular colombiano válido de 10 dígitos',
+        message: MENSAJE_CELULAR_INVALIDO,
       })
     }
 

@@ -29,7 +29,7 @@ const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth, limitadorSesion } = require('../middlewares/rateLimitMiddleware')
 const { exigirTurnstile } = require('../middlewares/turnstileMiddleware')
 const { permitirOpenerEnPopupOauth } = require('../middlewares/oauthPopupMiddleware')
-const { normalizarTelefonoColombiano } = require('../utils/normalizar')
+const { normalizarCelular, esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
 const router = express.Router()
 const passwordFuerteRegex =
@@ -73,9 +73,9 @@ router.post(
     body('telefono')
       .optional({ values: 'falsy' })
       .trim()
-      .customSanitizer(normalizarTelefonoColombiano)
-      .custom((valor) => /^3\d{9}$/.test(valor))
-      .withMessage('El teléfono debe ser un celular colombiano válido de 10 dígitos'),
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO)
+      .customSanitizer(normalizarCelular),
     body('departamento').optional({ values: 'falsy' }).trim(),
     body('ciudad').optional({ values: 'falsy' }).trim(),
     body('nit').optional({ values: 'falsy' }).trim(),

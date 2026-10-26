@@ -1,6 +1,7 @@
 // Reglas puras de los recordatorios de cobro de suscripciones: a quién avisar,
 // con qué tipo de aviso, qué precios mostrar y el enlace de WhatsApp. Sin base
 // de datos ni envío, para poder probarlas con `node` directo.
+const { parsePhoneNumberFromString } = require('libphonenumber-js/max')
 const { PLANES, CORTESIA_END_DATE } = require('../config/planes')
 
 const TOPE_POR_EJECUCION = 30
@@ -61,12 +62,13 @@ const preciosRecordatorio = ({ plan, precio }) => {
   return precioPlan > 0 ? [{ nombre: nombrePlan(plan), precioMensual: precioPlan }] : []
 }
 
-// Celular colombiano como '57' + 10 dígitos que empiezan en 3; null si no lo es.
+// Celular de cualquier país como indicativo + número, solo dígitos (lo que pide
+// wa.me); null si no es válido o es un fijo. Sin indicativo se asume Colombia.
+const TIPOS_CON_WHATSAPP = new Set(['MOBILE', 'FIXED_LINE_OR_MOBILE'])
 const normalizarCelular = (telefono) => {
-  const digitos = String(telefono ?? '').replace(/\D/g, '')
-  if (/^573\d{9}$/.test(digitos)) return digitos
-  if (/^3\d{9}$/.test(digitos)) return `57${digitos}`
-  return null
+  const numero = parsePhoneNumberFromString(String(telefono ?? ''), 'CO')
+  if (!numero?.isValid() || !TIPOS_CON_WHATSAPP.has(numero.getType())) return null
+  return numero.number.slice(1)
 }
 
 const enlaceWhatsapp = ({ telefono, nombreClinica, urlPagar }) => {

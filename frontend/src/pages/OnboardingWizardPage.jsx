@@ -5,14 +5,10 @@ import Logo from '@/components/shared/Logo'
 import { useGuardarOnboarding } from '@/features/onboarding/useOnboarding'
 import { Select } from '@/components/ui/select'
 import { useAuthStore } from '@/store/authStore'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { esCelularValido } from '@/lib/celular'
 
 const TOTAL_PASOS = 5
-
-const CELULAR_REGEX = /^3\d{9}$/
-const soloDigitosCelular = (valor) => {
-  const digitos = valor.replace(/\D/g, '')
-  return digitos.length > 10 && digitos.startsWith('57') ? digitos.slice(2) : digitos
-}
 
 const opcionClass = (activa) =>
   `w-full rounded-xl px-4 py-4 text-left transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
@@ -81,13 +77,13 @@ export default function OnboardingWizardPage() {
 
   const actualizar = (campo, valor) => setRespuestas((prev) => ({ ...prev, [campo]: valor }))
 
-  const celular = soloDigitosCelular(respuestas.whatsapp)
-  const celularValido = CELULAR_REGEX.test(celular)
-  const celularConError = celular.length >= 10 && !celularValido
+  const [celularTocado, setCelularTocado] = useState(false)
+  const celularValido = esCelularValido(respuestas.whatsapp)
+  const celularConError = celularTocado && Boolean(respuestas.whatsapp) && !celularValido
 
   const puedeAvanzar = {
     1: Boolean(respuestas.usoPlanificado),
-    2: Boolean(respuestas.cargo) && (celularValido || (!celularObligatorio && !celular)),
+    2: Boolean(respuestas.cargo) && (celularValido || (!celularObligatorio && !respuestas.whatsapp)),
     3: Boolean(respuestas.tipoClinica && respuestas.tamanoEquipo && respuestas.mascotasPorMes),
     4: Boolean(respuestas.objetivoInicial),
     5: true,
@@ -174,25 +170,22 @@ export default function OnboardingWizardPage() {
                 <label htmlFor="onboarding-celular" className={labelClass}>
                   Celular (WhatsApp){celularObligatorio ? '' : ' (opcional)'}
                 </label>
-                <input
+                <CampoCelular
                   id="onboarding-celular"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
                   value={respuestas.whatsapp}
-                  onChange={(e) => actualizar('whatsapp', e.target.value)}
-                  placeholder="3001234567"
-                  aria-invalid={celularConError ? 'true' : undefined}
+                  onChange={(valor) => actualizar('whatsapp', valor)}
+                  onBlur={() => setCelularTocado(true)}
+                  placeholder="300 1234567"
+                  invalido={celularConError}
                   aria-describedby="onboarding-celular-ayuda"
-                  className={`${inputClass} ${celularConError ? 'border-danger' : ''}`}
                 />
                 <p
                   id="onboarding-celular-ayuda"
                   className={`mt-1.5 text-[13px] ${celularConError ? 'text-danger' : 'text-muted-foreground'}`}
                 >
                   {celularConError
-                    ? 'Debe ser un celular colombiano de 10 dígitos que empiece por 3.'
-                    : 'Para avisarte de tu plan y ayudarte si algo falla. Sin +57.'}
+                    ? 'Ese número no es válido para el país elegido.'
+                    : 'Para avisarte de tu plan y ayudarte si algo falla.'}
                 </p>
               </div>
             </div>

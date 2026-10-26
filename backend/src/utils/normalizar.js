@@ -1,3 +1,5 @@
+const { parsePhoneNumberFromString } = require('libphonenumber-js/max')
+
 const limpiarTexto = (valor) => {
   if (valor === undefined || valor === null) return null
   const limpio = String(valor).trim()
@@ -11,16 +13,19 @@ const normalizarEmail = (valor) => {
   return limpio ? limpio.toLowerCase() : null
 }
 
-const normalizarTelefonoColombiano = (valor) => {
+// Celular de contacto (clínica, usuarios) en E.164: '+573001234567'. Sin
+// indicativo se asume Colombia, que es como se guardaban antes (10 dígitos).
+// null si está vacío o no es un número válido para su país.
+const normalizarCelular = (valor) => {
   const limpio = limpiarTexto(valor)
   if (!limpio) return null
-  const soloNumeros = limpio.replace(/\D/g, '')
-  const sinPrefijo =
-    soloNumeros.length > 10 && soloNumeros.startsWith('57')
-      ? soloNumeros.slice(2)
-      : soloNumeros
-  return sinPrefijo.slice(0, 10) || null
+  const numero = parsePhoneNumberFromString(limpio, 'CO')
+  return numero?.isValid() ? numero.number : null
 }
+
+const esCelularValido = (valor) => normalizarCelular(valor) !== null
+
+const MENSAJE_CELULAR_INVALIDO = 'El celular no es válido para el país elegido'
 
 const normalizarNit = (valor) => {
   const limpio = limpiarTexto(valor)
@@ -28,4 +33,12 @@ const normalizarNit = (valor) => {
   return limpio.replace(/\D/g, '').slice(0, 15) || null
 }
 
-module.exports = { limpiarTexto, normalizarTexto, normalizarEmail, normalizarTelefonoColombiano, normalizarNit }
+module.exports = {
+  limpiarTexto,
+  normalizarTexto,
+  normalizarEmail,
+  normalizarCelular,
+  esCelularValido,
+  MENSAJE_CELULAR_INVALIDO,
+  normalizarNit,
+}
