@@ -18,7 +18,7 @@ const contieneValorCifrado = (datos) =>
 const crearPropietario = async (req, res) => {
   try {
     const {
-      nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad,
+      nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad, barrio,
       razonSocial, nombreComercial, tipoPersona, digitoVerificacion, codigoPostal,
       municipioId, tipoDocumentoFacturacionId, organizacionJuridicaId, tributoId,
     } = req.body;
@@ -49,6 +49,7 @@ const crearPropietario = async (req, res) => {
       telefono,
       direccion,
       ciudad,
+      barrio,
       razonSocial,
       nombreComercial,
       tipoPersona: tipoPersona || 'persona_natural',
@@ -171,7 +172,7 @@ const editarPropietario = async (req, res) => {
     const { id } = req.params;
     const { clinicaId } = req.usuario;
     const {
-      nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad,
+      nombre, tipoDocumento, numeroDocumento, email, telefono, direccion, ciudad, barrio,
       razonSocial, nombreComercial, tipoPersona, digitoVerificacion, codigoPostal,
       municipioId, tipoDocumentoFacturacionId, organizacionJuridicaId, tributoId,
     } = req.body;
@@ -209,6 +210,7 @@ const editarPropietario = async (req, res) => {
       telefono,
       direccion,
       ciudad,
+      barrio,
       razonSocial,
       nombreComercial,
       tipoPersona,

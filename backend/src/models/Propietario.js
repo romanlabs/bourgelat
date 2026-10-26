@@ -47,6 +47,10 @@ const Propietario = sequelize.define('Propietario', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  barrio: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+  },
   razonSocial: {
     type: DataTypes.TEXT,
     allowNull: true,
