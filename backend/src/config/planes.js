@@ -15,8 +15,8 @@ const CORTESIA_END_DATE = '2099-12-31'
 // lo trae de fabrica.
 const FUNCIONALIDAD_DIAN = 'facturacion_electronica'
 const DOCUMENTOS_DIAN_INCLUIDOS = 200
-const PRECIO_DIAN_MENSUAL = 70000
-const PRECIO_DIAN_DOCUMENTO_EXCEDENTE = 800
+const PRECIO_DIAN_MENSUAL = 49000
+const PRECIO_DIAN_DOCUMENTO_EXCEDENTE = 250
 
 // Lo que Clinica agrega sobre Esencial: analitica de agenda y rentabilidad
 // (`reportes_completos`) y exportables. Esencial conserva los reportes operativos.

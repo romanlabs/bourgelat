@@ -365,7 +365,7 @@ export default function MiPlanPage() {
             <span className="self-start rounded-[5px] bg-card px-2 py-1 text-[13px] font-semibold">Próximamente</span>
             <h2 id="pl-dian" className="text-xl font-semibold">Facturación electrónica DIAN</h2>
             <p className="text-[15px] leading-relaxed">
-              Un complemento para cualquier plan: tus ventas salen como factura electrónica válida ante la DIAN.
+              Llega como el plan Clínica + DIAN: todo lo de Clínica, cinco usuarios y tus ventas como factura electrónica válida ante la DIAN.
             </p>
             <Link
               to={enlaceSolicitud('Quiero que me avisen cuando llegue la facturación electrónica DIAN', 'sugerencia')}

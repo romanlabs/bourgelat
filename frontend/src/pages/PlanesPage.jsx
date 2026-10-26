@@ -82,12 +82,14 @@ const PLANES = [
   },
   {
     key: 'dian',
-    nombre: 'Facturación electrónica',
-    subtitulo: 'Complemento DIAN',
+    nombre: 'Clínica + DIAN',
+    subtitulo: 'Con facturación electrónica',
     comingSoon: true,
     resumen:
-      'La emisión validada ante la DIAN —con CUFE, notas crédito y conexión a Factus— llega en la próxima versión de Bourgelat.',
+      'Todo lo del plan Clínica con cinco usuarios y emisión validada ante la DIAN, con CUFE y notas crédito. Llega en la próxima versión de Bourgelat.',
     proximamente: [
+      'Todo lo del plan Clínica',
+      '5 usuarios incluidos',
       'Emisión validada ante la DIAN',
       'Notas crédito y débito',
       'XML firmado y representación gráfica',
@@ -102,17 +104,17 @@ const COMPARISON_GROUPS = [
   {
     grupo: 'Operación clínica',
     filas: [
-      { label: 'Agenda con contexto del paciente', values: { esencial: true, activo: true, dian: false } },
-      { label: 'Historia clínica y antecedentes', values: { esencial: true, activo: true, dian: false } },
-      { label: 'Pacientes activos', values: { esencial: 'Ilimitados', activo: 'Ilimitados', dian: false } },
-      { label: 'Usuarios del equipo', values: { esencial: '1 incluido', activo: '3 incluidos', dian: false } },
+      { label: 'Agenda con contexto del paciente', values: { esencial: true, activo: true, dian: true } },
+      { label: 'Historia clínica y antecedentes', values: { esencial: true, activo: true, dian: true } },
+      { label: 'Pacientes activos', values: { esencial: 'Ilimitados', activo: 'Ilimitados', dian: 'Ilimitados' } },
+      { label: 'Usuarios del equipo', values: { esencial: '1 incluido', activo: '3 incluidos', dian: '5 incluidos' } },
     ],
   },
   {
     grupo: 'Caja y facturación',
     filas: [
-      { label: 'Inventario operativo', values: { esencial: true, activo: true, dian: false } },
-      { label: 'Caja y facturación interna', values: { esencial: true, activo: true, dian: false } },
+      { label: 'Inventario operativo', values: { esencial: true, activo: true, dian: true } },
+      { label: 'Caja y facturación interna', values: { esencial: true, activo: true, dian: true } },
       {
         label: 'Facturación electrónica DIAN',
         hint: 'Emisión validada ante la DIAN a través de Factus. Disponible en la próxima versión.',
@@ -124,9 +126,9 @@ const COMPARISON_GROUPS = [
   {
     grupo: 'Reportes y datos',
     filas: [
-      { label: 'Reportes operativos', values: { esencial: true, activo: true, dian: false } },
-      { label: 'Analítica de agenda y rentabilidad', values: { esencial: false, activo: true, dian: false } },
-      { label: 'Almacenamiento de archivos', values: { esencial: '5 GB', activo: '20 GB', dian: false } },
+      { label: 'Reportes operativos', values: { esencial: true, activo: true, dian: true } },
+      { label: 'Analítica de agenda y rentabilidad', values: { esencial: false, activo: true, dian: true } },
+      { label: 'Almacenamiento de archivos', values: { esencial: '5 GB', activo: '20 GB', dian: '20 GB' } },
     ],
   },
 ]
@@ -568,7 +570,7 @@ export default function PlanesPage() {
               <p className="mt-5 max-w-xl text-base leading-8 sm:text-lg" style={{ color: BODY }}>
                 Esencial para un consultorio que empieza, Clínica para un equipo que
                 atiende el día completo y quiere medir su operación: analítica de
-                agenda y rentabilidad. La facturación electrónica DIAN llega como complemento.
+                agenda y rentabilidad. Pronto, Clínica + DIAN con facturación electrónica y cinco usuarios.
               </p>
             </div>
 

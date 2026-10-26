@@ -50,10 +50,10 @@ export const PLAN_PREVIEW = [
     featured: true,
   },
   {
-    name: 'Facturación electrónica',
-    subtitle: 'Complemento DIAN',
+    name: 'Clínica + DIAN',
+    subtitle: 'Con facturación electrónica',
     price: null,
-    note: 'Emisión validada ante la DIAN, notas crédito y envío automático. En desarrollo.',
+    note: 'Todo lo de Clínica con cinco usuarios y emisión validada ante la DIAN. En desarrollo.',
     comingSoon: true,
   },
 ]
