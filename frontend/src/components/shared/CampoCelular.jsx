@@ -3,6 +3,7 @@ import flags from 'react-phone-number-input/flags'
 import es from 'react-phone-number-input/locale/es'
 import 'react-phone-number-input/style.css'
 import { celularE164 } from '@/lib/celular'
+import SelectorPais from './SelectorPais'
 
 // Celular con selector de país (bandera) y el número en formato local.
 // Recibe y entrega E.164 ('+573001234567'); '' cuando está vacío.
@@ -12,7 +13,9 @@ export default function CampoCelular({ value, onChange, onBlur, invalido = false
       flags={flags}
       labels={es}
       defaultCountry="CO"
+      addInternationalOption={false}
       countryOptionsOrder={['CO', '|', '...']}
+      countrySelectComponent={SelectorPais}
       // Lo que trae '+' viene del propio campo (incluso a medio escribir); sin
       // '+' es un número viejo de 10 dígitos que hay que pasar a E.164.
       value={(String(value || '').startsWith('+') ? value : celularE164(value)) || undefined}
