@@ -34,6 +34,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { useAuthStore } from '@/store/authStore'
 import SuscripcionBanner from '@/components/shared/SuscripcionBanner'
+import AvisoCelular from './AvisoCelular'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
@@ -508,6 +509,8 @@ export default function AdminShell({
             </div>
           </div>
         ) : null}
+
+        <AvisoCelular />
 
         <Dialog.Root open={isNavOpen} onOpenChange={setIsNavOpen}>
           <Dialog.Portal>
