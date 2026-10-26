@@ -58,8 +58,8 @@ export const pagoManual = {
   destinatario: 'bourgelat',
   precioMensual: 89000,
   precioAnualPorMes: 75000,
-  // Número de WhatsApp para comprobantes (formato internacional sin +, ej. 573001234567).
-  // Vacío mientras se define: la página muestra solo el correo.
-  whatsapp: '',
+  // Número de WhatsApp de Bourgelat (formato internacional sin +). También lo usa
+  // el botón flotante de la landing.
+  whatsapp: '573102047057',
   correo: 'soporte@bourgelat.co',
 }

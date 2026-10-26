@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
+import { pagoManual } from "@/content/publicSiteContent"
 
 // Botón flotante de soporte por WhatsApp. Fijo abajo a la derecha, pero se
 // oculta donde estorbaría: sobre el hero (en móvil taparía sus CTAs) y desde
 // Contacto hasta el final, que ya tienen sus propios botones y el correo.
 // Solo vive en la landing, que siempre tiene #hero y #contacto.
-// TODO: reemplazar PLACEHOLDER por el número real de soporte en formato
-// internacional sin "+", espacios ni guiones (ej. 573001112233).
-const WHATSAPP_NUMBER = '573000000000' // ← PLACEHOLDER
+const WHATSAPP_NUMBER = pagoManual.whatsapp
 const WHATSAPP_MESSAGE = 'Hola, quiero saber más sobre Bourgelat.'
 
 export default function WhatsAppFab() {
