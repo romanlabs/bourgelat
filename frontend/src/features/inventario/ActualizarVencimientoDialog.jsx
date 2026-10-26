@@ -15,21 +15,13 @@ import {
 import { inventarioApi } from './inventarioApi'
 import { inventarioClinicoApi } from '@/features/inventarioClinico/inventarioClinicoApi'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
-import { getErrorMessage, invalidateInventarioQueries } from './inventarioUtils'
+import { getErrorMessage, hoyLocal, invalidateInventarioQueries } from './inventarioUtils'
 import { invalidateInventarioClinicoQueries } from '@/features/inventarioClinico/inventarioClinicoUtils'
 import VencimientosSiguientes from './VencimientosSiguientes'
 
 // Los insumos clinicos admiten decimales (ml, g); el formatNumber del dashboard redondea.
 const formatNumber = (valor) =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(valor || 0))
-
-// Fecha de hoy YYYY-MM-DD en hora local del navegador.
-const hoyLocal = () => {
-  const ahora = new Date()
-  const mes = String(ahora.getMonth() + 1).padStart(2, '0')
-  const dia = String(ahora.getDate()).padStart(2, '0')
-  return `${ahora.getFullYear()}-${mes}-${dia}`
-}
 
 const fieldClass = (hasError) =>
   `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
@@ -61,16 +53,27 @@ const crearSchema = (stock) =>
  * Relevo de vencimiento: la clinica saca lo vencido y deja la fecha del siguiente
  * producto mas cercano a vencer. `item` = { id, nombre, stock, fechaVencimiento, unidad? }.
  * `tipo`: 'producto' (ventas) o 'insumo' (clinico). Sin `item` el dialogo esta cerrado.
+ * Caja lo abre con `aviso` (por que se pide) y `onGuardado`, que recibe la
+ * respuesta ({ stockNuevo, fechaVencimiento }) para seguir con la venta.
  */
-export default function ActualizarVencimientoDialog({ item, tipo = 'producto', onClose }) {
+export default function ActualizarVencimientoDialog({ item, tipo = 'producto', aviso, onGuardado, onClose }) {
   return (
     <DialogRoot open={Boolean(item)} onOpenChange={(abierto) => { if (!abierto) onClose() }}>
-      {item && <ContenidoDialogo key={item.id} item={item} tipo={tipo} onClose={onClose} />}
+      {item && (
+        <ContenidoDialogo
+          key={item.id}
+          item={item}
+          tipo={tipo}
+          aviso={aviso}
+          onGuardado={onGuardado}
+          onClose={onClose}
+        />
+      )}
     </DialogRoot>
   )
 }
 
-function ContenidoDialogo({ item, tipo, onClose }) {
+function ContenidoDialogo({ item, tipo, aviso, onGuardado, onClose }) {
   const queryClient = useQueryClient()
   const stock = Number(item.stock) || 0
   const vencido = Boolean(item.fechaVencimiento) && String(item.fechaVencimiento).slice(0, 10) < hoyLocal()
@@ -102,6 +105,7 @@ function ContenidoDialogo({ item, tipo, onClose }) {
       toast.success(data?.message || 'Vencimiento actualizado')
       if (esInsumo) invalidateInventarioClinicoQueries(queryClient)
       else invalidateInventarioQueries(queryClient)
+      onGuardado?.(data)
       onClose()
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible actualizar el vencimiento.')),
@@ -130,6 +134,10 @@ function ContenidoDialogo({ item, tipo, onClose }) {
       </DialogHeader>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-4 grid gap-4" noValidate>
+        {aviso && (
+          <p className="rounded-xl bg-danger-soft px-3 py-2 text-[13px] text-danger">{aviso}</p>
+        )}
+
         <div className="grid gap-1.5">
           <label htmlFor="av-cantidad" className={labelClass}>
             Unidades vencidas a retirar

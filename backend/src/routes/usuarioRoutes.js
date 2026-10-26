@@ -3,6 +3,7 @@ const { body } = require('express-validator')
 
 const {
   crearUsuario,
+  reenviarInvitacion,
   obtenerUsuarios,
   obtenerEquipoAgenda,
   obtenerEquipoClinica,
@@ -19,8 +20,6 @@ const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadUsuarioFotoSingle } = require('../middlewares/uploadUsuarioFotoMiddleware')
 
 const router = express.Router()
-const passwordFuerteRegex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 const telefonoColombiaRegex = /^3\d{9}$/
 const rolesValidos = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
@@ -37,11 +36,8 @@ router.post(
       .isLength({ min: 3, max: 120 })
       .withMessage('El nombre debe tener entre 3 y 120 caracteres'),
     body('email').trim().isEmail().withMessage('Email invalido').normalizeEmail(),
-    body('password')
-      .matches(passwordFuerteRegex)
-      .withMessage(
-        'La contrasena debe tener entre 8 y 72 caracteres e incluir mayuscula, minuscula, numero y caracter especial'
-      ),
+    // La contraseña la define la persona invitada, nunca el administrador.
+    body('password').not().exists().withMessage('La contraseña la crea la persona invitada desde su correo'),
     body('rol').isIn(rolesValidos).withMessage('Rol no valido'),
     body('rolesAdicionales')
       .optional()
@@ -148,6 +144,14 @@ router.put(
     validar,
   ],
   editarUsuario
+)
+
+router.post(
+  '/:id/reenviar-invitacion',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  reenviarInvitacion
 )
 
 router.patch(

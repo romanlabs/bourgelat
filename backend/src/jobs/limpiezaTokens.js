@@ -5,7 +5,41 @@ const EmailVerificationToken = require('../models/EmailVerificationToken')
 const CodigoVerificacionEmail = require('../models/CodigoVerificacionEmail')
 const AuditoriaLog = require('../models/AuditoriaLog')
 const { IdempotenciaKey } = require('../middlewares/idempotenciaMiddleware')
+const InvitacionUsuario = require('../models/InvitacionUsuario')
+const {
+  inicioVentanaTope,
+  buscarPendientesAbandonadas,
+  borrarCuentaPendiente,
+  DIAS_PARA_LIMPIAR_PENDIENTES,
+} = require('../services/invitacionService')
+const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const logger = require('../utils/logger')
+
+// Cuentas invitadas que nadie aceptó en N días y sin invitación vigente: se
+// borran para liberar el correo (quien fue invitado sin quererlo debe poder
+// registrar su propia clínica con él).
+const limpiarInvitacionesAbandonadas = async () => {
+  const abandonadas = await buscarPendientesAbandonadas()
+  for (const usuario of abandonadas) {
+    try {
+      const resultado = await borrarCuentaPendiente(usuario)
+      await registrarAuditoria({
+        accion: 'INVITACION_VENCIDA',
+        entidad: 'Usuario',
+        entidadId: usuario.id,
+        clinicaId: usuario.clinicaId,
+        usuarioId: null,
+        descripcion: `Invitación a ${usuario.email} sin aceptar en ${DIAS_PARA_LIMPIAR_PENDIENTES} días (cuenta ${resultado})`,
+        resultado: 'exitoso',
+      })
+    } catch (error) {
+      logger.error({ contexto: 'limpieza-invitaciones', mensaje: `${usuario.id}: ${error.message}` })
+    }
+  }
+  if (abandonadas.length > 0) {
+    logger.info({ contexto: 'limpieza', mensaje: `${abandonadas.length} invitaciones abandonadas procesadas` })
+  }
+}
 
 const limpiarTokensVencidos = async () => {
   try {
@@ -53,6 +87,28 @@ const limpiarTokensVencidos = async () => {
         mensaje: `${verificacionEliminados} tokens de verificacion de email eliminados`,
       })
     }
+
+    // Las invitaciones tambien se conservan 24 h: los topes diarios de envio
+    // (invitacionService) cuentan estas filas.
+    const invitacionesEliminadas = await InvitacionUsuario.destroy({
+      where: {
+        [Op.or]: [
+          { expiracion: { [Op.lt]: new Date() } },
+          { usado: true },
+        ],
+        createdAt: { [Op.lt]: inicioVentanaTope() },
+      },
+      sinTenant: true,
+    })
+
+    if (invitacionesEliminadas > 0) {
+      logger.info({
+        contexto: 'limpieza',
+        mensaje: `${invitacionesEliminadas} invitaciones de usuario eliminadas`,
+      })
+    }
+
+    await limpiarInvitacionesAbandonadas()
 
     // Los codigos se conservan 24 h aunque esten usados o vencidos: el tope
     // de codigos por cuenta (codigoVerificacionService) cuenta estas filas.

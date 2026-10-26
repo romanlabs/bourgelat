@@ -1225,6 +1225,21 @@ export default function InventarioPage() {
           {activeTab === 'facturas-compra' && (
             <div className="space-y-4">
 
+              {/* Error de confirmar / anular / pagar */}
+              {facturaCompraHook.errorAccion && (
+                <div role="alert" className="flex items-start gap-3 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium leading-6 text-danger">
+                  <CircleAlert className="mt-1 h-4 w-4 shrink-0" />
+                  <span className="flex-1">{facturaCompraHook.errorAccion}</span>
+                  <button
+                    type="button"
+                    onClick={facturaCompraHook.limpiarErroresAccion}
+                    className={cn(ENLACE, 'shrink-0')}
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              )}
+
               {/* Banner de alertas de pago */}
               {(facturaCompraHook.alertasCompra.totalVencidas > 0 || facturaCompraHook.alertasCompra.totalProximas > 0) && (
                 <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning">

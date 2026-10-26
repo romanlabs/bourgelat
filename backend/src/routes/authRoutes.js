@@ -15,6 +15,9 @@ const {
   cambiarPassword,
   verificarCodigo,
   reenviarCodigo,
+  consultarInvitacion,
+  aceptarInvitacion,
+  rechazarInvitacion,
 } = require('../controllers/authController')
 const {
   iniciar: oauthIniciar,
@@ -145,6 +148,35 @@ router.post(
   ],
   resetPassword
 )
+
+// Invitación de usuarios. Rutas públicas: el token de 256 bits es la
+// credencial, y limitadorAuth frena a quien pruebe tokens al azar.
+const validarTokenInvitacion = body('token')
+  .isString()
+  .withMessage('Token requerido')
+  .bail()
+  .isLength({ min: 20, max: 100 })
+  .withMessage('Token requerido')
+
+router.post('/invitacion/consultar', limitadorAuth, [validarTokenInvitacion, validar], consultarInvitacion)
+
+router.post(
+  '/invitacion/aceptar',
+  limitadorAuth,
+  [
+    validarTokenInvitacion,
+    body('password')
+      .matches(passwordFuerteRegex)
+      .withMessage(
+        'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula, número y carácter especial'
+      ),
+    ...validarAceptacionesLegales,
+    validar,
+  ],
+  aceptarInvitacion
+)
+
+router.post('/invitacion/rechazar', limitadorAuth, [validarTokenInvitacion, validar], rechazarInvitacion)
 
 router.post(
   '/verify-email',

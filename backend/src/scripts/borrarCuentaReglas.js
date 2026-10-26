@@ -10,6 +10,8 @@ const TABLAS_PERMITIDAS = new Set([
   'auditoria_logs',
   'refresh_tokens',
   'consultorios',
+  // Enlaces de invitación: no son datos clínicos y caen en cascada con el usuario.
+  'invitaciones_usuario',
 ])
 
 /**

@@ -29,7 +29,7 @@ describe('debeIntentarRefresh', () => {
   })
 
   it('NO refresca en los demás formularios de acceso', () => {
-    for (const url of ['/auth/verificar-codigo', '/auth/reenviar-codigo', '/auth/forgot-password', '/auth/reset-password']) {
+    for (const url of ['/auth/verificar-codigo', '/auth/reenviar-codigo', '/auth/forgot-password', '/auth/reset-password', '/auth/invitacion/consultar', '/auth/invitacion/aceptar', '/auth/invitacion/rechazar']) {
       expect(debeIntentarRefresh(error401({ url }))).toBe(false)
     }
   })

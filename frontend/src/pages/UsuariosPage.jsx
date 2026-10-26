@@ -37,10 +37,10 @@ const STATUS_OPTIONS = [
   { value: 'inactivos', label: 'Inactivos' },
 ]
 
+// Sin contraseña: la persona invitada la crea desde el enlace de su correo.
 const DEFAULT_CREATE_FORM = {
   nombre: '',
   email: '',
-  password: '',
   rol: 'recepcionista',
   telefono: '',
   rolesAdicionales: [],
@@ -56,7 +56,6 @@ const DEFAULT_EDIT_FORM = {
   activo: true,
 }
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 const phoneRegex = /^3\d{9}$/
 
 const getErrorMessage = (error, fallback) =>
@@ -172,8 +171,9 @@ function Campo({ label, children }) {
   )
 }
 
-// Editar y activar/desactivar en un menú «⋯». La propia cuenta no se desactiva.
-function AccionesUsuario({ nombre, onEditar, onCambiarEstado, activo }) {
+// Editar, reenviar invitación y activar/desactivar en un menú «⋯». La propia
+// cuenta no se desactiva.
+function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, activo }) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -194,6 +194,11 @@ function AccionesUsuario({ nombre, onEditar, onCambiarEstado, activo }) {
           <DropdownMenu.Item onSelect={onEditar} className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted">
             Editar
           </DropdownMenu.Item>
+          {onReenviar ? (
+            <DropdownMenu.Item onSelect={onReenviar} className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted">
+              Reenviar invitación
+            </DropdownMenu.Item>
+          ) : null}
           {onCambiarEstado ? (
             <DropdownMenu.Item
               onSelect={onCambiarEstado}
@@ -335,36 +340,6 @@ function RoleBadges({ user }) {
   )
 }
 
-function PasswordChecklist({ password, visible }) {
-  if (!visible) return null
-
-  const rules = [
-    { id: 'length', label: 'Entre 8 y 72 caracteres', valid: /^.{8,72}$/.test(password) },
-    { id: 'upper', label: 'Una mayúscula', valid: /[A-Z]/.test(password) },
-    { id: 'lower', label: 'Una minúscula', valid: /[a-z]/.test(password) },
-    { id: 'number', label: 'Un número', valid: /\d/.test(password) },
-    { id: 'special', label: 'Un carácter especial', valid: /[^A-Za-z0-9]/.test(password) },
-  ]
-
-  return (
-    <div className="rounded-xl bg-muted px-4 py-3.5">
-      <p className="text-sm font-semibold text-foreground">
-        Requisitos de acceso
-      </p>
-      <div className="mt-3 grid gap-2">
-        {rules.map((rule) => (
-          <div key={rule.id} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">{rule.label}</span>
-            <span className={rule.valid ? 'font-semibold text-success' : 'text-muted-foreground'}>
-              {rule.valid ? 'Cumple' : 'Pendiente'}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function RestrictedUsersPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -395,7 +370,6 @@ export default function UsuariosPage() {
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
-  const [showPasswordChecklist, setShowPasswordChecklist] = useState(false)
 
   const busquedaDiferida = useDeferredValue(buscar.trim().toLowerCase())
   const rolPermitido = canAccessModule(usuario, 'usuarios')
@@ -415,14 +389,25 @@ export default function UsuariosPage() {
   const crearUsuarioMutation = useMutation({
     mutationFn: usuariosApi.crearUsuario,
     onSuccess: (data) => {
-      toast.success(data?.message || 'Usuario creado exitosamente')
+      // La cuenta queda creada aunque el correo falle: se avisa para reenviar.
+      if (data?.invitacionEnviada === false) toast.warning(data.message)
+      else toast.success(data?.message || 'Invitación enviada')
       setCreateForm(DEFAULT_CREATE_FORM)
-      setShowPasswordChecklist(false)
       setPanel(null)
       invalidarDominios(queryClient, 'equipo')
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, 'No fue posible crear el usuario.'))
+      toast.error(getErrorMessage(error, 'No fue posible enviar la invitación.'))
+    },
+  })
+
+  const reenviarInvitacionMutation = useMutation({
+    mutationFn: ({ id }) => usuariosApi.reenviarInvitacion(id),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Invitación reenviada')
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible reenviar la invitación.'))
     },
   })
 
@@ -437,6 +422,8 @@ export default function UsuariosPage() {
           useAuthStore.setState((state) => ({
             usuario: {
               ...state.usuario,
+              // Un correo nuevo vuelve a pedir verificación (el aviso del encabezado).
+              ...(data.usuario.email !== state.usuario?.email ? { emailVerificado: false } : {}),
               nombre: data.usuario.nombre,
               email: data.usuario.email,
               telefono: data.usuario.telefono,
@@ -493,8 +480,9 @@ export default function UsuariosPage() {
   }, [busquedaDiferida, estado, rolFiltro, usuarios])
 
   const activos = useMemo(() => usuarios.filter((item) => item.activo), [usuarios])
+  // Quien no ha aceptado su invitación aún no puede atender.
   const totalVeterinarios = useMemo(
-    () => activos.filter((item) => hasVeterinaryAccess(item)).length,
+    () => activos.filter((item) => hasVeterinaryAccess(item) && !item.invitacionPendiente).length,
     [activos]
   )
   const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
@@ -518,7 +506,9 @@ export default function UsuariosPage() {
   )
 
   const esUsuarioActualSeleccionado = selectedUser?.id === usuario?.id
-  const createPasswordValid = passwordRegex.test(createForm.password)
+  // El correo de una cuenta ya activada es su llave de recuperación: solo se
+  // corrige mientras la invitación está pendiente (o en la cuenta propia).
+  const puedeEditarCorreo = Boolean(selectedUser?.invitacionPendiente) || esUsuarioActualSeleccionado
 
   const handleCreateUser = (event) => {
     event.preventDefault()
@@ -526,7 +516,6 @@ export default function UsuariosPage() {
     const payload = {
       nombre: createForm.nombre.trim(),
       email: normalizeEmail(createForm.email),
-      password: createForm.password,
       rol: createForm.rol,
       telefono: normalizePhone(createForm.telefono),
       rolesAdicionales: normalizeRoles(createForm.rolesAdicionales, createForm.rol),
@@ -539,11 +528,6 @@ export default function UsuariosPage() {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
       toast.error('Ingresa un correo corporativo válido para el usuario.')
-      return
-    }
-
-    if (!createPasswordValid) {
-      toast.error('La contraseña inicial aún no cumple los requisitos de seguridad.')
       return
     }
 
@@ -568,7 +552,7 @@ export default function UsuariosPage() {
 
     const payload = {
       nombre: editForm.nombre.trim(),
-      email: normalizeEmail(editForm.email),
+      email: puedeEditarCorreo ? normalizeEmail(editForm.email) : selectedUser.email,
       telefono: normalizePhone(editForm.telefono),
     }
 
@@ -610,10 +594,7 @@ export default function UsuariosPage() {
     setEditForm(buildEditForm(user))
     setPanel('editar')
   }
-  const cerrarPanel = () => {
-    setPanel(null)
-    setShowPasswordChecklist(false)
-  }
+  const cerrarPanel = () => setPanel(null)
 
   const totalEquipo = activos.length
   const titulo = usuariosQuery.isPending
@@ -738,17 +719,26 @@ export default function UsuariosPage() {
                         </td>
                         <td className="px-3 py-3.5"><RoleBadges user={row.raw} /></td>
                         <td className="whitespace-nowrap px-3 py-3.5 text-muted-foreground">
-                          {formatLastAccess(row.ultimoAcceso, esActual)}
+                          {row.raw.invitacionPendiente ? 'Aún no ha entrado' : formatLastAccess(row.ultimoAcceso, esActual)}
                         </td>
                         <td className="px-3 py-3.5">
-                          <StatusPill tone={cn('whitespace-nowrap', row.activo ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground')}>
-                            {row.activo ? 'Activo' : 'Inactivo'}
-                          </StatusPill>
+                          {row.activo && row.raw.invitacionPendiente ? (
+                            <StatusPill tone="whitespace-nowrap bg-warning-soft text-warning">Invitación pendiente</StatusPill>
+                          ) : (
+                            <StatusPill tone={cn('whitespace-nowrap', row.activo ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground')}>
+                              {row.activo ? 'Activo' : 'Inactivo'}
+                            </StatusPill>
+                          )}
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <AccionesUsuario
                             nombre={row.nombre}
                             onEditar={() => abrirEditar(row.raw)}
+                            onReenviar={
+                              row.activo && row.raw.invitacionPendiente
+                                ? () => reenviarInvitacionMutation.mutate({ id: row.raw.id })
+                                : null
+                            }
                             onCambiarEstado={
                               esActual ? null : () => toggleUsuarioMutation.mutate({ id: row.raw.id })
                             }
@@ -770,7 +760,7 @@ export default function UsuariosPage() {
       <PanelLateral
         abierto={panel === 'crear'}
         titulo="Invitar a alguien"
-        subtitulo="Crea su acceso con rol, celular laboral y una contraseña inicial que podrá cambiar."
+        subtitulo="Le llegará un enlace a su correo para crear su propia contraseña. Nadie más la conocerá."
         onCerrar={cerrarPanel}
       >
         <form className="grid gap-4" onSubmit={handleCreateUser}>
@@ -804,47 +794,36 @@ export default function UsuariosPage() {
               />
             </Campo>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo label="Rol principal">
-              <Select
-                variant="field"
-                aria-label="Rol principal"
-                className="h-11"
-                value={createForm.rol}
-                onValueChange={(value) =>
-                  setCreateForm((current) => ({
-                    ...current,
-                    rol: value,
-                    rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
-                  }))
-                }
-                options={ROLE_OPTIONS}
-              />
-            </Campo>
-            <Campo label="Contraseña inicial">
-              <input
-                type="password"
-                // Es la clave de otra persona: que el navegador no ponga la guardada.
-                autoComplete="new-password"
-                value={createForm.password}
-                onFocus={() => setShowPasswordChecklist(true)}
-                onChange={(event) => setCreateForm((current) => ({ ...current, password: event.target.value }))}
-                className={CAMPO}
-              />
-            </Campo>
-          </div>
-          <PasswordChecklist password={createForm.password} visible={showPasswordChecklist || createForm.password.length > 0} />
+          <Campo label="Rol principal">
+            <Select
+              variant="field"
+              aria-label="Rol principal"
+              className="h-11"
+              value={createForm.rol}
+              onValueChange={(value) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  rol: value,
+                  rolesAdicionales: normalizeRoles(current.rolesAdicionales, value),
+                }))
+              }
+              options={ROLE_OPTIONS}
+            />
+          </Campo>
           <RoleChecklist
             primaryRole={createForm.rol}
             value={createForm.rolesAdicionales}
             onChange={(rolesAdicionales) => setCreateForm((current) => ({ ...current, rolesAdicionales }))}
           />
+          <p className="rounded-xl bg-muted px-4 py-3.5 text-sm leading-6 text-muted-foreground">
+            El enlace vence en 72 horas. Mientras no lo abra, la persona aparece como «Invitación pendiente» y puedes reenviárselo o corregir su correo.
+          </p>
           <button
             type="submit"
             disabled={crearUsuarioMutation.isPending}
             className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
           >
-            {crearUsuarioMutation.isPending ? 'Guardando…' : 'Crear acceso'}
+            {crearUsuarioMutation.isPending ? 'Enviando…' : 'Enviar invitación'}
           </button>
         </form>
       </PanelLateral>
@@ -854,7 +833,9 @@ export default function UsuariosPage() {
         titulo={selectedUser ? `Editar a ${selectedUser.nombre}` : 'Editar'}
         subtitulo={
           selectedUser
-            ? `Último acceso: ${formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)} · ${selectedUser.activo ? 'Activo' : 'Inactivo'}`
+            ? selectedUser.invitacionPendiente
+              ? `Invitación pendiente · ${selectedUser.activo ? 'Activo' : 'Inactivo'}`
+              : `Último acceso: ${formatLastAccess(selectedUser.ultimoAcceso, esUsuarioActualSeleccionado)} · ${selectedUser.activo ? 'Activo' : 'Inactivo'}`
             : ''
         }
         onCerrar={cerrarPanel}
@@ -874,8 +855,10 @@ export default function UsuariosPage() {
                 <input
                   type="email"
                   value={editForm.email}
+                  disabled={!puedeEditarCorreo}
+                  aria-describedby={puedeEditarCorreo ? undefined : 'correo-bloqueado'}
                   onChange={(event) => setEditForm((current) => ({ ...current, email: event.target.value }))}
-                  className={CAMPO}
+                  className={cn(CAMPO, 'disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground')}
                 />
               </Campo>
               <Campo label="Celular laboral (opcional)">
@@ -888,6 +871,17 @@ export default function UsuariosPage() {
                 />
               </Campo>
             </div>
+            {puedeEditarCorreo ? (
+              selectedUser.invitacionPendiente ? (
+                <p className="-mt-2 text-[13px] leading-5 text-muted-foreground">
+                  Si corriges el correo, la invitación anterior se anula y enviamos una nueva al correo corregido.
+                </p>
+              ) : null
+            ) : (
+              <p id="correo-bloqueado" className="-mt-2 text-[13px] leading-5 text-muted-foreground">
+                El correo de una cuenta activa no se cambia desde aquí: es con el que esa persona recupera su contraseña. Si ya no lo usa, desactívala e invítala con el correo nuevo.
+              </p>
+            )}
             <Campo label="Rol principal">
               <Select
                 variant="field"
