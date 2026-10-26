@@ -9,6 +9,7 @@ import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useBuscarPropietarios } from './useRecepcion'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM } from '@/lib/especies'
+import { formatearCelular } from '@/lib/celular'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -92,7 +93,7 @@ export function TutorPetSelector({
       nombre: formData.nombre.trim(),
       tipoDocumento: formData.tipoDocumento,
       numeroDocumento: formData.numeroDocumento.trim(),
-      telefono: formData.telefono.replace(/\D/g, ''),
+      telefono: formData.telefono,
       email: formData.email?.trim().toLowerCase() || undefined,
       ciudad: formData.ciudad?.trim() || undefined,
     })
@@ -128,7 +129,7 @@ export function TutorPetSelector({
           {selectedOwner ? (
             <div className="rounded-xl bg-success-soft px-4 py-3 text-sm text-foreground">
               <p className="font-semibold text-foreground">{selectedOwner.nombre}</p>
-              <p className="mt-1">{selectedOwner.telefono || 'Sin teléfono principal'}</p>
+              <p className="mt-1">{formatearCelular(selectedOwner.telefono) || 'Sin teléfono principal'}</p>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
@@ -150,7 +151,7 @@ export function TutorPetSelector({
                   <div>
                     <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {owner.telefono || 'Sin teléfono principal'}
+                      {formatearCelular(owner.telefono) || 'Sin teléfono principal'}
                     </p>
                   </div>
                   <span className="text-[13px] font-semibold text-muted-foreground">

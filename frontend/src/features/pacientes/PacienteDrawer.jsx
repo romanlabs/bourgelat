@@ -9,6 +9,7 @@ import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM, ESPECIE_VALORES, etiquetaEspecie } from '@/lib/especies'
 import { hoyLocal } from '@/lib/fecha'
+import { formatearCelular } from '@/lib/celular'
 
 const SEX_OPTIONS = [
   { value: 'desconocido', label: 'Sin especificar' },
@@ -216,7 +217,7 @@ export default function PacienteDrawer({
                 <div className="rounded-xl bg-card px-4 py-3 text-sm text-foreground">
                   <p className="font-semibold">{selectedOwner?.nombre || 'Sin tutor'}</p>
                   <p className="mt-1 text-[13px] text-muted-foreground">
-                    {selectedOwner?.telefono || 'Sin teléfono'}
+                    {formatearCelular(selectedOwner?.telefono) || 'Sin teléfono'}
                     {selectedOwner?.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
                   <p className="mt-2 text-[13px] leading-5 text-muted-foreground">
@@ -228,7 +229,7 @@ export default function PacienteDrawer({
                 <div className="rounded-xl bg-success-soft px-4 py-3 text-sm text-success">
                   <p className="font-semibold">{selectedOwner.nombre}</p>
                   <p className="mt-1 text-[13px]">
-                    {selectedOwner.telefono || 'Sin teléfono'}
+                    {formatearCelular(selectedOwner.telefono) || 'Sin teléfono'}
                     {selectedOwner.numeroDocumento ? ` · ${selectedOwner.numeroDocumento}` : ''}
                   </p>
                   <button
@@ -273,7 +274,7 @@ export default function PacienteDrawer({
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{owner.telefono || 'Sin teléfono'}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{formatearCelular(owner.telefono) || 'Sin teléfono'}</p>
                       </div>
                       <span className="shrink-0 text-[13px] font-semibold text-primary">Seleccionar</span>
                     </button>

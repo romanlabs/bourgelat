@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
+import { formatearCelular } from '@/lib/celular'
 
 export default function TutorSelectorDrawer({
   open,
@@ -100,7 +101,7 @@ export default function TutorSelectorDrawer({
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {propietario.numeroDocumento}
-                        {propietario.telefono ? ` · ${propietario.telefono}` : ''}
+                        {propietario.telefono ? ` · ${formatearCelular(propietario.telefono)}` : ''}
                       </p>
                     </div>
                     {propietario.id === selectedId && (

@@ -3,6 +3,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { RecepcionDrawer } from './RecepcionDrawer'
 import { ACCION_LABELS, ORIGEN_LABELS, TRANSICIONES, TYPE_OPTIONS } from './recepcionConstants'
 import { etiquetaEspecie } from '@/lib/especies'
+import { formatearCelular } from '@/lib/celular'
 
 const formatTime = (value) => value?.slice(0, 5) || '--:--'
 
@@ -78,7 +79,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
             <Dato label="Telefono">
               {cita.propietario?.telefono ? (
                 <a href={`tel:${cita.propietario.telefono}`} className="tabular-nums text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-                  {cita.propietario.telefono}
+                  {formatearCelular(cita.propietario.telefono)}
                 </a>
               ) : (
                 <span className="text-muted-foreground">Sin registrar</span>

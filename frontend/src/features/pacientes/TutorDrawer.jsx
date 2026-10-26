@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { X } from 'lucide-react'
 import { DOCUMENT_OPTIONS } from './useTutores'
 import { Select } from '@/components/ui/select'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { celularE164, esCelularValido } from '@/lib/celular'
 
 const tutorSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -14,8 +16,7 @@ const tutorSchema = z.object({
   telefono: z
     .string()
     .min(1, 'El teléfono es requerido')
-    .transform((v) => v.replace(/\D/g, ''))
-    .refine((v) => v.length >= 7 && v.length <= 10, 'Usa un teléfono válido entre 7 y 10 dígitos'),
+    .refine(esCelularValido, 'Ese número no es válido para el país elegido'),
   email: z.string().email('Correo inválido').optional().or(z.literal('')),
   ciudad: z.string().optional(),
 })
@@ -52,7 +53,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             nombre: editingTutor.nombre || '',
             tipoDocumento: editingTutor.tipoDocumento || 'CC',
             numeroDocumento: editingTutor.numeroDocumento || '',
-            telefono: editingTutor.telefono || '',
+            telefono: celularE164(editingTutor.telefono),
             email: editingTutor.email || '',
             ciudad: editingTutor.ciudad || '',
           }
@@ -152,11 +153,24 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5">
+              <div className="flex min-w-0 flex-col gap-1.5">
                 <label htmlFor="t-tel" className="text-[13px] font-medium text-muted-foreground">
-                  Telefono o celular *
+                  Teléfono o celular *
                 </label>
-                <input id="t-tel" type="text" inputMode="numeric" placeholder="Número principal" className={`${fieldClass} ${errors.telefono ? 'border-danger' : ''}`} {...register('telefono')} />
+                <Controller
+                  name="telefono"
+                  control={control}
+                  render={({ field }) => (
+                    <CampoCelular
+                      id="t-tel"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      invalido={Boolean(errors.telefono)}
+                      className="min-w-0 text-sm"
+                    />
+                  )}
+                />
                 {errors.telefono && <p className="text-[13px] text-danger">{errors.telefono.message}</p>}
               </div>
               <div className="grid gap-1.5">
