@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
 import { useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { esCelularValido } from '@/lib/celular'
 
 const esquema = z.object({
   nombreClinica: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
+  telefono: z.string().refine(esCelularValido, 'Escribe un celular válido para el país elegido'),
   aceptaTerminos: z
     .boolean()
     .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
@@ -39,7 +42,7 @@ export default function CompletarRegistroPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(esquema),
-    defaultValues: { nombreClinica: '', aceptaTerminos: false, aceptaComunicaciones: false },
+    defaultValues: { nombreClinica: '', telefono: '', aceptaTerminos: false, aceptaComunicaciones: false },
     mode: 'onBlur',
   })
   const aceptaTerminos = useWatch({ control, name: 'aceptaTerminos' })
@@ -102,6 +105,28 @@ export default function CompletarRegistroPage() {
                 {errors.nombreClinica ? (
                   <p className="mt-1.5 text-sm text-danger">{errors.nombreClinica.message}</p>
                 ) : null}
+              </div>
+
+              <div>
+                <label htmlFor="completar-celular" className="mb-2 block text-sm font-semibold text-foreground">
+                  Celular (WhatsApp)
+                </label>
+                <Controller
+                  name="telefono"
+                  control={control}
+                  render={({ field }) => (
+                    <CampoCelular
+                      id="completar-celular"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="300 1234567"
+                      invalido={Boolean(errors.telefono)}
+                      className="h-12 text-base"
+                    />
+                  )}
+                />
+                {errors.telefono ? <p className="mt-1.5 text-sm text-danger">{errors.telefono.message}</p> : null}
               </div>
 
               <ConsentimientoRegistro

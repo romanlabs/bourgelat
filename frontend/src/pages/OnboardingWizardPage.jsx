@@ -64,7 +64,8 @@ export default function OnboardingWizardPage() {
   const [respuestas, setRespuestas] = useState({
     usoPlanificado: '',
     cargo: '',
-    whatsapp: '',
+    // Ya lo dio al registrarse; aquí solo lo confirma.
+    whatsapp: useAuthStore.getState().usuario?.telefono || '',
     tipoClinica: '',
     tamanoEquipo: '',
     mascotasPorMes: '',

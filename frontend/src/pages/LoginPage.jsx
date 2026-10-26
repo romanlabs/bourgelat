@@ -14,6 +14,8 @@ import CodigoVerificacionPaso from '@/features/auth/CodigoVerificacionPaso'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { esCelularValido } from '@/lib/celular'
 
 const loginSchema = z.object({
   email: z.string().trim().email('Ingresa un correo válido'),
@@ -50,6 +52,9 @@ export default function LoginPage() {
   )
   const [tokenOnboardingOauth, setTokenOnboardingOauth] = useState(null)
   const [aceptaTerminosOauth, setAceptaTerminosOauth] = useState(false)
+  const [celularOauth, setCelularOauth] = useState('')
+  const [celularOauthTocado, setCelularOauthTocado] = useState(false)
+  const celularOauthValido = esCelularValido(celularOauth)
   const { mutate: completarRegistroOauth, isPending: completandoOauth } = useCompletarRegistroOauth()
 
   useEffect(() => {
@@ -309,6 +314,7 @@ export default function LoginPage() {
                 completarRegistroOauth({
                   token: tokenOnboardingOauth,
                   nombreClinica: formulario.get('nombreClinica'),
+                  telefono: celularOauth,
                   aceptaTerminos: aceptaTerminosOauth,
                   aceptaComunicaciones: formulario.get('aceptaComunicaciones') === 'on',
                 })
@@ -322,6 +328,20 @@ export default function LoginPage() {
                 placeholder="Veterinaria San Roque"
                 className={inputClass}
               />
+              <div>
+                <CampoCelular
+                  value={celularOauth}
+                  onChange={setCelularOauth}
+                  onBlur={() => setCelularOauthTocado(true)}
+                  placeholder="Celular (WhatsApp)"
+                  aria-label="Celular (WhatsApp)"
+                  invalido={celularOauthTocado && Boolean(celularOauth) && !celularOauthValido}
+                  className="h-12 muy-bajo:h-11"
+                />
+                {celularOauthTocado && celularOauth && !celularOauthValido ? (
+                  <p className="mt-1.5 text-sm text-danger">Escribe un celular válido para el país elegido</p>
+                ) : null}
+              </div>
               <ConsentimientoRegistro
                 terminosProps={{
                   checked: aceptaTerminosOauth,
@@ -329,7 +349,11 @@ export default function LoginPage() {
                 }}
                 comunicacionesProps={{ name: 'aceptaComunicaciones' }}
               />
-              <Button type="submit" disabled={completandoOauth || !aceptaTerminosOauth} className={botonPrincipalClass}>
+              <Button
+                type="submit"
+                disabled={completandoOauth || !aceptaTerminosOauth || !celularOauthValido}
+                className={botonPrincipalClass}
+              >
                 {completandoOauth ? 'Creando cuenta...' : 'Continuar'}
               </Button>
             </form>

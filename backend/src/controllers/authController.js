@@ -226,7 +226,7 @@ const registro = async (req, res) => {
       })
     }
 
-    if (limpiarTexto(telefono) && !esCelularValido(telefono)) {
+    if (!esCelularValido(telefono)) {
       return res.status(400).json({
         message: MENSAJE_CELULAR_INVALIDO,
       })

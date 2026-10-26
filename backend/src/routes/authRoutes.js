@@ -70,8 +70,8 @@ router.post(
       .isEmail()
       .withMessage('Email de la clinica invalido')
       .normalizeEmail(),
+    // Sin celular no hay cómo contactar a la clínica (cobro, soporte).
     body('telefono')
-      .optional({ values: 'falsy' })
       .trim()
       .custom(esCelularValido)
       .withMessage(MENSAJE_CELULAR_INVALIDO)
@@ -246,6 +246,11 @@ router.post(
   [
     body('token').notEmpty().withMessage('Token requerido'),
     body('nombreClinica').trim().notEmpty().isLength({ max: 160 }).withMessage('El nombre de la clinica es obligatorio'),
+    body('telefono')
+      .trim()
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO)
+      .customSanitizer(normalizarCelular),
     ...validarAceptacionesLegales,
     validar,
   ],

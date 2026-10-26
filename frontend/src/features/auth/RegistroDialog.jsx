@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
@@ -16,6 +16,8 @@ import TurnstileWidget from '@/components/auth/TurnstileWidget'
 import { turnstileHabilitado } from '@/lib/turnstile'
 import CodigoVerificacionPaso from './CodigoVerificacionPaso'
 import { useRegistro, useSesionVerificada } from './useAuth'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { esCelularValido } from '@/lib/celular'
 
 // Misma composición que LoginPage.jsx (Google primero, campos altos con borde,
 // un solo botón petróleo). El modal se abre desde LoginPage y desde la landing,
@@ -25,6 +27,7 @@ const esquema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
   nombreAdministrador: z.string().trim().min(1, 'Tu nombre es requerido').max(120),
   email: z.string().trim().email('Correo inválido'),
+  telefono: z.string().refine(esCelularValido, 'Escribe un celular válido para el país elegido'),
   password: z
     .string()
     .regex(
@@ -71,6 +74,7 @@ export default function RegistroDialog({ open, onOpenChange }) {
       nombre: '',
       nombreAdministrador: '',
       email: '',
+      telefono: '',
       password: '',
       aceptaTerminos: false,
       aceptaComunicaciones: false,
@@ -197,6 +201,29 @@ export default function RegistroDialog({ open, onOpenChange }) {
               <p className="mt-1.5 text-sm text-danger">{errors.email.message}</p>
             ) : (
               <p className={ayudaClass}>Te enviamos un código para confirmarlo.</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="registro-celular" className={labelClass}>Celular (WhatsApp)</label>
+            <Controller
+              name="telefono"
+              control={control}
+              render={({ field }) => (
+                <CampoCelular
+                  id="registro-celular"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="300 1234567"
+                  invalido={Boolean(errors.telefono)}
+                />
+              )}
+            />
+            {errors.telefono ? (
+              <p className="mt-1.5 text-sm text-danger">{errors.telefono.message}</p>
+            ) : (
+              <p className={ayudaClass}>Para avisarte de tu plan y ayudarte si algo falla.</p>
             )}
           </div>
 
