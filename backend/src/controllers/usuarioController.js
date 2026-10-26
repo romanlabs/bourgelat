@@ -512,7 +512,9 @@ const editarUsuario = async (req, res) => {
     if (nombre !== undefined) datosActualizar.nombre = nombreNormalizado
     if (email !== undefined) datosActualizar.email = emailNormalizado
     // Un correo nuevo aún no está probado: vuelve a pedir verificación.
-    if (cambiaEmail) datosActualizar.emailVerificado = false
+    // Salvo en una cuenta local sin contraseña cuyo login social ya probó el
+    // correo: quedaría igual que una invitación pendiente y sin forma de entrar.
+    if (cambiaEmail && (invitacionPendiente || usuario.password)) datosActualizar.emailVerificado = false
     if (telefono !== undefined) datosActualizar.telefono = telefonoNormalizado || null
     if (rol !== undefined) datosActualizar.rol = siguienteRol
     if (rolesAdicionales !== undefined) datosActualizar.rolesAdicionales = siguientesRolesAdicionales
