@@ -6,7 +6,7 @@ const CODES_SIN_REFRESH = new Set(['USER_INACTIVE', 'CLINIC_INACTIVE'])
 // debe llegar al formulario como error, sin refresh, logout ni recarga a /login.
 // Antes la recarga borraba el formulario y el aviso «Credenciales incorrectas».
 const RUTAS_DE_CREDENCIALES =
-  /\/auth\/(login|registro|verificar-codigo|reenviar-codigo|forgot-password|reset-password)\b/
+  /\/auth\/(login|registro|verificar-codigo|reenviar-codigo|forgot-password|reset-password|invitacion)\b/
 
 export const esRutaDeCredenciales = (error) =>
   RUTAS_DE_CREDENCIALES.test(error?.config?.url || '')

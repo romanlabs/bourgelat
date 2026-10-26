@@ -75,4 +75,24 @@ export const authApi = {
     const { data } = await api.post('/auth/resend-verification', { email })
     return data
   },
+
+  consultarInvitacion: async ({ token }) => {
+    const { data } = await api.post('/auth/invitacion/consultar', { token })
+    return data
+  },
+
+  aceptarInvitacion: async ({ token, password, aceptaTerminos, aceptaComunicaciones }) => {
+    const { data } = await api.post('/auth/invitacion/aceptar', {
+      token,
+      password,
+      aceptaTerminos,
+      aceptaComunicaciones,
+    })
+    return data
+  },
+
+  rechazarInvitacion: async ({ token }) => {
+    const { data } = await api.post('/auth/invitacion/rechazar', { token })
+    return data
+  },
 }

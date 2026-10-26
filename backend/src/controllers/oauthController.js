@@ -12,6 +12,7 @@ const Suscripcion = require('../models/Suscripcion')
 const { crearSuscripcionPrueba } = require('../config/planes')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const { enviarEmailBienvenida } = require('../services/emailService')
+const { estaPendiente } = require('../services/invitacionService')
 
 const COOKIE_FLUJO = 'bourgelat_oauth_flujo'
 
@@ -61,6 +62,13 @@ const callback = async (req, res) => {
 
     if (usuario) {
       if (!usuario.activo || !usuario.clinicaId) return irALoginConError()
+
+      // Invitación sin aceptar: Google prueba que el correo es suyo, pero no
+      // que quiera unirse a esa clínica. Se acepta (o rechaza) desde el enlace
+      // del correo; si no, cualquiera podría meter a otro en su clínica.
+      if (estaPendiente(usuario)) {
+        return res.redirect(`${oauthConfig.frontendUrl}/login?error=invitacion`)
+      }
 
       // Pre-hijacking: alguien pudo registrar una cuenta local con este correo
       // (sin verificarlo) y conservar la contraseña. Google acaba de probar que

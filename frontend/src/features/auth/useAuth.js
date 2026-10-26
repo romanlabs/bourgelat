@@ -113,6 +113,23 @@ export const useResetPassword = () =>
     mutationFn: authApi.resetPassword,
   })
 
+// Mutación y no query: el token es una credencial y no debe quedar como clave
+// en el caché de React Query.
+export const useConsultarInvitacion = () =>
+  useMutation({
+    mutationFn: authApi.consultarInvitacion,
+  })
+
+export const useAceptarInvitacion = () =>
+  useMutation({
+    mutationFn: authApi.aceptarInvitacion,
+  })
+
+export const useRechazarInvitacion = () =>
+  useMutation({
+    mutationFn: authApi.rechazarInvitacion,
+  })
+
 export const useVerificarEmail = () => {
   const usuario = useAuthStore((s) => s.usuario)
   const setUsuario = useAuthStore((s) => s.setUsuario)

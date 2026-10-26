@@ -54,6 +54,8 @@ const {
 const logger = require('../utils/logger')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const { validarCorreoRegistro } = require('../services/correoRegistroService')
+const { hashToken, urlFrontend } = require('../utils/enlaceSeguro')
+const invitacionService = require('../services/invitacionService')
 const passwordFuerteRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
@@ -400,6 +402,15 @@ const login = async (req, res) => {
       })
     }
 
+    // Invitación sin aceptar: se responde igual que a un correo inexistente
+    // para no revelar a quién invitó cada clínica.
+    if (invitacionService.estaPendiente(usuario)) {
+      await compararConHashFicticio(password)
+      return res.status(401).json({
+        message: 'Credenciales incorrectas',
+      })
+    }
+
     if (!usuario.password) {
       const proveedorNombre = usuario.proveedorAuth === 'microsoft' ? 'Microsoft' : 'Google'
       return res.status(400).json({
@@ -726,17 +737,6 @@ const me = async (req, res) => {
 const RESET_TOKEN_MINUTOS = 30
 const VERIFICATION_TOKEN_HORAS = 24
 
-const hashToken = (token) =>
-  crypto.createHash('sha256').update(token).digest('hex')
-
-const urlFrontend = () =>
-  (
-    process.env.OAUTH_FRONTEND_URL ||
-    process.env.FRONTEND_URLS?.split(',')[0] ||
-    process.env.FRONTEND_URL ||
-    ''
-  ).replace(/\/$/, '')
-
 // Siempre responde 200 con el mismo mensaje, exista o no la cuenta:
 // no revelar qué correos están registrados (user enumeration).
 const forgotPassword = async (req, res) => {
@@ -787,52 +787,58 @@ const forgotPassword = async (req, res) => {
   }
 }
 
+const MENSAJE_ENLACE_RESET_INVALIDO = 'El enlace no es válido o ya expiró. Solicita uno nuevo.'
+
 const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body
-
-    const registro = await PasswordResetToken.findOne({
-      where: {
-        tokenHash: hashToken(token),
-        usado: false,
-        expiracion: { [Op.gt]: new Date() },
-      },
-      sinTenant: true,
+    const condicionVigente = () => ({
+      tokenHash: hashToken(token),
+      usado: false,
+      expiracion: { [Op.gt]: new Date() },
     })
 
-    if (!registro) {
-      return res.status(401).json({
-        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
-      })
-    }
-
-    const usuario = await Usuario.findOne({
-      where: { id: registro.usuarioId },
-      sinTenant: true,
-    })
-
-    if (!usuario || !usuario.activo) {
-      return res.status(401).json({
-        message: 'El enlace no es válido o ya expiró. Solicita uno nuevo.',
-      })
+    // Revisión barata antes del bcrypt, para no gastar CPU en tokens inventados.
+    const vigente = await PasswordResetToken.findOne({ where: condicionVigente(), sinTenant: true })
+    if (!vigente) {
+      return res.status(401).json({ message: MENSAJE_ENLACE_RESET_INVALIDO })
     }
 
     const salt = await bcrypt.genSalt(12)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    await sequelize.transaction(async (transaction) => {
-      await usuario.update(
+    const usuario = await sequelize.transaction(async (transaction) => {
+      // Consumo atómico: con dos peticiones simultáneas con el mismo enlace,
+      // solo una recibe la fila y cambia la contraseña.
+      const [filas, consumidos] = await PasswordResetToken.update(
+        { usado: true },
+        { where: condicionVigente(), returning: true, transaction, sinTenant: true }
+      )
+      if (filas !== 1) return null
+
+      const encontrado = await Usuario.findOne({
+        where: { id: consumidos[0].usuarioId },
+        transaction,
+        sinTenant: true,
+      })
+      if (!encontrado || !encontrado.activo) return null
+
+      await encontrado.update(
         { password: passwordHash, intentosFallidos: 0, bloqueadoHasta: null },
         { transaction }
       )
-      await registro.update({ usado: true }, { transaction, sinTenant: true })
       // Cierra todas las sesiones abiertas: si alguien robó la cuenta,
       // el cambio de contraseña lo expulsa.
       await RefreshToken.update(
         { revocado: true },
-        { where: { usuarioId: usuario.id, revocado: false }, transaction, sinTenant: true }
+        { where: { usuarioId: encontrado.id, revocado: false }, transaction, sinTenant: true }
       )
+      return encontrado
     })
+
+    if (!usuario) {
+      return res.status(401).json({ message: MENSAJE_ENLACE_RESET_INVALIDO })
+    }
 
     await registrarAuditoria({
       accion: 'PASSWORD_RESET_COMPLETADO',
@@ -1152,7 +1158,141 @@ const reenviarCodigo = async (req, res) => {
   return res.json(respuesta)
 }
 
+// ---------- Invitación de usuarios ----------
+// El token llega en el body (la página lo lee del fragment #token=, que el
+// navegador nunca envía al servidor). Toda respuesta ante un token malo es la
+// misma, para no distinguir "no existe", "vencido" o "ya usado".
+
+const MENSAJE_INVITACION_INVALIDA =
+  'La invitación no es válida o ya venció. Pide al administrador de tu clínica que te la reenvíe.'
+
+// Usuario pendiente de una invitación vigente. Se busca con el clinicaId de la
+// invitación: un token nunca activa a alguien de otra clínica.
+const cargarUsuarioDeInvitacion = async (invitacion, { transaction } = {}) => {
+  if (!invitacion) return null
+  const usuario = await Usuario.findOne({
+    where: { id: invitacion.usuarioId, clinicaId: invitacion.clinicaId },
+    include: [{ model: Clinica, attributes: ['id', 'nombre'], required: false }],
+    transaction,
+  })
+  if (!usuario || !usuario.activo || !invitacionService.estaPendiente(usuario)) return null
+  return usuario
+}
+
+const consultarInvitacion = async (req, res) => {
+  try {
+    const invitacion = await invitacionService.buscarVigente(req.body.token)
+    const usuario = await cargarUsuarioDeInvitacion(invitacion)
+    if (!usuario) return res.status(401).json({ message: MENSAJE_INVITACION_INVALIDA })
+
+    return res.json({
+      nombre: usuario.nombre,
+      email: usuario.email,
+      clinica: usuario.Clinica?.nombre || null,
+    })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
+const aceptarInvitacion = async (req, res) => {
+  try {
+    const { token, password, aceptaComunicaciones } = req.body
+
+    // Revisión barata antes del bcrypt, para no gastar CPU en tokens inventados.
+    const vigente = await cargarUsuarioDeInvitacion(await invitacionService.buscarVigente(token))
+    if (!vigente) return res.status(401).json({ message: MENSAJE_INVITACION_INVALIDA })
+
+    const salt = await bcrypt.genSalt(12)
+    const passwordHash = await bcrypt.hash(password, salt)
+
+    const usuario = await sequelize.transaction(async (transaction) => {
+      // Consumo atómico: entre dos peticiones simultáneas solo una gana.
+      const invitacion = await invitacionService.consumirInvitacion(token, { transaction })
+      const encontrado = await cargarUsuarioDeInvitacion(invitacion, { transaction })
+      if (!encontrado) return null
+
+      // Abrir el enlace de su correo prueba que el correo es suyo.
+      await encontrado.update(
+        { password: passwordHash, emailVerificado: true, intentosFallidos: 0, bloqueadoHasta: null },
+        { transaction }
+      )
+      await invitacionService.invalidarInvitaciones(encontrado.id, { transaction })
+      await RefreshToken.update(
+        { revocado: true },
+        { where: { usuarioId: encontrado.id, revocado: false }, transaction, sinTenant: true }
+      )
+      // La persona invitada no aceptó nada al ser creada por el administrador:
+      // su autorización de datos (Ley 1581) se registra aquí, con su propia IP.
+      await registrarAceptacionesRegistro({
+        req,
+        transaction,
+        usuarioId: encontrado.id,
+        clinicaId: encontrado.clinicaId,
+        aceptaComunicaciones,
+        origen: 'invitacion',
+      })
+      return encontrado
+    })
+
+    if (!usuario) return res.status(401).json({ message: MENSAJE_INVITACION_INVALIDA })
+
+    await registrarAuditoria({
+      accion: 'INVITACION_ACEPTADA',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      clinicaId: usuario.clinicaId,
+      usuarioId: usuario.id,
+      descripcion: `${usuario.email} aceptó la invitación y creó su contraseña`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    return res.json({
+      message: 'Listo. Ya puedes iniciar sesión con tu correo y tu contraseña.',
+      email: usuario.email,
+    })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
+// "No reconozco esta invitación": borra la cuenta pendiente para que nadie
+// pueda dejar ocupado el correo de otra persona ni meterla en su clínica.
+const rechazarInvitacion = async (req, res) => {
+  try {
+    const invitacion = await invitacionService.buscarVigente(req.body.token)
+    const usuario = await cargarUsuarioDeInvitacion(invitacion)
+    if (!usuario) return res.status(401).json({ message: MENSAJE_INVITACION_INVALIDA })
+
+    const resultado = await invitacionService.borrarCuentaPendiente(usuario)
+
+    await registrarAuditoria({
+      accion: 'INVITACION_RECHAZADA',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      clinicaId: usuario.clinicaId,
+      usuarioId: null,
+      descripcion: `${usuario.email} rechazó la invitación (cuenta ${resultado})`,
+      req,
+      resultado: 'exitoso',
+    })
+
+    return res.json({
+      message:
+        resultado === 'borrada'
+          ? 'Rechazaste la invitación. La cuenta creada con tu correo ya no existe.'
+          : 'Rechazaste la invitación. La cuenta creada con tu correo quedó desactivada.',
+    })
+  } catch (error) {
+    responderErrorInterno(res, 'Error servidor')
+  }
+}
+
 module.exports = {
+  consultarInvitacion,
+  aceptarInvitacion,
+  rechazarInvitacion,
   verificarCodigo,
   reenviarCodigo,
   registro,
