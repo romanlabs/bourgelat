@@ -159,7 +159,7 @@ exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
 | Historias clínicas | `/historias` | `/api/historias` |
 | Antecedentes | `/antecedentes` | `/api/antecedentes` |
 | Inventario (productos, servicios, movimientos, compras) | `/inventario` (pestañas) | `/api/inventario`, `/api/inventario-clinico`, `/api/servicios-clinicos`, `/api/facturas-compra` |
-| Finanzas (venta, gastos/rentabilidad, turnos de caja) | `/finanzas` (pestañas) | `/api/facturas`, `/api/gastos`, `/api/caja`, `/api/reportes` |
+| Finanzas (venta, gastos/rentabilidad, análisis del periodo, turnos de caja) | `/finanzas` (pestañas) | `/api/facturas`, `/api/gastos`, `/api/caja`, `/api/reportes` |
 | Exámenes de laboratorio | — (integrado en historias/pacientes) | `/api/examenes-laboratorio` |
 | Estilos de historia clínica | — (integrado en configuración) | `/api/registros-estilo` |
 | Usuarios | `/usuarios` | `/api/usuarios` |

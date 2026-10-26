@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom'
-import { lazy, Suspense, useLayoutEffect } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 import ModuleAccessRoute from './ModuleAccessRoute'
@@ -7,27 +7,69 @@ import RouteErrorPage from '@/components/shared/RouteErrorPage'
 import { APP_HOSTS } from '@/content/seo'
 import { aplicarSeo } from '@/lib/seo'
 
+// Página de la app que se puede descargar por adelantado. Ya descargada se
+// pinta directo, sin pasar por <Suspense>: así entrar a un módulo no muestra
+// la pantalla de carga.
+const PAGINAS_APP = []
+function paginaApp(importar) {
+  let Componente = null
+  const cargar = () => importar().then((modulo) => { Componente = modulo.default; return modulo })
+  const Diferida = lazy(cargar)
+  function Pagina(props) {
+    return Componente ? <Componente {...props} /> : <Diferida {...props} />
+  }
+  Pagina.precargar = () => (Componente ? Promise.resolve() : cargar())
+  PAGINAS_APP.push(Pagina)
+  return Pagina
+}
+
+// Con sesión abierta, cuando el navegador queda libre, se bajan los módulos de
+// a uno para no competir con la pantalla actual.
+const PrecargaModulos = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  useEffect(() => {
+    if (!isAuthenticated) return undefined
+    let cancelado = false
+    const enReposo = window.requestIdleCallback || ((fn) => window.setTimeout(fn, 1200))
+    const id = enReposo(async () => {
+      for (const pagina of PAGINAS_APP) {
+        if (cancelado) return
+        try {
+          await pagina.precargar()
+        } catch {
+          // Sin red no pasa nada: la página se descarga al entrar, como antes.
+        }
+      }
+    })
+    return () => {
+      cancelado = true
+      ;(window.cancelIdleCallback || window.clearTimeout)(id)
+    }
+  }, [isAuthenticated])
+  return null
+}
+
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
 const VerificarEmailPage = lazy(() => import('@/pages/VerificarEmailPage'))
 const OAuthPopupCallbackPage = lazy(() => import('@/pages/OAuthPopupCallbackPage'))
-const PerfilPage = lazy(() => import('@/pages/PerfilPage'))
-const OnboardingWizardPage = lazy(() => import('@/pages/OnboardingWizardPage'))
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
-const AgendaPage = lazy(() => import('@/pages/AgendaPage'))
-const PacientesPage = lazy(() => import('@/pages/PacientesPage'))
-const PacienteHistorialPage = lazy(() => import('@/pages/PacienteHistorialPage'))
-const HistoriasPage = lazy(() => import('@/pages/HistoriasPage'))
-const AntecedentesPage = lazy(() => import('@/pages/AntecedentesPage'))
-const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
-const UsuariosPage = lazy(() => import('@/pages/UsuariosPage'))
-const AuditoriaPage = lazy(() => import('@/pages/AuditoriaPage'))
-const SoportePage = lazy(() => import('@/pages/SoportePage'))
-const MiPlanPage = lazy(() => import('@/pages/MiPlanPage'))
-const InventarioPage = lazy(() => import('@/pages/InventarioPage'))
-const FinanzasPage = lazy(() => import('@/pages/FinanzasPage'))
+const PerfilPage = paginaApp(() => import('@/pages/PerfilPage'))
+const OnboardingWizardPage = paginaApp(() => import('@/pages/OnboardingWizardPage'))
+const DashboardPage = paginaApp(() => import('@/pages/DashboardPage'))
+const AgendaPage = paginaApp(() => import('@/pages/AgendaPage'))
+const PacientesPage = paginaApp(() => import('@/pages/PacientesPage'))
+const PacienteHistorialPage = paginaApp(() => import('@/pages/PacienteHistorialPage'))
+const HistoriasPage = paginaApp(() => import('@/pages/HistoriasPage'))
+const AntecedentesPage = paginaApp(() => import('@/pages/AntecedentesPage'))
+const ConfiguracionPage = paginaApp(() => import('@/pages/ConfiguracionPage'))
+const UsuariosPage = paginaApp(() => import('@/pages/UsuariosPage'))
+const AuditoriaPage = paginaApp(() => import('@/pages/AuditoriaPage'))
+const SoportePage = paginaApp(() => import('@/pages/SoportePage'))
+const MiPlanPage = paginaApp(() => import('@/pages/MiPlanPage'))
+const InventarioPage = paginaApp(() => import('@/pages/InventarioPage'))
+const FinanzasPage = paginaApp(() => import('@/pages/FinanzasPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
 const PagarPage     = lazy(() => import('@/pages/PagarPage'))
@@ -91,7 +133,12 @@ const router = createBrowserRouter([
         ],
       },
       {
-        element: <ProtectedRoute />,
+        element: (
+          <>
+            <PrecargaModulos />
+            <ProtectedRoute />
+          </>
+        ),
         children: [{
         element: <ModuleAccessRoute />,
         children: [

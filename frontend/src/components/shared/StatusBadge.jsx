@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
  * así que no llevan clases dark:.
  *   neutral  → sin urgencia (programada, anulada, inactiva)
  *   success  → bien / terminado (pagada, aceptado, activa, disponible)
- *   warning  → requiere atención (en espera, pendiente, cantidad baja)
+ *   warning  → requiere atención (en espera, pendiente, por cobrar, cantidad baja)
  *   danger   → problema (cancelada, rechazado, vencida, agotado)
- *   info     → en curso (en atención, emitida, enviado, prueba gratis)
+ *   info     → en curso (en atención, enviado, prueba gratis)
  */
 const TONOS = {
   neutral:  { colors: 'bg-secondary text-secondary-foreground', dot: 'bg-muted-foreground' },
@@ -39,7 +39,8 @@ const STATUS_MAP = {
 
   // ── Facturas ──────────────────────────────────────────────────
   pendiente:   { label: 'Pendiente',   ...TONOS.warning },
-  emitida:     { label: 'Emitida',     ...TONOS.info    },
+  emitida:     { label: 'Por cobrar',  ...TONOS.warning },
+  parcial:     { label: 'Abono parcial', ...TONOS.warning },
   pagada:      { label: 'Pagada',      ...TONOS.success },
   anulada:     { label: 'Anulada',     ...TONOS.neutral },
   borrador:    { label: 'Borrador',    ...TONOS.apagado },

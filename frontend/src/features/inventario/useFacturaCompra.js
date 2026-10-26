@@ -266,24 +266,37 @@ export function useFacturaCompra({ enabled = true } = {}) {
     crearInsumoInlineMutation,
   ])
 
-  const pedirConfirmar = useCallback((facturaId) => {
-    setConfirmDialog({ open: true, tipo: 'confirmar', facturaId })
-  }, [])
+  // Un error viejo de otra fila no debe quedar a la vista al pedir una acción nueva.
+  const limpiarErroresAccion = useCallback(() => {
+    mutConfirmar.reset()
+    mutAnular.reset()
+    mutPagar.reset()
+  }, [mutConfirmar, mutAnular, mutPagar])
 
-  const pedirAnular = useCallback((facturaId) => {
-    setConfirmDialog({ open: true, tipo: 'anular', facturaId })
-  }, [])
+  const pedirAccion = useCallback((tipo, facturaId) => {
+    limpiarErroresAccion()
+    setConfirmDialog({ open: true, tipo, facturaId })
+  }, [limpiarErroresAccion])
 
-  const pedirPagar = useCallback((facturaId) => {
-    setConfirmDialog({ open: true, tipo: 'pagar', facturaId })
-  }, [])
+  const pedirConfirmar = useCallback((facturaId) => pedirAccion('confirmar', facturaId), [pedirAccion])
+  const pedirAnular = useCallback((facturaId) => pedirAccion('anular', facturaId), [pedirAccion])
+  const pedirPagar = useCallback((facturaId) => pedirAccion('pagar', facturaId), [pedirAccion])
 
+  // El diálogo sigue abierto con «Procesando…» hasta que el servidor responde.
+  // Antes se cerraba antes de enviar y, si fallaba, el error no se veía en
+  // ninguna parte: la factura seguía en borrador sin explicación. El error
+  // queda en `errorAccion`, que la pestaña muestra.
   const ejecutarAccion = useCallback(async () => {
     const { tipo, facturaId } = confirmDialog
-    setConfirmDialog({ open: false, tipo: null, facturaId: null })
-    if (tipo === 'confirmar') await mutConfirmar.mutateAsync(facturaId)
-    if (tipo === 'anular') await mutAnular.mutateAsync(facturaId)
-    if (tipo === 'pagar') await mutPagar.mutateAsync(facturaId)
+    try {
+      if (tipo === 'confirmar') await mutConfirmar.mutateAsync(facturaId)
+      if (tipo === 'anular') await mutAnular.mutateAsync(facturaId)
+      if (tipo === 'pagar') await mutPagar.mutateAsync(facturaId)
+    } catch {
+      // Ya queda en el estado de la mutación.
+    } finally {
+      setConfirmDialog({ open: false, tipo: null, facturaId: null })
+    }
   }, [confirmDialog, mutConfirmar, mutAnular, mutPagar])
 
   const cancelarAccion = useCallback(() => {
@@ -374,14 +387,23 @@ export function useFacturaCompra({ enabled = true } = {}) {
     0
   )
 
+  // Errores del drawer de crear/editar.
   const errorMsg =
     getErrorMessage(mutCrear.error, null) ||
     getErrorMessage(mutEditar.error, null) ||
-    getErrorMessage(mutConfirmar.error, null) ||
-    getErrorMessage(mutAnular.error, null) ||
-    getErrorMessage(mutPagar.error, null) ||
     getErrorMessage(crearProductoInlineMutation.error, null) ||
     getErrorMessage(crearInsumoInlineMutation.error, null)
+
+  // Errores de las acciones de la tabla. Un timeout o una caída de red no traen
+  // mensaje del servidor; se explica en vez de mostrar el texto en inglés de axios.
+  const errorAccionDe = (error) =>
+    error && (error.response?.data?.message ||
+      'No se recibió respuesta del servidor. Revisa tu conexión y vuelve a intentarlo.')
+  const errorAccion =
+    errorAccionDe(mutConfirmar.error) ||
+    errorAccionDe(mutAnular.error) ||
+    errorAccionDe(mutPagar.error) ||
+    null
 
   const isSaving =
     mutCrear.isPending ||
@@ -441,6 +463,8 @@ export function useFacturaCompra({ enabled = true } = {}) {
     ejecutarAccion,
     cancelarAccion,
     isActuando: mutConfirmar.isPending || mutAnular.isPending || mutPagar.isPending,
+    errorAccion,
+    limpiarErroresAccion,
     // Error
     errorMsg,
   }

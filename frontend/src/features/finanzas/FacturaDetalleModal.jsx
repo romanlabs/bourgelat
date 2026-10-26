@@ -22,6 +22,43 @@ import {
   getEstadoTone,
   getEstadoElectronicoTone,
 } from './useFinanzasHistorial'
+import FormAbono from './FormAbono'
+
+// Al anular, cada producto vuelve a la bodega salvo que se diga lo contrario.
+const DESTINOS_PRODUCTO = [
+  { value: 'vuelve', label: 'Vuelve a la bodega' },
+  { value: 'entregado', label: 'No vuelve: se entregó al cliente' },
+  { value: 'danado', label: 'No vuelve: se dañó' },
+  { value: 'vencido', label: 'No vuelve: venció' },
+]
+
+function ProductosAlAnular({ items, noVuelven, onCambiar }) {
+  const productos = items.filter((item) => item.tipo === 'producto' && item.productoId)
+  if (!productos.length) return null
+  return (
+    <div role="group" aria-labelledby="anular-productos" className="space-y-2 rounded-xl bg-muted p-4">
+      <p id="anular-productos" className="text-sm font-semibold text-foreground">¿Qué pasa con los productos?</p>
+      <p className="text-[13px] text-muted-foreground">
+        Lo que vuelve suma al inventario. Lo que no vuelve queda registrado como salida con su motivo.
+      </p>
+      {productos.map((item) => (
+        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <span className="text-sm text-foreground">
+            {item.descripcion} <span className="text-muted-foreground">× {Number(item.cantidad)}</span>
+          </span>
+          <Select
+            variant="field"
+            aria-label={`Qué pasa con ${item.descripcion}`}
+            className="h-10 w-64"
+            value={noVuelven[item.id] || 'vuelve'}
+            onValueChange={(valor) => onCambiar(item.id, valor)}
+            options={DESTINOS_PRODUCTO}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function FacturaDetalleModal({ historialHook }) {
   const {
@@ -31,19 +68,17 @@ export default function FacturaDetalleModal({ historialHook }) {
     facturaSeleccionada,
     handlePrintReceipt,
     canEmitInvoice,
-    canRegisterPayment,
+    canAbonar,
     canVoidInvoice,
     emisionForm,
     setEmisionForm,
-    pagoMetodo,
-    setPagoMetodo,
     motivoAnulacion,
     setMotivoAnulacion,
+    noVuelven,
+    setNoVuelven,
     handleEmitirFactura,
-    handleRegistrarPago,
     handleAnularFactura,
     emitirFacturaMutation,
-    registrarPagoMutation,
     anularFacturaMutation,
   } = historialHook
 
@@ -56,7 +91,7 @@ export default function FacturaDetalleModal({ historialHook }) {
         <DialogHeader>
           <DialogTitle>Detalle de factura</DialogTitle>
           <DialogDescription>
-            Revisa la venta, imprime la tirilla o registra el pago.
+            Revisa la venta, imprime la tirilla o cobra el saldo si fue a crédito.
           </DialogDescription>
         </DialogHeader>
 
@@ -109,6 +144,15 @@ export default function FacturaDetalleModal({ historialHook }) {
                   {formatCurrency(facturaSeleccionada.total)}
                 </p>
               </div>
+
+              {canAbonar ? (
+                <div className="flex items-baseline justify-between gap-3 rounded-xl bg-warning-soft px-5 py-3">
+                  <p className="text-[15px] font-semibold text-warning">Saldo pendiente</p>
+                  <p className="text-[22px] font-semibold tabular-nums text-warning">
+                    {formatCurrency(facturaSeleccionada.saldoPendiente)}
+                  </p>
+                </div>
+              ) : null}
 
               <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <div className="rounded-xl bg-muted px-4 py-3">
@@ -293,35 +337,17 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : null}
 
-              {canRegisterPayment ? (
+              {canAbonar ? (
                 <div className="space-y-4 border-t border-border/60 pt-5">
                   <div className="flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold text-foreground">Registrar pago</p>
+                    <p className="text-sm font-semibold text-foreground">Cobrar venta a crédito</p>
                   </div>
-                  <Select
-                    variant="field"
-                    aria-label="Método de pago"
-                    placeholder="Método de pago (opcional)"
-                    value={pagoMetodo}
-                    onValueChange={setPagoMetodo}
-                    options={[
-                      { value: 'efectivo', label: 'Efectivo' },
-                      { value: 'transferencia', label: 'Transferencia' },
-                      { value: 'tarjeta_debito', label: 'Tarjeta débito' },
-                      { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-                      { value: 'otro', label: 'Otro' },
-                    ]}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRegistrarPago}
-                    disabled={registrarPagoMutation.isPending}
-                    className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    {registrarPagoMutation.isPending ? 'Registrando...' : 'Marcar como pagada'}
-                  </button>
+                  <p className="text-sm text-muted-foreground">
+                    Registra un abono o paga el saldo completo. El efectivo entra a tu turno de caja.
+                  </p>
+                  {/* key: al cambiar de factura el formulario arranca vacío. */}
+                  <FormAbono key={facturaSeleccionada.id} factura={facturaSeleccionada} />
                 </div>
               ) : null}
 
@@ -331,6 +357,18 @@ export default function FacturaDetalleModal({ historialHook }) {
                     <Ban className="h-4 w-4 text-danger" />
                     <p className="text-sm font-semibold text-foreground">Anular factura</p>
                   </div>
+                  <ProductosAlAnular
+                    items={facturaSeleccionada.items || []}
+                    noVuelven={noVuelven}
+                    onCambiar={(itemId, valor) =>
+                      setNoVuelven((actual) => {
+                        const siguiente = { ...actual }
+                        if (valor === 'vuelve') delete siguiente[itemId]
+                        else siguiente[itemId] = valor
+                        return siguiente
+                      })
+                    }
+                  />
                   <textarea
                     value={motivoAnulacion}
                     onChange={(event) => setMotivoAnulacion(event.target.value)}

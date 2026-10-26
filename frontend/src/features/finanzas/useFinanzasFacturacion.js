@@ -36,6 +36,8 @@ const buildInitialForm = () => ({
   // Banco o referencia de la transferencia, o cuál es el «otro» método.
   detallePago: '',
   observaciones: '',
+  // Solo crédito: en cuántos días queda en pagar ('' = sin plazo).
+  plazoCreditoDias: '',
   items: [],
   // Cuando la factura cobra una consulta: marca la historia como facturada.
   historiaClinicaId: '',
@@ -469,6 +471,10 @@ export function useFinanzasFacturacion({
       registroEstiloId: invoiceForm.registroEstiloId || undefined,
       items: itemsValidos,
       claveIdempotencia: claveVenta.obtener(),
+      plazoCreditoDias:
+        invoiceForm.metodoPago === 'credito' && invoiceForm.plazoCreditoDias
+          ? Number(invoiceForm.plazoCreditoDias)
+          : undefined,
     })
   }
 
