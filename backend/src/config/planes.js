@@ -15,8 +15,8 @@ const CORTESIA_END_DATE = '2099-12-31'
 // lo trae de fabrica.
 const FUNCIONALIDAD_DIAN = 'facturacion_electronica'
 const DOCUMENTOS_DIAN_INCLUIDOS = 200
-const PRECIO_DIAN_MENSUAL = 49000
-const PRECIO_DIAN_DOCUMENTO_EXCEDENTE = 250
+const PRECIO_DIAN_MENSUAL = 70000
+const PRECIO_DIAN_DOCUMENTO_EXCEDENTE = 800
 
 // Lo que Clinica agrega sobre Esencial: analitica de agenda y rentabilidad
 // (`reportes_completos`) y exportables. Esencial conserva los reportes operativos.
@@ -72,8 +72,8 @@ const PLANES = {
     nombre: 'Esencial',
     descripcion:
       'Para consultorios pequenos que empiezan: todo el sistema con un usuario, menos almacenamiento y reportes operativos.',
-    precioMensual: 49000,
-    precioAnual: 41000,
+    precioMensual: 89000,
+    precioAnual: 75000,
     limiteUsuarios: 1,
     limiteMascotas: null,
     almacenamientoMB: 5120,
@@ -85,8 +85,8 @@ const PLANES = {
     nombre: 'Clinica',
     descripcion:
       'Toda la operacion de la clinica en un solo sistema, sin limites de pacientes, historias ni facturas.',
-    precioMensual: 89000,
-    precioAnual: 75000,
+    precioMensual: 120000,
+    precioAnual: 100000,
     limiteUsuarios: USUARIOS_BASE,
     limiteMascotas: null,
     almacenamientoMB: 20480,

@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'l
 import BrandMark from '@/components/landing/BrandMark'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import { calcularPrecioPlan, maxAhorroPct } from '@/lib/precios'
+import { PRECIOS_PLANES } from '@/content/publicSiteContent'
 
 // ── Paleta cálida (misma identidad de landing, login y registro) ──
 //   INK      espresso — títulos, texto, botón sólido y card-ancla
@@ -42,8 +43,8 @@ const PLANES = [
     subtitulo: 'Para empezar ordenado',
     resumen:
       'Lo necesario para un consultorio pequeño: agenda, historia clínica, inventario, caja y reportes operativos con un usuario.',
-    precioMensual: 49000,
-    precioAnual: 41000,
+    precioMensual: PRECIOS_PLANES.esencial.precioMensual,
+    precioAnual: PRECIOS_PLANES.esencial.precioAnual,
     cta: 'Probar 30 días gratis',
     nota: 'Sin tarjeta · 30 días de prueba',
     registro: true,
@@ -64,8 +65,8 @@ const PLANES = [
     popular: true,
     resumen:
       'Agenda, historia clínica, inventario, caja y reportes sin límites de pacientes, historias ni facturas.',
-    precioMensual: 89000,
-    precioAnual: 75000,
+    precioMensual: PRECIOS_PLANES.activo.precioMensual,
+    precioAnual: PRECIOS_PLANES.activo.precioAnual,
     cta: 'Probar 30 días gratis',
     nota: 'Sin tarjeta · 30 días de prueba',
     registro: true,
