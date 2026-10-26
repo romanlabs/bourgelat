@@ -90,48 +90,49 @@ const procesarRecordatorios = async ({
     const urlPagar = `${urlFrontend}/pagar`
 
     for (const suscripcion of candidatas) {
-      const tieneOtraVigente = (vigentes.get(suscripcion.clinicaId) || [])
-        .some((id) => id !== suscripcion.id)
-      const clasificacion = clasificarRecordatorio({ suscripcion, hoy, tieneOtraVigente })
-      if (!clasificacion) continue
-      const { tipo, dias } = clasificacion
-      if (enviadas.has(`${suscripcion.id}:${tipo}`)) continue
-
-      const admins = await Usuario.findAll({
-        where: { clinicaId: suscripcion.clinicaId, rol: 'admin', activo: true },
-        attributes: ['nombre', 'email'],
-      })
-      if (admins.length === 0) continue
-
-      if (!cabeEnTope({ enviados: enTope, destinatarios: admins.length, tope })) {
-        logger.warn({ contexto: CONTEXTO, mensaje: `Tope de ${tope} correos por ejecución alcanzado` })
-        break
-      }
-
-      const clinica = suscripcion.clinica
-      const fechaFin = String(suscripcion.fechaFin).slice(0, 10)
-      const fila = {
-        suscripcionId: suscripcion.id,
-        clinicaId: suscripcion.clinicaId,
-        clinica: clinica?.nombre,
-        plan: suscripcion.plan,
-        tipo,
-        dias,
-        fechaFin,
-        correos: admins.map((a) => a.email),
-        telefono: clinica?.telefono || null,
-        enlaceWhatsapp: enlaceWhatsapp({ telefono: clinica?.telefono, nombreClinica: clinica?.nombre, urlPagar }),
-      }
-
-      if (simular) {
-        enTope += admins.length
-        filas.push(fila)
-        continue
-      }
-
-      // El estado de antes del cambio decide si el correo habla de la prueba.
-      const esPrueba = suscripcion.estado === 'prueba'
+      // Un fallo en una candidata no corta la corrida: se registra y se sigue.
       try {
+        const tieneOtraVigente = (vigentes.get(suscripcion.clinicaId) || [])
+          .some((id) => id !== suscripcion.id)
+        const clasificacion = clasificarRecordatorio({ suscripcion, hoy, tieneOtraVigente })
+        if (!clasificacion) continue
+        const { tipo, dias } = clasificacion
+        if (enviadas.has(`${suscripcion.id}:${tipo}`)) continue
+
+        const admins = await Usuario.findAll({
+          where: { clinicaId: suscripcion.clinicaId, rol: 'admin', activo: true },
+          attributes: ['nombre', 'email'],
+        })
+        if (admins.length === 0) continue
+
+        if (!cabeEnTope({ enviados: enTope, destinatarios: admins.length, tope })) {
+          logger.warn({ contexto: CONTEXTO, mensaje: `Tope de ${tope} correos por ejecución alcanzado` })
+          break
+        }
+
+        const clinica = suscripcion.clinica
+        const fechaFin = String(suscripcion.fechaFin).slice(0, 10)
+        const fila = {
+          suscripcionId: suscripcion.id,
+          clinicaId: suscripcion.clinicaId,
+          clinica: clinica?.nombre,
+          plan: suscripcion.plan,
+          tipo,
+          dias,
+          fechaFin,
+          correos: admins.map((a) => a.email),
+          telefono: clinica?.telefono || null,
+          enlaceWhatsapp: enlaceWhatsapp({ telefono: clinica?.telefono, nombreClinica: clinica?.nombre, urlPagar }),
+        }
+
+        if (simular) {
+          enTope += admins.length
+          filas.push(fila)
+          continue
+        }
+
+        // El estado de antes del cambio decide si el correo habla de la prueba.
+        const esPrueba = suscripcion.estado === 'prueba'
         if (tipo === 'vencida' && ESTADOS_VIGENTES.includes(suscripcion.estado)) {
           await suscripcion.update({ estado: 'solo_lectura' })
         }
@@ -178,15 +179,37 @@ const procesarRecordatorios = async ({
         }
 
         if (salidos === 0) {
-          // Sin el registro, la próxima ejecución lo vuelve a intentar.
-          await registro.destroy()
           fallidos += 1
+          // Sin el registro, la próxima ejecución lo vuelve a intentar.
+          try {
+            await registro.destroy()
+          } catch (errorBorrar) {
+            logger.error({
+              contexto: CONTEXTO,
+              mensaje: 'No se pudo borrar el registro del aviso tras el fallo de envío',
+              suscripcionId: suscripcion.id,
+              clinicaId: suscripcion.clinicaId,
+            })
+          }
           continue
         }
-        if (salidos !== admins.length) await registro.update({ destinatarios: salidos })
+
+        // Ya salieron correos: la fila va al resumen aunque falle este ajuste.
         enviados += salidos
         enTope += salidos
         filas.push(fila)
+        if (salidos !== admins.length) {
+          try {
+            await registro.update({ destinatarios: salidos })
+          } catch (errorAjuste) {
+            logger.error({
+              contexto: CONTEXTO,
+              mensaje: 'No se pudo ajustar el número de destinatarios del aviso',
+              suscripcionId: suscripcion.id,
+              clinicaId: suscripcion.clinicaId,
+            })
+          }
+        }
       } catch (error) {
         fallidos += 1
         logger.error({
@@ -197,26 +220,26 @@ const procesarRecordatorios = async ({
         })
       }
     }
-
-    if (!simular && filas.length > 0) {
-      try {
-        await enviarEmailResumenCobro({ filas, fecha: hoy })
-      } catch (error) {
-        logger.error({
-          contexto: CONTEXTO,
-          mensaje: `No se pudo enviar el resumen a soporte: ${error.code || error.responseCode || 'desconocido'}`,
-        })
-      }
-    }
-
-    if (enviados > 0 || fallidos > 0) {
-      logger.info({ contexto: CONTEXTO, mensaje: `Correos enviados: ${enviados}, avisos fallidos: ${fallidos}` })
-    }
-    return { enviados, fallidos, filas }
   } catch (error) {
     logger.error({ contexto: CONTEXTO, mensaje: `Error en la corrida: ${error.message}` })
-    return { enviados, fallidos, filas }
   }
+
+  // Fuera del try: aunque la corrida se corte, soporte recibe lo que sí salió.
+  if (!simular && filas.length > 0) {
+    try {
+      await enviarEmailResumenCobro({ filas, fecha: hoy })
+    } catch (error) {
+      logger.error({
+        contexto: CONTEXTO,
+        mensaje: `No se pudo enviar el resumen a soporte: ${error.code || error.responseCode || 'desconocido'}`,
+      })
+    }
+  }
+
+  if (enviados > 0 || fallidos > 0) {
+    logger.info({ contexto: CONTEXTO, mensaje: `Correos enviados: ${enviados}, avisos fallidos: ${fallidos}` })
+  }
+  return { enviados, fallidos, filas }
 }
 
 module.exports = { procesarRecordatorios }
