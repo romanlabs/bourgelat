@@ -22,10 +22,9 @@ const respuestaLimiteUsuarios = (cupo) => ({
   usoActual: cupo.usoActual,
 })
 
-const telefonoColombiaRegex = /^3\d{9}$/
 const ROLES_VALIDOS = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
-const { normalizarTexto, normalizarEmail, normalizarTelefonoColombiano: normalizarTelefono } = require('../utils/normalizar')
+const { normalizarTexto, normalizarEmail, normalizarCelular: normalizarTelefono, esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
 const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
   if (!Array.isArray(rolesAdicionales)) return []
@@ -77,7 +76,7 @@ const contarAdminsActivos = async ({ clinicaId, excludeUsuarioId = null }) => {
 }
 
 const validarTelefonoLaboral = (telefono) =>
-  !telefono || telefonoColombiaRegex.test(telefono)
+  !normalizarTexto(telefono) || esCelularValido(telefono)
 
 const responderErrorInterno = (res) =>
   res.status(500).json({ message: 'Error en el servidor' })
@@ -147,9 +146,9 @@ const crearUsuario = async (req, res) => {
       return res.status(400).json({ message: 'Rol no valido' })
     }
 
-    if (telefono && !validarTelefonoLaboral(telefonoNormalizado)) {
+    if (!validarTelefonoLaboral(telefono)) {
       return res.status(400).json({
-        message: 'El celular laboral debe tener 10 digitos colombianos y comenzar por 3',
+        message: MENSAJE_CELULAR_INVALIDO,
       })
     }
 
@@ -405,9 +404,9 @@ const editarUsuario = async (req, res) => {
       return res.status(400).json({ message: 'El nombre no puede estar vacio' })
     }
 
-    if (telefono !== undefined && !validarTelefonoLaboral(telefonoNormalizado)) {
+    if (telefono !== undefined && !validarTelefonoLaboral(telefono)) {
       return res.status(400).json({
-        message: 'El celular laboral debe tener 10 digitos colombianos y comenzar por 3',
+        message: MENSAJE_CELULAR_INVALIDO,
       })
     }
 
@@ -668,9 +667,9 @@ const actualizarMiPerfil = async (req, res) => {
 
     if (req.body.telefono !== undefined) {
       const telefono = normalizarTelefono(req.body.telefono)
-      if (telefono && !validarTelefonoLaboral(telefono)) {
+      if (!validarTelefonoLaboral(req.body.telefono)) {
         return res.status(400).json({
-          message: 'El celular laboral debe tener 10 digitos colombianos y comenzar por 3',
+          message: MENSAJE_CELULAR_INVALIDO,
         })
       }
       cambios.telefono = telefono || null
@@ -744,7 +743,17 @@ const guardarOnboarding = async (req, res) => {
       completadoEn: new Date().toISOString(),
     }
 
-    await usuario.update({ onboarding: respuestas })
+    // El celular del wizard es el que se usa para contactar al usuario; el del
+    // admin queda también como teléfono de la clínica si esta aún no tiene.
+    await usuario.update({
+      onboarding: respuestas,
+      ...(respuestas.whatsapp ? { telefono: respuestas.whatsapp } : {}),
+    })
+
+    if (respuestas.whatsapp && usuario.rol === 'admin') {
+      const clinica = await Clinica.findByPk(usuario.clinicaId, { attributes: ['id', 'telefono'] })
+      if (clinica && !clinica.telefono) await clinica.update({ telefono: respuestas.whatsapp })
+    }
 
     await registrarAuditoria({
       accion: 'COMPLETAR_ONBOARDING',

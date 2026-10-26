@@ -1,4 +1,5 @@
 import { LINE, MARGIN, MUTED, TEXT, nombreClinica } from '@/lib/pdfComun'
+import { formatearCelular } from '@/lib/celular'
 
 // Piezas del estilo formal que comparten la historia clinica, la formula y la
 // factura: blanco y negro, encabezado institucional, secciones con una linea
@@ -180,7 +181,7 @@ export const dibujarEncabezadoFormal = (doc, c, { clinica, logo, titulo, lineasD
   const datos = [
     [clinica?.nit && `NIT ${clinica.nit}`, clinica?.direccion].filter(Boolean).join(' · '),
     [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', '),
-    [clinica?.telefono && `Tel. ${clinica.telefono}`, clinica?.email].filter(Boolean).join(' · '),
+    [clinica?.telefono && `Tel. ${formatearCelular(clinica.telefono)}`, clinica?.email].filter(Boolean).join(' · '),
   ]
     .filter(Boolean)
     .flatMap((linea) => doc.splitTextToSize(linea, anchoIzquierda))

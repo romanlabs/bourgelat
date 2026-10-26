@@ -13,6 +13,7 @@ const { crearSuscripcionPrueba } = require('../config/planes')
 const { registrarAceptacionesRegistro } = require('../services/aceptacionLegalService')
 const { enviarEmailBienvenida } = require('../services/emailService')
 const { estaPendiente } = require('../services/invitacionService')
+const { normalizarCelular, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
 const COOKIE_FLUJO = 'bourgelat_oauth_flujo'
 
@@ -140,6 +141,8 @@ const completarRegistro = async (req, res) => {
     if (!token || !nombreClinica || !String(nombreClinica).trim()) {
       return res.status(400).json({ message: 'Token y nombre de la clinica son obligatorios' })
     }
+    const telefono = normalizarCelular(req.body.telefono)
+    if (!telefono) return res.status(400).json({ message: MENSAJE_CELULAR_INVALIDO })
 
     let datos
     try {
@@ -160,6 +163,7 @@ const completarRegistro = async (req, res) => {
           email: datos.email,
           password: 'oauth', // Clinica.password sigue NOT NULL; el acceso real es via Usuario
           nombreComercial: String(nombreClinica).trim(),
+          telefono,
         },
         { transaction }
       )
@@ -170,6 +174,7 @@ const completarRegistro = async (req, res) => {
           password: null,
           proveedorAuth: datos.proveedor,
           proveedorId: datos.proveedorId,
+          telefono,
           rol: 'admin',
           clinicaId: clinica.id,
           activo: true,

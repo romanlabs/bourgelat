@@ -18,9 +18,9 @@ const { verificarToken, verificarRol } = require('../middlewares/authMiddleware'
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadUsuarioFotoSingle } = require('../middlewares/uploadUsuarioFotoMiddleware')
+const { esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
 const router = express.Router()
-const telefonoColombiaRegex = /^3\d{9}$/
 const rolesValidos = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'facturador']
 
 router.post(
@@ -46,8 +46,8 @@ router.post(
     body('rolesAdicionales.*').optional().isIn(rolesValidos).withMessage('Rol adicional no valido'),
     body('telefono')
       .optional({ checkFalsy: true })
-      .custom((value) => telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
-      .withMessage('El celular laboral debe tener 10 digitos colombianos y comenzar por 3'),
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO),
     validar,
   ],
   crearUsuario
@@ -69,8 +69,8 @@ router.patch(
       .withMessage('El nombre debe tener entre 3 y 120 caracteres'),
     body('telefono')
       .optional({ nullable: true })
-      .custom((value) => !value || telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
-      .withMessage('El celular laboral debe tener 10 digitos colombianos y comenzar por 3'),
+      .custom((value) => !value || esCelularValido(value))
+      .withMessage(MENSAJE_CELULAR_INVALIDO),
     body('cargo').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('foto').optional({ nullable: true }).trim().isLength({ max: 500 }),
     body('tarjetaProfesional').optional({ nullable: true }).trim().isLength({ max: 60 }),
@@ -88,10 +88,11 @@ router.patch(
   [
     body('usoPlanificado').trim().notEmpty().withMessage('Selecciona una opción').isLength({ max: 60 }),
     body('cargo').optional({ checkFalsy: true }).trim().isLength({ max: 120 }),
+    // El admin es el contacto de la clínica (cobro, soporte): su celular es obligatorio.
     body('whatsapp')
-      .optional({ checkFalsy: true })
-      .custom((value) => telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
-      .withMessage('El WhatsApp debe tener 10 dígitos colombianos y comenzar por 3'),
+      .if((value, { req }) => Boolean(value) || req.usuario?.rol === 'admin')
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO),
     body('tipoClinica').trim().notEmpty().withMessage('Selecciona el tipo de clínica').isLength({ max: 60 }),
     body('tamanoEquipo').trim().notEmpty().withMessage('Selecciona el tamaño del equipo').isLength({ max: 30 }),
     body('mascotasPorMes').trim().notEmpty().withMessage('Selecciona un rango').isLength({ max: 30 }),
@@ -139,8 +140,8 @@ router.put(
     body('rolesAdicionales.*').optional().isIn(rolesValidos).withMessage('Rol adicional no valido'),
     body('telefono')
       .optional({ nullable: true })
-      .custom((value) => !value || telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
-      .withMessage('El celular laboral debe tener 10 digitos colombianos y comenzar por 3'),
+      .custom((value) => !value || esCelularValido(value))
+      .withMessage(MENSAJE_CELULAR_INVALIDO),
     validar,
   ],
   editarUsuario

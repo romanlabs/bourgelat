@@ -40,6 +40,8 @@ import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
 import { Select } from '@/components/ui/select'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { celularE164, esCelularValido, formatearCelular } from '@/lib/celular'
 
 const PERSON_TYPE_OPTIONS = [
   { value: 'persona_juridica', label: 'Persona jurídica' },
@@ -80,7 +82,6 @@ const INPUT_CLASS =
 const LABEL_CLASS = 'text-sm font-medium text-foreground'
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
-const normalizePhone = (value) => value.replace(/\D/g, '').slice(0, 10)
 const normalizeNit = (value) => value.replace(/\D/g, '').slice(0, 15)
 
 const getErrorMessage = (error, fallback) =>
@@ -92,7 +93,7 @@ const buildClinicForm = (clinica) => ({
   razonSocial: clinica?.razonSocial || '',
   tipoPersona: clinica?.tipoPersona || 'persona_juridica',
   email: clinica?.email || '',
-  telefono: clinica?.telefono || '',
+  telefono: celularE164(clinica?.telefono),
   direccion: clinica?.direccion || '',
   departamento: clinica?.departamento || '',
   ciudad: clinica?.ciudad || '',
@@ -308,7 +309,7 @@ function ConfiguracionContent({
       razonSocial: clinicForm.razonSocial.trim(),
       tipoPersona: clinicForm.tipoPersona,
       email: normalizeEmail(clinicForm.email),
-      telefono: normalizePhone(clinicForm.telefono),
+      telefono: clinicForm.telefono,
       direccion: clinicForm.direccion.trim(),
       departamento: clinicForm.departamento,
       ciudad: clinicForm.ciudad,
@@ -331,8 +332,8 @@ function ConfiguracionContent({
       return
     }
 
-    if (payload.telefono && !/^3\d{9}$/.test(payload.telefono)) {
-      toast.error('El teléfono debe ser un celular colombiano válido de 10 dígitos.')
+    if (payload.telefono && !esCelularValido(payload.telefono)) {
+      toast.error('El celular no es válido para el país elegido.')
       return
     }
 
@@ -502,17 +503,12 @@ function ConfiguracionContent({
               </FormField>
               <FormField
                 label="Celular principal"
-                helper="Solo celulares colombianos de 10 dígitos, por ejemplo 3001234567."
+                helper="Elige el país en la bandera y escribe el número."
               >
-                <input
-                  type="text"
-                  inputMode="numeric"
+                <CampoCelular
                   value={clinicForm.telefono}
-                  onChange={(event) =>
-                    setClinicForm((current) => ({ ...current, telefono: normalizePhone(event.target.value) }))
-                  }
-                  placeholder="3001234567"
-                  className={INPUT_CLASS}
+                  onChange={(valor) => setClinicForm((current) => ({ ...current, telefono: valor }))}
+                  aria-label="Celular principal"
                 />
               </FormField>
             </div>
@@ -1942,7 +1938,7 @@ export default function ConfiguracionPage() {
   const datosClinica = [
     clinicaActual?.nit ? `NIT ${clinicaActual.nit}${clinicaActual.digitoVerificacion ? `-${clinicaActual.digitoVerificacion}` : ''}` : null,
     [clinicaActual?.direccion, clinicaActual?.ciudad].filter(Boolean).join(', ') || null,
-    clinicaActual?.telefono || null,
+    formatearCelular(clinicaActual?.telefono) || null,
   ].filter(Boolean).join(' · ')
 
   return (

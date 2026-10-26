@@ -33,7 +33,13 @@ const {
   guardarRefreshToken,
   huellaRefreshToken,
 } = require('../services/sesionService')
-const { limpiarTexto, normalizarEmail, normalizarTelefonoColombiano } = require('../utils/normalizar')
+const {
+  limpiarTexto,
+  normalizarEmail,
+  normalizarCelular,
+  esCelularValido,
+  MENSAJE_CELULAR_INVALIDO,
+} = require('../utils/normalizar')
 const {
   enviarEmailRecuperacionPassword,
   enviarEmailVerificacion,
@@ -64,8 +70,6 @@ const estaTemporalmenteBloqueado = (usuario) =>
     usuario?.bloqueadoHasta &&
       new Date(usuario.bloqueadoHasta).getTime() > Date.now()
   )
-
-const esTelefonoColombianoValido = (valor) => /^3\d{9}$/.test(valor)
 
 const registrarIntentoFallido = async (usuario) => {
   // Incremento atomico en SQL (SET intentosFallidos = intentosFallidos + 1)
@@ -210,7 +214,7 @@ const registro = async (req, res) => {
     const nombreUsuarioAdmin = limpiarTexto(nombreAdministrador)
     const emailAdministrador = normalizarEmail(email)
     const emailContactoClinica = normalizarEmail(emailClinica) || emailAdministrador
-    const telefonoNormalizado = normalizarTelefonoColombiano(telefono)
+    const telefonoNormalizado = normalizarCelular(telefono)
     const direccionNormalizada = limpiarTexto(direccion)
     const ciudadNormalizada = limpiarTexto(ciudad)
     const departamentoNormalizado = limpiarTexto(departamento)
@@ -222,9 +226,9 @@ const registro = async (req, res) => {
       })
     }
 
-    if (telefonoNormalizado && !esTelefonoColombianoValido(telefonoNormalizado)) {
+    if (!esCelularValido(telefono)) {
       return res.status(400).json({
-        message: 'El teléfono debe ser un celular colombiano válido de 10 dígitos',
+        message: MENSAJE_CELULAR_INVALIDO,
       })
     }
 

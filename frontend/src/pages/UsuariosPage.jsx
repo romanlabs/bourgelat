@@ -20,6 +20,8 @@ import { MODULE_ACCESS, canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { celularE164, esCelularValido, formatearCelular } from '@/lib/celular'
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Administrador' },
@@ -56,13 +58,11 @@ const DEFAULT_EDIT_FORM = {
   activo: true,
 }
 
-const phoneRegex = /^3\d{9}$/
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
-const normalizePhone = (value) => value.replace(/\D/g, '').slice(0, 10)
 // Un administrador ya tiene todos los permisos: de los roles adicionales solo
 // cuenta Veterinario, porque citas e historias exigen un usuario veterinario.
 const normalizeRoles = (roles, primaryRole) =>
@@ -83,7 +83,7 @@ const buildEditForm = (user) => ({
   nombre: user?.nombre || '',
   email: user?.email || '',
   rol: user?.rol || 'recepcionista',
-  telefono: user?.telefono || '',
+  telefono: celularE164(user?.telefono),
   rolesAdicionales: Array.isArray(user?.rolesAdicionales) ? user.rolesAdicionales : [],
   activo: Boolean(user?.activo),
 })
@@ -495,7 +495,7 @@ export default function UsuariosPage() {
         id: item.id,
         nombre: item.nombre,
         email: item.email,
-        telefono: item.telefono || 'Sin celular laboral',
+        telefono: formatearCelular(item.telefono) || 'Sin celular laboral',
         rol: item.rol,
         rolesAdicionales: Array.isArray(item.rolesAdicionales) ? item.rolesAdicionales : [],
         activo: item.activo,
@@ -517,7 +517,7 @@ export default function UsuariosPage() {
       nombre: createForm.nombre.trim(),
       email: normalizeEmail(createForm.email),
       rol: createForm.rol,
-      telefono: normalizePhone(createForm.telefono),
+      telefono: createForm.telefono,
       rolesAdicionales: normalizeRoles(createForm.rolesAdicionales, createForm.rol),
     }
 
@@ -531,8 +531,8 @@ export default function UsuariosPage() {
       return
     }
 
-    if (payload.telefono && !phoneRegex.test(payload.telefono)) {
-      toast.error('El celular laboral debe tener 10 dígitos colombianos y comenzar por 3.')
+    if (payload.telefono && !esCelularValido(payload.telefono)) {
+      toast.error('El celular laboral no es válido para el país elegido.')
       return
     }
 
@@ -553,7 +553,7 @@ export default function UsuariosPage() {
     const payload = {
       nombre: editForm.nombre.trim(),
       email: puedeEditarCorreo ? normalizeEmail(editForm.email) : selectedUser.email,
-      telefono: normalizePhone(editForm.telefono),
+      telefono: editForm.telefono,
     }
 
     // Sobre la propia cuenta solo viajan los roles adicionales: el rol
@@ -571,8 +571,8 @@ export default function UsuariosPage() {
       return
     }
 
-    if (payload.telefono && !phoneRegex.test(payload.telefono)) {
-      toast.error('El celular laboral debe tener 10 dígitos colombianos y comenzar por 3.')
+    if (payload.telefono && !esCelularValido(payload.telefono)) {
+      toast.error('El celular laboral no es válido para el país elegido.')
       return
     }
 
@@ -784,13 +784,10 @@ export default function UsuariosPage() {
               />
             </Campo>
             <Campo label="Celular laboral (opcional)">
-              <input
-                type="text"
-                inputMode="numeric"
+              <CampoCelular
                 value={createForm.telefono}
-                onChange={(event) => setCreateForm((current) => ({ ...current, telefono: normalizePhone(event.target.value) }))}
-                placeholder="3001234567"
-                className={CAMPO}
+                onChange={(valor) => setCreateForm((current) => ({ ...current, telefono: valor }))}
+                aria-label="Celular laboral"
               />
             </Campo>
           </div>
@@ -862,12 +859,10 @@ export default function UsuariosPage() {
                 />
               </Campo>
               <Campo label="Celular laboral (opcional)">
-                <input
-                  type="text"
-                  inputMode="numeric"
+                <CampoCelular
                   value={editForm.telefono}
-                  onChange={(event) => setEditForm((current) => ({ ...current, telefono: normalizePhone(event.target.value) }))}
-                  className={CAMPO}
+                  onChange={(valor) => setEditForm((current) => ({ ...current, telefono: valor }))}
+                  aria-label="Celular laboral"
                 />
               </Campo>
             </div>
