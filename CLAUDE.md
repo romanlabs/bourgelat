@@ -62,7 +62,7 @@ bourgelat/
 │       ├── services/        # factus, suscripcion, email, oauth, almacenamiento...
 │       ├── scripts/         # Operación por CLI: superadmin, suscripciones, secretos
 │       ├── utils/           # tenant.js, paginacion, busqueda, turnoCaja...
-│       └── jobs/            # Limpieza de tokens y logs; recordatorio de citas (cada minuto, tope 150/día)
+│       └── jobs/            # Limpieza de tokens y logs; recordatorio de citas (cada minuto, tope 150/día); recordatorios de cobro (una vez al día, tope 30)
 │
 ├── frontend/
 │   └── src/
@@ -259,6 +259,7 @@ npm run suscripcion:cancelar -- --email admin@clinica.com --confirmar  # deja la
 npm run suscripcion:cortesia -- --email admin@clinica.com   # cortesía sin vencimiento
 npm run cuenta:borrar -- --email prueba@clinica.com   # solo cuentas sin datos; sin --confirmar solo muestra
 npm run cuenta:limpiar-no-verificadas -- --dias 7   # registros sin verificar y sin datos; sin --confirmar solo lista
+npm run cobro:pendientes   # simula; --enviar los manda
 npm run create:superadmin
 npm run cifrado:rotar
 ```

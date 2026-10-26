@@ -20,7 +20,8 @@
     "secrets:generate": "node src/scripts/generateSecrets.js",
     "cifrado:rotar": "node src/scripts/rotarCifrado.js",
     "cuenta:borrar": "node src/scripts/borrarCuenta.js",
-    "cuenta:limpiar-no-verificadas": "node src/scripts/limpiarNoVerificadas.js"
+    "cuenta:limpiar-no-verificadas": "node src/scripts/limpiarNoVerificadas.js",
+    "cobro:pendientes": "node src/scripts/cobroPendientes.js"
   },
   "keywords": [],
   "author": "",
