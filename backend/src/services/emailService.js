@@ -259,7 +259,117 @@ Ver en la agenda: ${datos.urlAgenda}`
 const enviarEmailRecordatorioCita = ({ para, nombreProfesional, datos }) =>
   enviarEmail({ para, ...armarEmailRecordatorioCita({ nombreProfesional, datos }) })
 
+// Recordatorios de cobro de la suscripción (job recordatoriosCobro).
+// `precios` llega ya resuelto: [{ nombre, precioMensual }].
+const formatoFecha = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeZone: 'UTC' })
+const fechaLarga = (fechaISO) => formatoFecha.format(new Date(`${String(fechaISO).slice(0, 10)}T00:00:00Z`))
+const pesos = (valor) => `$${Number(valor).toLocaleString('es-CO')}`
+
+const armarEmailRecordatorioCobro = ({ nombre, clinica, tipo, dias, fechaFin, esPrueba, precios = [], urlPagar, urlFrontend }) => {
+  const e = escaparHtml
+  const x = esPrueba ? 'prueba' : 'plan'
+  let asunto
+  if (tipo === 'vence_pronto') asunto = `Tu ${x} de Bourgelat vence en ${dias} días`
+  else if (tipo === 'vence_manana') asunto = `Tu ${x} de Bourgelat vence ${dias === 0 ? 'hoy' : 'mañana'}`
+  else asunto = 'Tu cuenta de Bourgelat quedó en solo lectura'
+
+  const vencida = tipo === 'vencida'
+  const fecha = fechaLarga(fechaFin)
+  const intro = vencida
+    ? `La suscripción de ${clinica} venció el ${fecha} y la cuenta quedó en solo lectura.`
+    : `${esPrueba ? 'La prueba' : 'El plan'} de ${clinica} vence el ${fecha}.`
+  const lineasPrecio = precios.map((p) => `${p.nombre}: ${pesos(p.precioMensual)} al mes`)
+  const datosPersonales = 'Tus datos siguen ahí: puedes consultarlos y exportarlos cuando quieras.'
+  const activacion = 'Activamos tu plan el mismo día hábil en que recibimos el pago.'
+  const pie = pieLegal(urlFrontend)
+
+  const texto = `Hola ${nombre},
+
+${intro}
+${lineasPrecio.length ? `\n${lineasPrecio.join('\n')}\n` : ''}
+Pagar ahora: ${urlPagar}
+
+${activacion}${vencida ? `\n${datosPersonales}` : ''}${pie.texto}`
+
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">${e(asunto)}</h2>
+      <p>Hola ${e(nombre)},</p>
+      <p>${e(intro)}</p>
+      ${lineasPrecio.map((linea) => `<p style="margin: 4px 0; font-size: 15px;">${e(linea)}</p>`).join('')}
+      <p style="margin: 24px 0;">
+        <a href="${e(urlPagar)}" style="background: #10b981; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Pagar ahora</a>
+      </p>
+      <p style="font-size: 13px; color: #51697d;">${e(activacion)}</p>
+      ${vencida ? `<p style="font-size: 13px; color: #51697d;">${e(datosPersonales)}</p>` : ''}
+      ${pie.html}
+    </div>
+  `
+  return { asunto, html, texto }
+}
+
+const enviarEmailRecordatorioCobro = ({ para, ...datos }) =>
+  enviarEmail({ para, ...armarEmailRecordatorioCobro(datos) })
+
+const ETIQUETA_TIPO_COBRO = {
+  vence_pronto: 'Vence pronto',
+  vence_manana: 'Vence mañana',
+  vencida: 'Vencida',
+}
+
+// Resumen diario para soporte: a quién se le avisó, con el WhatsApp listo.
+const armarEmailResumenCobro = ({ filas, fecha }) => {
+  const e = escaparHtml
+  const asunto = `Recordatorios de cobro enviados (${filas.length})`
+  const etiqueta = (tipo) => ETIQUETA_TIPO_COBRO[tipo] || tipo
+
+  const texto = `Recordatorios de cobro enviados el ${fechaLarga(fecha)}:
+
+${filas.map((f) => [
+    `${f.clinica} — ${etiqueta(f.tipo)} — vence ${fechaLarga(f.fechaFin)}`,
+    `  Correos: ${f.correos.join(', ')}`,
+    `  Teléfono: ${f.telefono || 'sin teléfono'}`,
+    f.enlaceWhatsapp ? `  WhatsApp: ${f.enlaceWhatsapp}` : null,
+  ].filter(Boolean).join('\n')).join('\n\n')}`
+
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 720px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">Recordatorios de cobro enviados</h2>
+      <p>${e(fechaLarga(fecha))}: ${filas.length} ${filas.length === 1 ? 'clínica avisada' : 'clínicas avisadas'}.</p>
+      <table style="border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px;">
+        <tr style="text-align: left; color: #51697d; font-size: 13px;">
+          <th style="padding: 6px 12px 6px 0;">Clínica</th>
+          <th style="padding: 6px 12px 6px 0;">Tipo</th>
+          <th style="padding: 6px 12px 6px 0;">Vencimiento</th>
+          <th style="padding: 6px 12px 6px 0;">Correos</th>
+          <th style="padding: 6px 12px 6px 0;">Teléfono</th>
+          <th style="padding: 6px 0;"></th>
+        </tr>
+        ${filas.map((f) => `
+        <tr style="border-top: 1px solid #d7e4ee;">
+          <td style="padding: 8px 12px 8px 0;">${e(f.clinica)}</td>
+          <td style="padding: 8px 12px 8px 0;">${e(etiqueta(f.tipo))}</td>
+          <td style="padding: 8px 12px 8px 0;">${e(fechaLarga(f.fechaFin))}</td>
+          <td style="padding: 8px 12px 8px 0;">${f.correos.map(e).join('<br>')}</td>
+          <td style="padding: 8px 12px 8px 0;">${e(f.telefono || 'Sin teléfono')}</td>
+          <td style="padding: 8px 0;">${f.enlaceWhatsapp
+    ? `<a href="${e(f.enlaceWhatsapp)}" style="background: #112739; color: #ffffff; padding: 8px 12px; text-decoration: none; display: inline-block;">Enviar WhatsApp</a>`
+    : ''}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `
+  return { asunto, html, texto }
+}
+
+const enviarEmailResumenCobro = ({ filas, fecha }) =>
+  enviarEmail({ para: 'soporte@bourgelat.co', ...armarEmailResumenCobro({ filas, fecha }) })
+
 module.exports = {
+  armarEmailRecordatorioCobro,
+  enviarEmailRecordatorioCobro,
+  armarEmailResumenCobro,
+  enviarEmailResumenCobro,
   enviarEmail,
   enviarEmailCodigoVerificacion,
   armarEmailRecordatorioCita,
