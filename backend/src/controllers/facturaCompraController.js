@@ -16,6 +16,20 @@ const {
 } = require('./facturaCompraReferencias');
 const { parsePaginacion } = require('../utils/paginacion');
 const { requiereVencimiento, resolverVencimiento } = require('../utils/vencimiento');
+const logger = require('../utils/logger');
+
+// Al cliente solo le llega «Error en el servidor»; sin este registro un 500
+// (p. ej. un timeout esperando el bloqueo de un producto) no dejaba rastro.
+const registrarErrorCompra = (accion, req, error) => {
+  logger.error({
+    contexto: 'facturas-compra',
+    accion,
+    facturaCompraId: req.params?.id,
+    clinicaId: req.usuario?.clinicaId,
+    mensaje: error.message,
+    codigo: error.original?.code || error.parent?.code,
+  });
+};
 
 // Los errores de detalle se responden como 400. Se marcan con una bandera en
 // vez de inspeccionar el texto del mensaje: el catch antes buscaba subcadenas
@@ -248,6 +262,7 @@ const crearFacturaCompra = async (req, res) => {
 
     res.status(201).json({ message: 'Factura de compra creada', factura: facturaConItems });
   } catch (error) {
+    registrarErrorCompra('crear', req, error);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };
@@ -367,6 +382,7 @@ const editarFacturaCompra = async (req, res) => {
     if (error.esDetalleInvalido) {
       return res.status(400).json({ message: error.message });
     }
+    registrarErrorCompra('editar', req, error);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };
@@ -499,6 +515,7 @@ const confirmarFacturaCompra = async (req, res) => {
     if (error.esDetalleInvalido) {
       return res.status(400).json({ message: error.message });
     }
+    registrarErrorCompra('confirmar', req, error);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };
@@ -609,6 +626,7 @@ const anularFacturaCompra = async (req, res) => {
     if (error.esDetalleInvalido) {
       return res.status(400).json({ message: error.message });
     }
+    registrarErrorCompra('anular', req, error);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 };
@@ -710,6 +728,7 @@ const marcarComoPagada = async (req, res) => {
 
     res.json({ message: 'Factura marcada como pagada', fechaPago: fechaPagoFinal })
   } catch (error) {
+    registrarErrorCompra('pagar', req, error)
     res.status(500).json({ message: 'Error en el servidor' })
   }
 }

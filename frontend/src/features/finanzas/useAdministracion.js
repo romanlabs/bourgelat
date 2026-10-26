@@ -5,14 +5,16 @@ import { administracionApi } from './administracionApi'
 const KEYS = {
   gastos: (filtros) => ['administracion', 'gastos', filtros],
   cuentasPorCobrar: ['administracion', 'cuentas-por-cobrar'],
-  rentabilidad: (periodo) => ['administracion', 'rentabilidad', periodo],
+  analisisPeriodo: (periodo) => ['administracion', 'analisis-periodo', periodo],
 }
 
-export function useGastos(filtros = {}) {
+// Ver la lista de gastos es solo de administración: el resto no la pide.
+export function useGastos(filtros = {}, { enabled = true } = {}) {
   return useQuery({
     queryKey: KEYS.gastos(filtros),
     queryFn: () => administracionApi.obtenerGastos(filtros),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
+    enabled,
   })
 }
 
@@ -56,10 +58,13 @@ export function useRegistrarAbono() {
   })
 }
 
-export function useRentabilidad(periodo, { enabled = true } = {}) {
+// Cuelga de la raíz 'administracion': la refrescan las mutaciones de gastos y
+// todo el dominio 'facturacion' (ventas, abonos, anulaciones).
+export function useAnalisisPeriodo(periodo, { enabled = true } = {}) {
   return useQuery({
-    queryKey: KEYS.rentabilidad(periodo),
-    queryFn: () => administracionApi.obtenerRentabilidad(periodo),
+    queryKey: KEYS.analisisPeriodo(periodo),
+    queryFn: () => administracionApi.obtenerAnalisisPeriodo(periodo),
     enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
+    placeholderData: (previousData) => previousData,
   })
 }
