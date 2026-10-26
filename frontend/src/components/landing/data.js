@@ -1,4 +1,7 @@
 import { Calendar, HeartPulse, Package } from "lucide-react"
+import { PRECIOS_PLANES } from "@/content/publicSiteContent"
+
+const precioPorMes = (plan) => `COP ${plan.precioMensual.toLocaleString("es-CO")}/mes`
 
 export const NAV_ITEMS = [
   { label: 'Plataforma', href: '#plataforma' },
@@ -36,21 +39,21 @@ export const PLAN_PREVIEW = [
   {
     name: 'Esencial',
     subtitle: 'Para empezar con orden',
-    price: 'COP 49.000/mes',
+    price: precioPorMes(PRECIOS_PLANES.esencial),
     note: 'Todo lo que un consultorio pequeño necesita: un usuario, 5 GB y reportes operativos.',
   },
   {
     name: 'Clínica',
     subtitle: 'Para el día completo',
-    price: 'COP 89.000/mes',
+    price: precioPorMes(PRECIOS_PLANES.activo),
     note: 'Para el equipo completo: tres usuarios incluidos, 20 GB, analítica de agenda y rentabilidad del mes.',
     featured: true,
   },
   {
-    name: 'Facturación electrónica',
-    subtitle: 'Complemento DIAN',
+    name: 'Clínica + DIAN',
+    subtitle: 'Con facturación electrónica',
     price: null,
-    note: 'Emisión validada ante la DIAN, notas crédito y envío automático. En desarrollo.',
+    note: 'Todo lo de Clínica con cinco usuarios y emisión validada ante la DIAN. En desarrollo.',
     comingSoon: true,
   },
 ]

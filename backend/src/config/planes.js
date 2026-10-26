@@ -72,8 +72,8 @@ const PLANES = {
     nombre: 'Esencial',
     descripcion:
       'Para consultorios pequenos que empiezan: todo el sistema con un usuario, menos almacenamiento y reportes operativos.',
-    precioMensual: 49000,
-    precioAnual: 41000,
+    precioMensual: 89000,
+    precioAnual: 75000,
     limiteUsuarios: 1,
     limiteMascotas: null,
     almacenamientoMB: 5120,
@@ -85,8 +85,8 @@ const PLANES = {
     nombre: 'Clinica',
     descripcion:
       'Toda la operacion de la clinica en un solo sistema, sin limites de pacientes, historias ni facturas.',
-    precioMensual: 89000,
-    precioAnual: 75000,
+    precioMensual: 120000,
+    precioAnual: 100000,
     limiteUsuarios: USUARIOS_BASE,
     limiteMascotas: null,
     almacenamientoMB: 20480,
