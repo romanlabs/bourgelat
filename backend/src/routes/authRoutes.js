@@ -29,7 +29,7 @@ const { validar } = require('../middlewares/validacionMiddleware')
 const { limitadorAuth, limitadorSesion } = require('../middlewares/rateLimitMiddleware')
 const { exigirTurnstile } = require('../middlewares/turnstileMiddleware')
 const { permitirOpenerEnPopupOauth } = require('../middlewares/oauthPopupMiddleware')
-const { normalizarTelefonoColombiano } = require('../utils/normalizar')
+const { normalizarCelular, esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
 const router = express.Router()
 const passwordFuerteRegex =
@@ -70,12 +70,12 @@ router.post(
       .isEmail()
       .withMessage('Email de la clinica invalido')
       .normalizeEmail(),
+    // Sin celular no hay cómo contactar a la clínica (cobro, soporte).
     body('telefono')
-      .optional({ values: 'falsy' })
       .trim()
-      .customSanitizer(normalizarTelefonoColombiano)
-      .custom((valor) => /^3\d{9}$/.test(valor))
-      .withMessage('El teléfono debe ser un celular colombiano válido de 10 dígitos'),
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO)
+      .customSanitizer(normalizarCelular),
     body('departamento').optional({ values: 'falsy' }).trim(),
     body('ciudad').optional({ values: 'falsy' }).trim(),
     body('nit').optional({ values: 'falsy' }).trim(),
@@ -246,6 +246,11 @@ router.post(
   [
     body('token').notEmpty().withMessage('Token requerido'),
     body('nombreClinica').trim().notEmpty().isLength({ max: 160 }).withMessage('El nombre de la clinica es obligatorio'),
+    body('telefono')
+      .trim()
+      .custom(esCelularValido)
+      .withMessage(MENSAJE_CELULAR_INVALIDO)
+      .customSanitizer(normalizarCelular),
     ...validarAceptacionesLegales,
     validar,
   ],

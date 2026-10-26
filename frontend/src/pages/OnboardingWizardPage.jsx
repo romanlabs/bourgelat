@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react'
 import Logo from '@/components/shared/Logo'
 import { useGuardarOnboarding } from '@/features/onboarding/useOnboarding'
 import { Select } from '@/components/ui/select'
+import { useAuthStore } from '@/store/authStore'
+import CampoCelular from '@/components/shared/CampoCelular'
+import { esCelularValido } from '@/lib/celular'
 
 const TOTAL_PASOS = 5
 
@@ -61,7 +64,8 @@ export default function OnboardingWizardPage() {
   const [respuestas, setRespuestas] = useState({
     usoPlanificado: '',
     cargo: '',
-    whatsapp: '',
+    // Ya lo dio al registrarse; aquí solo lo confirma.
+    whatsapp: useAuthStore.getState().usuario?.telefono || '',
     tipoClinica: '',
     tamanoEquipo: '',
     mascotasPorMes: '',
@@ -69,11 +73,18 @@ export default function OnboardingWizardPage() {
     gestionActual: '',
   })
 
+  // El admin es el contacto de la clínica: sin su celular no hay cómo llamarlo.
+  const celularObligatorio = useAuthStore((state) => state.usuario?.rol) === 'admin'
+
   const actualizar = (campo, valor) => setRespuestas((prev) => ({ ...prev, [campo]: valor }))
+
+  const [celularTocado, setCelularTocado] = useState(false)
+  const celularValido = esCelularValido(respuestas.whatsapp)
+  const celularConError = celularTocado && Boolean(respuestas.whatsapp) && !celularValido
 
   const puedeAvanzar = {
     1: Boolean(respuestas.usoPlanificado),
-    2: Boolean(respuestas.cargo),
+    2: Boolean(respuestas.cargo) && (celularValido || (!celularObligatorio && !respuestas.whatsapp)),
     3: Boolean(respuestas.tipoClinica && respuestas.tamanoEquipo && respuestas.mascotasPorMes),
     4: Boolean(respuestas.objetivoInicial),
     5: true,
@@ -157,15 +168,25 @@ export default function OnboardingWizardPage() {
                 />
               </div>
               <div>
-                <label className={labelClass}>WhatsApp (opcional)</label>
-                <input
-                  type="tel"
+                <label htmlFor="onboarding-celular" className={labelClass}>
+                  Celular (WhatsApp){celularObligatorio ? '' : ' (opcional)'}
+                </label>
+                <CampoCelular
+                  id="onboarding-celular"
                   value={respuestas.whatsapp}
-                  onChange={(e) => actualizar('whatsapp', e.target.value)}
-                  placeholder="Número de contacto"
-                  className={inputClass}
+                  onChange={(valor) => actualizar('whatsapp', valor)}
+                  onBlur={() => setCelularTocado(true)}
+                  invalido={celularConError}
+                  aria-describedby="onboarding-celular-ayuda"
                 />
-                <p className="mt-1.5 text-[13px] text-muted-foreground">Formato: 3001234567 (sin +57)</p>
+                <p
+                  id="onboarding-celular-ayuda"
+                  className={`mt-1.5 text-[13px] ${celularConError ? 'text-danger' : 'text-muted-foreground'}`}
+                >
+                  {celularConError
+                    ? 'Ese número no es válido para el país elegido.'
+                    : 'Para avisarte de tu plan y ayudarte si algo falla.'}
+                </p>
               </div>
             </div>
           </div>

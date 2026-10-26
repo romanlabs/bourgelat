@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -10,6 +10,8 @@ import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { hasRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { celularE164, esCelularValido } from '@/lib/celular'
+import CampoCelular from '@/components/shared/CampoCelular'
 import {
   useActualizarPerfil,
   useSubirFotoPerfil,
@@ -34,7 +36,6 @@ const ROLES = {
 
 const PROVEEDORES = { google: 'Google', microsoft: 'Microsoft' }
 
-const telefonoRegex = /^3\d{9}$/
 const passwordFuerteRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/
 
 const esquemaDatos = z.object({
@@ -42,7 +43,7 @@ const esquemaDatos = z.object({
   telefono: z
     .string()
     .trim()
-    .refine((v) => !v || telefonoRegex.test(v.replace(/\D/g, '')), 'Celular colombiano de 10 dígitos que empiece por 3')
+    .refine((v) => !v || esCelularValido(v), 'Ese número no es válido para el país elegido')
     .optional()
     .or(z.literal('')),
   cargo: z.string().trim().max(120).optional().or(z.literal('')),
@@ -145,6 +146,7 @@ function DatosPersonales({ usuario }) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isDirty },
@@ -152,7 +154,7 @@ function DatosPersonales({ usuario }) {
     resolver: zodResolver(esquemaDatos),
     defaultValues: {
       nombre: usuario?.nombre || '',
-      telefono: usuario?.telefono || '',
+      telefono: celularE164(usuario?.telefono),
       cargo: usuario?.cargo || '',
       tarjetaProfesional: usuario?.tarjetaProfesional || '',
     },
@@ -172,7 +174,19 @@ function DatosPersonales({ usuario }) {
           <input id="p-nombre" {...register('nombre')} className={CAMPO} autoComplete="name" />
         </Campo>
         <Campo id="p-telefono" label="Celular" error={errors.telefono?.message}>
-          <input id="p-telefono" {...register('telefono')} className={CAMPO} placeholder="3001234567" inputMode="tel" autoComplete="tel" />
+          <Controller
+            name="telefono"
+            control={control}
+            render={({ field }) => (
+              <CampoCelular
+                id="p-telefono"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                invalido={Boolean(errors.telefono)}
+              />
+            )}
+          />
         </Campo>
         <Campo
           id="p-correo"

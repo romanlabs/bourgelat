@@ -11,6 +11,7 @@ const {
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
+const { esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 const { uploadClinicaLogoSingle } = require('../middlewares/uploadClinicaLogoMiddleware')
 const { MINUTOS_MIN, MINUTOS_MAX } = require('../services/recordatorioCitaReglas')
 const { esUrlDeUploadPropio, CLINICAS_SUBDIR } = require('../config/uploads')
@@ -46,8 +47,8 @@ router.put(
     body('email').optional().trim().isEmail().withMessage('Email institucional invalido').normalizeEmail(),
     body('telefono')
       .optional({ nullable: true })
-      .custom((valor) => !valor || /^3\d{9}$/.test(String(valor).replace(/\D/g, '').slice(-10)))
-      .withMessage('El telefono debe ser un celular colombiano valido de 10 digitos'),
+      .custom((valor) => !valor || esCelularValido(valor))
+      .withMessage(MENSAJE_CELULAR_INVALIDO),
     body('direccion').optional({ nullable: true }).trim().isLength({ max: 200 }),
     body('ciudad').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('departamento').optional({ nullable: true }).trim().isLength({ max: 120 }),
