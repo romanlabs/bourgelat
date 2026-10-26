@@ -983,7 +983,7 @@ const obtenerPreliquidacion = async (req, res) => {
     if (cantidadesPorProducto.size > 0) {
       const productos = await Producto.findAll({
         where: { id: { [Op.in]: [...cantidadesPorProducto.keys()] }, clinicaId },
-        attributes: ['id', 'nombre', 'unidadMedida', 'precioVenta', 'precioCompra', 'stock', 'activo'],
+        attributes: ['id', 'nombre', 'unidadMedida', 'precioVenta', 'precioCompra', 'stock', 'activo', 'fechaVencimiento'],
       })
 
       const encontrados = new Set(productos.map((p) => p.id))
@@ -1010,6 +1010,9 @@ const obtenerPreliquidacion = async (req, res) => {
           precioUnitario,
           precioMinimo: Number(producto.precioCompra),
           stock: Number(producto.stock),
+          // Un vencido no se omite: el carrito lo marca y bloquea el cobro hasta
+          // que se revise el vencimiento o se quite.
+          fechaVencimiento: producto.fechaVencimiento || null,
           subtotal: redondearCantidad(cantidad * precioUnitario),
         })
       }

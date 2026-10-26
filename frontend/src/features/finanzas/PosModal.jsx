@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Loader2, Packa
 import { DialogRoot, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ProductCommandSearch from './ProductCommandSearch'
 import CartSidebar from './CartSidebar'
+import VencimientoCajaDialog from './VencimientoCajaDialog'
 import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
 import { finanzasApi } from './finanzasApi'
@@ -11,6 +12,7 @@ import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import { descargarFacturaPdf } from './facturaPdf'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { useAuthStore } from '@/store/authStore'
+import { hasAnyRole } from '@/lib/permissions'
 import { formatShortDate } from '@/features/dashboard/dashboardUtils'
 import { PLAZOS_CREDITO, sumarDias } from './resumenFinanzas'
 import { hoyLocal } from '@/lib/fecha'
@@ -124,7 +126,23 @@ export default function PosModal({
     handleCrearFactura, handleBarcodeScan,
     addServiceFromCatalog, addProductToInvoice,
     removeInvoiceItem, updateInvoiceItem,
+    vencimientoPendiente, setVencimientoPendiente, aplicarRelevoVencimiento,
   } = facturacionHook
+
+  // Mismos roles que POST /inventario/:id/vencimiento: recepción y facturación
+  // solo ven el aviso.
+  const puedeRelevarVencimiento = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
+  const abrirVencimientoProducto = (producto) => setVencimientoPendiente({ producto })
+  const abrirVencimientoItem = (item) =>
+    setVencimientoPendiente({
+      itemId: item.id,
+      producto: {
+        id: item.productoId,
+        nombre: item.descripcion,
+        stock: item.stock,
+        fechaVencimiento: item.fechaVencimiento,
+      },
+    })
 
   const items = invoiceForm?.items || []
   const itemCount = items.length
@@ -250,6 +268,7 @@ export default function PosModal({
                       serviciosQuery={serviciosQuery}
                       addProductToInvoice={addProductToInvoice}
                       addServiceFromCatalog={addServiceFromCatalog}
+                      onProductoVencido={abrirVencimientoProducto}
                       setInvoiceForm={setInvoiceForm}
                       puedeConsultarInventario={puedeConsultarInventario}
                       barcodeInput={barcodeInput}
@@ -271,6 +290,7 @@ export default function PosModal({
                     updateInvoiceItem={updateInvoiceItem}
                     removeInvoiceItem={removeInvoiceItem}
                     onOpenPaymentModal={irACobrar}
+                    onRevisarVencimiento={abrirVencimientoItem}
                   />
                 </div>
 
@@ -313,6 +333,7 @@ export default function PosModal({
                         serviciosQuery={serviciosQuery}
                         addProductToInvoice={(p) => { addProductToInvoice(p); setMobilePane('carrito') }}
                         addServiceFromCatalog={(s) => { addServiceFromCatalog(s); setMobilePane('carrito') }}
+                        onProductoVencido={abrirVencimientoProducto}
                         setInvoiceForm={setInvoiceForm}
                         puedeConsultarInventario={puedeConsultarInventario}
                         barcodeInput={barcodeInput}
@@ -334,6 +355,7 @@ export default function PosModal({
                         updateInvoiceItem={updateInvoiceItem}
                         removeInvoiceItem={removeInvoiceItem}
                         onOpenPaymentModal={irACobrar}
+                        onRevisarVencimiento={abrirVencimientoItem}
                       />
                     )}
                   </div>
@@ -680,6 +702,13 @@ export default function PosModal({
               </div>
             )}
           </div>
+
+          <VencimientoCajaDialog
+            pendiente={vencimientoPendiente}
+            puedeRelevar={puedeRelevarVencimiento}
+            onGuardado={aplicarRelevoVencimiento}
+            onClose={() => setVencimientoPendiente(null)}
+          />
         </div>
   )
 

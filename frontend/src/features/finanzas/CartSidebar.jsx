@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
 import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacion'
+import { estadoVencimiento, fechaCortaVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
 
@@ -29,6 +30,7 @@ export default function CartSidebar({
   updateInvoiceItem,
   removeInvoiceItem,
   onOpenPaymentModal,
+  onRevisarVencimiento,
 }) {
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [obsOpen, setObsOpen] = useState(false)
@@ -133,6 +135,7 @@ export default function CartSidebar({
               const bajoCosto =
                 item.tipo === 'producto' && precioMinimo > 0 && precio < precioMinimo
               const subtotalItem = Math.max(qty * precio, 0)
+              const vencimiento = item.tipo === 'producto' ? estadoVencimiento(item) : null
 
               return (
                 <MotionDiv
@@ -217,6 +220,26 @@ export default function CartSidebar({
                   {bajoCosto && (
                     <p className="mt-1.5 text-[13px] font-semibold text-danger">
                       Mínimo {formatCOP(precioMinimo)} (costo)
+                    </p>
+                  )}
+
+                  {vencimiento === 'vencido' && (
+                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                      <p className="text-[13px] font-semibold text-danger">
+                        Vencido desde el {fechaCortaVencimiento(item.fechaVencimiento)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => onRevisarVencimiento?.(item)}
+                        className="text-[13px] font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Revisar vencimiento
+                      </button>
+                    </div>
+                  )}
+                  {vencimiento === 'proximo' && (
+                    <p className="mt-1.5 text-[13px] font-semibold text-warning">
+                      {textoVencimiento(item.fechaVencimiento)}
                     </p>
                   )}
                 </MotionDiv>

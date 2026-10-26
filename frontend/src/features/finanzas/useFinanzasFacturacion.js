@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { inventarioApi } from '@/features/inventario/inventarioApi'
+import { estadoVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { serviciosApi } from '@/features/servicios/serviciosApi'
@@ -77,8 +78,13 @@ export const PAYMENT_METHOD_OPTIONS = [
   },
 ]
 
-// Qué le falta al método elegido para poder cobrar (null si nada).
+// Qué le falta al carrito o al método elegido para poder cobrar (null si nada).
 export const faltaParaCobrar = (form) => {
+  // El backend rechaza la venta de un vencido: se avisa antes de llegar al cobro.
+  const vencido = (form?.items || []).find(
+    (item) => item.tipo === 'producto' && estadoVencimiento(item) === 'vencido'
+  )
+  if (vencido) return `«${vencido.descripcion}» figura vencido: revisa el vencimiento o quítalo del carrito`
   const opcion = PAYMENT_METHOD_OPTIONS.find((o) => o.value === form?.metodoPago)
   if (opcion?.requiereCliente && !form?.propietarioId) return 'Para vender a crédito asigna un cliente'
   if (opcion?.detalle?.requerido && !String(form?.detallePago || '').trim()) return opcion.detalle.falta
@@ -100,6 +106,9 @@ export function useFinanzasFacturacion({
   const [selectedOwnerData, setSelectedOwnerData] = useState(null)
   const [tutorDrawerOpen, setTutorDrawerOpen] = useState(false)
   const [productDrawerOpen, setProductDrawerOpen] = useState(false)
+  // Producto vencido que se intentó vender: { producto, itemId? }. Con itemId
+  // ya está en el carrito (vino de una consulta); sin él, del catálogo o el escáner.
+  const [vencimientoPendiente, setVencimientoPendiente] = useState(null)
   // Clave de idempotencia del carrito actual: se repite en los reintentos para
   // que un corte de red no duplique la venta (ver claveIdempotenciaVenta.js).
   const [claveVenta] = useState(() => crearGestorClaveVenta())
@@ -176,10 +185,19 @@ export function useFinanzasFacturacion({
   const buscarProductoPorBarcodeMutation = useMutation({
     mutationFn: (codigo) => inventarioApi.obtenerProductoPorBarcode(codigo),
     onSuccess: (data) => {
-      if (data?.producto) {
-        addProductToInvoice(data.producto)
-        setBarcodeInput('')
-        toast.success(`Producto agregado: ${data.producto.nombre}`)
+      const producto = data?.producto
+      if (!producto) return
+      setBarcodeInput('')
+      const estado = estadoVencimiento(producto)
+      if (estado === 'vencido') {
+        setVencimientoPendiente({ producto })
+        return
+      }
+      addProductToInvoice(producto)
+      if (estado === 'proximo') {
+        toast.warning(`${producto.nombre}: ${textoVencimiento(producto.fechaVencimiento).toLowerCase()}`)
+      } else {
+        toast.success(`Producto agregado: ${producto.nombre}`)
       }
     },
     onError: (error) => {
@@ -260,6 +278,7 @@ export function useFinanzasFacturacion({
           stock: product.stock ?? null,
           // Piso de precio: no se puede vender por debajo del costo.
           precioMinimo: Math.max(toAmount(product.precioCompra), 0),
+          fechaVencimiento: product.fechaVencimiento || null,
         },
       ],
     }))
@@ -284,6 +303,7 @@ export function useFinanzasFacturacion({
       servicioClinicoId: '',
       stock: item.stock ?? null,
       precioMinimo: toAmount(item.precioMinimo),
+      fechaVencimiento: item.fechaVencimiento || null,
     }))
 
     // Reemplaza el carrito: anexar duplicaba los ítems al repetir «Facturar
@@ -337,6 +357,34 @@ export function useFinanzasFacturacion({
     setInvoiceForm(buildInitialForm)
     setSelectedOwnerData(null)
     setOwnerSearch('')
+  }
+
+  /**
+   * Tras actualizar el vencimiento desde Caja: lo que quedó vigente sigue en la
+   * venta. Si el producto ya estaba en el carrito se actualiza; si venía del
+   * catálogo, entra ahora con la nueva fecha. Sin existencias, no hay qué vender.
+   */
+  const aplicarRelevoVencimiento = ({ producto, itemId }, data) => {
+    const stockNuevo = toAmount(data?.stockNuevo)
+    const fechaVencimiento = data?.fechaVencimiento || null
+
+    if (stockNuevo <= 0) {
+      if (itemId) removeInvoiceItem(itemId)
+      toast.info(`Se retiró todo el stock de ${producto.nombre}: no queda nada para vender.`)
+      return
+    }
+
+    if (itemId) {
+      setInvoiceForm((curr) => ({
+        ...curr,
+        items: curr.items.map((item) =>
+          item.id === itemId ? { ...item, stock: stockNuevo, fechaVencimiento } : item
+        ),
+      }))
+      return
+    }
+
+    addProductToInvoice({ ...producto, stock: stockNuevo, fechaVencimiento })
   }
 
   const handleBarcodeScan = () => {
@@ -461,6 +509,9 @@ export function useFinanzasFacturacion({
     addServiceItem,
     addServiceFromCatalog,
     addProductToInvoice,
+    vencimientoPendiente,
+    setVencimientoPendiente,
+    aplicarRelevoVencimiento,
     loadPreliquidacionHistoria,
     loadPreliquidacionEstilo,
     descartarCobroVinculado,
