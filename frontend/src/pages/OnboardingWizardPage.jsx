@@ -176,7 +176,6 @@ export default function OnboardingWizardPage() {
                   value={respuestas.whatsapp}
                   onChange={(valor) => actualizar('whatsapp', valor)}
                   onBlur={() => setCelularTocado(true)}
-                  placeholder="300 1234567"
                   invalido={celularConError}
                   aria-describedby="onboarding-celular-ayuda"
                 />

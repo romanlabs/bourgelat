@@ -120,7 +120,6 @@ export default function CompletarRegistroPage() {
                       value={field.value}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
-                      placeholder="300 1234567"
                       invalido={Boolean(errors.telefono)}
                       className="h-12 text-base"
                     />

@@ -183,7 +183,6 @@ function DatosPersonales({ usuario }) {
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                placeholder="300 1234567"
                 invalido={Boolean(errors.telefono)}
               />
             )}

@@ -508,7 +508,6 @@ function ConfiguracionContent({
                 <CampoCelular
                   value={clinicForm.telefono}
                   onChange={(valor) => setClinicForm((current) => ({ ...current, telefono: valor }))}
-                  placeholder="300 1234567"
                   aria-label="Celular principal"
                 />
               </FormField>

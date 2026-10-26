@@ -787,7 +787,6 @@ export default function UsuariosPage() {
               <CampoCelular
                 value={createForm.telefono}
                 onChange={(valor) => setCreateForm((current) => ({ ...current, telefono: valor }))}
-                placeholder="300 1234567"
                 aria-label="Celular laboral"
               />
             </Campo>
@@ -863,7 +862,6 @@ export default function UsuariosPage() {
                 <CampoCelular
                   value={editForm.telefono}
                   onChange={(valor) => setEditForm((current) => ({ ...current, telefono: valor }))}
-                  placeholder="300 1234567"
                   aria-label="Celular laboral"
                 />
               </Campo>
