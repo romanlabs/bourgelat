@@ -18,6 +18,7 @@ const { verificarToken, verificarRol } = require('../middlewares/authMiddleware'
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadUsuarioFotoSingle } = require('../middlewares/uploadUsuarioFotoMiddleware')
+const { normalizarTelefonoColombiano } = require('../utils/normalizar')
 
 const router = express.Router()
 const telefonoColombiaRegex = /^3\d{9}$/
@@ -88,10 +89,11 @@ router.patch(
   [
     body('usoPlanificado').trim().notEmpty().withMessage('Selecciona una opción').isLength({ max: 60 }),
     body('cargo').optional({ checkFalsy: true }).trim().isLength({ max: 120 }),
+    // El admin es el contacto de la clínica (cobro, soporte): su celular es obligatorio.
     body('whatsapp')
-      .optional({ checkFalsy: true })
-      .custom((value) => telefonoColombiaRegex.test(String(value).replace(/\D/g, '')))
-      .withMessage('El WhatsApp debe tener 10 dígitos colombianos y comenzar por 3'),
+      .if((value, { req }) => Boolean(value) || req.usuario?.rol === 'admin')
+      .custom((value) => telefonoColombiaRegex.test(normalizarTelefonoColombiano(value) || ''))
+      .withMessage('El celular debe tener 10 dígitos colombianos y comenzar por 3'),
     body('tipoClinica').trim().notEmpty().withMessage('Selecciona el tipo de clínica').isLength({ max: 60 }),
     body('tamanoEquipo').trim().notEmpty().withMessage('Selecciona el tamaño del equipo').isLength({ max: 30 }),
     body('mascotasPorMes').trim().notEmpty().withMessage('Selecciona un rango').isLength({ max: 30 }),

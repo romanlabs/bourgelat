@@ -4,8 +4,15 @@ import { ArrowLeft } from 'lucide-react'
 import Logo from '@/components/shared/Logo'
 import { useGuardarOnboarding } from '@/features/onboarding/useOnboarding'
 import { Select } from '@/components/ui/select'
+import { useAuthStore } from '@/store/authStore'
 
 const TOTAL_PASOS = 5
+
+const CELULAR_REGEX = /^3\d{9}$/
+const soloDigitosCelular = (valor) => {
+  const digitos = valor.replace(/\D/g, '')
+  return digitos.length > 10 && digitos.startsWith('57') ? digitos.slice(2) : digitos
+}
 
 const opcionClass = (activa) =>
   `w-full rounded-xl px-4 py-4 text-left transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
@@ -69,11 +76,18 @@ export default function OnboardingWizardPage() {
     gestionActual: '',
   })
 
+  // El admin es el contacto de la clínica: sin su celular no hay cómo llamarlo.
+  const celularObligatorio = useAuthStore((state) => state.usuario?.rol) === 'admin'
+
   const actualizar = (campo, valor) => setRespuestas((prev) => ({ ...prev, [campo]: valor }))
+
+  const celular = soloDigitosCelular(respuestas.whatsapp)
+  const celularValido = CELULAR_REGEX.test(celular)
+  const celularConError = celular.length >= 10 && !celularValido
 
   const puedeAvanzar = {
     1: Boolean(respuestas.usoPlanificado),
-    2: Boolean(respuestas.cargo),
+    2: Boolean(respuestas.cargo) && (celularValido || (!celularObligatorio && !celular)),
     3: Boolean(respuestas.tipoClinica && respuestas.tamanoEquipo && respuestas.mascotasPorMes),
     4: Boolean(respuestas.objetivoInicial),
     5: true,
@@ -157,15 +171,29 @@ export default function OnboardingWizardPage() {
                 />
               </div>
               <div>
-                <label className={labelClass}>WhatsApp (opcional)</label>
+                <label htmlFor="onboarding-celular" className={labelClass}>
+                  Celular (WhatsApp){celularObligatorio ? '' : ' (opcional)'}
+                </label>
                 <input
+                  id="onboarding-celular"
                   type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
                   value={respuestas.whatsapp}
                   onChange={(e) => actualizar('whatsapp', e.target.value)}
-                  placeholder="Número de contacto"
-                  className={inputClass}
+                  placeholder="3001234567"
+                  aria-invalid={celularConError ? 'true' : undefined}
+                  aria-describedby="onboarding-celular-ayuda"
+                  className={`${inputClass} ${celularConError ? 'border-danger' : ''}`}
                 />
-                <p className="mt-1.5 text-[13px] text-muted-foreground">Formato: 3001234567 (sin +57)</p>
+                <p
+                  id="onboarding-celular-ayuda"
+                  className={`mt-1.5 text-[13px] ${celularConError ? 'text-danger' : 'text-muted-foreground'}`}
+                >
+                  {celularConError
+                    ? 'Debe ser un celular colombiano de 10 dígitos que empiece por 3.'
+                    : 'Para avisarte de tu plan y ayudarte si algo falla. Sin +57.'}
+                </p>
               </div>
             </div>
           </div>

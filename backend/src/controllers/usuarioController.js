@@ -744,7 +744,17 @@ const guardarOnboarding = async (req, res) => {
       completadoEn: new Date().toISOString(),
     }
 
-    await usuario.update({ onboarding: respuestas })
+    // El celular del wizard es el que se usa para contactar al usuario; el del
+    // admin queda también como teléfono de la clínica si esta aún no tiene.
+    await usuario.update({
+      onboarding: respuestas,
+      ...(respuestas.whatsapp ? { telefono: respuestas.whatsapp } : {}),
+    })
+
+    if (respuestas.whatsapp && usuario.rol === 'admin') {
+      const clinica = await Clinica.findByPk(usuario.clinicaId, { attributes: ['id', 'telefono'] })
+      if (clinica && !clinica.telefono) await clinica.update({ telefono: respuestas.whatsapp })
+    }
 
     await registrarAuditoria({
       accion: 'COMPLETAR_ONBOARDING',
