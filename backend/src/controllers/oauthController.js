@@ -114,6 +114,8 @@ const callback = async (req, res) => {
         accion: 'LOGIN',
         entidad: 'Usuario',
         entidadId: usuario.id,
+        clinicaId: usuario.clinicaId,
+        usuarioId: usuario.id,
         descripcion: `Login social ${proveedor} ${perfil.email}`,
         req,
         resultado: 'exitoso',
