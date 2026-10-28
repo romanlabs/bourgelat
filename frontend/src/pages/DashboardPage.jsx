@@ -1,96 +1,24 @@
-import { chartColors } from '@/lib/theme'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import {
-  ArrowRight,
-  CalendarPlus,
-  BarChart3,
-  Boxes,
-  CalendarClock,
-  CalendarX,
-  CircleAlert,
-  FileText,
-  LayoutDashboard,
-  PawPrint,
-  Receipt,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-  Stethoscope,
-  UserX,
-  Users,
-  Wallet,
-} from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Boxes, CalendarClock, CalendarPlus, PawPrint, Receipt, Stethoscope, Wallet } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
-import { NavCta, NavCtaLink } from '@/components/shared/NavCta'
-import { EmptyState } from '@/components/shared/EmptyState'
 import { cajaApi } from '@/features/caja/cajaApi'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
+import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import {
-  BarPanel,
-  DashboardPanel,
-  DataTable,
-  DonutCard,
-  KpiCard,
-  KpiGrid,
-  LinePanel,
-  StatusPill,
-} from '@/features/dashboard/dashboardComponents'
-import {
-  CITA_ESTADO_LABELS,
-  CITA_TIPO_LABELS,
   PAYMENT_METHOD_LABELS,
-  PLAN_META,
-  formatCurrency,
-  formatLongDate,
   formatNumber,
-  formatShortDate,
   getCurrentMonthRange,
-  getFeatureStateRows,
-  getUsagePercentage,
-  mapIngresosPorDia,
-  objectToChartData,
-  toNumber,
 } from '@/features/dashboard/dashboardUtils'
 import JornadaHoy from '@/features/dashboard/JornadaHoy'
 import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
-import { tieneFuncionalidad, FUNCIONALIDAD_DIAN } from '@/lib/suscripcion'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
-
-const TABS = [
-  { id: 'resumen', label: 'Hoy', icon: LayoutDashboard },
-  { id: 'agenda', label: 'Agenda', icon: CalendarClock },
-  { id: 'ingresos', label: 'Caja', icon: Wallet },
-  { id: 'inventario', label: 'Inventario', icon: Boxes },
-  { id: 'pacientes', label: 'Pacientes', icon: PawPrint },
-  { id: 'plan', label: 'Plan y control', icon: ShieldCheck },
-]
-
 
 const EMPTY_LIST = []
 const EMPTY_RECORD = {}
-
-const MODULE_ICONS = {
-  '/agenda': CalendarClock,
-  '/caja': Wallet,
-  '/finanzas': Wallet,
-  '/inventario': Boxes,
-  '/pacientes': PawPrint,
-}
-
-function OpenModuleButton({ to, label }) {
-  return (
-    <div className="flex justify-end">
-      <NavCta to={to} icon={MODULE_ICONS[to]}>
-        {label}
-      </NavCta>
-    </div>
-  )
-}
 
 const serializeDate = (date) => {
   const year = date.getFullYear()
@@ -101,100 +29,6 @@ const serializeDate = (date) => {
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback
-
-
-const buildCapacityChart = (used, limit, label) => {
-  if (limit === null || limit === undefined) {
-    return {
-      centerValue: 'Sin límite',
-      rows: [{ key: 'abierto', name: label, value: 1, color: chartColors.categorica[0] }],
-    }
-  }
-
-  return {
-    centerValue: `${getUsagePercentage(used, limit)}%`,
-    rows: [
-      { key: 'en_uso', name: 'En uso', value: used, color: chartColors.categorica[0] },
-      { key: 'disponible', name: 'Disponible', value: Math.max(limit - used, 0), color: chartColors.vacio },
-    ],
-  }
-}
-
-function SectionTabs({ activeTab, setActiveTab, tabBadges }) {
-  const tabRefs = useRef({})
-
-  // Patron de tabs de WAI-ARIA: una sola parada de tabulacion en el grupo y
-  // movimiento entre pestanas con flechas, Inicio y Fin.
-  const handleKeyDown = (event) => {
-    const offsets = { ArrowRight: 1, ArrowLeft: -1 }
-    let destino = null
-
-    if (event.key === 'Home') destino = TABS[0]
-    else if (event.key === 'End') destino = TABS[TABS.length - 1]
-    else if (offsets[event.key]) {
-      const actual = TABS.findIndex((tab) => tab.id === activeTab)
-      destino = TABS[(actual + offsets[event.key] + TABS.length) % TABS.length]
-    }
-
-    if (!destino) return
-    event.preventDefault()
-    setActiveTab(destino.id)
-    tabRefs.current[destino.id]?.focus()
-  }
-
-  return (
-    <section className="self-start">
-      <div
-        role="tablist"
-        aria-label="Secciones del panel de control"
-        onKeyDown={handleKeyDown}
-        className="inline-flex flex-wrap items-center gap-1 rounded-xl bg-secondary p-1"
-      >
-        {TABS.map((tab) => {
-          const Icon = tab.icon
-          const active = tab.id === activeTab
-
-          return (
-            <button
-              key={tab.id}
-              ref={(node) => {
-                tabRefs.current[tab.id] = node
-              }}
-              type="button"
-              role="tab"
-              id={`dashboard-tab-${tab.id}`}
-              aria-selected={active}
-              aria-controls={`dashboard-panel-${tab.id}`}
-              tabIndex={active ? 0 : -1}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'flex h-9 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm transition',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                active
-                  ? 'bg-card font-semibold text-foreground'
-                  : 'font-medium text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
-              <span>{tab.label}</span>
-
-              {tabBadges[tab.id] ? (
-                <span
-                  className={cn(
-                    'rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
-                    active ? 'bg-brand text-foreground' : 'bg-card text-primary'
-                  )}
-                >
-                  {tabBadges[tab.id]}
-                </span>
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 // Dentro de AdminShell como el resto de la app: sin él, los roles no admin
 // entraban a una página sin menú, sin buscador y sin forma de cerrar sesión.
@@ -290,11 +124,13 @@ function RestrictedDashboard({ usuario }) {
   )
 }
 
+
+// Hoy del administrador: la jornada, la caja del día y lo que hay que revisar.
+// Los reportes del mes viven en Finanzas; las pestañas que los repetían aquí
+// se quitaron.
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('resumen')
+  const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
-  const clinica = useAuthStore((state) => state.clinica)
-  const suscripcionPersistida = useAuthStore((state) => state.suscripcion)
   const setSuscripcion = useAuthStore((state) => state.setSuscripcion)
 
   const esAdministrador = hasAnyRole(usuario, ['admin', 'superadmin'])
@@ -323,46 +159,17 @@ export default function DashboardPage() {
     }
   }, [setSuscripcion, suscripcionQuery.data?.suscripcion])
 
-  const suscripcion = suscripcionQuery.data?.suscripcion || suscripcionPersistida
-  const funcionalidades = Array.isArray(suscripcion?.funcionalidades)
-    ? suscripcion.funcionalidades
-    : EMPTY_LIST
-  // Todos los planes traen agenda, historias, inventario, caja y reportes: lo
-  // unico que decide aqui es el rol.
-  const puedeVerAgenda = esAdministrador
-  const puedeVerIngresos = esAdministrador
-  const puedeVerInventario = esAdministrador
-  const puedeAbrirAgenda = esAdministrador
-  const puedeAbrirHistorias = esAdministrador
-  const puedeAbrirCaja = esAdministrador
-  // Solo mostramos el control DIAN cuando el plan incluye facturacion electronica (v1 sin DIAN).
-  const mostrarDian = puedeVerIngresos && tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
-
-  const ingresosQuery = useQuery({
-    queryKey: ['dashboard-ingresos', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () => dashboardApi.obtenerReporteIngresos(rangoMes),
-    enabled: puedeVerIngresos,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const citasQuery = useQuery({
-    queryKey: ['dashboard-citas', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () => dashboardApi.obtenerReporteCitas(rangoMes),
-    enabled: puedeVerAgenda,
-    placeholderData: (previousData) => previousData,
-  })
-
   const inventarioQuery = useQuery({
     queryKey: ['dashboard-inventario'],
     queryFn: dashboardApi.obtenerReporteInventario,
-    enabled: puedeVerInventario,
+    enabled: esAdministrador,
     placeholderData: (previousData) => previousData,
   })
 
   const agendaHoyQuery = useQuery({
     queryKey: ['dashboard-citas-hoy-detalle', hoy],
     queryFn: () => agendaApi.obtenerCitas({ fecha: hoy, pagina: 1, limite: 40 }),
-    enabled: puedeAbrirAgenda,
+    enabled: esAdministrador,
     placeholderData: (previousData) => previousData,
   })
 
@@ -375,95 +182,31 @@ export default function DashboardPage() {
         pagina: 1,
         limite: 1,
       }),
-    enabled: puedeVerIngresos,
+    enabled: esAdministrador,
     placeholderData: (previousData) => previousData,
   })
 
-  const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clínica'
-  const ubicacionClinica = [clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', ')
+  const ingresosHoyQuery = useQuery({
+    queryKey: ['dashboard-ingresos', hoy, hoy],
+    queryFn: () => dashboardApi.obtenerReporteIngresos({ fechaInicio: hoy, fechaFin: hoy }),
+    enabled: esAdministrador,
+  })
 
-  const metaPlan = PLAN_META[suscripcion?.plan] || PLAN_META.inicio
+  const turnoActivoQuery = useQuery({
+    queryKey: ['caja-turno-activo'],
+    queryFn: () => cajaApi.obtenerTurnoActivo(),
+    enabled: esAdministrador,
+  })
+
   const resumen = dashboardQuery.data
-  const usuariosActivos = resumen?.totales?.usuarios ?? 0
-  const propietariosActivos = resumen?.totales?.propietarios ?? 0
-  const mascotasActivas = resumen?.totales?.mascotas ?? 0
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
   // Los dos inventarios cuentan: quedarse sin un insumo clínico frena una
   // cirugía igual que quedarse sin un producto frena una venta.
   const productosBajoStock = resumen?.alertas?.productosbajoStock ?? 0
   const insumosBajoStock = resumen?.alertas?.insumosBajoStock ?? 0
   const alertasInventario = productosBajoStock + insumosBajoStock
-  const limiteUsuarios = toNumber(suscripcion?.limiteUsuarios)
-  const limiteMascotas = toNumber(suscripcion?.limiteMascotas)
   const diasRestantes = suscripcionQuery.data?.diasRestantes
-  const advertenciaPlan = suscripcionQuery.data?.advertencia
 
-  const ingresosPorDia = useMemo(
-    () => mapIngresosPorDia(ingresosQuery.data?.ingresosPorDia),
-    [ingresosQuery.data?.ingresosPorDia]
-  )
-  const metodosPago = useMemo(
-    () => objectToChartData(ingresosQuery.data?.ingresosPorMetodoPago, PAYMENT_METHOD_LABELS),
-    [ingresosQuery.data?.ingresosPorMetodoPago]
-  )
-  const estadosCita = useMemo(
-    () => objectToChartData(citasQuery.data?.citasPorEstado, CITA_ESTADO_LABELS),
-    [citasQuery.data?.citasPorEstado]
-  )
-  const tiposCita = useMemo(
-    () => objectToChartData(citasQuery.data?.citasPorTipo, CITA_TIPO_LABELS),
-    [citasQuery.data?.citasPorTipo]
-  )
-  const categoriasInventario = useMemo(
-    () =>
-      Object.entries(inventarioQuery.data?.porCategoria || {}).map(([key, value], index) => ({
-        key,
-        name: key,
-        total: Number(value?.total || 0),
-        valor: Number(value?.valor || 0),
-        value: Number(value?.total || 0),
-        color: chartColors.categorica[index % chartColors.categorica.length],
-      })),
-    [inventarioQuery.data?.porCategoria]
-  )
-
-  const invoiceRows = useMemo(
-    () =>
-      [...(ingresosQuery.data?.facturas || [])]
-        .slice(-8)
-        .reverse()
-        .map((factura) => ({
-          id: factura.id,
-          numero: factura.numero,
-          fecha: formatShortDate(factura.fecha),
-          total: formatCurrency(factura.total),
-          metodoPago: PAYMENT_METHOD_LABELS[factura.metodoPago] || factura.metodoPago || 'Otro',
-        })),
-    [ingresosQuery.data?.facturas]
-  )
-
-  const inventoryRows = useMemo(
-    () =>
-      (inventarioQuery.data?.productos || [])
-        .filter(
-          (producto) =>
-            producto.stock <= producto.stockMinimo ||
-            Boolean(producto.fechaVencimiento)
-        )
-        .slice(0, 10)
-        .map((producto) => ({
-          id: producto.id,
-          nombre: producto.nombre,
-          categoria: producto.categoria,
-          stock: `${producto.stock}/${producto.stockMinimo}`,
-          vencimiento: producto.fechaVencimiento ? formatLongDate(producto.fechaVencimiento) : 'Sin fecha',
-          valor: formatCurrency(Number(producto.precioVenta || 0) * Number(producto.stock || 0)),
-        })),
-    [inventarioQuery.data?.productos]
-  )
-
-  const patientCapacity = buildCapacityChart(mascotasActivas, limiteMascotas, 'Pacientes')
-  const userCapacity = buildCapacityChart(usuariosActivos, limiteUsuarios, 'Usuarios')
   const citasHoyRows = useMemo(() => agendaHoyQuery.data?.citas ?? EMPTY_LIST, [agendaHoyQuery.data?.citas])
   const resumenElectronico = useMemo(
     () => facturacionEstadoQuery.data?.resumenElectronico ?? EMPTY_RECORD,
@@ -471,10 +214,6 @@ export default function DashboardPage() {
   )
   const dianErrores =
     Number(resumenElectronico.rechazada || 0) + Number(resumenElectronico.error || 0)
-  const dianPendientes =
-    Number(resumenElectronico.pendiente || 0) + Number(resumenElectronico.enviada || 0)
-
-  const featureRows = getFeatureStateRows(funcionalidades)
 
   const urgenciasSinHistoria = useMemo(
     () =>
@@ -541,23 +280,6 @@ export default function DashboardPage() {
     return rows
   }, [alertasInventario, productosBajoStock, insumosBajoStock, dianErrores, diasRestantes, urgenciasSinHistoria])
 
-  const ingresosHoy = useMemo(() => {
-    const entry = ingresosPorDia.find((d) => d.fechaISO === hoy)
-    return entry?.total ?? 0
-  }, [ingresosPorDia, hoy])
-
-  const ingresosHoyQuery = useQuery({
-    queryKey: ['dashboard-ingresos', hoy, hoy],
-    queryFn: () => dashboardApi.obtenerReporteIngresos({ fechaInicio: hoy, fechaFin: hoy }),
-    enabled: puedeVerIngresos,
-  })
-
-  const turnoActivoQuery = useQuery({
-    queryKey: ['caja-turno-activo'],
-    queryFn: () => cajaApi.obtenerTurnoActivo(),
-    enabled: puedeVerIngresos,
-  })
-
   const cajaHoy = useMemo(() => {
     const porMetodo = Object.entries(ingresosHoyQuery.data?.ingresosPorMetodoPago || {})
       .map(([key, valor]) => ({ key, label: PAYMENT_METHOD_LABELS[key] || key, valor: Number(valor) || 0 }))
@@ -565,13 +287,15 @@ export default function DashboardPage() {
       .sort((a, b) => b.valor - a.valor)
     const apertura = turnoActivoQuery.data?.turno?.fechaApertura
     return {
-      total: porMetodo.length ? porMetodo.reduce((suma, metodo) => suma + metodo.valor, 0) : ingresosHoy,
+      total: porMetodo.length
+        ? porMetodo.reduce((suma, metodo) => suma + metodo.valor, 0)
+        : Number(ingresosHoyQuery.data?.totalIngresos) || 0,
       porMetodo,
       turnoApertura: apertura
         ? new Date(apertura).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
         : null,
     }
-  }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoy])
+  }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoyQuery.data?.totalIngresos])
 
   // «Para revisar» nombra cada caso (el producto, el paciente) en vez de contar.
   const alertasHoy = useMemo(() => {
@@ -608,444 +332,7 @@ export default function DashboardPage() {
     return <RestrictedDashboard usuario={usuario} />
   }
 
-  const renderSummaryOverview = () => (
-    <JornadaHoy
-      citas={citasHoyRows}
-      loading={agendaHoyQuery.isLoading}
-      cajaHoy={cajaHoy}
-      alertas={alertasHoy}
-      puedeAtender={puedeAbrirHistorias}
-      puedeCobrar={puedeAbrirCaja}
-      puedeVerCaja={puedeVerIngresos}
-      usuarioIdMios={hasAnyRole(usuario, ['veterinario']) ? usuario?.id : null}
-      onVerReportes={() => setActiveTab('agenda')}
-    />
-  )
-
-  const renderAgendaTab = () => {
-    if (!puedeVerAgenda) {
-      return (
-        <EmptyState
-          icon={<Sparkles />}
-          title="Agenda y reportes de citas no disponibles"
-          description="Esta vista de agenda requiere reportes operativos activos para mostrar estados, tipos y tasa de asistencia."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
-        />
-      )
-    }
-
-    return (
-      <div className="space-y-5">
-        <KpiGrid
-          action={<OpenModuleButton to="/agenda" label="Abrir agenda completa" />}
-          items={[
-            {
-              id: 'citas-mes',
-              icon: CalendarClock,
-              label: 'Citas del mes',
-              value: formatNumber(citasQuery.data?.totalCitas || 0),
-              helper: 'Todas las citas registradas dentro del período actual.',
-            },
-            {
-              id: 'asistencia',
-              icon: ShieldCheck,
-              label: 'Asistencia',
-              value: citasQuery.data?.tasaAsistencia || '0%',
-              helper: 'Relación de citas completadas sobre el total del período.',
-              tone: 'text-success',
-            },
-            {
-              id: 'canceladas',
-              icon: CalendarX,
-              label: 'Canceladas',
-              value: formatNumber(citasQuery.data?.citasPorEstado?.cancelada || 0),
-              helper: 'Citas anuladas dentro del período actual.',
-              tone: 'text-danger',
-            },
-            {
-              id: 'no-asistio',
-              icon: UserX,
-              label: 'No asistió',
-              value: formatNumber(citasQuery.data?.citasPorEstado?.no_asistio || 0),
-              helper: 'Pacientes que no se presentaron a su cita en el período.',
-              tone: 'text-warning',
-            },
-          ]}
-        />
-
-        <div className="grid gap-5 xl:grid-cols-2">
-          <DonutCard
-            title="Estado de citas"
-            subtitle="Distribución del período por estado operativo."
-            data={estadosCita}
-            centerLabel="Total"
-            centerValue={formatNumber(citasQuery.data?.totalCitas || 0)}
-            formatter={formatNumber}
-            emptyMessage="Aún no hay citas registradas en este período."
-          />
-          <BarPanel
-            title="Tipos de cita"
-            subtitle="Qué tipo de atención se está moviendo más durante el mes."
-            data={tiposCita}
-            dataKey="value"
-            color={chartColors.categorica[0]}
-            formatter={formatNumber}
-            emptyMessage="Todavía no hay datos por tipo de cita."
-          />
-        </div>
-
-      </div>
-    )
-  }
-
-  const renderIngresosTab = () => {
-    if (!puedeVerIngresos) {
-      return (
-        <EmptyState
-          icon={<Sparkles />}
-          title="Caja y reportes financieros no disponibles"
-          description="Activa facturación interna y reportes operativos para ver el comportamiento diario, los métodos de pago y la tabla de facturas."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
-        />
-      )
-    }
-
-    const totalFacturas = ingresosQuery.data?.totalFacturas || 0
-    const promedioFactura = totalFacturas > 0 ? (ingresosQuery.data?.totalIngresos || 0) / totalFacturas : 0
-
-    return (
-      <div className="space-y-5">
-        <KpiGrid
-          action={<OpenModuleButton to="/caja" label="Abrir caja completa" />}
-          items={[
-            {
-              id: 'ingresos-periodo',
-              icon: Wallet,
-              label: 'Ingresos del período',
-              value: formatCurrency(ingresosQuery.data?.totalIngresos || 0),
-              helper: 'Suma total entre facturas emitidas y pagadas dentro del mes.',
-              tone: 'text-success',
-            },
-            {
-              id: 'facturas',
-              icon: Receipt,
-              label: 'Facturas',
-              value: formatNumber(totalFacturas),
-              helper: 'Número de facturas emitidas o pagadas en el período.',
-            },
-            {
-              id: 'promedio-factura',
-              icon: BarChart3,
-              label: 'Promedio por factura',
-              value: formatCurrency(promedioFactura),
-              helper: 'Valor promedio de cada factura del mes actual.',
-              tone: 'text-primary',
-            },
-            mostrarDian && {
-              id: 'control-dian',
-              icon: ShieldAlert,
-              label: 'Control DIAN',
-              value: formatNumber(dianErrores),
-              helper: `Facturas rechazadas o que no se pudieron enviar. ${formatNumber(dianPendientes)} siguen pendientes de respuesta.`,
-              tone: 'text-info',
-            },
-          ]}
-        />
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_420px]">
-          <LinePanel
-            title="Evolución diaria de ingresos"
-            subtitle="Movimiento día a día del período seleccionado."
-            data={ingresosPorDia}
-            dataKey="total"
-            color={chartColors.categorica[1]}
-            formatter={formatCurrency}
-            emptyMessage="Todavía no hay movimiento financiero en este período."
-          />
-          <DonutCard
-            title="Métodos de pago"
-            subtitle="Distribución de ingresos según el método usado por la clínica."
-            data={metodosPago}
-            centerLabel="Total"
-            centerValue={formatCurrency(ingresosQuery.data?.totalIngresos || 0)}
-            formatter={formatCurrency}
-            emptyMessage="No hay datos por método de pago disponibles."
-          />
-        </div>
-
-        <DataTable
-          title="Detalle de facturas"
-          subtitle="Las más recientes del período actual con su método de pago."
-          rows={invoiceRows}
-          columns={[
-            { key: 'numero', label: 'Factura' },
-            { key: 'fecha', label: 'Fecha' },
-            { key: 'metodoPago', label: 'Metodo' },
-            { key: 'total', label: 'Total' },
-          ]}
-          emptyTitle="No hay facturas registradas"
-          emptyBody="A medida que la clínica facture, aquí se llenará la tabla del período."
-          action={
-            <NavCtaLink to="/caja">Abrir módulo</NavCtaLink>
-          }
-        />
-      </div>
-    )
-  }
-
-  const renderInventarioTab = () => {
-    if (!puedeVerInventario) {
-      return (
-        <EmptyState
-          icon={<Sparkles />}
-          title="Inventario no disponible en el plan actual"
-          description="Para revisar categorías, valor inventariado y alertas de cantidad necesitas inventario y reportes operativos activos."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
-        />
-      )
-    }
-
-    const resumenInventario = inventarioQuery.data?.resumen || {}
-    const resumenClinico = inventarioQuery.data?.resumenClinico || {}
-    const vencimientosVentas = (resumenInventario.vencidos || 0) + (resumenInventario.proximosVencer || 0)
-    const vencimientosClinico = (resumenClinico.vencidos || 0) + (resumenClinico.proximosVencer || 0)
-
-    return (
-      <div className="space-y-5">
-        <KpiGrid
-          action={<OpenModuleButton to="/inventario" label="Abrir inventario completo" />}
-          items={[
-            {
-              id: 'productos-activos',
-              icon: Boxes,
-              label: 'Productos activos',
-              value: formatNumber(resumenInventario.totalProductos || 0),
-              helper: 'Productos actualmente activos dentro del inventario.',
-            },
-            {
-              id: 'valor-inventariado',
-              icon: Wallet,
-              label: 'Valor inventariado',
-              value: formatCurrency(resumenInventario.valorTotalInventario || 0),
-              helper: 'Valor de venta estimado del inventario registrado.',
-              tone: 'text-success',
-            },
-            {
-              id: 'bajo-stock',
-              icon: CircleAlert,
-              label: 'Cantidad baja',
-              value: formatNumber(resumenInventario.bajoStock || 0),
-              helper: 'Productos con cantidad por debajo del mínimo definido.',
-              tone: 'text-warning',
-            },
-            {
-              id: 'vencimientos',
-              icon: Receipt,
-              label: 'Vencimientos',
-              value: formatNumber(vencimientosVentas + vencimientosClinico),
-              helper: `Vencidos y próximos a vencer. Ventas: ${formatNumber(vencimientosVentas)} · Clínico: ${formatNumber(vencimientosClinico)}.`,
-              tone: 'text-danger',
-            },
-          ]}
-        />
-
-        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1.45fr)]">
-          <DonutCard
-            title="Categorías activas"
-            subtitle="Distribución actual del inventario por categoría."
-            data={categoriasInventario}
-            centerLabel="Productos"
-            centerValue={formatNumber(resumenInventario.totalProductos || 0)}
-            formatter={formatNumber}
-            emptyMessage="Aún no hay categorías para mostrar."
-          />
-          <BarPanel
-            title="Valor por categoría"
-            subtitle="Lectura financiera del inventario según su categoría."
-            data={categoriasInventario}
-            dataKey="valor"
-            color={chartColors.categorica[1]}
-            formatter={formatCurrency}
-            emptyMessage="No hay valor inventariado por categoría disponible."
-          />
-        </div>
-
-        <DataTable
-          title="Productos que requieren revisión"
-          subtitle="Cantidad baja o fechas de vencimiento presentes en el inventario."
-          rows={inventoryRows}
-          columns={[
-            { key: 'nombre', label: 'Producto' },
-            { key: 'categoria', label: 'Categoría' },
-            { key: 'stock', label: 'Cantidad / Mín.' },
-            { key: 'vencimiento', label: 'Vencimiento' },
-            { key: 'valor', label: 'Valor' },
-          ]}
-          emptyTitle="No hay alertas de inventario"
-          emptyBody="Cuando un producto quede con cantidad baja o tenga fecha próxima a vencer, aparecerá aquí."
-          action={
-            <NavCtaLink to="/inventario">Abrir módulo</NavCtaLink>
-          }
-        />
-      </div>
-    )
-  }
-
-  const renderPacientesTab = () => (
-    <div className="space-y-5">
-      <KpiGrid
-        action={<OpenModuleButton to="/pacientes" label="Abrir pacientes completo" />}
-        items={[
-          {
-            id: 'pacientes-activos',
-            icon: PawPrint,
-            label: 'Pacientes activos',
-            value: formatNumber(mascotasActivas),
-            helper: 'Base clínica lista para consulta y seguimiento.',
-          },
-          {
-            id: 'propietarios',
-            icon: Users,
-            label: 'Propietarios',
-            value: formatNumber(propietariosActivos),
-            helper: 'Responsables activos asociados a la base de pacientes.',
-            tone: 'text-primary',
-          },
-          {
-            id: 'usuarios-activos',
-            icon: ShieldCheck,
-            label: 'Usuarios activos',
-            value: formatNumber(usuariosActivos),
-            helper: 'Equipo actualmente activo en la clínica.',
-            tone: 'text-info',
-          },
-        ]}
-      />
-
-      <div className="grid gap-5 xl:grid-cols-2">
-        <DonutCard
-          title="Uso de pacientes"
-          subtitle="Lectura administrativa del cupo actual."
-          data={patientCapacity.rows}
-          centerLabel="Plan"
-          centerValue={patientCapacity.centerValue}
-          formatter={formatNumber}
-          emptyMessage="No hay datos de capacidad disponibles."
-        />
-        <DonutCard
-          title="Uso de usuarios"
-          subtitle="Control simple del equipo activo frente al límite del plan."
-          data={userCapacity.rows}
-          centerLabel="Equipo"
-          centerValue={userCapacity.centerValue}
-          formatter={formatNumber}
-          emptyMessage="No hay datos de capacidad disponibles."
-        />
-      </div>
-    </div>
-  )
-
-  const renderPlanTab = () => (
-    <div className="space-y-5">
-      <DashboardPanel
-        title="Plan actual"
-        subtitle="Visibilidad directa sobre el estado comercial, la vigencia y la capacidad disponible."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <StatusPill tone={metaPlan.tone}>{metaPlan.nombre}</StatusPill>
-            {typeof diasRestantes === 'number' ? (
-              <StatusPill tone="border-warning/30 bg-warning-soft text-warning">
-                {diasRestantes} dias restantes
-              </StatusPill>
-            ) : null}
-          </div>
-        }
-      >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[13px] font-semibold text-muted-foreground">
-              Clinica
-            </p>
-            <p className="mt-3 text-base font-semibold text-foreground">{nombreClinica}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{ubicacionClinica || 'Ubicación pendiente'}</p>
-          </div>
-          <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[13px] font-semibold text-muted-foreground">
-              Vigencia
-            </p>
-            <p className="mt-3 text-base font-semibold text-foreground">
-              {suscripcion?.fechaFin ? formatLongDate(suscripcion.fechaFin) : 'Sin fecha de cierre'}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {advertenciaPlan || 'El plan no tiene alertas comerciales por ahora.'}
-            </p>
-          </div>
-          <div className="border border-border bg-muted px-4 py-4">
-            <p className="text-[13px] font-semibold text-muted-foreground">
-              Acción recomendada
-            </p>
-            <p className="mt-3 text-base font-semibold text-foreground">Gestión comercial</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Usa esta vista para decidir si necesitas un plan mayor, antes de quedarte sin cupos o sin secciones disponibles.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <NavCtaLink to="/plan" icon={ArrowRight}>
-                Pagar o renovar
-              </NavCtaLink>
-              <NavCtaLink to="/planes" icon={ArrowRight}>
-                Revisar planes
-              </NavCtaLink>
-            </div>
-          </div>
-        </div>
-      </DashboardPanel>
-
-      <DataTable
-        title="Funcionalidades habilitadas"
-        subtitle="Cada sección de Bourgelat según la suscripción activa de la clínica."
-        rows={featureRows}
-        columns={[
-          { key: 'label', label: 'Sección' },
-          {
-            key: 'enabled',
-            label: 'Estado',
-            render: (row) => (
-              <StatusPill
-                tone={
-                  row.enabled
-                    ? 'border-success/30 bg-success-soft text-success'
-                    : 'border-border bg-muted text-muted-foreground'
-                }
-              >
-                {row.enabled ? 'Incluido' : 'No incluido'}
-              </StatusPill>
-            ),
-          },
-        ]}
-        emptyTitle="Sin funcionalidades"
-        emptyBody="No fue posible cargar el estado de funcionalidades del plan."
-      />
-    </div>
-  )
-
-  // Se resuelve solo la pestana visible: el objeto anterior construia los seis
-  // arboles en cada render para descartar cinco.
-  const renderActiveView = () => {
-    switch (activeTab) {
-      case 'agenda':
-        return renderAgendaTab()
-      case 'ingresos':
-        return renderIngresosTab()
-      case 'inventario':
-        return renderInventarioTab()
-      case 'pacientes':
-        return renderPacientesTab()
-      case 'plan':
-        return renderPlanTab()
-      default:
-        return renderSummaryOverview()
-    }
-  }
+  const esVeterinario = hasAnyRole(usuario, ['veterinario'])
 
   // El encabezado responde lo primero que se pregunta al llegar: cuántas citas
   // hay y cómo va el día.
@@ -1063,17 +350,6 @@ export default function DashboardPage() {
   ]
     .filter(Boolean)
     .join(' · ')
-
-  const tabBadges = {
-    resumen: tacticalAlerts.length > 0 ? `${tacticalAlerts.length}` : null,
-    agenda: citasHoy > 0 ? `${citasHoy}` : null,
-    ingresos: puedeVerIngresos ? (dianErrores > 0 ? `${dianErrores}` : null) : 'Plan',
-    inventario: alertasInventario > 0 ? `${alertasInventario}` : null,
-    // Sin badge: el cupo lo comunican los medidores "Uso de pacientes/usuarios"
-    // dentro de la pestana, que son su unica fuente de verdad.
-    pacientes: null,
-    plan: typeof diasRestantes === 'number' && diasRestantes <= 60 ? `${diasRestantes}d` : null,
-  }
 
   const queryErrors = [
     suscripcionQuery.isError
@@ -1131,12 +407,6 @@ export default function DashboardPage() {
         </>
       }
     >
-      {/* Hoy es la jornada; los reportes del mes quedan a un clic y se
-          navegan con pestañas solo cuando se abren. */}
-      {activeTab === 'resumen' ? null : (
-        <SectionTabs activeTab={activeTab} setActiveTab={setActiveTab} tabBadges={tabBadges} />
-      )}
-
       {queryErrors.length > 0 ? (
         <div className="space-y-3">
           {queryErrors.map((message) => (
@@ -1150,25 +420,29 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div
-        role="tabpanel"
-        id={`dashboard-panel-${activeTab}`}
-        aria-labelledby={`dashboard-tab-${activeTab}`}
-      >
-        {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-panel"
-              />
-            ))}
-            <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-panel sm:col-span-2 lg:col-span-4" />
-          </div>
-        ) : (
-          renderActiveView()
-        )}
-      </div>
+      {dashboardQuery.isLoading || suscripcionQuery.isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="h-20 animate-pulse rounded-xl border border-border bg-card shadow-panel"
+            />
+          ))}
+          <div className="h-72 animate-pulse rounded-2xl border border-border bg-card shadow-panel sm:col-span-2 lg:col-span-4" />
+        </div>
+      ) : (
+        <JornadaHoy
+          citas={citasHoyRows}
+          loading={agendaHoyQuery.isLoading}
+          cajaHoy={cajaHoy}
+          alertas={alertasHoy}
+          puedeAtender
+          puedeCobrar
+          puedeVerCaja
+          usuarioIdMios={esVeterinario ? usuario?.id : null}
+          onVerReportes={() => navigate('/finanzas')}
+        />
+      )}
     </AdminShell>
   )
 }

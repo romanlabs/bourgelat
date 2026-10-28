@@ -1,46 +1,5 @@
 import { chartColors } from '@/lib/theme'
 
-const TONO_LEGADO = 'bg-muted text-muted-foreground border-border'
-
-// Las cinco primeras son la oferta vigente. Las tres ultimas son legado: no se
-// ofrecen, pero el historial de suscripciones todavia las contiene y sin su
-// etiqueta las filas viejas se verian con la llave cruda.
-export const PLAN_META = {
-  prueba: {
-    nombre: 'Prueba',
-    tone: 'bg-info-soft text-info border-info/30',
-  },
-  esencial: {
-    nombre: 'Esencial',
-    tone: 'bg-info-soft text-info border-info/30',
-  },
-  activo: {
-    nombre: 'Clínica',
-    tone: 'bg-success-soft text-success border-success/30',
-  },
-  cortesia: {
-    nombre: 'Cortesía',
-    tone: 'bg-brand-muted text-brand-foreground border-brand/30',
-  },
-  personalizado: {
-    nombre: 'Personalizado',
-    tone: 'bg-card text-foreground border-foreground/20',
-  },
-  inicio: { nombre: 'Inicio (legado)', tone: TONO_LEGADO },
-  clinica: { nombre: 'Clínica (legado)', tone: TONO_LEGADO },
-  profesional: { nombre: 'Profesional (legado)', tone: TONO_LEGADO },
-}
-
-// Bajo el modelo de plan único todos los planes traen agenda, historias,
-// antecedentes, pacientes, roles, inventario, caja y reportes. Listarlos sería
-// una tabla de doce filas siempre en verde. Aquí solo va lo que se compra
-// aparte y por lo tanto puede variar entre clínicas.
-export const FEATURE_LABELS = {
-  facturacion_electronica: 'Facturación electrónica',
-  acompanamiento_migracion: 'Acompañamiento de migración',
-  soporte_prioritario_comercial: 'Soporte prioritario comercial',
-}
-
 export const PAYMENT_METHOD_LABELS = {
   efectivo: 'Efectivo',
   tarjeta: 'Tarjeta',
@@ -205,7 +164,7 @@ export const getRangeForPreset = (preset) => {
 }
 
 // El backend entrega serieDiaria ya ordenada por fecha; aqui solo se le agrega
-// la etiqueta legible del eje X, conservando la clave ISO como en mapIngresosPorDia.
+// la etiqueta legible del eje X, conservando la clave ISO (YYYY-MM-DD) en `fechaISO`.
 export const mapSerieCitas = (serie) =>
   (serie || []).map((punto) => ({
     fechaISO: punto.fecha,
@@ -233,25 +192,4 @@ export const objectToChartData = (record, labels = {}, colors = {}) =>
     name: labels[key] || key,
     value: Number(value || 0),
     color: colors[key] || CHART_COLORS[index % CHART_COLORS.length],
-  }))
-
-// `fecha` es la etiqueta visible del eje X; `fechaISO` conserva la clave original
-// (YYYY-MM-DD) para poder buscar un dia puntual sin depender del formato mostrado.
-export const mapIngresosPorDia = (record) =>
-  Object.entries(record || {}).map(([date, value]) => ({
-    fechaISO: date,
-    fecha: formatShortDate(date),
-    total: Number(value || 0),
-  }))
-
-export const getUsagePercentage = (used, limit) => {
-  if (limit === null || limit === undefined || limit === 0) return null
-  return Math.max(0, Math.min(100, Math.round((used / limit) * 100)))
-}
-
-export const getFeatureStateRows = (featureList) =>
-  Object.entries(FEATURE_LABELS).map(([key, label]) => ({
-    id: key,
-    label,
-    enabled: featureList.includes(key),
   }))
