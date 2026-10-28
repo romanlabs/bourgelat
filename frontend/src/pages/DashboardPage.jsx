@@ -1,7 +1,7 @@
 import { chartColors } from '@/lib/theme'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   CalendarPlus,
@@ -291,6 +291,7 @@ function RestrictedDashboard({ usuario }) {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('resumen')
   const usuario = useAuthStore((state) => state.usuario)
   const clinica = useAuthStore((state) => state.clinica)
@@ -618,7 +619,7 @@ export default function DashboardPage() {
       puedeCobrar={puedeAbrirCaja}
       puedeVerCaja={puedeVerIngresos}
       usuarioIdMios={hasAnyRole(usuario, ['veterinario']) ? usuario?.id : null}
-      onVerReportes={() => setActiveTab('agenda')}
+      onVerReportes={() => navigate('/finanzas')}
     />
   )
 
