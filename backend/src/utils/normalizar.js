@@ -25,6 +25,16 @@ const normalizarCelular = (valor) => {
 
 const esCelularValido = (valor) => normalizarCelular(valor) !== null
 
+// Para mostrar, igual que formatearCelular del frontend: los de Colombia en
+// formato nacional (300 123 4567) y los demás con su indicativo.
+const formatearCelular = (valor) => {
+  const limpio = limpiarTexto(valor)
+  if (!limpio) return ''
+  const numero = parsePhoneNumberFromString(limpio, 'CO')
+  if (!numero?.isValid()) return limpio
+  return numero.country === 'CO' ? numero.formatNational() : numero.formatInternational()
+}
+
 const MENSAJE_CELULAR_INVALIDO = 'El celular no es válido para el país elegido'
 
 const normalizarNit = (valor) => {
@@ -34,6 +44,7 @@ const normalizarNit = (valor) => {
 }
 
 module.exports = {
+  formatearCelular,
   limpiarTexto,
   normalizarTexto,
   normalizarEmail,

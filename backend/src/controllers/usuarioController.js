@@ -28,6 +28,9 @@ const ROLES_VALIDOS = ['admin', 'veterinario', 'recepcionista', 'auxiliar', 'fac
 
 const { normalizarTexto, normalizarEmail, normalizarCelular: normalizarTelefono, esCelularValido, MENSAJE_CELULAR_INVALIDO } = require('../utils/normalizar')
 
+// Un administrador ya tiene todos los permisos: de los roles adicionales solo
+// cuenta Veterinario (citas e historias exigen un usuario veterinario). Igual
+// que normalizeRoles en UsuariosPage.
 const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
   if (!Array.isArray(rolesAdicionales)) return []
 
@@ -35,6 +38,7 @@ const normalizarRolesAdicionales = (rolesAdicionales, rolPrincipal) => {
     rolesAdicionales
       .map((rol) => normalizarTexto(rol).toLowerCase())
       .filter((rol) => ROLES_VALIDOS.includes(rol) && rol !== rolPrincipal)
+      .filter((rol) => rolPrincipal !== 'admin' || rol === 'veterinario')
   )]
 }
 
@@ -427,9 +431,7 @@ const editarUsuario = async (req, res) => {
     const siguientesRolesAdicionales =
       rolesAdicionales !== undefined
         ? normalizarRolesAdicionales(rolesAdicionales, siguienteRol)
-        : Array.isArray(usuario.rolesAdicionales)
-          ? usuario.rolesAdicionales
-          : []
+        : normalizarRolesAdicionales(usuario.rolesAdicionales, siguienteRol)
 
     const conservariaAdmin = tienePermisoAdmin({
       rol: siguienteRol,
