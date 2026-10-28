@@ -431,6 +431,7 @@ const login = async (req, res) => {
         accion: 'LOGIN_FALLIDO',
         entidad: 'Usuario',
         entidadId: usuario.id,
+        clinicaId: usuario.clinicaId,
         descripcion: `Password incorrecta para ${usuario.email}`,
         req,
         resultado: 'fallido',
@@ -496,6 +497,10 @@ const login = async (req, res) => {
       accion: 'LOGIN',
       entidad: 'Usuario',
       entidadId: usuario.id,
+      // Antes de iniciar sesión req no trae la clínica: sin ella el ingreso no
+      // sale en el filtro «Inicio de sesión» de Auditoría.
+      clinicaId: usuario.clinicaId,
+      usuarioId: usuario.id,
       descripcion: `Login exitoso ${usuario.email}`,
       req,
       resultado: 'exitoso',

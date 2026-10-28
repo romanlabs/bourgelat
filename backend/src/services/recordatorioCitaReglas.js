@@ -2,6 +2,8 @@
 // correo): cuándo avisar, rango de anticipación y datos del correo.
 // Colombia no tiene horario de verano: el desfase -05:00 es fijo.
 
+const { formatearCelular } = require('../utils/normalizar')
+
 const MINUTOS_MIN = 15
 const MINUTOS_MAX = 2880
 const TOPE_DIARIO = 150
@@ -37,7 +39,7 @@ const datosCorreo = ({ cita, mascota, propietario, consultorio, urlFrontend }) =
     paciente: mascota.nombre,
     especie: capitalizar(mascota.especie),
     tutor: propietario?.nombre || '',
-    celularTutor: propietario?.telefono || null,
+    celularTutor: formatearCelular(propietario?.telefono) || null,
     motivo: cita.motivo || '',
     tipo,
     consultorio: consultorio?.nombre || null,
