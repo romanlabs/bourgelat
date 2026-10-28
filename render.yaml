@@ -30,6 +30,10 @@ services:
       # proceso; sin esto el contenedor corre en UTC y se desfasa 5 horas.
       - key: TZ
         value: America/Bogota
+      # Rechaza queries sin filtro de clinicaId (ver docs/tenant-guard.md).
+      # Paso de log a strict el 2026-10-28 tras 24 h de logs sin avisos.
+      - key: TENANT_GUARD_MODE
+        value: strict
       - key: DB_HOST
         fromDatabase:
           name: bourgelat-postgres
@@ -259,6 +263,10 @@ services:
       # proceso; sin esto el contenedor corre en UTC y se desfasa 5 horas.
       - key: TZ
         value: America/Bogota
+      # Rechaza queries sin filtro de clinicaId (ver docs/tenant-guard.md).
+      # Paso de log a strict el 2026-10-28 tras 24 h de logs sin avisos.
+      - key: TENANT_GUARD_MODE
+        value: strict
       - key: DB_HOST
         fromDatabase:
           name: bourgelat-postgres-staging
