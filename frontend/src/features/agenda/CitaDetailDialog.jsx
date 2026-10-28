@@ -21,6 +21,7 @@ import { formatHora12, formatFranja12, moverFin } from '@/lib/hora'
 import { agendaApi } from './agendaApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
+import { nombreAutor } from '@/lib/equipo'
 
 export function CitaDetailDialog({
   cita,
@@ -119,7 +120,7 @@ export function CitaDetailDialog({
                 Tutor: <span className="font-medium text-foreground">{cita.propietario?.nombre || '—'}</span>
               </p>
               <p className="text-muted-foreground">
-                Profesional: <span className="font-medium text-foreground">{cita.veterinario?.nombre || '—'}</span>
+                Profesional: <span className="font-medium text-foreground">{nombreAutor(cita.veterinario, '—')}</span>
               </p>
               <p className="text-muted-foreground">
                 Horario:{' '}

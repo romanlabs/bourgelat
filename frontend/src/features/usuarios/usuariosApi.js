@@ -25,4 +25,9 @@ export const usuariosApi = {
     const { data } = await api.patch(`/usuarios/${id}/toggle`)
     return data
   },
+
+  async eliminarUsuario(id) {
+    const { data } = await api.delete(`/usuarios/${id}`)
+    return data
+  },
 }

@@ -54,7 +54,7 @@ const listarExamenes = async (req, res) => {
 
     const examenes = await ExamenLaboratorio.findAll({
       where: { mascotaId, clinicaId },
-      include: [{ model: Usuario, as: 'registradoPor', attributes: ['id', 'nombre'] }],
+      include: [{ model: Usuario, as: 'registradoPor', attributes: ['id', 'nombre', 'retiradoEn'] }],
       order: [['fecha', 'DESC'], ['createdAt', 'DESC']],
     });
 
