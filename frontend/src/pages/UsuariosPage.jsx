@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 import CampoCelular from '@/components/shared/CampoCelular'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { celularE164, esCelularValido, formatearCelular } from '@/lib/celular'
 
 const ROLE_OPTIONS = [
@@ -171,9 +172,9 @@ function Campo({ label, children }) {
   )
 }
 
-// Editar, reenviar invitación y activar/desactivar en un menú «⋯». La propia
-// cuenta no se desactiva.
-function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, activo }) {
+// Editar, reenviar invitación, activar/desactivar y eliminar en un menú «⋯».
+// La propia cuenta no se desactiva ni se elimina.
+function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onEliminar, activo }) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -208,6 +209,14 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, activo
               )}
             >
               {activo ? 'Desactivar' : 'Activar'}
+            </DropdownMenu.Item>
+          ) : null}
+          {onEliminar ? (
+            <DropdownMenu.Item
+              onSelect={onEliminar}
+              className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-danger outline-none transition hover:bg-muted focus:bg-muted"
+            >
+              Eliminar
             </DropdownMenu.Item>
           ) : null}
         </DropdownMenu.Content>
@@ -368,6 +377,7 @@ export default function UsuariosPage() {
   // Crear y editar se abren en un panel lateral: null | 'crear' | 'editar'
   const [panel, setPanel] = useState(null)
   const [selectedUserId, setSelectedUserId] = useState(null)
+  const [porEliminar, setPorEliminar] = useState(null)
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
 
@@ -450,6 +460,22 @@ export default function UsuariosPage() {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible cambiar el estado del usuario.'))
+    },
+  })
+
+  const eliminarUsuarioMutation = useMutation({
+    mutationFn: ({ id }) => usuariosApi.eliminarUsuario(id),
+    onSuccess: (data, variables) => {
+      toast.success(data?.message || 'Usuario eliminado')
+      setPorEliminar(null)
+      if (variables.id === selectedUserId) {
+        setPanel(null)
+        setSelectedUserId(null)
+      }
+      invalidarDominios(queryClient, 'equipo')
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'No fue posible eliminar el usuario.'))
     },
   })
 
@@ -742,6 +768,7 @@ export default function UsuariosPage() {
                             onCambiarEstado={
                               esActual ? null : () => toggleUsuarioMutation.mutate({ id: row.raw.id })
                             }
+                            onEliminar={esActual ? null : () => setPorEliminar(row.raw)}
                             activo={row.activo}
                           />
                         </td>
@@ -914,6 +941,24 @@ export default function UsuariosPage() {
           </form>
         ) : null}
       </PanelLateral>
+      <ConfirmDialog
+        open={Boolean(porEliminar)}
+        onOpenChange={(abierto) => { if (!abierto && !eliminarUsuarioMutation.isPending) setPorEliminar(null) }}
+        title={`¿Eliminar a ${porEliminar?.nombre || 'este usuario'}?`}
+        confirmLabel="Eliminar"
+        loading={eliminarUsuarioMutation.isPending}
+        onConfirm={() => eliminarUsuarioMutation.mutate({ id: porEliminar.id })}
+      >
+        {porEliminar?.invitacionPendiente ? (
+          <p>Nunca aceptó la invitación, así que se borra sin dejar rastro y el enlace que recibió deja de servir.</p>
+        ) : (
+          <p>
+            Ya no podrá entrar y deja de aparecer en el equipo. Sus historias, citas y ventas siguen a su
+            nombre, marcadas como «ya no está en el equipo». Se borran su correo, celular y foto. Esto no se
+            puede deshacer; si solo quieres pausar su acceso, usa «Desactivar».
+          </p>
+        )}
+      </ConfirmDialog>
     </AdminShell>
   )
 }

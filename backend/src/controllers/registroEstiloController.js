@@ -13,7 +13,7 @@ const {
 const INCLUDES_DETALLE = [
   { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza'] },
   { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-  { model: Usuario, as: 'estilista', attributes: ['id', 'nombre'] },
+  { model: Usuario, as: 'estilista', attributes: ['id', 'nombre', 'retiradoEn'] },
 ]
 
 const crearRegistroEstilo = async (req, res) => {
@@ -135,7 +135,7 @@ const obtenerRegistrosEstiloMascota = async (req, res) => {
     const registros = await RegistroEstilo.findAll({
       where: { mascotaId, clinicaId },
       order: [['fechaServicio', 'DESC']],
-      include: [{ model: Usuario, as: 'estilista', attributes: ['id', 'nombre'] }],
+      include: [{ model: Usuario, as: 'estilista', attributes: ['id', 'nombre', 'retiradoEn'] }],
     })
 
     res.json({

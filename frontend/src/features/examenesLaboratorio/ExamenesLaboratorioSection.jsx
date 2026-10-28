@@ -7,6 +7,7 @@ import { FlaskConical, Paperclip, Plus, X } from 'lucide-react'
 import { examenesLaboratorioApi } from '@/features/examenesLaboratorio/examenesLaboratorioApi'
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { nombreAutor } from '@/lib/equipo'
 
 const TIPOS_EXAMEN_SUGERIDOS = [
   'Hemograma', 'Perfil renal', 'Perfil hepático', 'Uroanálisis',
@@ -301,7 +302,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
                   <p className="mt-0.5 text-[13px] text-muted-foreground">
                     {formatFecha(examen.fecha)}
                     {examen.laboratorio ? ` · ${examen.laboratorio}` : ''}
-                    {examen.registradoPor?.nombre ? ` · ${examen.registradoPor.nombre}` : ''}
+                    {examen.registradoPor?.nombre ? ` · ${nombreAutor(examen.registradoPor)}` : ''}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">

@@ -213,7 +213,7 @@ const incluirRelacionesCita = (cita, clinicaId) =>
     include: [
       { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie'] },
       { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-      { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+      { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
       { model: Consultorio, as: 'consultorio', attributes: ['id', 'nombre'], required: false },
     ],
   });
@@ -428,7 +428,7 @@ const obtenerCitas = async (req, res) => {
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
         { model: Consultorio, as: 'consultorio', attributes: ['id', 'nombre'], required: false },
         { model: HistoriaClinica, as: 'historia', attributes: ['id'], required: false },
       ],
@@ -455,7 +455,7 @@ const obtenerCita = async (req, res) => {
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
         { model: Consultorio, as: 'consultorio', attributes: ['id', 'nombre'], required: false },
         { model: HistoriaClinica, as: 'historia', attributes: ['id'], required: false },
       ],
@@ -484,7 +484,7 @@ const obtenerSalaEspera = async (req, res) => {
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'fotoPerfil'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
         { model: Consultorio, as: 'consultorio', attributes: ['id', 'nombre'], required: false },
         { model: HistoriaClinica, as: 'historia', attributes: ['id'], required: false },
       ],
