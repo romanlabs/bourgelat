@@ -4,6 +4,7 @@ import { RecepcionDrawer } from './RecepcionDrawer'
 import { ACCION_LABELS, ORIGEN_LABELS, TRANSICIONES, TYPE_OPTIONS } from './recepcionConstants'
 import { etiquetaEspecie } from '@/lib/especies'
 import { formatearCelular } from '@/lib/celular'
+import { nombreAutor } from '@/lib/equipo'
 
 const formatTime = (value) => value?.slice(0, 5) || '--:--'
 
@@ -85,7 +86,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
                 <span className="text-muted-foreground">Sin registrar</span>
               )}
             </Dato>
-            <Dato label="Veterinario">{cita.veterinario?.nombre || 'Sin profesional'}</Dato>
+            <Dato label="Veterinario">{nombreAutor(cita.veterinario, 'Sin profesional')}</Dato>
             <Dato label="Consultorio">{cita.consultorio?.nombre || 'Sin asignar'}</Dato>
           </div>
 

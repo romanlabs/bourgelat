@@ -13,6 +13,7 @@ import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { nombreAutor } from '@/lib/equipo'
 
 // Cada chip es una pregunta operativa, no una metrica: al tocarlo filtra la
 // tabla de abajo. 'pendientes' es el default porque una historia sin cerrar es
@@ -163,7 +164,7 @@ export default function HistoriasPage() {
         }).format(new Date(historia.fechaConsulta)),
         paciente: historia.mascota?.nombre || 'Paciente',
         tutor: historia.propietario?.nombre || 'Sin tutor',
-        profesional: historia.veterinario?.nombre || 'Sin profesional',
+        profesional: nombreAutor(historia.veterinario, 'Sin profesional'),
         motivo: historia.motivoConsulta,
         diagnostico: historia.diagnosticoPresuntivo || historia.diagnostico,
         faltantes: historia.bloqueada ? [] : faltantesDe(historia),

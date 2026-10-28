@@ -141,7 +141,7 @@ const obtenerFacturaDetallada = async (id, clinicaId) => {
           'tributoId',
         ],
       },
-      { model: Usuario, as: 'usuario', attributes: ['id', 'nombre'] },
+      { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'retiradoEn'] },
       {
         model: FacturaItem,
         as: 'items',

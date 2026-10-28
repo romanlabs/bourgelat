@@ -3,6 +3,7 @@ import {
 } from 'lucide-react'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
 import { tienePlanFarmacologico } from './formulaPdf'
+import { nombreAutor } from '@/lib/equipo'
 
 function formatDate(value) {
   if (!value) return '—'
@@ -77,7 +78,7 @@ function TimelineCard({
             {veterinario?.nombre && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span className="text-[13px] text-muted-foreground">{veterinario.nombre}</span>
+                <span className="text-[13px] text-muted-foreground">{nombreAutor(veterinario)}</span>
               </>
             )}
           </div>

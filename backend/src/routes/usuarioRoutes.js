@@ -10,6 +10,7 @@ const {
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,
+  eliminarUsuario,
   actualizarMiPerfil,
   subirFotoMiPerfil,
   guardarOnboarding,
@@ -161,6 +162,14 @@ router.patch(
   verificarRol('admin', 'superadmin'),
   requerirEscritura,
   toggleUsuario
+)
+
+router.delete(
+  '/:id',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  requerirEscritura,
+  eliminarUsuario
 )
 
 module.exports = router

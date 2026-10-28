@@ -4,6 +4,8 @@ const Clinica = require('../models/Clinica')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { ejecutarConCupo } = require('../services/suscripcionService')
 const invitacionService = require('../services/invitacionService')
+const usuarioRetiroService = require('../services/usuarioRetiroService')
+const sequelize = require('../config/database')
 const logger = require('../utils/logger')
 
 const cupoUsuariosActivos = (clinicaId) => ({
@@ -231,7 +233,7 @@ const reenviarInvitacion = async (req, res) => {
     const { id } = req.params
     const { clinicaId } = req.usuario
 
-    const usuario = await Usuario.findOne({ where: { id, clinicaId } })
+    const usuario = await Usuario.findOne({ where: { id, clinicaId, retiradoEn: null } })
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
@@ -281,7 +283,7 @@ const obtenerUsuarios = async (req, res) => {
     const { clinicaId } = req.usuario
 
     const usuarios = await Usuario.findAll({
-      where: { clinicaId },
+      where: { clinicaId, retiradoEn: null },
       attributes: {
         exclude: ['password'],
         include: [invitacionService.atributoInvitacionPendiente()],
@@ -361,7 +363,7 @@ const obtenerUsuario = async (req, res) => {
     const { clinicaId } = req.usuario
 
     const usuario = await Usuario.findOne({
-      where: { id, clinicaId },
+      where: { id, clinicaId, retiradoEn: null },
       attributes: {
         exclude: ['password'],
         include: [invitacionService.atributoInvitacionPendiente()],
@@ -385,7 +387,7 @@ const editarUsuario = async (req, res) => {
     const usuarioActualId = req.auth?.usuarioId || req.usuario?.id
     const { nombre, telefono, rol, rolesAdicionales, email } = req.body
 
-    const usuario = await Usuario.findOne({ where: { id, clinicaId } })
+    const usuario = await Usuario.findOne({ where: { id, clinicaId, retiradoEn: null } })
 
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
@@ -563,7 +565,7 @@ const toggleUsuario = async (req, res) => {
     const { clinicaId } = req.usuario
     const usuarioActualId = req.auth?.usuarioId || req.usuario?.id
 
-    const usuario = await Usuario.findOne({ where: { id, clinicaId } })
+    const usuario = await Usuario.findOne({ where: { id, clinicaId, retiradoEn: null } })
 
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
@@ -622,6 +624,74 @@ const toggleUsuario = async (req, res) => {
       activo: usuario.activo,
     })
   } catch (error) {
+    responderErrorInterno(res)
+  }
+}
+
+// Saca a alguien del equipo. Si nunca hizo nada (invitación sin aceptar) se
+// borra; si tiene actividad se retira para que historias, citas y ventas sigan
+// diciendo quién las hizo (ver usuarioRetiroService).
+const eliminarUsuario = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { clinicaId } = req.usuario
+    const usuarioActualId = req.auth?.usuarioId || req.usuario?.id
+
+    const usuario = await Usuario.findOne({ where: { id, clinicaId, retiradoEn: null } })
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    if (String(usuario.id) === String(usuarioActualId)) {
+      return res.status(400).json({ message: 'No puedes eliminar tu propio usuario.' })
+    }
+
+    if (usuario.activo && tienePermisoAdmin(usuario)) {
+      const adminsRestantes = await contarAdminsActivos({ clinicaId, excludeUsuarioId: usuario.id })
+      if (adminsRestantes === 0) {
+        return res.status(400).json({
+          message:
+            'La clinica debe conservar al menos un administrador activo. Asigna otro administrador antes de eliminar este usuario.',
+          code: 'LAST_ADMIN_REQUIRED',
+        })
+      }
+    }
+
+    // Sin el correo: retirar es también quitar sus datos de contacto.
+    const anterior = { nombre: usuario.nombre, rol: usuario.rol, activo: usuario.activo }
+
+    const resultado = await sequelize.transaction(async (transaction) => {
+      if (!(await usuarioRetiroService.tieneActividad(usuario.id, { transaction }))) {
+        const borrado = await invitacionService.borrarCuentaPendiente(usuario, { transaction })
+        if (borrado === 'borrada') return 'borrado'
+      }
+      await usuarioRetiroService.retirarUsuario(usuario, { transaction })
+      return 'retirado'
+    })
+
+    await registrarAuditoria({
+      accion: resultado === 'borrado' ? 'ELIMINAR_USUARIO' : 'RETIRAR_USUARIO',
+      entidad: 'Usuario',
+      entidadId: usuario.id,
+      descripcion:
+        resultado === 'borrado'
+          ? `Usuario ${anterior.nombre} eliminado (no tenía actividad)`
+          : `Usuario ${anterior.nombre} retirado del equipo; se conserva su nombre en lo que hizo`,
+      datosAnteriores: anterior,
+      datosNuevos: { resultado },
+      req,
+      resultado: 'exitoso',
+    })
+
+    res.json({
+      resultado,
+      message:
+        resultado === 'borrado'
+          ? 'Usuario eliminado.'
+          : 'Usuario retirado del equipo. Lo que hizo sigue a su nombre.',
+    })
+  } catch (error) {
+    logger.error('Error al eliminar usuario', { error: error.message })
     responderErrorInterno(res)
   }
 }
@@ -795,6 +865,7 @@ module.exports = {
   obtenerUsuario,
   editarUsuario,
   toggleUsuario,
+  eliminarUsuario,
   actualizarMiPerfil,
   subirFotoMiPerfil,
   guardarOnboarding,
