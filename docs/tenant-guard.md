@@ -209,5 +209,8 @@ guard:
 - **Dev/test:** nada que hacer — `strict` es el default y los errores son explícitos.
 - **Producción (Render):** arranca en modo `log`. Tras 1–2 semanas sin mensajes
   `TenantGuard:` en los logs, fijar `TENANT_GUARD_MODE=strict` en el servicio.
+  Hecho el 2026-10-28 en `render.yaml` (24 h de logs sin avisos, que es lo que
+  Render guarda). Si un endpoint empieza a dar 500 con `TenantGuard:` en el log,
+  la salida rápida es volver a `log` en el dashboard y corregir la query.
 - **Auditoría periódica:** `grep -rn "sinTenant: true" backend/src` debe devolver
   solo sitios justificables (auth, superadmin, jobs, scripts).
