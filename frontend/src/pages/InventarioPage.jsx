@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { ArrowLeftRight, Check, CircleAlert, FileSpreadsheet, Filter, MoreHorizontal, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, Check, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -520,11 +520,23 @@ export default function InventarioPage() {
 
   const accionesEncabezado = (
     <div className="flex flex-wrap items-center gap-2">
-      {inventarioSeleccionado === 'ventas' ? (
-        <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={importarInventarioHook.openImportDialog}>
-          <FileSpreadsheet />
-          Importar Excel
-        </Button>
+      {inventarioSeleccionado === 'ventas' || activeTab === 'servicios' ? (
+        <>
+          <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={importarInventarioHook.openImportDialog}>
+            <FileSpreadsheet />
+            Importar Excel
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-10 px-3.5"
+            onClick={importarInventarioHook.exportarExcel}
+            disabled={importarInventarioHook.exportando}
+          >
+            <Download />
+            {importarInventarioHook.exportando ? 'Generando…' : 'Exportar Excel'}
+          </Button>
+        </>
       ) : null}
       <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={facturaCompraHook.abrirNueva}>
         <ShoppingCart />

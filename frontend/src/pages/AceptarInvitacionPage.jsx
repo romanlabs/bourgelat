@@ -4,10 +4,13 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
+import { authApi } from '@/features/auth/authApi'
+import { useAuthStore } from '@/store/authStore'
 import {
   useAceptarInvitacion,
   useConsultarInvitacion,
@@ -51,6 +54,10 @@ export default function AceptarInvitacionPage() {
   const [modoRechazo, setModoRechazo] = useState(abrirEnRechazo)
   const [verPassword, setVerPassword] = useState(false)
   const consultado = useRef(false)
+  const queryClient = useQueryClient()
+  const sesionAbierta = useAuthStore((s) => s.isAuthenticated)
+  const emailSesion = useAuthStore((s) => s.usuario?.email)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const consulta = useConsultarInvitacion()
   const aceptar = useAceptarInvitacion()
@@ -93,7 +100,18 @@ export default function AceptarInvitacionPage() {
     aceptar.mutate(
       { token, ...data },
       {
-        onSuccess: (respuesta) => {
+        onSuccess: async (respuesta) => {
+          // Con otra sesión abierta (la del administrador, si probó el enlace en
+          // su equipo), /login redirigiría a su dashboard: se cierra primero.
+          if (sesionAbierta) {
+            try {
+              await authApi.logout()
+            } catch {
+              // Limpiar igual aunque falle el cierre remoto.
+            }
+            clearAuth()
+            queryClient.clear()
+          }
           toast.success(respuesta?.message || 'Contraseña creada. Ya puedes iniciar sesión.')
           navigate('/login', { replace: true, state: { email: respuesta?.email || invitacion?.email } })
         },
@@ -193,6 +211,14 @@ export default function AceptarInvitacionPage() {
           comunicacionesProps={register('aceptaComunicaciones')}
           error={errors.aceptaTerminos?.message}
         />
+
+        {sesionAbierta && emailSesion !== invitacion.email ? (
+          <p className="rounded-lg bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning">
+            Este navegador tiene abierta la sesión de{' '}
+            <span className="font-semibold">{emailSesion || 'otra cuenta'}</span>. Al crear tu contraseña la
+            cerraremos para que entres con <span className="font-semibold">{invitacion.email}</span>.
+          </p>
+        ) : null}
 
         {aceptar.isError ? (
           <p role="alert" className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">

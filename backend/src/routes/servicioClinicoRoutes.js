@@ -3,6 +3,7 @@ const { body, param, query } = require('express-validator')
 
 const {
   crearServicio,
+  importarServicios,
   obtenerServicios,
   obtenerServicio,
   editarServicio,
@@ -55,6 +56,26 @@ const validarEdicionServicio = [
   body('insumos.*.cantidadConsumida').optional().isFloat({ min: 0.01 }).withMessage('La cantidad consumida debe ser mayor a 0'),
   validar,
 ]
+
+const validarImportacionServicios = [
+  body('servicios')
+    .isArray({ min: 1, max: 500 })
+    .withMessage('Se debe enviar un arreglo de entre 1 y 500 servicios'),
+  body('servicios.*.nombre').trim().notEmpty().withMessage('El nombre es obligatorio').isLength({ max: 160 }),
+  body('servicios.*.categoria').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
+  body('servicios.*.descripcion').optional({ values: 'falsy' }).trim().isLength({ max: 1000 }),
+  body('servicios.*.precioVenta').isFloat({ min: 0 }).withMessage('El precio de venta debe ser mayor o igual a 0'),
+  validar,
+]
+
+router.post(
+  '/importar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarImportacionServicios,
+  importarServicios
+)
 
 router.post(
   '/',
