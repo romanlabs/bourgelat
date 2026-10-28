@@ -1,4 +1,5 @@
 import { Lock, Plus, Scissors } from 'lucide-react'
+import { nombreAutor } from '@/lib/equipo'
 
 // proximaCitaSugerida es DATEONLY ("2026-09-01"); fechaServicio es DATE y
 // llega como timestamp UTC ("2026-08-24T00:00:00.000Z"). En ambos casos el
@@ -87,7 +88,7 @@ function EstiloCard({ registro, onEdit }) {
           </span>
         ) : null}
         <span className="text-[13px] text-muted-foreground">
-          {[estilista?.nombre, bloqueado ? 'Ver detalle' : 'Ver o editar'].filter(Boolean).join(' · ')}
+          {[nombreAutor(estilista), bloqueado ? 'Ver detalle' : 'Ver o editar'].filter(Boolean).join(' · ')}
         </span>
       </span>
     </button>

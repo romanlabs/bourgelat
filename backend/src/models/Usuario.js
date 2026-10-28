@@ -98,6 +98,11 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  retiradoEn: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Salió del equipo: sin acceso ni datos de contacto; se conserva el nombre',
+  },
   clinicaId: {
     type: DataTypes.UUID,
     allowNull: true,

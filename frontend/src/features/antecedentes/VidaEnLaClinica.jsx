@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { hoyLocal } from '@/lib/fecha'
 import { aFechaLocal, soloDia } from '@/features/pacientes/fichaSaludUtils'
+import { nombreAutor } from '@/lib/equipo'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const VISIBLES = 8
@@ -23,7 +24,7 @@ function eventosDe({ historias, antecedentes, mascota }) {
     agregar(
       h.fechaConsulta || h.createdAt,
       h.motivoConsulta || 'Consulta',
-      [h.diagnostico, h.veterinario?.nombre].filter(Boolean).join(' · ')
+      [h.diagnostico, nombreAutor(h.veterinario)].filter(Boolean).join(' · ')
     )
   }
   for (const v of antecedentes?.vacunas || []) {

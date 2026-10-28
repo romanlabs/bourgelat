@@ -36,6 +36,7 @@ import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Select } from '@/components/ui/select'
 import { hoyLocal } from '@/lib/fecha'
+import { nombreAutor } from '@/lib/equipo'
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos los estados' },
@@ -219,7 +220,7 @@ export default function AgendaPage() {
         paciente: cita.mascota?.nombre || 'Paciente',
         tutor: cita.propietario?.nombre || 'Sin tutor',
         motivo: cita.motivo,
-        profesional: cita.veterinario?.nombre || 'Sin profesional',
+        profesional: nombreAutor(cita.veterinario, 'Sin profesional'),
         estado: cita.estado,
         esUrgencia: cita.tipoCita === 'urgencia',
         sinHistoria: cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id,

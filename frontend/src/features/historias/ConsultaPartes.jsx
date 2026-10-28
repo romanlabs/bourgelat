@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import { aFechaLocal, fechaCorta, formatoNumero, soloDia } from '@/features/pacientes/fichaSaludUtils'
 import { hoyLocal } from '@/lib/fecha'
+import { nombreAutor } from '@/lib/equipo'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const CAMPO =
@@ -219,7 +220,7 @@ export function ConsultaAnterior({ historia }) {
             {historia.diagnostico ? <span className="text-muted-foreground"> · {historia.diagnostico}</span> : null}
           </p>
           <p className="text-[13px] text-muted-foreground">
-            {[historia.peso ? `${formatoNumero(historia.peso, 2)} kg` : null, historia.veterinario?.nombre].filter(Boolean).join(' · ')}
+            {[historia.peso ? `${formatoNumero(historia.peso, 2)} kg` : null, nombreAutor(historia.veterinario)].filter(Boolean).join(' · ')}
           </p>
         </>
       ) : (

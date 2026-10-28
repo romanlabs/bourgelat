@@ -158,12 +158,26 @@ const enviarInvitacion = ({ usuario, clinica, token, nombreAdmin }) => {
 // Borra una cuenta que nunca aceptó su invitación. Una cuenta pendiente no ha
 // iniciado sesión, así que solo tiene tokens; si algo más la referencia (por
 // ejemplo, una cita que le asignaron por API), se desactiva en vez de borrarse.
+// Se revisa antes de borrar: en bases con llaves en CASCADE el DELETE no falla
+// y se llevaría esas citas o historias con él.
 const borrarCuentaPendiente = async (usuario, { transaction } = {}) => {
   const sequelize = require('../config/database')
   const Usuario = require('../models/Usuario')
   const PasswordResetToken = require('../models/PasswordResetToken')
   const EmailVerificationToken = require('../models/EmailVerificationToken')
   const RefreshToken = require('../models/RefreshToken')
+  const { tieneActividad } = require('./usuarioRetiroService')
+
+  const desactivar = async () => {
+    await invalidarInvitaciones(usuario.id, { transaction })
+    await Usuario.update(
+      { activo: false },
+      { where: { id: usuario.id, clinicaId: usuario.clinicaId }, transaction }
+    )
+    return 'desactivada'
+  }
+
+  if (await tieneActividad(usuario.id, { transaction })) return desactivar()
 
   try {
     await sequelize.transaction({ transaction }, async (t) => {
@@ -177,12 +191,7 @@ const borrarCuentaPendiente = async (usuario, { transaction } = {}) => {
     return 'borrada'
   } catch (error) {
     if (error.name !== 'SequelizeForeignKeyConstraintError') throw error
-    await invalidarInvitaciones(usuario.id, { transaction })
-    await Usuario.update(
-      { activo: false },
-      { where: { id: usuario.id, clinicaId: usuario.clinicaId }, transaction }
-    )
-    return 'desactivada'
+    return desactivar()
   }
 }
 

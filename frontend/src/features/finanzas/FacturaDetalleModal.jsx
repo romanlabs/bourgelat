@@ -23,6 +23,7 @@ import {
   getEstadoElectronicoTone,
 } from './useFinanzasHistorial'
 import FormAbono from './FormAbono'
+import { nombreAutor } from '@/lib/equipo'
 
 // Al anular, cada producto vuelve a la bodega salvo que se diga lo contrario.
 const DESTINOS_PRODUCTO = [
@@ -176,7 +177,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     Responsable
                   </dt>
                   <dd className="mt-1 truncate text-sm font-semibold text-foreground">
-                    {facturaSeleccionada.usuario?.nombre || 'Sin usuario asignado'}
+                    {nombreAutor(facturaSeleccionada.usuario, 'Sin usuario asignado')}
                   </dd>
                 </div>
               </dl>

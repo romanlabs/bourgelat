@@ -376,7 +376,7 @@ const obtenerHistorias = async (req, res) => {
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
         {
           model: Cita,
           as: 'cita',
@@ -569,7 +569,7 @@ const crearHistoria = async (req, res) => {
       include: [
         { model: Mascota, as: 'mascota', attributes: ['id', 'nombre', 'especie', 'raza'] },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
       ],
     })
 
@@ -618,7 +618,7 @@ const obtenerHistoriasMascota = async (req, res) => {
       where: { mascotaId, clinicaId },
       order: [['fechaConsulta', 'DESC']],
       include: [
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'retiradoEn'] },
       ],
     })
 
@@ -649,7 +649,7 @@ const obtenerHistoria = async (req, res) => {
           include: [{ model: AntecedentesMascota, as: 'antecedentes', required: false }],
         },
         { model: Propietario, as: 'propietario', attributes: ['id', 'nombre', 'telefono', 'email', 'tipoDocumento', 'numeroDocumento', 'direccion', 'ciudad'] },
-        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'tarjetaProfesional'] },
+        { model: Usuario, as: 'veterinario', attributes: ['id', 'nombre', 'tarjetaProfesional', 'retiradoEn'] },
         { model: Cita, as: 'cita', attributes: ['id', 'fecha', 'tipoCita'] },
       ],
     })
