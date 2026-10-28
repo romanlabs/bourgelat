@@ -49,6 +49,12 @@ assert.strictEqual(datos.tipo, 'consulta general')
 assert.strictEqual(datos.especie, 'Perro')
 assert.strictEqual(datos.consultorio, 'Consultorio 1')
 assert.strictEqual(datos.urlAgenda, 'https://app.bourgelat.co/agenda?fecha=2026-10-17')
+// El celular se guarda en E.164; en el correo va legible, como en la app
+assert.strictEqual(datos.celularTutor, '300 1234567')
+assert.strictEqual(
+  datosCorreo({ ...{ cita: { fecha: '2026-10-17', horaInicio: '10:00', tipoCita: 'control' }, mascota: { nombre: 'Rex', especie: 'perro' }, consultorio: null, urlFrontend: '' }, propietario: { nombre: 'Tom', telefono: '+14155552671' } }).celularTutor,
+  '+1 415 555 2671'
+)
 assert.ok(!JSON.stringify(datos).includes('NO DEBE SALIR'))
 
 // Sin consultorio ni teléfono
