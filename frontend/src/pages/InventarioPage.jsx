@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { FiltroDesactivados } from '@/components/shared/FiltroDesactivados'
 import Paginacion from '@/components/shared/Paginacion'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
@@ -396,6 +397,8 @@ export default function InventarioPage() {
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
   const rolPermitido = canAccessModule(usuario, 'inventario')
+  // Desactivar y reactivar: los mismos roles que deja el backend.
+  const puedeGestionar = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   // Todos los planes incluyen inventario y reportes operativos.
   const puedeVerInventario = rolPermitido
 
@@ -631,6 +634,9 @@ export default function InventarioPage() {
                     bajoStock={bajoStock}
                     onBajoStockChange={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
                   />
+                  {puedeGestionar && (
+                    <FiltroDesactivados checked={productosHook.verDesactivados} onChange={productosHook.setVerDesactivados} />
+                  )}
                 </div>
               </div>
 
@@ -640,7 +646,7 @@ export default function InventarioPage() {
                 </DashboardPanel>
               ) : (
                 <TablaInventario
-                  title="Productos activos"
+                  title={productosHook.verDesactivados ? 'Productos desactivados' : 'Productos activos'}
                   subtitle="Lo que hay en bodega para vender, con su mínimo y su vencimiento."
                   rows={productosRows}
                   columns={[
@@ -696,7 +702,9 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={[
+                          acciones={productosHook.verDesactivados ? [
+                            { label: 'Reactivar', onSelect: () => productosHook.activar(row.id) },
+                          ] : [
                             (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
                               label: 'Actualizar vencimiento',
                               onSelect: () => abrirRelevoVencimiento(row.raw, 'producto'),
@@ -710,7 +718,9 @@ export default function InventarioPage() {
                     },
                   ]}
                   emptyTitle={
-                    buscar.trim() || categoria !== 'todas' || bajoStock
+                    productosHook.verDesactivados
+                      ? 'No hay productos desactivados'
+                      : buscar.trim() || categoria !== 'todas' || bajoStock
                       ? 'No hay productos para este filtro'
                       : 'Aún no hay productos'
                   }
@@ -812,6 +822,9 @@ export default function InventarioPage() {
                     bajoStock={insumosClinicosHook.bajoStock}
                     onBajoStockChange={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
                   />
+                  {puedeGestionar && (
+                    <FiltroDesactivados checked={insumosClinicosHook.verDesactivados} onChange={insumosClinicosHook.setVerDesactivados} />
+                  )}
                 </div>
               </div>
 
@@ -821,7 +834,7 @@ export default function InventarioPage() {
                 </DashboardPanel>
               ) : (
                 <TablaInventario
-                  title="Insumos clínicos"
+                  title={insumosClinicosHook.verDesactivados ? 'Insumos clínicos desactivados' : 'Insumos clínicos'}
                   subtitle="Lo que se usa en consulta y procedimientos. No se vende: lo aplicado se descuenta al cerrar la historia clínica y queda como gasto de insumos."
                   rows={insumosClinicosHook.insumosRows}
                   columns={[
@@ -872,7 +885,9 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={[
+                          acciones={insumosClinicosHook.verDesactivados ? [
+                            { label: 'Reactivar', onSelect: () => insumosClinicosHook.activar(row.id) },
+                          ] : [
                             (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
                               label: 'Actualizar vencimiento',
                               onSelect: () => abrirRelevoVencimiento(row.raw, 'insumo'),
@@ -884,7 +899,7 @@ export default function InventarioPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay insumos clínicos para este filtro"
+                  emptyTitle={insumosClinicosHook.verDesactivados ? 'No hay insumos clínicos desactivados' : 'No hay insumos clínicos para este filtro'}
                   emptyBody="Ajusta la búsqueda o crea el primer insumo clínico con el botón Nuevo insumo clínico."
                 />
               )}
@@ -916,13 +931,18 @@ export default function InventarioPage() {
           {activeTab === 'servicios' && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SearchInput
-                  value={serviciosHook.buscar}
-                  onChange={(valor) => { serviciosHook.setBuscar(valor); serviciosHook.setPagina(1) }}
-                  placeholder="Buscar servicio por nombre"
-                  ariaLabel="Buscar servicios"
-                  className="max-w-md flex-1"
-                />
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <SearchInput
+                    value={serviciosHook.buscar}
+                    onChange={(valor) => { serviciosHook.setBuscar(valor); serviciosHook.setPagina(1) }}
+                    placeholder="Buscar servicio por nombre"
+                    ariaLabel="Buscar servicios"
+                    className="max-w-md flex-1"
+                  />
+                  {puedeGestionar && (
+                    <FiltroDesactivados checked={serviciosHook.verDesactivados} onChange={serviciosHook.setVerDesactivados} />
+                  )}
+                </div>
                 <Button type="button" size="lg" className="px-4" onClick={serviciosHook.openCreateDrawer}>
                   <Plus />
                   Nuevo servicio
@@ -930,7 +950,7 @@ export default function InventarioPage() {
               </div>
 
               <TablaInventario
-                title="Catálogo de servicios"
+                title={serviciosHook.verDesactivados ? 'Servicios desactivados' : 'Catálogo de servicios'}
                 subtitle="Al facturar un servicio se descuentan solos los insumos de su receta, si la tiene."
                 rows={serviciosHook.serviciosRows}
                 columns={[
@@ -959,7 +979,15 @@ export default function InventarioPage() {
                   {
                     key: 'accion',
                     label: 'Acciones',
-                    render: (row) => (
+                    render: (row) => serviciosHook.verDesactivados ? (
+                      <button
+                        type="button"
+                        onClick={() => serviciosHook.activar(row.id)}
+                        className={cn(ENLACE, 'text-primary')}
+                      >
+                        Reactivar
+                      </button>
+                    ) : (
                       <div className="flex flex-wrap gap-x-3 gap-y-1">
                         <button
                           type="button"
@@ -979,7 +1007,7 @@ export default function InventarioPage() {
                     ),
                   },
                 ]}
-                emptyTitle="No hay servicios en el catálogo"
+                emptyTitle={serviciosHook.verDesactivados ? 'No hay servicios desactivados' : 'No hay servicios en el catálogo'}
                 emptyBody="Crea el primer servicio y define qué insumos clínicos consume."
               />
 

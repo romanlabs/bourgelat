@@ -6,9 +6,9 @@ const cleanParams = (params) =>
   )
 
 export const inventarioClinicoApi = {
-  async obtenerInsumos({ buscar, categoria, bajoStock, pagina = 1, limite = 20 } = {}) {
+  async obtenerInsumos({ buscar, categoria, bajoStock, estado, pagina = 1, limite = 20 } = {}) {
     const { data } = await api.get('/inventario-clinico', {
-      params: cleanParams({ buscar, categoria, bajoStock, pagina, limite }),
+      params: cleanParams({ buscar, categoria, bajoStock, estado, pagina, limite }),
     })
     return data
   },
@@ -50,6 +50,11 @@ export const inventarioClinicoApi = {
 
   async eliminarInsumo(insumoId) {
     const { data } = await api.delete(`/inventario-clinico/${insumoId}`)
+    return data
+  },
+
+  async activarInsumo(insumoId) {
+    const { data } = await api.patch(`/inventario-clinico/${insumoId}/activar`)
     return data
   },
 

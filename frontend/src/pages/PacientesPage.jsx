@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { FiltroDesactivados } from '@/components/shared/FiltroDesactivados'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -222,23 +223,6 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
-  )
-}
-
-function FiltroDesactivados({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'h-11 rounded-lg px-3.5 text-sm font-semibold transition active:translate-y-px',
-        FOCO,
-        checked ? 'bg-warning-soft text-warning' : 'bg-secondary text-secondary-foreground hover:brightness-95'
-      )}
-    >
-      {checked ? 'Viendo desactivados' : 'Ver desactivados'}
-    </button>
   )
 }
 

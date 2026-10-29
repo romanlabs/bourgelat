@@ -19,6 +19,7 @@ export function useServicios({ enabled, forSelector = false } = {}) {
 
   const [buscar, setBuscar] = useState('')
   const [pagina, setPagina] = useState(1)
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [editingServicio, setEditingServicio] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ open: false, servicio: null })
@@ -26,8 +27,14 @@ export function useServicios({ enabled, forSelector = false } = {}) {
   const busquedaDiferida = useDeferredValue(buscar.trim())
 
   const serviciosQuery = useQuery({
-    queryKey: ['servicios-clinicos', busquedaDiferida, pagina],
-    queryFn: () => serviciosApi.obtenerServicios({ buscar: busquedaDiferida || undefined, pagina, limite: 12 }),
+    queryKey: ['servicios-clinicos', busquedaDiferida, pagina, verDesactivados],
+    queryFn: () =>
+      serviciosApi.obtenerServicios({
+        buscar: busquedaDiferida || undefined,
+        estado: verDesactivados ? 'inactivos' : undefined,
+        pagina,
+        limite: 12,
+      }),
     enabled,
     placeholderData: (prev) => prev,
   })
@@ -70,6 +77,21 @@ export function useServicios({ enabled, forSelector = false } = {}) {
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el servicio.')),
   })
+
+
+  const activarMutation = useMutation({
+    mutationFn: serviciosApi.activarServicio,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Servicio reactivado')
+      invalidateServiciosQueries(queryClient)
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible reactivar el servicio.')),
+  })
+
+  function cambiarVerDesactivados(valor) {
+    setVerDesactivados(valor)
+    setPagina(1)
+  }
 
   const serviciosRows = useMemo(
     () =>
@@ -132,6 +154,9 @@ export function useServicios({ enabled, forSelector = false } = {}) {
     serviciosRows,
     isPendingServicio: crearServicioMutation.isPending || editarServicioMutation.isPending,
     isPendingDelete: eliminarServicioMutation.isPending,
+    verDesactivados, setVerDesactivados: cambiarVerDesactivados,
+    activar: (id) => activarMutation.mutate(id),
+    isPendingActivar: activarMutation.isPending,
     buscar, setBuscar,
     pagina, setPagina,
     editingServicio,
