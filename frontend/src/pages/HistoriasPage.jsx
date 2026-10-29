@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
-import { formatLongDate, formatNumber } from '@/features/dashboard/dashboardUtils'
+import { formatNumber, formatShortDate, toLocalDate } from '@/features/dashboard/dashboardUtils'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { useAuthStore } from '@/store/authStore'
@@ -13,7 +13,6 @@ import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-import { nombreAutor } from '@/lib/equipo'
 
 // Cada chip es una pregunta operativa, no una metrica: al tocarlo filtra la
 // tabla de abajo. 'pendientes' es el default porque una historia sin cerrar es
@@ -72,6 +71,13 @@ function RestrictedHistoriasPage() {
       </div>
     </div>
   )
+}
+
+// «29 oct» en la tabla; el año solo cuando no es el actual, para que quepa el botón.
+const fechaCorta = (value) => {
+  const d = toLocalDate(value)
+  if (!d) return 'Sin fecha'
+  return d.getFullYear() === new Date().getFullYear() ? formatShortDate(d) : `${formatShortDate(d)} ${d.getFullYear()}`
 }
 
 export default function HistoriasPage() {
@@ -157,19 +163,16 @@ export default function HistoriasPage() {
     () =>
       (historiasQuery.data?.historias || []).map((historia) => ({
         id: historia.id,
-        fecha: new Intl.DateTimeFormat('es-CO', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }).format(new Date(historia.fechaConsulta)),
+        fecha: fechaCorta(historia.fechaConsulta),
         paciente: historia.mascota?.nombre || 'Paciente',
         tutor: historia.propietario?.nombre || 'Sin tutor',
-        profesional: nombreAutor(historia.veterinario, 'Sin profesional'),
+        profesional: historia.veterinario?.nombre || 'Sin profesional',
+        profesionalRetirado: Boolean(historia.veterinario?.retiradoEn),
         motivo: historia.motivoConsulta,
         diagnostico: historia.diagnosticoPresuntivo || historia.diagnostico,
         faltantes: historia.bloqueada ? [] : faltantesDe(historia),
         proximaConsulta: historia.proximaConsulta
-          ? formatLongDate(historia.proximaConsulta)
+          ? fechaCorta(historia.proximaConsulta)
           : 'Sin control',
         bloqueada: historia.bloqueada,
         mascotaId: historia.mascota?.id || null,
@@ -200,41 +203,39 @@ export default function HistoriasPage() {
       currentKey="historias"
       title="Historias clínicas"
       description={descripcion}
-      actions={
-      <div role="tablist" aria-label="Qué historias ver" className="flex flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
-        {pestanas.map((pestana) => {
-          const activa = filtro === pestana.id
-          return (
-            <button
-              key={pestana.id}
-              type="button"
-              role="tab"
-              aria-selected={activa}
-              onClick={() => aplicarFiltro(pestana.id)}
-              className={cn(
-                'h-10 rounded-[7px] px-3.5 text-[13px] transition',
-                FOCO,
-                activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {pestana.label}
-              {typeof pestana.conteo === 'number' ? (
-                <span
-                  className={cn(
-                    'ml-1.5 tabular-nums',
-                    pestana.id === 'controles' && pestana.conteo > 0 ? 'text-danger' : 'text-muted-foreground'
-                  )}
-                >
-                  {formatNumber(pestana.conteo)}
-                </span>
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
-      }
     >
       <div className="flex flex-col gap-4">
+        <div role="tablist" aria-label="Qué historias ver" className="flex w-fit max-w-full flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
+          {pestanas.map((pestana) => {
+            const activa = filtro === pestana.id
+            return (
+              <button
+                key={pestana.id}
+                type="button"
+                role="tab"
+                aria-selected={activa}
+                onClick={() => aplicarFiltro(pestana.id)}
+                className={cn(
+                  'h-10 rounded-[7px] px-3.5 text-[13px] transition',
+                  FOCO,
+                  activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {pestana.label}
+                {typeof pestana.conteo === 'number' ? (
+                  <span
+                    className={cn(
+                      'ml-1.5 tabular-nums',
+                      pestana.id === 'controles' && pestana.conteo > 0 ? 'text-danger' : 'text-muted-foreground'
+                    )}
+                  >
+                    {formatNumber(pestana.conteo)}
+                  </span>
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
             <Search className="h-[18px] w-[18px] shrink-0" />
@@ -326,18 +327,23 @@ export default function HistoriasPage() {
                     return (
                       <tr key={row.id} className="border-t border-border align-top transition hover:bg-muted">
                         <td className="whitespace-nowrap px-5 py-3.5 tabular-nums text-foreground">{row.fecha}</td>
-                        <td className="px-3 py-3.5">
+                        <td className="min-w-[170px] px-3 py-3.5">
                           <span className="block font-semibold text-foreground">{row.paciente}</span>
                           <span className="block text-[13px] text-muted-foreground">{row.tutor}</span>
                         </td>
-                        <td className="max-w-[340px] px-3 py-3.5">
+                        <td className="max-w-[300px] px-3 py-3.5">
                           <span className="block truncate font-medium text-foreground">{row.motivo || 'Sin motivo'}</span>
                           <span className="block truncate text-[13px] text-muted-foreground">{row.diagnostico || 'Sin diagnóstico'}</span>
                           {row.faltantes.length ? (
                             <span className="mt-1 block text-[13px] text-warning">Falta {row.faltantes.join(', ')}</span>
                           ) : null}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-3.5 text-foreground">{row.profesional}</td>
+                        <td className="px-3 py-3.5">
+                          <span className="block whitespace-nowrap text-foreground">{row.profesional}</span>
+                          {row.profesionalRetirado ? (
+                            <span className="block whitespace-nowrap text-[13px] text-muted-foreground">Ya no está en el equipo</span>
+                          ) : null}
+                        </td>
                         <td className="whitespace-nowrap px-3 py-3.5 text-muted-foreground">{row.proximaConsulta}</td>
                         <td className="px-5 py-3.5 text-right">
                           {destino ? (
