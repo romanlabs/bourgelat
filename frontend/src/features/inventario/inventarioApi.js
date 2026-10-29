@@ -13,9 +13,9 @@ export const inventarioApi = {
     return data
   },
 
-  async obtenerProductos({ buscar, categoria, bajoStock, pagina = 1, limite = 20 } = {}) {
+  async obtenerProductos({ buscar, categoria, bajoStock, estado, pagina = 1, limite = 20 } = {}) {
     const { data } = await api.get('/inventario', {
-      params: cleanParams({ buscar, categoria, bajoStock, pagina, limite }),
+      params: cleanParams({ buscar, categoria, bajoStock, estado, pagina, limite }),
     })
     return data
   },
@@ -77,6 +77,11 @@ export const inventarioApi = {
 
   async eliminarProducto(productoId) {
     const { data } = await api.delete(`/inventario/${productoId}`)
+    return data
+  },
+
+  async activarProducto(productoId) {
+    const { data } = await api.patch(`/inventario/${productoId}/activar`)
     return data
   },
 

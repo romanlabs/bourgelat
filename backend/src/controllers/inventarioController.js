@@ -296,7 +296,8 @@ const obtenerProductos = async (req, res) => {
     const { buscar, categoria, bajoStock } = req.query;
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
-    const where = { clinicaId, activo: true };
+    // ?estado=inactivos lista los desactivados (para reactivarlos); por defecto, activos.
+    const where = { clinicaId, activo: req.query.estado !== 'inactivos' };
 
     if (categoria) where.categoria = categoria;
     if (buscar) {
@@ -588,6 +589,29 @@ const eliminarProducto = async (req, res) => {
   }
 };
 
+
+// Revierte la desactivación (desactivado por error o que vuelve a usarse).
+const activarProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const producto = await Producto.findOne({ where: { id, clinicaId: req.usuario.clinicaId, activo: false } });
+
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+
+    await producto.update({ activo: true });
+
+    return res.json({
+      message: 'Producto reactivado',
+      producto,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
 const obtenerAlertas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
@@ -787,6 +811,7 @@ module.exports = {
   obtenerProducto,
   editarProducto,
   eliminarProducto,
+  activarProducto,
   registrarMovimiento,
   relevarVencimiento,
   obtenerAlertas,

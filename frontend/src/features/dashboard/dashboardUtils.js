@@ -81,7 +81,7 @@ export const formatNumber = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0))
 
-const toLocalDate = (value) => {
+export const toLocalDate = (value) => {
   if (!value) return null
   const s = String(value)
   const dateStr = s.includes('T') ? s : `${s}T00:00:00`

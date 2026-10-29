@@ -42,6 +42,7 @@ import { AdminSearchContext, HeaderSlotContext } from './HeaderSlotContext'
 import { etiquetaEspecie } from '@/lib/especies'
 import { useModuleAccess } from '@/lib/useModuleAccess'
 import { canAccessModule, getUserRoles } from '@/lib/permissions'
+import { formatearCelular } from '@/lib/celular'
 
 const QUICK_ACTION_MODULE = {
   facturar: 'caja',
@@ -618,7 +619,7 @@ export default function AdminShell({
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-semibold">{propietario.nombre}</span>
                             <span className="block truncate text-[13px] text-muted-foreground">
-                              {propietario.telefono || propietario.email || 'Sin contacto'}
+                              {formatearCelular(propietario.telefono) || propietario.email || 'Sin contacto'}
                             </span>
                           </span>
                         </button>

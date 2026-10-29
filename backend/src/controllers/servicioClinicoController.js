@@ -107,7 +107,8 @@ const obtenerServicios = async (req, res) => {
     const { buscar, categoria } = req.query;
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
-    const where = tenantWhere(req, { activo: true });
+    // ?estado=inactivos lista los desactivados (para reactivarlos); por defecto, activos.
+    const where = tenantWhere(req, { activo: req.query.estado !== 'inactivos' });
     if (categoria) where.categoria = categoria;
     if (buscar) {
       where.nombre = { [Op.iLike]: `%${buscar}%` };
@@ -252,6 +253,29 @@ const eliminarServicio = async (req, res) => {
   }
 };
 
+
+// Revierte la desactivación (desactivado por error o que vuelve a usarse).
+const activarServicio = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const servicio = await ServicioClinico.findOne({ where: tenantWhere(req, { id, activo: false }) });
+
+    if (!servicio) {
+      return res.status(404).json({ message: 'Servicio no encontrado' });
+    }
+
+    await servicio.update({ activo: true });
+
+    return res.json({
+      message: 'Servicio reactivado',
+      servicio,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
 const MAX_IMPORT_ROWS = 500;
 
 // Importacion masiva desde la plantilla de Excel. Los servicios entran sin
@@ -350,4 +374,5 @@ module.exports = {
   obtenerServicio,
   editarServicio,
   eliminarServicio,
+  activarServicio,
 };

@@ -6,7 +6,15 @@ const ESPECIES = [
   { value: 'gato', label: 'Felino', plural: 'Felinos', comun: 'gato' },
   { value: 'ave', label: 'Ave', plural: 'Aves' },
   { value: 'conejo', label: 'Lagomorfo', plural: 'Lagomorfos', comun: 'conejo' },
+  { value: 'roedor', label: 'Roedor', plural: 'Roedores', comun: 'hámster, cuy' },
+  { value: 'huron', label: 'Mustélido', plural: 'Mustélidos', comun: 'hurón' },
   { value: 'reptil', label: 'Reptil', plural: 'Reptiles' },
+  { value: 'pez', label: 'Pez', plural: 'Peces' },
+  { value: 'equino', label: 'Equino', plural: 'Equinos', comun: 'caballo' },
+  { value: 'bovino', label: 'Bovino', plural: 'Bovinos', comun: 'vaca' },
+  { value: 'porcino', label: 'Porcino', plural: 'Porcinos', comun: 'cerdo' },
+  { value: 'ovino', label: 'Ovino', plural: 'Ovinos', comun: 'oveja' },
+  { value: 'caprino', label: 'Caprino', plural: 'Caprinos', comun: 'cabra' },
   { value: 'otro', label: 'Otro', plural: 'Otros' },
 ]
 

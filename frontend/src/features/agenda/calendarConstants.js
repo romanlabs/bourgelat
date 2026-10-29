@@ -242,6 +242,14 @@ const ESPECIE_EMOJI = {
   pajaro:   '🦜',
   hamster:  '🐹',
   reptil:   '🦎',
+  roedor:   '🐹',
+  huron:    '🦦',
+  pez:      '🐟',
+  equino:   '🐴',
+  bovino:   '🐮',
+  porcino:  '🐷',
+  ovino:    '🐑',
+  caprino:  '🐐',
 }
 
 export function especieToEmoji(especie) {

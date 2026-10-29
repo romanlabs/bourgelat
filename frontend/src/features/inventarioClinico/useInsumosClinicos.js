@@ -31,6 +31,7 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
   const [categoria, setCategoria] = useState('todas')
   const [bajoStock, setBajoStock] = useState(false)
   const [pagina, setPagina] = useState(1)
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [editingInsumo, setEditingInsumo] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ open: false, insumo: null })
@@ -38,12 +39,13 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
   const busquedaDiferida = useDeferredValue(buscar.trim())
 
   const insumosQuery = useQuery({
-    queryKey: ['inventario-clinico-insumos', busquedaDiferida, categoria, bajoStock, pagina],
+    queryKey: ['inventario-clinico-insumos', busquedaDiferida, categoria, bajoStock, pagina, verDesactivados],
     queryFn: () =>
       inventarioClinicoApi.obtenerInsumos({
         buscar: busquedaDiferida || undefined,
         categoria: categoria !== 'todas' ? categoria : undefined,
         bajoStock: bajoStock ? 'true' : undefined,
+        estado: verDesactivados ? 'inactivos' : undefined,
         pagina,
         limite: 12,
       }),
@@ -89,6 +91,21 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el insumo clínico.')),
   })
+
+
+  const activarMutation = useMutation({
+    mutationFn: inventarioClinicoApi.activarInsumo,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Insumo clínico reactivado')
+      invalidateInventarioClinicoQueries(queryClient)
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible reactivar el insumo clínico.')),
+  })
+
+  function cambiarVerDesactivados(valor) {
+    setVerDesactivados(valor)
+    setPagina(1)
+  }
 
   const registrarCompraMutation = useMutation({
     mutationFn: ({ insumoId, payload }) => inventarioClinicoApi.registrarMovimiento(insumoId, payload),
@@ -212,6 +229,9 @@ export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
     insumosRows,
     isPendingInsumo: crearInsumoMutation.isPending || editarInsumoMutation.isPending,
     isPendingDelete: eliminarInsumoMutation.isPending,
+    verDesactivados, setVerDesactivados: cambiarVerDesactivados,
+    activar: (id) => activarMutation.mutate(id),
+    isPendingActivar: activarMutation.isPending,
     isPendingCompra: registrarCompraMutation.isPending,
     isPendingMerma: registrarMermaMutation.isPending,
     buscar, setBuscar,
