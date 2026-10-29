@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Boxes, CalendarClock, CalendarPlus, PawPrint, Receipt, Stethoscope, Wallet } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { cajaApi } from '@/features/caja/cajaApi'
@@ -10,15 +10,12 @@ import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import {
   PAYMENT_METHOD_LABELS,
   formatNumber,
-  getCurrentMonthRange,
 } from '@/features/dashboard/dashboardUtils'
 import JornadaHoy from '@/features/dashboard/JornadaHoy'
-import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
 
 const EMPTY_LIST = []
-const EMPTY_RECORD = {}
 
 const serializeDate = (date) => {
   const year = date.getFullYear()
@@ -89,7 +86,6 @@ function RestrictedDashboard({ usuario }) {
         <JornadaHoy
           citas={citasOrdenadas}
           loading={agendaHoyQuery.isLoading}
-          alertas={EMPTY_LIST}
           puedeAtender={canAccessModule(usuario, 'historias')}
           puedeCobrar={canAccessModule(usuario, 'caja')}
           puedeVerCaja={false}
@@ -126,16 +122,15 @@ function RestrictedDashboard({ usuario }) {
 }
 
 
-// Hoy del administrador: la jornada, la caja del día y lo que hay que revisar.
+// Hoy del administrador: la jornada y la caja del día. Lo que hay que revisar
+// (historias sin cerrar, stock, fiado) está en la campanita del encabezado.
 // Los reportes del mes viven en Finanzas; las pestañas que los repetían aquí
 // se quitaron.
 export default function DashboardPage() {
-  const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
   const setSuscripcion = useAuthStore((state) => state.setSuscripcion)
 
   const esAdministrador = hasAnyRole(usuario, ['admin', 'superadmin'])
-  const rangoMes = useMemo(() => getCurrentMonthRange(), [])
   const hoy = useMemo(() => serializeDate(new Date()), [])
 
   useEffect(() => {
@@ -160,29 +155,9 @@ export default function DashboardPage() {
     }
   }, [setSuscripcion, suscripcionQuery.data?.suscripcion])
 
-  const inventarioQuery = useQuery({
-    queryKey: ['dashboard-inventario'],
-    queryFn: dashboardApi.obtenerReporteInventario,
-    enabled: esAdministrador,
-    placeholderData: (previousData) => previousData,
-  })
-
   const agendaHoyQuery = useQuery({
     queryKey: ['dashboard-citas-hoy-detalle', hoy],
     queryFn: () => agendaApi.obtenerCitas({ fecha: hoy, pagina: 1, limite: 40 }),
-    enabled: esAdministrador,
-    placeholderData: (previousData) => previousData,
-  })
-
-  const facturacionEstadoQuery = useQuery({
-    queryKey: ['dashboard-facturacion-estado', rangoMes.fechaInicio, rangoMes.fechaFin],
-    queryFn: () =>
-      finanzasApi.obtenerFacturas({
-        fechaInicio: rangoMes.fechaInicio,
-        fechaFin: rangoMes.fechaFin,
-        pagina: 1,
-        limite: 1,
-      }),
     enabled: esAdministrador,
     placeholderData: (previousData) => previousData,
   })
@@ -201,86 +176,9 @@ export default function DashboardPage() {
 
   const resumen = dashboardQuery.data
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
-  // Los dos inventarios cuentan: quedarse sin un insumo clínico frena una
-  // cirugía igual que quedarse sin un producto frena una venta.
-  const productosBajoStock = resumen?.alertas?.productosbajoStock ?? 0
-  const insumosBajoStock = resumen?.alertas?.insumosBajoStock ?? 0
-  const alertasInventario = productosBajoStock + insumosBajoStock
   const diasRestantes = suscripcionQuery.data?.diasRestantes
 
   const citasHoyRows = useMemo(() => agendaHoyQuery.data?.citas ?? EMPTY_LIST, [agendaHoyQuery.data?.citas])
-  const resumenElectronico = useMemo(
-    () => facturacionEstadoQuery.data?.resumenElectronico ?? EMPTY_RECORD,
-    [facturacionEstadoQuery.data?.resumenElectronico]
-  )
-  const dianErrores =
-    Number(resumenElectronico.rechazada || 0) + Number(resumenElectronico.error || 0)
-
-  const urgenciasSinHistoria = useMemo(
-    () =>
-      citasHoyRows.filter(
-        (c) => c.tipoCita === 'urgencia' && c.estado === 'completada' && !c.historia?.id
-      ).length,
-    [citasHoyRows]
-  )
-
-  const tacticalAlerts = useMemo(() => {
-    const rows = []
-
-    if (urgenciasSinHistoria > 0) {
-      rows.push({
-        id: 'urgencias-sin-historia',
-        title: 'Urgencias sin historia clínica',
-        detail:
-          urgenciasSinHistoria === 1
-            ? '1 urgencia atendida hoy aún no tiene historia clínica registrada. Ciérrala antes de que se pierda el detalle clínico.'
-            : `${formatNumber(urgenciasSinHistoria)} urgencias atendidas hoy aún no tienen historia clínica registrada. Ciérralas antes de que se pierda el detalle clínico.`,
-        // A la agenda, no a /historias: esas urgencias todavia no tienen
-        // historia creada, asi que no aparecen en la bandeja clinica. La
-        // historia se abre desde la cita.
-        to: '/agenda',
-        actionLabel: 'Documentar urgencias',
-      })
-    }
-
-    if (typeof diasRestantes === 'number' && diasRestantes <= 7) {
-      rows.push({
-        id: 'vigencia',
-        title: 'Plan por vencer',
-        detail: `Quedan ${diasRestantes} días para el cierre de la vigencia actual. Conviene resolverlo antes de que afecte la continuidad.`,
-        to: '/plan',
-        actionLabel: 'Renovar plan',
-      })
-    }
-
-    if (alertasInventario > 0) {
-      rows.push({
-        id: 'inventario',
-        title: 'Inventario crítico',
-        detail:
-          alertasInventario === 1
-            ? '1 artículo está por debajo del mínimo y puede trabar ventas o tratamientos hoy.'
-            : `${formatNumber(alertasInventario)} artículos están por debajo del mínimo`
-              + ` (${formatNumber(productosBajoStock)} de ventas, ${formatNumber(insumosBajoStock)} clínicos)`
-              + ' y pueden trabar ventas o tratamientos hoy.',
-        to: '/inventario',
-        actionLabel: 'Ver inventario',
-      })
-    }
-
-    if (dianErrores > 0) {
-      rows.push({
-        id: 'dian',
-        title: 'Facturas con problema',
-        detail: `${formatNumber(dianErrores)} facturas fueron rechazadas o no se pudieron enviar a la DIAN. Requieren revisión antes del siguiente corte.`,
-        to: '/caja',
-        actionLabel: 'Abrir caja',
-      })
-    }
-
-    return rows
-  }, [alertasInventario, productosBajoStock, insumosBajoStock, dianErrores, diasRestantes, urgenciasSinHistoria])
-
   const cajaHoy = useMemo(() => {
     const porMetodo = Object.entries(ingresosHoyQuery.data?.ingresosPorMetodoPago || {})
       .map(([key, valor]) => ({ key, label: PAYMENT_METHOD_LABELS[key] || key, valor: Number(valor) || 0 }))
@@ -297,37 +195,6 @@ export default function DashboardPage() {
         : null,
     }
   }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoyQuery.data?.totalIngresos])
-
-  // «Para revisar» nombra cada caso (el producto, el paciente) en vez de contar.
-  const alertasHoy = useMemo(() => {
-    const productosBajos = (inventarioQuery.data?.productos || [])
-      .filter((producto) => Number(producto.stock) <= Number(producto.stockMinimo))
-      .slice(0, 3)
-      .map((producto) => ({
-        id: `producto-${producto.id}`,
-        title: producto.nombre,
-        detail:
-          Number(producto.stock) <= 0
-            ? 'Agotado'
-            : `Quedan ${formatNumber(producto.stock)}, el mínimo es ${formatNumber(producto.stockMinimo)}`,
-        to: '/inventario',
-      }))
-    const historiasAbiertas = citasHoyRows
-      .filter((cita) => cita.estado === 'completada' && !cita.historia?.id)
-      .slice(0, 3)
-      .map((cita) => ({
-        id: `historia-${cita.id}`,
-        title: `Historia de ${cita.mascota?.nombre || 'un paciente'} sin cerrar`,
-        detail: `Consulta de las ${String(cita.horaInicio || '').slice(0, 5)}`,
-        to: '/agenda',
-      }))
-    const resto = tacticalAlerts.filter(
-      (alerta) =>
-        !(alerta.id === 'inventario' && productosBajos.length > 0) &&
-        !(alerta.id === 'urgencias-sin-historia' && historiasAbiertas.length > 0)
-    )
-    return [...historiasAbiertas, ...productosBajos, ...resto]
-  }, [inventarioQuery.data?.productos, citasHoyRows, tacticalAlerts])
 
   if (!esAdministrador) {
     return <RestrictedDashboard usuario={usuario} />
@@ -369,12 +236,6 @@ export default function DashboardPage() {
       ? getErrorMessage(
           agendaHoyQuery.error,
           'No fue posible cargar el detalle de la agenda de hoy.'
-        )
-      : null,
-    facturacionEstadoQuery.isError
-      ? getErrorMessage(
-          facturacionEstadoQuery.error,
-          'No fue posible leer el estado de la facturación electrónica.'
         )
       : null,
   ].filter(Boolean)
@@ -436,12 +297,10 @@ export default function DashboardPage() {
           citas={citasHoyRows}
           loading={agendaHoyQuery.isLoading}
           cajaHoy={cajaHoy}
-          alertas={alertasHoy}
           puedeAtender
           puedeCobrar
           puedeVerCaja
           usuarioIdMios={esVeterinario ? usuario?.id : null}
-          onVerReportes={() => navigate('/finanzas')}
         />
       )}
     </AdminShell>
