@@ -44,7 +44,8 @@ const MODULOS_OPERATIVOS = [
 ]
 
 // Hoy para los roles que no administran: la misma jornada del admin, sin la
-// caja del día ni los reportes, y con accesos a sus módulos debajo.
+// caja del día ni los reportes. Los accesos a módulos solo salen si el rol no
+// ve la agenda: con la jornada en pantalla repetían el menú lateral.
 function RestrictedDashboard({ usuario }) {
   const hoy = useMemo(() => serializeDate(new Date()), [])
   const puedeVerAgenda = canAccessModule(usuario, 'agenda')
@@ -95,7 +96,7 @@ function RestrictedDashboard({ usuario }) {
         />
       ) : null}
 
-      {modulos.length > 0 ? (
+      {!puedeVerAgenda && modulos.length > 0 ? (
         <section aria-labelledby="hoy-modulos" className="flex flex-col gap-3">
           <h2 id="hoy-modulos" className="text-lg font-semibold tracking-[-0.01em]">
             Tus módulos
