@@ -24,12 +24,12 @@ export const UNIDAD_BASE_OPTIONS = [
   { value: 'dosis', label: 'Dosis' },
 ]
 
-export function useInsumosClinicos({ enabled, onInsumoDeleted }) {
+export function useInsumosClinicos({ enabled, onInsumoDeleted, bajoStockInicial = false, buscarInicial = '' }) {
   const queryClient = useQueryClient()
 
-  const [buscar, setBuscar] = useState('')
+  const [buscar, setBuscar] = useState(buscarInicial)
   const [categoria, setCategoria] = useState('todas')
-  const [bajoStock, setBajoStock] = useState(false)
+  const [bajoStock, setBajoStock] = useState(bajoStockInicial)
   const [pagina, setPagina] = useState(1)
   const [verDesactivados, setVerDesactivados] = useState(false)
   const [editingInsumo, setEditingInsumo] = useState(null)

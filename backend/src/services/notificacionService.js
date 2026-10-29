@@ -55,7 +55,7 @@ const listarMias = async ({ clinicaId, usuarioId }) => {
   const [notificaciones, sinLeer] = await Promise.all([
     Notificacion.findAll({
       where: { clinicaId, usuarioId },
-      attributes: ['id', 'categoria', 'tipo', 'titulo', 'texto', 'enlace', 'leidaEn', 'createdAt'],
+      attributes: ['id', 'categoria', 'tipo', 'titulo', 'texto', 'enlace', 'entidadTipo', 'entidadId', 'leidaEn', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: LIMITE_LISTA,
     }),

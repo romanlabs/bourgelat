@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { FlaskConical, Paperclip, Plus, X } from 'lucide-react'
 import { examenesLaboratorioApi } from '@/features/examenesLaboratorio/examenesLaboratorioApi'
 import { cn } from '@/lib/utils'
+import { CLASE_RESALTADO, useResaltado } from '@/lib/useResaltado'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { nombreAutor } from '@/lib/equipo'
 
@@ -262,6 +263,7 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
   })
 
   const examenes = examenesQuery.data?.examenes || []
+  const examenResaltado = useResaltado('examen', { presente: examenes.length > 0 })
 
   const abrirCrear = () => { setExamenEnEdicion(null); setModalOpen(true) }
   const abrirEditar = (examen) => { setExamenEnEdicion(examen); setModalOpen(true) }
@@ -295,7 +297,11 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
       ) : (
         <div className="flex flex-col gap-1.5">
           {examenes.map((examen) => (
-            <div key={examen.id} className="rounded-xl bg-muted px-4 py-3.5">
+            <div
+              key={examen.id}
+              data-resaltar-id={examen.id}
+              className={cn('rounded-xl bg-muted px-4 py-3.5 transition-colors duration-700', examen.id === examenResaltado && CLASE_RESALTADO)}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold text-foreground">{examen.tipo}</p>
