@@ -5,6 +5,7 @@ const { verificarToken, verificarRol } = require('../middlewares/authMiddleware'
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
 const { uploadMascotaPhotoSingle } = require('../middlewares/uploadMascotaPhotoMiddleware')
+const { ESPECIES } = require('../config/especies')
 const {
   crearMascota,
   subirFotoMascota,
@@ -42,7 +43,7 @@ router.post(
   [
     body('nombre').notEmpty().withMessage('El nombre es obligatorio').trim(),
     body('especie')
-      .isIn(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'])
+      .isIn(ESPECIES)
       .withMessage('Especie no valida'),
     body('propietarioId').isUUID().withMessage('Propietario no valido'),
     body('sexo')
@@ -64,7 +65,7 @@ const validarConsultaMascotas = [
     .withMessage('La busqueda no puede exceder 120 caracteres'),
   query('especie')
     .optional()
-    .isIn(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'])
+    .isIn(ESPECIES)
     .withMessage('Especie no valida'),
   query('estado')
     .optional()

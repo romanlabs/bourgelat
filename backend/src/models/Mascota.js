@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 const Propietario = require('./Propietario');
 const Clinica = require('./Clinica');
 const { aplicarDescifrado } = require('../config/modelEncryption');
+const { ESPECIES } = require('../config/especies');
 
 const Mascota = sequelize.define('Mascota', {
   id: {
@@ -15,7 +16,7 @@ const Mascota = sequelize.define('Mascota', {
     allowNull: false,
   },
   especie: {
-    type: DataTypes.ENUM('perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'),
+    type: DataTypes.ENUM(...ESPECIES),
     allowNull: false,
   },
   especieDetalle: {
