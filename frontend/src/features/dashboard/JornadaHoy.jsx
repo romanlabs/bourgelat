@@ -170,6 +170,8 @@ export default function JornadaHoy({
   // Si quien mira también atiende (admin y veterinario a la vez), puede
   // quedarse solo con sus pacientes.
   usuarioIdMios = null,
+  // Las alertas se cortan en 3 por tipo; esto lleva a la lista completa.
+  verMasAlertas = null,
 }) {
   const [consultorio, setConsultorio] = useState('todos')
   const [soloMios, setSoloMios] = useState(false)
@@ -395,6 +397,16 @@ export default function JornadaHoy({
               </Link>
             ))
           )}
+          {verMasAlertas ? (
+            <Link
+              to={verMasAlertas.to}
+              state={verMasAlertas.state}
+              className="mt-2 inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
+            >
+              {verMasAlertas.label}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : null}
         </section>
       </div>
     </div>

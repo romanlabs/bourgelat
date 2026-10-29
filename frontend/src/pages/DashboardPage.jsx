@@ -298,6 +298,13 @@ export default function DashboardPage() {
   }, [ingresosHoyQuery.data?.ingresosPorMetodoPago, turnoActivoQuery.data?.turno?.fechaApertura, ingresosHoyQuery.data?.totalIngresos])
 
   // «Para revisar» nombra cada caso (el producto, el paciente) en vez de contar.
+  const totalBajoMinimo = useMemo(
+    () =>
+      (inventarioQuery.data?.productos || []).filter(
+        (producto) => Number(producto.stock) <= Number(producto.stockMinimo)
+      ).length,
+    [inventarioQuery.data?.productos]
+  )
   const alertasHoy = useMemo(() => {
     const productosBajos = (inventarioQuery.data?.productos || [])
       .filter((producto) => Number(producto.stock) <= Number(producto.stockMinimo))
@@ -442,6 +449,15 @@ export default function DashboardPage() {
           puedeCobrar
           puedeVerCaja
           usuarioIdMios={esVeterinario ? usuario?.id : null}
+          verMasAlertas={
+            totalBajoMinimo > 3
+              ? {
+                  label: `Ver los ${formatNumber(totalBajoMinimo)} bajo el mínimo`,
+                  to: '/inventario',
+                  state: { verBajoMinimo: true },
+                }
+              : null
+          }
         />
       )}
     </AdminShell>

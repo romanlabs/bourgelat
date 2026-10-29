@@ -455,17 +455,18 @@ export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const location = useLocation()
   const navigate = useNavigate()
-  // Desde «Para revisar» del inicio se llega con un producto bajo el mínimo:
-  // se abre la lista de los que están bajo el mínimo con ese resaltado un
-  // momento. La cantidad no se edita aquí, entra por factura de compra.
+  // Desde «Para revisar» del inicio se llega a la lista de los que están bajo
+  // el mínimo, a veces con un producto para resaltar un momento. La cantidad
+  // no se edita aquí, entra por factura de compra.
   const [llegadaProductoId] = useState(() => location.state?.resaltarProductoId ?? null)
+  const [llegadaBajoMinimo] = useState(() => Boolean(llegadaProductoId || location.state?.verBajoMinimo))
   const [productoResaltado, setProductoResaltado] = useState(llegadaProductoId)
 
   const [activeTab, setActiveTab] = useState('productos')
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(() =>
-    llegadaProductoId ? 'ventas' : leerInventarioGuardado()
+    llegadaBajoMinimo ? 'ventas' : leerInventarioGuardado()
   ) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
@@ -482,7 +483,7 @@ export default function InventarioPage() {
 
   const productosHook = useInventarioProductos({
     enabled: puedeVerInventario,
-    bajoStockInicial: Boolean(llegadaProductoId),
+    bajoStockInicial: llegadaBajoMinimo,
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
@@ -511,8 +512,8 @@ export default function InventarioPage() {
 
   useEffect(() => {
     // Se limpia el estado para que volver o recargar no lo resalte otra vez.
-    if (llegadaProductoId) navigate(location.pathname, { replace: true, state: null })
-  }, [llegadaProductoId, location.pathname, navigate])
+    if (llegadaBajoMinimo) navigate(location.pathname, { replace: true, state: null })
+  }, [llegadaBajoMinimo, location.pathname, navigate])
   // El resaltado cuenta desde que la fila aparece, no desde que carga la página.
   const resaltadoVisible =
     productoResaltado != null && productosHook.productosRows.some((row) => row.id === productoResaltado)
