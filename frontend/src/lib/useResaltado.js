@@ -4,9 +4,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 // Cuánto dura el resaltado de lo que se abrió desde una notificación.
 export const DURACION_RESALTADO = 2500
 
-// Clase del elemento resaltado: el caramelo de la marca, un poco más fuerte
-// que el de las tablas (DataTable con highlightKey) porque cubre un bloque.
-export const CLASE_RESALTADO = 'bg-brand/25'
+// Franja miel del elemento resaltado. Lo que se resalta lleva también
+// TRANSICION_RESALTADO para que al quitarse se desvanezca y no parpadee.
+export const CLASE_RESALTADO = 'bg-warning-soft'
+export const TRANSICION_RESALTADO = 'transition-colors duration-700'
 
 /** Estado de navegación que pide resaltar algo en la pantalla de destino. */
 export const pedirResaltado = (tipo, id, extra = {}) => ({ ...extra, resaltar: { tipo, id } })
@@ -14,12 +15,12 @@ export const pedirResaltado = (tipo, id, extra = {}) => ({ ...extra, resaltar: {
 /**
  * Lo que la campanita manda resaltar al llegar a una pantalla
  * (`state: pedirResaltado('cliente', id)`). Devuelve el id si es del `tipo`
- * pedido. El resaltado corre desde que el elemento aparece (`presente`), no
- * desde que carga la página: lo lleva a la vista (busca `data-resaltar-id`) y
- * se quita solo. El estado de navegación se limpia para que volver o recargar
+ * pedido. El resaltado corre desde que ese elemento está en pantalla
+ * (`presente(id)`), no desde que carga la página ni desde que hay filas: lo
+ * lleva a la vista (busca `data-resaltar-id`) y se quita solo. El estado de navegación se limpia para que volver o recargar
  * no lo repita.
  */
-export function useResaltado(tipo, { presente = true } = {}) {
+export function useResaltado(tipo, { presente = () => true } = {}) {
   const location = useLocation()
   const navigate = useNavigate()
   const [id, setId] = useState(() =>
@@ -36,7 +37,7 @@ export function useResaltado(tipo, { presente = true } = {}) {
     })
   }, [location.pathname, location.search, location.state, navigate, tipo])
 
-  const activo = id != null && presente
+  const activo = id != null && presente(id)
   useEffect(() => {
     if (!activo) return
     document

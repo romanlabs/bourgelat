@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { DetalleCitaDrawer } from './DetalleCitaDrawer'
-import { CLASE_RESALTADO, DURACION_RESALTADO } from '@/lib/useResaltado'
+import { CLASE_RESALTADO, DURACION_RESALTADO, TRANSICION_RESALTADO } from '@/lib/useResaltado'
 import {
   ACCION_LABELS,
   ACCION_PRIMARIA,
@@ -199,7 +199,7 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
         }
       }}
       data-resaltar-id={cita.id}
-      className={`flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left transition-colors duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+      className={`flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left ${TRANSICION_RESALTADO} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         resaltada ? CLASE_RESALTADO : seleccionada ? 'bg-accent' : 'hover:bg-muted'
       } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_hsl(var(--danger))]' : ''}`}
     >

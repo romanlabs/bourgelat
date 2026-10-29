@@ -553,14 +553,15 @@ export default function InventarioPage() {
   // el orden de hooks si el rol cambia entre renders (p. ej. al refrescar /me).
   const facturaCompraHook = useFacturaCompra({ enabled: rolPermitido })
 
+  // Cada resaltado espera a que su fila esté en la lista ya filtrada.
   const productoResaltado = useResaltado('producto', {
-    presente: productosHook.productosRows.length > 0,
+    presente: (id) => productosHook.productosRows.some((row) => row.id === id),
   })
   const insumoResaltado = useResaltado('insumo', {
-    presente: insumosClinicosHook.insumosRows.length > 0,
+    presente: (id) => insumosClinicosHook.insumosRows.some((row) => row.id === id),
   })
   const compraResaltada = useResaltado('compra', {
-    presente: facturaCompraHook.facturas.length > 0,
+    presente: (id) => facturaCompraHook.facturas.some((factura) => factura.id === id),
   })
 
   if (!rolPermitido) return <RestrictedInventoryPage />

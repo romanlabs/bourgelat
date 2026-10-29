@@ -12,7 +12,7 @@ import {
   tramoDe,
 } from '@/features/finanzas/resumenFinanzas'
 import { hoyLocal } from '@/lib/fecha'
-import { CLASE_RESALTADO, useResaltado } from '@/lib/useResaltado'
+import { CLASE_RESALTADO, TRANSICION_RESALTADO, useResaltado } from '@/lib/useResaltado'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import FormAbono from './FormAbono'
@@ -77,7 +77,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
   return (
     <li
       data-resaltar-id={claveCliente(cliente)}
-      className={cn('border-t border-border transition-colors duration-700 first:border-t-0', resaltado && CLASE_RESALTADO)}
+      className={cn('border-t border-border first:border-t-0', TRANSICION_RESALTADO, resaltado && CLASE_RESALTADO)}
     >
       <button
         type="button"
@@ -234,7 +234,9 @@ export default function PorCobrarPanel() {
   const hoy = hoyLocal()
 
   const clientes = useMemo(() => data?.clientes || [], [data])
-  const clienteResaltado = useResaltado('cliente', { presente: clientes.length > 0 })
+  const clienteResaltado = useResaltado('cliente', {
+    presente: (id) => clientes.some((cliente) => claveCliente(cliente) === id),
+  })
   const tramos = useMemo(() => antiguedadCartera(clientes, hoy), [clientes, hoy])
   const masAntigua = clientes.reduce(
     (vieja, c) => (!vieja || c.facturaMasAntigua < vieja ? c.facturaMasAntigua : vieja),
