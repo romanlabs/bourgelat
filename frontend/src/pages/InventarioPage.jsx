@@ -132,41 +132,23 @@ function FiltroInventarioMenu({
         <DropdownMenu.Content
           align="start"
           sideOffset={6}
-          className="z-50 w-56 rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          collisionPadding={12}
+          className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] w-[300px] overflow-y-auto rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <DropdownMenu.Label className="px-3 py-1.5 text-[13px] font-semibold text-muted-foreground">
-            Categoría
-          </DropdownMenu.Label>
-          {categoryOptions.map((opt) => (
-            <DropdownMenu.Item
-              key={opt.value}
-              onSelect={() => onCategoriaChange(opt.value)}
-              className={cn(
-                'flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
-                categoria === opt.value && 'font-medium text-primary'
-              )}
-            >
-              {opt.label}
-              {categoria === opt.value && <Check className="h-4 w-4" />}
-            </DropdownMenu.Item>
-          ))}
-
-          <DropdownMenu.Separator className="mx-1.5 my-1.5 h-px bg-border" />
-
+          {/* Lo que más se usa va arriba; las categorías, en fichas para que el menú quepa sin bajar. */}
           <DropdownMenu.CheckboxItem
             checked={bajoStock}
             onCheckedChange={onBajoStockChange}
             onSelect={(event) => event.preventDefault()}
             className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
           >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input">
               <DropdownMenu.ItemIndicator>
-                <Check className="h-4 w-4" />
+                <Check className="h-3.5 w-3.5 text-primary" />
               </DropdownMenu.ItemIndicator>
             </span>
             Solo cantidad baja
           </DropdownMenu.CheckboxItem>
-
           {onVerDesactivadosChange ? (
             <DropdownMenu.CheckboxItem
               checked={verDesactivados}
@@ -174,14 +156,39 @@ function FiltroInventarioMenu({
               onSelect={(event) => event.preventDefault()}
               className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
             >
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input">
                 <DropdownMenu.ItemIndicator>
-                  <Check className="h-4 w-4" />
+                  <Check className="h-3.5 w-3.5 text-primary" />
                 </DropdownMenu.ItemIndicator>
               </span>
               Ver desactivados
             </DropdownMenu.CheckboxItem>
           ) : null}
+
+          <DropdownMenu.Separator className="mx-1.5 my-1.5 h-px bg-border" />
+
+          <DropdownMenu.Label className="px-3 pb-2 pt-1 text-[13px] font-semibold text-muted-foreground">
+            Categoría
+          </DropdownMenu.Label>
+          <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+            {categoryOptions.map((opt) => {
+              const elegida = categoria === opt.value
+              return (
+                <DropdownMenu.Item
+                  key={opt.value}
+                  onSelect={() => onCategoriaChange(opt.value)}
+                  className={cn(
+                    'cursor-pointer rounded-full px-3 py-1.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring',
+                    elegida
+                      ? 'bg-primary font-semibold text-primary-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:brightness-95'
+                  )}
+                >
+                  {opt.label}
+                </DropdownMenu.Item>
+              )
+            })}
+          </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
