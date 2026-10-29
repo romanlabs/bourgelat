@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { ArrowLeftRight, Check, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -50,6 +50,7 @@ const TABS = [
 // tabla con foco visible.
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 const INPUT = 'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
+const ITEM_MENU_EXCEL = 'flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 const ENLACE = `rounded-md text-sm font-semibold transition hover:underline ${FOCO}`
 
 // Alertas de la tabla → variante de StatusBadge. «Vence pronto» no está en el
@@ -67,7 +68,11 @@ function fechaLegible(valor) {
   if (!valor) return null
   const [a, m, d] = String(valor).slice(0, 10).split('-').map(Number)
   if (!a || !m || !d) return String(valor)
-  return formatoFecha.format(new Date(a, m - 1, d))
+  return formatoFecha
+    .formatToParts(new Date(a, m - 1, d))
+    .filter((parte) => parte.type !== 'literal')
+    .map((parte) => parte.value.replace('.', ''))
+    .join(' ')
 }
 
 // Menú de filtros (categoría + solo cantidad baja) para las tablas de inventario.
@@ -295,11 +300,23 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
 }
 
 // Nombre en negrita y, debajo, el dato que lo distingue (laboratorio, lote).
-function NombreProducto({ nombre, detalle }) {
+// Con conImagen muestra la foto del producto (o un ícono si no tiene).
+function NombreProducto({ nombre, detalle, imagen, conImagen = false }) {
   return (
-    <span className="flex min-w-[160px] flex-col gap-0.5">
-      <span className="text-[15px] font-semibold text-foreground">{nombre}</span>
-      {detalle ? <span className="text-[13px] text-muted-foreground">{detalle}</span> : null}
+    <span className="flex min-w-[180px] items-center gap-3">
+      {conImagen ? (
+        imagen ? (
+          <img src={imagen} alt="" loading="lazy" className="h-11 w-11 shrink-0 rounded-lg bg-muted object-cover" />
+        ) : (
+          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <Package className="h-5 w-5" />
+          </span>
+        )
+      ) : null}
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[15px] font-semibold text-foreground">{nombre}</span>
+        {detalle ? <span className="text-[13px] text-muted-foreground">{detalle}</span> : null}
+      </span>
     </span>
   )
 }
@@ -319,20 +336,34 @@ function TableSkeleton({ rows = 6 }) {
   )
 }
 
-function InventarioContextBar({ inventario, onCambiar }) {
-  const esVentas = inventario === 'ventas'
+// Ventas o clínica: cada inventario tiene sus propios productos y movimientos.
+function SelectorInventario({ valor, onChange }) {
+  const opciones = [
+    { id: 'ventas', label: 'Para vender', icono: <PackagePlus className="h-4 w-4" /> },
+    { id: 'clinica', label: 'De la clínica', icono: <FlaskConical className="h-4 w-4" /> },
+  ]
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card px-5 py-3">
-      <span className="inline-flex items-center gap-2.5 text-[15px] font-semibold text-foreground">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-primary">
-          {esVentas ? <PackagePlus className="h-4 w-4" /> : <FlaskConical className="h-4 w-4" />}
-        </span>
-        Inventario de {esVentas ? 'ventas' : 'la clínica'}
-      </span>
-      <Button type="button" variant="secondary" onClick={onCambiar}>
-        <ArrowLeftRight />
-        Cambiar de inventario
-      </Button>
+    <div role="radiogroup" aria-label="Inventario" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+      {opciones.map(({ id, label, icono }) => {
+        const activa = valor === id
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={activa}
+            onClick={() => onChange(id)}
+            className={cn(
+              'inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm transition',
+              FOCO,
+              activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {icono}
+            {label}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -441,6 +472,11 @@ export default function InventarioPage() {
     }
   }
 
+  function elegirInventario(inv) {
+    setInventarioSeleccionado(inv)
+    guardarInventario(inv)
+  }
+
   function abrirRelevoVencimiento(item, tipo) {
     setRelevoVencimiento({
       tipo,
@@ -524,22 +560,31 @@ export default function InventarioPage() {
   const accionesEncabezado = (
     <div className="flex flex-wrap items-center gap-2">
       {inventarioSeleccionado === 'ventas' || activeTab === 'servicios' ? (
-        <>
-          <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={importarInventarioHook.openImportDialog}>
-            <FileSpreadsheet />
-            Importar Excel
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-10 px-3.5"
-            onClick={importarInventarioHook.exportarExcel}
-            disabled={importarInventarioHook.exportando}
-          >
-            <Download />
-            {importarInventarioHook.exportando ? 'Generando…' : 'Exportar Excel'}
-          </Button>
-        </>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button type="button" variant="secondary" className="h-10 px-3.5" disabled={importarInventarioHook.exportando}>
+              <FileSpreadsheet />
+              {importarInventarioHook.exportando ? 'Generando…' : 'Excel'}
+              <ChevronDown className="text-muted-foreground" />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={6}
+              className="z-50 w-56 rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            >
+              <DropdownMenu.Item onSelect={importarInventarioHook.openImportDialog} className={ITEM_MENU_EXCEL}>
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                Importar desde Excel
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={importarInventarioHook.exportarExcel} className={ITEM_MENU_EXCEL}>
+                <Download className="h-4 w-4 text-muted-foreground" />
+                Exportar a Excel
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       ) : null}
       <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={facturaCompraHook.abrirNueva}>
         <ShoppingCart />
@@ -593,7 +638,12 @@ export default function InventarioPage() {
             </div>
           )}
 
-          <InventarioTabs activeTab={activeTab} onTabChange={handleTabClick} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <InventarioTabs activeTab={activeTab} onTabChange={handleTabClick} />
+            {activeTab === 'productos' && inventarioSeleccionado !== null && (
+              <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
+            )}
+          </div>
 
           {/* Tab: Productos — sin inventario seleccionado */}
           {activeTab === 'productos' && inventarioSeleccionado === null && (
@@ -617,7 +667,6 @@ export default function InventarioPage() {
           {/* Tab: Productos — inventario de ventas */}
           {activeTab === 'productos' && inventarioSeleccionado === 'ventas' && (
             <div className="space-y-4">
-              <InventarioContextBar inventario="ventas" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SearchInput
@@ -647,7 +696,11 @@ export default function InventarioPage() {
               ) : (
                 <TablaInventario
                   title={productosHook.verDesactivados ? 'Productos desactivados' : 'Productos activos'}
-                  subtitle="Lo que hay en bodega para vender, con su mínimo y su vencimiento."
+                  subtitle={
+                    productosHook.verDesactivados
+                      ? 'Ya no se venden ni salen en la caja. Reactívalos desde el menú de cada uno.'
+                      : 'Lo que hay en bodega para vender, con su mínimo y su vencimiento.'
+                  }
                   rows={productosRows}
                   columns={[
                     {
@@ -657,12 +710,14 @@ export default function InventarioPage() {
                         <NombreProducto
                           nombre={row.nombre}
                           detalle={[row.categoria, row.raw?.laboratorio].filter(Boolean).join(' · ')}
+                          imagen={row.raw?.imagenUrl}
+                          conImagen
                         />
                       ),
                     },
                     {
                       key: 'stock',
-                      label: 'Cantidad / mínimo',
+                      label: <span className="whitespace-nowrap">Cantidad / mínimo</span>,
                       render: (row) => <CantidadMinimo stock={row.stock} stockMinimo={row.stockMinimo} />,
                     },
                     {
@@ -805,7 +860,6 @@ export default function InventarioPage() {
           {/* Tab: Productos — inventario clinico */}
           {activeTab === 'productos' && inventarioSeleccionado === 'clinica' && (
             <div className="space-y-4">
-              <InventarioContextBar inventario="clinica" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SearchInput
@@ -850,7 +904,7 @@ export default function InventarioPage() {
                     },
                     {
                       key: 'stock',
-                      label: 'Cantidad / mínimo',
+                      label: <span className="whitespace-nowrap">Cantidad / mínimo</span>,
                       render: (row) => (
                         <CantidadMinimo stock={row.stock} stockMinimo={row.stockMinimo} unidad={row.unidadBase} />
                       ),
@@ -1471,8 +1525,7 @@ export default function InventarioPage() {
         onOpenChange={setSelectorOpen}
         seleccionActual={inventarioSeleccionado}
         onSelect={(inv) => {
-          setInventarioSeleccionado(inv)
-          guardarInventario(inv)
+          elegirInventario(inv)
           setSelectorOpen(false)
         }}
       />
