@@ -7,6 +7,7 @@ import { formatearEdad } from '@/lib/utils'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { pacientesApi } from './pacientesApi'
 import { ESPECIE_OPCIONES_FILTRO, etiquetaEspecie } from '@/lib/especies'
+import { formatearCelular } from '@/lib/celular'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -153,7 +154,7 @@ export function usePacientesMascotas({ enabled }) {
           especie: etiquetaEspecie(mascota.especie),
           raza: mascota.raza || '',
           tutor: mascota.Propietario?.nombre || 'Sin tutor',
-          contacto: mascota.Propietario?.telefono || 'Sin teléfono',
+          contacto: formatearCelular(mascota.Propietario?.telefono) || 'Sin teléfono',
           color: mascota.color || 'Sin color',
           edad: formatearEdad(mascota.fechaNacimiento) || 'Sin edad',
           peso: mascota.peso ? `${mascota.peso} kg` : 'Sin peso',
