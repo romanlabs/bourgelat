@@ -63,8 +63,7 @@ const ORDENES = [
 const claveCliente = (cliente) => cliente.propietarioId || 'mostrador'
 
 function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, resaltado = false }) {
-  // Desde la campanita llega abierto, con sus ventas a la vista.
-  const [abierto, setAbierto] = useState(abiertoAlInicio || resaltado)
+  const [abierto, setAbierto] = useState(abiertoAlInicio)
   const [abonando, setAbonando] = useState(null)
   const dias = diasDesde(cliente.facturaMasAntigua, hoy)
   const tono = TONOS[tramoDe(dias).tono]
