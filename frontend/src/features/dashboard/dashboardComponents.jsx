@@ -121,9 +121,9 @@ export function KpiCard({
       title={helper || undefined}
       className={`flex h-full flex-col gap-2 rounded-2xl bg-card px-5 py-4 ${borderTone === 'border-border' ? '' : `border ${borderTone}`} ${className}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="min-h-10 min-w-0 text-sm font-medium leading-5 text-muted-foreground">{label}</p>
-        {icon ? createElement(icon, { className: `mt-0.5 h-4 w-4 shrink-0 ${tone}` }) : null}
+      <div className="flex items-center justify-between gap-3">
+        <p className="truncate text-sm font-medium text-muted-foreground">{label}</p>
+        {icon ? createElement(icon, { className: `h-4 w-4 shrink-0 ${tone}` }) : null}
       </div>
       <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-card-foreground [overflow-wrap:anywhere]">
         {value}
@@ -137,43 +137,6 @@ export function KpiCard({
   )
 }
 
-/**
- * Grilla responsiva de indicadores: 4 columnas en escritorio (>=1024px),
- * 2 en tablet (>=640px) y 1 en movil.
- *
- * Los items falsy se descartan, de modo que quien la usa puede condicionar un KPI
- * segun el plan de la clinica (`mostrarDian && {...}`) sin armar el arreglo aparte.
- */
-export function KpiGrid({ items, className = '', action, columns }) {
-  const visibles = (items || []).filter(Boolean)
-  if (visibles.length === 0) return null
-
-  // `columns` permite salirse de las 4 por defecto sin duplicar la grilla
-  // (el tab de analítica muestra 5 indicadores en una sola fila).
-  const columnasLg = columns === 5 ? 'lg:grid-cols-5' : columns === 3 ? 'lg:grid-cols-3' : action ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-
-  return (
-    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${columnasLg} ${className}`.trim()}>
-      {action ? (
-        <div className="flex items-center justify-end sm:col-span-2 lg:col-span-1 lg:order-last">{action}</div>
-      ) : null}
-      {visibles.map((item) => (
-        <KpiCard
-          key={item.id || item.label}
-          icon={item.icon}
-          label={item.label}
-          value={item.value}
-          helper={item.helper}
-          tone={item.tone}
-          borderTone={item.borderTone}
-          badge={item.badge}
-          badgeTone={item.badgeTone}
-        />
-      ))}
-    </div>
-  )
-}
-
 export function StatusPill({ children, tone = 'border-border bg-muted text-foreground' }) {
   return (
     <span
@@ -181,92 +144,6 @@ export function StatusPill({ children, tone = 'border-border bg-muted text-foreg
     >
       {children}
     </span>
-  )
-}
-
-export function DonutCard({
-  title,
-  subtitle,
-  data,
-  centerLabel,
-  centerValue,
-  formatter,
-  emptyMessage,
-  className = '',
-  contentClassName = '',
-  chartSize = 160,
-  // 'split' (por defecto) pone la leyenda al lado del donut; 'stacked' la deja
-  // debajo, que es lo que funciona en una tarjeta angosta — antes el donut
-  // quedaba pequeño a la izquierda con la leyenda medio vacía a la derecha.
-  layout = 'split',
-}) {
-  const hasData = data.some((item) => item.value > 0)
-
-  return (
-    <div
-      className={`flex h-full flex-col overflow-hidden rounded-2xl bg-card ${className}`}
-    >
-      <div className="px-6 pt-6 pb-1">
-        <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
-        {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
-      </div>
-      <div
-        className={`grid flex-1 items-center gap-4 p-5 ${
-          layout === 'stacked' ? 'justify-items-center' : 'sm:grid-cols-[auto_minmax(0,1fr)]'
-        } ${contentClassName}`.trim()}
-      >
-        <div className="relative mx-auto" style={{ width: `${chartSize}px`, height: `${chartSize}px` }}>
-          {hasData ? (
-            <>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
-                <PieChart>
-                  <Pie
-                    data={data}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius="68%"
-                    outerRadius="98%"
-                    paddingAngle={3}
-                    stroke="none"
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    {data.map((item) => (
-                      <Cell key={item.key || item.name} fill={item.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<ChartTooltip formatter={formatter} />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[13px] font-semibold text-muted-foreground">
-                  {centerLabel}
-                </span>
-                <span className="mt-1 text-xl font-bold tabular-nums text-card-foreground">{centerValue}</span>
-              </div>
-            </>
-          ) : (
-            <div className="flex h-full items-center justify-center rounded-full border-2 border-dashed border-border bg-muted text-xs font-medium text-muted-foreground">
-              {emptyMessage}
-            </div>
-          )}
-        </div>
-
-        <div className={`flex w-full flex-col gap-2.5 ${layout === 'stacked' ? '' : '2xl:flex-1'}`}>
-          {data.map((item) => (
-            <div key={item.key || item.name} className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="min-w-0 truncate text-sm text-muted-foreground">{item.name}</span>
-              </div>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-card-foreground">
-                {formatter ? formatter(item.value) : item.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -417,7 +294,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
         <h2 className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
       </div>
-      <div className={`flex-1 ${height} px-2 py-4`}>
+      <div className={`${height} shrink-0 px-2 py-4`}>
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
             <BarChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barCategoryGap="20%">

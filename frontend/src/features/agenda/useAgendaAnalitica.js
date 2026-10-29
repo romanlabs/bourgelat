@@ -5,7 +5,6 @@ import { agendaAnaliticaApi } from './agendaAnaliticaApi'
 import {
   CITA_ESTADO_COLORS,
   CITA_ESTADO_LABELS,
-  CITA_ORIGEN_LABELS,
   CITA_TIPO_COLORS,
   CITA_TIPO_LABELS,
   getRangeForPreset,
@@ -45,22 +44,12 @@ export function useAgendaAnalitica({ habilitado = true } = {}) {
     [data]
   )
 
-  const origenChartData = useMemo(
-    () => objectToChartData(data?.citasPorOrigen, CITA_ORIGEN_LABELS),
-    [data]
-  )
-
   const serieDiaria = useMemo(() => mapSerieCitas(data?.serieDiaria, rango), [data, rango])
   const franjaHoraria = useMemo(() => mapFranjaHoraria(data?.citasPorFranja), [data])
 
   // El backend ya devuelve porVeterinario ordenado por total desc; el panel solo
   // muestra los primeros para que la lista no crezca sin control en clínicas grandes.
   const cargaProfesionales = useMemo(() => (data?.porVeterinario || []).slice(0, 8), [data])
-
-  const totalTipos = useMemo(
-    () => tipoChartData.reduce((suma, item) => suma + item.value, 0),
-    [tipoChartData]
-  )
 
   return {
     preset,
@@ -70,11 +59,9 @@ export function useAgendaAnalitica({ habilitado = true } = {}) {
     resumen: data?.resumen,
     estadoChartData,
     tipoChartData,
-    origenChartData,
     serieDiaria,
     franjaHoraria,
     cargaProfesionales,
-    totalTipos,
     topMotivosCancelacion: data?.topMotivosCancelacion || [],
   }
 }
