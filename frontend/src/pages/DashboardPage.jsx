@@ -309,9 +309,9 @@ export default function DashboardPage() {
           Number(producto.stock) <= 0
             ? 'Agotado'
             : `Quedan ${formatNumber(producto.stock)}, el mínimo es ${formatNumber(producto.stockMinimo)}`,
-        // Inventario abre la ficha del producto, no solo la lista.
+        // Inventario muestra los que están bajo el mínimo con este resaltado.
         to: '/inventario',
-        state: { abrirProductoId: producto.id },
+        state: { resaltarProductoId: producto.id },
       }))
     const historiasAbiertas = citasHoyRows
       .filter((cita) => cita.estado === 'completada' && !cita.historia?.id)

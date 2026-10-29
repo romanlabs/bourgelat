@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
@@ -26,7 +26,6 @@ import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDi
 import ActualizarVencimientoDialog from '@/features/inventario/ActualizarVencimientoDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
-import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { useImportarInventario } from '@/features/inventario/useImportarInventario'
 import {
   useInventarioMovimientos,
@@ -307,7 +306,7 @@ function AccionesFila({ nombre, acciones }) {
 
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
-function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action }) {
+function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey }) {
   return (
     <section className="overflow-hidden rounded-2xl bg-card">
       {title || action ? (
@@ -325,6 +324,7 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
         columns={columns}
         rows={rows}
         pageSize={Math.max(rows.length, 1)}
+        highlightKey={highlightKey}
         emptyTitle={emptyTitle}
         emptyDescription={emptyBody}
         className="rounded-none"
@@ -453,11 +453,20 @@ function RestrictedInventoryPage() {
 
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Desde «Para revisar» del inicio se llega con un producto bajo el mínimo:
+  // se abre la lista de los que están bajo el mínimo con ese resaltado un
+  // momento. La cantidad no se edita aquí, entra por factura de compra.
+  const [llegadaProductoId] = useState(() => location.state?.resaltarProductoId ?? null)
+  const [productoResaltado, setProductoResaltado] = useState(llegadaProductoId)
 
   const [activeTab, setActiveTab] = useState('productos')
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
-  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
+  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(() =>
+    llegadaProductoId ? 'ventas' : leerInventarioGuardado()
+  ) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
@@ -473,6 +482,7 @@ export default function InventarioPage() {
 
   const productosHook = useInventarioProductos({
     enabled: puedeVerInventario,
+    bajoStockInicial: Boolean(llegadaProductoId),
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
@@ -499,31 +509,18 @@ export default function InventarioPage() {
     document.title = 'Inventario | Bourgelat'
   }, [])
 
-  // Desde «Para revisar» del inicio se llega con un producto: se abre su ficha
-  // en el inventario de ventas y la lista queda filtrada por su nombre.
-  const location = useLocation()
-  const navigate = useNavigate()
-  const abrirProductoId = location.state?.abrirProductoId
-  const abiertoRef = useRef(null)
   useEffect(() => {
-    if (!abrirProductoId || !puedeVerInventario || abiertoRef.current === abrirProductoId) return
-    abiertoRef.current = abrirProductoId
-    // Se limpia el estado para que volver o recargar no abra la ficha otra vez.
-    navigate(location.pathname, { replace: true, state: null })
-    inventarioApi
-      .obtenerProducto(abrirProductoId)
-      .then((data) => {
-        if (!data?.producto) return
-        setActiveTab('productos')
-        setInventarioSeleccionado('ventas')
-        productosHook.setBuscar(data.producto.nombre)
-        productosHook.setPagina(1)
-        productosHook.openEditDrawer(data.producto)
-      })
-      .catch(() => {})
-    // productosHook cambia en cada render; solo importa el producto pedido.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [abrirProductoId, puedeVerInventario])
+    // Se limpia el estado para que volver o recargar no lo resalte otra vez.
+    if (llegadaProductoId) navigate(location.pathname, { replace: true, state: null })
+  }, [llegadaProductoId, location.pathname, navigate])
+  // El resaltado cuenta desde que la fila aparece, no desde que carga la página.
+  const resaltadoVisible =
+    productoResaltado != null && productosHook.productosRows.some((row) => row.id === productoResaltado)
+  useEffect(() => {
+    if (!resaltadoVisible) return
+    const quitar = setTimeout(() => setProductoResaltado(null), 2500)
+    return () => clearTimeout(quitar)
+  }, [resaltadoVisible])
 
   function handleTabClick(tabId) {
     setActiveTab(tabId)
@@ -757,6 +754,7 @@ export default function InventarioPage() {
                       : 'Lo que hay en bodega para vender, con su mínimo y su vencimiento.'
                   }
                   rows={productosRows}
+                  highlightKey={productoResaltado}
                   columns={[
                     {
                       key: 'nombre',
