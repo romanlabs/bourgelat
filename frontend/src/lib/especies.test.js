@@ -24,7 +24,10 @@ describe('especies', () => {
   })
 
   it('mantiene los mismos valores que acepta el backend', () => {
-    expect(ESPECIE_VALORES).toEqual(['perro', 'gato', 'ave', 'conejo', 'reptil', 'otro'])
+    expect(ESPECIE_VALORES).toEqual([
+      'perro', 'gato', 'ave', 'conejo', 'roedor', 'huron', 'reptil', 'pez',
+      'equino', 'bovino', 'porcino', 'ovino', 'caprino', 'otro',
+    ])
     expect(ESPECIE_OPCIONES_FILTRO[0].value).toBe('todas')
   })
 })

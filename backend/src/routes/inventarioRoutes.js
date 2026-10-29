@@ -9,6 +9,7 @@ const {
   obtenerProducto,
   editarProducto,
   eliminarProducto,
+  activarProducto,
   registrarMovimiento,
   relevarVencimiento,
   obtenerAlertas,
@@ -62,6 +63,7 @@ const validarIdProducto = [
 ]
 
 const validarConsultaProductos = [
+  query('estado').optional().isIn(['activos', 'inactivos']).withMessage('Estado no valido'),
   query('buscar')
     .optional()
     .trim()
@@ -462,6 +464,15 @@ router.put(
   requerirEscritura,
   validarEdicionProducto,
   editarProducto
+)
+
+router.patch(
+  '/:id/activar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarIdProducto,
+  activarProducto
 )
 
 router.delete(

@@ -29,6 +29,7 @@ import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
 import { etiquetaEspecie } from '@/lib/especies'
 import { formatearEdad } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
+import { formatearCelular } from '@/lib/celular'
 
 const TABS = [
   { id: 'historia', label: 'Consultas', titulo: 'Historia clínica' },
@@ -548,7 +549,7 @@ export default function PacienteHistorialPage() {
                   {mascota.Propietario.telefono ? (
                     <a href={`tel:${mascota.Propietario.telefono}`} className={`inline-flex items-center gap-2 self-start rounded hover:text-primary ${FOCO}`}>
                       <Phone className="h-4 w-4" />
-                      {mascota.Propietario.telefono}
+                      {formatearCelular(mascota.Propietario.telefono)}
                     </a>
                   ) : (
                     <span className="text-muted-foreground">Sin teléfono</span>

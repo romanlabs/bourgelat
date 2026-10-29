@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { ArrowLeftRight, Check, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
+import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { useAuthStore } from '@/store/authStore'
-import { canAccessModule } from '@/lib/permissions'
+import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { FiltroDesactivados } from '@/components/shared/FiltroDesactivados'
 import Paginacion from '@/components/shared/Paginacion'
 import ProductoComboBox from '@/components/shared/ProductoComboBox'
 import InventarioSelectorDialog from '@/components/shared/InventarioSelectorDialog'
@@ -49,6 +50,7 @@ const TABS = [
 // tabla con foco visible.
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 const INPUT = 'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
+const ITEM_MENU_EXCEL = 'flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 const ENLACE = `rounded-md text-sm font-semibold transition hover:underline ${FOCO}`
 
 // Alertas de la tabla → variante de StatusBadge. «Vence pronto» no está en el
@@ -66,7 +68,11 @@ function fechaLegible(valor) {
   if (!valor) return null
   const [a, m, d] = String(valor).slice(0, 10).split('-').map(Number)
   if (!a || !m || !d) return String(valor)
-  return formatoFecha.format(new Date(a, m - 1, d))
+  return formatoFecha
+    .formatToParts(new Date(a, m - 1, d))
+    .filter((parte) => parte.type !== 'literal')
+    .map((parte) => parte.value.replace('.', ''))
+    .join(' ')
 }
 
 // Menú de filtros (categoría + solo cantidad baja) para las tablas de inventario.
@@ -91,15 +97,24 @@ function guardarInventario(valor) {
   }
 }
 
-function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, bajoStock, onBajoStockChange }) {
-  const filtroActivo = categoria !== 'todas' || bajoStock
+// Categoría, cantidad baja y, para quien puede reactivar, los desactivados.
+function FiltroInventarioMenu({
+  categoryOptions,
+  categoria,
+  onCategoriaChange,
+  bajoStock,
+  onBajoStockChange,
+  verDesactivados = false,
+  onVerDesactivadosChange,
+}) {
+  const filtroActivo = categoria !== 'todas' || bajoStock || verDesactivados
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          aria-label="Filtrar por categoría"
+          aria-label="Filtrar"
           className={cn(
             'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-secondary/80 active:translate-y-px data-[state=open]:bg-accent',
             FOCO,
@@ -117,40 +132,63 @@ function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, b
         <DropdownMenu.Content
           align="start"
           sideOffset={6}
-          className="z-50 w-56 rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          collisionPadding={12}
+          className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] w-[300px] overflow-y-auto rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <DropdownMenu.Label className="px-3 py-1.5 text-[13px] font-semibold text-muted-foreground">
-            Categoría
-          </DropdownMenu.Label>
-          {categoryOptions.map((opt) => (
-            <DropdownMenu.Item
-              key={opt.value}
-              onSelect={() => onCategoriaChange(opt.value)}
-              className={cn(
-                'flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted',
-                categoria === opt.value && 'font-medium text-primary'
-              )}
-            >
-              {opt.label}
-              {categoria === opt.value && <Check className="h-4 w-4" />}
-            </DropdownMenu.Item>
-          ))}
-
-          <DropdownMenu.Separator className="mx-1.5 my-1.5 h-px bg-border" />
-
+          {/* Lo que más se usa va arriba; las categorías, en fichas para que el menú quepa sin bajar. */}
           <DropdownMenu.CheckboxItem
             checked={bajoStock}
             onCheckedChange={onBajoStockChange}
             onSelect={(event) => event.preventDefault()}
             className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
           >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input">
               <DropdownMenu.ItemIndicator>
-                <Check className="h-4 w-4" />
+                <Check className="h-3.5 w-3.5 text-primary" />
               </DropdownMenu.ItemIndicator>
             </span>
             Solo cantidad baja
           </DropdownMenu.CheckboxItem>
+          {onVerDesactivadosChange ? (
+            <DropdownMenu.CheckboxItem
+              checked={verDesactivados}
+              onCheckedChange={onVerDesactivadosChange}
+              onSelect={(event) => event.preventDefault()}
+              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+            >
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-input">
+                <DropdownMenu.ItemIndicator>
+                  <Check className="h-3.5 w-3.5 text-primary" />
+                </DropdownMenu.ItemIndicator>
+              </span>
+              Ver desactivados
+            </DropdownMenu.CheckboxItem>
+          ) : null}
+
+          <DropdownMenu.Separator className="mx-1.5 my-1.5 h-px bg-border" />
+
+          <DropdownMenu.Label className="px-3 pb-2 pt-1 text-[13px] font-semibold text-muted-foreground">
+            Categoría
+          </DropdownMenu.Label>
+          <div className="flex flex-wrap gap-1.5 px-2 pb-2">
+            {categoryOptions.map((opt) => {
+              const elegida = categoria === opt.value
+              return (
+                <DropdownMenu.Item
+                  key={opt.value}
+                  onSelect={() => onCategoriaChange(opt.value)}
+                  className={cn(
+                    'cursor-pointer rounded-full px-3 py-1.5 text-[13px] outline-none transition focus:ring-2 focus:ring-ring',
+                    elegida
+                      ? 'bg-primary font-semibold text-primary-foreground'
+                      : 'bg-secondary text-secondary-foreground hover:brightness-95'
+                  )}
+                >
+                  {opt.label}
+                </DropdownMenu.Item>
+              )
+            })}
+          </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -294,11 +332,23 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
 }
 
 // Nombre en negrita y, debajo, el dato que lo distingue (laboratorio, lote).
-function NombreProducto({ nombre, detalle }) {
+// Con conImagen muestra la foto del producto (o un ícono si no tiene).
+function NombreProducto({ nombre, detalle, imagen, conImagen = false }) {
   return (
-    <span className="flex min-w-[160px] flex-col gap-0.5">
-      <span className="text-[15px] font-semibold text-foreground">{nombre}</span>
-      {detalle ? <span className="text-[13px] text-muted-foreground">{detalle}</span> : null}
+    <span className="flex min-w-[180px] items-center gap-3">
+      {conImagen ? (
+        imagen ? (
+          <img src={imagen} alt="" loading="lazy" className="h-11 w-11 shrink-0 rounded-lg bg-muted object-cover" />
+        ) : (
+          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <Package className="h-5 w-5" />
+          </span>
+        )
+      ) : null}
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[15px] font-semibold text-foreground">{nombre}</span>
+        {detalle ? <span className="text-[13px] text-muted-foreground">{detalle}</span> : null}
+      </span>
     </span>
   )
 }
@@ -318,20 +368,34 @@ function TableSkeleton({ rows = 6 }) {
   )
 }
 
-function InventarioContextBar({ inventario, onCambiar }) {
-  const esVentas = inventario === 'ventas'
+// Ventas o clínica: cada inventario tiene sus propios productos y movimientos.
+function SelectorInventario({ valor, onChange }) {
+  const opciones = [
+    { id: 'ventas', label: 'Para vender', icono: <PackagePlus className="h-4 w-4" /> },
+    { id: 'clinica', label: 'De la clínica', icono: <FlaskConical className="h-4 w-4" /> },
+  ]
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card px-5 py-3">
-      <span className="inline-flex items-center gap-2.5 text-[15px] font-semibold text-foreground">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-primary">
-          {esVentas ? <PackagePlus className="h-4 w-4" /> : <FlaskConical className="h-4 w-4" />}
-        </span>
-        Inventario de {esVentas ? 'ventas' : 'la clínica'}
-      </span>
-      <Button type="button" variant="secondary" onClick={onCambiar}>
-        <ArrowLeftRight />
-        Cambiar de inventario
-      </Button>
+    <div role="radiogroup" aria-label="Inventario" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+      {opciones.map(({ id, label, icono }) => {
+        const activa = valor === id
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={activa}
+            onClick={() => onChange(id)}
+            className={cn(
+              'inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm transition',
+              FOCO,
+              activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {icono}
+            {label}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -396,6 +460,8 @@ export default function InventarioPage() {
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
   const rolPermitido = canAccessModule(usuario, 'inventario')
+  // Desactivar y reactivar: los mismos roles que deja el backend.
+  const puedeGestionar = hasAnyRole(usuario, ['admin', 'superadmin', 'auxiliar'])
   // Todos los planes incluyen inventario y reportes operativos.
   const puedeVerInventario = rolPermitido
 
@@ -436,6 +502,11 @@ export default function InventarioPage() {
     if (tabId === 'productos' && inventarioSeleccionado === null) {
       setSelectorOpen(true)
     }
+  }
+
+  function elegirInventario(inv) {
+    setInventarioSeleccionado(inv)
+    guardarInventario(inv)
   }
 
   function abrirRelevoVencimiento(item, tipo) {
@@ -521,22 +592,31 @@ export default function InventarioPage() {
   const accionesEncabezado = (
     <div className="flex flex-wrap items-center gap-2">
       {inventarioSeleccionado === 'ventas' || activeTab === 'servicios' ? (
-        <>
-          <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={importarInventarioHook.openImportDialog}>
-            <FileSpreadsheet />
-            Importar Excel
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-10 px-3.5"
-            onClick={importarInventarioHook.exportarExcel}
-            disabled={importarInventarioHook.exportando}
-          >
-            <Download />
-            {importarInventarioHook.exportando ? 'Generando…' : 'Exportar Excel'}
-          </Button>
-        </>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button type="button" variant="secondary" className="h-10 px-3.5" disabled={importarInventarioHook.exportando}>
+              <FileSpreadsheet />
+              {importarInventarioHook.exportando ? 'Generando…' : 'Excel'}
+              <ChevronDown className="text-muted-foreground" />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={6}
+              className="z-50 w-56 rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            >
+              <DropdownMenu.Item onSelect={importarInventarioHook.openImportDialog} className={ITEM_MENU_EXCEL}>
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                Importar desde Excel
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={importarInventarioHook.exportarExcel} className={ITEM_MENU_EXCEL}>
+                <Download className="h-4 w-4 text-muted-foreground" />
+                Exportar a Excel
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       ) : null}
       <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={facturaCompraHook.abrirNueva}>
         <ShoppingCart />
@@ -614,7 +694,6 @@ export default function InventarioPage() {
           {/* Tab: Productos — inventario de ventas */}
           {activeTab === 'productos' && inventarioSeleccionado === 'ventas' && (
             <div className="space-y-4">
-              <InventarioContextBar inventario="ventas" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SearchInput
@@ -630,8 +709,11 @@ export default function InventarioPage() {
                     onCategoriaChange={(value) => { setCategoria(value); setPaginaProductos(1) }}
                     bajoStock={bajoStock}
                     onBajoStockChange={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
+                    verDesactivados={productosHook.verDesactivados}
+                    onVerDesactivadosChange={puedeGestionar ? productosHook.setVerDesactivados : undefined}
                   />
                 </div>
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
               </div>
 
               {productosQuery.isLoading ? (
@@ -640,8 +722,12 @@ export default function InventarioPage() {
                 </DashboardPanel>
               ) : (
                 <TablaInventario
-                  title="Productos activos"
-                  subtitle="Lo que hay en bodega para vender, con su mínimo y su vencimiento."
+                  title={productosHook.verDesactivados ? 'Productos desactivados' : 'Productos activos'}
+                  subtitle={
+                    productosHook.verDesactivados
+                      ? 'Ya no se venden ni salen en la caja. Reactívalos desde el menú de cada uno.'
+                      : 'Lo que hay en bodega para vender, con su mínimo y su vencimiento.'
+                  }
                   rows={productosRows}
                   columns={[
                     {
@@ -651,12 +737,14 @@ export default function InventarioPage() {
                         <NombreProducto
                           nombre={row.nombre}
                           detalle={[row.categoria, row.raw?.laboratorio].filter(Boolean).join(' · ')}
+                          imagen={row.raw?.imagenUrl}
+                          conImagen
                         />
                       ),
                     },
                     {
                       key: 'stock',
-                      label: 'Cantidad / mínimo',
+                      label: <span className="whitespace-nowrap">Cantidad / mínimo</span>,
                       render: (row) => <CantidadMinimo stock={row.stock} stockMinimo={row.stockMinimo} />,
                     },
                     {
@@ -696,7 +784,9 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={[
+                          acciones={productosHook.verDesactivados ? [
+                            { label: 'Reactivar', onSelect: () => productosHook.activar(row.id) },
+                          ] : [
                             (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
                               label: 'Actualizar vencimiento',
                               onSelect: () => abrirRelevoVencimiento(row.raw, 'producto'),
@@ -710,7 +800,9 @@ export default function InventarioPage() {
                     },
                   ]}
                   emptyTitle={
-                    buscar.trim() || categoria !== 'todas' || bajoStock
+                    productosHook.verDesactivados
+                      ? 'No hay productos desactivados'
+                      : buscar.trim() || categoria !== 'todas' || bajoStock
                       ? 'No hay productos para este filtro'
                       : 'Aún no hay productos'
                   }
@@ -795,7 +887,6 @@ export default function InventarioPage() {
           {/* Tab: Productos — inventario clinico */}
           {activeTab === 'productos' && inventarioSeleccionado === 'clinica' && (
             <div className="space-y-4">
-              <InventarioContextBar inventario="clinica" onCambiar={() => setSelectorOpen(true)} />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SearchInput
@@ -811,8 +902,11 @@ export default function InventarioPage() {
                     onCategoriaChange={(value) => { insumosClinicosHook.setCategoria(value); insumosClinicosHook.setPagina(1) }}
                     bajoStock={insumosClinicosHook.bajoStock}
                     onBajoStockChange={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
+                    verDesactivados={insumosClinicosHook.verDesactivados}
+                    onVerDesactivadosChange={puedeGestionar ? insumosClinicosHook.setVerDesactivados : undefined}
                   />
                 </div>
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
               </div>
 
               {insumosClinicosHook.insumosQuery.isLoading ? (
@@ -821,7 +915,7 @@ export default function InventarioPage() {
                 </DashboardPanel>
               ) : (
                 <TablaInventario
-                  title="Insumos clínicos"
+                  title={insumosClinicosHook.verDesactivados ? 'Insumos clínicos desactivados' : 'Insumos clínicos'}
                   subtitle="Lo que se usa en consulta y procedimientos. No se vende: lo aplicado se descuenta al cerrar la historia clínica y queda como gasto de insumos."
                   rows={insumosClinicosHook.insumosRows}
                   columns={[
@@ -837,7 +931,7 @@ export default function InventarioPage() {
                     },
                     {
                       key: 'stock',
-                      label: 'Cantidad / mínimo',
+                      label: <span className="whitespace-nowrap">Cantidad / mínimo</span>,
                       render: (row) => (
                         <CantidadMinimo stock={row.stock} stockMinimo={row.stockMinimo} unidad={row.unidadBase} />
                       ),
@@ -872,7 +966,9 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={[
+                          acciones={insumosClinicosHook.verDesactivados ? [
+                            { label: 'Reactivar', onSelect: () => insumosClinicosHook.activar(row.id) },
+                          ] : [
                             (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
                               label: 'Actualizar vencimiento',
                               onSelect: () => abrirRelevoVencimiento(row.raw, 'insumo'),
@@ -884,7 +980,7 @@ export default function InventarioPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay insumos clínicos para este filtro"
+                  emptyTitle={insumosClinicosHook.verDesactivados ? 'No hay insumos clínicos desactivados' : 'No hay insumos clínicos para este filtro'}
                   emptyBody="Ajusta la búsqueda o crea el primer insumo clínico con el botón Nuevo insumo clínico."
                 />
               )}
@@ -916,13 +1012,18 @@ export default function InventarioPage() {
           {activeTab === 'servicios' && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SearchInput
-                  value={serviciosHook.buscar}
-                  onChange={(valor) => { serviciosHook.setBuscar(valor); serviciosHook.setPagina(1) }}
-                  placeholder="Buscar servicio por nombre"
-                  ariaLabel="Buscar servicios"
-                  className="max-w-md flex-1"
-                />
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <SearchInput
+                    value={serviciosHook.buscar}
+                    onChange={(valor) => { serviciosHook.setBuscar(valor); serviciosHook.setPagina(1) }}
+                    placeholder="Buscar servicio por nombre"
+                    ariaLabel="Buscar servicios"
+                    className="max-w-md flex-1"
+                  />
+                  {puedeGestionar && (
+                    <FiltroDesactivados checked={serviciosHook.verDesactivados} onChange={serviciosHook.setVerDesactivados} />
+                  )}
+                </div>
                 <Button type="button" size="lg" className="px-4" onClick={serviciosHook.openCreateDrawer}>
                   <Plus />
                   Nuevo servicio
@@ -930,7 +1031,7 @@ export default function InventarioPage() {
               </div>
 
               <TablaInventario
-                title="Catálogo de servicios"
+                title={serviciosHook.verDesactivados ? 'Servicios desactivados' : 'Catálogo de servicios'}
                 subtitle="Al facturar un servicio se descuentan solos los insumos de su receta, si la tiene."
                 rows={serviciosHook.serviciosRows}
                 columns={[
@@ -959,7 +1060,15 @@ export default function InventarioPage() {
                   {
                     key: 'accion',
                     label: 'Acciones',
-                    render: (row) => (
+                    render: (row) => serviciosHook.verDesactivados ? (
+                      <button
+                        type="button"
+                        onClick={() => serviciosHook.activar(row.id)}
+                        className={cn(ENLACE, 'text-primary')}
+                      >
+                        Reactivar
+                      </button>
+                    ) : (
                       <div className="flex flex-wrap gap-x-3 gap-y-1">
                         <button
                           type="button"
@@ -979,7 +1088,7 @@ export default function InventarioPage() {
                     ),
                   },
                 ]}
-                emptyTitle="No hay servicios en el catálogo"
+                emptyTitle={serviciosHook.verDesactivados ? 'No hay servicios desactivados' : 'No hay servicios en el catálogo'}
                 emptyBody="Crea el primer servicio y define qué insumos clínicos consume."
               />
 
@@ -1443,8 +1552,7 @@ export default function InventarioPage() {
         onOpenChange={setSelectorOpen}
         seleccionActual={inventarioSeleccionado}
         onSelect={(inv) => {
-          setInventarioSeleccionado(inv)
-          guardarInventario(inv)
+          elegirInventario(inv)
           setSelectorOpen(false)
         }}
       />

@@ -6,9 +6,9 @@ const cleanParams = (params) =>
   )
 
 export const serviciosApi = {
-  async obtenerServicios({ buscar, categoria, pagina = 1, limite = 20 } = {}) {
+  async obtenerServicios({ buscar, categoria, estado, pagina = 1, limite = 20 } = {}) {
     const { data } = await api.get('/servicios-clinicos', {
-      params: cleanParams({ buscar, categoria, pagina, limite }),
+      params: cleanParams({ buscar, categoria, estado, pagina, limite }),
     })
     return data
   },
@@ -30,6 +30,11 @@ export const serviciosApi = {
 
   async eliminarServicio(servicioId) {
     const { data } = await api.delete(`/servicios-clinicos/${servicioId}`)
+    return data
+  },
+
+  async activarServicio(servicioId) {
+    const { data } = await api.patch(`/servicios-clinicos/${servicioId}/activar`)
     return data
   },
 }
