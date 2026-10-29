@@ -97,15 +97,24 @@ function guardarInventario(valor) {
   }
 }
 
-function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, bajoStock, onBajoStockChange }) {
-  const filtroActivo = categoria !== 'todas' || bajoStock
+// Categoría, cantidad baja y, para quien puede reactivar, los desactivados.
+function FiltroInventarioMenu({
+  categoryOptions,
+  categoria,
+  onCategoriaChange,
+  bajoStock,
+  onBajoStockChange,
+  verDesactivados = false,
+  onVerDesactivadosChange,
+}) {
+  const filtroActivo = categoria !== 'todas' || bajoStock || verDesactivados
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          aria-label="Filtrar por categoría"
+          aria-label="Filtrar"
           className={cn(
             'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-secondary/80 active:translate-y-px data-[state=open]:bg-accent',
             FOCO,
@@ -157,6 +166,22 @@ function FiltroInventarioMenu({ categoryOptions, categoria, onCategoriaChange, b
             </span>
             Solo cantidad baja
           </DropdownMenu.CheckboxItem>
+
+          {onVerDesactivadosChange ? (
+            <DropdownMenu.CheckboxItem
+              checked={verDesactivados}
+              onCheckedChange={onVerDesactivadosChange}
+              onSelect={(event) => event.preventDefault()}
+              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted"
+            >
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                <DropdownMenu.ItemIndicator>
+                  <Check className="h-4 w-4" />
+                </DropdownMenu.ItemIndicator>
+              </span>
+              Ver desactivados
+            </DropdownMenu.CheckboxItem>
+          ) : null}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -638,12 +663,7 @@ export default function InventarioPage() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <InventarioTabs activeTab={activeTab} onTabChange={handleTabClick} />
-            {activeTab === 'productos' && inventarioSeleccionado !== null && (
-              <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
-            )}
-          </div>
+          <InventarioTabs activeTab={activeTab} onTabChange={handleTabClick} />
 
           {/* Tab: Productos — sin inventario seleccionado */}
           {activeTab === 'productos' && inventarioSeleccionado === null && (
@@ -682,11 +702,11 @@ export default function InventarioPage() {
                     onCategoriaChange={(value) => { setCategoria(value); setPaginaProductos(1) }}
                     bajoStock={bajoStock}
                     onBajoStockChange={() => { setBajoStock((v) => !v); setPaginaProductos(1) }}
+                    verDesactivados={productosHook.verDesactivados}
+                    onVerDesactivadosChange={puedeGestionar ? productosHook.setVerDesactivados : undefined}
                   />
-                  {puedeGestionar && (
-                    <FiltroDesactivados checked={productosHook.verDesactivados} onChange={productosHook.setVerDesactivados} />
-                  )}
                 </div>
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
               </div>
 
               {productosQuery.isLoading ? (
@@ -875,11 +895,11 @@ export default function InventarioPage() {
                     onCategoriaChange={(value) => { insumosClinicosHook.setCategoria(value); insumosClinicosHook.setPagina(1) }}
                     bajoStock={insumosClinicosHook.bajoStock}
                     onBajoStockChange={() => { insumosClinicosHook.setBajoStock((v) => !v); insumosClinicosHook.setPagina(1) }}
+                    verDesactivados={insumosClinicosHook.verDesactivados}
+                    onVerDesactivadosChange={puedeGestionar ? insumosClinicosHook.setVerDesactivados : undefined}
                   />
-                  {puedeGestionar && (
-                    <FiltroDesactivados checked={insumosClinicosHook.verDesactivados} onChange={insumosClinicosHook.setVerDesactivados} />
-                  )}
                 </div>
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
               </div>
 
               {insumosClinicosHook.insumosQuery.isLoading ? (
