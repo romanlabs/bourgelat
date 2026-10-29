@@ -50,7 +50,7 @@ export function useAgendaAnalitica({ habilitado = true } = {}) {
     [data]
   )
 
-  const serieDiaria = useMemo(() => mapSerieCitas(data?.serieDiaria), [data])
+  const serieDiaria = useMemo(() => mapSerieCitas(data?.serieDiaria, rango), [data, rango])
   const franjaHoraria = useMemo(() => mapFranjaHoraria(data?.citasPorFranja), [data])
 
   // El backend ya devuelve porVeterinario ordenado por total desc; el panel solo

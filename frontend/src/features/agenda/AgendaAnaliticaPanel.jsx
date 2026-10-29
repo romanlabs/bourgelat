@@ -16,8 +16,19 @@ const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1).replace('.', ',')}%`
+// 0 es una espera real de menos de un minuto (llegada y atención casi juntas),
+// distinta de null, que es no tener ninguna cita con los dos tiempos registrados.
 const formatMinutos = (value) =>
-  value === null || value === undefined ? 'Sin datos' : `${formatNumber(value)} min`
+  value === null || value === undefined ? 'Sin datos' : value < 1 ? '< 1 min' : `${formatNumber(value)} min`
+
+// Segmentos de la barra por profesional: los mismos colores que su leyenda. El
+// resto (programadas, en espera, canceladas) también se dibuja, para que dos
+// profesionales con el mismo total tengan barras del mismo largo.
+const SEGMENTOS_PROFESIONAL = [
+  { key: 'completadas', label: 'Atendidas', color: chartColors.estados.success },
+  { key: 'noAsistio', label: 'No asistió', color: chartColors.estados.dangerSuave },
+  { key: 'otras', label: 'Por atender o canceladas', color: chartColors.estados.neutro },
+]
 
 function Leyenda({ items }) {
   return (
@@ -281,14 +292,9 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
           <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
             <DashboardPanel
               title="Carga por profesional"
-              subtitle="Citas del periodo por veterinario, con la porción que no se presentó."
+              subtitle="Citas del periodo por veterinario y cómo terminaron."
               action={
-                <Leyenda
-                  items={[
-                    { label: 'Atendidas', color: chartColors.estados.success },
-                    { label: 'No asistió', color: chartColors.estados.dangerSuave },
-                  ]}
-                />
+                <Leyenda items={SEGMENTOS_PROFESIONAL} />
               }
             >
               {cargaProfesionales.length > 0 ? (
@@ -299,18 +305,23 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
                         {profesional.nombre}
                       </span>
                       <div className="flex h-5 flex-1 overflow-hidden rounded-md bg-muted">
-                        <div
-                          className="bg-primary transition-all duration-normal"
-                          style={{
-                            width: `${(profesional.completadas / maxCargaProfesional) * 100}%`,
-                          }}
-                        />
-                        <div
-                          className="bg-warning transition-all duration-normal"
-                          style={{
-                            width: `${(profesional.noAsistio / maxCargaProfesional) * 100}%`,
-                          }}
-                        />
+                        {SEGMENTOS_PROFESIONAL.map((segmento) => {
+                          const valor =
+                            segmento.key === 'otras'
+                              ? profesional.total - profesional.completadas - profesional.noAsistio
+                              : profesional[segmento.key]
+                          return (
+                            <div
+                              key={segmento.key}
+                              title={`${segmento.label}: ${formatNumber(valor)}`}
+                              className="transition-all duration-normal"
+                              style={{
+                                width: `${(Math.max(0, valor) / maxCargaProfesional) * 100}%`,
+                                backgroundColor: segmento.color,
+                              }}
+                            />
+                          )
+                        })}
                       </div>
                       <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums text-card-foreground">
                         {formatNumber(profesional.total)}

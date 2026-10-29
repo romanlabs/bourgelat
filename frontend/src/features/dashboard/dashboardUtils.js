@@ -163,28 +163,52 @@ export const getRangeForPreset = (preset) => {
   return { fechaInicio: serializeDate(inicio), fechaFin: serializeDate(hoy) }
 }
 
-// El backend entrega serieDiaria ya ordenada por fecha; aqui solo se le agrega
-// la etiqueta legible del eje X, conservando la clave ISO (YYYY-MM-DD) en `fechaISO`.
-export const mapSerieCitas = (serie) =>
-  (serie || []).map((punto) => ({
-    fechaISO: punto.fecha,
-    fecha: formatShortDate(punto.fecha),
-    total: Number(punto.total || 0),
-    completadas: Number(punto.completadas || 0),
-    noAsistio: Number(punto.noAsistio || 0),
-  }))
+// El backend solo devuelve los días que tienen citas; aquí se completa el rango
+// con ceros para que el eje X no salte días (del 20 al 23 parecía seguido). La
+// clave ISO (YYYY-MM-DD) se conserva en `fechaISO`.
+export const mapSerieCitas = (serie, rango) => {
+  const porFecha = new Map((serie || []).map((punto) => [punto.fecha, punto]))
+  const fechas = []
 
-// Franja horaria: el backend agrupa por EXTRACT(HOUR ...), asi que las claves
-// son numeros de hora. Se ordenan y se etiquetan en formato de 12 horas.
-export const mapFranjaHoraria = (record) =>
-  Object.entries(record || {})
-    .map(([hora, total]) => ({ hora: Number(hora), total: Number(total || 0) }))
-    .sort((a, b) => a.hora - b.hora)
-    .map(({ hora, total }) => ({
-      key: String(hora),
-      name: hora === 0 ? '12a' : hora === 12 ? '12m' : hora > 12 ? `${hora - 12}p` : `${hora}a`,
-      total,
-    }))
+  if (rango?.fechaInicio && rango?.fechaFin) {
+    const [anio, mes, dia] = rango.fechaInicio.split('-').map(Number)
+    for (let d = new Date(anio, mes - 1, dia); serializeDate(d) <= rango.fechaFin; d.setDate(d.getDate() + 1)) {
+      fechas.push(serializeDate(d))
+    }
+  } else {
+    fechas.push(...porFecha.keys())
+  }
+
+  return fechas.map((fecha) => {
+    const punto = porFecha.get(fecha) || {}
+    return {
+      fechaISO: fecha,
+      fecha: formatShortDate(fecha),
+      total: Number(punto.total || 0),
+      completadas: Number(punto.completadas || 0),
+      noAsistio: Number(punto.noAsistio || 0),
+    }
+  })
+}
+
+// Franja horaria: el backend agrupa por EXTRACT(HOUR ...) y solo trae las horas
+// con citas. Se rellena de 7 a. m. a 6 p. m. (o más si hubo citas por fuera) para
+// que se vean los huecos del día, y se etiqueta en formato de 12 horas.
+const etiquetaHora = (hora) => (hora === 0 ? '12a' : hora === 12 ? '12m' : hora > 12 ? `${hora - 12}p` : `${hora}a`)
+
+export const mapFranjaHoraria = (record) => {
+  const totales = new Map(Object.entries(record || {}).map(([hora, total]) => [Number(hora), Number(total || 0)]))
+  if (totales.size === 0) return []
+
+  const horas = [...totales.keys()]
+  const desde = Math.min(7, ...horas)
+  const hasta = Math.max(18, ...horas)
+
+  return Array.from({ length: hasta - desde + 1 }, (_, i) => {
+    const hora = desde + i
+    return { key: String(hora), name: etiquetaHora(hora), total: totales.get(hora) || 0 }
+  })
+}
 
 export const objectToChartData = (record, labels = {}, colors = {}) =>
   Object.entries(record || {}).map(([key, value], index) => ({

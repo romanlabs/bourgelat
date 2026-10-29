@@ -121,9 +121,9 @@ export function KpiCard({
       title={helper || undefined}
       className={`flex h-full flex-col gap-2 rounded-2xl bg-card px-5 py-4 ${borderTone === 'border-border' ? '' : `border ${borderTone}`} ${className}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="truncate text-sm font-medium text-muted-foreground">{label}</p>
-        {icon ? createElement(icon, { className: `h-4 w-4 shrink-0 ${tone}` }) : null}
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-h-10 min-w-0 text-sm font-medium leading-5 text-muted-foreground">{label}</p>
+        {icon ? createElement(icon, { className: `mt-0.5 h-4 w-4 shrink-0 ${tone}` }) : null}
       </div>
       <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-card-foreground [overflow-wrap:anywhere]">
         {value}
@@ -373,6 +373,7 @@ export function LinePanel({
                 fontSize={11}
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={(value) => (formatter ? formatter(value) : value)}
+                allowDecimals={false}
                 width={72}
               />
               <Tooltip content={<ChartTooltip formatter={formatter} />} cursor={{ stroke: color, strokeWidth: 1, strokeDasharray: '4 4' }} />
@@ -419,7 +420,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
       <div className={`flex-1 ${height} px-2 py-4`}>
         {hasData ? (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
-            <BarChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barCategoryGap="38%">
+            <BarChart data={data} margin={{ left: 4, right: 16, top: 8, bottom: 4 }} barCategoryGap="20%">
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={color} stopOpacity={1} />
@@ -441,6 +442,7 @@ export function BarPanel({ title, subtitle, data, dataKey, color = chartColors.c
                 fontSize={11}
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={(value) => (formatter ? formatter(value) : value)}
+                allowDecimals={false}
                 width={72}
               />
               <Tooltip content={<ChartTooltip formatter={formatter} />} cursor={{ fill: 'hsl(var(--muted))' }} />
