@@ -171,9 +171,13 @@ function Buscador({ value, onChange, placeholder, ariaLabel, cargando }) {
 }
 
 // Botón de filtro con menú de especies y su conteo; resaltado si hay una elegida.
+// Solo lista las especies que la clínica atiende (y la elegida, aunque quede en 0).
 function FiltroEspecie({ value, onChange, porEspecie, total }) {
   const activa = value !== 'todas'
   const elegida = SPECIES_OPTIONS.find((option) => option.value === value)
+  const opciones = SPECIES_OPTIONS.filter(
+    (option) => option.value === 'todas' || option.value === value || porEspecie[option.value] > 0
+  )
 
   return (
     <DropdownMenu.Root>
@@ -199,7 +203,7 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
           sideOffset={6}
           className="z-50 w-60 rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          {SPECIES_OPTIONS.map((option) => {
+          {opciones.map((option) => {
             const conteo = option.value === 'todas' ? total : porEspecie[option.value] || 0
             return (
               <DropdownMenu.Item
