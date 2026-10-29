@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Boxes, CalendarClock, CalendarPlus, PawPrint, Receipt, Stethoscope, Wallet } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { cajaApi } from '@/features/caja/cajaApi'
@@ -130,7 +130,6 @@ function RestrictedDashboard({ usuario }) {
 // Los reportes del mes viven en Finanzas; las pestañas que los repetían aquí
 // se quitaron.
 export default function DashboardPage() {
-  const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
   const setSuscripcion = useAuthStore((state) => state.setSuscripcion)
 
@@ -310,7 +309,9 @@ export default function DashboardPage() {
           Number(producto.stock) <= 0
             ? 'Agotado'
             : `Quedan ${formatNumber(producto.stock)}, el mínimo es ${formatNumber(producto.stockMinimo)}`,
+        // Inventario abre la ficha del producto, no solo la lista.
         to: '/inventario',
+        state: { abrirProductoId: producto.id },
       }))
     const historiasAbiertas = citasHoyRows
       .filter((cita) => cita.estado === 'completada' && !cita.historia?.id)
@@ -441,7 +442,6 @@ export default function DashboardPage() {
           puedeCobrar
           puedeVerCaja
           usuarioIdMios={esVeterinario ? usuario?.id : null}
-          onVerReportes={() => navigate('/finanzas')}
         />
       )}
     </AdminShell>

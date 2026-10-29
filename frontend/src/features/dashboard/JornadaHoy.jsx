@@ -170,7 +170,6 @@ export default function JornadaHoy({
   // Si quien mira también atiende (admin y veterinario a la vez), puede
   // quedarse solo con sus pacientes.
   usuarioIdMios = null,
-  onVerReportes = null,
 }) {
   const [consultorio, setConsultorio] = useState('todos')
   const [soloMios, setSoloMios] = useState(false)
@@ -385,6 +384,7 @@ export default function JornadaHoy({
               <Link
                 key={alerta.id}
                 to={alerta.to}
+                state={alerta.state}
                 className="-mx-3 flex items-start gap-3.5 rounded-xl p-3 transition hover:bg-muted"
               >
                 <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-[3px] bg-brand" />
@@ -395,16 +395,6 @@ export default function JornadaHoy({
               </Link>
             ))
           )}
-          {onVerReportes ? (
-            <button
-              type="button"
-              onClick={onVerReportes}
-              className="mt-2 inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
-            >
-              Ver reportes del mes
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          ) : null}
         </section>
       </div>
     </div>

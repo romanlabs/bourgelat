@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,7 @@ import ImportarInventarioDialog from '@/features/inventario/ImportarInventarioDi
 import ActualizarVencimientoDialog from '@/features/inventario/ActualizarVencimientoDialog'
 import { useInventarioResumen } from '@/features/inventario/useInventarioResumen'
 import { useInventarioProductos, CATEGORY_OPTIONS } from '@/features/inventario/useInventarioProductos'
+import { inventarioApi } from '@/features/inventario/inventarioApi'
 import { useImportarInventario } from '@/features/inventario/useImportarInventario'
 import {
   useInventarioMovimientos,
@@ -496,6 +498,32 @@ export default function InventarioPage() {
   useEffect(() => {
     document.title = 'Inventario | Bourgelat'
   }, [])
+
+  // Desde «Para revisar» del inicio se llega con un producto: se abre su ficha
+  // en el inventario de ventas y la lista queda filtrada por su nombre.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const abrirProductoId = location.state?.abrirProductoId
+  const abiertoRef = useRef(null)
+  useEffect(() => {
+    if (!abrirProductoId || !puedeVerInventario || abiertoRef.current === abrirProductoId) return
+    abiertoRef.current = abrirProductoId
+    // Se limpia el estado para que volver o recargar no abra la ficha otra vez.
+    navigate(location.pathname, { replace: true, state: null })
+    inventarioApi
+      .obtenerProducto(abrirProductoId)
+      .then((data) => {
+        if (!data?.producto) return
+        setActiveTab('productos')
+        setInventarioSeleccionado('ventas')
+        productosHook.setBuscar(data.producto.nombre)
+        productosHook.setPagina(1)
+        productosHook.openEditDrawer(data.producto)
+      })
+      .catch(() => {})
+    // productosHook cambia en cada render; solo importa el producto pedido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirProductoId, puedeVerInventario])
 
   function handleTabClick(tabId) {
     setActiveTab(tabId)
