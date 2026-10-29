@@ -137,6 +137,11 @@ export const DOMINIOS = {
     'suscripcion-activa',
     'suscripcion-planes',
   ],
+
+  // Avisos guardados de la campanita (los derivados usan las claves de su dominio).
+  notificaciones: [
+    'notificaciones',
+  ],
 }
 
 /**

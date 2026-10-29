@@ -12,6 +12,7 @@ const { tenantWhere } = require('../utils/tenant');
 const { DURACION_ESTIMADA_MINUTOS } = require('../config/duracionesCita');
 const { obtenerContextoAgenda, evaluarVentana } = require('../services/horarioAtencionService');
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
+const { avisarPacienteLlego } = require('../services/notificacionService');
 
 const ESTADOS_ACTIVOS_AGENDA = ['programada', 'en_espera', 'en_atencion'];
 
@@ -390,6 +391,8 @@ const crearWalkIn = async (req, res) => {
       advertencia: advertencias[0] || null,
       advertencias,
     });
+
+    await avisarPacienteLlego({ cita, actorId: req.usuario.id });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -598,6 +601,8 @@ const actualizarEstadoCita = async (req, res) => {
       message: MENSAJE_CAMBIO_ESTADO[estado] || 'Estado de la cita actualizado',
       cita,
     });
+
+    if (estado === 'en_espera') await avisarPacienteLlego({ cita, actorId: req.usuario.id });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }

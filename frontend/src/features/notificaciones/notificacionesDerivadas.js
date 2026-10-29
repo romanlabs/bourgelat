@@ -111,14 +111,14 @@ function avisosDeInventario(inventario, { hoy }) {
     ...conResumen(stock, (resto) => ({
       id: `stock-resumen-${stock.length}`,
       categoria: 'inventario',
-      titulo: `${formatNumber(resto)} artículos más bajo el mínimo`,
+      titulo: resto === 1 ? '1 artículo más bajo el mínimo' : `${formatNumber(resto)} artículos más bajo el mínimo`,
       texto: 'Revísalos en Inventario.',
       to: '/inventario',
     })),
     ...conResumen(vencimientos, (resto) => ({
       id: `vence-resumen-${vencimientos.length}`,
       categoria: 'inventario',
-      titulo: `${formatNumber(resto)} artículos más vencidos o por vencer`,
+      titulo: resto === 1 ? '1 artículo más vencido o por vencer' : `${formatNumber(resto)} artículos más vencidos o por vencer`,
       texto: 'Revísalos en Inventario.',
       to: '/inventario',
     })),
@@ -165,7 +165,7 @@ function avisosDeFiado(cuentas, { hoy }) {
   return conResumen(clientes, (resto) => ({
     id: `fiado-resumen-${clientes.length}`,
     categoria: 'caja',
-    titulo: `${formatNumber(resto)} créditos vencidos más`,
+    titulo: resto === 1 ? '1 crédito vencido más' : `${formatNumber(resto)} créditos vencidos más`,
     texto: 'Revísalos en Caja, en «Por cobrar».',
     to: '/caja',
     state: { tab: 'cobrar' },
@@ -218,6 +218,57 @@ export function derivarNotificaciones({
     ...avisosDeCompras(alertasCompra),
     ...avisosDeSistema({ tickets, diasRestantes }),
   ]
+}
+
+// ── Avisos guardados (Fase B) ─────────────────────────────────────────────
+
+const diaLocal = (fecha) => hoyLocal(new Date(fecha))
+
+// «Hace 5 min», «Hace 2 h» o la hora del día en que pasó.
+export const cuandoFue = (fecha, ahora = new Date()) => {
+  const minutos = Math.max(0, Math.floor((ahora - new Date(fecha)) / 60_000))
+  if (minutos < 1) return 'Ahora'
+  if (minutos < 60) return `Hace ${minutos} min`
+  if (minutos < 6 * 60 && diaLocal(fecha) === hoyLocal(ahora)) return `Hace ${Math.floor(minutos / 60)} h`
+  return new Date(fecha).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+}
+
+/** Convierte una fila del servidor al mismo formato de los avisos derivados. */
+export const desdeServidor = (fila, ahora = new Date()) => ({
+  id: `srv-${fila.id}`,
+  servidorId: fila.id,
+  categoria: fila.categoria,
+  titulo: fila.titulo,
+  texto: fila.texto,
+  to: fila.enlace || null,
+  fecha: fila.createdAt,
+  cuando: cuandoFue(fila.createdAt, ahora),
+  nueva: !fila.leidaEn,
+})
+
+/**
+ * Grupos del panel: primero lo pendiente ahora (derivado, sin fecha) y luego
+ * lo guardado por día: Hoy, Ayer y la fecha para lo anterior.
+ */
+export function agruparAvisos(avisos, ahora = new Date()) {
+  const hoy = hoyLocal(ahora)
+  const ayer = hoyLocal(new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 1))
+  const grupos = []
+  const pendientes = avisos.filter((aviso) => !aviso.fecha)
+  if (pendientes.length > 0) grupos.push({ id: 'pendiente', titulo: 'Para revisar ahora', items: pendientes })
+
+  for (const aviso of avisos.filter((item) => item.fecha)) {
+    const dia = diaLocal(aviso.fecha)
+    const titulo = dia === hoy
+      ? 'Hoy'
+      : dia === ayer
+        ? 'Ayer'
+        : new Date(aviso.fecha).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+    const grupo = grupos.find((item) => item.id === dia)
+    if (grupo) grupo.items.push(aviso)
+    else grupos.push({ id: dia, titulo: titulo.charAt(0).toUpperCase() + titulo.slice(1), items: [aviso] })
+  }
+  return grupos
 }
 
 export const FILTROS = [
