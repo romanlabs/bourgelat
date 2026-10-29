@@ -3,6 +3,7 @@
 // (no sale por el correo de Bourgelat ni gasta su cupo diario).
 import { fechaCorta, soloDia } from './fichaSaludUtils'
 import { hoyLocal } from '@/lib/fecha'
+import { formatearCelular } from '@/lib/celular'
 
 const primerNombre = (nombre) => String(nombre || '').trim().split(/\s+/)[0] || ''
 
@@ -21,7 +22,7 @@ export function textoRecordatorio({ tutorNombre, mascotaNombre, tratamiento, pro
     '',
     `Te escribimos de ${nombreClinica} para recordarte que a ${mascotaNombre} ${cuando} su ${tratamiento.charAt(0).toLowerCase()}${tratamiento.slice(1)}.`,
     '',
-    `Responde este correo${clinica?.telefono ? ` o llámanos al ${clinica.telefono}` : ''} para agendar la cita.`,
+    `Responde este correo${clinica?.telefono ? ` o llámanos al ${formatearCelular(clinica.telefono)}` : ''} para agendar la cita.`,
     '',
     'Un saludo,',
     nombreClinica,

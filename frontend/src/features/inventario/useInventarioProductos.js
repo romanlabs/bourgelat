@@ -38,6 +38,7 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
   const [categoria, setCategoria] = useState('todas')
   const [bajoStock, setBajoStock] = useState(false)
   const [pagina, setPagina] = useState(1)
+  const [verDesactivados, setVerDesactivados] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState({ open: false, producto: null })
@@ -45,12 +46,13 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
   const busquedaDiferida = useDeferredValue(buscar.trim())
 
   const productosQuery = useQuery({
-    queryKey: ['inventario-productos', busquedaDiferida, categoria, bajoStock, pagina],
+    queryKey: ['inventario-productos', busquedaDiferida, categoria, bajoStock, pagina, verDesactivados],
     queryFn: () =>
       inventarioApi.obtenerProductos({
         buscar: busquedaDiferida || undefined,
         categoria: categoria !== 'todas' ? categoria : undefined,
         bajoStock: bajoStock ? 'true' : undefined,
+        estado: verDesactivados ? 'inactivos' : undefined,
         pagina,
         limite: 12,
       }),
@@ -94,6 +96,21 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
     },
     onError: (error) => toast.error(getErrorMessage(error, 'No fue posible desactivar el producto.')),
   })
+
+
+  const activarMutation = useMutation({
+    mutationFn: inventarioApi.activarProducto,
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Producto reactivado')
+      invalidateInventarioQueries(queryClient)
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible reactivar el producto.')),
+  })
+
+  function cambiarVerDesactivados(valor) {
+    setVerDesactivados(valor)
+    setPagina(1)
+  }
 
   const productosRows = useMemo(
     () =>
@@ -172,6 +189,9 @@ export function useInventarioProductos({ enabled, onProductDeleted }) {
       editarProductoMutation.isPending ||
       subirImagenProductoMutation.isPending,
     isPendingDelete: eliminarProductoMutation.isPending,
+    verDesactivados, setVerDesactivados: cambiarVerDesactivados,
+    activar: (id) => activarMutation.mutate(id),
+    isPendingActivar: activarMutation.isPending,
     buscar, setBuscar,
     categoria, setCategoria,
     bajoStock, setBajoStock,

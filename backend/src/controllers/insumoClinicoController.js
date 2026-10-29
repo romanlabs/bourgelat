@@ -123,7 +123,8 @@ const obtenerInsumos = async (req, res) => {
     const { buscar, categoria, bajoStock } = req.query;
     const { pagina, limite, offset } = parsePaginacion(req.query, { limitePorDefecto: 20 });
 
-    const where = tenantWhere(req, { activo: true });
+    // ?estado=inactivos lista los desactivados (para reactivarlos); por defecto, activos.
+    const where = tenantWhere(req, { activo: req.query.estado !== 'inactivos' });
 
     if (categoria) where.categoria = categoria;
     if (buscar) {
@@ -578,6 +579,29 @@ const obtenerMovimientosClinicos = async (req, res) => {
   }
 };
 
+
+// Revierte la desactivación (desactivado por error o que vuelve a usarse).
+const activarInsumo = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const insumo = await InsumoClinico.findOne({ where: tenantWhere(req, { id, activo: false }) });
+
+    if (!insumo) {
+      return res.status(404).json({ message: 'Insumo clinico no encontrado' });
+    }
+
+    await insumo.update({ activo: true });
+
+    return res.json({
+      message: 'Insumo clinico reactivado',
+      insumo,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error en el servidor' });
+  }
+};
+
 module.exports = {
   crearInsumo,
   obtenerInsumos,
@@ -585,6 +609,7 @@ module.exports = {
   obtenerCatalogoConsumo,
   editarInsumo,
   eliminarInsumo,
+  activarInsumo,
   registrarMovimientoClinico,
   relevarVencimientoClinico,
   obtenerAlertas,

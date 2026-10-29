@@ -8,6 +8,7 @@ const {
   obtenerServicio,
   editarServicio,
   eliminarServicio,
+  activarServicio,
 } = require('../controllers/servicioClinicoController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -22,6 +23,7 @@ const validarIdServicio = [
 
 const validarConsultaServicios = [
   query('buscar').optional().trim().isLength({ max: 120 }),
+  query('estado').optional().isIn(['activos', 'inactivos']).withMessage('Estado no valido'),
   query('categoria').optional().trim().isLength({ max: 80 }),
   query('pagina').optional().isInt({ min: 1 }),
   query('limite').optional().isInt({ min: 1, max: 100 }),
@@ -109,6 +111,15 @@ router.put(
   requerirEscritura,
   validarEdicionServicio,
   editarServicio
+)
+
+router.patch(
+  '/:id/activar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarIdServicio,
+  activarServicio
 )
 
 router.delete(

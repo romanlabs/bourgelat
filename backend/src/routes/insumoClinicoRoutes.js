@@ -8,6 +8,7 @@ const {
   obtenerCatalogoConsumo,
   editarInsumo,
   eliminarInsumo,
+  activarInsumo,
   registrarMovimientoClinico,
   relevarVencimientoClinico,
   obtenerAlertas,
@@ -37,6 +38,7 @@ const validarIdInsumo = [
 
 const validarConsultaInsumos = [
   query('buscar').optional().trim().isLength({ max: 120 }).withMessage('La busqueda no puede exceder 120 caracteres'),
+  query('estado').optional().isIn(['activos', 'inactivos']).withMessage('Estado no valido'),
   query('categoria').optional().isIn(categoriasValidas).withMessage('Categoria no valida'),
   query('bajoStock').optional().isIn(['true', 'false']).withMessage('bajoStock debe ser true o false'),
   query('pagina').optional().isInt({ min: 1 }).withMessage('La pagina debe ser un entero mayor a 0'),
@@ -156,6 +158,15 @@ router.put(
   requerirEscritura,
   validarEdicionInsumo,
   editarInsumo
+)
+
+router.patch(
+  '/:id/activar',
+  verificarToken,
+  verificarRol('admin', 'superadmin', 'auxiliar'),
+  requerirEscritura,
+  validarIdInsumo,
+  activarInsumo
 )
 
 router.delete(

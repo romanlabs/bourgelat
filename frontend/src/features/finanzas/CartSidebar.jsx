@@ -5,6 +5,7 @@ import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacio
 import { estadoVencimiento, fechaCortaVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
+import { formatearCelular } from '@/lib/celular'
 
 // Alias en mayúscula: la regla no-unused-vars no ve el uso dentro del JSX y
 // sin el import `motion` el carrito se caía al agregar el primer producto.
@@ -89,7 +90,7 @@ export default function CartSidebar({
             </span>
             <span className="block truncate text-[13px] text-muted-foreground">
               {selectedOwnerData
-                ? selectedOwnerData.numeroDocumento || selectedOwnerData.telefono || 'Cliente registrado'
+                ? selectedOwnerData.numeroDocumento || formatearCelular(selectedOwnerData.telefono) || 'Cliente registrado'
                 : 'Sin cliente asociado'}
             </span>
           </span>
