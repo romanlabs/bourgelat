@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Dialog } from 'radix-ui'
-import { Activity, Bell, MessageSquare, Package, Receipt, X } from 'lucide-react'
+import { Activity, ArrowLeft, Bell, MessageSquare, Package, Receipt, Settings, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FILTROS, agruparAvisos } from './notificacionesDerivadas'
 
@@ -40,6 +40,89 @@ function FilaAviso({ aviso, onAbrir }) {
   )
 }
 
+function Interruptor({ titulo, detalle, activo, onCambiar, deshabilitado = false }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={activo}
+      disabled={deshabilitado}
+      onClick={() => onCambiar(!activo)}
+      className="flex w-full items-center gap-4 rounded-xl p-3 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-[15px] font-semibold text-foreground">{titulo}</span>
+        {detalle ? <span className="text-sm leading-5 text-muted-foreground">{detalle}</span> : null}
+      </span>
+      <span
+        aria-hidden="true"
+        className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', activo ? 'bg-primary' : 'bg-input')}
+      >
+        <span
+          className={cn(
+            'absolute top-0.5 h-5 w-5 rounded-full bg-card shadow-sm transition-transform',
+            activo ? 'translate-x-[22px]' : 'translate-x-0.5'
+          )}
+        />
+      </span>
+    </button>
+  )
+}
+
+const CATEGORIAS_AJUSTES = [
+  { id: 'clinica', titulo: 'Clínica', detalle: 'Llegadas, citas, historias, exámenes y vacunas por vencer.' },
+  { id: 'inventario', titulo: 'Inventario', detalle: 'Agotados, bajo el mínimo y vencimientos.' },
+  { id: 'caja', titulo: 'Caja y facturación', detalle: 'Cierres de turno, créditos vencidos, pagos a proveedores y DIAN.' },
+  { id: 'sistema', titulo: 'Soporte y plan', detalle: 'Respuestas de soporte y vencimiento del plan.' },
+]
+
+function AjustesAvisos({ ajustes, guardarAjustes, navegador }) {
+  const apagadas = ajustes.categoriasApagadas || []
+  const cambiarCategoria = (id, recibir) =>
+    guardarAjustes({
+      categoriasApagadas: recibir ? apagadas.filter((item) => item !== id) : [...apagadas, id],
+    })
+
+  return (
+    <div className="flex flex-col gap-4 px-1 pt-1">
+      <section aria-label="Qué avisos recibir">
+        <h3 className="px-3 pb-1.5 pt-2.5 text-[13px] font-semibold text-muted-foreground">Qué avisos recibir</h3>
+        {CATEGORIAS_AJUSTES.map((categoria) => (
+          <Interruptor
+            key={categoria.id}
+            titulo={categoria.titulo}
+            detalle={categoria.detalle}
+            activo={!apagadas.includes(categoria.id)}
+            onCambiar={(recibir) => cambiarCategoria(categoria.id, recibir)}
+          />
+        ))}
+      </section>
+      <section aria-label="Cómo avisarte">
+        <h3 className="px-3 pb-1.5 pt-2.5 text-[13px] font-semibold text-muted-foreground">Cómo avisarte</h3>
+        <Interruptor
+          titulo="Correo para lo urgente"
+          detalle="Descuadres al cerrar caja y cajas que quedaron abiertas de un día anterior."
+          activo={Boolean(ajustes.correoUrgente)}
+          onCambiar={(activo) => guardarAjustes({ correoUrgente: activo })}
+        />
+        {navegador.disponible ? (
+          <Interruptor
+            titulo="Avisos en este equipo"
+            detalle={
+              navegador.bloqueado
+                ? 'El navegador los tiene bloqueados. Permítelos desde el candado de la barra de direcciones.'
+                : 'Te avisa aunque estés en otra pestaña o ventana.'
+            }
+            activo={navegador.activo}
+            deshabilitado={navegador.bloqueado}
+            onCambiar={navegador.cambiar}
+          />
+        ) : null}
+      </section>
+    </div>
+  )
+}
+
 /**
  * Campanita del encabezado y su panel. Recibe lo que devuelve
  * `useNotificaciones` desde AdminShell, que la pinta en la barra superior o
@@ -47,10 +130,16 @@ function FilaAviso({ aviso, onAbrir }) {
  * comparten lo leído.
  */
 export default function CampanitaNotificaciones({ notificaciones, className }) {
-  const { avisos, sinLeer, cargando, marcarLeida, marcarTodas } = notificaciones
+  const { avisos, sinLeer, cargando, marcarLeida, marcarTodas, ajustes, guardarAjustes, navegador } = notificaciones
   const navigate = useNavigate()
   const [abierto, setAbierto] = useState(false)
   const [filtro, setFiltro] = useState('todas')
+  const [verAjustes, setVerAjustes] = useState(false)
+
+  const cambiarAbierto = (siguiente) => {
+    setAbierto(siguiente)
+    if (!siguiente) setVerAjustes(false)
+  }
 
   const filtroActivo = FILTROS.find((item) => item.id === filtro) ?? FILTROS[0]
   const visibles = avisos.filter(filtroActivo.incluye)
@@ -64,7 +153,7 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
   }
 
   return (
-    <Dialog.Root open={abierto} onOpenChange={setAbierto}>
+    <Dialog.Root open={abierto} onOpenChange={cambiarAbierto}>
       <Dialog.Trigger asChild>
         <button
           type="button"
@@ -92,16 +181,43 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
         >
           <div className="flex flex-col gap-3.5 px-5 pb-3.5 pt-5 sm:px-6 sm:pt-6">
             <div className="flex items-center justify-between gap-3">
-              <Dialog.Title className="text-2xl font-semibold tracking-[-0.03em]">Notificaciones</Dialog.Title>
+              <div className="flex min-w-0 items-center gap-1.5">
+                {verAjustes ? (
+                  <button
+                    type="button"
+                    aria-label="Volver a las notificaciones"
+                    onClick={() => setVerAjustes(false)}
+                    className="-ml-2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-[18px] w-[18px]" />
+                  </button>
+                ) : null}
+                <Dialog.Title className="text-2xl font-semibold tracking-[-0.03em]">
+                  {verAjustes ? 'Ajustes de avisos' : 'Notificaciones'}
+                </Dialog.Title>
+              </div>
               <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={marcarTodas}
-                  disabled={sinLeer === 0}
-                  className="h-9 rounded-lg bg-muted px-3 text-sm font-semibold text-foreground transition hover:brightness-95 disabled:opacity-50"
-                >
-                  Marcar leídas
-                </button>
+                {verAjustes ? null : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={marcarTodas}
+                      disabled={sinLeer === 0}
+                      className="h-9 rounded-lg bg-muted px-3 text-sm font-semibold text-foreground transition hover:brightness-95 disabled:opacity-50"
+                    >
+                      Marcar leídas
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Ajustes de avisos"
+                      title="Ajustes de avisos"
+                      onClick={() => setVerAjustes(true)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    >
+                      <Settings className="h-[18px] w-[18px]" />
+                    </button>
+                  </>
+                )}
                 <Dialog.Close asChild>
                   <button
                     type="button"
@@ -114,6 +230,7 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
               </div>
             </div>
 
+            {verAjustes ? null : (
             <div role="tablist" aria-label="Filtrar notificaciones" className="flex gap-1 rounded-xl bg-muted p-1">
               {FILTROS.map((item) => {
                 const activa = item.id === filtro
@@ -134,10 +251,13 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
                 )
               })}
             </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 pb-3">
-            {cargando && avisos.length === 0 ? (
+            {verAjustes ? (
+              <AjustesAvisos ajustes={ajustes} guardarAjustes={guardarAjustes} navegador={navegador} />
+            ) : cargando && avisos.length === 0 ? (
               <div className="space-y-2 px-1 pt-1">
                 {[0, 1, 2].map((item) => (
                   <div key={item} className="h-16 animate-pulse rounded-xl bg-muted" />
@@ -169,7 +289,9 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
           </div>
 
           <p className="bg-muted/60 px-5 py-3.5 text-sm text-muted-foreground sm:px-6">
-            Lo de «Para revisar ahora» se quita solo cuando se resuelve.
+            {verAjustes
+              ? 'Los ajustes son tuyos: no cambian lo que recibe el resto del equipo.'
+              : 'Lo de «Para revisar ahora» se quita solo cuando se resuelve.'}
           </p>
         </Dialog.Content>
       </Dialog.Portal>

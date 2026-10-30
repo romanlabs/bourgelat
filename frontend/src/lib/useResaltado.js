@@ -23,9 +23,14 @@ export const pedirResaltado = (tipo, id, extra = {}) => ({ ...extra, resaltar: {
 export function useResaltado(tipo, { presente = () => true } = {}) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [id, setId] = useState(() =>
-    location.state?.resaltar?.tipo === tipo ? location.state.resaltar.id ?? null : null
-  )
+  const pedido = location.state?.resaltar?.tipo === tipo ? location.state.resaltar.id ?? null : null
+  // Cada navegación trae su `key`: si ya se estaba en esta pantalla no hay
+  // montaje nuevo, y el pedido se toma aquí al cambiar la navegación.
+  const [resaltado, setResaltado] = useState(() => ({ key: location.key, id: pedido }))
+  if (pedido != null && resaltado.key !== location.key) {
+    setResaltado({ key: location.key, id: pedido })
+  }
+  const id = resaltado.id
 
   useEffect(() => {
     if (location.state?.resaltar?.tipo !== tipo) return
@@ -43,7 +48,7 @@ export function useResaltado(tipo, { presente = () => true } = {}) {
     document
       .querySelector(`[data-resaltar-id="${CSS.escape(String(id))}"]`)
       ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    const quitar = window.setTimeout(() => setId(null), DURACION_RESALTADO)
+    const quitar = window.setTimeout(() => setResaltado((previo) => ({ ...previo, id: null })), DURACION_RESALTADO)
     return () => window.clearTimeout(quitar)
   }, [activo, id])
 

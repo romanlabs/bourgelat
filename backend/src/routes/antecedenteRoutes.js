@@ -14,6 +14,7 @@ const {
   agregarPlanificacion,
   agregarCondicionCronica,
   actualizarGenerales,
+  listarSeguimientosPendientes,
 } = require('../controllers/antecedenteController');
 
 const validateDateOnly = (value) => {
@@ -186,6 +187,8 @@ const validarGenerales = [
   validar,
 ];
 
+// Antes de /:mascotaId. Recepción también la ve: es quien llama al tutor.
+router.get('/seguimientos', verificarToken, verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'recepcionista'), listarSeguimientosPendientes);
 router.get('/:mascotaId', verificarToken, verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar'), validarMascotaId, obtenerOCrearAntecedentes);
 router.post('/:mascotaId/alergia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarAlergia, agregarAlergia);
 router.post('/:mascotaId/cirugia', verificarToken, verificarRol('veterinario', 'admin', 'superadmin'), requerirEscritura, validarCirugia, agregarCirugia);
