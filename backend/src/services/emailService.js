@@ -365,7 +365,41 @@ ${filas.map((f) => [
 const enviarEmailResumenCobro = ({ filas, fecha }) =>
   enviarEmail({ para: 'soporte@bourgelat.co', ...armarEmailResumenCobro({ filas, fecha }) })
 
+// Lo urgente de la campanita (descuadre de caja, caja sin cerrar) para quien
+// pidió recibirlo también por correo en sus ajustes de avisos.
+const armarEmailAvisoUrgente = ({ nombre, aviso, urlFrontend }) => {
+  const enlace = `${urlFrontend}${aviso.enlace || '/dashboard'}`
+  const asunto = aviso.titulo
+  const texto = `Hola ${nombre},
+
+${aviso.titulo}.${aviso.texto ? `
+${aviso.texto}` : ''}
+
+Revísalo en: ${enlace}
+
+Puedes dejar de recibir estos correos en la campanita de Bourgelat, en Ajustes.`
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">${escaparHtml(aviso.titulo)}</h2>
+      <p>Hola ${escaparHtml(nombre)},</p>
+      ${aviso.texto ? `<p>${escaparHtml(aviso.texto)}</p>` : ''}
+      <p style="margin: 24px 0;">
+        <a href="${escaparHtml(enlace)}"
+           style="background: #10b981; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+          Revisarlo en Bourgelat
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #51697d;">Puedes dejar de recibir estos correos en la campanita de Bourgelat, en Ajustes.</p>
+    </div>
+  `
+  return { asunto, html, texto }
+}
+
+const enviarEmailAvisoUrgente = ({ para, ...datos }) => enviarEmail({ para, ...armarEmailAvisoUrgente(datos) })
+
 module.exports = {
+  armarEmailAvisoUrgente,
+  enviarEmailAvisoUrgente,
   armarEmailRecordatorioCobro,
   enviarEmailRecordatorioCobro,
   armarEmailResumenCobro,

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { DataTable, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatLongDate } from '@/features/dashboard/dashboardUtils'
 import TurnoDetalleModal from './TurnoDetalleModal'
+import { useResaltado } from '@/lib/useResaltado'
 import { CATEGORIA_DIFERENCIA_LABELS } from './cajaConstants'
 
 const getDiferenciaTone = (turno) => {
@@ -12,7 +13,9 @@ const getDiferenciaTone = (turno) => {
 }
 
 export default function HistorialTurnosPanel({ cajaHook, esAdmin }) {
-  const [turnoSeleccionadoId, setTurnoSeleccionadoId] = useState(null)
+  // El aviso de cierre de turno llega con ese turno: se abre su detalle.
+  const turnoDeAviso = useResaltado('turno')
+  const [turnoSeleccionadoId, setTurnoSeleccionadoId] = useState(turnoDeAviso)
   const [expandido, setExpandido] = useState(false)
   const { historialFiltros, setHistorialFiltros, turnosHistorial } = cajaHook
 

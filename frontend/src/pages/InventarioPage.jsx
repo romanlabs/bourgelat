@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useResaltado } from '@/lib/useResaltado'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -305,7 +307,7 @@ function AccionesFila({ nombre, acciones }) {
 
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
-function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action }) {
+function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey }) {
   return (
     <section className="overflow-hidden rounded-2xl bg-card">
       {title || action ? (
@@ -323,6 +325,7 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
         columns={columns}
         rows={rows}
         pageSize={Math.max(rows.length, 1)}
+        highlightKey={highlightKey}
         emptyTitle={emptyTitle}
         emptyDescription={emptyBody}
         className="rounded-none"
@@ -451,11 +454,26 @@ function RestrictedInventoryPage() {
 
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
+  const location = useLocation()
+  // Desde la campanita se llega al inventario de ventas o al clínico, a la
+  // lista bajo el mínimo o con el artículo buscado, y con lo que hay que mirar
+  // resaltado un momento (useResaltado). La cantidad no se edita aquí, entra
+  // por factura de compra.
+  const [llegada] = useState(() => ({
+    inventario: location.state?.inventario ?? null,
+    tab: location.state?.tab ?? null,
+    bajoMinimo: Boolean(location.state?.verBajoMinimo),
+    buscar: location.state?.buscar ?? '',
+  }))
 
-  const [activeTab, setActiveTab] = useState('productos')
+  const [activeTab, setActiveTab] = useState(() =>
+    TABS.some((tab) => tab.id === llegada.tab) ? llegada.tab : 'productos'
+  )
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
-  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
+  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(() =>
+    llegada.inventario ?? (llegada.bajoMinimo ? 'ventas' : leerInventarioGuardado())
+  ) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
@@ -471,6 +489,8 @@ export default function InventarioPage() {
 
   const productosHook = useInventarioProductos({
     enabled: puedeVerInventario,
+    bajoStockInicial: llegada.bajoMinimo && llegada.inventario !== 'clinica',
+    buscarInicial: llegada.inventario === 'ventas' ? llegada.buscar : '',
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
@@ -484,6 +504,8 @@ export default function InventarioPage() {
 
   const insumosClinicosHook = useInsumosClinicos({
     enabled: puedeVerInventario,
+    bajoStockInicial: llegada.bajoMinimo && llegada.inventario === 'clinica',
+    buscarInicial: llegada.inventario === 'clinica' ? llegada.buscar : '',
     onInsumoDeleted: (insumoId) => {
       if (movimientosClinicosHook.selectedInsumo?.id === insumoId) {
         movimientosClinicosHook.clearSelection()
@@ -530,6 +552,17 @@ export default function InventarioPage() {
   // Antes del return por rol: un hook despues de un return condicional rompe
   // el orden de hooks si el rol cambia entre renders (p. ej. al refrescar /me).
   const facturaCompraHook = useFacturaCompra({ enabled: rolPermitido })
+
+  // Cada resaltado espera a que su fila esté en la lista ya filtrada.
+  const productoResaltado = useResaltado('producto', {
+    presente: (id) => productosHook.productosRows.some((row) => row.id === id),
+  })
+  const insumoResaltado = useResaltado('insumo', {
+    presente: (id) => insumosClinicosHook.insumosRows.some((row) => row.id === id),
+  })
+  const compraResaltada = useResaltado('compra', {
+    presente: (id) => facturaCompraHook.facturas.some((factura) => factura.id === id),
+  })
 
   if (!rolPermitido) return <RestrictedInventoryPage />
 
@@ -729,6 +762,7 @@ export default function InventarioPage() {
                       : 'Lo que hay en bodega para vender, con su mínimo y su vencimiento.'
                   }
                   rows={productosRows}
+                  highlightKey={productoResaltado}
                   columns={[
                     {
                       key: 'nombre',
@@ -918,6 +952,7 @@ export default function InventarioPage() {
                   title={insumosClinicosHook.verDesactivados ? 'Insumos clínicos desactivados' : 'Insumos clínicos'}
                   subtitle="Lo que se usa en consulta y procedimientos. No se vende: lo aplicado se descuenta al cerrar la historia clínica y queda como gasto de insumos."
                   rows={insumosClinicosHook.insumosRows}
+                  highlightKey={insumoResaltado}
                   columns={[
                     {
                       key: 'nombre',
@@ -1424,6 +1459,7 @@ export default function InventarioPage() {
                 <TablaInventario
                   title="Facturas de compra"
                   subtitle="Compras a proveedores. Al confirmar una factura se suman las cantidades al inventario."
+                  highlightKey={compraResaltada}
                   rows={facturaCompraHook.facturas.map((f) => {
                     const hoy = new Date()
                     const plazo = f.fechaPagoFinal ? new Date(f.fechaPagoFinal) : null
