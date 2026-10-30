@@ -194,7 +194,104 @@ const margenDe = (ingresos, ganancia) =>
 
 const ticketPromedioDe = (ingresos, ventas) => (ventas > 0 ? redondearPesos(ingresos / ventas) : 0)
 
+// ── Cobrado por medio de pago (GET /reportes/medios-pago) ───────────────────
+// Los medios con que entra la plata, en el orden del punto de venta. 'credito'
+// no es un medio: el fiado entra después, por el medio de cada abono.
+const MEDIOS_PAGO = ['efectivo', 'transferencia', 'nequi', 'daviplata', 'tarjeta_debito', 'tarjeta_credito', 'otro']
+const medioDe = (metodo) => (MEDIOS_PAGO.includes(metodo) ? metodo : 'otro')
+
+// Los gastos se registran con un ENUM más grueso; cada medio se cruza con el
+// grupo de gasto que le corresponde.
+const GRUPO_GASTO_DE_MEDIO = {
+  efectivo: 'efectivo',
+  transferencia: 'transferencia',
+  nequi: 'transferencia',
+  daviplata: 'transferencia',
+  tarjeta_debito: 'tarjeta',
+  tarjeta_credito: 'tarjeta',
+  otro: 'otro',
+}
+
+// Fecha local de Bogotá (UTC−5) de un timestamp: el día en que se recibió un abono.
+const fechaBogota = (instante) =>
+  new Date(new Date(instante).getTime() - 5 * 3600000).toISOString().slice(0, 10)
+
+const diaSemana = (fechaISO) => {
+  const [anio, mes, dia] = partes(fechaISO)
+  return new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay()
+}
+
+// Reparte lo cobrado entre los medios con la regla de COBRADO_DE_CONTADO: de
+// cada venta, lo que entró en el momento (total − saldo − abonos) por el medio
+// de la venta; de cada abono, su monto por el medio del abono. Así la suma de
+// todos los medios es el «cobrado» del Resumen. Se hace en memoria porque el
+// método de pago está cifrado.
+//   facturas:         [{ id, fecha, total, saldoPendiente, metodoPago }]
+//   abonosPorFactura: { [facturaId]: suma de sus abonos (de cualquier fecha) }
+//   abonos:           [{ fecha: 'YYYY-MM-DD', monto, metodoPago }] recibidos en el periodo
+//   claves:           tramos de la serie (clavesDelPeriodo); vacío = sin serie
+const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], claves = [], granularidad = 'dia' }) => {
+  const medios = Object.fromEntries(
+    MEDIOS_PAGO.map((id) => [id, { id, cobrado: 0, deVentas: 0, deAbonos: 0, ventas: 0, abonos: 0, porDiaSemana: [0, 0, 0, 0, 0, 0, 0] }])
+  )
+  const serie = new Map(claves.map((periodo) => [periodo, Object.fromEntries(MEDIOS_PAGO.map((id) => [id, 0]))]))
+  const tramoDe = (fecha) => (granularidad === 'mes' ? String(fecha).slice(0, 7) : String(fecha).slice(0, 10))
+
+  const sumar = (medio, monto, fecha, origen) => {
+    const fila = medios[medio]
+    fila.cobrado += monto
+    if (origen === 'venta') {
+      fila.deVentas += monto
+      fila.ventas += 1
+    } else {
+      fila.deAbonos += monto
+      fila.abonos += 1
+    }
+    fila.porDiaSemana[diaSemana(fecha)] += monto
+    const tramo = serie.get(tramoDe(fecha))
+    if (tramo) tramo[medio] += monto
+  }
+
+  for (const factura of facturas) {
+    const contado =
+      Number(factura.total || 0) - Number(factura.saldoPendiente || 0) - Number(abonosPorFactura[factura.id] || 0)
+    // Una venta a crédito no trae plata en el momento: no cuenta como operación.
+    if (contado > 0) sumar(medioDe(factura.metodoPago), contado, factura.fecha, 'venta')
+  }
+  for (const abono of abonos) {
+    const monto = Number(abono.monto || 0)
+    if (monto > 0) sumar(medioDe(abono.metodoPago), monto, abono.fecha, 'abono')
+  }
+
+  const total = redondearPesos(Object.values(medios).reduce((suma, fila) => suma + fila.cobrado, 0))
+  return {
+    total,
+    medios: MEDIOS_PAGO.map((id) => {
+      const fila = medios[id]
+      const operaciones = fila.ventas + fila.abonos
+      return {
+        ...fila,
+        cobrado: redondearPesos(fila.cobrado),
+        deVentas: redondearPesos(fila.deVentas),
+        deAbonos: redondearPesos(fila.deAbonos),
+        operaciones,
+        ticketPromedio: ticketPromedioDe(fila.cobrado, operaciones),
+        participacion: total > 0 ? Number(((fila.cobrado / total) * 100).toFixed(1)) : 0,
+        porDiaSemana: fila.porDiaSemana.map(redondearPesos),
+      }
+    }),
+    serie: [...serie].map(([periodo, valores]) => ({
+      periodo,
+      ...Object.fromEntries(Object.entries(valores).map(([id, valor]) => [id, redondearPesos(valor)])),
+    })),
+  }
+}
+
 module.exports = {
+  MEDIOS_PAGO,
+  GRUPO_GASTO_DE_MEDIO,
+  agregarPorMedio,
+  fechaBogota,
   MAX_MESES_RANGO,
   sumarMesesISO,
   validarRango,
