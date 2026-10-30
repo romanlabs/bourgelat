@@ -1,5 +1,6 @@
 import { estadoVencimiento, fechaCortaVencimiento, hoyLocal } from '@/features/inventario/inventarioUtils'
 import { formatNumber } from '@/features/dashboard/dashboardUtils'
+import { pedirResaltado } from '@/lib/useResaltado'
 
 // Fase A de la campanita: los avisos no se guardan en el servidor, se derivan
 // de lo que la app ya consulta (citas de hoy, inventario, compras, fiado,
@@ -58,7 +59,8 @@ function avisosDeCitas(citas, { ahora, puedeAtender }) {
       categoria: 'clinica',
       titulo: `${cita.mascota?.nombre || 'Un paciente'} lleva ${duracion(minutos)} en sala`,
       texto: `Llegó a las ${hora12(cita.horaLlegada)}${cita.veterinario?.nombre ? `; lo atiende ${cita.veterinario.nombre}` : ''}.`,
-      to: '/agenda',
+      // Recepción abre la cita en la sala de espera y la resalta.
+      to: `/agenda?tab=recepcion&cita=${cita.id}`,
     }))
 
   return [...espera, ...historias]
@@ -69,10 +71,16 @@ function avisosDeInventario(inventario, { hoy }) {
     ...(inventario?.productos || []).map((item) => ({ ...item, tipo: 'producto' })),
     ...(inventario?.insumos || []).map((item) => ({ ...item, tipo: 'insumo' })),
   ]
-  const destino = (item) =>
-    item.tipo === 'producto'
-      ? { to: '/inventario', state: { resaltarProductoId: item.id } }
-      : { to: '/inventario' }
+  // Inventario abre el de ventas o el clínico y resalta el artículo: en la
+  // lista bajo el mínimo si es por stock, o buscándolo por nombre si es por
+  // vencimiento (puede no estar bajo el mínimo).
+  const destino = (item, { porStock }) => ({
+    to: '/inventario',
+    state: pedirResaltado(item.tipo, item.id, {
+      inventario: item.tipo === 'producto' ? 'ventas' : 'clinica',
+      ...(porStock ? { verBajoMinimo: true } : { buscar: item.nombre }),
+    }),
+  })
 
   const stock = articulos
     .filter((item) => Number(item.stock) <= Number(item.stockMinimo))
@@ -87,7 +95,7 @@ function avisosDeInventario(inventario, { hoy }) {
         texto: agotado
           ? `El mínimo es ${formatNumber(item.stockMinimo)}. Conviene pedirlo pronto.`
           : `Quedan ${formatNumber(item.stock)}, el mínimo es ${formatNumber(item.stockMinimo)}.`,
-        ...destino(item),
+        ...destino(item, { porStock: true }),
       }
     })
 
@@ -104,7 +112,7 @@ function avisosDeInventario(inventario, { hoy }) {
       texto: estado === 'vencido'
         ? `Venció el ${fechaCortaVencimiento(item.fechaVencimiento)} y quedan ${formatNumber(item.stock)}. Retíralo de la venta.`
         : `Quedan ${formatNumber(item.stock)}. Úsalo primero.`,
-      ...destino(item),
+      ...destino(item, { porStock: false }),
     }))
 
   return [
@@ -114,6 +122,7 @@ function avisosDeInventario(inventario, { hoy }) {
       titulo: resto === 1 ? '1 artículo más bajo el mínimo' : `${formatNumber(resto)} artículos más bajo el mínimo`,
       texto: 'Revísalos en Inventario.',
       to: '/inventario',
+      state: { verBajoMinimo: true },
     })),
     ...conResumen(vencimientos, (resto) => ({
       id: `vence-resumen-${vencimientos.length}`,
@@ -134,6 +143,7 @@ function avisosDeCompras(alertasCompra) {
       : `Se acerca el pago a ${factura.proveedor || 'un proveedor'}`,
     texto: `Factura ${factura.numero || 'sin número'} por ${pesos(factura.total)}, vence el ${fechaCortaVencimiento(factura.fechaPagoFinal)}.`,
     to: '/inventario',
+    state: pedirResaltado('compra', factura.id, { tab: 'facturas-compra' }),
   })
   return [
     ...(alertasCompra?.vencidas?.facturas || []).map((factura) => aviso(factura, true)),
@@ -158,7 +168,7 @@ function avisosDeFiado(cuentas, { hoy }) {
         titulo: `Crédito vencido de ${cliente.nombre}`,
         texto: `${vencidas.length === 1 ? '1 venta' : `${vencidas.length} ventas`} con saldo de ${pesos(saldo)}.`,
         to: '/caja',
-        state: { tab: 'cobrar' },
+        state: pedirResaltado('cliente', cliente.propietarioId || 'mostrador', { tab: 'cobrar' }),
       }
     })
 
@@ -233,6 +243,13 @@ export const cuandoFue = (fecha, ahora = new Date()) => {
   return new Date(fecha).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
 }
 
+// Qué se resalta al abrir un aviso guardado, según la entidad que lo originó.
+// Las citas van en el enlace (Recepción la abre con ?cita=).
+const RESALTAR_ENTIDAD = {
+  ExamenLaboratorio: (id) => pedirResaltado('examen', id),
+  CajaTurno: (id) => pedirResaltado('turno', id, { tab: 'turnos' }),
+}
+
 /** Convierte una fila del servidor al mismo formato de los avisos derivados. */
 export const desdeServidor = (fila, ahora = new Date()) => ({
   id: `srv-${fila.id}`,
@@ -241,6 +258,7 @@ export const desdeServidor = (fila, ahora = new Date()) => ({
   titulo: fila.titulo,
   texto: fila.texto,
   to: fila.enlace || null,
+  state: fila.entidadId ? RESALTAR_ENTIDAD[fila.entidadTipo]?.(fila.entidadId) : undefined,
   fecha: fila.createdAt,
   cuando: cuandoFue(fila.createdAt, ahora),
   nueva: !fila.leidaEn,

@@ -31,10 +31,10 @@ export const UNIT_OPTIONS = [
   { value: 'bolsa', label: 'Bolsa' },
 ]
 
-export function useInventarioProductos({ enabled, onProductDeleted, bajoStockInicial = false }) {
+export function useInventarioProductos({ enabled, onProductDeleted, bajoStockInicial = false, buscarInicial = '' }) {
   const queryClient = useQueryClient()
 
-  const [buscar, setBuscar] = useState('')
+  const [buscar, setBuscar] = useState(buscarInicial)
   const [categoria, setCategoria] = useState('todas')
   const [bajoStock, setBajoStock] = useState(bajoStockInicial)
   const [pagina, setPagina] = useState(1)

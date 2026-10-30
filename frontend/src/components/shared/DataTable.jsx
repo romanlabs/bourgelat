@@ -251,7 +251,10 @@ export function DataTable({
                   data-resaltada={highlightKey != null && row[keyField] === highlightKey ? '' : undefined}
                   className={cn(
                     'group/fila [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl',
-                    highlightKey != null && row[keyField] === highlightKey && '[&>td]:bg-brand/15'
+                    // Franja miel de lo que llega resaltado (lib/useResaltado); las
+                    // celdas se desvanecen al quitarla en vez de cortar de golpe.
+                    '[&>td]:transition-colors [&>td]:duration-700',
+                    highlightKey != null && row[keyField] === highlightKey && '[&>td]:bg-warning-soft'
                   )}
                 >
                   {columns.map((col) => (

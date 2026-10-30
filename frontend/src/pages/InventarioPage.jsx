@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
+import { useResaltado } from '@/lib/useResaltado'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -454,19 +455,24 @@ function RestrictedInventoryPage() {
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const location = useLocation()
-  const navigate = useNavigate()
-  // Desde «Para revisar» del inicio se llega a la lista de los que están bajo
-  // el mínimo, a veces con un producto para resaltar un momento. La cantidad
-  // no se edita aquí, entra por factura de compra.
-  const [llegadaProductoId] = useState(() => location.state?.resaltarProductoId ?? null)
-  const [llegadaBajoMinimo] = useState(() => Boolean(llegadaProductoId || location.state?.verBajoMinimo))
-  const [productoResaltado, setProductoResaltado] = useState(llegadaProductoId)
+  // Desde la campanita se llega al inventario de ventas o al clínico, a la
+  // lista bajo el mínimo o con el artículo buscado, y con lo que hay que mirar
+  // resaltado un momento (useResaltado). La cantidad no se edita aquí, entra
+  // por factura de compra.
+  const [llegada] = useState(() => ({
+    inventario: location.state?.inventario ?? null,
+    tab: location.state?.tab ?? null,
+    bajoMinimo: Boolean(location.state?.verBajoMinimo),
+    buscar: location.state?.buscar ?? '',
+  }))
 
-  const [activeTab, setActiveTab] = useState('productos')
+  const [activeTab, setActiveTab] = useState(() =>
+    TABS.some((tab) => tab.id === llegada.tab) ? llegada.tab : 'productos'
+  )
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
   const [inventarioSeleccionado, setInventarioSeleccionado] = useState(() =>
-    llegadaBajoMinimo ? 'ventas' : leerInventarioGuardado()
+    llegada.inventario ?? (llegada.bajoMinimo ? 'ventas' : leerInventarioGuardado())
   ) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
@@ -483,7 +489,8 @@ export default function InventarioPage() {
 
   const productosHook = useInventarioProductos({
     enabled: puedeVerInventario,
-    bajoStockInicial: llegadaBajoMinimo,
+    bajoStockInicial: llegada.bajoMinimo && llegada.inventario !== 'clinica',
+    buscarInicial: llegada.inventario === 'ventas' ? llegada.buscar : '',
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
@@ -497,6 +504,8 @@ export default function InventarioPage() {
 
   const insumosClinicosHook = useInsumosClinicos({
     enabled: puedeVerInventario,
+    bajoStockInicial: llegada.bajoMinimo && llegada.inventario === 'clinica',
+    buscarInicial: llegada.inventario === 'clinica' ? llegada.buscar : '',
     onInsumoDeleted: (insumoId) => {
       if (movimientosClinicosHook.selectedInsumo?.id === insumoId) {
         movimientosClinicosHook.clearSelection()
@@ -509,19 +518,6 @@ export default function InventarioPage() {
   useEffect(() => {
     document.title = 'Inventario | Bourgelat'
   }, [])
-
-  useEffect(() => {
-    // Se limpia el estado para que volver o recargar no lo resalte otra vez.
-    if (llegadaBajoMinimo) navigate(location.pathname, { replace: true, state: null })
-  }, [llegadaBajoMinimo, location.pathname, navigate])
-  // El resaltado cuenta desde que la fila aparece, no desde que carga la página.
-  const resaltadoVisible =
-    productoResaltado != null && productosHook.productosRows.some((row) => row.id === productoResaltado)
-  useEffect(() => {
-    if (!resaltadoVisible) return
-    const quitar = setTimeout(() => setProductoResaltado(null), 2500)
-    return () => clearTimeout(quitar)
-  }, [resaltadoVisible])
 
   function handleTabClick(tabId) {
     setActiveTab(tabId)
@@ -556,6 +552,17 @@ export default function InventarioPage() {
   // Antes del return por rol: un hook despues de un return condicional rompe
   // el orden de hooks si el rol cambia entre renders (p. ej. al refrescar /me).
   const facturaCompraHook = useFacturaCompra({ enabled: rolPermitido })
+
+  // Cada resaltado espera a que su fila esté en la lista ya filtrada.
+  const productoResaltado = useResaltado('producto', {
+    presente: (id) => productosHook.productosRows.some((row) => row.id === id),
+  })
+  const insumoResaltado = useResaltado('insumo', {
+    presente: (id) => insumosClinicosHook.insumosRows.some((row) => row.id === id),
+  })
+  const compraResaltada = useResaltado('compra', {
+    presente: (id) => facturaCompraHook.facturas.some((factura) => factura.id === id),
+  })
 
   if (!rolPermitido) return <RestrictedInventoryPage />
 
@@ -945,6 +952,7 @@ export default function InventarioPage() {
                   title={insumosClinicosHook.verDesactivados ? 'Insumos clínicos desactivados' : 'Insumos clínicos'}
                   subtitle="Lo que se usa en consulta y procedimientos. No se vende: lo aplicado se descuenta al cerrar la historia clínica y queda como gasto de insumos."
                   rows={insumosClinicosHook.insumosRows}
+                  highlightKey={insumoResaltado}
                   columns={[
                     {
                       key: 'nombre',
@@ -1451,6 +1459,7 @@ export default function InventarioPage() {
                 <TablaInventario
                   title="Facturas de compra"
                   subtitle="Compras a proveedores. Al confirmar una factura se suman las cantidades al inventario."
+                  highlightKey={compraResaltada}
                   rows={facturaCompraHook.facturas.map((f) => {
                     const hoy = new Date()
                     const plazo = f.fechaPagoFinal ? new Date(f.fechaPagoFinal) : null

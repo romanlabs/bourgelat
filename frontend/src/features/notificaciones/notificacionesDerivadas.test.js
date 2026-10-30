@@ -35,7 +35,7 @@ describe('derivarNotificaciones', () => {
     expect(derivarNotificaciones({ inventario: inventario(0), ahora })[0]).toMatchObject({
       id: 'stock-producto-p1-agotado',
       titulo: 'Se agotó Jeringa 3 ml',
-      state: { resaltarProductoId: 'p1' },
+      state: { resaltar: { tipo: 'producto', id: 'p1' }, inventario: 'ventas', verBajoMinimo: true },
     })
   })
 
@@ -74,7 +74,7 @@ describe('derivarNotificaciones', () => {
     }
     const avisos = derivarNotificaciones({ cuentasPorCobrar, ahora })
     expect(avisos).toHaveLength(1)
-    expect(avisos[0]).toMatchObject({ titulo: 'Crédito vencido de Daniela Toro', to: '/caja', state: { tab: 'cobrar' } })
+    expect(avisos[0]).toMatchObject({ titulo: 'Crédito vencido de Daniela Toro', to: '/caja', state: { tab: 'cobrar', resaltar: { tipo: 'cliente', id: 't1' } } })
     expect(avisos[0].texto).toBe('2 ventas con saldo de $100.000.')
   })
 

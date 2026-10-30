@@ -26,7 +26,7 @@ assert.deepStrictEqual(llegada, {
   tipo: 'paciente_llego',
   titulo: 'Oreo llegó a sala',
   texto: 'Cita de las 11:00 a. m. con Carlos Mejía. Cojea de la pata trasera',
-  enlace: '/agenda',
+  enlace: '/agenda?tab=recepcion&cita=c1',
   entidadTipo: 'Cita',
   entidadId: 'c1',
 })

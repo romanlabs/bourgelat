@@ -43,7 +43,8 @@ const avisoPacienteLlego = ({ cita, mascotaNombre, propietarioNombre }) =>
       cita.horaInicio ? `Cita de las ${hora12(cita.horaInicio)}` : null,
       propietarioNombre ? `con ${propietarioNombre}` : null,
     ].filter(Boolean).join(' ') + (cita.motivo ? `. ${cita.motivo}` : '.'),
-    enlace: '/agenda',
+    // Recepción abre la cita en la sala de espera y la resalta.
+    enlace: `/agenda?tab=recepcion&cita=${cita.id}`,
     entidadTipo: 'Cita',
     entidadId: cita.id,
   })
@@ -88,7 +89,8 @@ const avisoCitaProxima = ({ cita, mascotaNombre, propietarioNombre, consultorioN
       consultorioNombre ? `en ${consultorioNombre}` : null,
       cita.motivo || null,
     ].filter(Boolean).join(' · ') || null,
-    enlace: '/agenda',
+    // Recepción abre la cita en la sala de espera y la resalta.
+    enlace: `/agenda?tab=recepcion&cita=${cita.id}`,
     entidadTipo: 'Cita',
     entidadId: cita.id,
   })
