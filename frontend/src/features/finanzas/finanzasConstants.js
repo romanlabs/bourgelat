@@ -46,3 +46,15 @@ export const PAYMENT_METHOD_SHORT = {
   daviplata: 'Daviplata',
   otro: 'Otro',
 }
+
+// Medios por los que entra la plata, en el mismo orden que el backend
+// (reportes/medios-pago). 'credito' no está: el fiado entra por el medio de cada abono.
+export const MEDIOS_PAGO = [
+  { id: 'efectivo', label: 'Efectivo' },
+  { id: 'transferencia', label: 'Transferencia' },
+  { id: 'nequi', label: 'Nequi' },
+  { id: 'daviplata', label: 'Daviplata' },
+  { id: 'tarjeta_debito', label: 'Tarjeta débito' },
+  { id: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { id: 'otro', label: 'Otro' },
+]

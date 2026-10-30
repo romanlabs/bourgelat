@@ -17,6 +17,8 @@ const {
   calcularDestacados,
   margenDe,
   ticketPromedioDe,
+  agregarPorMedio,
+  fechaBogota,
 } = require('./finanzasPeriodo')
 
 // sumarMesesISO: conserva el día y se queda en el último si el mes es corto.
@@ -179,5 +181,46 @@ assert.strictEqual(margenDe(1000000, 250000), 25)
 assert.strictEqual(margenDe(300000, 100000), 33.3)
 assert.strictEqual(ticketPromedioDe(0, 0), 0)
 assert.strictEqual(ticketPromedioDe(100000, 3), 33333.33)
+
+// fechaBogota: un abono a las 9 p. m. de Bogotá ya es el día siguiente en UTC.
+assert.strictEqual(fechaBogota('2026-10-14T02:00:00Z'), '2026-10-13')
+assert.strictEqual(fechaBogota('2026-10-14T05:00:00Z'), '2026-10-14')
+
+// agregarPorMedio: contado por el medio de la venta, abonos por el suyo.
+const porMedio = agregarPorMedio({
+  facturas: [
+    { id: 'f1', fecha: '2026-10-05', total: '100000', saldoPendiente: '0', metodoPago: 'efectivo' },
+    { id: 'f2', fecha: '2026-10-05', total: '50000', saldoPendiente: '0', metodoPago: 'nequi' },
+    // Crédito de 80.000 con un abono de 30.000: no trae plata en la venta.
+    { id: 'f3', fecha: '2026-10-06', total: '80000', saldoPendiente: '50000', metodoPago: 'credito' },
+    // Método que no conocemos (o nulo): cae en «otro».
+    { id: 'f4', fecha: '2026-11-02', total: '20000', saldoPendiente: '0', metodoPago: null },
+  ],
+  abonosPorFactura: { f3: '30000' },
+  abonos: [{ fecha: '2026-10-07', monto: '30000', metodoPago: 'transferencia' }],
+  claves: ['2026-10', '2026-11'],
+  granularidad: 'mes',
+})
+const medio = (id) => porMedio.medios.find((m) => m.id === id)
+assert.strictEqual(porMedio.total, 200000, 'contado + abonos, sin el saldo del crédito')
+assert.ok(!porMedio.medios.some((m) => m.id === 'credito'), 'el crédito no es un medio')
+assert.deepStrictEqual(
+  { cobrado: medio('transferencia').cobrado, deAbonos: medio('transferencia').deAbonos, abonos: medio('transferencia').abonos, ventas: medio('transferencia').ventas },
+  { cobrado: 30000, deAbonos: 30000, abonos: 1, ventas: 0 },
+  'el abono entra por su propio medio'
+)
+assert.strictEqual(medio('otro').cobrado, 20000)
+assert.strictEqual(medio('efectivo').participacion, 50)
+assert.strictEqual(medio('efectivo').ticketPromedio, 100000)
+assert.strictEqual(medio('efectivo').porDiaSemana[1], 100000, '5 de octubre de 2026 es lunes')
+assert.deepStrictEqual(porMedio.serie.map((f) => [f.periodo, f.efectivo, f.otro]), [['2026-10', 100000, 0], ['2026-11', 0, 20000]])
+assert.strictEqual(
+  porMedio.medios.reduce((suma, m) => suma + m.cobrado, 0),
+  porMedio.total,
+  'la suma de los medios es el total cobrado'
+)
+// Sin claves no hay serie (lo usa el periodo anterior).
+assert.deepStrictEqual(agregarPorMedio({ facturas: [] }).serie, [])
+assert.strictEqual(agregarPorMedio({ facturas: [] }).medios[0].participacion, 0)
 
 console.log('finanzasPeriodo: OK')
