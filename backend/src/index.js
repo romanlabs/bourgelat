@@ -20,6 +20,7 @@ const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeError
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
 const { enviarRecordatoriosCita, INTERVALO_MS: INTERVALO_RECORDATORIOS_CITA } = require('./jobs/recordatoriosCita')
 const { ejecutarRecordatoriosCobro, INTERVALO_MS: INTERVALO_RECORDATORIOS_COBRO } = require('./jobs/recordatoriosCobro')
+const { limpiarNotificacionesAntiguas } = require('./services/notificacionService')
 const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR, EXAMENES_SUBDIR } = require('./config/uploads')
 const { rutaSinQuery } = require('./utils/rutaLog')
 const logger = require('./utils/logger')
@@ -194,6 +195,7 @@ app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
 // Soporte de la clinica. Las puertas del equipo viven en `/api/soporte-equipo`
 // (montado arriba, antes del body parsing; ver docs/soporte.md).
 app.use('/api/soporte', soporteRoutes)
+app.use('/api/notificaciones', require('./routes/notificacionRoutes'))
 
 // Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin
 // el guard de escritura. En produccion no se ejecuta: el despliegue no es el
@@ -270,6 +272,8 @@ sequelize.authenticate()
     setInterval(limpiarTokensVencidos, 24 * 60 * 60 * 1000)
     setInterval(limpiarLogsAntiguos, 24 * 60 * 60 * 1000)
     setInterval(limpiarIdempotencia, 24 * 60 * 60 * 1000)
+    limpiarNotificacionesAntiguas()
+    setInterval(limpiarNotificacionesAntiguas, 24 * 60 * 60 * 1000)
 
     // ── Recordatorio de citas al profesional ────────────
     enviarRecordatoriosCita()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { derivarNotificaciones } from './notificacionesDerivadas'
+import { agruparAvisos, cuandoFue, derivarNotificaciones, desdeServidor } from './notificacionesDerivadas'
 
 const ahora = new Date(2026, 9, 29, 10, 30)
 
@@ -87,5 +87,35 @@ describe('derivarNotificaciones', () => {
     expect(avisos.map((a) => a.titulo)).toEqual(['Respondimos tu solicitud #1042', 'Tu plan vence en 3 días'])
     expect(avisos[0].to).toBe('/soporte?ticket=t1')
     expect(derivarNotificaciones({ diasRestantes: 10, ahora })).toEqual([])
+  })
+})
+
+describe('avisos guardados', () => {
+  it('dice hace cuánto pasó', () => {
+    expect(cuandoFue(new Date(2026, 9, 29, 10, 29, 40), ahora)).toBe('Ahora')
+    expect(cuandoFue(new Date(2026, 9, 29, 10, 25), ahora)).toBe('Hace 5 min')
+    expect(cuandoFue(new Date(2026, 9, 29, 8, 10), ahora)).toBe('Hace 2 h')
+    expect(cuandoFue(new Date(2026, 9, 28, 18, 4), ahora)).toMatch(/^6:04/)
+  })
+
+  it('convierte la fila del servidor y la marca nueva si no está leída', () => {
+    const aviso = desdeServidor(
+      { id: 'n1', categoria: 'caja', titulo: 'Cierre', texto: null, enlace: '/caja', leidaEn: null, createdAt: new Date(2026, 9, 29, 9, 0).toISOString() },
+      ahora
+    )
+    expect(aviso).toMatchObject({ id: 'srv-n1', servidorId: 'n1', to: '/caja', nueva: true })
+  })
+
+  it('agrupa lo pendiente primero y lo guardado por día', () => {
+    const grupos = agruparAvisos(
+      [
+        { id: 'd1' },
+        { id: 's1', fecha: new Date(2026, 9, 29, 9, 0).toISOString() },
+        { id: 's2', fecha: new Date(2026, 9, 28, 18, 0).toISOString() },
+        { id: 's3', fecha: new Date(2026, 9, 20, 8, 0).toISOString() },
+      ],
+      ahora
+    )
+    expect(grupos.map((g) => g.titulo)).toEqual(['Para revisar ahora', 'Hoy', 'Ayer', expect.stringMatching(/^Martes, 20 de octubre/)])
   })
 })

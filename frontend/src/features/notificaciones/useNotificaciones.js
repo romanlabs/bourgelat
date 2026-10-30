@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { agendaApi } from '@/features/agenda/agendaApi'
 import { dashboardApi } from '@/features/dashboard/dashboardApi'
 import { administracionApi } from '@/features/finanzas/administracionApi'
@@ -8,7 +8,11 @@ import { soporteApi } from '@/features/soporte/soporteApi'
 import { fechaLocal } from '@/lib/fecha'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
-import { derivarNotificaciones } from './notificacionesDerivadas'
+import { derivarNotificaciones, desdeServidor } from './notificacionesDerivadas'
+import { notificacionesApi } from './notificacionesApi'
+
+const CLAVE_GUARDADAS = ['notificaciones']
+const CADA_MINUTO = 60_000
 
 // Las citas cambian durante el día (llegadas, consultas que terminan); lo
 // demás cambia poco. Las claves son las mismas de Hoy, Inventario, Caja y
@@ -88,6 +92,14 @@ export function useNotificaciones() {
     queryFn: dashboardApi.obtenerSuscripcionActiva,
     enabled: Boolean(usuarioId) && verPlan,
   })
+  // Los avisos guardados (llegadas, exámenes, cierres de caja) los crea el
+  // servidor para otra persona: se consultan cada minuto.
+  const guardadasQuery = useQuery({
+    queryKey: CLAVE_GUARDADAS,
+    queryFn: notificacionesApi.listar,
+    enabled: Boolean(usuarioId) && verSoporte,
+    refetchInterval: CADA_MINUTO,
+  })
 
   // El veterinario recibe avisos de sus pacientes y de los que aún no tienen
   // profesional, como en su jornada de Hoy.
@@ -139,16 +151,51 @@ export function useNotificaciones() {
     [derivadas, leidas, usuarioId]
   )
 
-  const avisos = useMemo(
-    () => derivadas.map((aviso) => ({ ...aviso, nueva: !leidas.has(aviso.id) })),
-    [derivadas, leidas]
+  // Marcar en el servidor se refleja de una vez en la caché; si falla (p. ej.
+  // la clínica está en solo lectura) se vuelve a pedir la lista y ya.
+  const queryClient = useQueryClient()
+  const marcarGuardadas = useMutation({
+    mutationFn: (ids) => notificacionesApi.marcarLeidas(ids),
+    onMutate: (ids) => {
+      queryClient.setQueryData(CLAVE_GUARDADAS, (previo) => {
+        if (!previo) return previo
+        const leidaEn = new Date().toISOString()
+        const notificaciones = previo.notificaciones.map((fila) =>
+          !fila.leidaEn && (!ids || ids.includes(fila.id)) ? { ...fila, leidaEn } : fila
+        )
+        return { ...previo, notificaciones }
+      })
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: CLAVE_GUARDADAS }),
+  })
+
+  const guardadas = useMemo(
+    () => (guardadasQuery.data?.notificaciones || []).map((fila) => desdeServidor(fila, ahora)),
+    [guardadasQuery.data?.notificaciones, ahora]
   )
+
+  const avisos = useMemo(
+    () => [...derivadas.map((aviso) => ({ ...aviso, nueva: !leidas.has(aviso.id) })), ...guardadas],
+    [derivadas, leidas, guardadas]
+  )
+
+  // La lista trae las últimas 50; el conteo del servidor cubre las que no caben.
+  const guardadasSinLeer = guardadas.filter((aviso) => aviso.nueva).length
+  const sinLeerFueraDeLista = Math.max(0, (guardadasQuery.data?.sinLeer ?? 0) - guardadasSinLeer)
+  const { mutate: enviarLeidas } = marcarGuardadas
 
   return {
     avisos,
-    sinLeer: avisos.filter((aviso) => aviso.nueva).length,
-    cargando: [citasQuery, inventarioQuery, comprasQuery, fiadoQuery, ticketsQuery].some((query) => query.isLoading),
-    marcarLeida: (id) => marcar([id]),
-    marcarTodas: () => marcar(derivadas.map((aviso) => aviso.id)),
+    sinLeer: avisos.filter((aviso) => aviso.nueva).length + sinLeerFueraDeLista,
+    cargando: [citasQuery, inventarioQuery, comprasQuery, fiadoQuery, ticketsQuery, guardadasQuery].some((query) => query.isLoading),
+    marcarLeida: (aviso) => {
+      if (!aviso.nueva) return
+      if (aviso.servidorId) enviarLeidas([aviso.servidorId])
+      else marcar([aviso.id])
+    },
+    marcarTodas: () => {
+      marcar(derivadas.map((aviso) => aviso.id))
+      if (guardadasSinLeer + sinLeerFueraDeLista > 0) enviarLeidas(undefined)
+    },
   }
 }

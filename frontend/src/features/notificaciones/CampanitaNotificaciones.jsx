@@ -3,13 +3,41 @@ import { useNavigate } from 'react-router-dom'
 import { Dialog } from 'radix-ui'
 import { Activity, Bell, MessageSquare, Package, Receipt, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { FILTROS } from './notificacionesDerivadas'
+import { FILTROS, agruparAvisos } from './notificacionesDerivadas'
 
 const ICONO_CATEGORIA = {
   clinica: { icon: Activity, tono: 'bg-info-soft text-info' },
   inventario: { icon: Package, tono: 'bg-danger-soft text-danger' },
   caja: { icon: Receipt, tono: 'bg-warning-soft text-warning' },
   sistema: { icon: MessageSquare, tono: 'bg-muted text-muted-foreground' },
+}
+
+function FilaAviso({ aviso, onAbrir }) {
+  const { icon: Icono, tono } = ICONO_CATEGORIA[aviso.categoria] ?? ICONO_CATEGORIA.sistema
+  return (
+    <button
+      type="button"
+      onClick={() => onAbrir(aviso)}
+      className={cn(
+        'flex w-full items-start gap-3.5 rounded-xl p-3 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        aviso.nueva && 'bg-muted/60'
+      )}
+    >
+      <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', tono)}>
+        <Icono className="h-5 w-5" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-[15px] font-semibold text-foreground">{aviso.titulo}</span>
+        {aviso.texto ? <span className="text-sm leading-5 text-muted-foreground">{aviso.texto}</span> : null}
+        {aviso.cuando ? <span className="text-xs text-muted-foreground">{aviso.cuando}</span> : null}
+      </span>
+      {aviso.nueva ? (
+        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-brand">
+          <span className="sr-only">Sin leer</span>
+        </span>
+      ) : null}
+    </button>
+  )
 }
 
 /**
@@ -26,9 +54,11 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
 
   const filtroActivo = FILTROS.find((item) => item.id === filtro) ?? FILTROS[0]
   const visibles = avisos.filter(filtroActivo.incluye)
+  const grupos = agruparAvisos(visibles)
 
   const abrirAviso = (aviso) => {
-    marcarLeida(aviso.id)
+    marcarLeida(aviso)
+    if (!aviso.to) return
     setAbierto(false)
     navigate(aviso.to, aviso.state ? { state: aviso.state } : undefined)
   }
@@ -121,41 +151,25 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
                 </span>
               </div>
             ) : (
-              <ul className="flex flex-col gap-0.5">
-                {visibles.map((aviso) => {
-                  const { icon: Icono, tono } = ICONO_CATEGORIA[aviso.categoria] ?? ICONO_CATEGORIA.sistema
-                  return (
-                    <li key={aviso.id}>
-                      <button
-                        type="button"
-                        onClick={() => abrirAviso(aviso)}
-                        className={cn(
-                          'flex w-full items-start gap-3.5 rounded-xl p-3 text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          aviso.nueva && 'bg-muted/60'
-                        )}
-                      >
-                        <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', tono)}>
-                          <Icono className="h-5 w-5" />
-                        </span>
-                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <span className="text-[15px] font-semibold text-foreground">{aviso.titulo}</span>
-                          <span className="text-sm leading-5 text-muted-foreground">{aviso.texto}</span>
-                        </span>
-                        {aviso.nueva ? (
-                          <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-brand">
-                            <span className="sr-only">Sin leer</span>
-                          </span>
-                        ) : null}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+              <div className="flex flex-col gap-2">
+                {grupos.map((grupo) => (
+                  <section key={grupo.id} aria-label={grupo.titulo}>
+                    <h3 className="px-3 pb-1.5 pt-2.5 text-[13px] font-semibold text-muted-foreground">{grupo.titulo}</h3>
+                    <ul className="flex flex-col gap-0.5">
+                      {grupo.items.map((aviso) => (
+                        <li key={aviso.id}>
+                          <FilaAviso aviso={aviso} onAbrir={abrirAviso} />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             )}
           </div>
 
           <p className="bg-muted/60 px-5 py-3.5 text-sm text-muted-foreground sm:px-6">
-            Los avisos se quitan solos cuando se resuelven.
+            Lo de «Para revisar ahora» se quita solo cuando se resuelve.
           </p>
         </Dialog.Content>
       </Dialog.Portal>
