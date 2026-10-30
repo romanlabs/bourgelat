@@ -35,14 +35,23 @@ const minutosDelDia = (valor) => {
   return Number(h) * 60 + Number(m)
 }
 
-const historiaHref = (cita) => (cita?.mascota?.id ? `/pacientes/${cita.mascota.id}/historial` : '/pacientes')
+// Atendida y sin historia: la consulta se registra todavía, con la cita vinculada.
+const faltaHistoria = (cita) => cita?.estado === 'completada' && !cita?.historia?.id
+
+const historiaHref = (cita) => {
+  if (!cita?.mascota?.id) return '/pacientes'
+  const base = `/pacientes/${cita.mascota.id}/historial`
+  return faltaHistoria(cita) ? `${base}?citaId=${cita.id}` : base
+}
 
 // Se cobra en Caja. Con historia, Caja precarga sus insumos (igual que el botón
 // de cobrar dentro de la historia clínica).
 const cobroEstado = (cita) => (cita?.historia?.id ? { facturarHistoriaId: cita.historia.id } : undefined)
 
-function ChipEstado({ estado }) {
-  const config = ESTADOS[estado] || ESTADOS.programada
+const FALTA_HISTORIA = { label: 'Falta historia', className: 'bg-warning-soft text-warning' }
+
+function ChipEstado({ estado, sinHistoria = false }) {
+  const config = sinHistoria ? FALTA_HISTORIA : ESTADOS[estado] || ESTADOS.programada
   return (
     <span className={cn('whitespace-nowrap rounded-md px-2.5 py-1 text-[13px] font-semibold', config.className)}>
       {config.label}
@@ -163,14 +172,12 @@ export default function JornadaHoy({
   citas,
   loading,
   cajaHoy,
-  alertas,
   puedeAtender,
   puedeCobrar,
   puedeVerCaja,
   // Si quien mira también atiende (admin y veterinario a la vez), puede
   // quedarse solo con sus pacientes.
   usuarioIdMios = null,
-  onVerReportes = null,
 }) {
   const [consultorio, setConsultorio] = useState('todos')
   const [soloMios, setSoloMios] = useState(false)
@@ -180,8 +187,12 @@ export default function JornadaHoy({
   // Tocar una cita lleva a Recepción con esa cita abierta, donde se cambia su
   // estado. Quien no entra a Agenda solo la ve en el panel de la derecha.
   const veRecepcion = canAccessModule(usuario, 'agenda')
-  const abrirCita = (cita) =>
-    veRecepcion ? navigate(`/agenda?tab=recepcion&cita=${cita.id}`) : setSeleccionId(cita.id)
+  // Una atendida sin historia ya no cambia de estado: abre su consulta.
+  const abrirCita = (cita) => {
+    if (puedeAtender && faltaHistoria(cita) && cita.mascota?.id) navigate(historiaHref(cita))
+    else if (veRecepcion) navigate(`/agenda?tab=recepcion&cita=${cita.id}`)
+    else setSeleccionId(cita.id)
+  }
 
   const ordenadas = useMemo(
     () => [...citas].sort((a, b) => minutosDelDia(a.horaInicio) - minutosDelDia(b.horaInicio)),
@@ -305,7 +316,13 @@ export default function JornadaHoy({
                   <button
                     type="button"
                     onClick={() => abrirCita(cita)}
-                    title={veRecepcion ? 'Abrir en Recepción para cambiar su estado' : undefined}
+                    title={
+                      puedeAtender && faltaHistoria(cita)
+                        ? 'Registrar la historia de esta consulta'
+                        : veRecepcion
+                          ? 'Abrir en Recepción para cambiar su estado'
+                          : undefined
+                    }
                     aria-pressed={activa}
                     className={cn(
                       'grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors',
@@ -328,7 +345,7 @@ export default function JornadaHoy({
                         {[cita.motivo, cita.propietario?.nombre].filter(Boolean).join(' · ') || 'Sin motivo'}
                       </span>
                     </span>
-                    <ChipEstado estado={cita.estado} />
+                    <ChipEstado estado={cita.estado} sinHistoria={faltaHistoria(cita)} />
                   </button>
                 </li>
               )
@@ -375,37 +392,6 @@ export default function JornadaHoy({
             )}
           </section>
         ) : null}
-
-        <section aria-labelledby="hoy-revisar" className="flex flex-col gap-1.5 rounded-2xl bg-card p-6">
-          <h2 id="hoy-revisar" className="mb-2 text-lg font-semibold">Para revisar</h2>
-          {alertas.length === 0 ? (
-            <p className="text-[15px] text-muted-foreground">Todo en orden por ahora.</p>
-          ) : (
-            alertas.map((alerta) => (
-              <Link
-                key={alerta.id}
-                to={alerta.to}
-                className="-mx-3 flex items-start gap-3.5 rounded-xl p-3 transition hover:bg-muted"
-              >
-                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-[3px] bg-brand" />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold">{alerta.title}</span>
-                  <span className="text-sm leading-5 text-muted-foreground">{alerta.detail}</span>
-                </span>
-              </Link>
-            ))
-          )}
-          {onVerReportes ? (
-            <button
-              type="button"
-              onClick={onVerReportes}
-              className="mt-2 inline-flex w-fit items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
-            >
-              Ver reportes del mes
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          ) : null}
-        </section>
       </div>
     </div>
   )

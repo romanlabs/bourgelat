@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -305,7 +306,7 @@ function AccionesFila({ nombre, acciones }) {
 
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
-function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action }) {
+function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey }) {
   return (
     <section className="overflow-hidden rounded-2xl bg-card">
       {title || action ? (
@@ -323,6 +324,7 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
         columns={columns}
         rows={rows}
         pageSize={Math.max(rows.length, 1)}
+        highlightKey={highlightKey}
         emptyTitle={emptyTitle}
         emptyDescription={emptyBody}
         className="rounded-none"
@@ -451,11 +453,21 @@ function RestrictedInventoryPage() {
 
 export default function InventarioPage() {
   const usuario = useAuthStore((state) => state.usuario)
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Desde «Para revisar» del inicio se llega a la lista de los que están bajo
+  // el mínimo, a veces con un producto para resaltar un momento. La cantidad
+  // no se edita aquí, entra por factura de compra.
+  const [llegadaProductoId] = useState(() => location.state?.resaltarProductoId ?? null)
+  const [llegadaBajoMinimo] = useState(() => Boolean(llegadaProductoId || location.state?.verBajoMinimo))
+  const [productoResaltado, setProductoResaltado] = useState(llegadaProductoId)
 
   const [activeTab, setActiveTab] = useState('productos')
   // Se recuerda la ultima eleccion: preguntar en cada visita a Productos costaba un clic
   // de mas. 'Cambiar de inventario' sigue a mano para alternar.
-  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(leerInventarioGuardado) // null | 'ventas' | 'clinica'
+  const [inventarioSeleccionado, setInventarioSeleccionado] = useState(() =>
+    llegadaBajoMinimo ? 'ventas' : leerInventarioGuardado()
+  ) // null | 'ventas' | 'clinica'
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [relevoVencimiento, setRelevoVencimiento] = useState(null) // null | { item, tipo }
 
@@ -471,6 +483,7 @@ export default function InventarioPage() {
 
   const productosHook = useInventarioProductos({
     enabled: puedeVerInventario,
+    bajoStockInicial: llegadaBajoMinimo,
     onProductDeleted: (productoId) => {
       if (movimientosHook.selectedProduct?.id === productoId) {
         movimientosHook.clearSelection()
@@ -496,6 +509,19 @@ export default function InventarioPage() {
   useEffect(() => {
     document.title = 'Inventario | Bourgelat'
   }, [])
+
+  useEffect(() => {
+    // Se limpia el estado para que volver o recargar no lo resalte otra vez.
+    if (llegadaBajoMinimo) navigate(location.pathname, { replace: true, state: null })
+  }, [llegadaBajoMinimo, location.pathname, navigate])
+  // El resaltado cuenta desde que la fila aparece, no desde que carga la página.
+  const resaltadoVisible =
+    productoResaltado != null && productosHook.productosRows.some((row) => row.id === productoResaltado)
+  useEffect(() => {
+    if (!resaltadoVisible) return
+    const quitar = setTimeout(() => setProductoResaltado(null), 2500)
+    return () => clearTimeout(quitar)
+  }, [resaltadoVisible])
 
   function handleTabClick(tabId) {
     setActiveTab(tabId)
@@ -729,6 +755,7 @@ export default function InventarioPage() {
                       : 'Lo que hay en bodega para vender, con su mínimo y su vencimiento.'
                   }
                   rows={productosRows}
+                  highlightKey={productoResaltado}
                   columns={[
                     {
                       key: 'nombre',
