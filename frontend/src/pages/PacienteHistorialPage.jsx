@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
@@ -93,7 +93,11 @@ export default function PacienteHistorialPage() {
   // consulta concreta sin obligar a buscarla en el timeline.
   const historiaIdParam = searchParams.get('historiaId') || ''
 
-  const [activeTab, setActiveTab] = useState('historia')
+  const location = useLocation()
+  // El aviso de resultados llega a la pestaña de exámenes (ahí se resalta el examen).
+  const [activeTab, setActiveTab] = useState(() =>
+    location.state?.resaltar?.tipo === 'examen' ? 'examenes' : 'historia'
+  )
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [historiaToEdit, setHistoriaToEdit] = useState(null)
   const [estiloDrawerOpen, setEstiloDrawerOpen] = useState(false)

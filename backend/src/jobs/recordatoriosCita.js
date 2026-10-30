@@ -11,6 +11,8 @@ const Usuario = require('../models/Usuario')
 const Consultorio = require('../models/Consultorio')
 const { obtenerSuscripcionActivaClinica } = require('../services/suscripcionService')
 const { enviarEmailRecordatorioCita, smtpConfigurado } = require('../services/emailService')
+const { notificar } = require('../services/notificacionService')
+const { avisoCitaProxima } = require('../services/notificacionReglas')
 const { hoyISO, sumarDiasISO } = require('../utils/vencimiento')
 const {
   TOPE_DIARIO, inicioCita, inicioDelDia, debeAvisar, datosCorreo,
@@ -138,6 +140,18 @@ const enviarRecordatoriosCita = async ({ ahora = new Date() } = {}) => {
         }
         enviados += 1
         restantes -= 1
+        // El mismo aviso en la campanita. Solo tras el envío: si el correo
+        // falla, la cita se suelta y se reintenta, y no debe avisar dos veces.
+        await notificar({
+          clinicaId: cita.clinicaId,
+          usuarioIds: [cita.veterinario.id],
+          aviso: avisoCitaProxima({
+            cita,
+            mascotaNombre: cita.mascota?.nombre,
+            propietarioNombre: cita.propietario?.nombre,
+            consultorioNombre: cita.consultorio?.nombre,
+          }),
+        })
       } catch (error) {
         fallidos += 1
         try {

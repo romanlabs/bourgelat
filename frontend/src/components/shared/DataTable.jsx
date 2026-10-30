@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EmptyState } from './EmptyState'
@@ -128,8 +128,12 @@ export function DataTable({
   emptyDescription,
   emptyAction,
 
+  // Fila que se resalta y se trae a la vista (p. ej. al llegar desde una alerta)
+  highlightKey = null,
+
   className,
 }) {
+  const tbodyRef = useRef(null)
   // ── Estado interno (modo cliente) ────────────────────────────
   const [sortKeyLocal, setSortKeyLocal] = useState(null)
   const [sortDirLocal, setSortDirLocal] = useState('asc')
@@ -141,6 +145,12 @@ export function DataTable({
   const sortKey = isControlledSort ? sortKeyProp : sortKeyLocal
   const sortDir = isControlledSort ? sortDirProp : sortDirLocal
   const page    = isControlledPage ? pageProp    : pageLocal
+
+  const filaResaltadaVisible = highlightKey != null && rows.some((row) => row[keyField] === highlightKey)
+  useEffect(() => {
+    if (!filaResaltadaVisible) return
+    tbodyRef.current?.querySelector('[data-resaltada]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [filaResaltadaVisible, highlightKey])
 
   // ── Handlers ─────────────────────────────────────────────────
   function handleSort(key) {
@@ -229,7 +239,7 @@ export function DataTable({
           </thead>
 
           {/* Cuerpo */}
-          <tbody>
+          <tbody ref={tbodyRef}>
             {loading ? (
               Array.from({ length: skeletonRows }).map((_, i) => (
                 <SkeletonRow key={i} columns={columns} />
@@ -238,7 +248,14 @@ export function DataTable({
               processedRows.map((row) => (
                 <tr
                   key={row[keyField] ?? row.key}
-                  className="group/fila [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl"
+                  data-resaltada={highlightKey != null && row[keyField] === highlightKey ? '' : undefined}
+                  className={cn(
+                    'group/fila [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl',
+                    // Franja miel de lo que llega resaltado (lib/useResaltado); las
+                    // celdas se desvanecen al quitarla en vez de cortar de golpe.
+                    '[&>td]:transition-colors [&>td]:duration-700',
+                    highlightKey != null && row[keyField] === highlightKey && '[&>td]:bg-warning-soft'
+                  )}
                 >
                   {columns.map((col) => (
                     <td

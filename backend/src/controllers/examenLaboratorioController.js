@@ -4,6 +4,7 @@ const ExamenLaboratorio = require('../models/ExamenLaboratorio');
 const Mascota = require('../models/Mascota');
 const Usuario = require('../models/Usuario');
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
+const { avisarExamenRegistrado } = require('../services/notificacionService');
 const contentDisposition = require('content-disposition');
 const { EXAMENES_SUBDIR, UPLOADS_ROOT_DIR } = require('../config/uploads');
 const logger = require('../utils/logger');
@@ -102,6 +103,8 @@ const crearExamen = async (req, res) => {
       message: 'Examen de laboratorio registrado exitosamente',
       examen: serializarExamen(req, examen),
     });
+
+    await avisarExamenRegistrado({ examen, actor: req.usuario });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }

@@ -113,6 +113,8 @@ export const DOMINIOS = {
     'antecedentes-detalle',
     'examenes-laboratorio',
     'paciente-estilos',
+    // Vacunas y controles por vencer de la campanita.
+    'notificaciones-seguimientos',
   ],
 
   // Un usuario nuevo (o un cambio de rol) tiene que aparecer en los selectores de
@@ -136,6 +138,11 @@ export const DOMINIOS = {
     'recepcion-consultorios',
     'suscripcion-activa',
     'suscripcion-planes',
+  ],
+
+  // Avisos guardados de la campanita (los derivados usan las claves de su dominio).
+  notificaciones: [
+    'notificaciones',
   ],
 }
 

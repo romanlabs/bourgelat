@@ -38,6 +38,8 @@ import AvisoCelular from './AvisoCelular'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS, ROL_ACTION_ORDER } from './quickActions'
 import QuickCreateMenu from './QuickCreateMenu'
+import CampanitaNotificaciones from '@/features/notificaciones/CampanitaNotificaciones'
+import { useNotificaciones } from '@/features/notificaciones/useNotificaciones'
 import { AdminSearchContext, HeaderSlotContext } from './HeaderSlotContext'
 import { etiquetaEspecie } from '@/lib/especies'
 import { useModuleAccess } from '@/lib/useModuleAccess'
@@ -315,6 +317,10 @@ export default function AdminShell({
   // toolbar (Hoy/prev/next/vista) en vez de duplicar una segunda barra debajo.
   const [headerCenter, setHeaderCenter] = useState(null)
   const searchInputRef = useRef(null)
+  const notificaciones = useNotificaciones()
+  // En escritorio la barra superior solo se ve si la página usa su centro o no
+  // trae título; si no, la campanita va en la fila del título.
+  const barraSuperiorEnEscritorio = Boolean(headerCenter) || (hidePageHeader && !hideSearch)
 
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'Tu clínica'
 
@@ -469,6 +475,8 @@ export default function AdminShell({
                 Ctrl K
               </kbd>
             </button>
+
+            <CampanitaNotificaciones notificaciones={notificaciones} />
 
             <MenuUsuario {...menuUsuarioProps}>
               <button
@@ -733,6 +741,9 @@ export default function AdminShell({
                       </>
                     )}
                   </button>
+                )}
+                {barraSuperiorEnEscritorio ? null : (
+                  <CampanitaNotificaciones notificaciones={notificaciones} className="hidden lg:inline-flex" />
                 )}
                 {actions}
                 {visibleQuickActions.length > 0 ? <QuickCreateMenu actions={visibleQuickActions} /> : null}

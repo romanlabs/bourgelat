@@ -48,6 +48,15 @@
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
 }
+/* Panel que entra por la derecha (notificaciones). */
+@keyframes admin-panel-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes admin-panel-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
 @keyframes admin-drawer-overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }

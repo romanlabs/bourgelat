@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { DetalleCitaDrawer } from './DetalleCitaDrawer'
+import { CLASE_RESALTADO, DURACION_RESALTADO, TRANSICION_RESALTADO } from '@/lib/useResaltado'
 import {
   ACCION_LABELS,
   ACCION_PRIMARIA,
@@ -178,7 +179,7 @@ function AccionesMenu({ acciones, disabled, onSelect }) {
   )
 }
 
-function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, onAccion, onSeleccionar, seleccionada }) {
+function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, onAccion, onSeleccionar, seleccionada, resaltada = false }) {
   const atrasada = esCitaAtrasada(cita, ahoraMinutos)
   const tiempo = tiempoDeFila(cita, ahoraMinutos)
   const transiciones = TRANSICIONES[cita.estado] || []
@@ -197,8 +198,9 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
           onSeleccionar(cita)
         }
       }}
-      className={`flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        seleccionada ? 'bg-accent' : 'hover:bg-muted'
+      data-resaltar-id={cita.id}
+      className={`flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left ${TRANSICION_RESALTADO} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        resaltada ? CLASE_RESALTADO : seleccionada ? 'bg-accent' : 'hover:bg-muted'
       } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_hsl(var(--danger))]' : ''}`}
     >
       <span className="w-12 shrink-0 text-[15px] font-semibold tabular-nums text-muted-foreground">
@@ -281,6 +283,17 @@ export function SalaEsperaPanel({
   const [motivoCancelacion, setMotivoCancelacion] = useState('')
   const [mostrarResueltas, setMostrarResueltas] = useState(false)
   const [citaSeleccionadaId, setCitaSeleccionadaId] = useState(citaInicialId)
+  // La cita que llega por enlace (campanita, Hoy) se resalta un momento.
+  const [citaResaltadaId, setCitaResaltadaId] = useState(citaInicialId)
+  const citaResaltadaVisible = citaResaltadaId != null && citas.some((cita) => cita.id === citaResaltadaId)
+  useEffect(() => {
+    if (!citaResaltadaVisible) return
+    document
+      .querySelector(`[data-resaltar-id="${CSS.escape(String(citaResaltadaId))}"]`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const quitar = window.setTimeout(() => setCitaResaltadaId(null), DURACION_RESALTADO)
+    return () => window.clearTimeout(quitar)
+  }, [citaResaltadaVisible, citaResaltadaId])
   const [ahoraMinutos, setAhoraMinutos] = useState(() => horaAMinutos(new Date().toTimeString()))
 
   useEffect(() => {
@@ -438,6 +451,7 @@ export function SalaEsperaPanel({
                 onAccion={handleAction}
                 onSeleccionar={(seleccionada) => setCitaSeleccionadaId(seleccionada.id)}
                 seleccionada={cita.id === citaSeleccionadaId}
+                resaltada={cita.id === citaResaltadaId}
               />
             ))}
           </div>
