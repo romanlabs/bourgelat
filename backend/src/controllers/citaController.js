@@ -12,7 +12,7 @@ const { tenantWhere } = require('../utils/tenant');
 const { DURACION_ESTIMADA_MINUTOS } = require('../config/duracionesCita');
 const { obtenerContextoAgenda, evaluarVentana } = require('../services/horarioAtencionService');
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware');
-const { avisarPacienteLlego } = require('../services/notificacionService');
+const { avisarPacienteLlego, avisarCambioAgenda, resolverAvisosDeCita } = require('../services/notificacionService');
 
 const ESTADOS_ACTIVOS_AGENDA = ['programada', 'en_espera', 'en_atencion'];
 
@@ -308,6 +308,8 @@ const crearCita = async (req, res) => {
         ? { tipo: 'walk_in_en_curso', paciente: walkInEnCurso.mascota?.nombre || null }
         : null,
     });
+
+    await avisarCambioAgenda({ cita, cambio: 'agendada', actor: req.usuario });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -603,6 +605,8 @@ const actualizarEstadoCita = async (req, res) => {
     });
 
     if (estado === 'en_espera') await avisarPacienteLlego({ cita, actorId: req.usuario.id });
+    else if (estado === 'cancelada') await avisarCambioAgenda({ cita, cambio: 'cancelada', actor: req.usuario });
+    else await resolverAvisosDeCita(cita);
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -650,6 +654,7 @@ const reprogramarCita = async (req, res) => {
       return res.status(ventana.status).json({ message: ventana.error, codigo: ventana.codigo });
     }
 
+    const anterior = { fecha: cita.fecha, horaInicio: cita.horaInicio };
     const solapamiento = await sequelize.transaction(async (transaction) => {
       await bloquearAgendaDelDia(clinicaId, fecha, transaction);
 
@@ -683,6 +688,8 @@ const reprogramarCita = async (req, res) => {
       message: 'Cita reprogramada exitosamente',
       cita,
     });
+
+    await avisarCambioAgenda({ cita, cambio: 'movida', anterior, actor: req.usuario });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }

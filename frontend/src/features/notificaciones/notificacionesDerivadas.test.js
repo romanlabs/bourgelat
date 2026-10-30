@@ -119,3 +119,47 @@ describe('avisos guardados', () => {
     expect(grupos.map((g) => g.titulo)).toEqual(['Para revisar ahora', 'Hoy', 'Ayer', expect.stringMatching(/^Martes, 20 de octubre/)])
   })
 })
+
+describe('flujos nuevos', () => {
+  it('avisa la cita que pasó su hora sin llegada', () => {
+    const citas = [
+      { id: 'c1', estado: 'programada', origen: 'programada', horaInicio: '10:00:00', mascota: { nombre: 'Kira' } },
+      { id: 'c2', estado: 'programada', origen: 'programada', horaInicio: '10:20:00', mascota: { nombre: 'Nala' } },
+    ]
+    const avisos = derivarNotificaciones({ citas, ahora })
+    expect(avisos.map((a) => a.id)).toEqual(['sin-llegar-c1'])
+    expect(avisos[0]).toMatchObject({ titulo: 'Kira no ha llegado', to: '/agenda?tab=recepcion&cita=c1' })
+  })
+
+  it('avisa vacunas y controles que vencen sin cita', () => {
+    const seguimientos = [{
+      mascotaId: 'm1',
+      mascotaNombre: 'Lupe',
+      propietarioNombre: 'Ana',
+      propietarioTelefono: '3001234567',
+      pendientes: [
+        { tipo: 'vacuna', nombre: 'Rabia', fecha: '2026-10-20' },
+        { tipo: 'control', nombre: 'Control', fecha: '2026-10-29' },
+      ],
+    }]
+    const [aviso] = derivarNotificaciones({ seguimientos, ahora })
+    expect(aviso.titulo).toMatch(/^A Lupe se le pasó la vacuna Rabia \(20/)
+    expect(aviso.texto).toBe('Tutor: Ana · 3001234567. También el control. Sin cita agendada.')
+    expect(aviso.to).toBe('/pacientes/m1/historial')
+  })
+
+  it('avisa las facturas que no llegaron a la DIAN', () => {
+    expect(derivarNotificaciones({ resumenElectronico: { validada: 4 }, ahora })).toEqual([])
+    expect(derivarNotificaciones({ resumenElectronico: { rechazada: 1, error: 1 }, ahora })[0].titulo)
+      .toBe('2 facturas no llegaron a la DIAN')
+  })
+
+  it('lo urgente sin leer sale en «Para revisar ahora»', () => {
+    const fila = { id: 'n2', categoria: 'caja', tipo: 'turno_sin_cerrar', titulo: 'Caja', leidaEn: null, createdAt: new Date(2026, 9, 29, 7, 0).toISOString() }
+    const urgente = desdeServidor(fila, ahora)
+    expect(urgente.urgente).toBe(true)
+    expect(agruparAvisos([urgente], ahora).map((g) => g.id)).toEqual(['pendiente'])
+    const leida = desdeServidor({ ...fila, leidaEn: new Date().toISOString() }, ahora)
+    expect(agruparAvisos([leida], ahora)[0].titulo).toBe('Hoy')
+  })
+})

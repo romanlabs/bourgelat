@@ -113,6 +113,8 @@ export const DOMINIOS = {
     'antecedentes-detalle',
     'examenes-laboratorio',
     'paciente-estilos',
+    // Vacunas y controles por vencer de la campanita.
+    'notificaciones-seguimientos',
   ],
 
   // Un usuario nuevo (o un cambio de rol) tiene que aparecer en los selectores de

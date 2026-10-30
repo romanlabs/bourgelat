@@ -9,7 +9,7 @@ const FacturaItem = require('../models/FacturaItem')
 const Producto = require('../models/Producto')
 const Usuario = require('../models/Usuario')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
-const { avisarTurnoCerrado } = require('../services/notificacionService')
+const { avisarTurnoCerrado, resolverTurnoSinCerrar } = require('../services/notificacionService')
 const { parsePaginacion } = require('../utils/paginacion')
 const Clinica = require('../models/Clinica')
 const {
@@ -261,6 +261,7 @@ const cerrarTurno = async (req, res) => {
       turno,
     })
 
+    await resolverTurnoSinCerrar(turno)
     await avisarTurnoCerrado({ turno, actor: req.usuario })
   } catch (error) {
     if (!transaction.finished) await transaction.rollback()
@@ -359,6 +360,8 @@ const cerrarTurnoAdmin = async (req, res) => {
       message: 'Turno cerrado exitosamente',
       turno,
     })
+
+    await resolverTurnoSinCerrar(turno)
   } catch (error) {
     if (!transaction.finished) await transaction.rollback()
     res.status(500).json({ message: 'Error en el servidor', error: error.message })

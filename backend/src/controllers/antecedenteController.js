@@ -2,6 +2,7 @@ const AntecedentesMascota = require('../models/AntecedentesMascota');
 const Mascota = require('../models/Mascota');
 const crypto = require('crypto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
+const { listarSeguimientos } = require('../services/seguimientoService');
 
 const obtenerOMaterializarAntecedentes = async ({ mascotaId, clinicaId }) => {
   const mascota = await Mascota.findOne({ where: { id: mascotaId, clinicaId, activo: true } });
@@ -282,7 +283,17 @@ const actualizarGenerales = async (req, res) => {
   }
 };
 
+// Vacunas, desparasitaciones y controles que vencen sin cita agendada (campanita).
+const listarSeguimientosPendientes = async (req, res) => {
+  try {
+    res.json({ seguimientos: await listarSeguimientos({ clinicaId: req.usuario.clinicaId }) });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 module.exports = {
+  listarSeguimientosPendientes,
   obtenerOCrearAntecedentes,
   agregarAlergia,
   agregarCirugia,

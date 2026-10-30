@@ -11,6 +11,12 @@ import { pedirResaltado } from '@/lib/useResaltado'
 const MAX_POR_TIPO = 4
 // Minutos en sala a partir de los cuales se avisa a recepción y al veterinario.
 const MINUTOS_ESPERA = 15
+// Minutos de retraso desde la hora de la cita para avisar que no ha llegado.
+const MINUTOS_SIN_LLEGAR = 15
+
+// Avisos guardados que no pueden esperar: mientras estén sin leer salen
+// arriba, en «Para revisar ahora». Mismos tipos que TIPOS_URGENTES del backend.
+export const TIPOS_URGENTES = ['turno_descuadre', 'turno_sin_cerrar']
 
 const hora12 = (hora) => {
   const [h, m] = String(hora || '').split(':').map(Number)
@@ -63,7 +69,81 @@ function avisosDeCitas(citas, { ahora, puedeAtender }) {
       to: `/agenda?tab=recepcion&cita=${cita.id}`,
     }))
 
-  return [...espera, ...historias]
+  // Citas programadas de hoy que pasaron su hora y nadie marcó la llegada:
+  // recepción llama al tutor o la marca como no asistió.
+  const sinLlegar = citas
+    .filter((cita) => cita.estado === 'programada' && cita.origen !== 'walk_in' && cita.horaInicio)
+    .map((cita) => {
+      const [h, m] = String(cita.horaInicio).split(':').map(Number)
+      return { cita, minutos: minutosAhora - (h * 60 + m) }
+    })
+    .filter(({ minutos }) => minutos >= MINUTOS_SIN_LLEGAR)
+    .sort((a, b) => b.minutos - a.minutos)
+    .map(({ cita, minutos }) => ({
+      id: `sin-llegar-${cita.id}`,
+      categoria: 'clinica',
+      titulo: `${cita.mascota?.nombre || 'Un paciente'} no ha llegado`,
+      texto: `Su cita era a las ${hora12(cita.horaInicio)} (hace ${duracion(minutos)})${cita.veterinario?.nombre ? ` con ${cita.veterinario.nombre}` : ''}. Llama al tutor o márcala como no asistió.`,
+      to: `/agenda?tab=recepcion&cita=${cita.id}`,
+    }))
+
+  return [...espera, ...sinLlegar, ...historias]
+}
+
+const QUE_TOCA = {
+  vacuna: (pendiente) => `la vacuna ${pendiente.nombre}`,
+  desparasitacion: (pendiente) => `la desparasitación (${pendiente.nombre})`,
+  control: () => 'el control',
+}
+
+// «A Lupe se le pasó la vacuna Rabia (20 oct)», «A Lupe le toca hoy el
+// control», «A Lupe le toca la vacuna Rabia el 3 nov».
+const tituloSeguimiento = (mascota, pendiente, hoy) => {
+  const que = QUE_TOCA[pendiente.tipo](pendiente)
+  if (pendiente.fecha < hoy) return `A ${mascota} se le pasó ${que} (${fechaCortaVencimiento(pendiente.fecha)})`
+  if (pendiente.fecha === hoy) return `A ${mascota} le toca hoy ${que}`
+  return `A ${mascota} le toca ${que} el ${fechaCortaVencimiento(pendiente.fecha)}`
+}
+
+// Vacunas, desparasitaciones y controles que vencen sin cita agendada: lo que
+// recepción debería llamar. El id cambia con lo pendiente, así un nuevo
+// vencimiento vuelve a salir como nuevo.
+function avisosDeSeguimientos(seguimientos, { hoy }) {
+  const avisos = (seguimientos || []).map((paciente) => {
+    const [primero, ...resto] = paciente.pendientes
+    const tutor = [paciente.propietarioNombre, paciente.propietarioTelefono].filter(Boolean).join(' · ')
+    return {
+      id: `seguimiento-${paciente.mascotaId}-${paciente.pendientes.map((p) => `${p.tipo}.${p.fecha}`).join('-')}`,
+      categoria: 'clinica',
+      titulo: tituloSeguimiento(paciente.mascotaNombre, primero, hoy),
+      texto: [
+        tutor ? `Tutor: ${tutor}.` : null,
+        resto.length ? `También ${resto.map((p) => QUE_TOCA[p.tipo](p)).join(', ')}.` : null,
+        'Sin cita agendada.',
+      ].filter(Boolean).join(' '),
+      to: `/pacientes/${paciente.mascotaId}/historial`,
+    }
+  })
+  return conResumen(avisos, (resto) => ({
+    id: `seguimiento-resumen-${avisos.length}`,
+    categoria: 'clinica',
+    titulo: resto === 1 ? '1 paciente más con vacuna o control pendiente' : `${formatNumber(resto)} pacientes más con vacuna o control pendiente`,
+    texto: 'Revísalos en Antecedentes.',
+    to: '/antecedentes',
+  }))
+}
+
+// Facturas que la DIAN rechazó o no se pudieron enviar este mes.
+function avisoDian(resumenElectronico) {
+  const errores = Number(resumenElectronico?.rechazada || 0) + Number(resumenElectronico?.error || 0)
+  if (errores <= 0) return []
+  return [{
+    id: `dian-${errores}`,
+    categoria: 'caja',
+    titulo: errores === 1 ? '1 factura no llegó a la DIAN' : `${formatNumber(errores)} facturas no llegaron a la DIAN`,
+    texto: 'Fueron rechazadas o no se pudieron enviar. Revísalas antes del siguiente corte.',
+    to: '/finanzas',
+  }]
 }
 
 function avisosDeInventario(inventario, { hoy }) {
@@ -217,15 +297,19 @@ export function derivarNotificaciones({
   cuentasPorCobrar,
   tickets,
   diasRestantes,
+  seguimientos,
+  resumenElectronico,
   puedeAtender = false,
   ahora = new Date(),
 } = {}) {
   const hoy = hoyLocal(ahora)
   return [
     ...avisosDeCitas(citas || [], { ahora, puedeAtender }),
+    ...avisosDeSeguimientos(seguimientos, { hoy }),
     ...avisosDeInventario(inventario, { hoy }),
     ...avisosDeFiado(cuentasPorCobrar, { hoy }),
     ...avisosDeCompras(alertasCompra),
+    ...avisoDian(resumenElectronico),
     ...avisosDeSistema({ tickets, diasRestantes }),
   ]
 }
@@ -255,6 +339,8 @@ export const desdeServidor = (fila, ahora = new Date()) => ({
   id: `srv-${fila.id}`,
   servidorId: fila.id,
   categoria: fila.categoria,
+  tipo: fila.tipo,
+  urgente: TIPOS_URGENTES.includes(fila.tipo),
   titulo: fila.titulo,
   texto: fila.texto,
   to: fila.enlace || null,
@@ -265,17 +351,18 @@ export const desdeServidor = (fila, ahora = new Date()) => ({
 })
 
 /**
- * Grupos del panel: primero lo pendiente ahora (derivado, sin fecha) y luego
- * lo guardado por día: Hoy, Ayer y la fecha para lo anterior.
+ * Grupos del panel: primero lo pendiente ahora (derivado, sin fecha, y lo
+ * urgente sin leer) y luego lo guardado por día: Hoy, Ayer y la fecha.
  */
 export function agruparAvisos(avisos, ahora = new Date()) {
   const hoy = hoyLocal(ahora)
   const ayer = hoyLocal(new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 1))
   const grupos = []
-  const pendientes = avisos.filter((aviso) => !aviso.fecha)
+  const esPendiente = (aviso) => !aviso.fecha || (aviso.urgente && aviso.nueva)
+  const pendientes = [...avisos.filter((aviso) => aviso.urgente && aviso.nueva), ...avisos.filter((aviso) => !aviso.fecha)]
   if (pendientes.length > 0) grupos.push({ id: 'pendiente', titulo: 'Para revisar ahora', items: pendientes })
 
-  for (const aviso of avisos.filter((item) => item.fecha)) {
+  for (const aviso of avisos.filter((item) => !esPendiente(item))) {
     const dia = diaLocal(aviso.fecha)
     const titulo = dia === hoy
       ? 'Hoy'

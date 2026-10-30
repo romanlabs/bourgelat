@@ -20,7 +20,7 @@ const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeError
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
 const { enviarRecordatoriosCita, INTERVALO_MS: INTERVALO_RECORDATORIOS_CITA } = require('./jobs/recordatoriosCita')
 const { ejecutarRecordatoriosCobro, INTERVALO_MS: INTERVALO_RECORDATORIOS_COBRO } = require('./jobs/recordatoriosCobro')
-const { limpiarNotificacionesAntiguas } = require('./services/notificacionService')
+const { limpiarNotificacionesAntiguas, avisarTurnosSinCerrar } = require('./services/notificacionService')
 const { UPLOADS_PUBLIC_PATH, UPLOADS_ROOT_DIR, EXAMENES_SUBDIR } = require('./config/uploads')
 const { rutaSinQuery } = require('./utils/rutaLog')
 const logger = require('./utils/logger')
@@ -274,6 +274,10 @@ sequelize.authenticate()
     setInterval(limpiarIdempotencia, 24 * 60 * 60 * 1000)
     limpiarNotificacionesAntiguas()
     setInterval(limpiarNotificacionesAntiguas, 24 * 60 * 60 * 1000)
+
+    // ── Cajas que quedaron abiertas de un día anterior ──
+    avisarTurnosSinCerrar()
+    setInterval(avisarTurnosSinCerrar, 60 * 60 * 1000)
 
     // ── Recordatorio de citas al profesional ────────────
     enviarRecordatoriosCita()

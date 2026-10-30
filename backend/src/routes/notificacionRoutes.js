@@ -1,7 +1,13 @@
 const express = require('express')
 const { body } = require('express-validator')
 
-const { listarNotificaciones, marcarNotificacionesLeidas } = require('../controllers/notificacionController')
+const {
+  listarNotificaciones,
+  marcarNotificacionesLeidas,
+  actualizarAjustesAvisos,
+  actualizarLeidasDerivadas,
+} = require('../controllers/notificacionController')
+const { CATEGORIAS } = require('../services/notificacionReglas')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -26,6 +32,35 @@ router.patch(
     validar,
   ],
   marcarNotificacionesLeidas
+)
+
+// Qué categorías recibe y si quiere correo de lo urgente.
+router.put(
+  '/ajustes',
+  verificarToken,
+  verificarRol(...rolesClinica),
+  requerirEscritura,
+  [
+    body('categoriasApagadas').optional().isArray({ max: CATEGORIAS.length }).withMessage('Categorías no validas'),
+    body('categoriasApagadas.*').isIn(CATEGORIAS).withMessage('Categoría no valida'),
+    body('correoUrgente').optional().isBoolean().withMessage('Valor no valido'),
+    validar,
+  ],
+  actualizarAjustesAvisos
+)
+
+// Los avisos derivados que ya leyó (la lista completa de los vigentes).
+router.put(
+  '/derivadas-leidas',
+  verificarToken,
+  verificarRol(...rolesClinica),
+  requerirEscritura,
+  [
+    body('ids').isArray({ max: 300 }).withMessage('Lista no valida'),
+    body('ids.*').isString().isLength({ min: 1, max: 200 }).withMessage('Aviso no valido'),
+    validar,
+  ],
+  actualizarLeidasDerivadas
 )
 
 module.exports = router
