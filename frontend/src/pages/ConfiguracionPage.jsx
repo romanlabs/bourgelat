@@ -33,6 +33,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { configuracionApi } from '@/features/configuracion/configuracionApi'
 import RecordatoriosCitaSection from '@/features/configuracion/RecordatoriosCitaSection'
+import CuentasRecaudoSection from '@/features/configuracion/CuentasRecaudoSection'
 import { recepcionApi } from '@/features/recepcion/recepcionApi'
 import colombia from '@/data/colombia'
 import { useAuthStore } from '@/store/authStore'
@@ -395,6 +396,7 @@ function ConfiguracionContent({
     { id: 'consultorios', label: 'Consultorios', helper: 'Salas que usan agenda y recepción' },
     { id: 'horarios', label: 'Horarios y cierres', helper: 'Atención y días bloqueados' },
     { id: 'recordatorios', label: 'Recordatorios', helper: 'Aviso por correo antes de cada cita' },
+    { id: 'cuentas', label: 'Cuentas de pago', helper: 'Dónde recibes las transferencias' },
     {
       id: 'facturacion',
       label: 'Facturación electrónica',
@@ -724,6 +726,7 @@ function ConfiguracionContent({
       ) : null}
 
       {activeSection === 'recordatorios' ? <RecordatoriosCitaSection clinica={initialClinica} /> : null}
+      {activeSection === 'cuentas' ? <CuentasRecaudoSection /> : null}
 
       {activeSection === 'facturacion' ? (
         !puedeVerFacturacionElectronica ? (

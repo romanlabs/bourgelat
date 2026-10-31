@@ -181,6 +181,12 @@ const Factura = sequelize.define('Factura', {
     type: DataTypes.DATEONLY,
     allowNull: true,
   },
+  // Cuenta de la clínica (CuentaRecaudo) a la que entró una venta por
+  // transferencia. Cifrada como metodoPago: TEXT y sin llave foránea.
+  cuentaRecaudoId: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 }, {
   tableName: 'facturas',
   timestamps: true,
@@ -194,7 +200,7 @@ const Factura = sequelize.define('Factura', {
 })
 
 registrarHooksCifrado(Factura, {
-  campos:     ['metodoPago', 'observaciones', 'mensajeElectronico'],
+  campos:     ['metodoPago', 'cuentaRecaudoId', 'observaciones', 'mensajeElectronico'],
   camposJson: ['payloadElectronico', 'respuestaElectronica'],
 })
 

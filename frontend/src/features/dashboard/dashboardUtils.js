@@ -12,6 +12,14 @@ export const PAYMENT_METHOD_LABELS = {
   otro: 'Otro',
 }
 
+// Forma de pago para mostrar: la transferencia lleva la cuenta de la clínica a
+// la que entró («Transferencia · Nequi»), si se eligió una al cobrar.
+export const formaDePago = (factura) => {
+  const metodo = PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago || ''
+  const cuenta = factura?.cuentaRecaudo?.nombre
+  return metodo && cuenta ? `${metodo} · ${cuenta}` : metodo
+}
+
 export const CITA_ESTADO_LABELS = {
   programada: 'Programadas',
   en_espera: 'En espera',

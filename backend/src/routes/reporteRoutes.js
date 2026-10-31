@@ -9,6 +9,7 @@ const {
   dashboardGeneral,
   reporteRentabilidad,
   reporteFinanzasPeriodo,
+  reporteMediosPago,
 } = require('../controllers/reporteController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { validar } = require('../middlewares/validacionMiddleware')
@@ -67,6 +68,22 @@ router.get(
   cargarSuscripcionActiva,
   definirAlcanceAnalisis,
   reporteFinanzasPeriodo
+)
+
+// Cobrado por medio de pago: solo administración (incluye lo que salió por
+// cada medio). Mismo alcance por plan que el análisis del periodo.
+router.get(
+  '/medios-pago',
+  verificarToken,
+  verificarRol('admin', 'superadmin'),
+  [
+    query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
+    query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
+    validar,
+  ],
+  cargarSuscripcionActiva,
+  definirAlcanceAnalisis,
+  reporteMediosPago
 )
 
 router.get(

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import {
-  PAYMENT_METHOD_LABELS,
+  formaDePago,
   formatCurrency,
   formatLongDate,
   formatNumber,
@@ -169,7 +169,7 @@ export default function FacturaDetalleModal({ historialHook }) {
                     Pago
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-foreground">
-                    {PAYMENT_METHOD_LABELS[facturaSeleccionada.metodoPago] || 'Sin definir'}
+                    {formaDePago(facturaSeleccionada) || 'Sin definir'}
                   </dd>
                 </div>
                 <div className="rounded-xl bg-muted px-4 py-3">

@@ -63,12 +63,11 @@ router.post(
         'tarjeta_debito',
         'tarjeta_credito',
         'transferencia',
-        'nequi',
-        'daviplata',
         'credito',
         'otro',
       ])
       .withMessage('Metodo de pago no valido'),
+    body('cuentaRecaudoId').optional({ values: 'falsy' }).isUUID().withMessage('Cuenta no valida'),
     validar,
   ],
   crearFactura
@@ -140,8 +139,9 @@ router.post(
     body('monto').isFloat({ min: 0.01 }).withMessage('Monto debe ser mayor a 0'),
     body('metodoPago')
       .optional()
-      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'nequi', 'daviplata', 'otro'])
+      .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'otro'])
       .withMessage('Metodo de pago no valido'),
+    body('cuentaRecaudoId').optional({ values: 'falsy' }).isUUID().withMessage('Cuenta no valida'),
     body('observaciones').optional({ values: 'falsy' }).trim(),
     validar,
   ],

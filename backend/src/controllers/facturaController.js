@@ -23,6 +23,7 @@ const { ESTADOS_EMITIBLES, MENSAJE_RESPUESTA_INCOMPLETA, resolverFalloEmision, r
 const { leerClaveIdempotencia, esConflictoClaveIdempotencia } = require('../utils/ventaIdempotente')
 const logger = require('../utils/logger')
 const AbonoFactura = require('../models/AbonoFactura')
+const CuentaRecaudo = require('../models/CuentaRecaudo')
 const { registrarAuditoria } = require('../middlewares/auditoriaMiddleware')
 const { obtenerContextoFactusPorClinica } = require('../config/factusConfig')
 const {
@@ -114,8 +115,32 @@ const generarNumeroFactura = async (clinicaId, transaction) => {
   return `FAC-${String(numero).padStart(4, '0')}`
 }
 
+// Cuenta de la clínica a la que entró una transferencia. Solo aplica a ese
+// medio; si llega con otro se ignora. Debe ser de la clínica y estar activa.
+const resolverCuentaRecaudo = async ({ cuentaRecaudoId, metodoPago, clinicaId, transaction }) => {
+  if (metodoPago !== 'transferencia' || !cuentaRecaudoId) return { id: null }
+  const cuenta = await CuentaRecaudo.findOne({
+    where: { id: cuentaRecaudoId, clinicaId, activo: true },
+    attributes: ['id'],
+    transaction,
+  })
+  return cuenta ? { id: cuenta.id } : { error: 'La cuenta elegida no existe o está desactivada' }
+}
+
+// La factura guarda solo el id (cifrado, sin llave foránea): el nombre se
+// busca aparte para mostrarlo en el detalle y en el PDF.
+const conCuentaRecaudo = async (factura) => {
+  if (!factura?.cuentaRecaudoId) return factura
+  const cuenta = await CuentaRecaudo.findOne({
+    where: { id: factura.cuentaRecaudoId, clinicaId: factura.clinicaId },
+    attributes: ['id', 'nombre'],
+  })
+  factura.setDataValue('cuentaRecaudo', cuenta ? { id: cuenta.id, nombre: cuenta.nombre } : null)
+  return factura
+}
+
 const obtenerFacturaDetallada = async (id, clinicaId) => {
-  return Factura.findOne({
+  const factura = await Factura.findOne({
     where: { id, clinicaId },
     include: [
       {
@@ -156,6 +181,7 @@ const obtenerFacturaDetallada = async (id, clinicaId) => {
     ],
     order: [[{ model: FacturaItem, as: 'items' }, 'createdAt', 'ASC']],
   })
+  return conCuentaRecaudo(factura)
 }
 
 const distribuirDescuentoGeneral = (items, descuentoGeneral) => {
@@ -482,6 +508,7 @@ const crearFactura = async (req, res) => {
       historiaClinicaId = null,
       registroEstiloId = null,
       plazoCreditoDias,
+      cuentaRecaudoId,
     } = req.body
     const { clinicaId } = req.usuario
 
@@ -784,6 +811,12 @@ const crearFactura = async (req, res) => {
       return res.status(400).json({ message: plazo.error, code: 'PLAZO_CREDITO_INVALIDO' })
     }
 
+    const cuentaRecaudo = await resolverCuentaRecaudo({ cuentaRecaudoId, metodoPago, clinicaId, transaction })
+    if (cuentaRecaudo.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: cuentaRecaudo.error, code: 'CUENTA_RECAUDO_INVALIDA' })
+    }
+
     const numero = await generarNumeroFactura(clinicaId, transaction)
 
     const factura = await Factura.create({
@@ -799,6 +832,7 @@ const crearFactura = async (req, res) => {
       impuesto,
       total,
       metodoPago,
+      cuentaRecaudoId: cuentaRecaudo.id,
       observaciones,
       proveedorElectronico: emitirElectronica ? 'factus' : null,
       estadoElectronico: emitirElectronica ? 'pendiente' : 'no_aplica',
@@ -1342,7 +1376,7 @@ const registrarAbono = async (req, res) => {
 
   try {
     const { id } = req.params
-    const { monto, metodoPago, observaciones } = req.body
+    const { monto, metodoPago, observaciones, cuentaRecaudoId } = req.body
     const { clinicaId } = req.usuario
     const montoNumero = convertirANumero(monto, NaN)
 
@@ -1383,6 +1417,12 @@ const registrarAbono = async (req, res) => {
       })
     }
 
+    const cuentaRecaudo = await resolverCuentaRecaudo({ cuentaRecaudoId, metodoPago, clinicaId, transaction })
+    if (cuentaRecaudo.error) {
+      await transaction.rollback()
+      return res.status(400).json({ message: cuentaRecaudo.error, code: 'CUENTA_RECAUDO_INVALIDA' })
+    }
+
     // Efectivo entra a la caja del cobrador si tiene turno abierto.
     let cajaTurnoId = null
     if (metodoPago === 'efectivo') {
@@ -1420,6 +1460,7 @@ const registrarAbono = async (req, res) => {
     const abono = await AbonoFactura.create({
       monto: montoNumero,
       metodoPago: metodoPago || null,
+      cuentaRecaudoId: cuentaRecaudo.id,
       observaciones: observaciones || null,
       facturaId: factura.id,
       cajaTurnoId,

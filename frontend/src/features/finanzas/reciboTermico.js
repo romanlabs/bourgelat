@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import {
-  PAYMENT_METHOD_LABELS,
+  formaDePago,
   formatCurrency,
   formatNumber,
 } from '@/features/dashboard/dashboardUtils'
@@ -116,7 +116,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
         <div class="section">
           <div class="row"><span class="muted">Fecha</span><span>${formatDateTime(factura?.createdAt || factura?.fecha)}</span></div>
           <div class="row"><span class="muted">Cliente</span><span>${escaparHtml(factura?.propietario?.nombre || 'Consumidor final')}</span></div>
-          <div class="row"><span class="muted">Pago</span><span>${escaparHtml(PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago || '-')}</span></div>
+          <div class="row"><span class="muted">Pago</span><span>${escaparHtml(formaDePago(factura) || '-')}</span></div>
           <div class="row"><span class="muted">Atendio</span><span>${escaparHtml(factura?.usuario?.nombre || '-')}</span></div>
         </div>
         <div class="divider"></div>
