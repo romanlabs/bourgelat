@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
 import RegistroDialog from '@/features/auth/RegistroDialog'
 import { useAuthStore } from '@/store/authStore'
+import { legalLinks } from '@/components/landing/data'
 
 const footerLinks = [
   { label: 'Nosotros', to: '/nosotros' },
-  { label: 'Privacidad', to: '/privacidad' },
-  { label: 'Terminos', to: '/terminos' },
-  { label: 'Cookies', to: '/cookies' },
   { label: 'Planes', to: '/planes' },
   { label: 'Pagar', to: '/pagar' },
 ]
@@ -110,6 +108,11 @@ export default function PublicPageShell({
                 <Link key={link.to} to={link.to} className="transition hover:text-tinta-800">
                   {link.label}
                 </Link>
+              ))}
+              {legalLinks.map((link) => (
+                <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className="transition hover:text-tinta-800">
+                  {link.label}
+                </a>
               ))}
             </div>
           </div>

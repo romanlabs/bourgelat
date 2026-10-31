@@ -26,6 +26,20 @@ const identificacion = ({ ciudad, direccion }) => [
   },
 ]
 
+// Inventario real de lo que Bourgelat guarda en el navegador. Si se agrega
+// una cookie o clave de almacenamiento nueva, debe listarse aquí.
+const COOKIES = [
+  ['bourgelat_access_token', 'Mantiene la sesión iniciada. No es accesible desde JavaScript (httpOnly).', '15 minutos'],
+  ['bourgelat_refresh_token', 'Renueva la sesión sin volver a pedir la contraseña. No es accesible desde JavaScript (httpOnly).', '7 días'],
+  ['bourgelat_oauth_flujo', 'Protege el inicio de sesión con Google mientras se completa.', '10 minutos'],
+]
+
+const ALMACENAMIENTO_LOCAL = [
+  ['bourgelat-auth', 'Datos básicos de la sesión para mostrar la aplicación: usuario, clínica y estado de la suscripción.'],
+  ['bourgelat-theme', 'Preferencia de tema claro u oscuro.'],
+  ['agenda-view, agenda-view-prefs, agenda-sidebar-open', 'Preferencias de visualización de la agenda.'],
+]
+
 export const politicaDatos = (datos) => [
   {
     titulo: '¿Qué encontrarás en este documento?',
@@ -226,6 +240,26 @@ export const politicaDatos = (datos) => [
     titulo: '¿Qué pasa con los menores de edad?',
     bloques: [
       'Bourgelat es un servicio dirigido a clínicas veterinarias y sus profesionales. No está destinado a menores de edad ni recolecta intencionalmente sus datos como usuarios de la plataforma.',
+    ],
+  },
+  {
+    titulo: '¿Usamos cookies?',
+    bloques: [
+      'Bourgelat solo usa cookies y almacenamiento local **estrictamente necesarios** para que puedas iniciar sesión y usar la plataforma de forma segura, y para recordar algunas preferencias de visualización. No usamos cookies de publicidad, no hacemos seguimiento entre sitios y actualmente no usamos herramientas de analítica. Por eso no mostramos un banner de consentimiento; si en el futuro incorporamos cookies no esenciales, actualizaremos esta política y pediremos tu consentimiento antes de activarlas.',
+      { sub: 'Cookies' },
+      'Se instalan solo cuando inicias sesión y se envían únicamente a los servidores de Bourgelat.',
+      { tabla: { columnas: ['Nombre', 'Finalidad', 'Duración'], filas: COOKIES } },
+      { sub: 'Almacenamiento local del navegador' },
+      'Permanece hasta que cierras sesión o lo borras desde el navegador.',
+      { tabla: { columnas: ['Nombre', 'Finalidad'], filas: ALMACENAMIENTO_LOCAL } },
+      { sub: 'Cookies de terceros y cómo controlarlas' },
+      {
+        lista: [
+          'Cloudflare, nuestro proveedor de seguridad de red, puede instalar cookies técnicas para distinguir el tráfico legítimo de ataques automatizados. No se usan para identificarte ni con fines publicitarios.',
+          'Si inicias sesión con Google, ese servicio aplica sus propias políticas de cookies mientras estás en sus páginas.',
+          'Al cerrar sesión, Bourgelat elimina las cookies de sesión y los datos de sesión del almacenamiento local. También puedes borrarlas o bloquearlas desde tu navegador; si bloqueas las de sesión, no podrás iniciar sesión.',
+        ],
+      },
     ],
   },
   {
@@ -447,68 +481,6 @@ export const terminos = (datos) => [
     titulo: 'Contacto',
     bloques: [
       `Bourgelat opera de forma digital y no tiene oficinas de atención presencial. Todas las comunicaciones relacionadas con estos términos se atienden en ${CORREO} o al ${TELEFONO}.`,
-    ],
-  },
-]
-
-// Inventario real de lo que Bourgelat guarda en el navegador. Si se agrega
-// una cookie o clave de almacenamiento nueva, debe listarse aquí.
-const COOKIES = [
-  ['bourgelat_access_token', 'Mantiene la sesión iniciada. No es accesible desde JavaScript (httpOnly).', '15 minutos'],
-  ['bourgelat_refresh_token', 'Renueva la sesión sin volver a pedir la contraseña. No es accesible desde JavaScript (httpOnly).', '7 días'],
-  ['bourgelat_oauth_flujo', 'Protege el inicio de sesión con Google mientras se completa.', '10 minutos'],
-]
-
-const ALMACENAMIENTO_LOCAL = [
-  ['bourgelat-auth', 'Datos básicos de la sesión para mostrar la aplicación: usuario, clínica y estado de la suscripción.'],
-  ['bourgelat-theme', 'Preferencia de tema claro u oscuro.'],
-  ['agenda-view, agenda-view-prefs, agenda-sidebar-open', 'Preferencias de visualización de la agenda.'],
-]
-
-export const cookies = () => [
-  {
-    titulo: 'Resumen',
-    bloques: [
-      'Bourgelat solo usa cookies y almacenamiento local **estrictamente necesarios** para que puedas iniciar sesión y usar la plataforma de forma segura, y para recordar algunas preferencias de visualización. No usamos cookies de publicidad, no hacemos seguimiento entre sitios y actualmente no usamos herramientas de analítica.',
-    ],
-  },
-  {
-    titulo: 'Cookies que usamos',
-    bloques: [
-      'Se instalan solo cuando inicias sesión y se envían únicamente a los servidores de Bourgelat.',
-      { tabla: { columnas: ['Nombre', 'Finalidad', 'Duración'], filas: COOKIES } },
-    ],
-  },
-  {
-    titulo: 'Almacenamiento local del navegador',
-    bloques: [
-      'Además de cookies, la aplicación guarda en el almacenamiento local (localStorage) de tu navegador la siguiente información. Permanece hasta que cierras sesión o la borras desde el navegador.',
-      { tabla: { columnas: ['Nombre', 'Finalidad'], filas: ALMACENAMIENTO_LOCAL } },
-    ],
-  },
-  {
-    titulo: 'Cookies de terceros',
-    bloques: [
-      'Nuestro proveedor de seguridad de red, Cloudflare, puede instalar cookies técnicas para distinguir el tráfico legítimo de ataques automatizados. No se usan para identificarte ni con fines publicitarios.',
-      'Si inicias sesión con Google, ese servicio aplica sus propias políticas de cookies mientras estás en sus páginas.',
-    ],
-  },
-  {
-    titulo: 'Cómo controlarlas',
-    bloques: [
-      {
-        lista: [
-          'Al cerrar sesión, Bourgelat elimina las cookies de sesión y los datos de sesión del almacenamiento local.',
-          'Puedes borrar o bloquear cookies y almacenamiento local desde la configuración de tu navegador. Si bloqueas las cookies de sesión, no podrás iniciar sesión en la plataforma.',
-        ],
-      },
-      'Como solo usamos elementos necesarios para el funcionamiento del servicio, no mostramos un banner de consentimiento. Si en el futuro incorporamos analítica u otras cookies no esenciales, actualizaremos esta política y te pediremos tu consentimiento antes de activarlas.',
-    ],
-  },
-  {
-    titulo: 'Más información',
-    bloques: [
-      `El tratamiento de los datos personales asociados se rige por nuestra política de tratamiento de datos personales, publicada en bourgelat.co/privacidad. Para cualquier pregunta, escríbenos a ${CORREO}.`,
     ],
   },
 ]

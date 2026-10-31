@@ -1,3 +1,4 @@
+import { urlDocumentoLegal } from '@/content/legal'
 import { Calendar, HeartPulse, Package } from "lucide-react"
 import { PRECIOS_PLANES } from "@/content/publicSiteContent"
 
@@ -58,12 +59,10 @@ export const PLAN_PREVIEW = [
   },
 ]
 
-export const footerLinks = [
-  { label: 'Planes', to: '/planes' },
-  { label: 'Nosotros', to: '/nosotros' },
-  { label: 'Privacidad', to: '/privacidad' },
-  { label: 'Terminos', to: '/terminos' },
-  { label: 'Cookies', to: '/cookies' },
+// Abren el PDF en otra pestaña, como Nu.
+export const legalLinks = [
+  { label: 'Privacidad', href: urlDocumentoLegal('privacidad') },
+  { label: 'Términos', href: urlDocumentoLegal('terminos') },
 ]
 
 export const TRUST_LOGOS = [

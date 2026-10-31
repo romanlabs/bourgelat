@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
+import { legalLinks } from '@/components/landing/data'
 import { Link } from 'react-router-dom'
 import { motion as Motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'lucide-react'
@@ -812,9 +813,9 @@ export default function PlanesPage() {
           </p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link to="/nosotros" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Nosotros</Link>
-            <Link to="/privacidad" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Privacidad</Link>
-            <Link to="/terminos" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Términos</Link>
-            <Link to="/cookies" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>Cookies</Link>
+            {legalLinks.map((link) => (
+              <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className="no-underline transition-colors hover:text-[#b07645]" style={{ color: BODY }}>{link.label}</a>
+            ))}
           </div>
         </div>
       </footer>

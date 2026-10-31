@@ -1,5 +1,5 @@
-// Datos de identificación y versiones de los documentos legales. Los usan las
-// páginas /privacidad, /terminos y /cookies (que muestran el PDF) y el script
+// Datos de identificación y versiones de los documentos legales. Los usan los
+// enlaces del sitio (que abren el PDF directo, como Nu) y el script
 // `npm run legal:pdf`, que genera los PDF en public/legal/. El art. 13 del
 // Decreto 1377 de 2013 exige nombre, domicilio, dirección, correo y teléfono
 // del responsable: el script no genera la versión final si falta alguno.
@@ -13,10 +13,8 @@ export const RESPONSABLES = [
 
 export const NOMBRES_RESPONSABLES = RESPONSABLES.map((r) => r.nombre).join(' y ')
 
-// Pendientes de Roman y Sergio (2026-10-31): ciudad de domicilio y dirección
-// de correspondencia. Mientras sean null, solo sale el borrador.
-export const CIUDAD_DOMICILIO = null
-export const DIRECCION_CORRESPONDENCIA = null
+export const CIUDAD_DOMICILIO = 'Neiva, Huila'
+export const DIRECCION_CORRESPONDENCIA = 'Calle 59N # 1E-22, barrio Las Mercedes, Neiva'
 
 export const CORREO_LEGAL = 'soporte@bourgelat.co'
 export const TELEFONO_LEGAL = '+57 310 204 7057'
@@ -30,20 +28,14 @@ export const VERSIONES_LEGALES = {
   privacidad: {
     titulo: 'Política de tratamiento de datos personales',
     version: '1.0',
-    vigencia: null,
+    vigencia: '2026-10-31',
     archivo: 'politica-tratamiento-datos-v1.0.pdf',
   },
   terminos: {
     titulo: 'Términos y condiciones de uso',
     version: '1.0',
-    vigencia: null,
+    vigencia: '2026-10-31',
     archivo: 'terminos-y-condiciones-v1.0.pdf',
-  },
-  cookies: {
-    titulo: 'Política de cookies',
-    version: '1.0',
-    vigencia: null,
-    archivo: 'politica-de-cookies-v1.0.pdf',
   },
 }
 

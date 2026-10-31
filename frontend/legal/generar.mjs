@@ -18,7 +18,7 @@ import {
   VERSIONES_LEGALES,
   formatearVigencia,
 } from '../src/content/legal.js'
-import { cookies, politicaDatos, terminos } from './documentos.js'
+import { politicaDatos, terminos } from './documentos.js'
 
 const RAIZ = dirname(fileURLToPath(import.meta.url))
 const NEGRO = [17, 17, 17]
@@ -31,7 +31,6 @@ const alturaLinea = (puntos) => puntos * 0.3528 * 1.45
 const DOCUMENTOS = [
   { clave: 'privacidad', secciones: politicaDatos },
   { clave: 'terminos', secciones: terminos },
-  { clave: 'cookies', secciones: cookies },
 ]
 
 const borrador = process.argv.includes('--borrador')
