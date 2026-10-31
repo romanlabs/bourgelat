@@ -120,7 +120,7 @@ export default function CuentasRecaudoSection() {
 
       <DashboardPanel
         title="Nueva cuenta"
-        subtitle="Usa el nombre con que la reconoces. Las desactivadas dejan de salir al cobrar, pero sus cobros se conservan."
+        subtitle="Usa el nombre con que la reconoces. Apaga una cuenta para que no salga al cobrar; sus cobros se conservan."
       >
         <form className="grid gap-4" onSubmit={handleSubmit((valores) => crearMutation.mutate(valores))} noValidate>
           <div className="grid gap-1.5">
