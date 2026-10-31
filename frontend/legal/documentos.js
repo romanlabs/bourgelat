@@ -60,7 +60,7 @@ export const politicaDatos = (datos) => [
     bloques: [
       'Bourgelat es una plataforma de software para la gestión de clínicas veterinarias en Colombia, desarrollada y operada por las siguientes personas naturales, quienes actúan conjuntamente como responsables del tratamiento de los datos descritos en esta política (en adelante, "Bourgelat"):',
       ...identificacion(datos),
-      'Bourgelat opera de forma digital y no cuenta con oficinas de atención presencial. El correo electrónico indicado es el canal oficial para consultas, solicitudes y reclamos sobre datos personales, y los responsables son quienes los atienden directamente.',
+      'Bourgelat opera de forma digital y no cuenta con oficinas de atención presencial. Los responsables atienden directamente las consultas y reclamos sobre datos personales, que se reciben por el correo electrónico indicado (canal oficial, que deja constancia escrita) o en la dirección de correspondencia. Por WhatsApp se pueden resolver dudas, pero las solicitudes formales deben enviarse por escrito.',
     ],
   },
   {
@@ -85,7 +85,7 @@ export const politicaDatos = (datos) => [
           'Nombre, nombre comercial, razón social, NIT y dígito de verificación.',
           'Correo electrónico, teléfono, dirección, ciudad, departamento y código postal.',
           'Información tributaria necesaria para la facturación electrónica y el logo de la clínica.',
-          'Plan de suscripción, estado, fechas y referencias de pago.',
+          'Plan de suscripción, estado, fechas, referencias de pago y los comprobantes de pago que la clínica nos envía.',
         ],
       },
       { sub: 'De los usuarios de la plataforma (equipo de la clínica)' },
@@ -121,7 +121,7 @@ export const politicaDatos = (datos) => [
           'Configurar y transmitir la facturación electrónica de la clínica ante la DIAN, cuando la clínica activa esa función.',
           'Gestionar la suscripción, su cobro y la facturación del servicio.',
           'Atender solicitudes de soporte y diagnosticar fallas técnicas.',
-          'Enviar comunicaciones relacionadas con el servicio: verificación de correo, recuperación de contraseña, recordatorios de pago, avisos de seguridad y cambios en el servicio o en esta política.',
+          'Enviar comunicaciones relacionadas con el servicio por correo electrónico o WhatsApp: verificación de correo, recuperación de contraseña, recordatorios de vencimiento y de pago de la suscripción, avisos de seguridad y cambios en el servicio o en esta política. Los recordatorios de vencimiento llegan al correo registrado, como máximo tres por cada vencimiento y entre las 8:00 a. m. y las 8:00 p. m. La suscripción es prepagada: no renovarla no genera ninguna deuda.',
           'Entender el perfil de la clínica a partir del cuestionario inicial para adaptar el acompañamiento durante la puesta en marcha y contactarla por los medios que haya indicado.',
           'Enviar novedades, promociones y actualizaciones de Bourgelat por correo electrónico, **solo si el usuario lo autorizó** de forma independiente al registrarse. Esta autorización es opcional, no condiciona el servicio y puede retirarse en cualquier momento.',
           'Mejorar el producto a partir de estadísticas agregadas de uso.',
@@ -142,10 +142,11 @@ export const politicaDatos = (datos) => [
           'Facturas, abonos y pagos asociados a los servicios prestados por la clínica.',
         ],
       },
+      'Por instrucción de la clínica, Bourgelat también envía en su nombre comunicaciones a sus clientes, como los recordatorios de citas por correo electrónico, usando los datos de contacto que la clínica registró.',
       'Frente a estos datos:',
       {
         lista: [
-          'La clínica es la responsable del tratamiento. Le corresponde contar con su propia política de tratamiento y obtener la autorización previa, expresa e informada de sus clientes.',
+          'La clínica es la responsable del tratamiento. Le corresponde contar con su propia política de tratamiento, obtener la autorización previa, expresa e informada de sus clientes (incluida la de recibir los recordatorios que envía por medio de Bourgelat) y atender sus consultas y reclamos.',
           'Bourgelat actúa como encargado: trata los datos únicamente para prestar el servicio a la clínica, no los usa para fines propios y no los comparte salvo con los proveedores indicados en la sección 8 o cuando la ley lo exija.',
           'Si un propietario de mascota quiere consultar, actualizar o suprimir sus datos, debe dirigirse a su clínica. Si escribe a Bourgelat, trasladaremos la solicitud a la clínica correspondiente y le daremos el apoyo técnico necesario para atenderla.',
         ],
@@ -155,8 +156,8 @@ export const politicaDatos = (datos) => [
   {
     titulo: '¿Cómo nos autorizas a tratar tus datos?',
     bloques: [
-      'Al crear una cuenta, la persona que se registra autoriza de manera previa, expresa e informada el tratamiento de sus datos según esta política, marcando una casilla que nunca viene seleccionada por defecto. Bourgelat conserva prueba de esa autorización: la versión de la política aceptada, la fecha y hora, la dirección IP y el navegador desde el que se otorgó.',
-      'La autorización puede revocarse en cualquier momento, salvo cuando exista un deber legal o contractual de conservar la información; revocarla puede implicar que no sea posible seguir prestando el servicio.',
+      'Al crear una cuenta, la persona que se registra autoriza de manera previa, expresa e informada el tratamiento de sus datos según esta política, marcando una casilla que nunca viene seleccionada por defecto. Esta aceptación electrónica tiene plena validez según la Ley 527 de 1999. Bourgelat conserva prueba de esa autorización: la versión de la política aceptada, la fecha y hora, la dirección IP y el navegador desde el que se otorgó. Los usuarios que la clínica invita a la plataforma otorgan la misma autorización al activar su cuenta.',
+      'La autorización puede revocarse total o parcialmente en cualquier momento, salvo cuando exista un deber legal o contractual de conservar la información; revocarla puede implicar que no sea posible seguir prestando el servicio. La autorización para recibir comunicaciones comerciales es independiente y puede retirarse sin afectar el servicio.',
       'Bourgelat no solicita datos sensibles de los usuarios de la plataforma. La información de salud que se registra corresponde a los animales atendidos por la clínica y no a las personas titulares de los datos.',
     ],
   },
@@ -171,10 +172,11 @@ export const politicaDatos = (datos) => [
           '**Brevo**: envío de correos del servicio (verificación, recuperación de contraseña, recordatorios y soporte).',
           '**Factus**: proveedor tecnológico de facturación electrónica, que transmite las facturas a la DIAN, cuando la clínica activa esa función.',
           '**Google**: solo si el usuario elige iniciar sesión con su cuenta de ese servicio.',
+          '**WhatsApp (Meta)**: cuando la clínica nos escribe o le escribimos por ese medio para soporte o cobro.',
           '**Pasarela de pagos**: cuando se habilite el pago en línea de la suscripción. Bourgelat no almacena datos de tarjetas.',
         ],
       },
-      'Algunos de estos proveedores almacenan o procesan datos fuera de Colombia, en particular en Estados Unidos. Al aceptar esta política, el titular autoriza esta transmisión internacional, que se realiza con proveedores que ofrecen niveles adecuados de protección y únicamente para las finalidades aquí descritas.',
+      'Algunos de estos proveedores almacenan o procesan datos fuera de Colombia, en particular en Estados Unidos. Al aceptar esta política, el titular autoriza esta transmisión internacional de datos, que se realiza con proveedores que ofrecen niveles adecuados de protección, únicamente para las finalidades aquí descritas y conforme a sus condiciones de servicio y de tratamiento de datos. Bourgelat no transfiere datos personales a terceros para que los usen como responsables propios, salvo por orden de autoridad competente.',
     ],
   },
   {
@@ -203,6 +205,7 @@ export const politicaDatos = (datos) => [
           'Los datos de la clínica, de sus usuarios y los que la clínica registra se conservan mientras la suscripción esté vigente.',
           'Al terminar la relación, la clínica podrá solicitar la exportación de su información durante un plazo de 30 días. Vencido ese plazo, los datos se eliminarán, salvo aquellos que deban conservarse por obligación legal, contable o tributaria, durante el tiempo que dicha obligación exija.',
           'Los registros de auditoría de acciones exitosas se eliminan automáticamente a los 3 meses. Las sesiones expiran a los 7 días y los enlaces de verificación y recuperación de contraseña se eliminan una vez vencidos.',
+          'La prueba de las autorizaciones otorgadas se conserva mientras exista la cuenta y, después, durante el tiempo necesario para atender reclamos o requerimientos de autoridades.',
         ],
       },
     ],
@@ -213,14 +216,15 @@ export const politicaDatos = (datos) => [
       'Como titular de datos personales, tienes derecho a:',
       {
         lista: [
-          'Conocer, actualizar y rectificar tus datos personales.',
-          'Solicitar prueba de la autorización otorgada.',
-          'Ser informado sobre el uso que se ha dado a tus datos.',
+          'Conocer, actualizar y rectificar tus datos personales, también frente a datos parciales, inexactos, incompletos, fraccionados o que induzcan a error.',
+          'Solicitar prueba de la autorización otorgada, salvo cuando la ley no la exija.',
+          'Ser informado, previa solicitud, sobre el uso que se ha dado a tus datos.',
           'Revocar la autorización o solicitar la supresión de tus datos cuando no exista un deber legal o contractual de conservarlos.',
-          'Acceder gratuitamente a tus datos personales.',
-          'Presentar quejas ante la Superintendencia de Industria y Comercio, una vez agotado el trámite de consulta o reclamo ante Bourgelat.',
+          'Acceder gratuitamente a tus datos personales, al menos una vez cada mes calendario y cada vez que esta política cambie de forma sustancial.',
+          'Presentar quejas ante la Superintendencia de Industria y Comercio por infracciones a la ley, una vez agotado el trámite de consulta o reclamo ante Bourgelat.',
         ],
       },
+      'Estos derechos los puedes ejercer tú, tus causahabientes, tu representante o apoderado, o quien actúe por estipulación a favor de otro, acreditando esa calidad.',
     ],
   },
   {
@@ -230,10 +234,27 @@ export const politicaDatos = (datos) => [
       {
         lista: [
           '**Consultas**: se responden en un máximo de diez (10) días hábiles desde su recibo. Si no es posible en ese plazo, te informaremos el motivo y responderemos en un máximo de cinco (5) días hábiles adicionales.',
-          '**Reclamos** (corrección, actualización, supresión, revocatoria o posible incumplimiento): se responden en un máximo de quince (15) días hábiles desde su recibo, prorrogables por ocho (8) días hábiles más, informando el motivo de la demora. Si el reclamo está incompleto, te pediremos completarlo dentro de los cinco (5) días hábiles siguientes; si pasan dos (2) meses sin respuesta, se entenderá desistido.',
+          '**Reclamos** (corrección, actualización, supresión, revocatoria o posible incumplimiento): deben incluir tu identificación, la descripción de los hechos, tu dirección o correo de respuesta y los documentos que quieras hacer valer. Se responden en un máximo de quince (15) días hábiles desde el día siguiente a su recibo, prorrogables por ocho (8) días hábiles más, informando el motivo de la demora. Si el reclamo está incompleto, te pediremos completarlo dentro de los cinco (5) días hábiles siguientes; si pasan dos (2) meses sin que lo completes, se entenderá desistido.',
         ],
       },
+      'Mientras un reclamo está en trámite, los datos correspondientes quedan marcados con la leyenda "reclamo en trámite", a más tardar dos (2) días hábiles después de recibirlo y hasta que se resuelva. Si quien recibe la solicitud no es competente para resolverla, la trasladará a quien corresponda dentro de los dos (2) días hábiles siguientes y te informará.',
       'Si tu solicitud se refiere a datos que una clínica registró sobre ti como cliente, la trasladaremos a esa clínica según lo indicado en la sección 6.',
+    ],
+  },
+  {
+    titulo: '¿Cuáles son los deberes de Bourgelat?',
+    bloques: [
+      'Como responsable, Bourgelat cumple los deberes del artículo 17 de la Ley 1581 de 2012; en particular:',
+      {
+        lista: [
+          'Garantizar en todo tiempo el pleno ejercicio de tus derechos y tratar los datos solo para las finalidades autorizadas.',
+          'Conservar copia de la autorización y la información bajo las condiciones de seguridad necesarias para impedir su adulteración, pérdida, consulta, uso o acceso no autorizado.',
+          'Actualizar y rectificar la información cuando sea procedente, y tramitar las consultas y reclamos en los términos de esta política.',
+          'Exigir a sus proveedores (encargados) el respeto de las condiciones de seguridad y privacidad de la información.',
+          'Informar a la Superintendencia de Industria y Comercio las violaciones a los códigos de seguridad que se presenten, y cumplir sus instrucciones.',
+        ],
+      },
+      'Como encargado de los datos que registran las clínicas, Bourgelat cumple los deberes del artículo 18 de la misma ley, según el acuerdo de tratamiento incluido en los términos y condiciones.',
     ],
   },
   {
@@ -272,7 +293,7 @@ export const politicaDatos = (datos) => [
   {
     titulo: 'Vigencia',
     bloques: [
-      'Esta política rige desde la fecha indicada en la portada. Los datos se tratarán durante el tiempo necesario para cumplir las finalidades aquí descritas, según la sección 10.',
+      'Esta política rige desde la fecha indicada en la portada y hasta que se publique una nueva versión. Las bases de datos de Bourgelat estarán vigentes mientras Bourgelat preste el servicio, y los datos se tratarán durante el tiempo necesario para cumplir las finalidades aquí descritas, según la sección 10.',
     ],
   },
   {
@@ -288,6 +309,8 @@ export const politicaDatos = (datos) => [
           '**Encargado del tratamiento**: quien trata datos personales por cuenta del responsable.',
           '**Autorización**: consentimiento previo, expreso e informado del titular para el tratamiento.',
           '**Transmisión**: comunicación de datos a un encargado, dentro o fuera de Colombia, para que los trate por cuenta del responsable.',
+          '**Transferencia**: envío de datos a otro responsable, dentro o fuera de Colombia.',
+          '**Causahabiente**: persona que ha sucedido a otra por causa de su fallecimiento (heredero o legatario).',
         ],
       },
     ],
@@ -300,7 +323,7 @@ export const terminos = (datos) => [
     bloques: [
       `Estos términos regulan el uso de Bourgelat, una plataforma de software para la gestión de clínicas veterinarias, desarrollada y operada por ${NOMBRES_RESPONSABLES}, personas naturales que actúan conjuntamente (en adelante, "Bourgelat"):`,
       ...identificacion(datos),
-      'Al crear una cuenta, la persona que la registra declara que es mayor de edad, que tiene facultades para obligar a la clínica o establecimiento que representa (en adelante, "la Clínica") y que acepta estos términos y la política de tratamiento de datos personales. Si no está de acuerdo, no debe usar el servicio.',
+      'Al crear una cuenta, la persona que la registra declara que es mayor de edad, que tiene facultades para obligar a la clínica o establecimiento que representa (en adelante, "la Clínica") y que acepta estos términos y la política de tratamiento de datos personales. La aceptación se hace por medios electrónicos y tiene plena validez según la Ley 527 de 1999; Bourgelat conserva la versión aceptada, la fecha, la hora y la dirección IP. Si no está de acuerdo, no debe usar el servicio.',
     ],
   },
   {
@@ -342,8 +365,9 @@ export const terminos = (datos) => [
       {
         lista: [
           'Toda cuenta nueva inicia con un **periodo de prueba gratuito de 30 días** con acceso a las funciones del Servicio, sin necesidad de registrar un medio de pago.',
-          'Los planes, precios, usuarios incluidos, el valor de los usuarios adicionales y los complementos (como la facturación electrónica DIAN) son los publicados en bourgelat.co/planes al momento de contratar. Los precios están expresados en pesos colombianos.',
-          'La suscripción se paga por periodos anticipados (mensual o anual). La Clínica puede cancelarla en cualquier momento; la cancelación tiene efecto al final del periodo ya pagado y no genera devoluciones proporcionales, salvo lo que disponga la ley.',
+          'Los planes, precios, usuarios incluidos, el valor de los usuarios adicionales y los complementos (como la facturación electrónica DIAN) son los publicados en bourgelat.co/planes al momento de contratar. Los precios están expresados en pesos colombianos e incluyen los impuestos que apliquen.',
+          'La suscripción se paga por periodos anticipados (mensual o anual), por los medios publicados en bourgelat.co/pagar. Bourgelat activa o renueva la suscripción dentro del día hábil siguiente a recibir el comprobante de pago. La suscripción no se renueva ni se cobra de forma automática: antes de cada vencimiento, Bourgelat envía recordatorios a la Clínica.',
+          'La Clínica puede cancelar la suscripción en cualquier momento; la cancelación tiene efecto al final del periodo ya pagado y no genera devoluciones proporcionales, salvo lo que disponga la ley.',
           'Bourgelat puede modificar sus precios avisando a la Clínica con al menos 30 días de anticipación. El nuevo precio aplica desde el siguiente periodo de pago.',
           'Las condiciones de los planes personalizados o de cortesía se rigen por lo acordado por escrito con cada Clínica.',
         ],
@@ -448,6 +472,7 @@ export const terminos = (datos) => [
         lista: [
           'Bourgelat responde por los daños directos causados por su culpa en la prestación del Servicio, hasta por el valor que la Clínica haya pagado en los tres (3) meses anteriores al hecho que origina el reclamo.',
           'Bourgelat no responde por lucro cesante, pérdida de oportunidades de negocio ni daños indirectos, ni por los perjuicios derivados del uso indebido del Servicio por parte de la Clínica o sus Usuarios, de la información que estos registren o de fallas de terceros.',
+          'Ninguna de las partes responde por incumplimientos causados por fuerza mayor o caso fortuito.',
           'Estas limitaciones no aplican en caso de dolo o culpa grave, ni en lo que la ley no permita limitar.',
         ],
       },
@@ -475,6 +500,20 @@ export const terminos = (datos) => [
     titulo: 'Ley aplicable y controversias',
     bloques: [
       `Estos términos se rigen por las leyes de la República de Colombia. Las partes buscarán resolver cualquier diferencia de forma directa a través de ${CORREO}. Si no llegan a un acuerdo en 30 días, la controversia se someterá a los jueces competentes de ${datos.ciudad}.`,
+      'Si la Clínica tiene la calidad de consumidor, conserva los derechos irrenunciables que le otorga la Ley 1480 de 2011 (Estatuto del Consumidor), incluido el derecho de retracto cuando proceda y la posibilidad de acudir a la Superintendencia de Industria y Comercio. Ninguna cláusula de estos términos se interpretará en contra de esos derechos.',
+    ],
+  },
+  {
+    titulo: 'Disposiciones generales',
+    bloques: [
+      {
+        lista: [
+          '**Notificaciones.** Las comunicaciones de Bourgelat a la Clínica se envían al correo electrónico registrado en su cuenta o dentro de la plataforma, y se entienden recibidas el día de su envío. La Clínica debe mantener ese correo actualizado.',
+          '**Cesión.** La Clínica no puede ceder este contrato sin autorización de Bourgelat. Bourgelat puede cederlo a una sociedad que constituyan sus responsables para operar el Servicio, avisando a la Clínica por correo electrónico; la sociedad asumirá todas las obligaciones de Bourgelat, incluidas las de tratamiento de datos.',
+          '**Independencia de las cláusulas.** Si alguna disposición de estos términos resulta inválida, las demás conservan su validez.',
+          '**Integridad.** Estos términos, la política de tratamiento de datos personales y lo acordado por escrito para planes personalizados constituyen el acuerdo completo entre las partes sobre el Servicio.',
+        ],
+      },
     ],
   },
   {
