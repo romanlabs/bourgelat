@@ -455,6 +455,33 @@ function NetoDelMedio({ neto }) {
   )
 }
 
+// Transferencias por cuenta de la clínica (Configuración › Cuentas de pago):
+// la cifra que se cuadra con la app de cada banco o billetera.
+function PorCuenta({ medio, oscuro }) {
+  const mayor = Math.max(1, ...medio.porCuenta.map((cuenta) => cuenta.cobrado))
+  const color = colorMedio(medio.id, { oscuro })
+
+  return (
+    <section aria-labelledby="m-cuentas" className={`${tarjeta} flex flex-col gap-4`}>
+      <div>
+        <h2 id="m-cuentas" className="text-lg font-semibold text-card-foreground">A qué cuenta entró</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">Compáralo con lo que muestra la app de cada banco o billetera.</p>
+      </div>
+      <ul className="flex flex-col gap-2.5">
+        {medio.porCuenta.map((cuenta) => (
+          <li key={cuenta.cuentaRecaudoId || 'sin-cuenta'} className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+            <span className={`truncate ${cuenta.cuentaRecaudoId ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+              {cuenta.nombre || (cuenta.cuentaRecaudoId ? 'Cuenta borrada' : 'Sin cuenta')}
+            </span>
+            <BarraCrece porcentaje={(cuenta.cobrado / mayor) * 100} color={color} className="h-2" />
+            <span className="text-right font-semibold tabular-nums">{formatCurrency(cuenta.cobrado)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 function QueDias({ medio, oscuro }) {
   const semana = semanaDesdeLunes(medio.porDiaSemana)
   const mayor = Math.max(1, ...semana.map((d) => d.valor))
@@ -583,6 +610,7 @@ export default function MediosPagoPanel() {
                   <SerieMedio serie={data.serie} medio={medio} porMes={porMes} />
                   {neto ? <NetoDelMedio neto={neto} /> : null}
                 </div>
+                {medio.porCuenta?.some((cuenta) => cuenta.cuentaRecaudoId) ? <PorCuenta medio={medio} oscuro={oscuro} /> : null}
                 {medio.cobrado > 0 ? <QueDias medio={medio} oscuro={oscuro} /> : null}
               </>
             ) : (

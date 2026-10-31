@@ -8,9 +8,10 @@ const assert = require('assert')
 const AbonoFactura = require('../models/AbonoFactura')
 const Factura = require('../models/Factura')
 const Gasto = require('../models/Gasto')
+const CuentaRecaudo = require('../models/CuentaRecaudo')
 const { reporteMediosPago } = require('./reporteController')
 
-const MODELOS = { AbonoFactura, Factura, Gasto }
+const MODELOS = { AbonoFactura, Factura, Gasto, CuentaRecaudo }
 
 // Las facturas llegan como instancias (se descifra metodoPago): el abonado
 // por factura sale de un atributo calculado que se lee con get().
@@ -30,10 +31,11 @@ const respuestas = () => ({
   ],
   AbonoFactura: [
     // 8 p. m. del 7 de octubre en Bogotá = 01:00 UTC del 8.
-    [{ monto: '40000', metodoPago: 'daviplata', createdAt: new Date('2026-10-08T01:00:00Z') }],
+    [{ monto: '40000', metodoPago: 'daviplata', cuentaRecaudoId: 'c-nequi', createdAt: new Date('2026-10-08T01:00:00Z') }],
     [],
   ],
   Gasto: [[{ metodoPago: 'efectivo', total: '30000' }, { metodoPago: 'transferencia', total: '10000' }]],
+  CuentaRecaudo: [[{ id: 'c-nequi', nombre: 'Nequi' }]],
 })
 
 const ejecutar = async (query, { analisisCompleto = true } = {}) => {
@@ -92,6 +94,12 @@ const run = async () => {
   assert.strictEqual(medio('transferencia').cobrado, 120000, 'venta por Nequi + abono por Daviplata')
   assert.strictEqual(medio('transferencia').porDiaSemana[3], 40000, 'el abono cuenta el miércoles 7 (hora Bogotá)')
   assert.strictEqual(payload.serie.find((f) => f.periodo === '2026-10-07').transferencia, 40000)
+  // Transferencias por cuenta de la clínica: la venta vieja queda sin cuenta.
+  assert.deepStrictEqual(medio('transferencia').porCuenta, [
+    { cuentaRecaudoId: null, cobrado: 80000, operaciones: 1, nombre: null },
+    { cuentaRecaudoId: 'c-nequi', cobrado: 40000, operaciones: 1, nombre: 'Nequi' },
+  ])
+  assert.ok(!('porCuenta' in medio('efectivo')), 'solo la transferencia se reparte por cuenta')
   assert.strictEqual(payload.serie.length, 31, 'un mes trae la serie diaria completa')
   assert.strictEqual(medio('efectivo').anterior, 50000)
   assert.strictEqual(payload.totalAnterior, 50000)

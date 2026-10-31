@@ -136,6 +136,8 @@ export const DOMINIOS = {
     'agenda-horario',
     'agenda-bloqueos',
     'recepcion-consultorios',
+    // Cuentas donde se reciben transferencias: Configuración y el cobro.
+    'cuentas-recaudo',
     'suscripcion-activa',
     'suscripcion-planes',
   ],

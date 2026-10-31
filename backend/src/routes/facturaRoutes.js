@@ -67,6 +67,7 @@ router.post(
         'otro',
       ])
       .withMessage('Metodo de pago no valido'),
+    body('cuentaRecaudoId').optional({ values: 'falsy' }).isUUID().withMessage('Cuenta no valida'),
     validar,
   ],
   crearFactura
@@ -140,6 +141,7 @@ router.post(
       .optional()
       .isIn(['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'otro'])
       .withMessage('Metodo de pago no valido'),
+    body('cuentaRecaudoId').optional({ values: 'falsy' }).isUUID().withMessage('Cuenta no valida'),
     body('observaciones').optional({ values: 'falsy' }).trim(),
     validar,
   ],
