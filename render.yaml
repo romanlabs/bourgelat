@@ -217,15 +217,18 @@ services:
       - type: rewrite
         source: /nosotros
         destination: /nosotros/index.html
-      - type: rewrite
+      # Los documentos legales son solo el PDF (las cookies son una sección de
+      # la política). Al publicar una versión nueva, actualizar estos destinos
+      # y VERSIONES_LEGALES en frontend/src/content/legal.js.
+      - type: redirect
         source: /privacidad
-        destination: /privacidad/index.html
-      - type: rewrite
+        destination: /legal/politica-tratamiento-datos-v1.0.pdf
+      - type: redirect
         source: /terminos
-        destination: /terminos/index.html
-      - type: rewrite
+        destination: /legal/terminos-y-condiciones-v1.0.pdf
+      - type: redirect
         source: /cookies
-        destination: /cookies/index.html
+        destination: /legal/politica-tratamiento-datos-v1.0.pdf
       - type: rewrite
         source: /*
         destination: /index.html
