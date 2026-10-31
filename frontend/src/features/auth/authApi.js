@@ -6,7 +6,7 @@ export const authApi = {
     return data
   },
 
-  registro: async ({ nombre, nombreAdministrador, email, telefono, password, aceptaTerminos, aceptaComunicaciones, turnstileToken }) => {
+  registro: async ({ nombre, nombreAdministrador, email, telefono, password, aceptaTerminos, aceptaComunicaciones, atiendePacientes, turnstileToken }) => {
     const { data } = await api.post('/auth/registro', {
       nombre,
       nombreAdministrador,
@@ -15,6 +15,7 @@ export const authApi = {
       password,
       aceptaTerminos,
       aceptaComunicaciones,
+      atiendePacientes,
       turnstileToken,
     })
     return data
@@ -47,13 +48,14 @@ export const authApi = {
     return data
   },
 
-  completarRegistroOauth: async ({ token, nombreClinica, telefono, aceptaTerminos, aceptaComunicaciones }) => {
+  completarRegistroOauth: async ({ token, nombreClinica, telefono, aceptaTerminos, aceptaComunicaciones, atiendePacientes }) => {
     const { data } = await api.post('/auth/oauth/completar-registro', {
       token,
       nombreClinica,
       telefono,
       aceptaTerminos,
       aceptaComunicaciones,
+      atiendePacientes,
     })
     return data
   },

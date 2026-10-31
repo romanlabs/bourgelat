@@ -48,6 +48,12 @@ const validarAceptacionesLegales = [
     .withMessage('Preferencia de comunicaciones no valida'),
 ]
 
+// «¿También atiendes pacientes?» del registro: si viene, debe ser booleano.
+const validarAtiendePacientes = body('atiendePacientes')
+  .optional({ values: 'undefined' })
+  .custom((valor) => typeof valor === 'boolean')
+  .withMessage('Indica si atiendes pacientes')
+
 router.post(
   '/registro',
   limitadorAuth,
@@ -99,6 +105,7 @@ router.post(
     body('organizacionJuridicaId').optional({ values: 'falsy' }).trim(),
     body('tributoId').optional({ values: 'falsy' }).trim(),
     ...validarAceptacionesLegales,
+    validarAtiendePacientes,
     validar,
   ],
   registro
@@ -252,6 +259,7 @@ router.post(
       .withMessage(MENSAJE_CELULAR_INVALIDO)
       .customSanitizer(normalizarCelular),
     ...validarAceptacionesLegales,
+    validarAtiendePacientes,
     validar,
   ],
   oauthCompletarRegistro
