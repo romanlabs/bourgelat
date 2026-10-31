@@ -23,9 +23,14 @@ que el respaldo se baja desde el dashboard, no con `pg_dump` desde el equipo.
 
 ### 1. Bajar el respaldo
 
-Dashboard de Render → `bourgelat-postgres` → **Recovery** → exportar o
-descargar el respaldo lógico más reciente. Guardarlo **fuera del repo** (por
-ejemplo `C:\respaldos\`); tiene datos reales de clínicas.
+Dashboard de Render → `bourgelat-postgres` → **Recovery** → sección
+**Export** → **Create export**. Tarda unos minutos; cuando termina aparece en
+la lista con su enlace de descarga (Render lo guarda al menos 7 días).
+Guardarlo **fuera del repo** (por ejemplo `C:\respaldos\`); tiene datos reales
+de clínicas.
+
+No usar **Restore database** (Point-in-Time Recovery) para esta prueba: crea
+una base nueva en Render, que se cobra aparte.
 
 ### 2. Restaurarlo en una base local nueva
 
