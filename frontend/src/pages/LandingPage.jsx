@@ -12,7 +12,7 @@ import SectionHeading from "@/components/landing/SectionHeading"
 import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
 import WhatsAppFab from "@/components/landing/WhatsAppFab"
-import { PLAN_PREVIEW, footerLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
+import { PLAN_PREVIEW, legalLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
 
 const FAQS = [
   {
@@ -457,18 +457,18 @@ export default function LandingPage() {
                 Legal
               </p>
               <ul className="mt-2 lg:mt-5 lg:space-y-3.5">
-                {footerLinks
-                  .filter((l) => ['Privacidad', 'Terminos', 'Cookies'].includes(l.label))
-                  .map((link) => (
-                    <li key={link.to}>
-                      <Link
-                        to={link.to}
-                        className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0"
-                      >
-                        {link.label === 'Terminos' ? 'Términos' : link.label}
-                      </Link>
-                    </li>
-                  ))}
+                {legalLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
             </div>
