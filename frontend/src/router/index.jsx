@@ -50,6 +50,7 @@ const PrecargaModulos = () => {
 }
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
+const RegistroPage = lazy(() => import('@/pages/RegistroPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
+          { path: '/registro', element: <Suspense fallback={<Loader />}><RegistroPage /></Suspense> },
           { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
           { path: '/recuperar-password', element: <Suspense fallback={<Loader />}><RecuperarPasswordPage /></Suspense> },
           { path: '/restablecer-password', element: <Suspense fallback={<Loader />}><RestablecerPasswordPage /></Suspense> },
@@ -163,7 +165,6 @@ const router = createBrowserRouter([
         }],
       },
       { path: '/',       element: <HostAwareHome /> },
-      { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
       // Fuera de PublicOnlyRoute: si el enlace se abre en un equipo con otra
       // sesión iniciada (el del administrador), igual debe mostrarse.

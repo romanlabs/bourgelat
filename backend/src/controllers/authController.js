@@ -299,6 +299,9 @@ const registro = async (req, res) => {
           email: emailAdministrador,
           password: passwordHash,
           rol: 'admin',
+          // En la clínica pequeña el administrador también atiende: sin el rol
+          // de veterinario no podría agendarse citas ni firmar historias.
+          rolesAdicionales: req.body.atiendePacientes === true ? ['veterinario'] : [],
           clinicaId: clinica.id,
           telefono: telefonoNormalizado,
           activo: true,

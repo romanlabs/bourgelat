@@ -4,7 +4,6 @@ import { motion as Motion, AnimatePresence, useReducedMotion } from 'motion/reac
 import { ArrowLeft, ArrowRight, Bell, Check, Clock, Minus, ShieldCheck } from 'lucide-react'
 
 import BrandMark from '@/components/landing/BrandMark'
-import RegistroDialog from '@/features/auth/RegistroDialog'
 import { calcularPrecioPlan, maxAhorroPct } from '@/lib/precios'
 import { PRECIOS_PLANES } from '@/content/publicSiteContent'
 
@@ -197,7 +196,7 @@ function DetalleAnual({ calc, onInk }) {
   )
 }
 
-function PlanCTA({ plan, className, style, onRegistro }) {
+function PlanCTA({ plan, className, style }) {
   const content = (
     <>
       {plan.cta}
@@ -208,11 +207,7 @@ function PlanCTA({ plan, className, style, onRegistro }) {
     return <a href={plan.href} className={className} style={style}>{content}</a>
   }
   if (plan.registro) {
-    return (
-      <button type="button" onClick={onRegistro} className={className} style={style}>
-        {content}
-      </button>
-    )
+    return <Link to="/registro" className={className} style={style}>{content}</Link>
   }
   return <Link to={plan.to} className={className} style={style}>{content}</Link>
 }
@@ -363,7 +358,7 @@ function ComingSoonCard({ plan, index, reduce, hovered, setHovered }) {
   )
 }
 
-function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro }) {
+function PlanCard({ plan, anual, index, reduce, hovered, setHovered }) {
   if (plan.comingSoon) {
     return <ComingSoonCard plan={plan} index={index} reduce={reduce} hovered={hovered} setHovered={setHovered} />
   }
@@ -435,7 +430,6 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
         <div className="mt-auto pt-7">
           <PlanCTA
             plan={plan}
-            onRegistro={onRegistro}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:bg-[#f1e9dc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{ color: INK }}
           />
@@ -492,7 +486,6 @@ function PlanCard({ plan, anual, index, reduce, hovered, setHovered, onRegistro 
       <div className="mt-auto pt-7">
         <PlanCTA
           plan={plan}
-          onRegistro={onRegistro}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md border px-5 py-3.5 text-sm font-semibold no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b07645]"
           style={{ borderColor: LINE, color: INK }}
         />
@@ -525,7 +518,6 @@ export default function PlanesPage() {
   const ahorroMax = maxAhorroPct(PLANES)
   const ahorroMaxTotal = Math.max(...PLANES.map((p) => calcularPrecioPlan(p, true).ahorroTotal))
   const [hovered, setHovered] = useState(null)
-  const [registroAbierto, setRegistroAbierto] = useState(false)
   const reduce = useReducedMotion()
 
   useEffect(() => {
@@ -546,10 +538,10 @@ export default function PlanesPage() {
             <Link to="/login" className="rounded-md border px-4 py-2 text-sm font-semibold no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645]" style={{ borderColor: 'rgba(43,32,24,0.25)', color: INK }}>
               Iniciar sesión
             </Link>
-            <button type="button" onClick={() => setRegistroAbierto(true)} className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#b07645]" style={{ backgroundColor: INK }}>
+            <Link to="/registro" className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#b07645]" style={{ backgroundColor: INK }}>
               Crear cuenta
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -620,7 +612,6 @@ export default function PlanesPage() {
               reduce={reduce}
               hovered={hovered}
               setHovered={setHovered}
-              onRegistro={() => setRegistroAbierto(true)}
             />
           ))}
         </section>
@@ -754,7 +745,6 @@ export default function PlanesPage() {
                         ) : (
                           <PlanCTA
                             plan={plan}
-                            onRegistro={() => setRegistroAbierto(true)}
                             className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold no-underline transition-colors"
                             style={plan.popular ? { backgroundColor: INK, color: '#fff' } : { color: ACCENT }}
                           />
@@ -787,10 +777,10 @@ export default function PlanesPage() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-col gap-3 sm:w-64">
-                <button type="button" onClick={() => setRegistroAbierto(true)} className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold transition-colors hover:bg-[#f1e9dc]" style={{ color: INK }}>
+                <Link to="/registro" className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3.5 text-sm font-semibold transition-colors hover:bg-[#f1e9dc]" style={{ color: INK }}>
                   Crear cuenta
                   <ArrowRight className="h-4 w-4" />
-                </button>
+                </Link>
                 <a href="mailto:soporte@bourgelat.co?subject=Quiero%20revisar%20los%20planes%20de%20Bourgelat" className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/15">
                   Hablar con el equipo
                 </a>
@@ -818,8 +808,6 @@ export default function PlanesPage() {
           </div>
         </div>
       </footer>
-
-      <RegistroDialog open={registroAbierto} onOpenChange={setRegistroAbierto} />
     </div>
   )
 }

@@ -178,6 +178,7 @@ const completarRegistro = async (req, res) => {
           proveedorId: datos.proveedorId,
           telefono,
           rol: 'admin',
+          rolesAdicionales: req.body.atiendePacientes === true ? ['veterinario'] : [],
           clinicaId: clinica.id,
           activo: true,
           emailVerificado: true,
