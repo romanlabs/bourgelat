@@ -83,19 +83,24 @@ export default function CuentasRecaudoSection() {
           <div className="divide-y divide-border overflow-hidden rounded-xl bg-muted">
             {cuentas.map((cuenta) => (
               <div key={cuenta.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                <p className={`text-sm font-semibold ${cuenta.activo ? 'text-foreground' : 'text-muted-foreground line-through'}`}>
-                  {cuenta.nombre}
-                </p>
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{cuenta.nombre}</p>
+                  <p className="text-[13px] text-muted-foreground">{cuenta.activo ? 'Sale al cobrar' : 'No sale al cobrar'}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {/* Activa o pausada: el mismo interruptor de Recordatorios. */}
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={cuenta.activo}
+                    aria-label={`Usar ${cuenta.nombre} al cobrar`}
                     disabled={actualizarMutation.isPending}
                     onClick={() => actualizarMutation.mutate({ id: cuenta.id, payload: { activo: !cuenta.activo } })}
-                    className={`inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                      cuenta.activo ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
+                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
+                      cuenta.activo ? 'bg-primary' : 'bg-muted-foreground/25'
                     }`}
                   >
-                    {cuenta.activo ? 'Desactivar' : 'Activar'}
+                    <span className={`inline-block h-5 w-5 rounded-full bg-card transition-transform ${cuenta.activo ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                   <button
                     type="button"
