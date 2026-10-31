@@ -21,7 +21,8 @@ export const TELEFONO_LEGAL = '+57 310 204 7057'
 export const SITIO_WEB = 'bourgelat.co'
 
 // Al cambiar un documento de forma sustancial se sube su versión (aquí y en
-// backend/src/config/legal.js) y se genera un PDF nuevo: los anteriores se
+// backend/src/config/legal.js), se genera un PDF nuevo y se actualizan las
+// redirecciones de render.yaml (/privacidad, /terminos, /cookies). Los anteriores se
 // conservan en public/legal/ porque son los que aceptaron las clínicas.
 // `vigencia` es la fecha de publicación (AAAA-MM-DD).
 export const VERSIONES_LEGALES = {
