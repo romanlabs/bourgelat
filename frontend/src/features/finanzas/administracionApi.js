@@ -42,4 +42,12 @@ export const administracionApi = {
     })
     return data
   },
+
+  // Cobrado del periodo repartido por medio de pago
+  async obtenerMediosPago({ fechaInicio, fechaFin }) {
+    const { data } = await api.get('/reportes/medios-pago', {
+      params: { fechaInicio, fechaFin },
+    })
+    return data
+  },
 }

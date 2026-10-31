@@ -25,6 +25,8 @@ const {
   margenDe,
   ticketPromedioDe,
   redondearPesos,
+  agregarPorMedio,
+  fechaBogota,
 } = require('../utils/finanzasPeriodo');
 const AbonoFactura = require('../models/AbonoFactura');
 
@@ -768,6 +770,108 @@ const reporteFinanzasPeriodo = async (req, res) => {
   }
 };
 
+// ── Cobrado por medio de pago ────────────────────────────────────────────────
+// ¿Por dónde entra la plata? Mismo «cobrado» que el análisis del periodo
+// (contado de las ventas + abonos recibidos), repartido por medio. El método de
+// pago está cifrado: se traen solo las columnas necesarias y se agrupa en memoria.
+const ABONADO_DE_LA_FACTURA = sequelize.literal(
+  `(SELECT COALESCE(SUM(a."monto"), 0) FROM "abonos_factura" a WHERE a."facturaId" = "Factura"."id")`
+);
+
+const reporteMediosPago = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    const errorRango = validarRango(fechaInicio, fechaFin);
+    if (errorRango) return res.status(400).json({ message: errorRango });
+
+    const granularidad = granularidadDe(fechaInicio, fechaFin);
+    const anterior = periodoAnterior(fechaInicio, fechaFin);
+    const completo = req.analisisCompleto === true;
+
+    const leerFacturas = (inicio, fin) =>
+      Factura.findAll({
+        attributes: ['id', 'fecha', 'total', 'saldoPendiente', 'metodoPago', [ABONADO_DE_LA_FACTURA, 'abonado']],
+        where: tenantWhere(req, {
+          estado: { [Op.in]: ESTADOS_INGRESO },
+          fecha: { [Op.between]: [inicio, fin] },
+        }),
+      });
+
+    const leerAbonos = (inicio, fin) => {
+      const { desde, hasta } = limitesBogota(inicio, fin);
+      return AbonoFactura.findAll({
+        attributes: ['monto', 'metodoPago', 'createdAt'],
+        where: tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } }),
+      });
+    };
+
+    const [facturas, abonos, facturasAnterior, abonosAnterior, gastosPorMetodo] = await Promise.all([
+      leerFacturas(fechaInicio, fechaFin),
+      leerAbonos(fechaInicio, fechaFin),
+      leerFacturas(anterior.fechaInicio, anterior.fechaFin),
+      leerAbonos(anterior.fechaInicio, anterior.fechaFin),
+      // Los gastos (metodoPago plano) solo van en el análisis completo, como la rentabilidad.
+      // Solo los manuales: el consumo de insumos de una historia no saca plata
+      // por ningún medio (se pagó al comprar el insumo).
+      completo
+        ? Gasto.findAll({
+            attributes: ['metodoPago', [sumaDe('monto'), 'total']],
+            where: tenantWhere(req, {
+              anulado: false,
+              origen: 'manual',
+              fecha: { [Op.between]: [fechaInicio, fechaFin] },
+            }),
+            group: ['metodoPago'],
+            raw: true,
+          })
+        : [],
+    ]);
+
+    const entrada = (filasFacturas, filasAbonos) => ({
+      facturas: filasFacturas.map((f) => ({
+        id: f.id,
+        fecha: f.fecha,
+        total: f.total,
+        saldoPendiente: f.saldoPendiente,
+        metodoPago: f.metodoPago,
+      })),
+      abonosPorFactura: Object.fromEntries(filasFacturas.map((f) => [f.id, f.get('abonado')])),
+      abonos: filasAbonos.map((a) => ({
+        fecha: fechaBogota(a.createdAt),
+        monto: a.monto,
+        metodoPago: a.metodoPago,
+      })),
+    });
+
+    const actual = agregarPorMedio({
+      ...entrada(facturas, abonos),
+      claves: clavesDelPeriodo(fechaInicio, fechaFin, granularidad),
+      granularidad,
+    });
+    const previo = agregarPorMedio(entrada(facturasAnterior, abonosAnterior));
+    const previoPorMedio = Object.fromEntries(previo.medios.map((m) => [m.id, m.cobrado]));
+    const gastosPorMedio = aRecord(gastosPorMetodo, 'metodoPago');
+
+    res.json({
+      alcance: completo ? 'completo' : 'basico',
+      periodo: { fechaInicio, fechaFin, granularidad, anterior },
+      total: actual.total,
+      totalAnterior: previo.total,
+      // Lo vendido a crédito en el periodo que aún se debe: no entró por ningún medio.
+      porCobrarDelPeriodo: redondearPesos(facturas.reduce((suma, f) => suma + Number(f.saldoPendiente || 0), 0)),
+      medios: actual.medios.map((medio) => ({
+        ...medio,
+        anterior: previoPorMedio[medio.id] || 0,
+        ...(completo ? { gastos: redondearPesos(gastosPorMedio[medio.id]) } : {}),
+      })),
+      serie: actual.serie,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 module.exports = {
   reporteIngresos,
   reporteCitas,
@@ -776,4 +880,5 @@ module.exports = {
   dashboardGeneral,
   reporteRentabilidad,
   reporteFinanzasPeriodo,
+  reporteMediosPago,
 };

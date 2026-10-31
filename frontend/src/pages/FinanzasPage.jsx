@@ -30,6 +30,7 @@ import FacturaDetalleModal from '@/features/finanzas/FacturaDetalleModal'
 import GastosRentabilidadPanel, { GastoForm } from '@/features/finanzas/GastosRentabilidadPanel'
 import PorCobrarPanel from '@/features/finanzas/PorCobrarPanel'
 import ResumenFinanzasPanel from '@/features/finanzas/ResumenFinanzasPanel'
+import MediosPagoPanel from '@/features/finanzas/MediosPagoPanel'
 import { useCajaTurno } from '@/features/caja/useCajaTurno'
 import TurnoActivoPanel from '@/features/caja/TurnoActivoPanel'
 import HistorialTurnosPanel from '@/features/caja/HistorialTurnosPanel'
@@ -62,6 +63,8 @@ const MODOS = {
     tabInicial: 'resumen',
     tabs: [
       { id: 'resumen', label: 'Resumen' },
+      // Dónde entra la plata: solo administración (cruza con los gastos).
+      { id: 'medios', label: 'Medios de pago', soloAdmin: true },
       { id: 'gastos', label: 'Gastos' },
       { id: 'cobrar', label: 'Por cobrar' },
     ],
@@ -90,14 +93,15 @@ function RestrictedFinancePage() {
 export default function FinanzasPage({ modo = 'caja' }) {
   const config = MODOS[modo] || MODOS.caja
   const esCaja = config.moduleKey === 'caja'
-  const TABS = config.tabs
   const usuario = useAuthStore((state) => state.usuario)
+  const esAdmin = hasAnyRole(usuario, ['admin', 'superadmin'])
+  const TABS = config.tabs.filter((tab) => !tab.soloAdmin || esAdmin)
   const suscripcion = useAuthStore((state) => state.suscripcion)
   const location = useLocation()
   const navigate = useNavigate()
   // Otra pantalla puede abrir una pestaña concreta («Ver cuentas» → Por cobrar).
   const [activeTab, setActiveTab] = useState(() =>
-    config.tabs.some((tab) => tab.id === location.state?.tab) ? location.state.tab : config.tabInicial
+    TABS.some((tab) => tab.id === location.state?.tab) ? location.state.tab : config.tabInicial
   )
   const [ventaExitosa, setVentaExitosa] = useState(false)
   // Factura recién emitida: el POS la muestra sin salir del flujo de venta.
@@ -297,7 +301,12 @@ export default function FinanzasPage({ modo = 'caja' }) {
       ) : (
         <div className="space-y-5">
           {/* ── Tab: Resumen ── */}
-          {activeTab === 'resumen' && <ResumenFinanzasPanel onVerCuentas={() => setActiveTab('cobrar')} />}
+          {activeTab === 'resumen' && (
+            <ResumenFinanzasPanel onVerCuentas={() => setActiveTab('cobrar')} onVerMedios={() => setActiveTab('medios')} />
+          )}
+
+          {/* ── Tab: Medios de pago ── */}
+          {activeTab === 'medios' && esAdmin && <MediosPagoPanel />}
 
           {/* ── Tab: Facturacion ── */}
           {activeTab === 'facturacion' && (

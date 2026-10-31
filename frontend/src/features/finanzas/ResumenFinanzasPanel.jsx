@@ -10,16 +10,19 @@ import { finanzasApi } from '@/features/finanzas/finanzasApi'
 import { CATEGORIAS_GASTO } from '@/features/finanzas/finanzasConstants'
 import { ESTADO_LABELS, getEstadoTone } from '@/features/finanzas/useFinanzasHistorial'
 import {
-  PRESETS_ANALISIS,
-  aniosDisponibles,
   badgeVariacion,
   etiquetaAnterior,
   etiquetaPeriodo,
-  rangoDelAnio,
-  rangoTrimestreActual,
-  rangoUltimos12Meses,
   variacion,
 } from '@/features/finanzas/analisisPeriodo'
+import SelectorPeriodo from '@/features/finanzas/SelectorPeriodo'
+import {
+  botonSegmento,
+  pesosCompactos,
+  segmentado,
+  tarjeta,
+  usePeriodoAnalisis,
+} from '@/features/finanzas/finanzasUi'
 import {
   CONFIG_SERIE,
   agruparMetodosPago,
@@ -33,86 +36,14 @@ import {
   nombreMes,
   rangoDelMes,
 } from '@/features/finanzas/resumenFinanzas'
-import { Select } from '@/components/ui/select'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/suscripcion'
-import { mesLocal, hoyLocal } from '@/lib/fecha'
+import { hoyLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 
 const ETIQUETAS_CATEGORIA = Object.fromEntries(CATEGORIAS_GASTO.map((c) => [c.value, c.label]))
 const TOP_CATEGORIAS = 5
-
-const compacto = (valor) =>
-  new Intl.NumberFormat('es-CO', { notation: 'compact', maximumFractionDigits: 1 }).format(Number(valor || 0))
-const pesosCompactos = (valor) => `${Number(valor) < 0 ? '−' : ''}$${compacto(Math.abs(Number(valor || 0)))}`
-
-const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
-const segmentado = 'flex gap-1 rounded-lg bg-secondary p-1'
-const botonSegmento = (activo) =>
-  `h-8 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-    activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
-  }`
-const inputFecha =
-  'h-10 rounded-lg border border-input bg-card px-3 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-
-function SelectorPeriodo({ preset, onPreset, mes, onMes, anio, onAnio, personalizado, onPersonalizado, completo, avisoBloqueo }) {
-  const anios = useMemo(() => aniosDisponibles().map((a) => ({ value: String(a), label: String(a) })), [])
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Desplegable y no botones: cabe junto a la cifra sin bajar a otra fila. */}
-      <Select
-        aria-label="Periodo"
-        value={preset}
-        onValueChange={onPreset}
-        options={PRESETS_ANALISIS.map((opcion) => ({
-          value: opcion.id,
-          label: opcion.largo && !completo ? `${opcion.label} · ${avisoBloqueo}` : opcion.label,
-          disabled: opcion.largo && !completo,
-        }))}
-      />
-
-      {preset === 'mes' ? (
-        <input
-          type="month"
-          value={mes}
-          max={mesLocal()}
-          onChange={(e) => e.target.value && onMes(e.target.value)}
-          aria-label="Mes"
-          className={inputFecha}
-        />
-      ) : null}
-
-      {preset === 'anio' ? (
-        <Select aria-label="Año" value={String(anio)} onValueChange={(valor) => onAnio(Number(valor))} options={anios} />
-      ) : null}
-
-      {preset === 'personalizado' ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="date"
-            value={personalizado.fechaInicio}
-            max={personalizado.fechaFin}
-            onChange={(e) => e.target.value && onPersonalizado({ ...personalizado, fechaInicio: e.target.value })}
-            aria-label="Fecha inicial del periodo"
-            className={inputFecha}
-          />
-          <span className="text-sm text-muted-foreground">a</span>
-          <input
-            type="date"
-            value={personalizado.fechaFin}
-            min={personalizado.fechaInicio}
-            onChange={(e) => e.target.value && onPersonalizado({ ...personalizado, fechaFin: e.target.value })}
-            aria-label="Fecha final del periodo"
-            className={inputFecha}
-          />
-        </div>
-      ) : null}
-
-    </div>
-  )
-}
 
 function TablaSerie({ filas, etiqueta, columnaTramo, conGastos }) {
   return (
@@ -546,12 +477,19 @@ function LoQueQueda({ titulo, resumen, gastosPorCategoria }) {
   )
 }
 
-function ComoPagan({ grupos, cargando }) {
+function ComoPagan({ grupos, cargando, onVerMedios }) {
   return (
     <section aria-labelledby="f-metodos" className={`${tarjeta} flex flex-col gap-4`}>
-      <div>
-        <h2 id="f-metodos" className="text-lg font-semibold text-card-foreground">Cómo pagan</h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">Sobre lo vendido en el periodo.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="f-metodos" className="text-lg font-semibold text-card-foreground">Cómo pagan</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">Sobre lo vendido en el periodo.</p>
+        </div>
+        {onVerMedios && grupos.length ? (
+          <button type="button" onClick={onVerMedios} className="shrink-0 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            Ver por medio
+          </button>
+        ) : null}
       </div>
       {grupos.length ? (
         <>
@@ -698,7 +636,7 @@ function ListaTop({ id, titulo, filas, sinCatalogo, etiquetaSinCatalogo }) {
   )
 }
 
-export default function ResumenFinanzasPanel({ onVerCuentas }) {
+export default function ResumenFinanzasPanel({ onVerCuentas, onVerMedios }) {
   const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
   const suscripcion = useAuthStore((state) => state.suscripcion)
@@ -711,18 +649,9 @@ export default function ResumenFinanzasPanel({ onVerCuentas }) {
     : 'solo administración'
   const puedeVerCaja = canAccessModule(usuario, 'caja')
 
-  const [preset, setPreset] = useState('mes')
-  const [mes, setMes] = useState(() => mesLocal())
-  const [anio, setAnio] = useState(() => new Date().getFullYear())
-  const [personalizado, setPersonalizado] = useState(() => rangoUltimos12Meses())
-
-  const rango = useMemo(() => {
-    if (preset === 'trimestre') return rangoTrimestreActual()
-    if (preset === 'anio') return rangoDelAnio(anio)
-    if (preset === '12m') return rangoUltimos12Meses()
-    if (preset === 'personalizado') return personalizado
-    return rangoDelMes(mes)
-  }, [preset, mes, anio, personalizado])
+  const {
+    preset, setPreset, mes, setMes, anio, setAnio, personalizado, setPersonalizado, rango, nombrePeriodo,
+  } = usePeriodoAnalisis()
 
   const analisis = useAnalisisPeriodo(rango)
   // La curva del mes se compara día a día con el mes anterior completo.
@@ -748,12 +677,6 @@ export default function ResumenFinanzasPanel({ onVerCuentas }) {
     [metodosQuery.data, oscuro]
   )
 
-  const nombrePeriodo =
-    preset === 'mes' ? nombreMes(mes)
-      : preset === 'anio' ? String(anio)
-        : preset === 'trimestre' ? 'el trimestre'
-          : preset === '12m' ? 'los últimos 12 meses'
-            : 'el periodo'
   const finVisible = rango.fechaFin > hoyLocal() ? hoyLocal() : rango.fechaFin
   // Sin datos del periodo anterior no hay comparación: no se muestra un aviso vacío.
   const hayComparacion = data && variacion(resumen.ingresos, data.anterior.ingresos) !== null
@@ -836,7 +759,7 @@ export default function ResumenFinanzasPanel({ onVerCuentas }) {
             {verCompleto && !porMes ? (
               <LoQueQueda titulo="Lo que queda del mes" resumen={resumen} gastosPorCategoria={data.gastosPorCategoria} />
             ) : null}
-            {!verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} /> : null}
+            {!verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} onVerMedios={esAdmin ? onVerMedios : null} /> : null}
           </div>
 
 
@@ -854,7 +777,7 @@ export default function ResumenFinanzasPanel({ onVerCuentas }) {
                   gastosPorCategoria={data.gastosPorCategoria}
                 />
               ) : null}
-              {verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} /> : null}
+              {verCompleto ? <ComoPagan grupos={grupos} cargando={metodosQuery.isLoading} onVerMedios={esAdmin ? onVerMedios : null} /> : null}
               <PorCobrar resumen={resumen} onVerCuentas={onVerCuentas || (puedeVerCaja ? () => irACaja('cobrar') : null)} />
             </div>
           </div>
