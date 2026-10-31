@@ -28,6 +28,12 @@ const AbonoFactura = sequelize.define('AbonoFactura', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // Cifrado, igual que metodoPago: cuenta de la clínica (CuentaRecaudo) a la
+  // que entró un abono por transferencia.
+  cuentaRecaudoId: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   // Cifrado: nota libre sobre el abono.
   observaciones: {
     type: DataTypes.TEXT,
@@ -79,7 +85,7 @@ const AbonoFactura = sequelize.define('AbonoFactura', {
 })
 
 registrarHooksCifrado(AbonoFactura, {
-  campos: ['metodoPago', 'observaciones'],
+  campos: ['metodoPago', 'cuentaRecaudoId', 'observaciones'],
 })
 
 Factura.hasMany(AbonoFactura, { foreignKey: 'facturaId', as: 'abonos' })

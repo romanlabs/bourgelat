@@ -1,5 +1,5 @@
 import { toast } from 'sonner'
-import { PAYMENT_METHOD_LABELS, formatCurrency } from '@/features/dashboard/dashboardUtils'
+import { formaDePago, formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { LINE, MARGIN, MUTED, TEXT, cargarLogo, nombreClinica } from '@/lib/pdfComun'
 import {
   NEGRO,
@@ -174,7 +174,7 @@ export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
 
   c.titulo('Datos del pago', 10)
   c.campos([
-    ['Forma de pago', PAYMENT_METHOD_LABELS[factura?.metodoPago] || factura?.metodoPago, 'No registrada', 2],
+    ['Forma de pago', formaDePago(factura), 'No registrada', 2],
     ['Atendido por', factura?.usuario?.nombre, 'No registrado', 2],
   ])
 

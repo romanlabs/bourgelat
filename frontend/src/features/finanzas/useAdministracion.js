@@ -6,6 +6,7 @@ const KEYS = {
   gastos: (filtros) => ['administracion', 'gastos', filtros],
   cuentasPorCobrar: ['administracion', 'cuentas-por-cobrar'],
   analisisPeriodo: (periodo) => ['administracion', 'analisis-periodo', periodo],
+  mediosPago: (periodo) => ['administracion', 'medios-pago', periodo],
 }
 
 // Ver la lista de gastos es solo de administración: el resto no la pide.
@@ -64,6 +65,16 @@ export function useAnalisisPeriodo(periodo, { enabled = true } = {}) {
   return useQuery({
     queryKey: KEYS.analisisPeriodo(periodo),
     queryFn: () => administracionApi.obtenerAnalisisPeriodo(periodo),
+    enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
+    placeholderData: (previousData) => previousData,
+  })
+}
+
+// Misma raíz 'administracion': ventas, abonos y gastos la refrescan.
+export function useMediosPago(periodo, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: KEYS.mediosPago(periodo),
+    queryFn: () => administracionApi.obtenerMediosPago(periodo),
     enabled: enabled && Boolean(periodo?.fechaInicio && periodo?.fechaFin),
     placeholderData: (previousData) => previousData,
   })

@@ -9,6 +9,8 @@ import { serviciosApi } from '@/features/servicios/serviciosApi'
 import { finanzasApi } from './finanzasApi'
 import { mensajeDeError } from '@/lib/errores'
 import { crearGestorClaveVenta } from './claveIdempotenciaVenta'
+import { cuentaDelCobro, faltaCuenta, MENSAJE_FALTA_CUENTA } from './cuentaCobro'
+import { useCuentasRecaudo } from './useCuentasRecaudo'
 
 const createBlankInvoiceItem = () => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -35,6 +37,8 @@ const buildInitialForm = () => ({
   metodoPago: 'efectivo',
   // Banco o referencia de la transferencia, o cuál es el «otro» método.
   detallePago: '',
+  // Solo transferencia: cuenta de la clínica a la que entró (Configuración).
+  cuentaRecaudoId: '',
   observaciones: '',
   // Solo crédito: en cuántos días queda en pagar ('' = sin plazo).
   plazoCreditoDias: '',
@@ -79,7 +83,7 @@ export const PAYMENT_METHOD_OPTIONS = [
 ]
 
 // Qué le falta al carrito o al método elegido para poder cobrar (null si nada).
-export const faltaParaCobrar = (form) => {
+export const faltaParaCobrar = (form, cuentas = []) => {
   // El backend rechaza la venta de un vencido: se avisa antes de llegar al cobro.
   const vencido = (form?.items || []).find(
     (item) => item.tipo === 'producto' && estadoVencimiento(item) === 'vencido'
@@ -88,6 +92,7 @@ export const faltaParaCobrar = (form) => {
   const opcion = PAYMENT_METHOD_OPTIONS.find((o) => o.value === form?.metodoPago)
   if (opcion?.requiereCliente && !form?.propietarioId) return 'Para vender a crédito asigna un cliente'
   if (opcion?.detalle?.requerido && !String(form?.detallePago || '').trim()) return opcion.detalle.falta
+  if (faltaCuenta({ metodoPago: form?.metodoPago, cuentaRecaudoId: form?.cuentaRecaudoId, cuentas })) return MENSAJE_FALTA_CUENTA
   return null
 }
 
@@ -112,6 +117,7 @@ export function useFinanzasFacturacion({
   // Clave de idempotencia del carrito actual: se repite en los reintentos para
   // que un corte de red no duplique la venta (ver claveIdempotenciaVenta.js).
   const [claveVenta] = useState(() => crearGestorClaveVenta())
+  const { data: cuentasRecaudo = [] } = useCuentasRecaudo({ soloActivas: true, enabled })
 
   const deferredOwnerSearch = useDeferredValue(ownerSearch)
   const deferredProductSearch = useDeferredValue(productSearch)
@@ -445,7 +451,7 @@ export function useFinanzasFacturacion({
       return
     }
 
-    const falta = faltaParaCobrar(invoiceForm)
+    const falta = faltaParaCobrar(invoiceForm, cuentasRecaudo)
     if (falta) {
       toast.error(falta)
       return
@@ -465,6 +471,12 @@ export function useFinanzasFacturacion({
     crearFacturaMutation.mutate({
       propietarioId: invoiceForm.propietarioId || undefined,
       metodoPago: invoiceForm.metodoPago,
+      cuentaRecaudoId:
+        cuentaDelCobro({
+          metodoPago: invoiceForm.metodoPago,
+          cuentaRecaudoId: invoiceForm.cuentaRecaudoId,
+          cuentas: cuentasRecaudo,
+        }) || undefined,
       observaciones: observaciones || undefined,
       emitirElectronica: emisionAutomaticaActiva && Boolean(invoiceForm.propietarioId),
       historiaClinicaId: invoiceForm.historiaClinicaId || undefined,

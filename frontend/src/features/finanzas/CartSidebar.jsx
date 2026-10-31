@@ -5,6 +5,9 @@ import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacio
 import { estadoVencimiento, fechaCortaVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
+import SelectorCuenta from './SelectorCuenta'
+import { cuentaDelCobro } from './cuentaCobro'
+import { useCuentasRecaudo } from './useCuentasRecaudo'
 import { formatearCelular } from '@/lib/celular'
 
 // Alias en mayúscula: la regla no-unused-vars no ve el uso dentro del JSX y
@@ -44,10 +47,17 @@ export default function CartSidebar({
   const total = invoiceTotals?.total ?? 0
 
   const opcionPago = PAYMENT_METHOD_OPTIONS.find((o) => o.value === metodoPago)
-  const falta = faltaParaCobrar(invoiceForm)
+  const { data: cuentas = [] } = useCuentasRecaudo({ soloActivas: true })
+  const falta = faltaParaCobrar(invoiceForm, cuentas)
   const setMetodoPago = (value) => {
-    setInvoiceForm((f) => ({ ...f, metodoPago: value, detallePago: '' }))
+    setInvoiceForm((f) => ({ ...f, metodoPago: value, detallePago: '', cuentaRecaudoId: '' }))
   }
+  // Con cuentas configuradas el banco ya no se escribe: el detalle queda para la referencia.
+  const cuentaElegida = cuentaDelCobro({ metodoPago, cuentaRecaudoId: invoiceForm?.cuentaRecaudoId, cuentas })
+  const detalle =
+    metodoPago === 'transferencia' && cuentas.length && opcionPago?.detalle
+      ? { ...opcionPago.detalle, label: 'Referencia', placeholder: 'ref. 8841…' }
+      : opcionPago?.detalle
 
   const incrementQty = (id, current) => {
     const next = Math.max(toAmount(current) + 1, 1)
@@ -281,15 +291,24 @@ export default function CartSidebar({
           </button>
         </div>
 
-        {/* Detalle del método: banco de la transferencia o cuál es «otro» */}
-        {opcionPago?.detalle ? (
+        {/* A qué cuenta de la clínica entró la transferencia (Configuración) */}
+        {metodoPago === 'transferencia' && cuentas.length ? (
+          <SelectorCuenta
+            cuentas={cuentas}
+            seleccionada={cuentaElegida}
+            onSeleccionar={(id) => setInvoiceForm((f) => ({ ...f, cuentaRecaudoId: id }))}
+          />
+        ) : null}
+
+        {/* Detalle del método: banco o referencia de la transferencia, o cuál es «otro» */}
+        {detalle ? (
           <input
             type="text"
             value={invoiceForm?.detallePago ?? ''}
             onChange={(e) => setInvoiceForm((f) => ({ ...f, detallePago: e.target.value }))}
             maxLength={80}
-            aria-label={opcionPago.detalle.label}
-            placeholder={`${opcionPago.detalle.label}${opcionPago.detalle.requerido ? '' : ' (opcional)'}: ${opcionPago.detalle.placeholder}`}
+            aria-label={detalle.label}
+            placeholder={`${detalle.label}${detalle.requerido ? '' : ' (opcional)'}: ${detalle.placeholder}`}
             className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         ) : null}
