@@ -12,13 +12,13 @@ const TABLAS = [
   },
   {
     tabla: 'facturas',
-    campos: ['metodoPago', 'observaciones', 'mensajeElectronico', 'payloadElectronico', 'respuestaElectronica'],
+    campos: ['metodoPago', 'cuentaRecaudoId', 'observaciones', 'mensajeElectronico', 'payloadElectronico', 'respuestaElectronica'],
   },
   { tabla: 'factura_items', campos: ['descripcion'] },
   { tabla: 'caja_turnos', campos: ['observacionesCierre'] },
   { tabla: 'movimientos_caja', campos: ['observaciones'] },
   { tabla: 'gastos', campos: ['descripcion'] },
-  { tabla: 'abonos_factura', campos: ['metodoPago', 'observaciones'] },
+  { tabla: 'abonos_factura', campos: ['metodoPago', 'cuentaRecaudoId', 'observaciones'] },
   {
     tabla: 'integraciones_facturacion',
     campos: ['clientIdCifrado', 'clientSecretCifrado', 'usernameCifrado', 'passwordCifrado'],

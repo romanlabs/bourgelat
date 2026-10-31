@@ -223,9 +223,11 @@ const diaSemana = (fechaISO) => {
 // de la venta; de cada abono, su monto por el medio del abono. Así la suma de
 // todos los medios es el «cobrado» del Resumen. Se hace en memoria porque el
 // método de pago está cifrado.
-//   facturas:         [{ id, fecha, total, saldoPendiente, metodoPago }]
+// Las transferencias además se reparten por la cuenta de la clínica a la que
+// entraron (cuentaRecaudoId; null = sin cuenta, como las ventas viejas).
+//   facturas:         [{ id, fecha, total, saldoPendiente, metodoPago, cuentaRecaudoId }]
 //   abonosPorFactura: { [facturaId]: suma de sus abonos (de cualquier fecha) }
-//   abonos:           [{ fecha: 'YYYY-MM-DD', monto, metodoPago }] recibidos en el periodo
+//   abonos:           [{ fecha: 'YYYY-MM-DD', monto, metodoPago, cuentaRecaudoId }] recibidos en el periodo
 //   claves:           tramos de la serie (clavesDelPeriodo); vacío = sin serie
 const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], claves = [], granularidad = 'dia' }) => {
   const medios = Object.fromEntries(
@@ -233,10 +235,18 @@ const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], cl
   )
   const serie = new Map(claves.map((periodo) => [periodo, Object.fromEntries(MEDIOS_PAGO.map((id) => [id, 0]))]))
   const tramoDe = (fecha) => (granularidad === 'mes' ? String(fecha).slice(0, 7) : String(fecha).slice(0, 10))
+  const porCuenta = new Map()
 
-  const sumar = (medio, monto, fecha, origen) => {
+  const sumar = (medio, monto, fecha, origen, cuentaRecaudoId) => {
     const fila = medios[medio]
     fila.cobrado += monto
+    if (medio === 'transferencia') {
+      const clave = cuentaRecaudoId || null
+      const cuenta = porCuenta.get(clave) || { cuentaRecaudoId: clave, cobrado: 0, operaciones: 0 }
+      cuenta.cobrado += monto
+      cuenta.operaciones += 1
+      porCuenta.set(clave, cuenta)
+    }
     if (origen === 'venta') {
       fila.deVentas += monto
       fila.ventas += 1
@@ -253,11 +263,11 @@ const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], cl
     const contado =
       Number(factura.total || 0) - Number(factura.saldoPendiente || 0) - Number(abonosPorFactura[factura.id] || 0)
     // Una venta a crédito no trae plata en el momento: no cuenta como operación.
-    if (contado > 0) sumar(medioDe(factura.metodoPago), contado, factura.fecha, 'venta')
+    if (contado > 0) sumar(medioDe(factura.metodoPago), contado, factura.fecha, 'venta', factura.cuentaRecaudoId)
   }
   for (const abono of abonos) {
     const monto = Number(abono.monto || 0)
-    if (monto > 0) sumar(medioDe(abono.metodoPago), monto, abono.fecha, 'abono')
+    if (monto > 0) sumar(medioDe(abono.metodoPago), monto, abono.fecha, 'abono', abono.cuentaRecaudoId)
   }
 
   const total = redondearPesos(Object.values(medios).reduce((suma, fila) => suma + fila.cobrado, 0))
@@ -275,6 +285,13 @@ const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], cl
         ticketPromedio: ticketPromedioDe(fila.cobrado, operaciones),
         participacion: total > 0 ? Number(((fila.cobrado / total) * 100).toFixed(1)) : 0,
         porDiaSemana: fila.porDiaSemana.map(redondearPesos),
+        ...(id === 'transferencia'
+          ? {
+              porCuenta: [...porCuenta.values()]
+                .map((cuenta) => ({ ...cuenta, cobrado: redondearPesos(cuenta.cobrado) }))
+                .sort((a, b) => b.cobrado - a.cobrado),
+            }
+          : {}),
       }
     }),
     serie: [...serie].map(([periodo, valores]) => ({

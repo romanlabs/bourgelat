@@ -29,6 +29,7 @@ const {
   fechaBogota,
 } = require('../utils/finanzasPeriodo');
 const AbonoFactura = require('../models/AbonoFactura');
+const CuentaRecaudo = require('../models/CuentaRecaudo');
 
 const reporteIngresos = async (req, res) => {
   try {
@@ -791,7 +792,7 @@ const reporteMediosPago = async (req, res) => {
 
     const leerFacturas = (inicio, fin) =>
       Factura.findAll({
-        attributes: ['id', 'fecha', 'total', 'saldoPendiente', 'metodoPago', [ABONADO_DE_LA_FACTURA, 'abonado']],
+        attributes: ['id', 'fecha', 'total', 'saldoPendiente', 'metodoPago', 'cuentaRecaudoId', [ABONADO_DE_LA_FACTURA, 'abonado']],
         where: tenantWhere(req, {
           estado: { [Op.in]: ESTADOS_INGRESO },
           fecha: { [Op.between]: [inicio, fin] },
@@ -801,12 +802,12 @@ const reporteMediosPago = async (req, res) => {
     const leerAbonos = (inicio, fin) => {
       const { desde, hasta } = limitesBogota(inicio, fin);
       return AbonoFactura.findAll({
-        attributes: ['monto', 'metodoPago', 'createdAt'],
+        attributes: ['monto', 'metodoPago', 'cuentaRecaudoId', 'createdAt'],
         where: tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } }),
       });
     };
 
-    const [facturas, abonos, facturasAnterior, abonosAnterior, gastosPorMetodo] = await Promise.all([
+    const [facturas, abonos, facturasAnterior, abonosAnterior, gastosPorMetodo, cuentas] = await Promise.all([
       leerFacturas(fechaInicio, fechaFin),
       leerAbonos(fechaInicio, fechaFin),
       leerFacturas(anterior.fechaInicio, anterior.fechaFin),
@@ -826,7 +827,11 @@ const reporteMediosPago = async (req, res) => {
             raw: true,
           })
         : [],
+      // Nombres de las cuentas de recaudo, también las desactivadas: cobros
+      // viejos pueden haber entrado a una que ya no se usa.
+      CuentaRecaudo.findAll({ attributes: ['id', 'nombre'], where: tenantWhere(req), raw: true }),
     ]);
+    const nombreCuenta = Object.fromEntries(cuentas.map((c) => [c.id, c.nombre]));
 
     const entrada = (filasFacturas, filasAbonos) => ({
       facturas: filasFacturas.map((f) => ({
@@ -835,12 +840,14 @@ const reporteMediosPago = async (req, res) => {
         total: f.total,
         saldoPendiente: f.saldoPendiente,
         metodoPago: f.metodoPago,
+        cuentaRecaudoId: f.cuentaRecaudoId,
       })),
       abonosPorFactura: Object.fromEntries(filasFacturas.map((f) => [f.id, f.get('abonado')])),
       abonos: filasAbonos.map((a) => ({
         fecha: fechaBogota(a.createdAt),
         monto: a.monto,
         metodoPago: a.metodoPago,
+        cuentaRecaudoId: a.cuentaRecaudoId,
       })),
     });
 
@@ -864,6 +871,14 @@ const reporteMediosPago = async (req, res) => {
         ...medio,
         anterior: previoPorMedio[medio.id] || 0,
         ...(completo ? { gastos: redondearPesos(gastosPorMedio[medio.id]) } : {}),
+        ...(medio.porCuenta
+          ? {
+              porCuenta: medio.porCuenta.map((cuenta) => ({
+                ...cuenta,
+                nombre: nombreCuenta[cuenta.cuentaRecaudoId] || null,
+              })),
+            }
+          : {}),
       })),
       serie: actual.serie,
     });

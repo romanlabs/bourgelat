@@ -7,6 +7,8 @@ import CartSidebar from './CartSidebar'
 import VencimientoCajaDialog from './VencimientoCajaDialog'
 import { PAYMENT_METHOD_OPTIONS } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
+import { cuentaDelCobro } from './cuentaCobro'
+import { useCuentasRecaudo } from './useCuentasRecaudo'
 import { finanzasApi } from './finanzasApi'
 import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import { descargarFacturaPdf } from './facturaPdf'
@@ -109,6 +111,7 @@ export default function PosModal({
   const clinica = useAuthStore((state) => state.clinica)
   // La factura impresa dice quien la imprimio.
   const usuario = useAuthStore((state) => state.usuario)
+  const { data: cuentasRecaudo = [] } = useCuentasRecaudo({ soloActivas: true })
 
   const {
     ownerSearch, setOwnerSearch,
@@ -153,7 +156,11 @@ export default function PosModal({
   const monto = parseFloat(montoRecibido) || 0
   const vuelto = monto - total
   const vueltoOk = vuelto >= 0
-  const metodoLabel = PAYMENT_METHOD_OPTIONS.find((m) => m.value === metodoPago)?.label || metodoPago
+  const metodoBase = PAYMENT_METHOD_OPTIONS.find((m) => m.value === metodoPago)?.label || metodoPago
+  // La transferencia muestra a qué cuenta de la clínica entró («Transferencia · Nequi»).
+  const cuentaId = cuentaDelCobro({ metodoPago, cuentaRecaudoId: invoiceForm?.cuentaRecaudoId, cuentas: cuentasRecaudo })
+  const nombreCuenta = cuentasRecaudo.find((cuenta) => cuenta.id === cuentaId)?.nombre
+  const metodoLabel = nombreCuenta ? `${metodoBase} · ${nombreCuenta}` : metodoBase
   const MetodoIcon = PAYMENT_METHOD_ICONS[metodoPago]
   const cashSuggestions = useMemo(() => buildCashSuggestions(total), [total])
   const isPending = crearFacturaMutation?.isPending
@@ -485,7 +492,7 @@ export default function PosModal({
                   />
                 ) : (
                   <p className="mt-6 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-                    {`Pago con ${metodoLabel.toLowerCase()} — sin vuelto.`}
+                    {`Pago con ${metodoBase.toLowerCase()}${nombreCuenta ? ` a ${nombreCuenta}` : ''} — sin vuelto.`}
                   </p>
                 )}
 

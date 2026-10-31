@@ -3,9 +3,13 @@ import MoneyInput from '@/components/shared/MoneyInput'
 import { Select } from '@/components/ui/select'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { useRegistrarAbono } from '@/features/finanzas/useAdministracion'
+import { useCuentasRecaudo } from '@/features/finanzas/useCuentasRecaudo'
+import { cuentaDelCobro, faltaCuenta, MENSAJE_FALTA_CUENTA } from '@/features/finanzas/cuentaCobro'
+import SelectorCuenta from '@/features/finanzas/SelectorCuenta'
 import { mensajeDeError } from '@/lib/errores'
 
-// Igual que la venta: Nequi, Daviplata y cualquier banco van como transferencia.
+// Igual que la venta: Nequi, Daviplata y cualquier banco van como transferencia
+// (a cuál cuenta entró se elige aparte, entre las que configuró la clínica).
 const METODOS_ABONO = [
   { value: 'efectivo', label: 'Efectivo' },
   { value: 'transferencia', label: 'Transferencia' },
@@ -23,13 +27,25 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
   const saldo = Number(factura.saldoPendiente) || 0
   const [monto, setMonto] = useState('')
   const [metodoPago, setMetodoPago] = useState('efectivo')
+  const [cuentaRecaudoId, setCuentaRecaudoId] = useState('')
   const [error, setError] = useState(null)
   const registrarAbono = useRegistrarAbono()
+  const { data: cuentas = [] } = useCuentasRecaudo({ soloActivas: true })
+  const cobro = { metodoPago, cuentaRecaudoId, cuentas }
 
   const cobrar = async (valor) => {
     setError(null)
+    if (faltaCuenta(cobro)) {
+      setError(MENSAJE_FALTA_CUENTA)
+      return
+    }
     try {
-      await registrarAbono.mutateAsync({ facturaId: factura.id, monto: valor, metodoPago })
+      await registrarAbono.mutateAsync({
+        facturaId: factura.id,
+        monto: valor,
+        metodoPago,
+        cuentaRecaudoId: cuentaDelCobro(cobro) || undefined,
+      })
       setMonto('')
       onListo?.()
     } catch (err) {
@@ -52,7 +68,10 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           aria-label="Método del abono"
           className="h-10 w-44"
           value={metodoPago}
-          onValueChange={setMetodoPago}
+          onValueChange={(valor) => {
+            setMetodoPago(valor)
+            setCuentaRecaudoId('')
+          }}
           options={METODOS_ABONO}
         />
         <button
@@ -81,6 +100,9 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           </button>
         ) : null}
       </div>
+      {metodoPago === 'transferencia' && cuentas.length ? (
+        <SelectorCuenta cuentas={cuentas} seleccionada={cuentaDelCobro(cobro)} onSeleccionar={setCuentaRecaudoId} />
+      ) : null}
       {error ? <p className="text-[13px] text-danger">{error}</p> : null}
     </div>
   )
