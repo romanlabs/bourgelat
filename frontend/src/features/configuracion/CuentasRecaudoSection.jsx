@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Landmark } from 'lucide-react'
+import { Landmark, Trash2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { cuentasRecaudoApi } from '@/features/finanzas/cuentasRecaudoApi'
@@ -45,6 +47,18 @@ export default function CuentasRecaudoSection() {
     onError: (error) => toast.error(mensajeDeError(error, 'No fue posible actualizar la cuenta.')),
   })
 
+  // Cuenta que se va a borrar (pide confirmación).
+  const [porBorrar, setPorBorrar] = useState(null)
+  const borrarMutation = useMutation({
+    mutationFn: (id) => cuentasRecaudoApi.borrar(id),
+    onSuccess: () => {
+      toast.success('Cuenta borrada')
+      setPorBorrar(null)
+      invalidarDominios(queryClient, 'configuracion')
+    },
+    onError: (error) => toast.error(mensajeDeError(error, 'No fue posible borrar la cuenta.')),
+  })
+
   return (
     <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_360px]">
       <DashboardPanel
@@ -72,16 +86,27 @@ export default function CuentasRecaudoSection() {
                 <p className={`text-sm font-semibold ${cuenta.activo ? 'text-foreground' : 'text-muted-foreground line-through'}`}>
                   {cuenta.nombre}
                 </p>
-                <button
-                  type="button"
-                  disabled={actualizarMutation.isPending}
-                  onClick={() => actualizarMutation.mutate({ id: cuenta.id, payload: { activo: !cuenta.activo } })}
-                  className={`inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-[13px] font-semibold outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                    cuenta.activo ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'
-                  }`}
-                >
-                  {cuenta.activo ? 'Desactivar' : 'Activar'}
-                </button>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={actualizarMutation.isPending}
+                    onClick={() => actualizarMutation.mutate({ id: cuenta.id, payload: { activo: !cuenta.activo } })}
+                    className={`inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                      cuenta.activo ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
+                    }`}
+                  >
+                    {cuenta.activo ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPorBorrar(cuenta)}
+                    aria-label={`Borrar ${cuenta.nombre}`}
+                    title="Borrar"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-danger-soft text-danger outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -114,6 +139,16 @@ export default function CuentasRecaudoSection() {
           </button>
         </form>
       </DashboardPanel>
+
+      <ConfirmDialog
+        open={Boolean(porBorrar)}
+        onOpenChange={(abierto) => !abierto && setPorBorrar(null)}
+        title={`¿Borrar «${porBorrar?.nombre ?? ''}»?`}
+        description="Deja de salir en esta lista y al cobrar. Las ventas que ya entraron a esta cuenta la siguen mostrando, y si vuelves a crearla con el mismo nombre recupera sus cobros."
+        confirmLabel="Borrar cuenta"
+        loading={borrarMutation.isPending}
+        onConfirm={() => porBorrar && borrarMutation.mutate(porBorrar.id)}
+      />
     </div>
   )
 }

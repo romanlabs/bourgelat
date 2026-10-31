@@ -19,6 +19,12 @@ const CuentaRecaudo = sequelize.define('CuentaRecaudo', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  // Borrada desde Configuración: no sale en la lista ni al cobrar, pero las
+  // ventas que entraron a ella siguen mostrando su nombre.
+  borradaEn: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   clinicaId: {
     type: DataTypes.UUID,
     allowNull: false,

@@ -18,4 +18,9 @@ export const cuentasRecaudoApi = {
     const { data } = await api.patch(`/cuentas-recaudo/${id}`, payload)
     return data
   },
+
+  async borrar(id) {
+    const { data } = await api.delete(`/cuentas-recaudo/${id}`)
+    return data
+  },
 }

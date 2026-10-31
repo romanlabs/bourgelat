@@ -26,6 +26,12 @@ module.exports = {
           allowNull: false,
           defaultValue: true,
         },
+        // Borrada desde Configuración: deja de verse, pero las ventas que
+        // entraron a ella conservan el nombre.
+        borradaEn: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
         clinicaId: {
           type: Sequelize.UUID,
           allowNull: false,

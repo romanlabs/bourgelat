@@ -5,6 +5,7 @@ const {
   listarCuentasRecaudo,
   crearCuentaRecaudo,
   actualizarCuentaRecaudo,
+  borrarCuentaRecaudo,
 } = require('../controllers/cuentaRecaudoController')
 const { verificarToken, verificarRol } = require('../middlewares/authMiddleware')
 const { requerirEscritura } = require('../middlewares/suscripcionMiddleware')
@@ -48,6 +49,15 @@ router.patch(
     validar,
   ],
   actualizarCuentaRecaudo
+)
+
+router.delete(
+  '/:id',
+  verificarToken,
+  verificarRol(...rolesEscritura),
+  requerirEscritura,
+  [param('id').isUUID().withMessage('Cuenta no valida'), validar],
+  borrarCuentaRecaudo
 )
 
 module.exports = router
