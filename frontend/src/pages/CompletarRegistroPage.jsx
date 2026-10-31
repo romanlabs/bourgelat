@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Logo from '@/components/shared/Logo'
 import { useCompletarRegistroOauth } from '@/features/auth/useAuth'
 import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
+import CasillaAtiendePacientes from '@/features/auth/CasillaAtiendePacientes'
 import CampoCelular from '@/components/shared/CampoCelular'
 import { esCelularValido } from '@/lib/celular'
 
@@ -17,6 +18,7 @@ const esquema = z.object({
     .boolean()
     .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
   aceptaComunicaciones: z.boolean(),
+  atiendePacientes: z.boolean(),
 })
 
 const inputClass =
@@ -42,7 +44,7 @@ export default function CompletarRegistroPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(esquema),
-    defaultValues: { nombreClinica: '', telefono: '', aceptaTerminos: false, aceptaComunicaciones: false },
+    defaultValues: { nombreClinica: '', telefono: '', aceptaTerminos: false, aceptaComunicaciones: false, atiendePacientes: true },
     mode: 'onBlur',
   })
   const aceptaTerminos = useWatch({ control, name: 'aceptaTerminos' })
@@ -127,6 +129,8 @@ export default function CompletarRegistroPage() {
                 />
                 {errors.telefono ? <p className="mt-1.5 text-sm text-danger">{errors.telefono.message}</p> : null}
               </div>
+
+              <CasillaAtiendePacientes {...register('atiendePacientes')} />
 
               <ConsentimientoRegistro
                 terminosProps={register('aceptaTerminos')}

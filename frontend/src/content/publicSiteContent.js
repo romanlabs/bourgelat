@@ -48,9 +48,6 @@ export const brandProfile = {
   ],
 }
 
-export const legalDraftNotice =
-  'Este contenido es un borrador operativo para el sitio mientras se completa la revisión legal final en Colombia.'
-
 // Cobro manual (sin pasarela): QR Bre-B de Bancolombia + comprobante + activación
 // manual con `npm run suscripcion:asignar`.
 // Precios de los planes pagos para las páginas públicas (landing, /planes, /pagar).

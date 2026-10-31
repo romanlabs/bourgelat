@@ -1,27 +1,23 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
-import {
-  DialogRoot,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import BotonesSociales, { oauthHabilitado } from './BotonesSociales'
-import ConsentimientoRegistro from './ConsentimientoRegistro'
+import AuthLayout from '@/features/auth/AuthLayout'
+import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
+import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
+import CasillaAtiendePacientes from '@/features/auth/CasillaAtiendePacientes'
 import TurnstileWidget from '@/components/auth/TurnstileWidget'
 import { turnstileHabilitado } from '@/lib/turnstile'
-import CodigoVerificacionPaso from './CodigoVerificacionPaso'
-import { useRegistro, useSesionVerificada } from './useAuth'
+import CodigoVerificacionPaso from '@/features/auth/CodigoVerificacionPaso'
+import { useRegistro, useSesionVerificada } from '@/features/auth/useAuth'
+import { useMensajesOauth } from '@/features/auth/useMensajesOauth'
 import CampoCelular from '@/components/shared/CampoCelular'
 import { esCelularValido } from '@/lib/celular'
 
 // Misma composición que LoginPage.jsx (Google primero, campos altos con borde,
-// un solo botón petróleo). El modal se abre desde LoginPage y desde la landing,
-// y debe leerse como la misma superficie.
+// un solo botón petróleo): las dos páginas comparten AuthLayout.
 
 const esquema = z.object({
   nombre: z.string().trim().min(1, 'El nombre de la clínica es requerido').max(160),
@@ -38,12 +34,13 @@ const esquema = z.object({
     .boolean()
     .refine((valor) => valor === true, 'Debes aceptar los términos y autorizar el tratamiento de datos'),
   aceptaComunicaciones: z.boolean(),
+  atiendePacientes: z.boolean(),
 })
 
 const normalizarEmail = (valor = '') => valor.trim().toLowerCase()
 
 const inputClass =
-  'h-11 w-full rounded-lg border border-input bg-card px-4 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
+  'h-12 w-full rounded-lg border border-input bg-card px-4 text-base muy-bajo:h-11 text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary'
 
 const labelClass = 'mb-2 block text-sm font-semibold text-foreground'
 
@@ -54,18 +51,25 @@ const obtenerMensajeError = (error) =>
   error?.response?.data?.message ||
   'No pudimos crear la cuenta. Inténtalo de nuevo.'
 
-export default function RegistroDialog({ open, onOpenChange }) {
+const enlaceClass =
+  'rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+export default function RegistroPage() {
   const { mutate: registro, isPending, error, isError } = useRegistro()
   const sesionVerificada = useSesionVerificada('registro')
   const [emailPendiente, setEmailPendiente] = useState(null)
   const [turnstileToken, setTurnstileToken] = useState(null)
   const [reinicio, setReinicio] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
+  useMensajesOauth()
+
+  useEffect(() => {
+    document.title = 'Crear cuenta | Bourgelat'
+  }, [])
 
   const {
     register,
     handleSubmit,
-    reset,
     control,
     formState: { errors },
   } = useForm({
@@ -78,14 +82,11 @@ export default function RegistroDialog({ open, onOpenChange }) {
       password: '',
       aceptaTerminos: false,
       aceptaComunicaciones: false,
+      atiendePacientes: true,
     },
     mode: 'onBlur',
   })
   const aceptaTerminos = useWatch({ control, name: 'aceptaTerminos' })
-
-  useEffect(() => {
-    if (open) reset()
-  }, [open, reset])
 
   const nombreField = register('nombre')
   const nombreAdministradorField = register('nombreAdministrador')
@@ -105,20 +106,9 @@ export default function RegistroDialog({ open, onOpenChange }) {
   }
 
   return (
-    <DialogRoot
-      open={open}
-      onOpenChange={(abierto) => {
-        if (!abierto) setEmailPendiente(null)
-        onOpenChange(abierto)
-      }}
-    >
-      <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[480px] overflow-y-auto sm:p-8">
+    <AuthLayout tituloId="registro-titulo" ancho="max-w-[440px]">
         {emailPendiente ? (
-          <>
-            <DialogHeader className="sr-only">
-              <DialogTitle>Revisa tu correo</DialogTitle>
-              <DialogDescription>Confirma tu correo con el código que te enviamos.</DialogDescription>
-            </DialogHeader>
+          <div className="rounded-2xl bg-card p-6">
             <CodigoVerificacionPaso
               email={emailPendiente}
               onVerificado={sesionVerificada}
@@ -127,19 +117,15 @@ export default function RegistroDialog({ open, onOpenChange }) {
                 setReinicio((n) => n + 1)
               }}
             />
-          </>
+          </div>
         ) : (
         <>
-        <DialogHeader className="gap-2">
-          <DialogTitle className="text-[28px] font-semibold leading-tight tracking-[-0.035em] text-foreground">
-            Crea la cuenta de tu clínica
-          </DialogTitle>
-          <DialogDescription className="text-[15px] text-muted-foreground">
-            Tú quedas como administrador.
-          </DialogDescription>
-        </DialogHeader>
+        <h1 id="registro-titulo" className="text-[40px] bajo:text-[34px] muy-bajo:text-[30px] font-semibold leading-none tracking-[-0.04em] text-foreground">
+          Crea tu cuenta
+        </h1>
+        <p className="mt-1.5 text-base text-muted-foreground">Registra tu clínica; tú quedas como administrador.</p>
 
-        <p className="mt-4 rounded-lg bg-accent px-4 py-3 text-sm text-accent-foreground">
+        <p className="mt-6 rounded-lg bg-accent px-4 py-3 text-sm text-accent-foreground">
           <span className="font-semibold">30 días con todo abierto, sin tarjeta.</span> Si te gusta, eliges
           un plan al final de la prueba.
         </p>
@@ -253,6 +239,8 @@ export default function RegistroDialog({ open, onOpenChange }) {
             )}
           </div>
 
+          <CasillaAtiendePacientes {...register('atiendePacientes')} />
+
           <ConsentimientoRegistro
             className="pt-1"
             terminosProps={register('aceptaTerminos')}
@@ -284,9 +272,15 @@ export default function RegistroDialog({ open, onOpenChange }) {
             {isPending ? 'Creando cuenta...' : 'Crear cuenta y empezar la prueba'}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-[15px] text-muted-foreground">
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className={enlaceClass}>
+            Inicia sesión
+          </Link>
+        </p>
         </>
         )}
-      </DialogContent>
-    </DialogRoot>
+    </AuthLayout>
   )
 }

@@ -6,11 +6,20 @@ import ModuleAccessRoute from './ModuleAccessRoute'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
 import { APP_HOSTS } from '@/content/seo'
 import { aplicarSeo } from '@/lib/seo'
+import { urlDocumentoLegal } from '@/content/legal'
 
 // Página de la app que se puede descargar por adelantado. Ya descargada se
 // pinta directo, sin pasar por <Suspense>: así entrar a un módulo no muestra
 // la pantalla de carga.
 const PAGINAS_APP = []
+// Carga completa (no navegación del router): el PDF es un archivo estático.
+function IrADocumentoLegal({ clave }) {
+  useLayoutEffect(() => {
+    window.location.replace(urlDocumentoLegal(clave))
+  }, [clave])
+  return null
+}
+
 function paginaApp(importar) {
   let Componente = null
   const cargar = () => importar().then((modulo) => { Componente = modulo.default; return modulo })
@@ -50,6 +59,7 @@ const PrecargaModulos = () => {
 }
 
 const LoginPage     = lazy(() => import('@/pages/LoginPage'))
+const RegistroPage = lazy(() => import('@/pages/RegistroPage'))
 const CompletarRegistroPage = lazy(() => import('@/pages/CompletarRegistroPage'))
 const RecuperarPasswordPage = lazy(() => import('@/pages/RecuperarPasswordPage'))
 const RestablecerPasswordPage = lazy(() => import('@/pages/RestablecerPasswordPage'))
@@ -75,9 +85,6 @@ const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
 const PagarPage     = lazy(() => import('@/pages/PagarPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
-const PrivacidadPage = lazy(() => import('@/pages/PrivacidadPage'))
-const TerminosPage   = lazy(() => import('@/pages/TerminosPage'))
-const CookiesPage    = lazy(() => import('@/pages/CookiesPage'))
 const NoEncontradaPage = lazy(() => import('@/pages/NoEncontradaPage'))
 
 const Loader = () => (
@@ -128,6 +135,7 @@ const router = createBrowserRouter([
         element: <PublicOnlyRoute />,
         children: [
           { path: '/login',    element: <Suspense fallback={<Loader />}><LoginPage /></Suspense> },
+          { path: '/registro', element: <Suspense fallback={<Loader />}><RegistroPage /></Suspense> },
           { path: '/completar-registro', element: <Suspense fallback={<Loader />}><CompletarRegistroPage /></Suspense> },
           { path: '/recuperar-password', element: <Suspense fallback={<Loader />}><RecuperarPasswordPage /></Suspense> },
           { path: '/restablecer-password', element: <Suspense fallback={<Loader />}><RestablecerPasswordPage /></Suspense> },
@@ -163,7 +171,6 @@ const router = createBrowserRouter([
         }],
       },
       { path: '/',       element: <HostAwareHome /> },
-      { path: '/registro', element: <Navigate to="/login?registro=1" replace /> },
       { path: '/verificar-email', element: <Suspense fallback={<Loader />}><VerificarEmailPage /></Suspense> },
       // Fuera de PublicOnlyRoute: si el enlace se abre en un equipo con otra
       // sesión iniciada (el del administrador), igual debe mostrarse.
@@ -171,9 +178,11 @@ const router = createBrowserRouter([
       { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
       { path: '/pagar', element: <Suspense fallback={<Loader />}><PagarPage /></Suspense> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
-      { path: '/privacidad', element: <Suspense fallback={<Loader />}><PrivacidadPage /></Suspense> },
-      { path: '/terminos', element: <Suspense fallback={<Loader />}><TerminosPage /></Suspense> },
-      { path: '/cookies', element: <Suspense fallback={<Loader />}><CookiesPage /></Suspense> },
+      // Los documentos legales son solo el PDF; las rutas viejas llevan a él
+      // (las cookies son una sección de la política de datos).
+      { path: '/privacidad', element: <IrADocumentoLegal clave="privacidad" /> },
+      { path: '/terminos', element: <IrADocumentoLegal clave="terminos" /> },
+      { path: '/cookies', element: <IrADocumentoLegal clave="privacidad" /> },
       { path: '*',       element: <Suspense fallback={<Loader />}><NoEncontradaPage /></Suspense> },
     ],
   },
