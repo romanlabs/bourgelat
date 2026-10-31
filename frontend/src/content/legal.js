@@ -8,7 +8,7 @@
 
 export const RESPONSABLES = [
   { nombre: 'Sergio Alexander Majé Montoya', documento: 'C.C. 1.118.364.898' },
-  { nombre: 'Roman Alberto Bolaños', documento: 'C.C. 1.110.449.828' },
+  { nombre: 'Román Alberto Bolaños Cerquera', documento: 'C.C. 1.110.449.828' },
 ]
 
 export const NOMBRES_RESPONSABLES = RESPONSABLES.map((r) => r.nombre).join(' y ')
