@@ -450,7 +450,7 @@ function NetoDelMedio({ neto }) {
         </div>
       </dl>
       {neto.grupo === 'efectivo' ? (
-        <p className="text-[13px] text-primary-foreground/80">Es la plata física que debió quedar entre las cajas del periodo, sin contar el fondo.</p>
+        <p className="text-[13px] text-primary-foreground/80">Incluye los gastos en efectivo pagados sin caja abierta. Para cuadrar cada caja, mira los turnos.</p>
       ) : varios ? (
         <p className="text-[13px] text-primary-foreground/80">Los gastos se registran por grupo: este neto suma todos sus medios.</p>
       ) : null}

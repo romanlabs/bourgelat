@@ -813,10 +813,16 @@ const reporteMediosPago = async (req, res) => {
       leerFacturas(anterior.fechaInicio, anterior.fechaFin),
       leerAbonos(anterior.fechaInicio, anterior.fechaFin),
       // Los gastos (metodoPago plano) solo van en el análisis completo, como la rentabilidad.
+      // Solo los manuales: el consumo de insumos de una historia no saca plata
+      // por ningún medio (se pagó al comprar el insumo).
       completo
         ? Gasto.findAll({
             attributes: ['metodoPago', [sumaDe('monto'), 'total']],
-            where: tenantWhere(req, { anulado: false, fecha: { [Op.between]: [fechaInicio, fechaFin] } }),
+            where: tenantWhere(req, {
+              anulado: false,
+              origen: 'manual',
+              fecha: { [Op.between]: [fechaInicio, fechaFin] },
+            }),
             group: ['metodoPago'],
             raw: true,
           })

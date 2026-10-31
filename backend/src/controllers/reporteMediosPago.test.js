@@ -100,6 +100,8 @@ const run = async () => {
   assert.strictEqual(medio('nequi').grupoGasto, 'transferencia')
   assert.strictEqual(medio('nequi').gastosGrupo, 10000)
   assert.strictEqual(medio('tarjeta_debito').gastosGrupo, 0)
+  const consultaGastos = llamadas.find((l) => l.modelo === 'Gasto')
+  assert.strictEqual(consultaGastos.opciones.where.origen, 'manual', 'el consumo de insumos no sale por ningún medio')
 
   // ── Alcance básico: sin gastos ──────────────────────────────────────────
   const basico = await ejecutar({ fechaInicio: '2026-10-01', fechaFin: '2026-10-31' }, { analisisCompleto: false })
