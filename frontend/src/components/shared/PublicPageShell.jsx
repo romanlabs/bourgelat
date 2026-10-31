@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
-import RegistroDialog from '@/features/auth/RegistroDialog'
 import { useAuthStore } from '@/store/authStore'
 import { legalLinks } from '@/components/landing/data'
 
@@ -18,7 +16,6 @@ export default function PublicPageShell({
   children,
 }) {
   // El <title> y los meta los pone aplicarSeo (lib/seo.js) desde content/seo.js.
-  const [registroAbierto, setRegistroAbierto] = useState(false)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   return (
@@ -66,14 +63,13 @@ export default function PublicPageShell({
                   >
                     Iniciar sesión
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => setRegistroAbierto(true)}
+                  <Link
+                    to="/registro"
                     className="inline-flex items-center gap-2 rounded-full bg-tinta-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-tinta-700"
                   >
                     Crear cuenta
                     <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </Link>
                 </>
               )}
             </div>
@@ -118,8 +114,6 @@ export default function PublicPageShell({
           </div>
         </footer>
       </div>
-
-      <RegistroDialog open={registroAbierto} onOpenChange={setRegistroAbierto} />
     </div>
   )
 }

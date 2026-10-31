@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
+import { AvisoSinVeterinarios } from '@/features/agenda/AvisoSinVeterinarios'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -328,6 +329,10 @@ export default function AgendaPage() {
               )}
             </div>
           )}
+
+          {veterinariosQuery.isSuccess && veterinarios.length === 0 && puedeProgramar ? (
+            <AvisoSinVeterinarios />
+          ) : null}
 
           {/* ══════════════════════════════
               Tab: Agenda

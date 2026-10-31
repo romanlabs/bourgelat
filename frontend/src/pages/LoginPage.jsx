@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Logo from '@/components/shared/Logo'
-import { useLogin, useCompletarRegistroOauth, pideVerificacion, useSesionVerificada } from '@/features/auth/useAuth'
+import { useLogin, pideVerificacion, useSesionVerificada } from '@/features/auth/useAuth'
 import TurnstileWidget from '@/components/auth/TurnstileWidget'
 import { turnstileHabilitado } from '@/lib/turnstile'
-import { esOrigenOauthValido } from '@/lib/oauthPopup'
 import CodigoVerificacionPaso from '@/features/auth/CodigoVerificacionPaso'
-import RegistroDialog from '@/features/auth/RegistroDialog'
 import BotonesSociales, { oauthHabilitado } from '@/features/auth/BotonesSociales'
-import ConsentimientoRegistro from '@/features/auth/ConsentimientoRegistro'
-import CampoCelular from '@/components/shared/CampoCelular'
-import { esCelularValido } from '@/lib/celular'
+import AuthLayout from '@/features/auth/AuthLayout'
+import { useMensajesOauth } from '@/features/auth/useMensajesOauth'
 
 const loginSchema = z.object({
   email: z.string().trim().email('Ingresa un correo válido'),
@@ -35,8 +31,6 @@ const botonPrincipalClass =
 const enlaceClass =
   'rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-const SELLOS = ['Tus datos cifrados', 'Soporte en español', '30 días de prueba']
-
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const { mutate: login, isPending } = useLogin()
@@ -45,46 +39,8 @@ export default function LoginPage() {
   const [turnstileToken, setTurnstileToken] = useState(null)
   const [reinicio, setReinicio] = useState(0)
   const location = useLocation()
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [registroAbierto, setRegistroAbierto] = useState(
-    () => searchParams.get('registro') === '1'
-  )
-  const [tokenOnboardingOauth, setTokenOnboardingOauth] = useState(null)
-  const [aceptaTerminosOauth, setAceptaTerminosOauth] = useState(false)
-  const [celularOauth, setCelularOauth] = useState('')
-  const [celularOauthTocado, setCelularOauthTocado] = useState(false)
-  const celularOauthValido = esCelularValido(celularOauth)
-  const { mutate: completarRegistroOauth, isPending: completandoOauth } = useCompletarRegistroOauth()
-
-  useEffect(() => {
-    const handler = (event) => {
-      if (!esOrigenOauthValido(event.origin)) return
-      if (event.data?.tipo === 'oauth-exito') {
-        // Hard redirect (no navigate()): la sesión OAuth solo dejó cookies
-        // httpOnly, y el authStore (Zustand) sigue vacío en esta pestaña. Un
-        // navigate() de react-router no remonta App ni vuelve a correr el
-        // AuthBootstrap de App.jsx que llama a authApi.me(). Necesitamos una
-        // carga completa para poblar el store, igual que useLogout/useLogin.
-        // Va al origen del popup (app.bourgelat.co aunque el login esté en
-        // bourgelat.co), que es donde vive la app.
-        window.location.assign(`${event.origin}/dashboard`)
-      } else if (event.data?.tipo === 'oauth-nuevo' && event.data.token) {
-        setTokenOnboardingOauth(event.data.token)
-      }
-    }
-    window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
-  }, [navigate])
-
-  const handleRegistroOpenChange = (abierto) => {
-    setRegistroAbierto(abierto)
-    if (!abierto && searchParams.get('registro') === '1') {
-      const next = new URLSearchParams(searchParams)
-      next.delete('registro')
-      setSearchParams(next, { replace: true })
-    }
-  }
+  const [searchParams] = useSearchParams()
+  useMensajesOauth()
 
   const {
     register,
@@ -105,6 +61,9 @@ export default function LoginPage() {
   const emailField = register('email')
   const passwordField = register('password')
 
+  // Enlaces viejos: el registro era una ventana dentro de /login.
+  if (searchParams.get('registro') === '1') return <Navigate to="/registro" replace />
+
   const onSubmit = (data) => {
     const email = normalizarEmail(data.email)
     login(
@@ -119,55 +78,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] bg-background text-foreground lg:h-[100dvh] lg:overflow-hidden">
-      <section
-        aria-label="Bourgelat"
-        className="hidden flex-1 flex-col justify-between gap-8 bg-sidebar p-10 text-sidebar-foreground lg:flex xl:p-14 bajo:xl:p-10 muy-bajo:p-8"
-      >
-        {/* El logo definitivo está en camino: mientras tanto, el nombre. */}
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-[26px] font-bold tracking-[-0.03em]">Bourgelat</span>
-          <Link
-            to="/"
-            className="group inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/80 no-underline transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-            Volver al inicio
-          </Link>
-        </div>
-
-        <div className="flex max-w-[520px] flex-col gap-5">
-          <p className="text-[clamp(40px,4.4vw,64px)] bajo:text-[clamp(36px,3.6vw,52px)] muy-bajo:text-[clamp(32px,3vw,44px)] font-semibold leading-none tracking-[-0.045em]">
-            La clínica entera, en orden.
-          </p>
-          <p className="text-lg leading-relaxed text-sidebar-foreground/85">
-            Agenda, historias, inventario y caja en un solo lugar, hecho para veterinarias en Colombia.
-          </p>
-        </div>
-
-        <ul className="flex flex-wrap gap-2.5">
-          {SELLOS.map((sello) => (
-            <li key={sello} className="rounded-lg bg-sidebar-foreground/10 px-3 py-2 text-sm">
-              {sello}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section
-        aria-labelledby="login-titulo"
-        className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 pb-8 pt-20 sm:px-10 lg:py-6"
-      >
-        <Link
-          to="/"
-          className="group absolute left-4 top-4 inline-flex h-10 lg:hidden items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground no-underline transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-6 sm:top-6"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-          Volver al inicio
-        </Link>
-
-        <div className="w-full max-w-[420px]">
-          <Logo className="mb-8 lg:hidden" />
+    <AuthLayout tituloId="login-titulo">
 
           <div className={emailPendiente ? 'hidden' : ''}>
             <h1 id="login-titulo" className="text-[40px] bajo:text-[34px] muy-bajo:text-[30px] font-semibold leading-none tracking-[-0.04em] text-foreground">
@@ -283,83 +194,10 @@ export default function LoginPage() {
 
           <p className={`mt-6 bajo:mt-4 muy-bajo:mt-3 text-center text-[15px] text-muted-foreground ${emailPendiente ? 'hidden' : ''}`}>
             ¿Tu clínica aún no usa Bourgelat?{' '}
-            <button type="button" onClick={() => setRegistroAbierto(true)} className={enlaceClass}>
+            <Link to="/registro" className={enlaceClass}>
               Crea una cuenta
-            </button>
+            </Link>
           </p>
-        </div>
-      </section>
-
-      <RegistroDialog open={registroAbierto} onOpenChange={handleRegistroOpenChange} />
-
-      {tokenOnboardingOauth ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 px-4 dark:bg-background/80">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="oauth-ultimo-paso"
-            className="w-full max-w-[420px] rounded-2xl bg-card p-6 shadow-modal"
-          >
-            <h2 id="oauth-ultimo-paso" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
-              Un último paso
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              ¿Cómo se llama tu clínica?
-            </p>
-            <form
-              className="mt-5 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                const formulario = new FormData(e.currentTarget)
-                completarRegistroOauth({
-                  token: tokenOnboardingOauth,
-                  nombreClinica: formulario.get('nombreClinica'),
-                  telefono: celularOauth,
-                  aceptaTerminos: aceptaTerminosOauth,
-                  aceptaComunicaciones: formulario.get('aceptaComunicaciones') === 'on',
-                })
-              }}
-            >
-              <input
-                name="nombreClinica"
-                type="text"
-                required
-                aria-label="Nombre de la clínica"
-                placeholder="Veterinaria San Roque"
-                className={inputClass}
-              />
-              <div>
-                <CampoCelular
-                  value={celularOauth}
-                  onChange={setCelularOauth}
-                  onBlur={() => setCelularOauthTocado(true)}
-                  placeholder="Celular (WhatsApp)"
-                  aria-label="Celular (WhatsApp)"
-                  invalido={celularOauthTocado && Boolean(celularOauth) && !celularOauthValido}
-                  className="h-12 muy-bajo:h-11"
-                />
-                {celularOauthTocado && celularOauth && !celularOauthValido ? (
-                  <p className="mt-1.5 text-sm text-danger">Escribe un celular válido para el país elegido</p>
-                ) : null}
-              </div>
-              <ConsentimientoRegistro
-                terminosProps={{
-                  checked: aceptaTerminosOauth,
-                  onChange: (e) => setAceptaTerminosOauth(e.target.checked),
-                }}
-                comunicacionesProps={{ name: 'aceptaComunicaciones' }}
-              />
-              <Button
-                type="submit"
-                disabled={completandoOauth || !aceptaTerminosOauth || !celularOauthValido}
-                className={botonPrincipalClass}
-              >
-                {completandoOauth ? 'Creando cuenta...' : 'Continuar'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      ) : null}
-    </div>
+    </AuthLayout>
   )
 }
