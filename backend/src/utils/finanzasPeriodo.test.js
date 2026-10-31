@@ -190,6 +190,7 @@ assert.strictEqual(fechaBogota('2026-10-14T05:00:00Z'), '2026-10-14')
 const porMedio = agregarPorMedio({
   facturas: [
     { id: 'f1', fecha: '2026-10-05', total: '100000', saldoPendiente: '0', metodoPago: 'efectivo' },
+    // Venta vieja con Nequi: cuenta como transferencia.
     { id: 'f2', fecha: '2026-10-05', total: '50000', saldoPendiente: '0', metodoPago: 'nequi' },
     // Crédito de 80.000 con un abono de 30.000: no trae plata en la venta.
     { id: 'f3', fecha: '2026-10-06', total: '80000', saldoPendiente: '50000', metodoPago: 'credito' },
@@ -206,9 +207,10 @@ assert.strictEqual(porMedio.total, 200000, 'contado + abonos, sin el saldo del c
 assert.ok(!porMedio.medios.some((m) => m.id === 'credito'), 'el crédito no es un medio')
 assert.deepStrictEqual(
   { cobrado: medio('transferencia').cobrado, deAbonos: medio('transferencia').deAbonos, abonos: medio('transferencia').abonos, ventas: medio('transferencia').ventas },
-  { cobrado: 30000, deAbonos: 30000, abonos: 1, ventas: 0 },
-  'el abono entra por su propio medio'
+  { cobrado: 80000, deAbonos: 30000, abonos: 1, ventas: 1 },
+  'el abono entra por su propio medio y Nequi suma como transferencia'
 )
+assert.deepStrictEqual(porMedio.medios.map((m) => m.id), ['efectivo', 'transferencia', 'tarjeta', 'otro'])
 assert.strictEqual(medio('otro').cobrado, 20000)
 assert.strictEqual(medio('efectivo').participacion, 50)
 assert.strictEqual(medio('efectivo').ticketPromedio, 100000)

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { CONFIG_MEDIOS, colorMedio, etiquetaMedio, mediosVisibles, netoDelGrupo, semanaDesdeLunes } from './mediosPago'
+import { CONFIG_MEDIOS, colorMedio, etiquetaMedio, mediosVisibles, netoDelMedio, semanaDesdeLunes } from './mediosPago'
 
 const medio = (id, cobrado, extra = {}) => ({ id, cobrado, anterior: 0, ...extra })
 
 describe('mediosVisibles', () => {
   it('deja los usados ahora o antes, ordenados por lo cobrado', () => {
-    const medios = [medio('efectivo', 100), medio('nequi', 300), medio('daviplata', 0, { anterior: 50 }), medio('otro', 0)]
-    expect(mediosVisibles(medios).map((m) => m.id)).toEqual(['nequi', 'efectivo', 'daviplata'])
+    const medios = [medio('efectivo', 100), medio('transferencia', 300), medio('tarjeta', 0, { anterior: 50 }), medio('otro', 0)]
+    expect(mediosVisibles(medios).map((m) => m.id)).toEqual(['transferencia', 'efectivo', 'tarjeta'])
   })
 })
 
@@ -18,22 +18,17 @@ describe('semanaDesdeLunes', () => {
   })
 })
 
-describe('netoDelGrupo', () => {
-  const medios = [
-    medio('efectivo', 500, { grupoGasto: 'efectivo', gastosGrupo: 120 }),
-    medio('transferencia', 200, { grupoGasto: 'transferencia', gastosGrupo: 90 }),
-    medio('nequi', 300, { grupoGasto: 'transferencia', gastosGrupo: 90 }),
-  ]
-
-  it('resta los gastos del grupo a lo cobrado por todos sus medios', () => {
-    expect(netoDelGrupo(medios, 'nequi')).toMatchObject({
-      grupo: 'transferencia', medios: ['transferencia', 'nequi'], cobrado: 500, gastos: 90, neto: 410,
+describe('netoDelMedio', () => {
+  it('resta a lo cobrado los gastos pagados por el mismo medio', () => {
+    expect(netoDelMedio(medio('transferencia', 500, { gastos: 90 }))).toMatchObject({
+      id: 'transferencia', nombre: 'transferencias', cobrado: 500, gastos: 90, neto: 410,
     })
-    expect(netoDelGrupo(medios, 'efectivo').neto).toBe(380)
+    expect(netoDelMedio(medio('efectivo', 100, { gastos: 120 })).neto).toBe(-20)
   })
 
   it('sin gastos en la respuesta no hay neto', () => {
-    expect(netoDelGrupo([medio('efectivo', 10)], 'efectivo')).toBeNull()
+    expect(netoDelMedio(medio('efectivo', 10))).toBeNull()
+    expect(netoDelMedio(null)).toBeNull()
   })
 })
 
@@ -41,7 +36,7 @@ describe('colores y etiquetas', () => {
   it('cada medio tiene color fijo por tema y config de gráfica', () => {
     expect(colorMedio('efectivo')).toBe(colorMedio('efectivo', { oscuro: true }))
     expect(colorMedio('desconocido')).toBe(colorMedio('otro'))
-    expect(CONFIG_MEDIOS.nequi.label).toBe('Nequi')
-    expect(etiquetaMedio('tarjeta_debito')).toBe('Tarjeta débito')
+    expect(Object.keys(CONFIG_MEDIOS)).toEqual(['efectivo', 'transferencia', 'tarjeta', 'otro'])
+    expect(etiquetaMedio('tarjeta')).toBe('Tarjeta')
   })
 })

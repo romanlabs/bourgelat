@@ -27,7 +27,6 @@ const {
   redondearPesos,
   agregarPorMedio,
   fechaBogota,
-  GRUPO_GASTO_DE_MEDIO,
 } = require('../utils/finanzasPeriodo');
 const AbonoFactura = require('../models/AbonoFactura');
 
@@ -852,7 +851,7 @@ const reporteMediosPago = async (req, res) => {
     });
     const previo = agregarPorMedio(entrada(facturasAnterior, abonosAnterior));
     const previoPorMedio = Object.fromEntries(previo.medios.map((m) => [m.id, m.cobrado]));
-    const gastosPorGrupo = aRecord(gastosPorMetodo, 'metodoPago');
+    const gastosPorMedio = aRecord(gastosPorMetodo, 'metodoPago');
 
     res.json({
       alcance: completo ? 'completo' : 'basico',
@@ -864,9 +863,7 @@ const reporteMediosPago = async (req, res) => {
       medios: actual.medios.map((medio) => ({
         ...medio,
         anterior: previoPorMedio[medio.id] || 0,
-        ...(completo
-          ? { grupoGasto: GRUPO_GASTO_DE_MEDIO[medio.id], gastosGrupo: redondearPesos(gastosPorGrupo[GRUPO_GASTO_DE_MEDIO[medio.id]]) }
-          : {}),
+        ...(completo ? { gastos: redondearPesos(gastosPorMedio[medio.id]) } : {}),
       })),
       serie: actual.serie,
     });

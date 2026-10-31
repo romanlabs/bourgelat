@@ -195,22 +195,19 @@ const margenDe = (ingresos, ganancia) =>
 const ticketPromedioDe = (ingresos, ventas) => (ventas > 0 ? redondearPesos(ingresos / ventas) : 0)
 
 // ── Cobrado por medio de pago (GET /reportes/medios-pago) ───────────────────
-// Los medios con que entra la plata, en el orden del punto de venta. 'credito'
-// no es un medio: el fiado entra después, por el medio de cada abono.
-const MEDIOS_PAGO = ['efectivo', 'transferencia', 'nequi', 'daviplata', 'tarjeta_debito', 'tarjeta_credito', 'otro']
-const medioDe = (metodo) => (MEDIOS_PAGO.includes(metodo) ? metodo : 'otro')
-
-// Los gastos se registran con un ENUM más grueso; cada medio se cruza con el
-// grupo de gasto que le corresponde.
-const GRUPO_GASTO_DE_MEDIO = {
-  efectivo: 'efectivo',
-  transferencia: 'transferencia',
+// Los medios con que entra la plata: los mismos del gasto, para restar lo
+// pagado por cada medio sin cruces. 'credito' no es un medio: el fiado entra
+// después, por el medio de cada abono. Cualquier banco o billetera es
+// transferencia (las ventas viejas con Nequi o Daviplata también) y las dos
+// tarjetas cuentan como una.
+const MEDIOS_PAGO = ['efectivo', 'transferencia', 'tarjeta', 'otro']
+const MEDIO_DE_METODO = {
   nequi: 'transferencia',
   daviplata: 'transferencia',
   tarjeta_debito: 'tarjeta',
   tarjeta_credito: 'tarjeta',
-  otro: 'otro',
 }
+const medioDe = (metodo) => MEDIO_DE_METODO[metodo] || (MEDIOS_PAGO.includes(metodo) ? metodo : 'otro')
 
 // Fecha local de Bogotá (UTC−5) de un timestamp: el día en que se recibió un abono.
 const fechaBogota = (instante) =>
@@ -289,7 +286,6 @@ const agregarPorMedio = ({ facturas = [], abonosPorFactura = {}, abonos = [], cl
 
 module.exports = {
   MEDIOS_PAGO,
-  GRUPO_GASTO_DE_MEDIO,
   agregarPorMedio,
   fechaBogota,
   MAX_MESES_RANGO,

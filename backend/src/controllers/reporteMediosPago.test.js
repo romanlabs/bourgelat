@@ -88,18 +88,18 @@ const run = async () => {
     'la suma de los medios es lo cobrado del periodo'
   )
   assert.strictEqual(payload.porCobrarDelPeriodo, 60000)
-  assert.strictEqual(medio('daviplata').cobrado, 40000, 'el abono va por su medio')
-  assert.strictEqual(medio('daviplata').porDiaSemana[3], 40000, 'el abono cuenta el miércoles 7 (hora Bogotá)')
-  assert.strictEqual(payload.serie.find((f) => f.periodo === '2026-10-07').daviplata, 40000)
+  // Nequi y Daviplata (ventas viejas) suman como transferencia.
+  assert.strictEqual(medio('transferencia').cobrado, 120000, 'venta por Nequi + abono por Daviplata')
+  assert.strictEqual(medio('transferencia').porDiaSemana[3], 40000, 'el abono cuenta el miércoles 7 (hora Bogotá)')
+  assert.strictEqual(payload.serie.find((f) => f.periodo === '2026-10-07').transferencia, 40000)
   assert.strictEqual(payload.serie.length, 31, 'un mes trae la serie diaria completa')
   assert.strictEqual(medio('efectivo').anterior, 50000)
   assert.strictEqual(payload.totalAnterior, 50000)
 
-  // Gastos cruzados por grupo: Nequi y Daviplata ven los de transferencia.
-  assert.strictEqual(medio('efectivo').gastosGrupo, 30000)
-  assert.strictEqual(medio('nequi').grupoGasto, 'transferencia')
-  assert.strictEqual(medio('nequi').gastosGrupo, 10000)
-  assert.strictEqual(medio('tarjeta_debito').gastosGrupo, 0)
+  // Los gastos usan los mismos medios: se restan directo.
+  assert.strictEqual(medio('efectivo').gastos, 30000)
+  assert.strictEqual(medio('transferencia').gastos, 10000)
+  assert.strictEqual(medio('tarjeta').gastos, 0)
   const consultaGastos = llamadas.find((l) => l.modelo === 'Gasto')
   assert.strictEqual(consultaGastos.opciones.where.origen, 'manual', 'el consumo de insumos no sale por ningún medio')
 
@@ -107,7 +107,7 @@ const run = async () => {
   const basico = await ejecutar({ fechaInicio: '2026-10-01', fechaFin: '2026-10-31' }, { analisisCompleto: false })
   assert.strictEqual(basico.payload.alcance, 'basico')
   assert.ok(!basico.llamadas.some((l) => l.modelo === 'Gasto'), 'no consulta gastos')
-  assert.ok(basico.payload.medios.every((m) => !('gastosGrupo' in m)), 'no expone gastos')
+  assert.ok(basico.payload.medios.every((m) => !('gastos' in m)), 'no expone gastos')
 
   // ── Validación del rango ────────────────────────────────────────────────
   const invertido = await ejecutar({ fechaInicio: '2026-10-31', fechaFin: '2026-10-01' })

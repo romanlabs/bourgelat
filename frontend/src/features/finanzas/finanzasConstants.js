@@ -26,6 +26,7 @@ import { Banknote, CreditCard, HandCoins, Landmark, MoreHorizontal, Smartphone }
 
 export const PAYMENT_METHOD_ICONS = {
   efectivo: Banknote,
+  tarjeta: CreditCard,
   tarjeta_debito: CreditCard,
   tarjeta_credito: CreditCard,
   transferencia: Landmark,
@@ -48,13 +49,11 @@ export const PAYMENT_METHOD_SHORT = {
 }
 
 // Medios por los que entra la plata, en el mismo orden que el backend
-// (reportes/medios-pago). 'credito' no está: el fiado entra por el medio de cada abono.
+// (reportes/medios-pago) y que los gastos. 'credito' no está: el fiado entra por
+// el medio de cada abono. Bancos y billeteras van en transferencia.
 export const MEDIOS_PAGO = [
   { id: 'efectivo', label: 'Efectivo' },
   { id: 'transferencia', label: 'Transferencia' },
-  { id: 'nequi', label: 'Nequi' },
-  { id: 'daviplata', label: 'Daviplata' },
-  { id: 'tarjeta_debito', label: 'Tarjeta débito' },
-  { id: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { id: 'tarjeta', label: 'Tarjeta' },
   { id: 'otro', label: 'Otro' },
 ]

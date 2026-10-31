@@ -12,7 +12,7 @@ import {
   colorMedio,
   etiquetaMedio,
   mediosVisibles,
-  netoDelGrupo,
+  netoDelMedio,
   semanaDesdeLunes,
 } from '@/features/finanzas/mediosPago'
 import SelectorPeriodo from '@/features/finanzas/SelectorPeriodo'
@@ -423,11 +423,8 @@ function SerieMedio({ serie, medio, porMes }) {
   )
 }
 
-// Lo que queda por este medio después de los gastos pagados con él. Los gastos
-// se registran por grupo, así que el neto es del grupo (Nequi suma con
-// transferencia y Daviplata).
+// Lo que queda por este medio después de los gastos pagados con él.
 function NetoDelMedio({ neto }) {
-  const varios = neto.medios.length > 1
   return (
     <section aria-labelledby="m-neto" className="flex h-fit min-w-0 flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground sm:p-6">
       <h2 id="m-neto" className="text-lg font-semibold">Lo que queda en {neto.nombre}</h2>
@@ -441,7 +438,7 @@ function NetoDelMedio({ neto }) {
       </div>
       <dl className="flex flex-col gap-2 text-[15px] tabular-nums">
         <div className="flex justify-between gap-4">
-          <dt className="text-primary-foreground/80">Cobrado{varios ? ` (${neto.medios.map(etiquetaMedio).join(', ')})` : ''}</dt>
+          <dt className="text-primary-foreground/80">Cobrado</dt>
           <dd className="font-semibold">{formatCurrency(neto.cobrado)}</dd>
         </div>
         <div className="flex justify-between gap-4">
@@ -449,10 +446,10 @@ function NetoDelMedio({ neto }) {
           <dd className="font-semibold">{neto.gastos > 0 ? '−' : ''}{formatCurrency(neto.gastos)}</dd>
         </div>
       </dl>
-      {neto.grupo === 'efectivo' ? (
+      {neto.id === 'efectivo' ? (
         <p className="text-[13px] text-primary-foreground/80">Incluye los gastos en efectivo pagados sin caja abierta. Para cuadrar cada caja, mira los turnos.</p>
-      ) : varios ? (
-        <p className="text-[13px] text-primary-foreground/80">Los gastos se registran por grupo: este neto suma todos sus medios.</p>
+      ) : neto.id === 'transferencia' ? (
+        <p className="text-[13px] text-primary-foreground/80">Suma todos los bancos y billeteras (Nequi, Daviplata, Bre-B…).</p>
       ) : null}
     </section>
   )
@@ -500,7 +497,7 @@ export default function MediosPagoPanel() {
   const medio = seleccionado === 'todos' ? null : data?.medios.find((m) => m.id === seleccionado) || null
   // Un medio elegido antes sigue en el selector aunque este periodo no tenga cobros.
   const enSelector = medio && !visibles.some((m) => m.id === medio.id) ? [...visibles, medio] : visibles
-  const neto = medio ? netoDelGrupo(data.medios, medio.id) : null
+  const neto = netoDelMedio(medio)
   const porMes = data?.periodo?.granularidad === 'mes'
 
   const valor = medio ? medio.cobrado : data?.total || 0
