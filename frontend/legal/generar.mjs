@@ -242,7 +242,7 @@ function componer(doc, { titulo, version, vigencia }, secciones, paginasToc) {
 }
 
 const nuevoDoc = (meta) => {
-  const doc = new jsPDF({ unit: 'mm', format: 'letter' })
+  const doc = new jsPDF({ unit: 'mm', format: 'letter', compress: true })
   doc.setProperties({
     title: `${meta.titulo} — Bourgelat`,
     subject: `Versión ${meta.version}`,
