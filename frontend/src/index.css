@@ -206,6 +206,31 @@ input:-webkit-autofill:focus {
     textarea {
       font-size: 16px !important;
     }
+
+    /* Safari de iPhone da a los campos de fecha y hora un ancho mínimo propio
+       que ignora w-full: se salen de la pantalla y la vista se balancea de
+       lado a lado. Se les quita la apariencia nativa del contenedor y el mínimo. */
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'],
+    input[type='month'] {
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 0;
+      max-width: 100%;
+    }
+    input[type='date']::-webkit-date-and-time-value,
+    input[type='time']::-webkit-date-and-time-value,
+    input[type='datetime-local']::-webkit-date-and-time-value {
+      text-align: left;
+    }
+
+    /* Respaldo: en celular la página nunca se desplaza de lado. `clip` (y no
+       `hidden`) para no romper los elementos sticky. */
+    html,
+    body {
+      overflow-x: clip;
+    }
   }
 
   ::-webkit-scrollbar {

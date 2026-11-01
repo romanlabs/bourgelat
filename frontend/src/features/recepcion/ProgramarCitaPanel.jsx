@@ -209,8 +209,8 @@ export function ProgramarCitaPanel({
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <input type="date" {...register('fecha')} className={`${fieldClass} w-full`} />
+            <div className="min-w-0">
+              <input type="date" {...register('fecha')} className={`${fieldClass} w-full min-w-0`} />
               {errors.fecha ? <p className="mt-1.5 text-[13px] font-medium text-danger">{errors.fecha.message}</p> : null}
             </div>
             <Controller
@@ -277,7 +277,7 @@ export function ProgramarCitaPanel({
                         role="radio"
                         aria-checked={activo}
                         onClick={() => elegirDuracion(minutos)}
-                        className={`h-11 rounded-lg border text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        className={`h-11 min-w-0 rounded-lg border px-0.5 text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                           activo
                             ? 'border-primary bg-primary text-primary-foreground'
                             : 'border-input bg-card text-foreground'

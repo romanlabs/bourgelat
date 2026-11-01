@@ -87,7 +87,8 @@ export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">{open ? children : null}</div>
+        {/* overflow-x-hidden: si algo del formulario se pasa de ancho, el panel no se balancea de lado. */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-6 sm:py-5">{open ? children : null}</div>
 
         {footer ? (
           <div className="border-t border-border px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:py-4">{footer}</div>
