@@ -52,7 +52,13 @@ router.put(
     body('direccion').optional({ nullable: true }).trim().isLength({ max: 200 }),
     body('ciudad').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('departamento').optional({ nullable: true }).trim().isLength({ max: 120 }),
-    body('nit').optional({ nullable: true }).trim().isLength({ min: 6, max: 20 }),
+    // La ficha se reenvia completa y manda nit '' cuando la clinica no tiene NIT
+    // (la mayoria sin DIAN): vacio es valido; si viene, entre 6 y 20 caracteres.
+    body('nit')
+      .optional({ values: 'falsy' })
+      .trim()
+      .isLength({ min: 6, max: 20 })
+      .withMessage('El NIT debe tener entre 6 y 20 caracteres'),
     body('razonSocial').optional({ nullable: true }).trim().isLength({ max: 160 }),
     body('nombreComercial').optional({ nullable: true }).trim().isLength({ max: 160 }),
     body('tipoPersona')
