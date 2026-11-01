@@ -674,26 +674,29 @@ export default function UsuariosPage() {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
-            <Search className="h-[18px] w-[18px] shrink-0" />
-            <input
-              type="search"
-              value={buscar}
-              onChange={(event) => setBuscar(event.target.value)}
-              placeholder="Buscar por nombre, correo o celular"
-              aria-label="Buscar en el equipo"
-              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+        {/* Con pocas personas la lista entera cabe a la vista: buscar y filtrar sobra. */}
+        {usuarios.length > 3 ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+              <Search className="h-[18px] w-[18px] shrink-0" />
+              <input
+                type="search"
+                value={buscar}
+                onChange={(event) => setBuscar(event.target.value)}
+                placeholder="Buscar por nombre, correo o celular"
+                aria-label="Buscar en el equipo"
+                className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+              />
+            </label>
+            <Select aria-label="Filtrar por estado" value={estado} onValueChange={setEstado} options={STATUS_OPTIONS} />
+            <Select
+              aria-label="Filtrar por rol"
+              value={rolFiltro}
+              onValueChange={setRolFiltro}
+              options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
             />
-          </label>
-          <Select aria-label="Filtrar por estado" value={estado} onValueChange={setEstado} options={STATUS_OPTIONS} />
-          <Select
-            aria-label="Filtrar por rol"
-            value={rolFiltro}
-            onValueChange={setRolFiltro}
-            options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
-          />
-        </div>
+          </div>
+        ) : null}
 
         <section aria-label="Equipo de la clínica" className="overflow-hidden rounded-2xl bg-card">
           {usuariosQuery.isPending ? (
