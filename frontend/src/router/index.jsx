@@ -67,6 +67,7 @@ const VerificarEmailPage = lazy(() => import('@/pages/VerificarEmailPage'))
 const AceptarInvitacionPage = lazy(() => import('@/pages/AceptarInvitacionPage'))
 const OAuthPopupCallbackPage = lazy(() => import('@/pages/OAuthPopupCallbackPage'))
 const PerfilPage = paginaApp(() => import('@/pages/PerfilPage'))
+const MasPage = paginaApp(() => import('@/pages/MasPage'))
 const OnboardingWizardPage = paginaApp(() => import('@/pages/OnboardingWizardPage'))
 const DashboardPage = paginaApp(() => import('@/pages/DashboardPage'))
 const AgendaPage = paginaApp(() => import('@/pages/AgendaPage'))
@@ -166,6 +167,7 @@ const router = createBrowserRouter([
           { path: '/caja', element: <Suspense fallback={<Loader />}><FinanzasPage modo="caja" /></Suspense> },
           { path: '/finanzas', element: <Suspense fallback={<Loader />}><FinanzasPage modo="finanzas" /></Suspense> },
           { path: '/perfil', element: <Suspense fallback={<Loader />}><PerfilPage /></Suspense> },
+          { path: '/mas', element: <Suspense fallback={<Loader />}><MasPage /></Suspense> },
           { path: '/onboarding', element: <Suspense fallback={<Loader />}><OnboardingWizardPage /></Suspense> },
         ],
         }],
