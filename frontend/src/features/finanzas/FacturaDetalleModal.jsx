@@ -83,6 +83,10 @@ export default function FacturaDetalleModal({ historialHook }) {
     anularFacturaMutation,
   } = historialHook
 
+  const fueALaDian = Boolean(
+    facturaSeleccionada?.estadoElectronico && facturaSeleccionada.estadoElectronico !== 'no_aplica'
+  )
+
   return (
     <DialogRoot
       open={Boolean(currentFacturaId)}
@@ -130,10 +134,12 @@ export default function FacturaDetalleModal({ historialHook }) {
                   <StatusPill tone={getEstadoTone(facturaSeleccionada.estado)}>
                     {ESTADO_LABELS[facturaSeleccionada.estado] || facturaSeleccionada.estado}
                   </StatusPill>
-                  <StatusPill tone={getEstadoElectronicoTone(facturaSeleccionada.estadoElectronico)}>
-                    {ESTADO_ELECTRONICO_LABELS[facturaSeleccionada.estadoElectronico] ||
-                      facturaSeleccionada.estadoElectronico}
-                  </StatusPill>
+                  {fueALaDian ? (
+                    <StatusPill tone={getEstadoElectronicoTone(facturaSeleccionada.estadoElectronico)}>
+                      {ESTADO_ELECTRONICO_LABELS[facturaSeleccionada.estadoElectronico] ||
+                        facturaSeleccionada.estadoElectronico}
+                    </StatusPill>
+                  ) : null}
                 </div>
               </div>
 
@@ -229,37 +235,41 @@ export default function FacturaDetalleModal({ historialHook }) {
                 </div>
               ) : null}
 
-              <div className="space-y-3 border-t border-border/60 pt-5">
-                <p className="text-[15px] font-semibold text-foreground">
-                  Estado electrónico
-                </p>
-                <div className="grid gap-2">
-                  <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                    CUFE:{' '}
-                    <span className="font-semibold text-foreground">
-                      {facturaSeleccionada.cufe || 'Pendiente'}
-                    </span>
-                  </div>
-                  <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
-                    Validada en:{' '}
-                    <span className="font-semibold text-foreground">
-                      {facturaSeleccionada.fechaValidacionElectronica
-                        ? formatDateTime(facturaSeleccionada.fechaValidacionElectronica)
-                        : 'Sin validación'}
-                    </span>
-                  </div>
-                  {facturaSeleccionada.mensajeElectronico ? (
-                    <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
-                      {facturaSeleccionada.mensajeElectronico}
+              {/* Solo las ventas que se enviaron a la DIAN tienen estado electrónico. */}
+              {fueALaDian ? (
+                <div className="space-y-3 border-t border-border/60 pt-5">
+                  <p className="text-[15px] font-semibold text-foreground">
+                    Estado electrónico
+                  </p>
+                  <div className="grid gap-2">
+                    <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
+                      CUFE:{' '}
+                      <span className="font-semibold text-foreground">
+                        {facturaSeleccionada.cufe || 'Pendiente'}
+                      </span>
                     </div>
-                  ) : null}
-                  {facturaSeleccionada.motivoAnulacion ? (
-                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-                      Motivo de anulación: {facturaSeleccionada.motivoAnulacion}
+                    <div className="rounded-xl bg-muted px-4 py-3 text-sm text-foreground">
+                      Validada en:{' '}
+                      <span className="font-semibold text-foreground">
+                        {facturaSeleccionada.fechaValidacionElectronica
+                          ? formatDateTime(facturaSeleccionada.fechaValidacionElectronica)
+                          : 'Sin validación'}
+                      </span>
                     </div>
-                  ) : null}
+                    {facturaSeleccionada.mensajeElectronico ? (
+                      <div className="rounded-xl bg-muted px-4 py-4 text-sm leading-6 text-muted-foreground">
+                        {facturaSeleccionada.mensajeElectronico}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
+
+              {facturaSeleccionada.motivoAnulacion ? (
+                <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
+                  Motivo de anulación: {facturaSeleccionada.motivoAnulacion}
+                </div>
+              ) : null}
 
               {canEmitInvoice ? (
                 <div className="space-y-4 border-t border-border/60 pt-5">

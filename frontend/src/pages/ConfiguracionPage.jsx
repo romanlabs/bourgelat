@@ -439,7 +439,7 @@ function ConfiguracionContent({
       {activeSection === 'ficha' ? (
         <DashboardPanel
           title="Ficha de la clínica"
-          subtitle="Nombre, contacto, dirección y logo. Los datos fiscales (NIT y demás) solo se necesitan para la facturación electrónica, que llega pronto."
+          subtitle="Nombre, NIT, contacto, dirección y logo: salen en el encabezado de los comprobantes y fórmulas que imprimas."
         >
           <form className="grid gap-4" onSubmit={handleSaveClinica}>
             <div className="grid gap-4 xl:grid-cols-2">
@@ -571,7 +571,7 @@ function ConfiguracionContent({
             <div className="grid gap-4 xl:grid-cols-2">
               <FormField
                 label="Logo"
-                helper="Aparecerá en el encabezado de las facturas que descargues o imprimas. JPG, PNG o WEBP, máximo 4 MB."
+                helper="Aparecerá en el encabezado de los comprobantes que descargues o imprimas. JPG, PNG o WEBP, máximo 4 MB."
               >
                 <div className="flex items-center gap-4">
                   {clinicForm.logo ? (
@@ -632,79 +632,84 @@ function ConfiguracionContent({
               </FormField>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-              <FormField label="Dígito de verificación">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={clinicForm.digitoVerificacion}
-                  onChange={(event) =>
-                    setClinicForm((current) => ({
-                      ...current,
-                      digitoVerificacion: event.target.value.replace(/\D/g, '').slice(0, 2),
-                    }))
-                  }
-                  placeholder="1"
-                  className={INPUT_CLASS}
-                />
-              </FormField>
-              <FormField label="Código DIAN del municipio">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={clinicForm.municipioId}
-                  onChange={(event) =>
-                    setClinicForm((current) => ({ ...current, municipioId: event.target.value.replace(/\D/g, '') }))
-                  }
-                  placeholder="11001"
-                  className={INPUT_CLASS}
-                />
-              </FormField>
-            </div>
+            {/* Códigos que solo pide la facturación electrónica: no salen en ningún impreso. */}
+            {puedeVerFacturacionElectronica ? (
+              <>
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <FormField label="Dígito de verificación">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={clinicForm.digitoVerificacion}
+                      onChange={(event) =>
+                        setClinicForm((current) => ({
+                          ...current,
+                          digitoVerificacion: event.target.value.replace(/\D/g, '').slice(0, 2),
+                        }))
+                      }
+                      placeholder="1"
+                      className={INPUT_CLASS}
+                    />
+                  </FormField>
+                  <FormField label="Código DIAN del municipio">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={clinicForm.municipioId}
+                      onChange={(event) =>
+                        setClinicForm((current) => ({ ...current, municipioId: event.target.value.replace(/\D/g, '') }))
+                      }
+                      placeholder="11001"
+                      className={INPUT_CLASS}
+                    />
+                  </FormField>
+                </div>
 
-            <div className="grid gap-4 2xl:grid-cols-3">
-              <FormField label="Documento fiscal">
-                <Select
-                  variant="field"
-                  aria-label="Tipo de documento de facturación"
-                  placeholder="Selecciona documento"
-                  value={clinicForm.tipoDocumentoFacturacionId}
-                  onValueChange={(value) =>
-                    setClinicForm((current) => ({
-                      ...current,
-                      tipoDocumentoFacturacionId: value,
-                    }))
-                  }
-                  options={FISCAL_DOCUMENT_OPTIONS}
-                />
-              </FormField>
-              <FormField label="Organización jurídica">
-                <Select
-                  variant="field"
-                  aria-label="Organización jurídica"
-                  placeholder="Selecciona organización"
-                  value={clinicForm.organizacionJuridicaId}
-                  onValueChange={(value) =>
-                    setClinicForm((current) => ({
-                      ...current,
-                      organizacionJuridicaId: value,
-                    }))
-                  }
-                  options={LEGAL_ORGANIZATION_OPTIONS}
-                />
-              </FormField>
-              <FormField label="Tributo">
-                <input
-                  type="text"
-                  value={clinicForm.tributoId}
-                  onChange={(event) =>
-                    setClinicForm((current) => ({ ...current, tributoId: event.target.value }))
-                  }
-                  placeholder="01"
-                  className={INPUT_CLASS}
-                />
-              </FormField>
-            </div>
+                <div className="grid gap-4 2xl:grid-cols-3">
+                  <FormField label="Documento fiscal">
+                    <Select
+                      variant="field"
+                      aria-label="Tipo de documento de facturación"
+                      placeholder="Selecciona documento"
+                      value={clinicForm.tipoDocumentoFacturacionId}
+                      onValueChange={(value) =>
+                        setClinicForm((current) => ({
+                          ...current,
+                          tipoDocumentoFacturacionId: value,
+                        }))
+                      }
+                      options={FISCAL_DOCUMENT_OPTIONS}
+                    />
+                  </FormField>
+                  <FormField label="Organización jurídica">
+                    <Select
+                      variant="field"
+                      aria-label="Organización jurídica"
+                      placeholder="Selecciona organización"
+                      value={clinicForm.organizacionJuridicaId}
+                      onValueChange={(value) =>
+                        setClinicForm((current) => ({
+                          ...current,
+                          organizacionJuridicaId: value,
+                        }))
+                      }
+                      options={LEGAL_ORGANIZATION_OPTIONS}
+                    />
+                  </FormField>
+                  <FormField label="Tributo">
+                    <input
+                      type="text"
+                      value={clinicForm.tributoId}
+                      onChange={(event) =>
+                        setClinicForm((current) => ({ ...current, tributoId: event.target.value }))
+                      }
+                      placeholder="01"
+                      className={INPUT_CLASS}
+                    />
+                  </FormField>
+                </div>
+              </>
+            ) : null}
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -733,7 +738,7 @@ function ConfiguracionContent({
         <EmptyState
           icon={<Sparkles />}
           title="Facturación electrónica no incluida en el plan actual"
-          description="La conexión de facturación electrónica se habilita cuando la clínica sube a un plan con facturación electrónica. Mientras tanto, puedes dejar lista la ficha institucional y fiscal."
+          description="La conexión de facturación electrónica se habilita cuando la clínica sube a un plan con facturación electrónica. Las ventas se imprimen como comprobante de venta, sin valor fiscal."
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (

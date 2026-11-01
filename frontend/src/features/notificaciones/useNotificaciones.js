@@ -9,6 +9,7 @@ import { obtenerAlertasCompra } from '@/features/inventario/facturaCompraApi'
 import { soporteApi } from '@/features/soporte/soporteApi'
 import { fechaLocal } from '@/lib/fecha'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
+import { FUNCIONALIDAD_DIAN, tieneFuncionalidad } from '@/lib/suscripcion'
 import { useAuthStore } from '@/store/authStore'
 import { derivarNotificaciones, desdeServidor } from './notificacionesDerivadas'
 import { notificacionesApi } from './notificacionesApi'
@@ -114,6 +115,7 @@ function useAvisosNavegador({ avisos, activo, listo }) {
 
 export function useNotificaciones() {
   const usuario = useAuthStore((state) => state.usuario)
+  const suscripcion = useAuthStore((state) => state.suscripcion)
   const usuarioId = usuario?.id
   const hoy = fechaLocal()
   const inicioMes = `${hoy.slice(0, 7)}-01`
@@ -124,7 +126,8 @@ export function useNotificaciones() {
   const verPlan = hasAnyRole(usuario, ROLES_PLAN)
   const verSoporte = canAccessModule(usuario, 'soporte')
   const verSeguimientos = hasAnyRole(usuario, ROLES_SEGUIMIENTO)
-  const verDian = hasAnyRole(usuario, ROLES_DIAN)
+  // Sin el plan con facturación electrónica ninguna venta va a la DIAN.
+  const verDian = hasAnyRole(usuario, ROLES_DIAN) && tieneFuncionalidad(suscripcion, FUNCIONALIDAD_DIAN)
 
   const citasQuery = useQuery({
     queryKey: ['dashboard-citas-hoy-detalle', hoy],
