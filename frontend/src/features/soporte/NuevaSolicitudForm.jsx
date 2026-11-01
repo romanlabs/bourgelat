@@ -29,7 +29,7 @@ const TIPOS_CAPTURA = ['image/jpeg', 'image/png', 'image/webp']
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
 const campo =
-  'w-full rounded-lg border-0 bg-card px-3.5 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-brand'
+  'w-full rounded-lg border-0 bg-card px-3.5 text-base text-foreground lg:text-[15px] outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-brand'
 
 // Cada tipo pide cosas distintas: la urgencia solo se pregunta cuando algo no funciona.
 const TEXTOS_POR_TIPO = {
@@ -172,7 +172,7 @@ export default function NuevaSolicitudForm({
       aria-labelledby="s-nuevo"
       onSubmit={enviar}
       onPaste={onPaste}
-      className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground lg:sticky lg:top-6"
+      className="flex flex-col gap-4 rounded-2xl bg-primary p-4 text-primary-foreground sm:p-6 lg:sticky lg:top-6"
     >
       <h2 id="s-nuevo" className="text-xl font-semibold tracking-[-0.02em]">Nueva solicitud</h2>
 
@@ -192,7 +192,7 @@ export default function NuevaSolicitudForm({
                     aria-pressed={activo}
                     onClick={() => cambiarTipo(opcion.value, field.onChange)}
                     className={cn(
-                      'h-[38px] rounded-lg px-3 text-[13px] transition',
+                      'h-11 rounded-lg px-3 text-[13px] transition lg:h-[38px]',
                       activo ? 'bg-primary-foreground font-semibold text-primary' : 'bg-primary-foreground/15 hover:bg-primary-foreground/25',
                       FOCO
                     )}
@@ -223,7 +223,7 @@ export default function NuevaSolicitudForm({
                     aria-pressed={activo}
                     onClick={() => field.onChange(opcion.value)}
                     className={cn(
-                      'h-[38px] rounded-[7px] px-1 text-[13px] leading-tight transition',
+                      'h-11 rounded-[7px] px-1 text-[13px] leading-tight transition lg:h-[38px]',
                       activo ? 'bg-primary-foreground font-semibold text-primary' : 'hover:bg-primary-foreground/10',
                       FOCO
                     )}
@@ -245,7 +245,7 @@ export default function NuevaSolicitudForm({
           type="text"
           autoComplete="off"
           placeholder={textos.asunto}
-          className={cn(campo, 'h-[46px]')}
+          className={cn(campo, 'h-12 lg:h-[46px]')}
           ref={(el) => {
             asuntoRegisterRef(el)
             asuntoRef.current = el

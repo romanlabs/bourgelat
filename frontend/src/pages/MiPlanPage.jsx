@@ -59,7 +59,7 @@ const describirActual = (suscripcion, planActual) => {
 function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
   if (limite === null || limite === undefined) {
     return (
-      <div className="flex min-w-[200px] flex-col gap-2">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[200px]">
         <span className="flex justify-between gap-4 text-sm">
           <span>{etiqueta}</span>
           <span className="font-semibold">{formato(usados)} · sin límite</span>
@@ -72,7 +72,7 @@ function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
   }
   const pct = Math.min(100, Math.round((usados / limite) * 100))
   return (
-    <div className="flex min-w-[200px] flex-col gap-2">
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[200px]">
       <span className="flex justify-between gap-4 text-sm">
         <span>{etiqueta}</span>
         <span className="font-semibold">{formato(usados)} de {formato(limite)}</span>
@@ -99,7 +99,7 @@ function TarjetaPlan({ nombre, lema, plan, anual, actual, accion, rasgos }) {
     ? `al mes, pagando ${pesos(plan.precioAnualTotal)} al año · ahorras ${pesos(plan.ahorroAnual)}`
     : 'al mes'
   return (
-    <article className={cn('flex flex-col gap-[18px] rounded-2xl bg-card p-7', actual && 'ring-[3px] ring-inset ring-primary')}>
+    <article className={cn('flex flex-col gap-[18px] rounded-2xl bg-card p-5 sm:p-7', actual && 'ring-[3px] ring-inset ring-primary')}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <h3 className="text-[22px] font-semibold text-foreground">{nombre}</h3>
@@ -108,7 +108,7 @@ function TarjetaPlan({ nombre, lema, plan, anual, actual, accion, rasgos }) {
         {actual ? <span className="shrink-0 whitespace-nowrap rounded-[5px] bg-primary px-2 py-1 text-[13px] font-semibold text-primary-foreground">Tu plan</span> : null}
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground">{pesos(precio)}</span>
+        <span className="text-[40px] font-semibold leading-none sm:text-[44px] tracking-[-0.04em] text-foreground">{pesos(precio)}</span>
         <span className="text-sm text-muted-foreground">{nota}</span>
       </div>
       <ul className="flex flex-col gap-2.5 text-[15px] text-foreground">{rasgos}</ul>
@@ -143,7 +143,7 @@ export default function MiPlanPage() {
   if (!esAdmin) {
     return (
       <AdminShell currentKey="planes" title="Mi plan">
-        <p className="rounded-2xl bg-card px-6 py-5 text-sm text-muted-foreground">
+        <p className="rounded-2xl bg-card px-4 py-5 text-sm text-muted-foreground sm:px-6">
           El plan de la clínica lo maneja la administración. Si necesitas algo, pídeselo a quien administra Bourgelat en tu clínica.
         </p>
       </AdminShell>
@@ -209,19 +209,19 @@ export default function MiPlanPage() {
 
   return (
     <AdminShell currentKey="planes" title="Mi plan" hidePageHeader hideSearch>
-      <div className="flex flex-col gap-7 lg:pt-6">
+      <div className="flex flex-col gap-5 lg:gap-7 lg:pt-6">
         <section
           aria-labelledby="pl-actual"
-          className={cn('flex flex-wrap items-end justify-between gap-7 rounded-2xl px-5 py-7 sm:px-9', vencido ? 'bg-danger text-primary-foreground' : 'bg-primary text-primary-foreground')}
+          className={cn('flex flex-wrap items-end justify-between gap-5 rounded-2xl px-5 py-6 sm:gap-7 sm:px-9 sm:py-7', vencido ? 'bg-danger text-primary-foreground' : 'bg-primary text-primary-foreground')}
         >
           <div className="flex flex-col gap-2.5">
-            <h1 id="pl-actual" className="text-4xl font-semibold leading-none tracking-[-0.04em] sm:text-5xl">
+            <h1 id="pl-actual" className="text-3xl font-semibold leading-none tracking-[-0.04em] sm:text-5xl">
               {cargando ? 'Tu plan' : nombreActual}
             </h1>
-            <p className="text-[17px] opacity-85">{cargando ? 'Cargando…' : describirActual(suscripcion, planActual)}</p>
+            <p className="text-base opacity-85 sm:text-[17px]">{cargando ? 'Cargando…' : describirActual(suscripcion, planActual)}</p>
           </div>
           {uso ? (
-            <div className="flex flex-wrap gap-7">
+            <div className="flex w-full flex-wrap gap-5 sm:w-auto sm:gap-7">
               <BarraUso etiqueta="Usuarios" usados={uso.usuarios.usados} limite={uso.usuarios.limite} />
               <BarraUso etiqueta="Archivos" usados={uso.almacenamientoMB.usados} limite={uso.almacenamientoMB.limite} formato={espacio} />
             </div>
@@ -234,9 +234,9 @@ export default function MiPlanPage() {
           </p>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">Cambiar de plan</h2>
-          <div role="group" aria-label="Forma de pago" className="flex gap-1 rounded-[10px] bg-secondary p-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+          <h2 className="text-2xl font-semibold sm:text-[28px] tracking-[-0.03em] text-foreground">Cambiar de plan</h2>
+          <div role="group" aria-label="Forma de pago" className="grid w-full grid-cols-2 gap-1 rounded-[10px] bg-secondary p-1 sm:flex sm:w-auto">
             {[
               { valor: false, texto: 'Mensual' },
               { valor: true, texto: `Anual · ahorra hasta ${pesos(clinicaPlan?.ahorroAnual)}` },
@@ -247,7 +247,7 @@ export default function MiPlanPage() {
                 aria-pressed={anual === opcion.valor}
                 onClick={() => setAnual(opcion.valor)}
                 className={cn(
-                  'h-[38px] rounded-[7px] px-3.5 text-[13px] transition',
+                  'min-h-11 rounded-[7px] px-3 text-[13px] leading-tight transition lg:min-h-[38px] lg:px-3.5',
                   anual === opcion.valor ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground',
                   FOCO
                 )}
@@ -259,7 +259,7 @@ export default function MiPlanPage() {
         </div>
 
         {esencial && clinicaPlan ? (
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
             <TarjetaPlan
               nombre="Esencial"
               lema="Para el consultorio que atiende solo"
@@ -294,7 +294,7 @@ export default function MiPlanPage() {
                 </>
               }
             />
-            <article className={cn('flex flex-col gap-[18px] rounded-2xl bg-secondary p-7', suscripcion?.plan === 'personalizado' && 'ring-[3px] ring-inset ring-primary')}>
+            <article className={cn('flex flex-col gap-[18px] rounded-2xl bg-secondary p-5 sm:p-7', suscripcion?.plan === 'personalizado' && 'ring-[3px] ring-inset ring-primary')}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-1.5">
                   <h3 className="text-[22px] font-semibold text-foreground">Personalizado</h3>
@@ -323,9 +323,9 @@ export default function MiPlanPage() {
         ) : null}
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <section aria-labelledby="pl-pago" className="flex flex-wrap items-center gap-7 rounded-2xl bg-card p-7">
+          <section aria-labelledby="pl-pago" className="flex flex-wrap items-center justify-center gap-5 rounded-2xl bg-card p-5 sm:justify-start sm:gap-7 sm:p-7">
             <img src={qrBourgelat} alt="Código QR de pago Bre-B de Bourgelat" className="h-[148px] w-[148px] shrink-0 rounded-[14px] bg-white p-2" />
-            <div className="flex min-w-[240px] flex-1 flex-col gap-2.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:min-w-[240px]">
               <h2 id="pl-pago" className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cómo pagar</h2>
               <p className="text-[15px] leading-relaxed text-foreground/85">
                 Escanea el código con tu banco o paga por Bre-B a la llave{' '}
@@ -333,17 +333,17 @@ export default function MiPlanPage() {
                   type="button"
                   onClick={copiarLlave}
                   title="Copiar la llave"
-                  className={cn('inline-flex items-center gap-1 rounded font-semibold text-primary underline-offset-2 hover:underline', FOCO)}
+                  className={cn('inline-flex min-h-11 items-center gap-1 rounded font-semibold text-primary underline-offset-2 hover:underline', FOCO)}
                 >
                   {pagoManual.llaveBreB}
                   {copiada ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 . Sube el comprobante y activamos el plan el mismo día hábil.
               </p>
-              <div className="flex flex-wrap gap-2.5 pt-1">
+              <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:flex-wrap">
                 <Link
                   to={enlaceSolicitud('Comprobante de pago')}
-                  className={cn('flex h-11 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px', FOCO)}
+                  className={cn('flex h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px', FOCO)}
                 >
                   Subir comprobante
                 </Link>
@@ -352,7 +352,7 @@ export default function MiPlanPage() {
                     href={`https://wa.me/${pagoManual.whatsapp}?text=${mensajeComprobante}`}
                     target="_blank"
                     rel="noreferrer"
-                    className={cn('flex h-11 items-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95', FOCO)}
+                    className={cn('flex h-12 items-center justify-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95', FOCO)}
                   >
                     Escribir por WhatsApp
                   </a>
@@ -361,7 +361,7 @@ export default function MiPlanPage() {
             </div>
           </section>
 
-          <section aria-labelledby="pl-dian" className="flex flex-col gap-2.5 rounded-2xl bg-warning-soft p-7 text-warning">
+          <section aria-labelledby="pl-dian" className="flex flex-col gap-2.5 rounded-2xl bg-warning-soft p-5 text-warning sm:p-7">
             <span className="self-start rounded-[5px] bg-card px-2 py-1 text-[13px] font-semibold">Próximamente</span>
             <h2 id="pl-dian" className="text-xl font-semibold">Facturación electrónica DIAN</h2>
             <p className="text-[15px] leading-relaxed">
@@ -369,7 +369,7 @@ export default function MiPlanPage() {
             </p>
             <Link
               to={enlaceSolicitud('Quiero que me avisen cuando llegue la facturación electrónica DIAN', 'sugerencia')}
-              className={cn('mt-auto flex h-11 items-center self-start rounded-lg bg-card px-4 text-sm font-semibold transition hover:brightness-95', FOCO)}
+              className={cn('mt-auto flex h-12 items-center justify-center rounded-lg bg-card px-4 sm:self-start text-sm font-semibold transition hover:brightness-95', FOCO)}
             >
               Quiero que me avisen
             </Link>

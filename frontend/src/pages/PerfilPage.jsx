@@ -21,9 +21,9 @@ import { perfilApi } from '@/features/perfil/perfilApi'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 const CAMPO =
-  'h-[46px] w-full rounded-lg border-0 bg-muted px-3.5 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary'
-const BTN_SECUNDARIO = cn('inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px disabled:opacity-60', FOCO)
-const BTN_PRIMARIO = cn('inline-flex h-11 items-center justify-center rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:opacity-60', FOCO)
+  'h-12 w-full rounded-lg border-0 bg-muted px-3.5 text-base lg:h-[46px] lg:text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary'
+const BTN_SECUNDARIO = cn('inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px disabled:opacity-60 lg:h-11', FOCO)
+const BTN_PRIMARIO = cn('inline-flex h-12 items-center justify-center rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:opacity-60 lg:h-11', FOCO)
 
 const ROLES = {
   admin: { label: 'Administración', clase: 'bg-primary/10 text-primary' },
@@ -94,14 +94,14 @@ function Encabezado({ usuario, clinica }) {
   }
 
   return (
-    <header className="flex flex-wrap items-center gap-6 lg:pt-6">
+    <header className="flex flex-wrap items-center gap-4 sm:gap-6 lg:pt-6">
       <div className="flex flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={subiendoFoto}
           aria-label="Cambiar foto de perfil"
-          className={cn('group relative h-[104px] w-[104px] overflow-hidden rounded-[30px] bg-brand text-[40px] font-bold tracking-[-0.03em] text-tinta-800', FOCO)}
+          className={cn('group relative h-24 w-24 overflow-hidden rounded-[28px] bg-brand text-[36px] sm:h-[104px] sm:w-[104px] sm:rounded-[30px] sm:text-[40px] font-bold tracking-[-0.03em] text-tinta-800', FOCO)}
         >
           {usuario?.foto ? (
             <img src={usuario.foto} alt="" className="h-full w-full bg-card object-cover" />
@@ -113,14 +113,14 @@ function Encabezado({ usuario, clinica }) {
           </span>
         </button>
         {usuario?.foto ? (
-          <button type="button" onClick={() => actualizar({ foto: null })} className="text-[13px] text-muted-foreground hover:text-danger">
+          <button type="button" onClick={() => actualizar({ foto: null })} className="inline-flex min-h-11 items-center px-2 text-[13px] text-muted-foreground hover:text-danger">
             Quitar foto
           </button>
         ) : null}
         <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onSeleccionarFoto} />
       </div>
       <div className="flex min-w-0 flex-col gap-2.5">
-        <h1 className="break-words text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+        <h1 className="break-words text-3xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
           {usuario?.nombre || 'Mi perfil'}
         </h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -167,7 +167,7 @@ function DatosPersonales({ usuario }) {
   }
 
   return (
-    <form aria-labelledby="p-datos" onSubmit={handleSubmit(onSubmit)} className="flex min-w-0 flex-col gap-[18px] rounded-2xl bg-card p-6">
+    <form aria-labelledby="p-datos" onSubmit={handleSubmit(onSubmit)} className="flex min-w-0 flex-col gap-[18px] rounded-2xl bg-card p-4 sm:p-6">
       <h2 id="p-datos" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Datos personales</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo id="p-nombre" label="Nombre" error={errors.nombre?.message}>
@@ -204,7 +204,7 @@ function DatosPersonales({ usuario }) {
           </Campo>
         ) : null}
       </div>
-      <div className="flex justify-end gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:flex sm:justify-end">
         <button type="button" onClick={() => reset()} disabled={!isDirty || isPending} className={BTN_SECUNDARIO}>
           Descartar
         </button>
@@ -231,7 +231,7 @@ function CambiarPassword({ onListo }) {
       type="button"
       onClick={alternar}
       aria-label={visible ? `Ocultar ${etiqueta}` : `Mostrar ${etiqueta}`}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-muted-foreground"
     >
       {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>
@@ -251,7 +251,7 @@ function CambiarPassword({ onListo }) {
           {ojo(verNueva, () => setVerNueva((v) => !v), 'contraseña nueva')}
         </div>
       </Campo>
-      <div className="flex justify-end gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
         <button type="button" onClick={onListo} className={BTN_SECUNDARIO}>Cancelar</button>
         <button type="submit" disabled={isPending} className={BTN_PRIMARIO}>{isPending ? 'Guardando…' : 'Cambiar contraseña'}</button>
       </div>
@@ -280,7 +280,7 @@ function Seguridad({ usuario }) {
   }
 
   return (
-    <section aria-labelledby="p-seg" className="flex flex-col gap-3.5 rounded-2xl bg-card p-6">
+    <section aria-labelledby="p-seg" className="flex flex-col gap-3.5 rounded-2xl bg-card p-4 sm:p-6">
       <h2 id="p-seg" className="text-lg font-semibold text-foreground">Seguridad</h2>
 
       {proveedor ? (
@@ -299,7 +299,7 @@ function Seguridad({ usuario }) {
               <span className="text-[13px] text-muted-foreground">Entras con tu correo y contraseña</span>
             </span>
             {!cambiando ? (
-              <button type="button" onClick={() => setCambiando(true)} className={cn(BTN_SECUNDARIO, 'h-[38px] px-3 text-[13px]')}>
+              <button type="button" onClick={() => setCambiando(true)} className={cn(BTN_SECUNDARIO, 'h-11 px-3 text-[13px] lg:h-[38px]')}>
                 Cambiar
               </button>
             ) : null}
@@ -313,7 +313,7 @@ function Seguridad({ usuario }) {
         <span className="text-[13px] text-muted-foreground">
           Si dejaste la sesión abierta en otro equipo o crees que alguien entró con tu cuenta, ciérralas todas.
         </span>
-        <button type="button" onClick={cerrarTodas} disabled={cerrando} className={cn(BTN_SECUNDARIO, 'mt-1 self-start text-danger')}>
+        <button type="button" onClick={cerrarTodas} disabled={cerrando} className={cn(BTN_SECUNDARIO, 'mt-1 h-auto min-h-12 w-full whitespace-normal py-2 text-center text-danger sm:w-auto sm:self-start')}>
           <LogOut className="h-4 w-4" />
           {cerrando ? 'Cerrando…' : 'Cerrar sesión en todos los dispositivos'}
         </button>
@@ -333,7 +333,7 @@ function Apariencia() {
   const setDark = useThemeStore((s) => s.setDark)
 
   return (
-    <section aria-labelledby="p-pref" className="flex flex-col gap-3.5 rounded-2xl bg-card p-6">
+    <section aria-labelledby="p-pref" className="flex flex-col gap-3.5 rounded-2xl bg-card p-4 sm:p-6">
       <h2 id="p-pref" className="text-lg font-semibold text-foreground">Apariencia</h2>
       <div role="radiogroup" aria-label="Tema" className="grid grid-cols-2 gap-2">
         {TEMAS.map((t) => {
@@ -370,11 +370,11 @@ export default function PerfilPage() {
 
   return (
     <AdminShell title="Mi perfil" hidePageHeader hideSearch>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 lg:gap-6">
         <Encabezado usuario={usuario} clinica={clinica} />
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] lg:gap-6">
           <DatosPersonales key={usuario?.id} usuario={usuario} />
-          <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
             <Seguridad usuario={usuario} />
             <Apariencia />
           </div>

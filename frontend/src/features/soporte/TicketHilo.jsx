@@ -32,8 +32,8 @@ function MensajeHilo({ mensaje, perspectiva }) {
 
   return (
     <li className={cn('flex', propio ? 'justify-end' : 'justify-start')}>
-      <div className={cn('max-w-[85%] min-w-0', propio ? 'items-end text-right' : 'items-start')}>
-        <div className={cn('mb-1 flex items-center gap-1.5 text-[13px]', propio ? 'justify-end' : 'justify-start')}>
+      <div className={cn('max-w-[88%] min-w-0', propio ? 'items-end text-right' : 'items-start')}>
+        <div className={cn('mb-1 flex flex-wrap items-center gap-x-1.5 text-[13px]', propio ? 'justify-end' : 'justify-start')}>
           {esSoporte ? <LifeBuoy className="h-3.5 w-3.5 text-primary" aria-hidden /> : null}
           <span className="font-semibold text-foreground">
             {esSoporte ? `Equipo Bourgelat · ${mensaje.autorNombre}` : mensaje.autorNombre}

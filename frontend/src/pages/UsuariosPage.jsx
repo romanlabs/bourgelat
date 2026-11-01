@@ -73,7 +73,7 @@ const normalizeRoles = (roles, primaryRole) =>
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const CAMPO =
-  'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
+  'h-12 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground lg:h-11 lg:text-sm outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
 
 const getRoleLabel = (role) => ROLE_LABELS[role] || role || 'Sin rol'
 
@@ -181,7 +181,7 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onElim
         <button
           type="button"
           aria-label={`Acciones de ${nombre}`}
-          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
+          className={cn('inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground lg:h-9 lg:w-9 transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
         >
           <MoreHorizontal className="h-[18px] w-[18px]" />
         </button>
@@ -192,11 +192,11 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onElim
           sideOffset={6}
           className="z-50 min-w-[180px] rounded-xl bg-popover p-1.5 shadow-dropdown data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         >
-          <DropdownMenu.Item onSelect={onEditar} className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted">
+          <DropdownMenu.Item onSelect={onEditar} className="flex cursor-pointer min-h-11 items-center rounded-lg px-3 text-sm lg:min-h-0 lg:py-2.5 text-foreground outline-none transition hover:bg-muted focus:bg-muted">
             Editar
           </DropdownMenu.Item>
           {onReenviar ? (
-            <DropdownMenu.Item onSelect={onReenviar} className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted">
+            <DropdownMenu.Item onSelect={onReenviar} className="flex cursor-pointer min-h-11 items-center rounded-lg px-3 text-sm lg:min-h-0 lg:py-2.5 text-foreground outline-none transition hover:bg-muted focus:bg-muted">
               Reenviar invitación
             </DropdownMenu.Item>
           ) : null}
@@ -204,7 +204,7 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onElim
             <DropdownMenu.Item
               onSelect={onCambiarEstado}
               className={cn(
-                'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm outline-none transition hover:bg-muted focus:bg-muted',
+                'flex cursor-pointer min-h-11 items-center rounded-lg px-3 text-sm lg:min-h-0 lg:py-2.5 outline-none transition hover:bg-muted focus:bg-muted',
                 activo ? 'text-danger' : 'text-foreground'
               )}
             >
@@ -214,7 +214,7 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onElim
           {onEliminar ? (
             <DropdownMenu.Item
               onSelect={onEliminar}
-              className="flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-danger outline-none transition hover:bg-muted focus:bg-muted"
+              className="flex cursor-pointer min-h-11 items-center rounded-lg px-3 text-sm lg:min-h-0 lg:py-2.5 text-danger outline-none transition hover:bg-muted focus:bg-muted"
             >
               Eliminar
             </DropdownMenu.Item>
@@ -232,7 +232,7 @@ function PanelLateral({ abierto, titulo, subtitulo, onCerrar, children }) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content className="fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-background shadow-2xl outline-none sm:w-[520px]">
-          <div className="flex items-start justify-between gap-4 bg-card px-6 py-5">
+          <div className="flex items-start justify-between gap-4 bg-card px-4 py-4 sm:px-6 sm:py-5">
             <div className="min-w-0">
               <Dialog.Title className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{titulo}</Dialog.Title>
               {subtitulo ? <Dialog.Description className="mt-1 text-sm text-muted-foreground">{subtitulo}</Dialog.Description> : null}
@@ -241,13 +241,13 @@ function PanelLateral({ abierto, titulo, subtitulo, onCerrar, children }) {
               <button
                 type="button"
                 aria-label="Cerrar"
-                className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95', FOCO)}
+                className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95', FOCO)}
               >
                 <X className="h-4 w-4" />
               </button>
             </Dialog.Close>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-5">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -272,12 +272,33 @@ const ROLES_MATRIZ = ROLE_OPTIONS.filter((rol) => rol.value !== 'admin')
 
 function MatrizRoles() {
   return (
-    <section aria-labelledby="matriz-roles" className="rounded-2xl bg-card p-6">
+    <section aria-labelledby="matriz-roles" className="rounded-2xl bg-card p-4 sm:p-6">
       <h2 id="matriz-roles" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Qué puede abrir cada rol</h2>
       <p className="mt-1 text-sm leading-6 text-muted-foreground">
         El administrador entra a todo. Una persona puede tener más de un rol y suma lo que abre cada uno.
       </p>
-      <div className="mt-4 overflow-x-auto">
+      <ul className="mt-4 flex flex-col sm:hidden">
+        {MODULOS_MATRIZ.map((modulo) => {
+          const roles = ROLES_MATRIZ.filter((rol) => (MODULE_ACCESS[modulo.key] || []).includes(rol.value))
+          return (
+            <li key={modulo.key} className="flex flex-col gap-1.5 border-t border-border py-3">
+              <span className="text-sm font-medium text-foreground">{modulo.label}</span>
+              {roles.length ? (
+                <span className="flex flex-wrap gap-1.5">
+                  {roles.map((rol) => (
+                    <span key={rol.value} className="rounded-[5px] bg-success-soft px-2 py-1 text-[13px] font-semibold text-success">
+                      {rol.label}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <span className="text-[13px] text-muted-foreground">Solo administración</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      <div className="mt-4 hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="text-left text-[13px] text-muted-foreground">
@@ -649,7 +670,7 @@ export default function UsuariosPage() {
                 setCreateForm(DEFAULT_CREATE_FORM)
                 setPanel('crear')
               }}
-              className={`inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px ${FOCO}`}
+              className={`inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px lg:h-10 ${FOCO}`}
             >
               <UserPlus className="h-4 w-4" />
               Invitar a alguien
@@ -677,7 +698,7 @@ export default function UsuariosPage() {
         {/* Con pocas personas la lista entera cabe a la vista: buscar y filtrar sobra. */}
         {usuarios.length > 3 ? (
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+            <label className="flex h-12 min-w-0 flex-1 basis-full items-center sm:basis-60 gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
               <Search className="h-[18px] w-[18px] shrink-0" />
               <input
                 type="search"
@@ -685,16 +706,19 @@ export default function UsuariosPage() {
                 onChange={(event) => setBuscar(event.target.value)}
                 placeholder="Buscar por nombre, correo o celular"
                 aria-label="Buscar en el equipo"
-                className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+                className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none lg:text-[15px] placeholder:text-muted-foreground"
               />
             </label>
-            <Select aria-label="Filtrar por estado" value={estado} onValueChange={setEstado} options={STATUS_OPTIONS} />
+            <div className="grid w-full grid-cols-2 gap-2 sm:contents">
+            <Select aria-label="Filtrar por estado" className="h-11 w-full lg:h-10 lg:w-auto" value={estado} onValueChange={setEstado} options={STATUS_OPTIONS} />
             <Select
               aria-label="Filtrar por rol"
+              className="h-11 w-full lg:h-10 lg:w-auto"
               value={rolFiltro}
               onValueChange={setRolFiltro}
               options={[{ value: 'todos', label: 'Todos los roles' }, ...ROLE_OPTIONS]}
             />
+            </div>
           </div>
         ) : null}
 
@@ -711,7 +735,65 @@ export default function UsuariosPage() {
               <p className="mt-1.5 text-sm text-muted-foreground">Ajusta la búsqueda o invita a alguien con el botón de arriba.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <ul className="flex flex-col gap-2 p-2 lg:hidden">
+              {tableRows.map((row) => {
+                const esActual = row.raw.id === usuario?.id
+                return (
+                  <li key={row.id} className="flex items-start gap-1 rounded-xl bg-muted/50 p-2">
+                    <button
+                      type="button"
+                      onClick={() => abrirEditar(row.raw)}
+                      className={cn('flex min-h-11 min-w-0 flex-1 items-start gap-3 rounded-lg p-1.5 text-left', FOCO)}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary"
+                      >
+                        {inicialesDe(row.nombre)}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                        <span className="block break-words font-semibold text-foreground">
+                          {row.nombre}
+                          {esActual ? <span className="ml-1.5 text-[13px] font-normal text-muted-foreground">(tú)</span> : null}
+                        </span>
+                        <span className="block break-all text-[13px] text-muted-foreground">
+                          {[row.email, row.raw.telefono].filter(Boolean).join(' · ')}
+                        </span>
+                        <RoleBadges user={row.raw} />
+                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          {row.activo && row.raw.invitacionPendiente ? (
+                            <StatusPill tone="whitespace-nowrap bg-warning-soft text-warning">Invitación pendiente</StatusPill>
+                          ) : (
+                            <StatusPill tone={cn('whitespace-nowrap', row.activo ? 'bg-success-soft text-success' : 'bg-muted text-muted-foreground')}>
+                              {row.activo ? 'Activo' : 'Inactivo'}
+                            </StatusPill>
+                          )}
+                          <span className="text-[13px] text-muted-foreground">
+                            {row.raw.invitacionPendiente ? 'Aún no ha entrado' : formatLastAccess(row.ultimoAcceso, esActual)}
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                    <AccionesUsuario
+                      nombre={row.nombre}
+                      onEditar={() => abrirEditar(row.raw)}
+                      onReenviar={
+                        row.activo && row.raw.invitacionPendiente
+                          ? () => reenviarInvitacionMutation.mutate({ id: row.raw.id })
+                          : null
+                      }
+                      onCambiarEstado={
+                        esActual ? null : () => toggleUsuarioMutation.mutate({ id: row.raw.id })
+                      }
+                      onEliminar={esActual ? null : () => setPorEliminar(row.raw)}
+                      activo={row.activo}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="text-left text-[13px] text-muted-foreground">
@@ -781,6 +863,7 @@ export default function UsuariosPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
 
@@ -825,7 +908,7 @@ export default function UsuariosPage() {
             <Select
               variant="field"
               aria-label="Rol principal"
-              className="h-11"
+              className="h-12 lg:h-11"
               value={createForm.rol}
               onValueChange={(value) =>
                 setCreateForm((current) => ({
@@ -848,7 +931,7 @@ export default function UsuariosPage() {
           <button
             type="submit"
             disabled={crearUsuarioMutation.isPending}
-            className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
+            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px lg:h-11 disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
           >
             {crearUsuarioMutation.isPending ? 'Enviando…' : 'Enviar invitación'}
           </button>
@@ -937,7 +1020,7 @@ export default function UsuariosPage() {
             <button
               type="submit"
               disabled={editarUsuarioMutation.isPending}
-              className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
+              className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px lg:h-11 disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`}
             >
               {editarUsuarioMutation.isPending ? 'Guardando…' : 'Guardar cambios'}
             </button>
