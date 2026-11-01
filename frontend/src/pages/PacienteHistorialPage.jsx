@@ -4,8 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import {
-  Camera, ChevronLeft, HeartPulse, Loader2, Mail, PawPrint, Phone, Plus, Scissors, Search,
+  Camera, ChevronLeft, HeartPulse, Loader2, Mail, PawPrint, Phone, Plus, Scissors, Search, X,
 } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { PesoEnElTiempo, VacunasYDesparasitacion } from '@/features/pacientes/FichaSalud'
@@ -189,6 +190,8 @@ export default function PacienteHistorialPage() {
   const puedeCambiarFoto = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
   const fotoInputRef = useRef(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  // Visor de la foto a pantalla completa (celular: se abre tocando la foto).
+  const [verFoto, setVerFoto] = useState(false)
 
   const mascota = mascotaQuery.data?.mascota
   const historias = historiasQuery.data?.historias || []
@@ -399,6 +402,30 @@ export default function PacienteHistorialPage() {
             No fue posible cargar los datos del paciente.
           </div>
         )}
+        {mascota?.fotoPerfil ? (
+          <Dialog.Root open={verFoto} onOpenChange={setVerFoto}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/95" />
+              <Dialog.Content
+                aria-describedby={undefined}
+                className="fixed inset-0 z-50 flex items-center justify-center p-3 outline-none"
+                onClick={() => setVerFoto(false)}
+              >
+                <Dialog.Title className="sr-only">Foto de {mascota.nombre}</Dialog.Title>
+                <img src={mascota.fotoPerfil} alt={`Foto de ${mascota.nombre}`} className="max-h-full max-w-full rounded-xl object-contain" />
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    aria-label="Cerrar"
+                    className={`absolute right-3 top-[calc(0.75rem+env(safe-area-inset-top))] inline-flex h-11 w-11 items-center justify-center rounded-full bg-card text-foreground ${FOCO}`}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </Dialog.Close>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        ) : null}
         {mascota && (
           <section
             aria-labelledby="ficha-nombre"
@@ -407,10 +434,26 @@ export default function PacienteHistorialPage() {
             <div
               role="img"
               aria-label={`Foto de ${mascota.nombre}`}
-              className="relative flex h-36 shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
+              // Celular: 4:3 y la foto completa (sin recorte) sobre una copia
+              // desenfocada; recortada en una franja baja solo se veía un pedazo.
+              className="relative flex aspect-[4/3] max-h-[52vh] w-full shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:aspect-auto sm:h-[320px] lg:h-auto lg:max-h-none lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
             >
               {mascota.fotoPerfil ? (
-                <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                <>
+                  <img
+                    src={mascota.fotoPerfil}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-2xl lg:hidden"
+                  />
+                  <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-contain lg:object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setVerFoto(true)}
+                    aria-label={`Ver la foto de ${mascota.nombre} completa`}
+                    className={`absolute inset-0 lg:hidden ${FOCO}`}
+                  />
+                </>
               ) : (
                 <PawPrint className="h-40 w-40 text-brand-foreground/25" strokeWidth={1.4} />
               )}
@@ -430,10 +473,14 @@ export default function PacienteHistorialPage() {
                     onClick={() => fotoInputRef.current?.click()}
                     disabled={subiendoFoto || propsAccion.disabled}
                     title={propsAccion.title}
-                    className={`absolute bottom-4 left-4 inline-flex h-11 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 ${FOCO}`}
+                    aria-label={subiendoFoto ? 'Subiendo foto' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    // Celular: botón redondo en la esquina para no tapar la foto.
+                    className={`absolute bottom-3 right-3 z-10 inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-card/95 text-sm font-semibold text-foreground shadow-dropdown transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 lg:bottom-4 lg:left-4 lg:right-auto lg:w-auto lg:justify-start lg:rounded-lg lg:bg-card lg:px-4 lg:shadow-none ${FOCO}`}
                   >
-                    {subiendoFoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                    {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    {subiendoFoto ? <Loader2 className="h-5 w-5 animate-spin lg:h-4 lg:w-4" /> : <Camera className="h-5 w-5 lg:h-4 lg:w-4" />}
+                    <span className="hidden lg:inline">
+                      {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    </span>
                   </button>
                 </>
               ) : null}
