@@ -159,7 +159,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
               {editingProduct ? 'Editar producto' : 'Nuevo producto'}
@@ -181,7 +181,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4">
           <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
@@ -283,7 +283,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 Existencias
               </p>
 
-              <div className="grid items-start gap-4 sm:grid-cols-2">
+              <div className="grid items-start grid-cols-2 gap-3 sm:gap-4">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-stock" className={labelClass}>
                     {editingProduct ? 'Cantidad actual' : 'Cantidad inicial'}
@@ -338,7 +338,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 Precios
               </p>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-precio-compra" className={labelClass}>
                     Precio de compra
@@ -470,7 +470,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <button
             type="submit"
             form="product-drawer-form"

@@ -131,7 +131,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -143,7 +143,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           </button>
         </div>
 
-        <form id="servicio-drawer-form" className="flex-1 overflow-y-auto px-6 py-4 space-y-5" onSubmit={handleSubmit}>
+        <form id="servicio-drawer-form" className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4 space-y-5" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 flex flex-col gap-1">
               <label className={labelClass}>Nombre del servicio *</label>
@@ -286,7 +286,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
           </div>
         </form>
 
-        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <button
             type="submit"
             form="servicio-drawer-form"

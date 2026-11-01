@@ -165,7 +165,7 @@ export default function InsumoClinicoDrawer({
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
               {editingInsumo ? 'Editar insumo clínico' : 'Nuevo insumo clínico'}
@@ -186,7 +186,7 @@ export default function InsumoClinicoDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4">
           <form id="insumo-clinico-drawer-form" className="grid gap-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-4">
               <p className="text-[13px] font-semibold text-muted-foreground">
@@ -334,7 +334,7 @@ export default function InsumoClinicoDrawer({
                 <p className="text-[13px] font-semibold text-muted-foreground">
                   Existencias
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
                     <span className={labelClass}>Cantidad actual</span>
                     <div className="flex h-12 lg:h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
@@ -515,7 +515,7 @@ export default function InsumoClinicoDrawer({
           </form>
         </div>
 
-        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <button
             type="submit"
             form="insumo-clinico-drawer-form"

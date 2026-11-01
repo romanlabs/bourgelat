@@ -176,7 +176,7 @@ export default function FacturaCompraDrawer({
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
             {editingFactura && (
@@ -195,7 +195,7 @@ export default function FacturaCompraDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4 space-y-5">
 
           {/* Datos cabecera */}
           <div className="grid grid-cols-2 gap-4">
@@ -552,7 +552,7 @@ export default function FacturaCompraDrawer({
         </div>
 
         {/* Footer */}
-        <div className="space-y-3 border-t border-border/60 px-6 py-4">
+        <div className="space-y-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total estimado</span>
             <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-foreground">{formatCOP(totalCalculado)}</span>

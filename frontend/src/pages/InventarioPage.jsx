@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useResaltado } from '@/lib/useResaltado'
 import { DropdownMenu } from 'radix-ui'
-import { ArrowLeftRight, Check, ChevronDown, CircleAlert, Download, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Plus, Sparkles, ShoppingCart, FlaskConical } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { ArrowLeftRight, Ban, Check, CheckCheck, ChevronDown, CircleAlert, Download, Eye, FileSpreadsheet, Filter, MoreHorizontal, Package, PackagePlus, Pencil, Plus, RotateCcw, Sparkles, ShoppingCart, FlaskConical, Trash2 } from 'lucide-react'
+import { useDeslizarHorizontal, useMantenerPresionado } from '@/lib/gestos'
+import { invalidarDominios } from '@/lib/queryKeys'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import HojaInferior from '@/components/movil/HojaInferior'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
@@ -45,7 +51,7 @@ const TABS = [
   { id: 'productos', label: 'Productos' },
   { id: 'servicios', label: 'Servicios' },
   { id: 'movimientos', label: 'Movimientos' },
-  { id: 'facturas-compra', label: 'Facturas de compra' },
+  { id: 'facturas-compra', label: 'Facturas de compra', corto: 'Compras' },
 ]
 
 // Inputs del rediseño: llevan borde (las tarjetas no). Enlaces de acción en
@@ -309,71 +315,159 @@ function AccionesFila({ nombre, acciones }) {
 const CLAVES_ANCHO_COMPLETO = new Set(['stock', 'alertas', 'tipo', 'motivo', 'plazo'])
 const CLAVES_ACCION = new Set(['accion', 'acciones'])
 
-// En celular cada fila es una tarjeta: la primera columna es el título, las
-// acciones van abajo y el resto son pares etiqueta/valor.
-function TarjetasInventario({ columns, rows, highlightKey }) {
+// En celular cada fila es una tarjeta: la primera columna es el título y el
+// resto son pares etiqueta/valor. Las acciones de la fila (`opciones`) se
+// alcanzan con el botón «⋯» (hoja inferior), deslizando la tarjeta a la
+// izquierda (las marcadas `deslizar`, máximo 3) o manteniéndola presionada.
+// Sin `opciones` se muestra la columna de acciones como antes.
+function TarjetaInventario({ row, columns, opciones, resaltada, onOpciones, tituloFila }) {
   const [titulo, ...resto] = columns
   const acciones = resto.find((c) => CLAVES_ACCION.has(c.key))
   const datos = resto.filter((c) => !CLAVES_ACCION.has(c.key))
-  const contenido = (col, row) => (col.render ? col.render(row) : row[col.key])
+  const contenido = (col) => (col.render ? col.render(row) : row[col.key])
+  const hayOpciones = opciones.length > 0
+  const mantener = useMantenerPresionado(() => {
+    if (hayOpciones) onOpciones(row)
+  })
+  const deslizables = opciones
+    .filter((o) => o.deslizar)
+    .slice(0, 3)
+    .map((o) => ({ key: o.label, label: o.corto || o.label, icon: o.icon, tono: o.tono, onClick: o.onSelect }))
+
+  return (
+    <li
+      data-tarjeta-resaltada={resaltada ? '' : undefined}
+      data-sin-deslizar-tabs={deslizables.length > 0 ? '' : undefined}
+      className="overflow-hidden rounded-xl"
+    >
+      <FilaDeslizable acciones={deslizables} redondeo="rounded-xl">
+        <div
+          {...mantener.props}
+          onClickCapture={(event) => {
+            // Tras una presión larga, el toque que suelta no debe activar nada.
+            if (mantener.consumido()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+          }}
+          className={cn('p-3', resaltada ? 'bg-warning-soft' : 'bg-card')}
+        >
+          <div className="flex items-start gap-1">
+            <div className="min-w-0 flex-1 text-sm">{contenido(titulo)}</div>
+            {hayOpciones ? (
+              <button
+                type="button"
+                aria-label={`Acciones de ${tituloFila(row)}`}
+                onClick={() => onOpciones(row)}
+                className={cn('-mr-2 -mt-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition active:bg-muted', FOCO)}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+            ) : null}
+          </div>
+          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            {datos.map((col) => (
+              <div key={col.key} className={cn('min-w-0', CLAVES_ANCHO_COMPLETO.has(col.key) && 'col-span-2')}>
+                <dt className="text-xs text-muted-foreground">{col.label}</dt>
+                <dd className="mt-0.5 break-words">{contenido(col)}</dd>
+              </div>
+            ))}
+          </dl>
+          {acciones && !hayOpciones ? (
+            <div className="mt-2 flex justify-end border-t border-border pt-2 [&_button]:min-h-11 [&_button]:min-w-11">
+              {contenido(acciones)}
+            </div>
+          ) : null}
+        </div>
+      </FilaDeslizable>
+    </li>
+  )
+}
+
+function TarjetasInventario({ columns, rows, highlightKey, opcionesFila, tituloFila }) {
+  const [filaAbierta, setFilaAbierta] = useState(null)
   useEffect(() => {
     if (highlightKey == null) return
     document.querySelector('[data-tarjeta-resaltada]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [highlightKey])
+  const opcionesAbiertas = filaAbierta && opcionesFila ? opcionesFila(filaAbierta).filter(Boolean) : []
   return (
-    <ul className="grid gap-3 px-3 pb-3 pt-4 lg:hidden">
-      {rows.map((row, i) => {
-        const resaltada = highlightKey != null && row.id === highlightKey
-        return (
-          <li
+    <>
+      <ul className="grid gap-2 px-2.5 pb-3 pt-3 lg:hidden">
+        {rows.map((row, i) => (
+          <TarjetaInventario
             key={row.id ?? i}
-            data-tarjeta-resaltada={resaltada ? '' : undefined}
-            className={cn('rounded-xl border border-border p-3.5', resaltada ? 'bg-warning-soft' : 'bg-card')}
-          >
-            <div className="text-sm">{contenido(titulo, row)}</div>
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
-              {datos.map((col) => (
-                <div
-                  key={col.key}
-                  className={cn('min-w-0', CLAVES_ANCHO_COMPLETO.has(col.key) && 'col-span-2')}
+            row={row}
+            columns={columns}
+            opciones={opcionesFila ? opcionesFila(row).filter(Boolean) : []}
+            resaltada={highlightKey != null && row.id === highlightKey}
+            onOpciones={setFilaAbierta}
+            tituloFila={tituloFila}
+          />
+        ))}
+      </ul>
+      <HojaInferior
+        abierta={Boolean(filaAbierta) && opcionesAbiertas.length > 0}
+        onCambiar={(abierta) => {
+          if (!abierta) setFilaAbierta(null)
+        }}
+        titulo={filaAbierta ? tituloFila(filaAbierta) : ''}
+      >
+        <ul className="grid gap-1.5 pb-2">
+          {opcionesAbiertas.map((opcion) => {
+            const Icono = opcion.icon
+            return (
+              <li key={opcion.label}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilaAbierta(null)
+                    // Deja cerrar la hoja antes de abrir otro diálogo o panel.
+                    setTimeout(() => opcion.onSelect?.(), 200)
+                  }}
+                  className={cn(
+                    'flex min-h-12 w-full items-center gap-3 rounded-xl bg-secondary px-4 text-left text-base font-medium transition active:brightness-95',
+                    FOCO,
+                    opcion.peligro ? 'text-danger' : 'text-foreground'
+                  )}
                 >
-                  <dt className="text-xs text-muted-foreground">{col.label}</dt>
-                  <dd className="mt-0.5 break-words">{contenido(col, row)}</dd>
-                </div>
-              ))}
-            </dl>
-            {acciones ? (
-              <div className="mt-3 flex justify-end border-t border-border pt-2.5 [&_button]:min-h-11 [&_button]:min-w-11">
-                {contenido(acciones, row)}
-              </div>
-            ) : null}
-          </li>
-        )
-      })}
-    </ul>
+                  {Icono ? <Icono className="h-5 w-5 shrink-0" aria-hidden="true" /> : null}
+                  {opcion.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </HojaInferior>
+    </>
   )
 }
 
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
-// En celular las filas se muestran como tarjetas; la tabla solo desde lg.
-function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey }) {
+// En celular las filas son tarjetas sueltas sobre el fondo (sin segundo
+// marco); la tabla y el marco blanco solo desde lg.
+// `opcionesFila(row)`: [{ label, onSelect, peligro, icon, deslizar, tono, corto }];
+// `tituloFila(row)`: nombre que encabeza la hoja de opciones.
+function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey, opcionesFila, tituloFila = (row) => row.nombre ?? 'Opciones' }) {
   const hayFilas = rows.length > 0
   return (
-    <section className="overflow-hidden rounded-2xl bg-card">
+    <section className="overflow-hidden rounded-2xl lg:bg-card">
       {title || action ? (
-        <div className="flex flex-col gap-2 px-4 pt-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
+        <div className="flex flex-col gap-1 px-1 pt-1 lg:flex-row lg:items-end lg:justify-between lg:gap-2 lg:px-6 lg:pt-5">
           <div className="min-w-0">
             {title ? (
-              <h2 className="text-lg font-semibold tracking-[-0.02em] text-card-foreground">{title}</h2>
+              <h2 className="text-base font-semibold tracking-[-0.02em] text-card-foreground lg:text-lg">{title}</h2>
             ) : null}
-            {subtitle ? <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">{subtitle}</p> : null}
+            {subtitle ? <p className="mt-0.5 hidden max-w-3xl text-sm leading-6 text-muted-foreground sm:block lg:mt-1">{subtitle}</p> : null}
           </div>
           {action}
         </div>
       ) : null}
-      {hayFilas ? <TarjetasInventario columns={columns} rows={rows} highlightKey={highlightKey} /> : null}
-      <div className={hayFilas ? 'hidden lg:block' : undefined}>
+      {hayFilas ? (
+        <TarjetasInventario columns={columns} rows={rows} highlightKey={highlightKey} opcionesFila={opcionesFila} tituloFila={tituloFila} />
+      ) : null}
+      <div className={hayFilas ? 'hidden lg:block' : 'rounded-2xl bg-card lg:rounded-none'}>
         <DataTable
           columns={columns}
           rows={rows}
@@ -426,13 +520,13 @@ function TableSkeleton({ rows = 6 }) {
 }
 
 // Ventas o clínica: cada inventario tiene sus propios productos y movimientos.
-function SelectorInventario({ valor, onChange }) {
+function SelectorInventario({ valor, onChange, className }) {
   const opciones = [
     { id: 'ventas', label: 'Para vender', icono: <PackagePlus className="h-4 w-4" /> },
     { id: 'clinica', label: 'De la clínica', icono: <FlaskConical className="h-4 w-4" /> },
   ]
   return (
-    <div role="radiogroup" aria-label="Inventario" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+    <div role="radiogroup" aria-label="Inventario" className={cn('grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1 lg:inline-flex', className)}>
       {opciones.map(({ id, label, icono }) => {
         const activa = valor === id
         return (
@@ -443,7 +537,7 @@ function SelectorInventario({ valor, onChange }) {
             aria-checked={activa}
             onClick={() => onChange(id)}
             className={cn(
-              'inline-flex h-11 shrink-0 items-center gap-2 lg:h-10 whitespace-nowrap rounded-lg px-4 text-sm transition',
+              'inline-flex h-11 shrink-0 items-center justify-center gap-2 lg:h-10 whitespace-nowrap rounded-lg px-3 lg:px-4 text-sm transition',
               FOCO,
               activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
             )}
@@ -460,8 +554,8 @@ function SelectorInventario({ valor, onChange }) {
 // Pestañas como control segmentado: fondo suave y la activa en hoja blanca.
 function InventarioTabs({ activeTab, onTabChange }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1 pb-1">
-      <div role="tablist" aria-label="Inventario" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+    <div className="lg:-mx-1 lg:overflow-x-auto lg:px-1 lg:pb-1">
+      <div role="tablist" aria-label="Secciones del inventario" className="grid grid-cols-4 gap-0.5 rounded-xl bg-secondary p-1 lg:inline-flex lg:gap-1">
         {TABS.map((tab) => {
           const activa = activeTab === tab.id
           return (
@@ -472,14 +566,21 @@ function InventarioTabs({ activeTab, onTabChange }) {
               aria-selected={activa}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'h-11 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm transition lg:h-10',
+                'h-11 min-w-0 shrink-0 truncate whitespace-nowrap rounded-lg px-1 text-[13px] transition lg:h-10 lg:px-4 lg:text-sm',
                 FOCO,
                 activa
                   ? 'bg-card font-semibold text-foreground'
                   : 'font-medium text-muted-foreground hover:text-foreground'
               )}
             >
-              {tab.label}
+              {tab.corto ? (
+                <>
+                  <span className="lg:hidden">{tab.corto}</span>
+                  <span className="hidden lg:inline">{tab.label}</span>
+                </>
+              ) : (
+                tab.label
+              )}
             </button>
           )
         })}
@@ -618,6 +719,32 @@ export default function InventarioPage() {
     presente: (id) => facturaCompraHook.facturas.some((factura) => factura.id === id),
   })
 
+  const queryClient = useQueryClient()
+  // Tirar para refrescar: vuelve a pedir todo lo del inventario.
+  function refrescarInventario() {
+    invalidarDominios(queryClient, 'productos', 'insumosClinicos', 'servicios', 'comprasProveedor')
+    return queryClient.refetchQueries({ type: 'active' })
+  }
+
+  // Deslizar con el dedo cambia de pestaña. No cuenta si el gesto empieza en
+  // un campo de texto o en una tarjeta que ya se desliza para sus acciones.
+  function pestanaVecina(paso) {
+    const i = TABS.findIndex((tab) => tab.id === activeTab)
+    const destino = TABS[i + paso]
+    if (destino) handleTabClick(destino.id)
+  }
+  const gestoPestanas = useDeslizarHorizontal({
+    onIzquierda: () => pestanaVecina(1),
+    onDerecha: () => pestanaVecina(-1),
+  })
+  const gestoPestanasProps = {
+    ...gestoPestanas,
+    onTouchStart: (event) => {
+      if (event.target.closest?.('input, textarea, select, [role="combobox"], [data-sin-deslizar-tabs]')) return
+      gestoPestanas.onTouchStart?.(event)
+    },
+  }
+
   if (!rolPermitido) return <RestrictedInventoryPage />
 
   const { resumen, alertsRows, reporteQuery } = resumenHook
@@ -676,8 +803,110 @@ export default function InventarioPage() {
         ].filter(Boolean).join(' · ')
       : 'Productos, insumos, servicios y compras.'
 
+  // Celular: Excel y «Registrar compra» van en un solo menú «⋯»; la acción
+  // principal de cada pestaña es el botón flotante de abajo.
+  const mostrarExcel = inventarioSeleccionado === 'ventas' || activeTab === 'servicios'
+  const accionFlotante =
+    activeTab === 'productos' && inventarioSeleccionado === 'ventas'
+      ? { label: 'Nuevo producto', icon: PackagePlus, onClick: openCreateDrawer }
+      : activeTab === 'productos' && esClinica
+        ? { label: 'Nuevo insumo', icon: FlaskConical, onClick: insumosClinicosHook.openCreateDrawer }
+        : activeTab === 'servicios'
+          ? { label: 'Nuevo servicio', icon: Plus, onClick: serviciosHook.openCreateDrawer }
+          : activeTab === 'facturas-compra'
+            ? { label: 'Nueva compra', icon: ShoppingCart, onClick: facturaCompraHook.abrirNueva }
+            : null
+
+  const venceoVencido = (row) => row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')
+  const opcionesProducto = (row) =>
+    productosHook.verDesactivados
+      ? [{ label: 'Reactivar', onSelect: () => productosHook.activar(row.id), icon: RotateCcw, deslizar: true, tono: 'primary' }]
+      : [
+          venceoVencido(row) && {
+            label: 'Actualizar vencimiento',
+            onSelect: () => abrirRelevoVencimiento(row.raw, 'producto'),
+            icon: Pencil,
+          },
+          { label: 'Registrar movimiento', corto: 'Stock', onSelect: () => handleMovimientoClick(row.raw), icon: ArrowLeftRight, deslizar: true, tono: 'info' },
+          { label: 'Editar', onSelect: () => openEditDrawer(row.raw), icon: Pencil, deslizar: true },
+          { label: 'Desactivar', onSelect: () => openConfirmDelete(row.raw), peligro: true, icon: Trash2, deslizar: true, tono: 'danger' },
+        ]
+  const opcionesInsumo = (row) =>
+    insumosClinicosHook.verDesactivados
+      ? [{ label: 'Reactivar', onSelect: () => insumosClinicosHook.activar(row.id), icon: RotateCcw, deslizar: true, tono: 'primary' }]
+      : [
+          venceoVencido(row) && {
+            label: 'Actualizar vencimiento',
+            onSelect: () => abrirRelevoVencimiento(row.raw, 'insumo'),
+            icon: Pencil,
+          },
+          { label: 'Editar o comprar', corto: 'Editar', onSelect: () => insumosClinicosHook.openEditDrawer(row.raw), icon: Pencil, deslizar: true },
+          { label: 'Desactivar', onSelect: () => insumosClinicosHook.openConfirmDelete(row.raw), peligro: true, icon: Trash2, deslizar: true, tono: 'danger' },
+        ]
+  const opcionesServicio = (row) =>
+    serviciosHook.verDesactivados
+      ? [{ label: 'Reactivar', onSelect: () => serviciosHook.activar(row.id), icon: RotateCcw, deslizar: true, tono: 'primary' }]
+      : [
+          { label: 'Editar', onSelect: () => serviciosHook.openEditDrawer(row.raw), icon: Pencil, deslizar: true },
+          { label: 'Desactivar', onSelect: () => serviciosHook.openConfirmDelete(row.raw), peligro: true, icon: Trash2, deslizar: true, tono: 'danger' },
+        ]
+  const opcionesCompra = (row) => [
+    { label: 'Ver', onSelect: () => facturaCompraHook.abrirDetalle(row.raw), icon: Eye, deslizar: true },
+    row.raw.estado === 'borrador' && { label: 'Editar', onSelect: () => facturaCompraHook.abrirEditar(row.raw), icon: Pencil },
+    row.raw.estado === 'borrador' && { label: 'Confirmar', onSelect: () => facturaCompraHook.pedirConfirmar(row.raw.id), icon: CheckCheck, deslizar: true, tono: 'primary' },
+    row.raw.estado === 'confirmada' && !row.raw.pagada && row.raw.fechaPagoFinal && {
+      label: 'Confirmar pago',
+      corto: 'Pagar',
+      onSelect: () => facturaCompraHook.pedirPagar(row.raw.id),
+      icon: CheckCheck,
+      deslizar: true,
+      tono: 'primary',
+    },
+    row.raw.estado !== 'anulada' && { label: 'Anular', onSelect: () => facturaCompraHook.pedirAnular(row.raw.id), peligro: true, icon: Ban, deslizar: true, tono: 'danger' },
+  ]
+
+  const menuCelular = (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Más acciones de inventario"
+          className={cn('flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground lg:hidden', FOCO)}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="z-50 w-60 rounded-xl bg-popover p-1.5 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        >
+          <DropdownMenu.Item onSelect={facturaCompraHook.abrirNueva} className={ITEM_MENU_EXCEL}>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            Registrar compra
+          </DropdownMenu.Item>
+          {mostrarExcel ? (
+            <>
+              <DropdownMenu.Item onSelect={importarInventarioHook.openImportDialog} className={ITEM_MENU_EXCEL}>
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                Importar desde Excel
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={importarInventarioHook.exportarExcel} className={ITEM_MENU_EXCEL}>
+                <Download className="h-4 w-4 text-muted-foreground" />
+                Exportar a Excel
+              </DropdownMenu.Item>
+            </>
+          ) : null}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+
   const accionesEncabezado = (
-    <div className="flex flex-wrap items-center gap-2">
+    <>
+    {menuCelular}
+    <div className="hidden flex-wrap items-center gap-2 lg:flex">
       {inventarioSeleccionado === 'ventas' || activeTab === 'servicios' ? (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
@@ -721,6 +950,7 @@ export default function InventarioPage() {
         </Button>
       ) : null}
     </div>
+    </>
   )
 
   return (
@@ -740,7 +970,8 @@ export default function InventarioPage() {
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
-        <div className="space-y-5">
+        <TirarParaRefrescar onRefrescar={refrescarInventario}>
+        <div className="space-y-3 pb-20 lg:space-y-5 lg:pb-0" {...gestoPestanasProps}>
           {/* Error banners */}
           {(reporteQuery.isError || productosQuery.isError) && (
             <div className="grid gap-3">
@@ -761,7 +992,14 @@ export default function InventarioPage() {
 
           {/* Tab: Productos — sin inventario seleccionado */}
           {activeTab === 'productos' && inventarioSeleccionado === null && (
+            <div className="grid gap-2 rounded-2xl bg-card p-3 lg:hidden">
+              <p className="text-sm font-semibold text-foreground">¿Qué inventario vas a ver?</p>
+              <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
+            </div>
+          )}
+          {activeTab === 'productos' && inventarioSeleccionado === null && (
             <DashboardPanel
+              className="hidden lg:block"
               title="Elige el inventario a gestionar"
               subtitle="Selecciona Ventas o Clínica para trabajar con los datos correctos."
             >
@@ -800,7 +1038,7 @@ export default function InventarioPage() {
                     onVerDesactivadosChange={puedeGestionar ? productosHook.setVerDesactivados : undefined}
                   />
                 </div>
-                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} className="w-full lg:w-auto" />
               </div>
 
               {productosQuery.isLoading ? (
@@ -872,21 +1110,12 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={productosHook.verDesactivados ? [
-                            { label: 'Reactivar', onSelect: () => productosHook.activar(row.id) },
-                          ] : [
-                            (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
-                              label: 'Actualizar vencimiento',
-                              onSelect: () => abrirRelevoVencimiento(row.raw, 'producto'),
-                            },
-                            { label: 'Registrar movimiento', onSelect: () => handleMovimientoClick(row.raw) },
-                            { label: 'Editar', onSelect: () => openEditDrawer(row.raw) },
-                            { label: 'Desactivar', onSelect: () => openConfirmDelete(row.raw), peligro: true },
-                          ]}
+                          acciones={opcionesProducto(row)}
                         />
                       ),
                     },
                   ]}
+                  opcionesFila={opcionesProducto}
                   emptyTitle={
                     productosHook.verDesactivados
                       ? 'No hay productos desactivados'
@@ -906,7 +1135,7 @@ export default function InventarioPage() {
               />
 
               <div className="grid items-start gap-4 lg:grid-cols-2">
-                <section aria-labelledby="inv-movimientos" className="flex flex-col gap-3 rounded-2xl bg-card p-5">
+                <section aria-labelledby="inv-movimientos" className="flex flex-col gap-3 rounded-2xl bg-card p-4 lg:p-5">
                   <div className="flex items-center justify-between gap-3">
                     <h2 id="inv-movimientos" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Últimos movimientos</h2>
                     <button type="button" onClick={() => setActiveTab('movimientos')} className={cn(ENLACE, 'text-primary')}>
@@ -932,7 +1161,7 @@ export default function InventarioPage() {
                   )}
                 </section>
 
-                <section aria-labelledby="inv-vencen" className="flex flex-col gap-3 rounded-2xl bg-card p-5">
+                <section aria-labelledby="inv-vencen" className="flex flex-col gap-3 rounded-2xl bg-card p-4 lg:p-5">
                   <h2 id="inv-vencen" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Vencen pronto</h2>
                   {alertsRows.filter((a) => a.tipo === 'Vencido' || a.tipo === 'Próximo a vencer').length === 0 ? (
                     <p className="rounded-xl bg-muted px-4 py-3.5 text-sm text-muted-foreground">Nada vence en los próximos días.</p>
@@ -994,7 +1223,7 @@ export default function InventarioPage() {
                     onVerDesactivadosChange={puedeGestionar ? insumosClinicosHook.setVerDesactivados : undefined}
                   />
                 </div>
-                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} />
+                <SelectorInventario valor={inventarioSeleccionado} onChange={elegirInventario} className="w-full lg:w-auto" />
               </div>
 
               {insumosClinicosHook.insumosQuery.isLoading ? (
@@ -1055,20 +1284,12 @@ export default function InventarioPage() {
                       render: (row) => (
                         <AccionesFila
                           nombre={row.nombre}
-                          acciones={insumosClinicosHook.verDesactivados ? [
-                            { label: 'Reactivar', onSelect: () => insumosClinicosHook.activar(row.id) },
-                          ] : [
-                            (row.alertas.includes('vencido') || row.alertas.includes('proximo_vencimiento')) && {
-                              label: 'Actualizar vencimiento',
-                              onSelect: () => abrirRelevoVencimiento(row.raw, 'insumo'),
-                            },
-                            { label: 'Editar o comprar', onSelect: () => insumosClinicosHook.openEditDrawer(row.raw) },
-                            { label: 'Desactivar', onSelect: () => insumosClinicosHook.openConfirmDelete(row.raw), peligro: true },
-                          ]}
+                          acciones={opcionesInsumo(row)}
                         />
                       ),
                     },
                   ]}
+                  opcionesFila={opcionesInsumo}
                   emptyTitle={insumosClinicosHook.verDesactivados ? 'No hay insumos clínicos desactivados' : 'No hay insumos clínicos para este filtro'}
                   emptyBody="Ajusta la búsqueda o crea el primer insumo clínico con el botón Nuevo insumo clínico."
                 />
@@ -1113,7 +1334,7 @@ export default function InventarioPage() {
                     <FiltroDesactivados checked={serviciosHook.verDesactivados} onChange={serviciosHook.setVerDesactivados} />
                   )}
                 </div>
-                <Button type="button" size="lg" className="px-4" onClick={serviciosHook.openCreateDrawer}>
+                <Button type="button" size="lg" className="hidden px-4 lg:inline-flex" onClick={serviciosHook.openCreateDrawer}>
                   <Plus />
                   Nuevo servicio
                 </Button>
@@ -1179,6 +1400,7 @@ export default function InventarioPage() {
                 ]}
                 emptyTitle={serviciosHook.verDesactivados ? 'No hay servicios desactivados' : 'No hay servicios en el catálogo'}
                 emptyBody="Crea el primer servicio y define qué insumos clínicos consume."
+                opcionesFila={opcionesServicio}
               />
 
               <Paginacion
@@ -1499,7 +1721,7 @@ export default function InventarioPage() {
                     )
                   })}
                 </div>
-                <Button type="button" size="lg" className="px-4" onClick={facturaCompraHook.abrirNueva}>
+                <Button type="button" size="lg" className="hidden px-4 lg:inline-flex" onClick={facturaCompraHook.abrirNueva}>
                   <ShoppingCart />
                   Nueva factura de compra
                 </Button>
@@ -1623,6 +1845,8 @@ export default function InventarioPage() {
                   ]}
                   emptyTitle="No hay facturas de compra"
                   emptyBody="Crea una nueva factura de compra para registrar el ingreso de mercancía al inventario."
+                  opcionesFila={opcionesCompra}
+                  tituloFila={(row) => row.proveedor || 'Factura de compra'}
                 />
               )}
 
@@ -1634,7 +1858,23 @@ export default function InventarioPage() {
             </div>
           )}
         </div>
+        </TirarParaRefrescar>
       )}
+
+      {/* Celular: acción principal de la pestaña, al alcance del pulgar */}
+      {puedeVerInventario && accionFlotante ? (
+        <button
+          type="button"
+          onClick={accionFlotante.onClick}
+          className={cn(
+            'fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-primary px-5 text-base font-semibold text-primary-foreground shadow-lg transition active:scale-95 lg:hidden',
+            FOCO
+          )}
+        >
+          <accionFlotante.icon className="h-5 w-5" aria-hidden="true" />
+          {accionFlotante.label}
+        </button>
+      ) : null}
 
       {/* Selector de inventario (Ventas / Clinica) */}
       <InventarioSelectorDialog
