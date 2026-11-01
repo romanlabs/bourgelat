@@ -12,6 +12,7 @@ import {
 } from '@/lib/pdfFormal'
 import { TIPO_DOCUMENTO_LABELS } from '@/features/historias/historiaPdfComun'
 import { formatDateTime } from './reciboTermico'
+import { documentoVenta, esFacturaElectronica } from './documentoVenta'
 
 // Segundo formato de salida de una venta, al lado de la tirilla termica de 80mm:
 // una factura tamano carta como archivo PDF descargable, pensada para entregarle
@@ -86,6 +87,7 @@ export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
     import('jspdf-autotable'),
   ])
 
+  const tipo = documentoVenta(factura)
   const doc = new jsPDF({ unit: 'mm', format: 'letter', compress: true })
   const lineasPie = [lineaImpreso(usuario)]
   const c = crearCompositor(doc, { limiteInferior: altoPie(doc, { lineas: lineasPie }) })
@@ -93,7 +95,7 @@ export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
   dibujarEncabezadoFormal(doc, c, {
     clinica,
     logo: await cargarLogo(clinica?.logo),
-    titulo: 'FACTURA DE VENTA',
+    titulo: tipo.titulo,
     lineasDerecha: [
       `N.º ${texto(factura?.numero) || '-'}`,
       formatDateTime(factura?.createdAt || factura?.fecha),
@@ -183,7 +185,7 @@ export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
     c.parrafo(factura.observaciones)
   }
 
-  if (factura?.estadoElectronico === 'validada' && factura?.cufe) {
+  if (esFacturaElectronica(factura)) {
     c.titulo('Código único de factura electrónica (CUFE)')
     c.fuente('normal', 8, MUTED)
     const lineas = doc.splitTextToSize(factura.cufe, c.anchoUtil)
@@ -200,7 +202,7 @@ export const buildFacturaPdf = async ({ factura, clinica, usuario }) => {
   }
 
   dibujarPieFormal(doc, c, {
-    identificacion: `Factura de venta N.º ${texto(factura?.numero) || '-'} · ${nombreClinica(clinica)}`,
+    identificacion: `${tipo.nombre} N.º ${texto(factura?.numero) || '-'} · ${nombreClinica(clinica)}`,
     lineas: lineasPie,
   })
 
@@ -217,7 +219,7 @@ export const descargarFacturaPdf = async ({ factura, clinica, usuario }) => {
     const doc = await buildFacturaPdf({ factura, clinica, usuario })
     // El numero puede traer prefijo y separadores del rango DIAN.
     const nombre = String(factura.numero || 'venta').replace(/[^\w.-]+/g, '-')
-    doc.save(`Factura-${nombre}.pdf`)
+    doc.save(`${documentoVenta(factura).archivo}-${nombre}.pdf`)
   } catch (error) {
     console.error('No se pudo generar el PDF de la factura', error)
     toast.error('No se pudo generar el PDF de la factura.')
