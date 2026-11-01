@@ -179,7 +179,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
                 <strong className="font-semibold text-foreground">Servicios</strong>, con listas para elegir la categoría y una
                 ayuda en cada columna.
               </p>
-              <Button type="button" variant="secondary" className="h-10 w-fit px-3.5" onClick={handleDescargarPlantilla} disabled={descargando}>
+              <Button type="button" variant="secondary" className="h-12 lg:h-10 w-fit px-3.5" onClick={handleDescargarPlantilla} disabled={descargando}>
                 <Download />
                 {descargando ? 'Generando…' : 'Descargar plantilla'}
               </Button>
@@ -282,12 +282,12 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
 
             <div className="flex flex-wrap gap-3">
               {!parseResult.globalError && (
-                <Button type="button" className="h-11 px-4" onClick={handleConfirm} disabled={isPending || !textoConfirmar}>
+                <Button type="button" className="h-12 lg:h-11 px-4" onClick={handleConfirm} disabled={isPending || !textoConfirmar}>
                   <Upload />
                   {isPending ? 'Cargando…' : textoConfirmar ? `Cargar ${textoConfirmar}` : 'Nada para cargar'}
                 </Button>
               )}
-              <Button type="button" variant="secondary" className="h-11 px-4" onClick={resetState} disabled={isPending}>
+              <Button type="button" variant="secondary" className="h-12 lg:h-11 px-4" onClick={resetState} disabled={isPending}>
                 Elegir otro archivo
               </Button>
             </div>
@@ -344,7 +344,7 @@ export default function ImportarInventarioDialog({ open, onClose, onConfirm, isP
               </div>
             )}
 
-            <Button type="button" className="h-11 w-fit px-4" onClick={handleClose}>
+            <Button type="button" className="h-12 lg:h-11 w-fit px-4" onClick={handleClose}>
               Listo
             </Button>
           </div>

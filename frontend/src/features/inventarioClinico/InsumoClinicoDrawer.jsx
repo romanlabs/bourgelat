@@ -113,7 +113,7 @@ export default function InsumoClinicoDrawer({
   }, [open, onClose])
 
   const fieldClass = (hasError) =>
-    `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+    `h-12 rounded-lg border bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
       hasError ? 'border-danger' : 'border-input'
     }`
 
@@ -180,7 +180,7 @@ export default function InsumoClinicoDrawer({
             type="button"
             onClick={onClose}
             aria-label="Cerrar formulario"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 lg:h-9 lg:w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>
@@ -337,13 +337,13 @@ export default function InsumoClinicoDrawer({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="grid gap-1.5">
                     <span className={labelClass}>Cantidad actual</span>
-                    <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
+                    <div className="flex h-12 lg:h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
                       {formatNumber(editingInsumo.stock || 0)} {unidadLabel}
                     </div>
                   </div>
                   <div className="grid gap-1.5">
                     <span className={labelClass}>Costo por {unidadLabel}</span>
-                    <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
+                    <div className="flex h-12 lg:h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
                       {formatCOP(editingInsumo.precioUnitarioBase || 0)}
                     </div>
                   </div>
@@ -352,7 +352,7 @@ export default function InsumoClinicoDrawer({
                 <button
                   type="button"
                   onClick={() => setCompraOpen((v) => !v)}
-                  className="flex h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-12 lg:h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-base leading-none">{compraOpen ? '−' : '+'}</span>
                   {compraOpen ? 'Ocultar registro de compra' : 'Registrar nueva compra'}
@@ -398,7 +398,7 @@ export default function InsumoClinicoDrawer({
                       type="button"
                       onClick={submitCompra}
                       disabled={!compraValida || isPendingCompra}
-                      className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPendingCompra ? 'Registrando...' : 'Registrar compra y recalcular costo'}
                     </button>
@@ -408,7 +408,7 @@ export default function InsumoClinicoDrawer({
                 <button
                   type="button"
                   onClick={() => setMermaOpen((v) => !v)}
-                  className="flex h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-12 lg:h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-base leading-none">{mermaOpen ? '−' : '+'}</span>
                   {mermaOpen ? 'Ocultar merma o ajuste' : 'Registrar merma o ajuste'}
@@ -520,14 +520,14 @@ export default function InsumoClinicoDrawer({
             type="submit"
             form="insumo-clinico-drawer-form"
             disabled={isPending}
-            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingInsumo ? 'Actualizar insumo' : 'Guardar insumo'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>

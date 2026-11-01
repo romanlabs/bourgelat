@@ -51,8 +51,8 @@ const TABS = [
 // Inputs del rediseño: llevan borde (las tarjetas no). Enlaces de acción en
 // tabla con foco visible.
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-const INPUT = 'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
-const ITEM_MENU_EXCEL = 'flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
+const INPUT = 'h-12 w-full rounded-lg border border-input bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring'
+const ITEM_MENU_EXCEL = 'flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 const ENLACE = `rounded-md text-sm font-semibold transition hover:underline ${FOCO}`
 
 // Alertas de la tabla → variante de StatusBadge. «Vence pronto» no está en el
@@ -118,7 +118,7 @@ function FiltroInventarioMenu({
           type="button"
           aria-label="Filtrar"
           className={cn(
-            'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-secondary/80 active:translate-y-px data-[state=open]:bg-accent',
+            'relative flex h-12 w-12 shrink-0 items-center lg:h-11 lg:w-11 justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-secondary/80 active:translate-y-px data-[state=open]:bg-accent',
             FOCO,
             filtroActivo && 'bg-accent text-primary'
           )}
@@ -276,7 +276,7 @@ function AccionesFila({ nombre, acciones }) {
         <button
           type="button"
           aria-label={`Acciones de ${nombre}`}
-          className={cn('flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground data-[state=open]:bg-muted', FOCO)}
+          className={cn('flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground lg:h-9 lg:w-9 transition hover:bg-muted hover:text-foreground data-[state=open]:bg-muted', FOCO)}
         >
           <MoreHorizontal className="h-[18px] w-[18px]" />
         </button>
@@ -292,7 +292,7 @@ function AccionesFila({ nombre, acciones }) {
               key={accion.label}
               onSelect={accion.onSelect}
               className={cn(
-                'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm outline-none transition hover:bg-muted focus:bg-muted',
+                'flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm outline-none transition hover:bg-muted focus:bg-muted',
                 accion.peligro ? 'text-danger' : 'text-foreground'
               )}
             >
@@ -305,13 +305,64 @@ function AccionesFila({ nombre, acciones }) {
   )
 }
 
+// Columnas que en celular ocupan todo el ancho de la tarjeta.
+const CLAVES_ANCHO_COMPLETO = new Set(['stock', 'alertas', 'tipo', 'motivo', 'plazo'])
+const CLAVES_ACCION = new Set(['accion', 'acciones'])
+
+// En celular cada fila es una tarjeta: la primera columna es el título, las
+// acciones van abajo y el resto son pares etiqueta/valor.
+function TarjetasInventario({ columns, rows, highlightKey }) {
+  const [titulo, ...resto] = columns
+  const acciones = resto.find((c) => CLAVES_ACCION.has(c.key))
+  const datos = resto.filter((c) => !CLAVES_ACCION.has(c.key))
+  const contenido = (col, row) => (col.render ? col.render(row) : row[col.key])
+  useEffect(() => {
+    if (highlightKey == null) return
+    document.querySelector('[data-tarjeta-resaltada]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [highlightKey])
+  return (
+    <ul className="grid gap-3 px-3 pb-3 pt-4 lg:hidden">
+      {rows.map((row, i) => {
+        const resaltada = highlightKey != null && row.id === highlightKey
+        return (
+          <li
+            key={row.id ?? i}
+            data-tarjeta-resaltada={resaltada ? '' : undefined}
+            className={cn('rounded-xl border border-border p-3.5', resaltada ? 'bg-warning-soft' : 'bg-card')}
+          >
+            <div className="text-sm">{contenido(titulo, row)}</div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
+              {datos.map((col) => (
+                <div
+                  key={col.key}
+                  className={cn('min-w-0', CLAVES_ANCHO_COMPLETO.has(col.key) && 'col-span-2')}
+                >
+                  <dt className="text-xs text-muted-foreground">{col.label}</dt>
+                  <dd className="mt-0.5 break-words">{contenido(col, row)}</dd>
+                </div>
+              ))}
+            </dl>
+            {acciones ? (
+              <div className="mt-3 flex justify-end border-t border-border pt-2.5 [&_button]:min-h-11 [&_button]:min-w-11">
+                {contenido(acciones, row)}
+              </div>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 // Tarjeta con título sobre la tabla compartida. La paginación es del servidor
 // (Paginacion debajo), así que la tabla recibe la página completa sin cortarla.
+// En celular las filas se muestran como tarjetas; la tabla solo desde lg.
 function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody, action, highlightKey }) {
+  const hayFilas = rows.length > 0
   return (
     <section className="overflow-hidden rounded-2xl bg-card">
       {title || action ? (
-        <div className="flex flex-col gap-2 px-6 pt-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-2 px-4 pt-5 lg:flex-row lg:items-end lg:justify-between lg:px-6">
           <div className="min-w-0">
             {title ? (
               <h2 className="text-lg font-semibold tracking-[-0.02em] text-card-foreground">{title}</h2>
@@ -321,15 +372,18 @@ function TablaInventario({ title, subtitle, columns, rows, emptyTitle, emptyBody
           {action}
         </div>
       ) : null}
-      <DataTable
-        columns={columns}
-        rows={rows}
-        pageSize={Math.max(rows.length, 1)}
-        highlightKey={highlightKey}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyBody}
-        className="rounded-none"
-      />
+      {hayFilas ? <TarjetasInventario columns={columns} rows={rows} highlightKey={highlightKey} /> : null}
+      <div className={hayFilas ? 'hidden lg:block' : undefined}>
+        <DataTable
+          columns={columns}
+          rows={rows}
+          pageSize={Math.max(rows.length, 1)}
+          highlightKey={highlightKey}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyBody}
+          className="rounded-none"
+        />
+      </div>
     </section>
   )
 }
@@ -389,7 +443,7 @@ function SelectorInventario({ valor, onChange }) {
             aria-checked={activa}
             onClick={() => onChange(id)}
             className={cn(
-              'inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm transition',
+              'inline-flex h-11 shrink-0 items-center gap-2 lg:h-10 whitespace-nowrap rounded-lg px-4 text-sm transition',
               FOCO,
               activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
             )}
@@ -418,7 +472,7 @@ function InventarioTabs({ activeTab, onTabChange }) {
               aria-selected={activa}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'h-10 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm transition',
+                'h-11 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm transition lg:h-10',
                 FOCO,
                 activa
                   ? 'bg-card font-semibold text-foreground'
@@ -627,7 +681,7 @@ export default function InventarioPage() {
       {inventarioSeleccionado === 'ventas' || activeTab === 'servicios' ? (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <Button type="button" variant="secondary" className="h-10 px-3.5" disabled={importarInventarioHook.exportando}>
+            <Button type="button" variant="secondary" className="h-12 px-3.5 lg:h-10" disabled={importarInventarioHook.exportando}>
               <FileSpreadsheet />
               {importarInventarioHook.exportando ? 'Generando…' : 'Excel'}
               <ChevronDown className="text-muted-foreground" />
@@ -651,17 +705,17 @@ export default function InventarioPage() {
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
       ) : null}
-      <Button type="button" variant="secondary" className="h-10 px-3.5" onClick={facturaCompraHook.abrirNueva}>
+      <Button type="button" variant="secondary" className="h-12 flex-1 px-3.5 lg:h-10 lg:flex-none" onClick={facturaCompraHook.abrirNueva}>
         <ShoppingCart />
         Registrar compra
       </Button>
       {inventarioSeleccionado === 'ventas' ? (
-        <Button type="button" className="h-10 px-3.5" onClick={openCreateDrawer}>
+        <Button type="button" className="h-12 flex-1 px-3.5 lg:h-10 lg:flex-none" onClick={openCreateDrawer}>
           <PackagePlus />
           Nuevo producto
         </Button>
       ) : esClinica ? (
-        <Button type="button" className="h-10 px-3.5" onClick={insumosClinicosHook.openCreateDrawer}>
+        <Button type="button" className="h-12 flex-1 px-3.5 lg:h-10 lg:flex-none" onClick={insumosClinicosHook.openCreateDrawer}>
           <FlaskConical />
           Nuevo insumo
         </Button>
@@ -734,7 +788,7 @@ export default function InventarioPage() {
                     onChange={(valor) => { setBuscar(valor); setPaginaProductos(1) }}
                     placeholder="Buscar por nombre, lote o laboratorio"
                     ariaLabel="Buscar productos"
-                    className="max-w-md flex-1"
+                    className="max-w-md flex-1 [&_input]:h-12 [&_input]:text-base lg:[&_input]:h-11 lg:[&_input]:text-[15px]"
                   />
                   <FiltroInventarioMenu
                     categoryOptions={CATEGORY_OPTIONS}
@@ -928,7 +982,7 @@ export default function InventarioPage() {
                     onChange={(valor) => { insumosClinicosHook.setBuscar(valor); insumosClinicosHook.setPagina(1) }}
                     placeholder="Buscar por nombre, lote o laboratorio"
                     ariaLabel="Buscar insumos clínicos"
-                    className="max-w-md flex-1"
+                    className="max-w-md flex-1 [&_input]:h-12 [&_input]:text-base lg:[&_input]:h-11 lg:[&_input]:text-[15px]"
                   />
                   <FiltroInventarioMenu
                     categoryOptions={CLINICO_CATEGORY_OPTIONS}
@@ -1053,7 +1107,7 @@ export default function InventarioPage() {
                     onChange={(valor) => { serviciosHook.setBuscar(valor); serviciosHook.setPagina(1) }}
                     placeholder="Buscar servicio por nombre"
                     ariaLabel="Buscar servicios"
-                    className="max-w-md flex-1"
+                    className="max-w-md flex-1 [&_input]:h-12 [&_input]:text-base lg:[&_input]:h-11 lg:[&_input]:text-[15px]"
                   />
                   {puedeGestionar && (
                     <FiltroDesactivados checked={serviciosHook.verDesactivados} onChange={serviciosHook.setVerDesactivados} />
@@ -1165,7 +1219,7 @@ export default function InventarioPage() {
                         <Select
                           variant="field"
                           id="mov-tipo"
-                          className="h-11"
+                          className="h-12 lg:h-11"
                           value={movementForm.tipo}
                           onValueChange={(nextType) => {
                             setMovementForm((cur) => ({
@@ -1185,7 +1239,7 @@ export default function InventarioPage() {
                         <Select
                           variant="field"
                           id="mov-motivo"
-                          className="h-11"
+                          className="h-12 lg:h-11"
                           value={movementForm.motivo}
                           onValueChange={(value) => setMovementForm((cur) => ({ ...cur, motivo: value, motivoOtro: '' }))}
                           options={motivosDisponibles}

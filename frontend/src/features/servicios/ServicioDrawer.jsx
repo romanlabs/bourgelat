@@ -5,7 +5,7 @@ import MoneyInput from '@/components/shared/MoneyInput'
 import { Select } from '@/components/ui/select'
 
 const fieldClass = (hasError) =>
-  `h-11 w-full rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-12 w-full rounded-lg border bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
     hasError ? 'border-danger' : 'border-input'
   }`
 
@@ -138,7 +138,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
               Define el precio de venta y, si aplica, los insumos clínicos que consume cada vez que se factura.
             </p>
           </div>
-          <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Cerrar">
+          <button onClick={onClose} className="flex h-11 w-11 lg:h-9 lg:w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Cerrar">
             <X size={18} />
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             <div className="col-span-2 flex flex-col gap-1">
               <label className={labelClass}>Descripción</label>
               <textarea
-                className="min-h-[70px] rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[70px] rounded-lg border border-input bg-card px-3 py-2.5 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 value={form.descripcion}
                 onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
                 maxLength={1000}
@@ -291,14 +291,14 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
             type="submit"
             form="servicio-drawer-form"
             disabled={isPending || !formularioValido}
-            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingServicio ? 'Actualizar servicio' : 'Guardar servicio'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>
