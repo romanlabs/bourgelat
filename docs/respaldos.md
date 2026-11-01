@@ -43,10 +43,13 @@ Con las herramientas de PostgreSQL 18 (deben ser 18 o mayor, como producción):
 PG="/c/Program Files/PostgreSQL/18/bin"
 "$PG/createdb" -U postgres bourgelat_restauracion
 
-# Si el archivo es un dump de pg_dump (custom o directorio):
-"$PG/pg_restore" -U postgres -d bourgelat_restauracion --no-owner --no-acl <archivo>
-# Si es SQL plano (.sql o .sql.gz descomprimido):
-"$PG/psql" -U postgres -d bourgelat_restauracion -f <archivo.sql>
+# Render entrega un .dir.tar.gz (pg_dump en formato directorio). Extraerlo y
+# renombrar la carpeta: su nombre trae ":" y Windows no lo acepta.
+cd /c/respaldos && mkdir extraido && tar -xzf <fecha>.dir.tar.gz -C extraido
+mv extraido/2026-* extraido/dump
+
+# pg_restore es un .exe de Windows: la ruta va en formato Windows.
+"$PG/pg_restore" -U postgres -d bourgelat_restauracion --no-owner --no-acl 'C:\respaldos\extraido\dump\bourgelat_prod'
 ```
 
 Los avisos de roles inexistentes (`bourgelat_app`) son esperables con
@@ -101,4 +104,4 @@ Borrar el archivo del respaldo y `backend/.env.restauracion`.
 
 | Fecha | Respaldo de | Resultado | Notas |
 |-------|-------------|-----------|-------|
-| | | | |
+| 2026-10-31 | Export de prod 2026-10-31 23:56 UTC | OK | 5 clínicas, 32 tutores, 165 ventas; toda la PII (legacy) descifró con `INTEGRACIONES_SECRET`/`JWT_SECRET` de Bitwarden. Base y archivos borrados al terminar |
