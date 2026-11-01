@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
 import { formatCurrency } from './dashboardUtils'
 import { formatearCelular } from '@/lib/celular'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import HojaInferior from '@/components/movil/HojaInferior'
+import { useMantenerPresionado } from '@/lib/gestos'
 
 // Etiqueta y tono de cada estado de cita, en singular y en el lenguaje de la
 // recepción («Atendida», no «Completadas»).
@@ -151,6 +154,109 @@ function DetalleCita({ cita, puedeAtender, puedeCobrar, veRecepcion }) {
   )
 }
 
+// Una cita de la jornada. En celular: deslizar a la izquierda deja Llamar,
+// Historia y Cobrar; mantener presionada abre la hoja con todas las opciones.
+// Ambos son atajos: las mismas acciones están en el detalle al tocar la fila.
+function FilaCita({
+  cita,
+  lineaAhora,
+  activa,
+  abierta,
+  esEscritorio,
+  puedeAtender,
+  puedeCobrar,
+  veRecepcion,
+  onAbrir,
+  onOpciones,
+}) {
+  const navigate = useNavigate()
+  const mantener = useMantenerPresionado(onOpciones)
+  const { hora, sufijo } = partirHora(cita.horaInicio)
+  const terminada = ['completada', 'cancelada', 'no_asistio'].includes(cita.estado)
+
+  const acciones = [
+    cita.propietario?.telefono
+      ? {
+          key: 'llamar',
+          label: 'Llamar',
+          icon: Phone,
+          tono: 'info',
+          onClick: () => {
+            window.location.href = `tel:${cita.propietario.telefono}`
+          },
+        }
+      : null,
+    puedeAtender && cita.mascota?.id
+      ? {
+          key: 'historia',
+          label: 'Historia',
+          icon: Stethoscope,
+          tono: 'primary',
+          onClick: () => navigate(historiaHref(cita)),
+        }
+      : null,
+    puedeCobrar
+      ? {
+          key: 'cobrar',
+          label: 'Cobrar',
+          icon: Receipt,
+          tono: 'neutro',
+          onClick: () => navigate('/caja', { state: cobroEstado(cita) }),
+        }
+      : null,
+  ].filter(Boolean)
+
+  return (
+    <li className="max-lg:overflow-hidden max-lg:rounded-xl max-lg:bg-card">
+      {lineaAhora ? <LineaAhora etiqueta={lineaAhora} /> : null}
+      <FilaDeslizable acciones={acciones} redondeo="rounded-xl">
+        <button
+          type="button"
+          onClick={() => {
+            if (!esEscritorio && mantener.consumido()) return
+            onAbrir()
+          }}
+          {...(esEscritorio ? {} : mantener.props)}
+          title={
+            puedeAtender && faltaHistoria(cita)
+              ? 'Registrar la historia de esta consulta'
+              : veRecepcion
+                ? 'Abrir en Recepción para cambiar su estado'
+                : undefined
+          }
+          aria-pressed={esEscritorio ? activa : undefined}
+          aria-expanded={esEscritorio ? undefined : abierta}
+          className={cn(
+            'grid min-h-[64px] w-full select-none grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors max-lg:min-h-[60px] max-lg:grid-cols-[48px_minmax(0,1fr)_auto] max-lg:gap-2.5 max-lg:bg-card max-lg:py-2.5 max-lg:active:bg-muted lg:select-text',
+            activa ? 'lg:bg-accent' : 'lg:hover:bg-muted'
+          )}
+        >
+          <span className={cn('flex flex-col leading-tight', terminada && 'opacity-60')}>
+            <span className="text-[15px] font-semibold tabular-nums text-muted-foreground">{hora}</span>
+            <span className="text-xs text-muted-foreground">{sufijo}</span>
+          </span>
+          <span className={cn('flex min-w-0 flex-col gap-0.5', terminada && 'opacity-60')}>
+            <span className="truncate text-base font-semibold">
+              {cita.mascota?.nombre || 'Paciente sin nombre'}
+              <span className="font-normal text-muted-foreground">
+                {' · '}
+                {etiquetaEspecie(cita.mascota?.especie) || 'Sin especie'}
+              </span>
+            </span>
+            <span className="truncate text-sm text-muted-foreground">
+              {[cita.motivo, cita.propietario?.nombre].filter(Boolean).join(' · ') || 'Sin motivo'}
+            </span>
+          </span>
+          <ChipEstado estado={cita.estado} sinHistoria={faltaHistoria(cita)} />
+        </button>
+      </FilaDeslizable>
+      {abierta ? (
+        <DetalleCita cita={cita} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} veRecepcion={veRecepcion} />
+      ) : null}
+    </li>
+  )
+}
+
 function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
   if (!cita) return null
   const especie = etiquetaEspecie(cita.mascota?.especie)
@@ -249,6 +355,7 @@ export default function JornadaHoy({
   const [soloMios, setSoloMios] = useState(false)
   const [seleccionId, setSeleccionId] = useState(null)
   const [abiertaId, setAbiertaId] = useState(null)
+  const [hojaId, setHojaId] = useState(null)
   const esEscritorio = useEsEscritorio()
   const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
@@ -302,12 +409,19 @@ export default function JornadaHoy({
   const etiquetaAhora = `${partirHora(`${ahora.getHours()}:${String(ahora.getMinutes()).padStart(2, '0')}`).hora}`
   const indiceAhora = visibles.findIndex((c) => minutosDelDia(c.horaInicio) > minutosAhora)
 
+  const citaHoja = hojaId && !esEscritorio ? visibles.find((c) => c.id === hojaId) : null
+
   return (
     <div className="flex flex-wrap items-start gap-4 lg:gap-6">
       <section aria-labelledby="hoy-jornada" className="min-w-0 flex-[999_1_460px] rounded-2xl bg-card px-3 pb-4 pt-6 max-lg:basis-full max-lg:bg-transparent max-lg:p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-3 pb-4 max-lg:px-1 max-lg:pb-3 lg:gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-4 max-lg:px-1 max-lg:pb-2 lg:gap-4">
           <h2 id="hoy-jornada" className="text-lg font-semibold tracking-[-0.02em] lg:text-[22px]">
             La jornada
+            {!loading && visibles.length > 0 ? (
+              <span className="ml-2 text-sm font-medium tabular-nums text-muted-foreground lg:hidden">
+                {visibles.length} {visibles.length === 1 ? 'cita' : 'citas'}
+              </span>
+            ) : null}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
           {usuarioIdMios ? (
@@ -322,7 +436,7 @@ export default function JornadaHoy({
                   aria-pressed={soloMios === opcion.id}
                   onClick={() => setSoloMios(opcion.id)}
                   className={cn(
-                    'h-9 rounded-lg px-3.5 text-[13px] transition',
+                    'h-9 rounded-lg px-3.5 text-[13px] transition max-lg:h-11 max-lg:active:scale-[0.98]',
                     soloMios === opcion.id
                       ? 'bg-card font-semibold text-foreground'
                       : 'font-medium text-muted-foreground hover:text-foreground'
@@ -342,7 +456,7 @@ export default function JornadaHoy({
                   aria-pressed={consultorio === opcion.id}
                   onClick={() => setConsultorio(opcion.id)}
                   className={cn(
-                    'h-9 rounded-lg px-3.5 text-[13px] transition',
+                    'h-9 rounded-lg px-3.5 text-[13px] transition max-lg:h-11 max-lg:active:scale-[0.98]',
                     consultorio === opcion.id
                       ? 'bg-card font-semibold text-foreground'
                       : 'font-medium text-muted-foreground hover:text-foreground'
@@ -363,8 +477,8 @@ export default function JornadaHoy({
             ))}
           </div>
         ) : visibles.length === 0 ? (
-          <div className="mx-3 flex flex-col items-start gap-3 rounded-xl bg-muted px-5 py-8 max-lg:mx-0 max-lg:bg-card">
-            <p className="text-lg font-semibold">No hay citas para hoy</p>
+          <div className="mx-3 flex flex-col items-start gap-3 rounded-xl bg-muted px-5 py-8 max-lg:mx-0 max-lg:bg-card max-lg:p-4">
+            <p className="text-lg font-semibold">{citas.length > 0 ? 'Ninguna cita con este filtro' : 'No hay citas para hoy'}</p>
             <p className="max-w-md text-[15px] leading-6 text-muted-foreground">
               Cuando recepción agende pacientes, aparecerán aquí en orden de llegada, con el que sigue resaltado.
             </p>
@@ -378,87 +492,66 @@ export default function JornadaHoy({
           </div>
         ) : (
           <ol className="flex flex-col gap-0.5 max-lg:gap-2">
-            {visibles.map((cita, indice) => {
-              const { hora, sufijo } = partirHora(cita.horaInicio)
-              const activa = seleccionada?.id === cita.id
-              const abierta = !esEscritorio && abiertaId === cita.id
-              const terminada = ['completada', 'cancelada', 'no_asistio'].includes(cita.estado)
-              return (
-                <li key={cita.id} className="max-lg:overflow-hidden max-lg:rounded-xl max-lg:bg-card">
-                  {indice === indiceAhora ? <LineaAhora etiqueta={etiquetaAhora} /> : null}
-                  <button
-                    type="button"
-                    onClick={() => abrirCita(cita)}
-                    title={
-                      puedeAtender && faltaHistoria(cita)
-                        ? 'Registrar la historia de esta consulta'
-                        : veRecepcion
-                          ? 'Abrir en Recepción para cambiar su estado'
-                          : undefined
-                    }
-                    aria-pressed={esEscritorio ? activa : undefined}
-                    aria-expanded={esEscritorio ? undefined : abierta}
-                    className={cn(
-                      'grid min-h-[64px] w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors max-lg:grid-cols-[56px_minmax(0,1fr)_auto] max-lg:gap-3 max-lg:active:bg-muted',
-                      activa ? 'lg:bg-accent' : 'lg:hover:bg-muted'
-                    )}
-                  >
-                    <span className={cn('flex flex-col leading-tight', terminada && 'opacity-60')}>
-                      <span className="text-[15px] font-semibold tabular-nums text-muted-foreground">{hora}</span>
-                      <span className="text-xs text-muted-foreground">{sufijo}</span>
-                    </span>
-                    <span className={cn('flex min-w-0 flex-col gap-0.5', terminada && 'opacity-60')}>
-                      <span className="truncate text-base font-semibold">
-                        {cita.mascota?.nombre || 'Paciente sin nombre'}
-                        <span className="font-normal text-muted-foreground">
-                          {' · '}
-                          {etiquetaEspecie(cita.mascota?.especie) || 'Sin especie'}
-                        </span>
-                      </span>
-                      <span className="truncate text-sm text-muted-foreground">
-                        {[cita.motivo, cita.propietario?.nombre].filter(Boolean).join(' · ') || 'Sin motivo'}
-                      </span>
-                    </span>
-                    <ChipEstado estado={cita.estado} sinHistoria={faltaHistoria(cita)} />
-                  </button>
-                  {abierta ? (
-                    <DetalleCita cita={cita} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} veRecepcion={veRecepcion} />
-                  ) : null}
-                </li>
-              )
-            })}
+            {visibles.map((cita, indice) => (
+              <FilaCita
+                key={cita.id}
+                cita={cita}
+                lineaAhora={indice === indiceAhora ? etiquetaAhora : null}
+                activa={seleccionada?.id === cita.id}
+                abierta={!esEscritorio && abiertaId === cita.id}
+                esEscritorio={esEscritorio}
+                puedeAtender={puedeAtender}
+                puedeCobrar={puedeCobrar}
+                veRecepcion={veRecepcion}
+                onAbrir={() => abrirCita(cita)}
+                onOpciones={() => setHojaId(cita.id)}
+              />
+            ))}
             {indiceAhora === -1 && visibles.length > 0 ? <LineaAhora etiqueta={etiquetaAhora} /> : null}
           </ol>
         )}
       </section>
 
-      <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6 max-lg:basis-full">
+      <HojaInferior
+        abierta={Boolean(citaHoja)}
+        onCambiar={(abierta) => !abierta && setHojaId(null)}
+        titulo={citaHoja?.mascota?.nombre || 'Cita'}
+        descripcion={citaHoja ? `${partirHora(citaHoja.horaInicio).hora} ${partirHora(citaHoja.horaInicio).sufijo} · ${ESTADOS[citaHoja.estado]?.label || ''}` : undefined}
+      >
+        {citaHoja ? (
+          <div className="overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <DetalleCita cita={citaHoja} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} veRecepcion={veRecepcion} />
+          </div>
+        ) : null}
+      </HojaInferior>
+
+      <div className={cn('flex min-w-0 flex-[1_1_300px] flex-col gap-6 max-lg:order-first max-lg:basis-full max-lg:gap-4', !puedeVerCaja && 'max-lg:hidden')}>
         <PanelPaciente cita={seleccionada} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} />
 
         {puedeVerCaja ? (
           <section
             aria-labelledby="hoy-caja"
-            className="flex flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground dark:bg-secondary dark:text-foreground lg:p-6"
+            className="flex flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground dark:bg-secondary dark:text-foreground max-lg:gap-2 max-lg:p-4 lg:p-6"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id="hoy-caja" className="text-lg font-semibold">Caja de hoy</h2>
+                <h2 id="hoy-caja" className="text-lg font-semibold max-lg:text-base">Caja de hoy</h2>
                 <p className="mt-0.5 text-[13px] opacity-80">
                   {cajaHoy?.turnoApertura ? `Turno abierto ${cajaHoy.turnoApertura}` : 'Sin turno abierto'}
                 </p>
               </div>
-              <Link to="/caja" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100 max-lg:min-h-11">
+              <Link to="/caja" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100 max-lg:min-h-11 max-lg:-my-2 max-lg:active:opacity-100">
                 Ir a caja
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <p className="text-4xl font-semibold lg:text-[44px] leading-none tracking-[-0.03em] tabular-nums">
+            <p className="text-4xl font-semibold lg:text-[44px] leading-none tracking-[-0.03em] tabular-nums max-lg:text-3xl">
               {formatCurrency(cajaHoy?.total ?? 0)}
             </p>
             {cajaHoy?.porMetodo?.length ? (
-              <dl className="flex flex-col gap-2 text-[15px]">
+              <dl className="flex flex-col gap-2 text-[15px] max-lg:flex-row max-lg:flex-wrap max-lg:gap-x-4 max-lg:gap-y-1 max-lg:text-[13px]">
                 {cajaHoy.porMetodo.map((metodo) => (
-                  <div key={metodo.key} className="flex items-center justify-between gap-3">
+                  <div key={metodo.key} className="flex items-center justify-between gap-3 max-lg:gap-1.5">
                     <dt className="opacity-80">{metodo.label}</dt>
                     <dd className="font-semibold tabular-nums">{formatCurrency(metodo.valor)}</dd>
                   </div>

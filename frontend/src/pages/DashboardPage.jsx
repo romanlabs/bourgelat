@@ -12,6 +12,7 @@ import {
   formatNumber,
 } from '@/features/dashboard/dashboardUtils'
 import JornadaHoy from '@/features/dashboard/JornadaHoy'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
 
@@ -82,6 +83,7 @@ function RestrictedDashboard({ usuario }) {
 
   return (
     <AdminShell currentKey="dashboard" title={titulo} description={descripcion}>
+      <TirarParaRefrescar onRefrescar={() => agendaHoyQuery.refetch()} className="space-y-4 lg:space-y-6 bajo:space-y-4">
       {puedeVerAgenda ? (
         <JornadaHoy
           citas={citasOrdenadas}
@@ -117,6 +119,7 @@ function RestrictedDashboard({ usuario }) {
           </div>
         </section>
       ) : null}
+      </TirarParaRefrescar>
     </AdminShell>
   )
 }
@@ -173,6 +176,14 @@ export default function DashboardPage() {
     queryFn: () => cajaApi.obtenerTurnoActivo(),
     enabled: esAdministrador,
   })
+
+  const refrescarHoy = () =>
+    Promise.all([
+      dashboardQuery.refetch(),
+      agendaHoyQuery.refetch(),
+      ingresosHoyQuery.refetch(),
+      turnoActivoQuery.refetch(),
+    ])
 
   const resumen = dashboardQuery.data
   const citasHoy = resumen?.hoy?.citasTotales ?? 0
@@ -269,17 +280,18 @@ export default function DashboardPage() {
         </>
       }
     >
+      <TirarParaRefrescar onRefrescar={refrescarHoy} className="space-y-4 lg:space-y-6 bajo:space-y-4">
       <div className="grid grid-cols-2 gap-2 lg:hidden">
         <Link
           to="/agenda?nueva=1"
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground active:translate-y-px"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground active:scale-[0.98]"
         >
           <CalendarPlus className="h-4 w-4" />
           Nueva cita
         </Link>
         <Link
           to="/caja"
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-secondary text-[15px] font-semibold text-secondary-foreground active:translate-y-px"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-secondary text-[15px] font-semibold text-secondary-foreground active:scale-[0.98]"
         >
           <Receipt className="h-4 w-4" />
           Cobrar
@@ -320,6 +332,7 @@ export default function DashboardPage() {
           usuarioIdMios={esVeterinario ? usuario?.id : null}
         />
       )}
+      </TirarParaRefrescar>
     </AdminShell>
   )
 }
