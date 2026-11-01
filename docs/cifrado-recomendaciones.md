@@ -52,8 +52,8 @@ SELECT count(*) FROM gastos WHERE "descripcion" LIKE 'v1:%';
 ```
 
 Solo cuando ninguna columna contenga el prefijo viejo es seguro retirarlo.
-Idealmente, implementar esto como subcomando del script
-(`npm run cifrado:verificar -- v1`) para no depender de queries manuales.
+Atajo: `npm run cifrado:verificar -- --version v1` recorre todas las columnas
+de `tablasCifradas.js` y dice si queda algún valor con esa versión.
 
 ## 3. Respaldar las claves fuera de Render
 
@@ -96,9 +96,10 @@ monitorear ese mensaje tras cada retiro.
 
 ## 6. Probar la restauración, no solo el backup
 
-Periódicamente: restaurar un backup de la base en staging usando el keyring
+Periódicamente: restaurar un backup de la base usando el keyring
 del respaldo externo y verificar que la PII descifra correctamente. Es la
 única prueba real de que la pareja backup + claves funciona de punta a punta.
+Paso a paso en `respaldos.md`.
 
 ## 7. `BLIND_INDEX_KEY`: rotable solo con re-indexado inmediato
 
