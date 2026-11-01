@@ -13,8 +13,11 @@ Hacerla al menos una vez, y repetirla cada vez que se rote una clave.
 - **Base:** `bourgelat-postgres` en Render (plan `basic-256mb`). Los planes
   pagos tienen recuperación a un punto en el tiempo y respaldos lógicos
   descargables en la pestaña **Recovery** de la base en el dashboard.
-- **Claves:** variables de entorno de `bourgelat-api` en Render, con copia en el
-  gestor de contraseñas de Roman.
+- **Claves:** variables de entorno de `bourgelat-api` en Render, con copia en
+  Bitwarden (nota «Bourgelat — claves de cifrado»). A 2026-10-31 producción
+  cifra en modo legacy: `ENCRYPTION_KEYS` y `BLIND_INDEX_KEY` nunca se
+  cargaron, así que toda la PII depende de `INTEGRACIONES_SECRET` (o
+  `JWT_SECRET` si faltara). **No regenerar ninguna de las dos en Render.**
 
 `ipAllowList: []` en `render.yaml` bloquea conexiones externas a la base, así
 que el respaldo se baja desde el dashboard, no con `pg_dump` desde el equipo.
@@ -62,11 +65,12 @@ DB_NAME=bourgelat_restauracion
 DB_USER=postgres
 DB_PASSWORD=<clave local>
 DB_SSL=false
-ENCRYPTION_KEYS=<copia externa>
-BLIND_INDEX_KEY=<copia externa>
-# Solo si quedan datos legacy (el script los muestra como legacy=N):
+# Modo legacy (hoy): basta con estas dos
 INTEGRACIONES_SECRET=<copia externa>
 JWT_SECRET=<copia externa>
+# Cuando se pase a claves dedicadas, agregar también:
+# ENCRYPTION_KEYS=<copia externa>
+# BLIND_INDEX_KEY=<copia externa>
 ```
 
 ### 4. Verificar
