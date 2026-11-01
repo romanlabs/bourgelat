@@ -214,6 +214,60 @@ export default function FinanzasPage({ modo = 'caja' }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estiloAFacturar, puedeVerFinanzas])
 
+  // Filtros del historial de ventas: los mismos en la tabla (escritorio) y en
+  // la lista de tarjetas (celular), donde ocupan todo el ancho.
+  const filtrosHistorial = (
+    <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap items-center gap-3">
+      <label className="relative w-full lg:w-auto">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          value={historialHook.buscarInput}
+          onChange={(event) => historialHook.setBuscarInput(event.target.value)}
+          placeholder="Buscar factura o cliente"
+          aria-label="Buscar factura o cliente"
+          className="h-11 w-full rounded-lg border border-input bg-card text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pl-10 pr-3 lg:h-10 lg:w-auto lg:text-sm"
+        />
+      </label>
+      <div className="flex w-full items-center gap-2 lg:w-auto">
+        <input
+          type="date"
+          value={historialHook.fechaInicio}
+          max={historialHook.fechaFin}
+          onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
+          aria-label="Fecha inicial del filtro"
+          className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-card text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums lg:h-10 lg:min-w-[auto] lg:flex-initial lg:text-sm"
+        />
+        <span className="text-sm text-muted-foreground">a</span>
+        <input
+          type="date"
+          value={historialHook.fechaFin}
+          min={historialHook.fechaInicio}
+          onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
+          aria-label="Fecha final del filtro"
+          className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-card text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums lg:h-10 lg:min-w-[auto] lg:flex-initial lg:text-sm"
+        />
+      </div>
+      <Select
+        aria-label="Filtrar por estado"
+        className="h-11 min-w-0 flex-1 lg:h-10 lg:min-w-[auto] lg:flex-initial"
+        value={historialHook.estado}
+        onValueChange={(value) => {
+          historialHook.setEstado(value)
+          historialHook.setPagina(1)
+          historialHook.resetSeleccion()
+        }}
+        options={STATUS_OPTIONS}
+      />
+      <button
+        type="submit"
+        className="inline-flex h-11 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10"
+      >
+        Buscar
+      </button>
+    </form>
+  )
+
   if (!rolPermitido) {
     return <RestrictedFinancePage />
   }
@@ -234,7 +288,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
       <div
         role="tablist"
         aria-label="Secciones de caja y facturación"
-        className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1"
+        className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {TABS.map((tab) => (
           <button
@@ -243,7 +297,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`flex h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm transition lg:h-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeTab === tab.id
                 ? 'bg-card font-semibold text-foreground'
                 : 'font-medium text-muted-foreground hover:text-foreground'
@@ -263,13 +317,14 @@ export default function FinanzasPage({ modo = 'caja' }) {
             type="button"
             onClick={() => setActiveTab('turnos')}
             title="Ver el turno de caja"
-            className="inline-flex h-10 items-center gap-x-3 rounded-lg bg-card px-3.5 text-[13px] text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-11 max-w-full items-center gap-x-3 whitespace-nowrap rounded-lg bg-card px-3.5 text-[13px] text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10"
           >
             <span className="flex items-center gap-1.5 font-semibold text-success">
               <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
               Turno abierto
             </span>
-            <span>
+            {/* En celular no cabe todo en la fila: el fondo se ve en Turno de caja. */}
+            <span className="hidden sm:inline">
               Fondo <span className="font-semibold tabular-nums text-foreground">{formatCurrency(cajaHook.turnoActivo.montoInicial)}</span>
             </span>
             <span>
@@ -281,7 +336,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           <button
             type="button"
             onClick={abrirPos}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:h-10"
           >
             <Plus className="h-4 w-4" />
             Nueva venta
@@ -342,9 +397,10 @@ export default function FinanzasPage({ modo = 'caja' }) {
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Punto de venta en la página: llena el alto disponible. En
-                    celular alterna productos y cuenta. */}
-                <div className="h-[calc(100dvh-8rem)] min-h-[480px]">
+                {/* Punto de venta en la página: en escritorio llena el alto
+                    disponible; en celular crece con el contenido y la página
+                    hace scroll (la cuenta va fija abajo). */}
+                <div className="lg:h-[calc(100dvh-8rem)] lg:min-h-[480px]">
                   <PosModal
                     embedded
                     open
@@ -394,6 +450,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
                 </div>
               ) : null}
 
+              <div className="hidden lg:block">
               <DataTable
                 title="Facturas del periodo"
                 subtitle="Busca por número, cliente o responsable y abre el detalle para operar."
@@ -429,57 +486,56 @@ export default function FinanzasPage({ modo = 'caja' }) {
                 ]}
                 emptyTitle="Aún no hay facturas para este filtro"
                 emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenará automáticamente."
-                action={
-                  <form onSubmit={historialHook.handleBuscar} className="flex flex-wrap items-center gap-3">
-                    <label className="relative">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        type="text"
-                        value={historialHook.buscarInput}
-                        onChange={(event) => historialHook.setBuscarInput(event.target.value)}
-                        placeholder="Buscar factura o cliente"
-                        aria-label="Buscar factura o cliente"
-                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pl-10 pr-3"
-                      />
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={historialHook.fechaInicio}
-                        max={historialHook.fechaFin}
-                        onChange={(event) => historialHook.cambiarRango(event.target.value, null)}
-                        aria-label="Fecha inicial del filtro"
-                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
-                      />
-                      <span className="text-sm text-muted-foreground">a</span>
-                      <input
-                        type="date"
-                        value={historialHook.fechaFin}
-                        min={historialHook.fechaInicio}
-                        onChange={(event) => historialHook.cambiarRango(null, event.target.value)}
-                        aria-label="Fecha final del filtro"
-                        className="h-10 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-3 tabular-nums"
-                      />
-                    </div>
-                    <Select
-                      aria-label="Filtrar por estado"
-                      value={historialHook.estado}
-                      onValueChange={(value) => {
-                        historialHook.setEstado(value)
-                        historialHook.setPagina(1)
-                        historialHook.resetSeleccion()
-                      }}
-                      options={STATUS_OPTIONS}
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      Buscar
-                    </button>
-                  </form>
-                }
+                action={filtrosHistorial}
               />
+              </div>
+
+              {/* Celular: cada factura es una tarjeta que abre su detalle. */}
+              <section aria-labelledby="historial-movil" className="overflow-hidden rounded-2xl bg-card lg:hidden">
+                <div className="space-y-3 border-b border-border px-4 pb-4 pt-5">
+                  <div>
+                    <h2 id="historial-movil" className="text-lg font-semibold tracking-[-0.01em] text-card-foreground">Facturas del periodo</h2>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">Busca por número o cliente y toca una para ver el detalle.</p>
+                  </div>
+                  {filtrosHistorial}
+                </div>
+                {historialHook.facturasRows.length ? (
+                  <ul className="divide-y divide-border">
+                    {historialHook.facturasRows.map((row) => (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          onClick={() => historialHook.seleccionarFactura(row.id)}
+                          className="flex min-h-[64px] w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        >
+                          <span className="flex min-w-0 flex-col gap-1">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-[15px] font-semibold text-foreground">{row.numero}</span>
+                              <StatusPill tone={getEstadoTone(row.estado)}>
+                                {ESTADO_LABELS[row.estado] || row.estado}
+                              </StatusPill>
+                            </span>
+                            <span className="truncate text-[13px] text-muted-foreground">
+                              {row.cliente} · <span className="tabular-nums">{row.fecha}</span>
+                            </span>
+                            <span className="truncate text-[13px] text-muted-foreground">{row.usuario}</span>
+                          </span>
+                          <span className="shrink-0 text-[15px] font-semibold tabular-nums text-foreground">{row.total}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-4">
+                    <div className="rounded-xl bg-muted px-4 py-5">
+                      <p className="text-sm font-semibold text-card-foreground">Aún no hay facturas para este filtro</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        Cuando haya movimiento en el estado elegido, la lista se llenará automáticamente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </section>
 
               {(historialHook.facturasQuery.data?.paginas || 1) > 1 ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card px-5 py-4">
@@ -495,7 +551,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
                         historialHook.setPagina((curr) => Math.max(curr - 1, 1))
                       }}
                       disabled={(historialHook.facturasQuery.data?.paginaActual || 1) <= 1}
-                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-11 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 lg:h-10"
                     >
                       Anterior
                     </button>
@@ -511,7 +567,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
                         (historialHook.facturasQuery.data?.paginaActual || 1) >=
                         (historialHook.facturasQuery.data?.paginas || 1)
                       }
-                      className="inline-flex h-10 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-11 items-center px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 lg:h-10"
                     >
                       Siguiente
                     </button>

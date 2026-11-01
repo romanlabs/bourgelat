@@ -50,3 +50,16 @@ export const NOTAS_RAPIDAS_DIFERENCIA_LEVE = ['Redondeo', 'Vuelto', 'Propina no 
 export const UMBRAL_COMENTARIO_OPCIONAL = 3000
 export const UMBRAL_REVISION_ADMIN = 30000
 export const MIN_CARACTERES_JUSTIFICACION = 20
+
+// Rango de fechas de los filtros de los listados: en escritorio fijo de 150px;
+// en celular reparte el ancho y usa letra de 16px (iOS no hace zoom al enfocar).
+export const claseFechaFiltro = (movil) =>
+  movil
+    ? 'h-11 min-w-0 flex-1 rounded-lg border border-input bg-card px-2.5 text-base tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+    : 'h-10 w-[150px] rounded-lg border border-input bg-card px-2.5 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+
+// Botón «Ver historial / Ocultar» de los listados plegables.
+export const claseToggleLista = (movil) =>
+  movil
+    ? 'inline-flex h-11 w-full items-center justify-center gap-1.5 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+    : 'inline-flex h-10 shrink-0 items-center gap-1.5 px-3.5 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'

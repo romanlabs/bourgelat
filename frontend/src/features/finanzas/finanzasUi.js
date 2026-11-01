@@ -1,7 +1,7 @@
 // Piezas compartidas por los paneles de lectura de Finanzas (Resumen, Medios de
 // pago): el estado del periodo y las clases de tarjeta y segmentado. El selector
 // del periodo está en SelectorPeriodo.jsx.
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { mesLocal } from '@/lib/fecha'
 import {
   rangoDelAnio,
@@ -17,9 +17,21 @@ export const pesosCompactos = (valor) => `${Number(valor) < 0 ? '−' : ''}$${co
 export const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
 export const segmentado = 'flex gap-1 rounded-lg bg-secondary p-1'
 export const botonSegmento = (activo) =>
-  `h-8 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-11 rounded-md px-3 text-[13px] transition lg:h-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
     activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
   }`
+
+// ¿Pantalla de celular (por debajo de lg)? Para lo que no se resuelve con clases:
+// el placeholder corto del buscador del punto de venta o las cifras sobre las
+// barras de las gráficas, que a 360px se pisan.
+const MEDIA_CELULAR = '(max-width: 1023px)'
+const suscribirCelular = (avisar) => {
+  const consulta = typeof window !== 'undefined' ? window.matchMedia?.(MEDIA_CELULAR) : null
+  consulta?.addEventListener?.('change', avisar)
+  return () => consulta?.removeEventListener?.('change', avisar)
+}
+const leerCelular = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.(MEDIA_CELULAR)?.matches)
+export const useEsCelular = () => useSyncExternalStore(suscribirCelular, leerCelular, () => false)
 
 // Estado del periodo elegido: el atajo y sus valores, el rango que piden los
 // reportes y cómo se nombra en el titular.

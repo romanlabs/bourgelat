@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Loader2, PackageSearch, Printer, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Loader2, Printer, ShoppingCart } from 'lucide-react'
 import { DialogRoot, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ProductCommandSearch from './ProductCommandSearch'
 import CartSidebar from './CartSidebar'
@@ -149,6 +149,8 @@ export default function PosModal({
 
   const items = invoiceForm?.items || []
   const itemCount = items.length
+  // Unidades en la cuenta: el resumen del celular sube con cada toque.
+  const unidades = items.reduce((suma, item) => suma + Math.max(parseFloat(item.cantidad) || 0, 0), 0)
   const total = invoiceTotals?.total ?? 0
   const metodoPago = invoiceForm?.metodoPago || 'efectivo'
   const esEfectivo = metodoPago === 'efectivo'
@@ -173,6 +175,13 @@ export default function PosModal({
       setMontoRecibido('')
     }
   }, [open])
+
+  // En el celular la página entera hace scroll: al cambiar de paso (catálogo,
+  // cuenta, cobro, vuelto) se vuelve arriba para no caer a mitad del siguiente.
+  useEffect(() => {
+    if (!embedded || typeof window === 'undefined') return
+    if (window.matchMedia?.('(max-width: 1023px)').matches) window.scrollTo?.({ top: 0 })
+  }, [embedded, view, mobilePane])
 
   // La página avisa el éxito de la venta (onFacturaCreada) → paso de vuelto.
   useEffect(() => {
@@ -301,32 +310,13 @@ export default function PosModal({
                   />
                 </div>
 
-                {/* Mobile: segmentado productos / carrito */}
-                <div className="flex h-full flex-col lg:hidden">
-                  <div className="mx-4 mt-3 flex shrink-0 gap-1 rounded-xl bg-secondary p-1">
-                    {[
-                      { id: 'productos', label: 'Productos', icon: PackageSearch },
-                      { id: 'carrito', label: `Carrito${itemCount ? ` · ${itemCount}` : ''}`, icon: ShoppingCart },
-                    ].map((t) => {
-                      const Icon = t.icon
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setMobilePane(t.id)}
-                          aria-pressed={mobilePane === t.id}
-                          className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                            mobilePane === t.id ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          {t.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                {/* Celular: el catálogo en una columna con la cuenta como resumen
+                    fijo abajo; «Cobrar» abre la cuenta (cliente, cantidades y
+                    medio de pago) y de ahí sigue el paso de cobro. */}
+                <div className="flex flex-col lg:hidden">
+                  <div className="min-w-0">
                     {mobilePane === 'productos' ? (
+                      <>
                       <ProductCommandSearch
                         productSearch={productSearch}
                         setProductSearch={setProductSearch}
@@ -338,8 +328,8 @@ export default function PosModal({
                         setServicioSearch={setServicioSearch}
                         serviciosDisponibles={serviciosDisponibles}
                         serviciosQuery={serviciosQuery}
-                        addProductToInvoice={(p) => { addProductToInvoice(p); setMobilePane('carrito') }}
-                        addServiceFromCatalog={(s) => { addServiceFromCatalog(s); setMobilePane('carrito') }}
+                        addProductToInvoice={addProductToInvoice}
+                        addServiceFromCatalog={addServiceFromCatalog}
                         onProductoVencido={abrirVencimientoProducto}
                         setInvoiceForm={setInvoiceForm}
                         puedeConsultarInventario={puedeConsultarInventario}
@@ -348,8 +338,48 @@ export default function PosModal({
                         handleBarcodeScan={handleBarcodeScan}
                         buscarProductoPorBarcodeMutation={buscarProductoPorBarcodeMutation}
                         searchInputRef={searchInputRef}
+                        itemsCarrito={items}
+                        updateInvoiceItem={updateInvoiceItem}
+                        removeInvoiceItem={removeInvoiceItem}
                       />
+                      {/* Lo que ocupa el resumen fijo, para no tapar el último producto. */}
+                      <div aria-hidden className="h-24" />
+                      <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 border-t border-border bg-card px-3 py-2.5">
+                        {itemCount ? (
+                          // Todo el resumen abre la cuenta: cliente, cantidades y medio de pago.
+                          <button
+                            type="button"
+                            onClick={() => setMobilePane('carrito')}
+                            aria-label={`Cobrar ${unidades} ${unidades === 1 ? 'ítem' : 'ítems'} por ${formatCOP(total)}`}
+                            className="flex h-[52px] w-full items-center gap-3 rounded-xl bg-primary pl-4 pr-1.5 text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <ShoppingCart aria-hidden className="h-5 w-5 shrink-0" />
+                            <span className="min-w-0 flex-1 truncate text-left text-[15px] font-semibold tabular-nums">
+                              {unidades} {unidades === 1 ? 'ítem' : 'ítems'} · {formatCOP(total)}
+                            </span>
+                            <span className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-card px-4 text-[15px] font-semibold text-primary">
+                              Cobrar
+                              <ArrowRight aria-hidden className="h-4 w-4" />
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="flex h-[52px] items-center gap-3 px-1">
+                            <ShoppingCart aria-hidden className="h-5 w-5 shrink-0 text-muted-foreground" />
+                            <p className="min-w-0 flex-1 text-sm text-muted-foreground">La cuenta está vacía: toca un producto para agregarlo.</p>
+                          </div>
+                        )}
+                      </div>
+                      </>
                     ) : (
+                      <>
+                      <button
+                        type="button"
+                        onClick={() => setMobilePane('productos')}
+                        className="mb-3 inline-flex h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <ArrowLeft aria-hidden className="h-4 w-4" />
+                        Agregar más productos
+                      </button>
                       <CartSidebar
                         invoiceForm={invoiceForm}
                         setInvoiceForm={setInvoiceForm}
@@ -364,6 +394,7 @@ export default function PosModal({
                         onOpenPaymentModal={irACobrar}
                         onRevisarVencimiento={abrirVencimientoItem}
                       />
+                      </>
                     )}
                   </div>
                 </div>
@@ -372,7 +403,7 @@ export default function PosModal({
 
             {/* Paso 2: cobro — el vuelto es el protagonista */}
             {view === 'pago' && (
-              <div className="flex h-full flex-col gap-5 overflow-y-auto p-5 lg:flex-row lg:overflow-hidden">
+              <div className="flex h-full flex-col gap-5 overflow-y-auto p-0 lg:flex-row lg:overflow-hidden lg:p-5">
 
                 {/* Resumen de la venta: el cajero confirma que esta cobrando
                     sin tener que devolverse al carrito. */}
@@ -414,7 +445,7 @@ export default function PosModal({
                   </div>
                 </aside>
 
-                <div className="flex min-h-0 w-full flex-1 flex-col rounded-2xl bg-card p-6 lg:overflow-y-auto">
+                <div className="flex min-h-0 w-full flex-1 flex-col rounded-2xl bg-card p-5 lg:overflow-y-auto lg:p-6">
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-semibold tracking-[-0.02em] text-foreground">
                     Total a cobrar
@@ -442,7 +473,7 @@ export default function PosModal({
                               type="button"
                               onClick={() => setMontoRecibido(String(amount))}
                               aria-pressed={monto === amount}
-                              className={`h-9 rounded-lg px-3 text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                              className={`h-11 rounded-lg px-3 text-[13px] font-semibold tabular-nums transition lg:h-9 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                 monto === amount
                                   ? 'bg-foreground text-background'
                                   : 'bg-secondary text-secondary-foreground hover:brightness-95'
@@ -513,7 +544,7 @@ export default function PosModal({
                     type="button"
                     onClick={() => setView('cart')}
                     disabled={isPending}
-                    className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                    className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-semibold text-muted-foreground transition hover:bg-muted lg:h-10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   >
                     <ArrowLeft className="h-4 w-4" /> Volver a la cuenta
                   </button>
@@ -619,7 +650,7 @@ export default function PosModal({
                           <button
                             type="button"
                             onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
-                            className="inline-flex h-10 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="inline-flex h-11 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10"
                           >
                             <Printer className="h-4 w-4" />
                             Imprimir tirilla
@@ -629,7 +660,7 @@ export default function PosModal({
                             type="button"
                             onClick={descargarPdf}
                             disabled={generandoPdf}
-                            className="inline-flex h-10 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-11 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {generandoPdf ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

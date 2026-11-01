@@ -19,7 +19,7 @@ const METODOS_ABONO = [
 ]
 
 const inputClass =
-  'rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm'
 
 // Cobro de una venta a crédito: un abono parcial o el saldo completo («Pagar
 // todo»). Lo usan la pestaña Por cobrar y el detalle de la factura.
@@ -61,12 +61,12 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           value={monto}
           onChange={(value) => setMonto(value === 0 ? '' : String(value))}
           placeholder="valor"
-          className={`${inputClass} h-10 w-32 text-right tabular-nums`}
+          className={`${inputClass} h-11 w-32 text-right tabular-nums lg:h-10`}
         />
         <Select
           variant="field"
           aria-label="Método del abono"
-          className="h-10 w-44"
+          className="h-11 w-44 lg:h-10"
           value={metodoPago}
           onValueChange={(valor) => {
             setMetodoPago(valor)
@@ -78,7 +78,7 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           type="button"
           onClick={() => cobrar(Number(monto))}
           disabled={registrarAbono.isPending || !monto}
-          className="h-10 px-4 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-11 px-4 rounded-lg bg-primary lg:h-10 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Abonar
         </button>
@@ -86,7 +86,7 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           type="button"
           onClick={() => cobrar(saldo)}
           disabled={registrarAbono.isPending || saldo <= 0}
-          className="h-10 px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-11 px-4 rounded-lg bg-secondary lg:h-10 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
         >
           Pagar todo ({formatCurrency(saldo)})
         </button>
@@ -94,7 +94,7 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
           <button
             type="button"
             onClick={onCancelar}
-            className="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground lg:h-10 transition hover:bg-card hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>

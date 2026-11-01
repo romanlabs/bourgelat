@@ -40,7 +40,7 @@ export default function ClientInlinePicker({
   return (
     <div
       ref={panelRef}
-      className="absolute left-5 right-5 top-full z-50 mt-1 overflow-hidden rounded-xl bg-card shadow-dropdown"
+      className="absolute left-4 right-4 top-full z-50 mt-1 overflow-hidden rounded-xl bg-card shadow-dropdown lg:left-5 lg:right-5"
     >
       {/* Búsqueda */}
       <div className="p-3">
@@ -53,7 +53,7 @@ export default function ClientInlinePicker({
             onChange={(e) => setOwnerSearch(e.target.value)}
             placeholder="Nombre, documento o teléfono"
             aria-label="Buscar cliente"
-            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none lg:text-sm"
           />
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function ClientInlinePicker({
         <Link
           to="/pacientes"
           onClick={onClose}
-          className="flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline"
+          className="flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline lg:min-h-0"
         >
           <UserPlus className="h-4 w-4" />
           Crear nuevo tutor

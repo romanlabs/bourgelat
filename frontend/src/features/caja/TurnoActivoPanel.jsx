@@ -133,7 +133,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
             <button
               type="button"
               onClick={() => setMovimientoOpen(true)}
-              className="inline-flex h-11 items-center gap-2 px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 px-4 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 sm:flex-none sm:justify-start active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <PlusCircle className="h-4 w-4" />
               Registrar movimiento
@@ -142,7 +142,7 @@ export default function TurnoActivoPanel({ cajaHook }) {
           <button
             type="button"
             onClick={() => setCierreOpen(true)}
-            className="inline-flex h-11 items-center gap-2 px-5 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 px-5 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-none sm:justify-start"
           >
             <Banknote className="h-4 w-4" />
             Cerrar turno

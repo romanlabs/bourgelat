@@ -28,7 +28,7 @@ const etiquetaCategoria = (value) => CATEGORIAS.find((c) => c.value === value)?.
 const etiquetaMetodo = (value) => METODOS_GASTO.find((m) => m.value === value)?.label || value
 
 const inputClass =
-  'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'h-11 rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm'
 const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
 // El backend no da más de 100 por página: «Ver más» sube hasta ahí.
 const LIMITE_INICIAL = 30
@@ -305,7 +305,7 @@ function AnularGasto({ gasto, onCerrar }) {
           rows={3}
           maxLength={500}
           placeholder="Ej.: se registró dos veces"
-          className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm"
         />
       </label>
     </ConfirmDialog>
@@ -331,7 +331,40 @@ function HistorialGastos({ data, cargando, filtro, onFiltrar, onVerMas, limite }
         ) : null}
       </div>
       {gastos.length ? (
-        <div className="overflow-x-auto">
+        <>
+        {/* Celular: una tarjeta por gasto, sin tabla. */}
+        <ul className="divide-y divide-border border-t border-border lg:hidden">
+          {gastos.map((g) => (
+            <li key={g.id} className={`flex flex-col gap-2 px-5 py-3.5 ${g.anulado ? 'opacity-60' : ''}`}>
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-medium text-card-foreground">{g.descripcion || etiquetaCategoria(g.categoria)}</span>
+                  <span className="text-[13px] text-muted-foreground">
+                    <span className="tabular-nums">{formatShortDate(g.fecha)}</span> · {etiquetaMetodo(g.metodoPago)}
+                  </span>
+                  <span className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
+                    {[g.descripcion ? etiquetaCategoria(g.categoria) : null, g.usuario?.nombre].filter(Boolean).join(' · ') || null}
+                    {g.origen === 'consumo_insumos' ? <StatusPill tone="bg-info-soft text-info">Insumos de consulta</StatusPill> : null}
+                    {g.anulado ? <StatusPill tone="bg-danger-soft text-danger">Anulado</StatusPill> : null}
+                  </span>
+                </span>
+                <span className={`shrink-0 font-semibold tabular-nums ${g.anulado ? 'line-through' : 'text-card-foreground'}`}>
+                  {formatCurrency(g.monto)}
+                </span>
+              </div>
+              {g.anulado ? null : (
+                <button
+                  type="button"
+                  onClick={() => setAnulando(g)}
+                  className="inline-flex h-11 w-fit items-center rounded-lg px-3 text-[13px] font-semibold text-muted-foreground transition hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Anular
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[480px] text-sm">
             <thead className="whitespace-nowrap text-left text-[13px] text-muted-foreground">
               <tr>
@@ -376,6 +409,7 @@ function HistorialGastos({ data, cargando, filtro, onFiltrar, onVerMas, limite }
             </tbody>
           </table>
         </div>
+        </>
       ) : (
         <p className="px-5 pb-6 text-sm text-muted-foreground sm:px-6">
           {cargando ? 'Cargando gastos…' : 'No hay gastos registrados en este periodo.'}
@@ -459,7 +493,7 @@ export default function GastosRentabilidadPanel() {
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         {totalQuery.data ? (
           <header className="flex flex-col gap-2">
-            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground max-lg:tabular-nums sm:text-5xl">
               {formatCurrency(totalMes)}
               <span className="ml-3 text-xl font-medium tracking-[-0.01em] text-muted-foreground sm:text-2xl">
                 en gastos de {nombreMes(mes)}
@@ -486,7 +520,7 @@ export default function GastosRentabilidadPanel() {
           max={mesLocal()}
           onChange={(e) => e.target.value && cambiarMes(e.target.value)}
           aria-label="Mes"
-          className="h-10 rounded-lg border border-input bg-card px-3 text-sm tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 rounded-lg border border-input bg-card px-3 text-base tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10 lg:text-sm"
         />
       </div>
 

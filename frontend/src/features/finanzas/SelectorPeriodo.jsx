@@ -4,7 +4,7 @@ import { mesLocal } from '@/lib/fecha'
 import { PRESETS_ANALISIS, aniosDisponibles } from '@/features/finanzas/analisisPeriodo'
 
 const inputFecha =
-  'h-10 rounded-lg border border-input bg-card px-3 text-sm tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'h-11 rounded-lg border border-input bg-card px-3 text-base tabular-nums text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10 lg:text-sm'
 
 export default function SelectorPeriodo({ preset, onPreset, mes, onMes, anio, onAnio, personalizado, onPersonalizado, completo, avisoBloqueo }) {
   const anios = useMemo(() => aniosDisponibles().map((a) => ({ value: String(a), label: String(a) })), [])
@@ -14,6 +14,7 @@ export default function SelectorPeriodo({ preset, onPreset, mes, onMes, anio, on
       {/* Desplegable y no botones: cabe junto a la cifra sin bajar a otra fila. */}
       <Select
         aria-label="Periodo"
+        className="h-11 lg:h-10"
         value={preset}
         onValueChange={onPreset}
         options={PRESETS_ANALISIS.map((opcion) => ({
@@ -35,7 +36,7 @@ export default function SelectorPeriodo({ preset, onPreset, mes, onMes, anio, on
       ) : null}
 
       {preset === 'anio' ? (
-        <Select aria-label="Año" value={String(anio)} onValueChange={(valor) => onAnio(Number(valor))} options={anios} />
+        <Select aria-label="Año" className="h-11 lg:h-10" value={String(anio)} onValueChange={(valor) => onAnio(Number(valor))} options={anios} />
       ) : null}
 
       {preset === 'personalizado' ? (
