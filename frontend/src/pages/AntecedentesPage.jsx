@@ -103,10 +103,10 @@ const buildRows = (items, mapper) =>
 // ─── Piezas de presentación ──────────────────────────────────────────────────
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const BTN_PRIMARIO = `inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
-const BTN_SECUNDARIO = `inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
-const CAMPO = 'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
-const CAMPO_AREA = 'min-h-[110px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+const BTN_PRIMARIO = `inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+const BTN_SECUNDARIO = `inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+const CAMPO = 'h-12 w-full rounded-lg border border-input bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+const CAMPO_AREA = 'min-h-[110px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 function Chip({ className, children }) {
   return (
@@ -128,7 +128,7 @@ function Campo({ label, children }) {
 // Tarjeta de una sección clínica: título con conteo y botón para agregar.
 function SeccionCard({ id, title, count, actionLabel = 'Agregar', onAction, primaria = false, className, children }) {
   return (
-    <section aria-labelledby={id} className={cn('flex flex-col gap-3 rounded-2xl bg-card p-6', className)}>
+    <section aria-labelledby={id} className={cn('flex flex-col gap-3 rounded-2xl bg-card p-4 sm:p-6', className)}>
       <div className="flex items-center justify-between gap-3">
         <h2 id={id} className="flex items-baseline gap-2 text-lg font-semibold tracking-[-0.02em] text-foreground">
           {title}
@@ -694,7 +694,7 @@ export default function AntecedentesPage() {
           onChange={(e) => setPetSearch(e.target.value)}
           placeholder={selectedPet ? 'Cambiar de paciente' : 'Buscar paciente por nombre'}
           aria-label={selectedPet ? 'Cambiar de paciente' : 'Buscar paciente'}
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none [&::-webkit-search-cancel-button]:appearance-none"
+          className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none lg:text-[15px] [&::-webkit-search-cancel-button]:appearance-none"
         />
       </label>
       {selectedPet && mostrarResultados && mascotas.length > 0 ? (
@@ -704,7 +704,7 @@ export default function AntecedentesPage() {
               key={pet.id}
               type="button"
               onClick={() => handleSelectPet(pet)}
-              className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted ${FOCO}`}
+              className={`flex w-full items-center justify-between gap-3 min-h-11 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted ${FOCO}`}
             >
               <span className="min-w-0 truncate">
                 <span className="font-semibold text-foreground">{pet.nombre}</span>
@@ -738,7 +738,7 @@ export default function AntecedentesPage() {
             <button
               type="button"
               onClick={handleVolverALista}
-              className={`inline-flex min-h-8 items-center gap-1.5 self-start rounded text-sm font-medium text-muted-foreground transition hover:text-foreground lg:mt-6 ${FOCO}`}
+              className={`inline-flex min-h-11 items-center gap-1.5 self-start rounded text-sm font-medium text-muted-foreground transition hover:text-foreground lg:mt-6 ${FOCO}`}
             >
               <ChevronLeft className="h-4 w-4" />
               Elegir otro paciente
@@ -786,7 +786,7 @@ export default function AntecedentesPage() {
 
           {!selectedPet ? (
             /* Sin paciente: lista para elegir */
-            <section aria-labelledby="ant-elegir" className="rounded-2xl bg-card p-6">
+            <section aria-labelledby="ant-elegir" className="rounded-2xl bg-card p-4 sm:p-6">
               <h2 id="ant-elegir" className="text-lg font-semibold tracking-[-0.02em] text-foreground">
                 {petSearch.trim() ? 'Resultados' : 'Elige un paciente'}
               </h2>
@@ -804,7 +804,7 @@ export default function AntecedentesPage() {
                       key={pet.id}
                       type="button"
                       onClick={() => handleSelectPet(pet)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted ${FOCO}`}
+                      className={`flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted ${FOCO}`}
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent text-base font-bold text-primary">
                         {pet.fotoPerfil ? (
@@ -838,7 +838,7 @@ export default function AntecedentesPage() {
               {alergiasRows.length > 0 ? (
                 <section
                   aria-labelledby="ant-alerta"
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-danger-soft px-6 py-[18px] text-danger"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-danger-soft px-4 py-4 text-danger sm:px-6 sm:py-[18px]"
                 >
                   <div className="flex items-center gap-3.5">
                     <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -858,7 +858,7 @@ export default function AntecedentesPage() {
                     <button
                       type="button"
                       onClick={() => openAntDrawer('alergia')}
-                      className={`inline-flex h-10 items-center rounded-lg bg-card px-4 text-sm font-semibold text-danger transition hover:brightness-95 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-11 items-center rounded-lg bg-card px-4 text-sm font-semibold text-danger transition hover:brightness-95 active:translate-y-px ${FOCO}`}
                     >
                       Agregar alergia
                     </button>
@@ -909,7 +909,35 @@ export default function AntecedentesPage() {
                     {vacunasRows.length === 0 ? (
                       <Vacio>Aún no hay vacunas registradas.</Vacio>
                     ) : (
-                      <div className="-mx-2 overflow-x-auto">
+                      <>
+                      <ul className="flex flex-col gap-2.5 lg:hidden">
+                        {vacunasRows.map((row) => (
+                          <li key={row.id} className="rounded-xl border border-border bg-background p-3.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="min-w-0 text-base font-semibold text-foreground">{row.nombre}</p>
+                              {row.diasVencida > 0 ? (
+                                <Chip className="bg-danger-soft text-danger">
+                                  {row.diasVencida === 1 ? 'Vencida hace 1 día' : `Vencida hace ${row.diasVencida} días`}
+                                </Chip>
+                              ) : !row.proximaDosis ? (
+                                <Chip className="bg-muted text-muted-foreground">Sin refuerzo</Chip>
+                              ) : (
+                                <Chip className="bg-success-soft text-success">Al día</Chip>
+                              )}
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Aplicada {row.fecha} · Próxima dosis {row.proximaDosis || '—'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Lote {row.lote} · {row.laboratorio}
+                            </p>
+                            <div className="mt-1">
+                              <BotonRecordar item={row} tutor={tutor} mascotaNombre={selectedPet.nombre} clinica={clinica} />
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="-mx-2 hidden overflow-x-auto lg:block">
                         <table className="w-full min-w-[600px] text-sm">
                           <thead>
                             <tr className="text-left text-[13px] text-muted-foreground">
@@ -954,6 +982,7 @@ export default function AntecedentesPage() {
                           </tbody>
                         </table>
                       </div>
+                      </>
                     )}
                   </SeccionCard>
 
@@ -1292,7 +1321,7 @@ export default function AntecedentesPage() {
           )}
         </div>
 
-        <div className="flex gap-2.5 px-6 pb-6 pt-3">
+        <div className="flex gap-2.5 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
           <button type="submit" form="ant-drawer-form" disabled={guardando} className={cn(BTN_PRIMARIO, 'h-11 flex-1')}>
             Guardar
           </button>
