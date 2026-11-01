@@ -4,6 +4,7 @@ import {
   formatCurrency,
   formatNumber,
 } from '@/features/dashboard/dashboardUtils'
+import { documentoVenta, esFacturaElectronica } from './documentoVenta'
 
 // Compartido entre el historial de facturas y el POS: ambos imprimen la misma
 // tirilla, uno sobre una factura archivada y otro sobre la recien emitida.
@@ -112,7 +113,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
         </div>
         <div class="divider"></div>
         ${anulada ? '<div class="stamp">ANULADA</div>' : ''}
-        <div class="center doc-number">FACTURA ${numero || '-'}</div>
+        <div class="center doc-number">${documentoVenta(factura).titulo}<br />${numero || '-'}</div>
         <div class="section">
           <div class="row"><span class="muted">Fecha</span><span>${formatDateTime(factura?.createdAt || factura?.fecha)}</span></div>
           <div class="row"><span class="muted">Cliente</span><span>${escaparHtml(factura?.propietario?.nombre || 'Consumidor final')}</span></div>
@@ -128,7 +129,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
           ${descuento > 0 ? `<div class="row"><span class="muted">Descuento</span><span class="num">-${formatCurrency(descuento)}</span></div>` : ''}
           <div class="total-row"><span>TOTAL</span><span class="amount num">${formatCurrency(factura?.total || 0)}</span></div>
         </div>
-        ${factura?.estadoElectronico === 'validada' && factura?.cufe
+        ${esFacturaElectronica(factura)
           ? `<div class="section"><div class="muted" style="word-break: break-all; font-size: 10px;">CUFE: ${escaparHtml(factura.cufe)}</div></div>`
           : ''}
         <div class="footer">
