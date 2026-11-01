@@ -1,5 +1,8 @@
 import { chartColors } from '@/lib/theme'
 import { CalendarClock } from 'lucide-react'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useEsCelular } from '@/lib/useEsCelular'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 
 import { BarPanel, DashboardPanel, LinePanel } from '@/features/dashboard/dashboardComponents'
 import { PERIODO_PRESETS, formatNumber } from '@/features/dashboard/dashboardUtils'
@@ -98,6 +101,231 @@ function ResumenPeriodo({ items }) {
   )
 }
 
+// ── Celular ─────────────────────────────────────────────────────────────
+// Ejes angostos (el de escritorio reserva 72px para la escala) y gráficas a
+// todo el ancho, legibles a 360px.
+const EJE = { tickLine: false, axisLine: false, fontSize: 11, tick: { fill: 'hsl(var(--muted-foreground))' } }
+
+function TooltipMovil({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl bg-card px-3 py-2 shadow-dropdown">
+      {label ? <p className="mb-1 text-xs font-semibold text-muted-foreground">{label}</p> : null}
+      {payload.map((item) => (
+        <p key={item.dataKey} className="flex items-center gap-1.5 text-xs text-card-foreground">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color || item.stroke }} />
+          {item.name}: <span className="font-semibold tabular-nums">{formatNumber(item.value)}</span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
+function TarjetaMovil({ titulo, ayuda, accion, children }) {
+  return (
+    <section className="rounded-2xl bg-card p-4">
+      <div className="mb-3 flex flex-col gap-2">
+        <div>
+          <h3 className="text-base font-semibold tracking-[-0.01em] text-card-foreground">{titulo}</h3>
+          {ayuda ? <p className="mt-0.5 text-[13px] leading-5 text-muted-foreground">{ayuda}</p> : null}
+        </div>
+        {accion}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function AnaliticaMovil({
+  preset,
+  setPreset,
+  query,
+  resumenItems,
+  serieDiaria,
+  estadoChartData,
+  tipoChartData,
+  franjaHoraria,
+  cargaProfesionales,
+  topMotivosCancelacion,
+  maxCargaProfesional,
+}) {
+  const hayVolumen = serieDiaria.some((item) => Number(item.total || 0) > 0 || Number(item.completadas || 0) > 0)
+  const hayFranja = franjaHoraria.some((item) => Number(item.total || 0) > 0)
+  const [principales, extra] = [resumenItems.slice(0, 4), resumenItems.slice(4)]
+
+  return (
+    <TirarParaRefrescar onRefrescar={() => query.refetch()}>
+      <div className="flex flex-col gap-3">
+        <div role="group" aria-label="Periodo" className="grid grid-cols-4 gap-1 rounded-xl bg-muted p-1">
+          {PERIODO_PRESETS.map((opcion) => (
+            <button
+              key={opcion.id}
+              type="button"
+              onClick={() => setPreset(opcion.id)}
+              aria-pressed={preset === opcion.id}
+              className={`h-11 min-w-0 truncate rounded-lg px-1 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                preset === opcion.id ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground'
+              }`}
+            >
+              {opcion.label}
+            </button>
+          ))}
+        </div>
+
+        {query.isError && (
+          <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium leading-6 text-warning">
+            {getErrorMessage(query.error, 'No fue posible cargar la analítica de la agenda.')}
+          </div>
+        )}
+
+        {query.isLoading ? (
+          <div className="flex flex-col gap-3" aria-hidden="true">
+            <div className="grid grid-cols-2 gap-2">
+              {[0, 1, 2, 3].map((idx) => (
+                <div key={idx} className="h-[88px] animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+            <div className="h-[240px] animate-pulse rounded-2xl bg-muted" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              {principales.map((item) => (
+                <div key={item.id} className="flex min-w-0 flex-col gap-1 rounded-2xl bg-card px-3.5 py-3">
+                  <span className="truncate text-[13px] text-muted-foreground">{item.label}</span>
+                  <span className={`text-2xl font-semibold leading-none tracking-[-0.03em] tabular-nums ${item.tono || 'text-card-foreground'}`}>
+                    {item.valor}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">{item.detalle}</span>
+                </div>
+              ))}
+              {extra.map((item) => (
+                <div key={item.id} className="col-span-2 flex items-baseline justify-between gap-3 rounded-2xl bg-card px-3.5 py-3">
+                  <span className="min-w-0 truncate text-[13px] text-muted-foreground">
+                    {item.label} · {item.detalle}
+                  </span>
+                  <span className="shrink-0 text-lg font-semibold tabular-nums text-card-foreground">{item.valor}</span>
+                </div>
+              ))}
+            </div>
+
+            <TarjetaMovil
+              titulo="Volumen diario"
+              ayuda="Agendadas contra atendidas."
+              accion={
+                <Leyenda
+                  items={[
+                    { label: 'Agendadas', color: chartColors.categorica[1] },
+                    { label: 'Completadas', color: chartColors.estados.success },
+                  ]}
+                />
+              }
+            >
+              {hayVolumen ? (
+                <div className="-mx-1 h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
+                    <AreaChart data={serieDiaria} margin={{ left: 0, right: 8, top: 6, bottom: 0 }}>
+                      <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis dataKey="fecha" {...EJE} interval="preserveStartEnd" minTickGap={28} dy={4} />
+                      <YAxis {...EJE} allowDecimals={false} width={28} />
+                      <Tooltip content={<TooltipMovil />} />
+                      <Area type="monotone" dataKey="total" name="Agendadas" stroke={chartColors.categorica[1]} strokeWidth={2} fill={chartColors.categorica[1]} fillOpacity={0.1} dot={false} />
+                      <Area type="monotone" dataKey="completadas" name="Completadas" stroke={chartColors.estados.success} strokeWidth={2} fill="none" dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <Vacio>Aún no hay citas en el periodo seleccionado.</Vacio>
+              )}
+            </TarjetaMovil>
+
+            <TarjetaMovil titulo="Cómo terminan las citas">
+              {estadoChartData.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  <ListaProporcion items={estadoChartData} />
+                  {topMotivosCancelacion.length > 0 ? (
+                    <div className="border-t border-border pt-3">
+                      <p className="text-[13px] font-semibold text-muted-foreground">Por qué se cancelan</p>
+                      <ul className="mt-1 flex flex-col divide-y divide-border">
+                        {topMotivosCancelacion.map((motivo) => (
+                          <li key={motivo.motivo} className="flex items-center justify-between gap-3 py-2.5">
+                            <span className="min-w-0 flex-1 text-sm capitalize text-card-foreground [overflow-wrap:anywhere]">{motivo.motivo}</span>
+                            <span className="shrink-0 text-sm font-semibold tabular-nums text-card-foreground">{formatNumber(motivo.total)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <Vacio>Sin citas en el periodo.</Vacio>
+              )}
+            </TarjetaMovil>
+
+            <TarjetaMovil titulo="Qué se atiende">
+              {tipoChartData.length > 0 ? <ListaProporcion items={tipoChartData} limite={8} /> : <Vacio>Aún no hay tipos de cita para mostrar.</Vacio>}
+            </TarjetaMovil>
+
+            <TarjetaMovil titulo="Cuándo llegan" ayuda="Citas por hora del día.">
+              {hayFranja ? (
+                <div className="-mx-1 h-[180px]">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
+                    <BarChart data={franjaHoraria} margin={{ left: 0, right: 8, top: 6, bottom: 0 }} barCategoryGap="18%">
+                      <CartesianGrid stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis dataKey="name" {...EJE} interval="preserveStartEnd" minTickGap={16} dy={4} />
+                      <YAxis {...EJE} allowDecimals={false} width={28} />
+                      <Tooltip content={<TooltipMovil />} cursor={{ fill: 'hsl(var(--muted))' }} />
+                      <Bar dataKey="total" name="Citas" fill={chartColors.categorica[1]} radius={[3, 3, 0, 0]} maxBarSize={28} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <Vacio>Aún no hay citas para medir la carga horaria.</Vacio>
+              )}
+            </TarjetaMovil>
+
+            <TarjetaMovil titulo="Carga por profesional" accion={cargaProfesionales.length > 0 ? <Leyenda items={SEGMENTOS_PROFESIONAL} /> : null}>
+              {cargaProfesionales.length > 0 ? (
+                <ul className="flex flex-col gap-3.5">
+                  {cargaProfesionales.map((profesional) => (
+                    <li key={profesional.id || profesional.nombre} className="flex flex-col gap-1.5">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="min-w-0 truncate text-sm font-medium text-card-foreground">{profesional.nombre}</span>
+                        <span className="shrink-0 text-[13px] font-semibold tabular-nums text-muted-foreground">
+                          {formatNumber(profesional.total)} · {formatNumber(profesional.completadas)} atendidas
+                        </span>
+                      </div>
+                      <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+                        {SEGMENTOS_PROFESIONAL.map((segmento) => {
+                          const valor =
+                            segmento.key === 'otras'
+                              ? profesional.total - profesional.completadas - profesional.noAsistio
+                              : profesional[segmento.key]
+                          return (
+                            <div
+                              key={segmento.key}
+                              style={{
+                                width: `${(Math.max(0, valor) / maxCargaProfesional) * 100}%`,
+                                backgroundColor: segmento.color,
+                              }}
+                            />
+                          )
+                        })}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <Vacio>Aún no hay citas para medir la carga del equipo.</Vacio>
+              )}
+            </TarjetaMovil>
+          </>
+        )}
+      </div>
+    </TirarParaRefrescar>
+  )
+}
+
 function Vacio({ children }) {
   return (
     <div className="flex h-[160px] items-center justify-center rounded-xl bg-muted px-4 text-center text-sm text-muted-foreground">
@@ -126,10 +354,11 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
     cargaProfesionales,
     topMotivosCancelacion,
   } = useAgendaAnalitica({ habilitado: puedeVerAnalitica })
+  const esCelular = useEsCelular()
 
   if (!puedeVerAnalitica) {
     return (
-      <div className="pt-5">
+      <div className="lg:pt-5">
         <EmptyState
           icon={<CalendarClock />}
           title="Analítica no disponible para tu rol"
@@ -183,6 +412,24 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       ayuda: 'Proporción de la agenda que llegó sin cita previa.',
     },
   ]
+
+  if (esCelular) {
+    return (
+      <AnaliticaMovil
+        preset={preset}
+        setPreset={setPreset}
+        query={query}
+        resumenItems={resumenItems}
+        serieDiaria={serieDiaria}
+        estadoChartData={estadoChartData}
+        tipoChartData={tipoChartData}
+        franjaHoraria={franjaHoraria}
+        cargaProfesionales={cargaProfesionales}
+        topMotivosCancelacion={topMotivosCancelacion}
+        maxCargaProfesional={maxCargaProfesional}
+      />
+    )
+  }
 
   // Control segmentado sobre la hoja (no sobre el fondo de la página, donde se
   // perdía): el periodo elegido queda marcado con el tono de acento.

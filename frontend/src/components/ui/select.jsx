@@ -33,7 +33,7 @@ const valorRaiz = (value, hayOpcionVacia) => {
 }
 
 const triggerVariants = {
-  pill: 'h-10 rounded-lg border border-input bg-card pl-3.5 pr-3 hover:bg-muted data-[state=open]:bg-muted',
+  pill: 'h-11 lg:h-10 rounded-lg border border-input bg-card pl-3.5 pr-3 hover:bg-muted data-[state=open]:bg-muted',
   field: 'h-11 w-full rounded-lg border border-input bg-card px-3',
 }
 

@@ -24,7 +24,7 @@ const INSUMO_CATEGORY_OPTIONS = sinOpcionTodas(CATEGORIAS_CLINICAS)
 const esClinico = (item) => item.destinoInventario === 'clinico'
 
 const fieldClass = (hasError) =>
-  `h-11 w-full rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-12 w-full rounded-lg border bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
     hasError ? 'border-danger' : 'border-input'
   }`
 
@@ -176,7 +176,7 @@ export default function FacturaCompraDrawer({
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{titulo}</h2>
             {editingFactura && (
@@ -187,7 +187,7 @@ export default function FacturaCompraDrawer({
           </div>
           <button
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 lg:h-9 lg:w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Cerrar"
           >
             <X size={18} />
@@ -195,7 +195,7 @@ export default function FacturaCompraDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4 space-y-5">
 
           {/* Datos cabecera */}
           <div className="grid grid-cols-2 gap-4">
@@ -237,7 +237,7 @@ export default function FacturaCompraDrawer({
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-[13px] font-medium text-muted-foreground">Observaciones</label>
               <textarea
-                className="rounded-lg border border-input bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring w-full resize-none"
+                className="rounded-lg border border-input bg-card px-3 py-2.5 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring w-full resize-none"
                 rows={2}
                 placeholder="Opcional"
                 value={form.observaciones}
@@ -552,7 +552,7 @@ export default function FacturaCompraDrawer({
         </div>
 
         {/* Footer */}
-        <div className="space-y-3 border-t border-border/60 px-6 py-4">
+        <div className="space-y-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total estimado</span>
             <span className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums text-foreground">{formatCOP(totalCalculado)}</span>
@@ -561,7 +561,7 @@ export default function FacturaCompraDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="h-11 flex-1 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-12 lg:h-11 flex-1 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancelar
             </button>
@@ -569,7 +569,7 @@ export default function FacturaCompraDrawer({
               type="button"
               onClick={onSubmit}
               disabled={isSaving || !formularioValido}
-              className="h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-12 lg:h-11 flex-1 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? 'Guardando…' : editingFactura ? 'Guardar cambios' : 'Guardar borrador'}
             </button>

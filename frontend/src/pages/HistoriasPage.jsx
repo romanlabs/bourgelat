@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { ExternalLink, FolderOpen, Search } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, formatShortDate, toLocalDate } from '@/features/dashboard/dashboardUtils'
@@ -13,6 +13,9 @@ import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 
 // Cada chip es una pregunta operativa, no una metrica: al tocarlo filtra la
 // tabla de abajo. 'pendientes' es el default porque una historia sin cerrar es
@@ -42,7 +45,7 @@ const CAMPO =
   'h-11 rounded-lg border border-input bg-card text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 const BOTON_PAGINA =
-  'inline-flex h-10 items-center rounded-lg bg-card px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex h-11 items-center rounded-lg bg-card px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const getCurrentMonthRange = () => {
   const now = new Date()
@@ -83,6 +86,7 @@ const fechaCorta = (value) => {
 export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   // El Dashboard entra aqui con ?estado=pendientes desde sus alertas.
   const estadoInicial = FILTROS[searchParams.get('estado')] ? searchParams.get('estado') : 'pendientes'
@@ -180,6 +184,19 @@ export default function HistoriasPage() {
     [historiasQuery.data]
   )
 
+  const moverFiltro = (paso) => {
+    const orden = ['pendientes', 'controles', 'mes', 'todas']
+    const i = orden.indexOf(filtro) + paso
+    if (i >= 0 && i < orden.length) aplicarFiltro(orden[i])
+  }
+  // Deslizar la lista cambia de pestaña (Sin cerrar, Controles, Este mes, Todas).
+  const gestoFiltros = useDeslizarHorizontal({
+    onIzquierda: () => moverFiltro(1),
+    onDerecha: () => moverFiltro(-1),
+  })
+
+  const refrescar = () => Promise.all([historiasQuery.refetch(), resumen.resumenQuery.refetch()])
+
   if (!rolPermitido) {
     return <RestrictedHistoriasPage />
   }
@@ -204,8 +221,9 @@ export default function HistoriasPage() {
       title="Historias clínicas"
       description={descripcion}
     >
-      <div className="flex flex-col gap-4">
-        <div role="tablist" aria-label="Qué historias ver" className="flex w-fit max-w-full flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
+      <TirarParaRefrescar onRefrescar={refrescar}>
+      <div className="flex flex-col gap-3 lg:gap-4">
+        <div role="tablist" aria-label="Qué historias ver" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:w-fit lg:max-w-full lg:flex-wrap lg:gap-1 lg:overflow-visible lg:rounded-[10px] lg:bg-secondary lg:p-1 lg:pb-1">
           {pestanas.map((pestana) => {
             const activa = filtro === pestana.id
             return (
@@ -216,9 +234,11 @@ export default function HistoriasPage() {
                 aria-selected={activa}
                 onClick={() => aplicarFiltro(pestana.id)}
                 className={cn(
-                  'h-10 rounded-[7px] px-3.5 text-[13px] transition',
+                  'h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm transition lg:h-10 lg:rounded-[7px] lg:px-3.5 lg:text-[13px]',
                   FOCO,
-                  activa ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
+                  activa
+                    ? 'bg-primary font-semibold text-primary-foreground lg:bg-card lg:text-foreground'
+                    : 'bg-card font-medium text-muted-foreground hover:text-foreground lg:bg-transparent'
                 )}
               >
                 {pestana.label}
@@ -236,8 +256,8 @@ export default function HistoriasPage() {
             )
           })}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+        <div className="grid grid-cols-2 items-center gap-3 lg:flex lg:flex-wrap">
+          <label className="col-span-2 flex h-12 min-w-0 flex-1 basis-60 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
             <Search className="h-[18px] w-[18px] shrink-0" />
             <input
               type="search"
@@ -245,7 +265,7 @@ export default function HistoriasPage() {
               onChange={(e) => { setBuscar(e.target.value); setPagina(1) }}
               placeholder="Motivo o diagnóstico"
               aria-label="Buscar por motivo o diagnóstico"
-              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+              className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none lg:text-[15px] placeholder:text-muted-foreground"
             />
           </label>
           <input
@@ -253,15 +273,16 @@ export default function HistoriasPage() {
             value={fechaInicio}
             onChange={(e) => { setFechaInicio(e.target.value); setPagina(1) }}
             aria-label="Desde"
-            className={`${CAMPO} h-12 px-3`}
+            className={`${CAMPO} h-12 min-w-0 px-3 text-base lg:text-sm`}
           />
           <input
             type="date"
             value={fechaFin}
             onChange={(e) => { setFechaFin(e.target.value); setPagina(1) }}
             aria-label="Hasta"
-            className={`${CAMPO} h-12 px-3`}
+            className={`${CAMPO} h-12 min-w-0 px-3 text-base lg:text-sm`}
           />
+          <div className="col-span-2 min-w-0 [&>*]:w-full lg:col-auto lg:[&>*]:w-auto">
           <Select
             aria-label="Filtrar por médico"
             value={veterinarioId}
@@ -271,6 +292,7 @@ export default function HistoriasPage() {
               ...veterinarios.map((v) => ({ value: v.id, label: v.nombre })),
             ]}
           />
+          </div>
         </div>
 
         {historiasQuery.isError ? (
@@ -284,7 +306,7 @@ export default function HistoriasPage() {
           </div>
         ) : null}
 
-        <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card">
+        <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card" {...gestoFiltros}>
           {historiasQuery.isLoading ? (
             <div className="flex flex-col gap-1 p-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -309,7 +331,65 @@ export default function HistoriasPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <ul className="flex flex-col gap-2 p-2.5 lg:hidden">
+              {historiasRows.map((row) => {
+                const destino = row.mascotaId ? `/pacientes/${row.mascotaId}/historial?historiaId=${row.id}` : null
+                const contenido = (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold text-foreground">{row.paciente}</p>
+                        <p className="truncate text-sm text-muted-foreground">{row.tutor}</p>
+                      </div>
+                      <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{row.fecha}</span>
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-sm font-medium text-foreground">{row.motivo || 'Sin motivo'}</p>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{row.diagnostico || 'Sin diagnóstico'}</p>
+                    {row.faltantes.length ? (
+                      <p className="mt-1.5 text-sm text-warning">Falta {row.faltantes.join(', ')}</p>
+                    ) : null}
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                      <span className="min-w-0 truncate">
+                        {row.profesional}
+                        {row.profesionalRetirado ? ' · ya no está en el equipo' : ''}
+                      </span>
+                      <span className="shrink-0">Control: {row.proximaConsulta}</span>
+                    </div>
+                    {destino ? (
+                      <span
+                        className={cn(
+                          'mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold',
+                          row.bloqueada ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'
+                        )}
+                      >
+                        {row.bloqueada ? 'Ver' : 'Continuar'}
+                      </span>
+                    ) : null}
+                  </>
+                )
+                const acciones = destino
+                  ? [
+                      { key: 'abrir', label: row.bloqueada ? 'Ver' : 'Continuar', icon: ExternalLink, tono: 'primary', onClick: () => navigate(destino) },
+                      { key: 'ficha', label: 'Ficha', icon: FolderOpen, tono: 'neutro', onClick: () => navigate(`/pacientes/${row.mascotaId}/historial`) },
+                    ]
+                  : []
+                return (
+                  <li key={row.id}>
+                    <FilaDeslizable acciones={acciones} className="rounded-xl border border-border bg-background">
+                      {destino ? (
+                        <Link to={destino} className={cn('block rounded-xl bg-background p-3 active:translate-y-px', FOCO)}>
+                          {contenido}
+                        </Link>
+                      ) : (
+                        <div className="rounded-xl bg-background p-3">{contenido}</div>
+                      )}
+                    </FilaDeslizable>
+                  </li>
+                )
+              })}
+            </ul>
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[860px] text-sm">
                 <thead>
                   <tr className="text-left text-[13px] text-muted-foreground">
@@ -367,6 +447,7 @@ export default function HistoriasPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 bg-muted px-5 py-4">
@@ -397,6 +478,7 @@ export default function HistoriasPage() {
           </div>
         </section>
       </div>
+      </TirarParaRefrescar>
     </AdminShell>
   )
 }

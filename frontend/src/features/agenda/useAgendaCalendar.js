@@ -222,7 +222,11 @@ export function useAgendaCalendar({
     [fechaBase, view, desde, hasta]
   )
 
+  // Tirar para refrescar en el celular: vuelve a pedir citas y bloqueos.
+  const refrescar = () => Promise.all([citasQuery.refetch(), disponibilidadQuery.refetch()])
+
   return {
+    refrescar,
     fechaBase,
     diasVisibles,
     tituloRango,

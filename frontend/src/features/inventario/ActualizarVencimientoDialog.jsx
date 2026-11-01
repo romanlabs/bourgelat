@@ -24,7 +24,7 @@ const formatNumber = (valor) =>
   new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(valor || 0))
 
 const fieldClass = (hasError) =>
-  `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-12 rounded-lg border bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
     hasError ? 'border-danger' : 'border-input'
   }`
 const labelClass = 'text-[13px] font-semibold text-muted-foreground'
@@ -156,7 +156,7 @@ function ContenidoDialogo({ item, tipo, aviso, onGuardado, onClose }) {
             <button
               type="button"
               onClick={() => setValue('cantidadVencida', stock, { shouldValidate: true })}
-              className="h-11 shrink-0 border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
+              className="h-12 lg:h-11 shrink-0 border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
             >
               Todo ({formatNumber(stock)})
             </button>
@@ -207,14 +207,14 @@ function ContenidoDialogo({ item, tipo, aviso, onGuardado, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="h-11 border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+            className="h-12 lg:h-11 border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="h-11 bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            className="h-12 lg:h-11 bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
           >
             {mutation.isPending ? 'Guardando…' : 'Guardar'}
           </button>

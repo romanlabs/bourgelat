@@ -4,8 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { toast } from 'sonner'
 import {
-  Camera, ChevronLeft, HeartPulse, Loader2, Mail, PawPrint, Phone, Plus, Scissors, Search,
+  Camera, ChevronLeft, HeartPulse, Loader2, Mail, PawPrint, Phone, Plus, Scissors, Search, X,
 } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { antecedentesApi } from '@/features/antecedentes/antecedentesApi'
 import { PesoEnElTiempo, VacunasYDesparasitacion } from '@/features/pacientes/FichaSalud'
@@ -30,6 +31,9 @@ import { etiquetaEspecie } from '@/lib/especies'
 import { formatearEdad } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { formatearCelular } from '@/lib/celular'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
 
 const TABS = [
   { id: 'historia', label: 'Consultas', titulo: 'Historia clínica' },
@@ -98,7 +102,11 @@ export default function PacienteHistorialPage() {
   const [activeTab, setActiveTab] = useState(() =>
     location.state?.resaltar?.tipo === 'examen' ? 'examenes' : 'historia'
   )
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const esCelular = useEsCelular()
+  // «Nueva consulta» desde la lista de pacientes llega con ?nueva=consulta y abre el formulario al montar.
+  const [drawerOpen, setDrawerOpen] = useState(
+    () => searchParams.get('nueva') === 'consulta' && tieneHistorias && puedeEditarHistorias
+  )
   const [historiaToEdit, setHistoriaToEdit] = useState(null)
   const [estiloDrawerOpen, setEstiloDrawerOpen] = useState(false)
   const [registroEstiloToEdit, setRegistroEstiloToEdit] = useState(null)
@@ -182,6 +190,8 @@ export default function PacienteHistorialPage() {
   const puedeCambiarFoto = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar', 'veterinario'])
   const fotoInputRef = useRef(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  // Visor de la foto a pantalla completa (celular: se abre tocando la foto).
+  const [verFoto, setVerFoto] = useState(false)
 
   const mascota = mascotaQuery.data?.mascota
   const historias = historiasQuery.data?.historias || []
@@ -235,6 +245,43 @@ export default function PacienteHistorialPage() {
     setHistoriaToEdit(historia)
     setDrawerOpen(true)
   }, [historiaIdParam, historiasQuery.data, historiasQuery.isPending, setSearchParams])
+
+  // Limpia ?nueva=consulta para no reabrir el formulario al volver.
+  const pideNuevaConsulta = searchParams.get('nueva') === 'consulta'
+  useEffect(() => {
+    if (pideNuevaConsulta) setSearchParams({}, { replace: true })
+  }, [pideNuevaConsulta, setSearchParams])
+
+  // Deslizar con el dedo cambia de pestaña (Consultas, Exámenes, Estilos).
+  // No cuenta dentro de tablas o bloques con scroll horizontal.
+  const irPestana = (delta) => {
+    const siguiente = TABS[TABS.findIndex((tab) => tab.id === activeTab) + delta]
+    if (siguiente) setActiveTab(siguiente.id)
+  }
+  const deslizar = useDeslizarHorizontal({
+    onIzquierda: () => irPestana(1),
+    onDerecha: () => irPestana(-1),
+    activo: esCelular,
+  })
+  const propsDeslizar = esCelular
+    ? {
+        ...deslizar,
+        onTouchStart: (event) => {
+          if (event.target.closest?.('.overflow-x-auto, table, [data-no-deslizar-pestana]')) return
+          deslizar.onTouchStart?.(event)
+        },
+      }
+    : {}
+
+  const refrescar = async () => {
+    await Promise.all([
+      mascotaQuery.refetch(),
+      historiasQuery.refetch(),
+      antecedentesQuery.refetch(),
+      registrosQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: ['examenes-laboratorio'] }),
+    ])
+  }
 
   const handleNuevaConsulta = () => {
     setHistoriaToEdit(null)
@@ -335,11 +382,12 @@ export default function PacienteHistorialPage() {
       hidePageHeader
       hideSearch
     >
-      <div className="flex flex-col gap-6">
+      <TirarParaRefrescar onRefrescar={refrescar}>
+      <div className="flex flex-col gap-4 lg:gap-6">
         <div className="flex items-center justify-between gap-3 lg:pt-6">
           <Link
             to="/pacientes"
-            className={`inline-flex min-h-8 items-center gap-1.5 rounded text-sm font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded text-sm lg:min-h-8 font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
           >
             <ChevronLeft className="h-4 w-4" />
             Volver a pacientes
@@ -354,6 +402,30 @@ export default function PacienteHistorialPage() {
             No fue posible cargar los datos del paciente.
           </div>
         )}
+        {mascota?.fotoPerfil ? (
+          <Dialog.Root open={verFoto} onOpenChange={setVerFoto}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/95" />
+              <Dialog.Content
+                aria-describedby={undefined}
+                className="fixed inset-0 z-50 flex items-center justify-center p-3 outline-none"
+                onClick={() => setVerFoto(false)}
+              >
+                <Dialog.Title className="sr-only">Foto de {mascota.nombre}</Dialog.Title>
+                <img src={mascota.fotoPerfil} alt={`Foto de ${mascota.nombre}`} className="max-h-full max-w-full rounded-xl object-contain" />
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    aria-label="Cerrar"
+                    className={`absolute right-3 top-[calc(0.75rem+env(safe-area-inset-top))] inline-flex h-11 w-11 items-center justify-center rounded-full bg-card text-foreground ${FOCO}`}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </Dialog.Close>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        ) : null}
         {mascota && (
           <section
             aria-labelledby="ficha-nombre"
@@ -362,10 +434,26 @@ export default function PacienteHistorialPage() {
             <div
               role="img"
               aria-label={`Foto de ${mascota.nombre}`}
-              className="relative flex h-[250px] shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
+              // Celular: 4:3 y la foto completa (sin recorte) sobre una copia
+              // desenfocada; recortada en una franja baja solo se veía un pedazo.
+              className="relative flex aspect-[4/3] max-h-[52vh] w-full shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:aspect-auto sm:h-[320px] lg:h-auto lg:max-h-none lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
             >
               {mascota.fotoPerfil ? (
-                <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                <>
+                  <img
+                    src={mascota.fotoPerfil}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-2xl lg:hidden"
+                  />
+                  <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-contain lg:object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setVerFoto(true)}
+                    aria-label={`Ver la foto de ${mascota.nombre} completa`}
+                    className={`absolute inset-0 lg:hidden ${FOCO}`}
+                  />
+                </>
               ) : (
                 <PawPrint className="h-40 w-40 text-brand-foreground/25" strokeWidth={1.4} />
               )}
@@ -385,33 +473,37 @@ export default function PacienteHistorialPage() {
                     onClick={() => fotoInputRef.current?.click()}
                     disabled={subiendoFoto || propsAccion.disabled}
                     title={propsAccion.title}
-                    className={`absolute bottom-4 left-4 inline-flex h-10 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 ${FOCO}`}
+                    aria-label={subiendoFoto ? 'Subiendo foto' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    // Celular: botón redondo en la esquina para no tapar la foto.
+                    className={`absolute bottom-3 right-3 z-10 inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full bg-card/95 text-sm font-semibold text-foreground shadow-dropdown transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 lg:bottom-4 lg:left-4 lg:right-auto lg:w-auto lg:justify-start lg:rounded-lg lg:bg-card lg:px-4 lg:shadow-none ${FOCO}`}
                   >
-                    {subiendoFoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                    {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    {subiendoFoto ? <Loader2 className="h-5 w-5 animate-spin lg:h-4 lg:w-4" /> : <Camera className="h-5 w-5 lg:h-4 lg:w-4" />}
+                    <span className="hidden lg:inline">
+                      {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
+                    </span>
                   </button>
                 </>
               ) : null}
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col justify-between gap-5 px-5 py-6 sm:px-9 sm:py-7">
+            <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 px-4 py-4 sm:gap-5 sm:px-9 sm:py-7">
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div className="min-w-0">
                   <h1
                     id="ficha-nombre"
-                    className="text-5xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[64px]"
+                    className="text-4xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[64px]"
                   >
                     {mascota.nombre}
                   </h1>
                   {subtitulo ? <p className="mt-2 text-base opacity-85">{subtitulo}</p> : null}
                 </div>
 
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex w-full flex-wrap gap-2.5 sm:w-auto">
                   {tieneHistorias && puedeEditarHistorias && (
                     <button
                       type="button"
                       onClick={handleNuevaConsulta}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:brightness-95 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:brightness-95 active:translate-y-px ${FOCO}`}
                     >
                       <Plus className="h-4 w-4" />
                       Nueva consulta
@@ -421,7 +513,7 @@ export default function PacienteHistorialPage() {
                     <button
                       type="button"
                       onClick={handleNuevoRegistroEstilo}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
                     >
                       <Scissors className="h-4 w-4" />
                       Nuevo servicio de estilos
@@ -431,7 +523,7 @@ export default function PacienteHistorialPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/antecedentes?mascotaId=${mascotaId}`)}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
                     >
                       <HeartPulse className="h-4 w-4" />
                       Antecedentes
@@ -459,8 +551,8 @@ export default function PacienteHistorialPage() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Historia, estilos y exámenes */}
-          <section aria-labelledby="ficha-secciones" className="min-w-0 rounded-2xl bg-card p-5 sm:p-6">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <section aria-labelledby="ficha-secciones" className="min-w-0 rounded-2xl bg-card p-3 sm:p-6" {...propsDeslizar}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-5 sm:gap-4">
               <div>
                 <h2 id="ficha-secciones" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
                   {TABS.find((tab) => tab.id === activeTab)?.titulo}
@@ -473,7 +565,7 @@ export default function PacienteHistorialPage() {
                   </p>
                 ) : null}
               </div>
-              <div role="tablist" aria-label="Secciones de la ficha" className="flex flex-wrap gap-1 rounded-[10px] bg-muted p-1">
+              <div role="tablist" aria-label="Secciones de la ficha" className="-mx-1 flex w-full gap-1 overflow-x-auto rounded-[10px] bg-muted p-1 sm:mx-0 sm:w-auto">
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
@@ -481,7 +573,7 @@ export default function PacienteHistorialPage() {
                     role="tab"
                     aria-selected={activeTab === tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`h-9 rounded-[7px] px-3.5 text-[13px] transition ${FOCO} ${
+                    className={`h-11 shrink-0 whitespace-nowrap rounded-[7px] px-4 text-sm transition sm:h-9 sm:px-3.5 sm:text-[13px] ${FOCO} ${
                       activeTab === tab.id
                         ? 'bg-card font-semibold text-foreground'
                         : 'font-medium text-muted-foreground hover:text-foreground'
@@ -546,12 +638,12 @@ export default function PacienteHistorialPage() {
           {/* Columna lateral: tutor y accesos */}
           <div className="flex min-w-0 flex-col gap-6">
             {mascota?.Propietario ? (
-              <section aria-labelledby="ficha-tutor" className="flex flex-col gap-2.5 rounded-2xl bg-secondary p-6 text-secondary-foreground">
+              <section aria-labelledby="ficha-tutor" className="flex flex-col gap-2.5 rounded-2xl bg-secondary p-4 text-secondary-foreground sm:p-6">
                 <p className="text-[13px] text-muted-foreground">Tutor</p>
                 <h2 id="ficha-tutor" className="-mt-1.5 text-lg font-semibold">{mascota.Propietario.nombre}</h2>
                 <div className="flex flex-col gap-1 text-[15px] leading-6">
                   {mascota.Propietario.telefono ? (
-                    <a href={`tel:${mascota.Propietario.telefono}`} className={`inline-flex items-center gap-2 self-start rounded hover:text-primary ${FOCO}`}>
+                    <a href={`tel:${mascota.Propietario.telefono}`} className={`inline-flex min-h-11 items-center gap-2 self-start rounded hover:text-primary lg:min-h-0 ${FOCO}`}>
                       <Phone className="h-4 w-4" />
                       {formatearCelular(mascota.Propietario.telefono)}
                     </a>
@@ -569,7 +661,7 @@ export default function PacienteHistorialPage() {
             ) : null}
 
             {mascota?.observaciones ? (
-              <section aria-labelledby="ficha-notas" className="flex flex-col gap-2 rounded-2xl bg-card p-6">
+              <section aria-labelledby="ficha-notas" className="flex flex-col gap-2 rounded-2xl bg-card p-4 sm:p-6">
                 <h2 id="ficha-notas" className="text-lg font-semibold text-foreground">Notas del paciente</h2>
                 <p className="whitespace-pre-line text-[15px] leading-6 text-foreground">{mascota.observaciones}</p>
               </section>
@@ -589,6 +681,7 @@ export default function PacienteHistorialPage() {
           </div>
         </div>
       </div>
+      </TirarParaRefrescar>
 
       {/* Drawer de historia clínica */}
       {mascotaParaDrawer && (

@@ -21,6 +21,7 @@ import {
   pesosCompactos,
   segmentado,
   tarjeta,
+  useEsCelular,
   usePeriodoAnalisis,
 } from '@/features/finanzas/finanzasUi'
 import {
@@ -47,7 +48,7 @@ const TOP_CATEGORIAS = 5
 
 function TablaSerie({ filas, etiqueta, columnaTramo, conGastos }) {
   return (
-    <div className="max-h-[280px] overflow-y-auto rounded-xl border border-border">
+    <div className="max-h-[280px] overflow-auto rounded-xl border border-border lg:overflow-y-auto">
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-card text-left text-[13px] text-muted-foreground">
           <tr>
@@ -209,15 +210,15 @@ function CobradoAcumulado({ serie, serieAnterior, nombreAnterior, ticketPromedio
         </ChartContainer>
       )}
 
-      <dl className="grid grid-cols-1 gap-3 border-t border-border pt-4 sm:grid-cols-3">
+      <dl className="grid grid-cols-3 gap-2 border-t border-border pt-4 sm:gap-3">
         {[
           ['Promedio por día con ventas', formatCurrency(lectura.promedioDiaConVentas)],
           ['Venta promedio', formatCurrency(ticketPromedio)],
           ['Días con ventas', formatNumber(lectura.diasConVentas)],
         ].map(([dt, dd]) => (
           <div key={dt} className="flex flex-col gap-0.5">
-            <dt className="text-[13px] text-muted-foreground">{dt}</dt>
-            <dd className="text-lg font-semibold text-card-foreground">{dd}</dd>
+            <dt className="text-[12px] leading-tight text-muted-foreground sm:text-[13px]">{dt}</dt>
+            <dd className="text-base font-semibold tabular-nums text-card-foreground sm:text-lg">{dd}</dd>
           </div>
         ))}
       </dl>
@@ -318,6 +319,8 @@ const MARCAS = [
 
 function PeriodoPorMes({ serie, destacados, onAbrirMes }) {
   const [vista, setVista] = useState('meses')
+  // A 360px doce cifras sobre las barras se pisan: en celular solo el tooltip.
+  const esCelular = useEsCelular()
   const pasados = useMemo(() => hastaHoy(serie), [serie])
   const mayor = Math.max(1, ...serie.map((f) => f.ingresos))
   // Un mes sin movimiento no tiene barra: no es «ganancia cero».
@@ -373,7 +376,7 @@ function PeriodoPorMes({ serie, destacados, onAbrirMes }) {
               dataKey="periodo"
               tickLine={false}
               axisLine={false}
-              interval={0}
+              interval={esCelular ? 'preserveStartEnd' : 0}
               tickMargin={8}
               tickFormatter={(periodo) => etiquetaPeriodo(periodo).split(" ")[0]}
               className="capitalize"
@@ -414,7 +417,7 @@ function PeriodoPorMes({ serie, destacados, onAbrirMes }) {
               }
             />
             <Bar dataKey="ganancia" name="positivo" shape={<BarraGanancia />} maxBarSize={44}>
-              <LabelList dataKey="ganancia" content={<EtiquetaGanancia />} />
+              {esCelular ? null : <LabelList dataKey="ganancia" content={<EtiquetaGanancia />} />}
             </Bar>
           </BarChart>
         </ChartContainer>
@@ -560,7 +563,25 @@ function VentasRecientes({ facturas, cargando, onVerHistorial }) {
         ) : null}
       </div>
       {facturas.length ? (
-        <div className="overflow-x-auto">
+        <>
+        {/* Celular: una fila por venta, sin tabla. */}
+        <ul className="divide-y divide-border border-t border-border lg:hidden">
+          {facturas.map((f) => (
+            <li key={f.id} className="flex items-start justify-between gap-3 px-5 py-3">
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-card-foreground">{f.numero}</span>
+                  <StatusPill tone={getEstadoTone(f.estado)}>{ESTADO_LABELS[f.estado] || f.estado}</StatusPill>
+                </span>
+                <span className="truncate text-[13px] text-muted-foreground">
+                  {f.propietario?.nombre || 'Mostrador'} · <span className="tabular-nums">{formatShortDate(f.fecha)}</span>
+                </span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-card-foreground">{formatCurrency(f.total)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="text-left text-[13px] text-muted-foreground">
               <tr>
@@ -592,6 +613,7 @@ function VentasRecientes({ facturas, cargando, onVerHistorial }) {
             </tbody>
           </table>
         </div>
+        </>
       ) : (
         <p className="px-5 pb-6 pt-2 text-sm text-muted-foreground sm:px-6">
           {cargando ? 'Cargando…' : 'Aún no hay ventas en este periodo.'}
@@ -698,7 +720,7 @@ export default function ResumenFinanzasPanel({ onVerCuentas, onVerMedios }) {
           <div aria-hidden className="h-[76px] w-80 max-w-full animate-pulse rounded-2xl bg-card" />
         ) : (
           <header className="flex flex-col gap-2">
-            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground max-lg:tabular-nums sm:text-5xl">
               {formatCurrency(resumen.ingresos)}
               <span className="ml-3 text-xl font-medium tracking-[-0.01em] text-muted-foreground sm:text-2xl">
                 cobrados en {nombrePeriodo}

@@ -17,9 +17,13 @@ export const pesosCompactos = (valor) => `${Number(valor) < 0 ? '−' : ''}$${co
 export const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
 export const segmentado = 'flex gap-1 rounded-lg bg-secondary p-1'
 export const botonSegmento = (activo) =>
-  `h-8 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-11 rounded-md px-3 text-[13px] transition lg:h-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
     activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
   }`
+
+// ¿Pantalla de celular (por debajo de lg)? Hook compartido; se reexporta aquí para
+// los paneles que ya lo importan de este archivo.
+export { useEsCelular } from '@/lib/useEsCelular'
 
 // Estado del periodo elegido: el atajo y sus valores, el rango que piden los
 // reportes y cómo se nombra en el titular.

@@ -57,7 +57,7 @@ export default function VidaEnLaClinica({ historias, antecedentes, mascota, carg
   const hoy = hoyLocal()
 
   return (
-    <section aria-labelledby="ant-vida" className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground">
+    <section aria-labelledby="ant-vida" className="flex flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground lg:p-6">
       <h2 id="ant-vida" className="text-lg font-semibold tracking-[-0.02em]">
         Su vida en la clínica
       </h2>
@@ -70,8 +70,9 @@ export default function VidaEnLaClinica({ historias, antecedentes, mascota, carg
       ) : (
         <ol className="flex flex-col">
           {visibles.map((evento, i) => (
-            <li key={`${evento.fecha}-${i}`} className="grid grid-cols-[92px_20px_minmax(0,1fr)] gap-x-3">
-              <span className="whitespace-nowrap pt-0.5 text-right text-[13px] tabular-nums opacity-75">
+            <li key={`${evento.fecha}-${i}`} className="grid grid-cols-[20px_minmax(0,1fr)] gap-x-3 lg:grid-cols-[92px_20px_minmax(0,1fr)]">
+              {/* Celular: la fecha va encima del evento para dejarle todo el ancho al texto. */}
+              <span className="hidden whitespace-nowrap pt-0.5 text-right text-[13px] tabular-nums opacity-75 lg:block">
                 {evento.fecha === hoy ? 'Hoy' : fechaEvento(evento.fecha)}
               </span>
               <span className="flex flex-col items-center" aria-hidden="true">
@@ -83,7 +84,10 @@ export default function VidaEnLaClinica({ historias, antecedentes, mascota, carg
                 {i < visibles.length - 1 ? <span className="w-px flex-1 bg-primary-foreground/25" /> : null}
               </span>
               <span className="flex min-w-0 flex-col gap-0.5 pb-5">
-                <span className={`text-[15px] font-semibold ${evento.tono === 'alerta' ? 'text-brand' : ''}`}>
+                <span className="text-[12px] font-medium tabular-nums opacity-75 lg:hidden">
+                  {evento.fecha === hoy ? 'Hoy' : fechaEvento(evento.fecha)}
+                </span>
+                <span className={`break-words text-[15px] font-semibold ${evento.tono === 'alerta' ? 'text-brand' : ''}`}>
                   {evento.titulo}
                 </span>
                 {evento.detalle ? <span className="text-sm opacity-75">{evento.detalle}</span> : null}
@@ -96,7 +100,7 @@ export default function VidaEnLaClinica({ historias, antecedentes, mascota, carg
         <button
           type="button"
           onClick={() => setVerTodo((v) => !v)}
-          className={`inline-flex h-10 items-center self-start rounded-lg bg-primary-foreground/15 px-4 text-sm font-semibold transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
+          className={`inline-flex h-11 items-center lg:h-10 self-start rounded-lg bg-primary-foreground/15 px-4 text-sm font-semibold transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
         >
           {verTodo ? 'Ver menos' : `Ver todo (${eventos.length})`}
         </button>

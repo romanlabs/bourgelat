@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { MessageCircle, Phone, Search, Wallet } from 'lucide-react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber, formatShortDate } from '@/features/dashboard/dashboardUtils'
 import { useCuentasPorCobrar } from '@/features/finanzas/useAdministracion'
@@ -24,7 +25,7 @@ const TONOS = {
   danger: { chip: 'bg-danger-soft text-danger', barra: 'bg-danger' },
 }
 const segmento = (activo) =>
-  `h-8 rounded-md px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+  `h-11 shrink-0 whitespace-nowrap rounded-md px-3 text-[13px] transition lg:h-8 lg:shrink lg:whitespace-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
     activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
   }`
 
@@ -79,6 +80,28 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
       data-resaltar-id={claveCliente(cliente)}
       className={cn('border-t border-border first:border-t-0', TRANSICION_RESALTADO, resaltado && CLASE_RESALTADO)}
     >
+      {/* Atajos con el dedo; Llamar, WhatsApp y Registrar abono están también al abrir el cliente. */}
+      <FilaDeslizable
+        redondeo="rounded-none"
+        acciones={[
+          ...(cliente.telefono
+            ? [{ key: 'llamar', label: 'Llamar', icon: Phone, tono: 'info', onClick: () => { window.location.href = `tel:${cliente.telefono}` } }]
+            : []),
+          ...(whatsapp
+            ? [{ key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, tono: 'primary', onClick: () => window.open(whatsapp, '_blank', 'noopener,noreferrer') }]
+            : []),
+          {
+            key: 'abonar',
+            label: 'Abonar',
+            icon: Wallet,
+            tono: 'neutro',
+            onClick: () => {
+              setAbierto(true)
+              if (cliente.facturas.length === 1) setAbonando(cliente.facturas[0].id)
+            },
+          },
+        ]}
+      >
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
@@ -104,6 +127,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
           <span aria-hidden className={`text-muted-foreground transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
         </span>
       </button>
+      </FilaDeslizable>
 
       {abierto ? (
         <div className="flex flex-col gap-3 bg-muted/50 px-5 pb-5 pt-1 sm:px-6">
@@ -134,7 +158,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
                       <button
                         type="button"
                         onClick={() => setAbonando(f.id)}
-                        className="inline-flex h-9 items-center rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        className="inline-flex h-11 items-center rounded-lg bg-primary px-3.5 text-[13px] lg:h-9 font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         Registrar abono
                       </button>
@@ -149,11 +173,11 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
           </ul>
           {cliente.telefono ? (
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              <a href={`tel:${cliente.telefono}`} className="font-semibold text-primary hover:underline">
+              <a href={`tel:${cliente.telefono}`} className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline lg:min-h-0">
                 Llamar al {formatearCelular(cliente.telefono)}
               </a>
               {whatsapp ? (
-                <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                <a href={whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline lg:min-h-0">
                   Escribirle por WhatsApp
                 </a>
               ) : null}
@@ -278,7 +302,7 @@ export default function PorCobrarPanel() {
     <div className="space-y-5">
       {data ? (
         <header className="flex flex-col gap-2">
-          <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+          <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground max-lg:tabular-nums sm:text-5xl">
             {formatCurrency(total)}
             <span className="ml-3 text-xl font-medium tracking-[-0.01em] text-muted-foreground sm:text-2xl">por cobrar</span>
           </p>
@@ -310,7 +334,7 @@ export default function PorCobrarPanel() {
               {tramo ? TRAMOS_ANTIGUEDAD.find((t) => t.id === tramo)?.label : 'Quién debe'}
             </h2>
             {(data?.totalFacturas || 0) > 1 ? (
-            <div role="group" aria-label="Ordenar" className="flex gap-1 rounded-lg bg-secondary p-1">
+            <div role="group" aria-label="Ordenar" className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-secondary p-1 [scrollbar-width:none] lg:overflow-visible [&::-webkit-scrollbar]:hidden">
               {ORDENES.map(([id, label]) => (
                 <button key={id} type="button" aria-pressed={orden === id} onClick={() => setOrden(id)} className={segmento(orden === id)}>
                   {label}
@@ -321,7 +345,7 @@ export default function PorCobrarPanel() {
           </div>
           {clientes.length > 3 ? (
             <div className="px-5 pb-3 sm:px-6">
-              <label className="flex h-10 items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+              <label className="flex h-11 items-center gap-2 rounded-lg border border-input px-3 lg:h-10 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
                 <Search aria-hidden className="h-4 w-4" />
                 <input
                   type="search"
@@ -329,7 +353,7 @@ export default function PorCobrarPanel() {
                   onChange={(e) => setBuscar(e.target.value)}
                   placeholder="Buscar cliente o teléfono"
                   aria-label="Buscar cliente o teléfono"
-                  className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none lg:text-sm"
                 />
               </label>
             </div>

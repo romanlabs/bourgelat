@@ -30,7 +30,7 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
+  'h-12 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none lg:h-11 lg:text-sm transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60'
 
 const mapRegistroToForm = (registro) => ({
   tipoCorte: registro?.tipoCorte || '',
@@ -138,9 +138,9 @@ export default function RegistroEstiloFormDrawer({
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[520px] ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
+        <div className="flex items-start justify-between gap-4 px-4 pb-2 pt-4 lg:px-6 lg:pb-3 lg:pt-6">
           <div>
-            <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
+            <p className="text-xl font-semibold lg:text-[22px] leading-tight tracking-[-0.02em] text-foreground">
               {registroToEdit ? 'Registro de estilos' : 'Nuevo servicio de estilos'}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -151,14 +151,14 @@ export default function RegistroEstiloFormDrawer({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary lg:h-10 lg:w-10 text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4">
           {bloqueado && (
             <div className="mb-4 flex items-start gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm leading-6 text-warning">
               <Lock className="mt-0.5 h-4 w-4 shrink-0" />
@@ -168,7 +168,7 @@ export default function RegistroEstiloFormDrawer({
 
           <form
             id="registro-estilo-drawer-form"
-            className="grid gap-4"
+            className="grid gap-3.5 lg:gap-4"
             onSubmit={handleSubmit(handleFormSubmit)}
           >
             <div className="grid gap-1.5">
@@ -198,7 +198,7 @@ export default function RegistroEstiloFormDrawer({
                     variant="field"
                     id="re-estilista"
                     aria-label="Estilista"
-                    className="h-11"
+                    className="h-12 text-base lg:h-11 lg:text-sm"
                     placeholder={equipoQuery.isPending ? 'Cargando equipo…' : 'Selecciona un estilista'}
                     disabled={bloqueado}
                     value={field.value}
@@ -210,7 +210,7 @@ export default function RegistroEstiloFormDrawer({
               {errors.estilistaId && <p className="text-[13px] text-danger">{errors.estilistaId.message}</p>}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3.5 sm:grid-cols-2 lg:gap-4">
               <div className="grid gap-1.5">
                 <label htmlFor="re-fechaServicio" className="text-[13px] font-medium text-muted-foreground">
                   Fecha del servicio *
@@ -248,7 +248,7 @@ export default function RegistroEstiloFormDrawer({
                 rows={4}
                 disabled={bloqueado}
                 placeholder="Notas sobre el servicio, comportamiento del paciente, recomendaciones..."
-                className="rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-input bg-card px-3 py-3 text-base lg:text-smtext-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                 {...register('observaciones')}
               />
             </div>
@@ -256,7 +256,7 @@ export default function RegistroEstiloFormDrawer({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-wrap gap-2.5 bg-card px-6 pb-6 pt-3">
+        <div className="flex flex-wrap gap-2.5 border-t border-border bg-card px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 lg:border-0 lg:px-6 lg:pb-6">
           {!bloqueado && (
             <button
               type="submit"

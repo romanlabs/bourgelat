@@ -270,7 +270,21 @@ export function useFinanzasFacturacion({
   }
 
   const addProductToInvoice = (product) => {
-    setInvoiceForm((curr) => ({
+    setInvoiceForm((curr) => {
+      // Si ya está en la cuenta se suma una unidad: dos toques rápidos al «+»
+      // (o Enter / escáner repetidos) no deben abrir líneas duplicadas.
+      const existente = curr.items.find((item) => item.tipo === 'producto' && item.productoId === product.id)
+      if (existente) {
+        const tope = product.stock ?? existente.stock
+        if (tope != null && (Number(existente.cantidad) || 0) >= Number(tope)) return curr
+        return {
+          ...curr,
+          items: curr.items.map((item) =>
+            item.id === existente.id ? { ...item, cantidad: String((Number(item.cantidad) || 0) + 1) } : item
+          ),
+        }
+      }
+      return {
       ...curr,
       items: [
         ...curr.items,
@@ -287,7 +301,8 @@ export function useFinanzasFacturacion({
           fechaVencimiento: product.fechaVencimiento || null,
         },
       ],
-    }))
+      }
+    })
   }
 
   /**

@@ -15,6 +15,8 @@ import {
 import AgendaCalendar from '@/features/agenda/AgendaCalendar'
 import { CitaDetailDialog } from '@/features/agenda/CitaDetailDialog'
 import { AvisoSinVeterinarios } from '@/features/agenda/AvisoSinVeterinarios'
+import { AgendaMovil } from '@/features/agenda/AgendaMovil'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -65,14 +67,14 @@ const formatTimeRange = (horaInicio, horaFin) => `${horaInicio?.slice(0, 5)} - $
 // Pestañas Agenda / Recepción / Analítica a la derecha del título.
 function AgendaTabs({ activeTab, onTabChange }) {
   return (
-    <div role="group" aria-label="Sección de la agenda" className="flex items-center gap-1 rounded-xl bg-muted p-1">
+    <div role="group" aria-label="Sección de la agenda" className="flex w-full items-center gap-1 rounded-xl bg-muted p-1 lg:w-auto">
       {TABS.map((tab) => (
         <button
           key={tab.id}
           type="button"
           aria-pressed={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`h-9 rounded-lg px-2.5 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`h-11 flex-1 rounded-lg px-2.5 text-sm transition lg:h-9 lg:flex-none lg:text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             activeTab === tab.id
               ? 'bg-card font-semibold text-foreground'
               : 'font-medium text-muted-foreground hover:text-foreground'
@@ -121,12 +123,21 @@ export default function AgendaPage() {
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
+  // Atajos del celular: abrir el detalle ya en «Reprogramar» o con «Cancelada» elegida.
+  const [modoDetalle, setModoDetalle] = useState({})
+  const abrirDetalle = useCallback((cita, modo = {}) => {
+    setModoDetalle(modo)
+    setSelectedAppointment(cita)
+  }, [])
   // «Nueva cita» desde otras pantallas llega con ?nueva=1 y abre el formulario.
   const [recepcionPrefill, setRecepcionPrefill] = useState(() =>
     new URLSearchParams(window.location.search).get('nueva') ? { fecha: hoyLocal() } : null
   )
   const [resumenCalendario, setResumenCalendario] = useState(null)
   const [calendarToolbar, setCalendarToolbar] = useState(null)
+  // Bajo lg la agenda es una lista por día (AgendaMovil); el calendario por horas queda en escritorio.
+  const esEscritorio = useMediaQuery('(min-width: 1024px)')
+  const agendaMovil = activeTab === 'agenda' && !esEscritorio
 
   const rolPermitido = canAccessModule(usuario, 'agenda')
   // Todos los planes incluyen citas y reportes operativos.
@@ -255,7 +266,8 @@ export default function AgendaPage() {
   }
 
   // El encabezado dice qué se está viendo: el rango del calendario y cuántas citas trae.
-  const enCalendario = activeTab === 'agenda' && vistaAgenda === 'calendario' && resumenCalendario
+  const enCalendario =
+    activeTab === 'agenda' && (agendaMovil || vistaAgenda === 'calendario') && resumenCalendario
   // El año solo se muestra si no es el actual: «18 – 24 de octubre».
   const tituloRango = enCalendario
     ? resumenCalendario.titulo.replace(` de ${new Date().getFullYear()}`, '').replace(` ${new Date().getFullYear()}`, '')
@@ -272,7 +284,7 @@ export default function AgendaPage() {
       ? 'Cargando citas…'
       : resumenCalendario.total === 0
         ? 'Sin citas en este rango'
-        : `${resumenCalendario.total} ${resumenCalendario.total === 1 ? 'cita' : 'citas'} en este rango`
+        : `${resumenCalendario.total} ${resumenCalendario.total === 1 ? 'cita' : 'citas'} ${agendaMovil ? 'en la semana' : 'en este rango'}`
     : activeTab === 'recepcion'
       ? 'Llegadas, sala de espera e ingresos directos del día.'
       : activeTab === 'analitica'
@@ -283,7 +295,9 @@ export default function AgendaPage() {
     <AdminShell
       currentKey="agenda"
       compactHeader
-      titleAside={activeTab === 'agenda' && vistaAgenda === 'calendario' ? calendarToolbar : null}
+      // En el celular el encabezado es solo la fila de pestañas (más abajo): gana alto.
+      hidePageHeader={!esEscritorio}
+      titleAside={activeTab === 'agenda' && vistaAgenda === 'calendario' && !agendaMovil ? calendarToolbar : null}
       title={tituloAgenda}
       description={descripcionAgenda}
       actions={
@@ -293,7 +307,8 @@ export default function AgendaPage() {
             <button
               type="button"
               onClick={() => setRecepcionPrefill({ fecha: hoyLocal() })}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              // En la agenda del celular el botón va fijo abajo (AgendaMovil).
+              className={`${agendaMovil ? 'hidden' : 'inline-flex'} h-10 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
             >
               <Plus className="h-4 w-4" />
               Nueva cita
@@ -311,6 +326,12 @@ export default function AgendaPage() {
         />
       ) : (
         <div className="space-y-0">
+          {!esEscritorio ? (
+            <div className="mb-3">
+              <h1 className="sr-only">{tituloAgenda}</h1>
+              <AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            </div>
+          ) : null}
           {/* ── Banners de error — siempre visibles ── */}
           {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
@@ -337,7 +358,25 @@ export default function AgendaPage() {
           {/* ══════════════════════════════
               Tab: Agenda
           ══════════════════════════════ */}
-          {activeTab === 'agenda' && (
+          {agendaMovil && (
+            <AgendaMovil
+              veterinarioId={veterinarioId}
+              estado={estado}
+              enabled={rolPermitido && puedeVerAgenda}
+              puedeProgramar={puedeProgramar}
+              puedeGestionarEstado={puedeGestionarEstado}
+              puedeReprogramar={puedeReprogramar}
+              onCitaClick={abrirDetalle}
+              onAbrirDetalle={abrirDetalle}
+              onAccionEstado={(cita, nuevoEstado) =>
+                actualizarEstadoMutation.mutate({ citaId: cita.id, payload: { estado: nuevoEstado }, cita })
+              }
+              onNuevaCita={(fechaCita) => setRecepcionPrefill({ fecha: fechaCita })}
+              onResumenChange={setResumenCalendario}
+            />
+          )}
+
+          {activeTab === 'agenda' && !agendaMovil && (
             <div className="space-y-5">
               {/* KPI cards — solo en vista lista; el calendario aprovecha ese espacio para la grilla */}
               {vistaAgenda === 'lista' && (
@@ -525,7 +564,7 @@ export default function AgendaPage() {
                           render: (row) => (
                             <button
                               type="button"
-                              onClick={() => setSelectedAppointment(row.raw)}
+                              onClick={() => abrirDetalle(row.raw)}
                               className="inline-flex h-9 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               Gestionar
@@ -608,7 +647,7 @@ export default function AgendaPage() {
             (incluyeAnalitica ? (
               <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
             ) : (
-              <div className="pt-5">
+              <div className="lg:pt-5">
                 <FuncionNoIncluida
                   titulo="La analítica de agenda es del plan Clínica"
                   descripcion="Tu plan Esencial incluye la agenda completa. La analítica con tendencias, franjas horarias y carga del equipo está en el plan Clínica."
@@ -620,6 +659,8 @@ export default function AgendaPage() {
 
       <CitaDetailDialog
         cita={selectedAppointment}
+        seccionInicial={modoDetalle.seccion}
+        estadoInicial={modoDetalle.estado}
         open={Boolean(selectedAppointment)}
         onClose={() => setSelectedAppointment(null)}
         puedeGestionarEstado={puedeGestionarEstado}

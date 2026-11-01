@@ -25,7 +25,7 @@ export default function SearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel || placeholder}
         maxLength={120}
-        className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-10 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:appearance-none"
+        className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-10 text-base text-foreground lg:text-[15px] outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:appearance-none"
       />
       {cargando ? (
         <Loader2

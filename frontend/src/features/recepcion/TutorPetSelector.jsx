@@ -8,7 +8,7 @@ import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
 import { useBuscarPropietarios } from './useRecepcion'
 import { Select } from '@/components/ui/select'
-import { ESPECIE_OPCIONES_FORM } from '@/lib/especies'
+import { ESPECIE_OPCIONES_FORM, etiquetaEspecie } from '@/lib/especies'
 import { formatearCelular } from '@/lib/celular'
 
 const getErrorMessage = (error, fallback) =>
@@ -111,7 +111,7 @@ export function TutorPetSelector({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Crear tutor
@@ -123,18 +123,20 @@ export function TutorPetSelector({
           onChange={(event) => onOwnerSearchChange(event.target.value)}
           placeholder="Nombre, documento o teléfono"
           aria-label="Buscar tutor"
-          className="mt-3 h-11 w-full rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-3 h-12 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:text-[15px]"
         />
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2 lg:mt-4">
           {selectedOwner ? (
-            <div className="rounded-xl bg-success-soft px-4 py-3 text-sm text-foreground">
-              <p className="font-semibold text-foreground">{selectedOwner.nombre}</p>
-              <p className="mt-1">{formatearCelular(selectedOwner.telefono) || 'Sin teléfono principal'}</p>
+            <div className="flex items-center justify-between gap-3 rounded-xl bg-success-soft px-4 py-3 text-sm text-foreground lg:block">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-foreground">{selectedOwner.nombre}</p>
+                <p className="mt-1">{formatearCelular(selectedOwner.telefono) || 'Sin teléfono principal'}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => onSelectOwner(null)}
-                className="mt-2 rounded text-sm font-semibold text-success hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-success hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:mt-2 lg:h-auto lg:rounded lg:px-0"
               >
                 Cambiar tutor
               </button>
@@ -147,7 +149,7 @@ export function TutorPetSelector({
                   key={owner.id}
                   type="button"
                   onClick={() => onSelectOwner(owner)}
-                  className="flex w-full items-start justify-between rounded-xl bg-card px-3 py-3 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex min-h-14 w-full items-center justify-between gap-2 rounded-xl bg-card px-3 py-3 text-left transition-colors hover:bg-accent active:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0 lg:items-start"
                 >
                   <div>
                     <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
@@ -155,7 +157,7 @@ export function TutorPetSelector({
                       {formatearCelular(owner.telefono) || 'Sin teléfono principal'}
                     </p>
                   </div>
-                  <span className="text-[13px] font-semibold text-muted-foreground">
+                  <span className="hidden text-[13px] font-semibold text-muted-foreground sm:inline">
                     Seleccionar
                   </span>
                 </button>
@@ -168,7 +170,7 @@ export function TutorPetSelector({
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="ml-1 rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
               >
                 Crearlo ahora
               </button>
@@ -182,16 +184,53 @@ export function TutorPetSelector({
         </div>
       </div>
 
-      <Select
-        variant="field"
-        aria-label="Paciente"
-        className="h-11 disabled:bg-muted"
-        placeholder={selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
-        value={mascotaId}
-        onValueChange={onSelectMascota}
-        disabled={!selectedOwner}
-        options={mascotasDelTutor.map((pet) => ({ value: pet.id, label: pet.nombre }))}
-      />
+      {/* Celular: los pacientes del tutor son fichas tocables (un toque, sin abrir
+          un desplegable). Escritorio conserva el selector. */}
+      {selectedOwner && mascotasDelTutor.length > 0 ? (
+        <div className="lg:hidden">
+          <p className="mb-2 text-[13px] font-semibold text-muted-foreground">Paciente</p>
+          <div role="radiogroup" aria-label="Paciente" className="grid grid-cols-2 gap-2">
+            {mascotasDelTutor.map((pet) => {
+              const activo = pet.id === mascotaId
+              return (
+                <button
+                  key={pet.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={activo}
+                  onClick={() => onSelectMascota(pet.id)}
+                  className={`flex min-h-14 items-center gap-2 rounded-xl border px-3 py-2 text-left transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    activo
+                      ? 'border-primary bg-success-soft text-foreground'
+                      : 'border-input bg-card text-foreground'
+                  }`}
+                >
+                  <PawPrint className={`h-4 w-4 shrink-0 ${activo ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">{pet.nombre}</span>
+                    {pet.especie ? (
+                      <span className="block truncate text-[13px] text-muted-foreground">{etiquetaEspecie(pet.especie)}</span>
+                    ) : null}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="hidden lg:block">
+        <Select
+          variant="field"
+          aria-label="Paciente"
+          className="h-11 disabled:bg-muted"
+          placeholder={selectedOwner ? 'Selecciona el paciente' : 'Selecciona primero un tutor'}
+          value={mascotaId}
+          onValueChange={onSelectMascota}
+          disabled={!selectedOwner}
+          options={mascotasDelTutor.map((pet) => ({ value: pet.id, label: pet.nombre }))}
+        />
+      </div>
 
       {selectedOwner && mascotasDelTutor.length === 0 && !nuevaMascota ? (
         <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium leading-6 text-warning">
@@ -203,7 +242,7 @@ export function TutorPetSelector({
         <button
           type="button"
           onClick={() => setNuevaMascota({ nombre: '', especie: '' })}
-          className="inline-flex items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
         >
           <PawPrint className="h-3.5 w-3.5" />
           Registrar paciente nuevo
@@ -221,12 +260,12 @@ export function TutorPetSelector({
             onChange={(event) => setNuevaMascota((prev) => ({ ...prev, nombre: event.target.value }))}
             placeholder="Nombre del paciente"
             aria-label="Nombre del paciente"
-            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-12 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:text-[15px]"
           />
           <Select
             variant="field"
             aria-label="Especie"
-            className="h-11"
+            className="h-12 lg:h-11"
             placeholder="Especie"
             value={nuevaMascota.especie}
             onValueChange={(value) => setNuevaMascota((prev) => ({ ...prev, especie: value }))}
@@ -240,14 +279,14 @@ export function TutorPetSelector({
               type="button"
               onClick={handleCreateMascota}
               disabled={crearMascotaMutation.isPending}
-              className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+              className="h-12 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold lg:h-10 lg:flex-none text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             >
               {crearMascotaMutation.isPending ? 'Registrando…' : 'Registrar paciente'}
             </button>
             <button
               type="button"
               onClick={() => setNuevaMascota(null)}
-              className="h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-12 rounded-lg bg-card px-4 text-sm font-semibold lg:h-10 text-foreground transition hover:bg-accent active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancelar
             </button>

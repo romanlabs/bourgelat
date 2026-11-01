@@ -1,4 +1,6 @@
-import { Lock, Plus, Scissors } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Eye, Lock, Pencil, Plus, Receipt, Scissors } from 'lucide-react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import { nombreAutor } from '@/lib/equipo'
 
 // proximaCitaSugerida es DATEONLY ("2026-09-01"); fechaServicio es DATE y
@@ -47,7 +49,7 @@ function EmptyEstilos({ onNuevoRegistro }) {
       <button
         type="button"
         onClick={onNuevoRegistro}
-        className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Plus className="h-4 w-4" />
         Registrar primer servicio
@@ -57,22 +59,34 @@ function EmptyEstilos({ onNuevoRegistro }) {
 }
 
 function EstiloCard({ registro, onEdit }) {
+  const navigate = useNavigate()
   const { bloqueado, tipoCorte, fechaServicio, estilista, proximaCitaSugerida } = registro
   const { dia, resto } = partesFecha(fechaServicio)
+  const facturable = !bloqueado && !registro.facturaId
+
+  // Atajos al deslizar; ambos existen también en el panel del registro.
+  const acciones = [
+    facturable && {
+      key: 'facturar', label: 'Facturar', icon: Receipt, tono: 'primary',
+      onClick: () => navigate('/caja', { state: { facturarEstiloId: registro.id } }),
+    },
+    { key: 'abrir', label: bloqueado ? 'Ver' : 'Editar', icon: bloqueado ? Eye : Pencil, tono: 'neutro', onClick: () => onEdit(registro) },
+  ].filter(Boolean)
 
   return (
+    <FilaDeslizable acciones={acciones} className="rounded-xl">
     <button
       type="button"
       onClick={() => onEdit(registro)}
-      className="grid w-full grid-cols-[72px_minmax(0,1fr)] gap-4 rounded-xl px-4 py-4 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-5"
+      className="grid min-h-14 w-full grid-cols-[52px_minmax(0,1fr)] gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:grid-cols-[96px_minmax(0,1fr)] lg:gap-5 lg:px-4 lg:py-4"
     >
       <span className="flex flex-col gap-0.5">
-        <span className="text-[26px] font-semibold leading-none tracking-[-0.03em] tabular-nums">{dia}</span>
-        <span className="text-[13px] text-muted-foreground">{resto}</span>
+        <span className="text-2xl font-semibold leading-none tracking-[-0.03em] tabular-nums lg:text-[26px]">{dia}</span>
+        <span className="text-xs text-muted-foreground lg:text-[13px]">{resto}</span>
       </span>
-      <span className="flex min-w-0 flex-col gap-1.5">
-        <span className="flex flex-wrap items-center gap-2.5">
-          <span className="text-[17px] font-semibold text-foreground">{tipoCorte || 'Servicio de estilos'}</span>
+      <span className="flex min-w-0 flex-col gap-1 lg:gap-1.5">
+        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span className="text-base font-semibold text-foreground lg:text-[17px]">{tipoCorte || 'Servicio de estilos'}</span>
           <span
             className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[13px] font-semibold ${
               bloqueado ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
@@ -92,6 +106,7 @@ function EstiloCard({ registro, onEdit }) {
         </span>
       </span>
     </button>
+    </FilaDeslizable>
   )
 }
 

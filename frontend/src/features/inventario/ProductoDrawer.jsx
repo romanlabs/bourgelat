@@ -129,7 +129,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
   }, [open, onClose])
 
   const fieldClass = (hasError) =>
-    `h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+    `h-12 rounded-lg border bg-card px-3 text-base lg:h-11 lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
       hasError ? 'border-danger' : 'border-input'
     }`
 
@@ -159,7 +159,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
+        <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">
           <div>
             <p className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
               {editingProduct ? 'Editar producto' : 'Nuevo producto'}
@@ -174,14 +174,14 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
             type="button"
             onClick={onClose}
             aria-label="Cerrar formulario"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 w-11 lg:h-9 lg:w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4">
           <form id="product-drawer-form" className="grid gap-6" onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Seccion: Informacion basica */}
             <div className="grid gap-4">
@@ -283,13 +283,13 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 Existencias
               </p>
 
-              <div className="grid items-start gap-4 sm:grid-cols-2">
+              <div className="grid items-start grid-cols-2 gap-3 sm:gap-4">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-stock" className={labelClass}>
                     {editingProduct ? 'Cantidad actual' : 'Cantidad inicial'}
                   </label>
                   {editingProduct ? (
-                    <div className="flex h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
+                    <div className="flex h-12 lg:h-11 items-center rounded-xl bg-muted px-3 text-sm text-muted-foreground">
                       {formatNumber(editingProduct.stock || 0)} {unidadLabel}
                     </div>
                   ) : (
@@ -338,7 +338,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
                 Precios
               </p>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="grid gap-1.5">
                   <label htmlFor="d-precio-compra" className={labelClass}>
                     Precio de compra
@@ -401,7 +401,7 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
               <button
                 type="button"
                 onClick={() => setAdditionalOpen((v) => !v)}
-                className="flex h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-12 lg:h-11 w-full items-center gap-2 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="text-base leading-none">{additionalOpen ? '−' : '+'}</span>
                 {additionalOpen ? 'Ocultar lote, laboratorio y vencimiento' : 'Agregar lote, laboratorio y vencimiento'}
@@ -470,19 +470,19 @@ export default function ProductoDrawer({ open, editingProduct, onClose, onSubmit
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-border/60 px-6 py-4">
+        <div className="flex gap-3 border-t border-border/60 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:px-6 lg:py-4">
           <button
             type="submit"
             form="product-drawer-form"
             disabled={isPending}
-            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : editingProduct ? 'Actualizar producto' : 'Guardar producto'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Cancelar
           </button>

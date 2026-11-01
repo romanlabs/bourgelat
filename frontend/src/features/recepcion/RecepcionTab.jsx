@@ -53,7 +53,7 @@ export function RecepcionTab({
   const cerrarDrawer = () => setDrawer(null)
 
   return (
-    <div className="pt-5">
+    <div className="lg:pt-5">
       <SalaEsperaPanel
         citas={salaEspera}
         resumen={resumen}
@@ -64,13 +64,14 @@ export function RecepcionTab({
         actualizarEstadoMutation={actualizarEstadoMutation}
         citaInicialId={citaInicialId}
         lastUpdatedAt={lastUpdatedAt}
+        onRefrescar={() => salaEsperaQuery.refetch()}
         headerActions={
           puedeProgramar ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
               <button
                 type="button"
                 onClick={() => setDrawer('programar')}
-                className="flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-12 items-center justify-center gap-2 rounded-xl lg:h-10 lg:justify-start lg:rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <CalendarPlus className="h-4 w-4" />
                 Programar cita
@@ -78,7 +79,7 @@ export function RecepcionTab({
               <button
                 type="button"
                 onClick={() => setDrawer('walk-in')}
-                className="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex h-12 items-center justify-center gap-2 rounded-xl lg:h-10 lg:justify-start lg:rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <UserPlus className="h-4 w-4" />
                 Ingreso directo

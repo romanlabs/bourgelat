@@ -2,30 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
-  Boxes,
-  Building2,
-  ChartColumn,
-  CalendarClock,
   ChevronsUpDown,
-  CreditCard,
-  FileText,
-  HeartPulse,
-  LayoutDashboard,
+  Ellipsis,
   LifeBuoy,
   Lock,
   LogOut,
-  Menu,
   Moon,
   PawPrint,
-  Receipt,
-  ScrollText,
   Search,
   Sun,
   User,
-  UserCog,
   Users,
   X,
 } from 'lucide-react'
+import { NAV_ITEMS, NAV_ITEMS_BY_KEY, NAV_SECTIONS, pestanasMovil } from './navegacion'
 import { useQuery } from '@tanstack/react-query'
 import { useLogout, useReenviarVerificacion } from '@/features/auth/useAuth'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
@@ -70,36 +60,41 @@ const etiquetaRoles = (usuario) =>
     .filter(Boolean)
     .join(' · ') || 'Mi perfil'
 
-const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Hoy', to: '/dashboard', icon: LayoutDashboard },
-  { key: 'agenda', label: 'Agenda', to: '/agenda', icon: CalendarClock },
-  { key: 'pacientes', label: 'Pacientes', to: '/pacientes', icon: PawPrint },
-  { key: 'historias', label: 'Historias', to: '/historias', icon: FileText },
-  { key: 'antecedentes', label: 'Antecedentes', to: '/antecedentes', icon: HeartPulse },
-  { key: 'caja', label: 'Caja', to: '/caja', icon: Receipt },
-  { key: 'inventario', label: 'Inventario', to: '/inventario', icon: Boxes },
-  { key: 'finanzas', label: 'Finanzas', to: '/finanzas', icon: ChartColumn },
-  { key: 'configuracion', label: 'Clínica', to: '/configuracion', icon: Building2 },
-  { key: 'usuarios', label: 'Usuarios', to: '/usuarios', icon: UserCog },
-  { key: 'auditoria', label: 'Auditoría', to: '/auditoria', icon: ScrollText },
-  { key: 'soporte', label: 'Soporte', to: '/soporte', icon: LifeBuoy },
-  { key: 'planes', label: 'Mi plan', to: '/plan', icon: CreditCard },
-]
+// Barra inferior del celular: las pestañas del rol y «Más» con el resto. Si la
+// pantalla actual no es una pestaña, se marca «Más» (de ahí se llegó).
+function BarraInferior({ usuario, currentKey }) {
+  const pestanas = pestanasMovil(usuario).map((key) => NAV_ITEMS_BY_KEY[key])
+  const enPestana = pestanas.some((item) => item.key === currentKey)
+  const items = [...pestanas, { key: 'mas', label: 'Más', to: '/mas', icon: Ellipsis }]
 
-const NAV_SECTIONS = [
-  {
-    key: 'operacion',
-    label: null,
-    items: ['dashboard', 'agenda', 'pacientes', 'historias', 'antecedentes', 'caja', 'inventario', 'finanzas'],
-  },
-  {
-    key: 'administracion',
-    label: 'Administración',
-    items: ['configuracion', 'usuarios', 'auditoria', 'soporte', 'planes'],
-  },
-]
-
-const NAV_ITEMS_BY_KEY = Object.fromEntries(NAV_ITEMS.map((item) => [item.key, item]))
+  return (
+    <nav
+      aria-label="Principal"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
+      <div className="mx-auto grid max-w-xl px-2 pb-2 pt-1.5" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+        {items.map((item) => {
+          const Icon = item.icon
+          const activo = item.key === currentKey || (item.key === 'mas' && !enPestana)
+          return (
+            <Link
+              key={item.key}
+              to={item.to}
+              aria-current={activo ? 'page' : undefined}
+              className={cn(
+                'flex h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                activo ? 'bg-primary/10 font-semibold text-primary' : 'font-medium text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="h-[22px] w-[22px]" aria-hidden="true" />
+              <span className="truncate">{item.label}</span>
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
 
 function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
   const Icon = item.icon
@@ -238,7 +233,8 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
 
           return (
             <div key={section.key} className="flex flex-col gap-0.5">
-              {section.label ? (
+              {/* El primer grupo va sin título en el menú lateral. */}
+              {section.label && section.key !== 'operacion' ? (
                 <p className="px-3 pb-1.5 text-[13px] text-sidebar-foreground/70 menu-muy-bajo:pb-0.5">{section.label}</p>
               ) : null}
               {sectionItems.map((item) => (
@@ -308,7 +304,6 @@ export default function AdminShell({
   const { mutate: reenviarVerificacion, isPending: reenviandoVerificacion } = useReenviarVerificacion()
   const navigate = useNavigate()
   const location = useLocation()
-  const [isNavOpen, setIsNavOpen] = useState(false)
   const [bannerVerificacionOculto, setBannerVerificacionOculto] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const openSearch = useCallback(() => setIsSearchOpen(true), [])
@@ -434,22 +429,14 @@ export default function AdminShell({
       <div className="min-w-0 flex-1">
         <header
           className={cn(
-            'sticky top-0 z-40 flex h-16 items-center justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
+            'sticky top-0 z-40 flex h-14 items-center lg:h-16 justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
             // En escritorio la barra solo queda si la página no trae título
             // ni buscador propio (la ficha pone el suyo junto a «Volver»).
             !headerCenter && (!hidePageHeader || hideSearch) && 'lg:hidden'
           )}
         >
-          <div className="flex min-w-0 items-center gap-2.5 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setIsNavOpen(true)}
-              aria-label="Menú principal"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground transition hover:bg-secondary"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <Link to="/dashboard" className="truncate text-base font-bold tracking-[-0.02em] text-foreground">
+          <div className="flex min-w-0 items-center lg:hidden">
+            <Link to="/dashboard" className="truncate text-lg font-bold tracking-[-0.02em] text-foreground">
               Bourgelat
             </Link>
           </div>
@@ -463,7 +450,7 @@ export default function AdminShell({
               onClick={openSearch}
               aria-label="Buscar"
               className={cn(
-                'flex h-10 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground',
+                'flex h-11 min-w-11 items-center justify-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground sm:h-10 sm:justify-start',
                 // Si la página usa el centro del encabezado (Agenda), el buscador
                 // se reduce al icono para no apretar su barra.
                 headerCenter ? '2xl:w-64' : 'sm:w-64'
@@ -477,16 +464,6 @@ export default function AdminShell({
             </button>
 
             <CampanitaNotificaciones notificaciones={notificaciones} />
-
-            <MenuUsuario {...menuUsuarioProps}>
-              <button
-                type="button"
-                title={`${usuario?.nombre || 'Mi perfil'} · Opciones`}
-                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground transition hover:brightness-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
-              >
-                {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : usuarioIniciales}
-              </button>
-            </MenuUsuario>
           </div>
         </header>
 
@@ -521,28 +498,6 @@ export default function AdminShell({
 
         <AvisoCelular />
 
-        <Dialog.Root open={isNavOpen} onOpenChange={setIsNavOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-40 bg-foreground/50 data-[state=open]:[animation:admin-drawer-overlay-in_250ms_ease-out] data-[state=closed]:[animation:admin-drawer-overlay-out_200ms_ease-in]" />
-            <Dialog.Content
-              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-sidebar text-sidebar-foreground shadow-modal data-[state=open]:[animation:admin-drawer-in_300ms_ease-out] data-[state=closed]:[animation:admin-drawer-out_200ms_ease-in]"
-              aria-describedby={undefined}
-            >
-              <Dialog.Title className="sr-only">Menú principal</Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  aria-label="Cerrar menú"
-                  className="absolute right-3 top-5 inline-flex h-10 w-10 items-center justify-center rounded-lg text-sidebar-foreground/80 transition hover:bg-sidebar-accent"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </Dialog.Close>
-              <SidebarContent {...sidebarProps} onNavigate={() => setIsNavOpen(false)} />
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
-
         <Dialog.Root
           open={isSearchOpen}
           onOpenChange={(open) => {
@@ -557,25 +512,36 @@ export default function AdminShell({
                 event.preventDefault()
                 searchInputRef.current?.focus()
               }}
-              className="fixed left-1/2 top-[12vh] z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-2xl bg-card text-card-foreground shadow-modal"
+              // Celular: pantalla completa, como la búsqueda de una app.
+              className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-card text-card-foreground sm:inset-auto sm:left-1/2 sm:top-[12vh] sm:block sm:w-[calc(100%-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:rounded-2xl sm:shadow-modal"
               aria-describedby={undefined}
             >
               <Dialog.Title className="sr-only">Buscar en Bourgelat</Dialog.Title>
 
-              <div className="flex h-16 items-center gap-3 border-b border-border px-5">
+              <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border pl-5 pr-2 pt-[env(safe-area-inset-top)] sm:pr-5 sm:pt-0">
                 <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <input
                   ref={searchInputRef}
-                  type="text"
+                  type="search"
+                  enterKeyHint="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Busca un paciente, tutor o sección"
-                  className="flex-1 bg-transparent text-lg text-foreground outline-none placeholder:text-muted-foreground"
+                  aria-label="Buscar en Bourgelat"
+                  className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-lg [&::-webkit-search-cancel-button]:hidden"
                 />
-                <kbd className="rounded-md bg-muted px-2 py-1 font-sans text-xs font-semibold text-muted-foreground">Esc</kbd>
+                <kbd className="hidden rounded-md bg-muted px-2 py-1 font-sans text-xs font-semibold text-muted-foreground sm:inline">Esc</kbd>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="h-11 shrink-0 rounded-lg px-3 text-[15px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+                  >
+                    Cancelar
+                  </button>
+                </Dialog.Close>
               </div>
 
-              <div className="max-h-[60vh] space-y-3 overflow-y-auto p-2">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-2 sm:max-h-[60vh] sm:flex-none">
                 {buscandoContenido ? (
                   <p className="px-3 py-2 text-sm text-muted-foreground">Buscando...</p>
                 ) : null}
@@ -650,7 +616,7 @@ export default function AdminShell({
                     <p className="px-3 pb-1 pt-2 text-[13px] font-semibold text-muted-foreground">Ir a</p>
                     <div className="space-y-0.5">
                       {modulosFiltrados.map((item) => {
-                        const Icon = item.icon || LayoutDashboard
+                        const Icon = item.icon
                         const permitido = canAccess(item.key)
                         return (
                           <button
@@ -684,7 +650,7 @@ export default function AdminShell({
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 bg-muted px-5 py-3 text-[13px] text-muted-foreground">
+              <div className="hidden flex-wrap items-center gap-x-5 gap-y-1 bg-muted px-5 py-3 text-[13px] text-muted-foreground sm:flex">
                 <span>Escribe el nombre de un paciente o tutor</span>
                 <span>
                   <span className="font-semibold text-foreground">Ctrl K</span> o{' '}
@@ -695,7 +661,8 @@ export default function AdminShell({
           </Dialog.Portal>
         </Dialog.Root>
 
-        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-14 pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
+        {/* pb-28 en celular: que la barra inferior no tape el final de la página. */}
+        <main className={cn('mx-auto max-w-[1600px] space-y-4 px-4 pb-28 pt-1 lg:space-y-6 lg:pb-14 lg:pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 lg:pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
@@ -708,7 +675,7 @@ export default function AdminShell({
                       'font-semibold leading-none text-foreground',
                       compactHeader
                         ? 'text-2xl tracking-[-0.03em]'
-                        : 'text-3xl tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
+                        : 'text-[28px] tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
                     )}
                   >
                     {title}
@@ -716,7 +683,7 @@ export default function AdminShell({
                   {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                 </div>
                 {description ? (
-                  <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-2.5 text-base leading-6')}>{description}</p>
+                  <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-1.5 text-sm leading-5 sm:mt-2.5 sm:text-base sm:leading-6')}>{description}</p>
                 ) : null}
                 </div>
                 {titleAside}
@@ -754,6 +721,7 @@ export default function AdminShell({
           {children}
         </main>
       </div>
+      <BarraInferior usuario={usuario} currentKey={currentKey} />
     </div>
     </HeaderSlotContext.Provider>
     </AdminSearchContext.Provider>

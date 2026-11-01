@@ -95,7 +95,7 @@ function SelectorMedio({ medios, seleccionado, onSeleccionar, oscuro }) {
 
   return (
     <LayoutGroup id="selector-medio">
-      <div role="radiogroup" aria-label="Medio de pago" className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1">
+      <div role="radiogroup" aria-label="Medio de pago" className="flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-xl bg-secondary p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {opciones.map((opcion) => {
           const activo = seleccionado === opcion.id
           const Icono = PAYMENT_METHOD_ICONS[opcion.id]
@@ -107,7 +107,7 @@ function SelectorMedio({ medios, seleccionado, onSeleccionar, oscuro }) {
               aria-checked={activo}
               onClick={() => onSeleccionar(opcion.id)}
               whileTap={reducir ? undefined : { scale: 0.98 }}
-              className={`relative flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`relative flex h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-sm transition-colors lg:h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 activo ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -469,11 +469,11 @@ function PorCuenta({ medio, oscuro }) {
       </div>
       <ul className="flex flex-col gap-2.5">
         {medio.porCuenta.map((cuenta) => (
-          <li key={cuenta.cuentaRecaudoId || 'sin-cuenta'} className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+          <li key={cuenta.cuentaRecaudoId || 'sin-cuenta'} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 text-sm lg:grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto] lg:gap-3">
             <span className={`truncate ${cuenta.cuentaRecaudoId ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
               {cuenta.nombre || (cuenta.cuentaRecaudoId ? 'Cuenta borrada' : 'Sin cuenta')}
             </span>
-            <BarraCrece porcentaje={(cuenta.cobrado / mayor) * 100} color={color} className="h-2" />
+            <span className="order-last col-span-2 lg:order-none lg:col-span-1"><BarraCrece porcentaje={(cuenta.cobrado / mayor) * 100} color={color} className="h-2" /></span>
             <span className="text-right font-semibold tabular-nums">{formatCurrency(cuenta.cobrado)}</span>
           </li>
         ))}
@@ -546,7 +546,7 @@ export default function MediosPagoPanel() {
           <div aria-hidden className="h-[76px] w-80 max-w-full animate-pulse rounded-2xl bg-card" />
         ) : (
           <header className="flex flex-col gap-2">
-            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+            <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] text-foreground max-lg:tabular-nums sm:text-5xl">
               <CifraAnimada valor={valor} />
               <span className="ml-3 text-xl font-medium tracking-[-0.01em] text-muted-foreground sm:text-2xl">
                 {medio ? `cobrados por ${etiquetaMedio(medio.id).toLowerCase()}` : 'cobrados'} en {nombrePeriodo}

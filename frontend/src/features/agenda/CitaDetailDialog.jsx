@@ -22,8 +22,39 @@ import { agendaApi } from './agendaApi'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { nombreAutor } from '@/lib/equipo'
+import { useEsCelular } from '@/lib/useEsCelular'
+import HojaInferior from '@/components/movil/HojaInferior'
+
+/** Escritorio: diálogo centrado (sin cambios). Celular: hoja que sube desde abajo. */
+function Marco({ celular, open, onClose, titulo, children }) {
+  if (celular) {
+    return (
+      <HojaInferior abierta={open} onCambiar={(v) => !v && onClose()} titulo={titulo}>
+        <div className="pb-2">{children}</div>
+      </HojaInferior>
+    )
+  }
+  return (
+    <DialogRoot open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-sm sm:max-w-md">{children}</DialogContent>
+    </DialogRoot>
+  )
+}
+
+function Encabezado({ celular, titulo, children }) {
+  // En la hoja, el título ya va en su cabecera.
+  if (celular) return <div className="mb-4">{children}</div>
+  return (
+    <DialogHeader className="mb-4">
+      <DialogTitle className="text-[22px] font-semibold tracking-[-0.02em]">{titulo}</DialogTitle>
+      <DialogDescription asChild>{children}</DialogDescription>
+    </DialogHeader>
+  )
+}
 
 export function CitaDetailDialog({
+  seccionInicial = 'estado',
+  estadoInicial = null,
   cita,
   open,
   onClose,
@@ -39,19 +70,22 @@ export function CitaDetailDialog({
   const [activeSection, setActiveSection] = useState('estado')
   const [forzar, setForzar] = useState(false)
   const usuario = useAuthStore((state) => state.usuario)
+  const esCelular = useEsCelular()
 
+  // Los atajos del celular (deslizar o mantener la cita) abren el detalle ya
+  // en «Reprogramar» o con «Cancelada» elegida, que piden fecha o motivo.
   useEffect(() => {
     if (cita) {
-      setStatusForm({ estado: cita.estado, motivoCancelacion: cita.motivoCancelacion || '' })
+      setStatusForm({ estado: estadoInicial || cita.estado, motivoCancelacion: cita.motivoCancelacion || '' })
       setRescheduleForm({
         fecha: cita.fecha || '',
         horaInicio: cita.horaInicio?.slice(0, 5) || '',
         horaFin: cita.horaFin?.slice(0, 5) || '',
       })
-      setActiveSection('estado')
+      setActiveSection(seccionInicial)
       setForzar(false)
     }
-  }, [cita])
+  }, [cita, seccionInicial, estadoInicial])
 
   // Horario de atencion y bloqueos de la fecha destino, para avisar antes de
   // que el backend rechace la reprogramacion.
@@ -107,14 +141,13 @@ export function CitaDetailDialog({
   const cannotReschedule =
     cita.estado === 'completada' || cita.estado === 'cancelada'
 
+  const titulo = cita.mascota?.nombre || 'Cita'
+  // En el celular los botones de la hoja miden 44px; en escritorio, como antes.
+  const altoTab = esCelular ? 'h-11 text-sm' : 'h-9 text-[13px]'
+
   return (
-    <DialogRoot open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-sm sm:max-w-md">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-[22px] font-semibold tracking-[-0.02em]">
-            {cita.mascota?.nombre || 'Cita'}
-          </DialogTitle>
-          <DialogDescription asChild>
+    <Marco celular={esCelular} open={open} onClose={onClose} titulo={titulo}>
+        <Encabezado celular={esCelular} titulo={titulo}>
             <div className="space-y-1 text-[15px]">
               <p className="text-muted-foreground">
                 Tutor: <span className="font-medium text-foreground">{cita.propietario?.nombre || '—'}</span>
@@ -153,15 +186,14 @@ export function CitaDetailDialog({
                     type="button"
                     disabled={isUpdating}
                     onClick={() => onUpdateStatus(cita.id, { estado: 'en_espera' }, cita)}
-                    className="inline-flex h-8 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                    className={`inline-flex ${esCelular ? 'h-11 px-4' : 'h-8 px-3'} items-center rounded-lg bg-secondary text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     Marcar en espera
                   </button>
                 )}
               </div>
             </div>
-          </DialogDescription>
-        </DialogHeader>
+        </Encabezado>
 
         {cita.tipoCita === 'urgencia' && cita.estado === 'completada' && !cita.historia?.id && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-danger-soft px-4 py-3 text-sm">
@@ -188,7 +220,8 @@ export function CitaDetailDialog({
                 type="button"
                 onClick={() => setActiveSection('estado')}
                 className={cn(
-                  'h-9 flex-1 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'flex-1 rounded-lg px-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  altoTab,
                   activeSection === 'estado'
                     ? 'bg-card font-semibold text-foreground'
                     : 'font-medium text-muted-foreground hover:text-foreground'
@@ -202,7 +235,8 @@ export function CitaDetailDialog({
                 type="button"
                 onClick={() => setActiveSection('reprogramar')}
                 className={cn(
-                  'h-9 flex-1 rounded-lg px-3 text-[13px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'flex-1 rounded-lg px-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  altoTab,
                   activeSection === 'reprogramar'
                     ? 'bg-card font-semibold text-foreground'
                     : 'font-medium text-muted-foreground hover:text-foreground'
@@ -235,7 +269,7 @@ export function CitaDetailDialog({
                 }
                 placeholder="Motivo de cancelación (obligatorio)"
                 aria-label="Motivo de cancelación"
-                className="min-h-[88px] rounded-lg border border-input bg-card px-3 py-2.5 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[88px] rounded-lg border border-input bg-card px-3 py-2.5 text-base text-foreground outline-none lg:text-[15px] transition focus-visible:ring-2 focus-visible:ring-ring"
                 required
               />
             )}
@@ -261,7 +295,7 @@ export function CitaDetailDialog({
                 setRescheduleForm((prev) => ({ ...prev, fecha: e.target.value }))
               }
               aria-label="Nueva fecha"
-              className="h-11 rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-11 rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none lg:text-[15px] transition focus-visible:ring-2 focus-visible:ring-ring"
               required
             />
             <div className="grid gap-2">
@@ -334,7 +368,6 @@ export function CitaDetailDialog({
             Esta cita ya fue {cita.estado === 'completada' ? 'completada' : 'cancelada'} y no se puede reprogramar.
           </p>
         )}
-      </DialogContent>
-    </DialogRoot>
+    </Marco>
   )
 }

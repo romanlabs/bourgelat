@@ -12,7 +12,7 @@ export default function SelectorCuenta({ cuentas, seleccionada, onSeleccionar })
             role="radio"
             aria-checked={activa}
             onClick={() => onSeleccionar(cuenta.id)}
-            className={`h-9 rounded-lg px-3 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`h-11 rounded-lg px-3 text-[13px] lg:h-9 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activa
                 ? 'bg-primary text-primary-foreground'
                 : 'border border-input bg-card text-foreground hover:bg-muted'

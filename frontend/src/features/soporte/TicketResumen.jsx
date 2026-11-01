@@ -20,7 +20,7 @@ export default function TicketResumen({ ticket, activo = false, mostrarAutor = f
       onClick={() => onSelect?.(ticket.id)}
       aria-current={activo ? 'true' : undefined}
       className={cn(
-        'grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 rounded-xl px-4 py-3.5 text-left outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring',
+        'grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 rounded-xl min-h-[60px] px-3 py-3 text-left sm:px-4 sm:py-3.5 outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring',
         activo && 'bg-primary/10 hover:bg-primary/10'
       )}
     >

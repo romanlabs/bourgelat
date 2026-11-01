@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MoreHorizontal, Search, TriangleAlert, Users } from 'lucide-react'
+import { FileText, Info, MoreHorizontal, Phone, Search, TriangleAlert, Users } from 'lucide-react'
+import { useEsCelular } from '@/lib/useEsCelular'
+import { useMantenerPresionado } from '@/lib/gestos'
+import { nombreAutor } from '@/lib/equipo'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { ICONO_ACCION } from '@/features/agenda/accionesCita'
+import { HojaOpcionesCita } from '@/features/agenda/HojaOpcionesCita'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -266,6 +273,123 @@ function FilaCita({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, 
   )
 }
 
+// Etiquetas cortas para los botones que aparecen al deslizar (76px de ancho).
+const ETIQUETA_CORTA = {
+  en_espera: 'Llegó',
+  en_atencion: 'Atender',
+  completada: 'Completar',
+  no_asistio: 'No vino',
+  cancelada: 'Cancelar',
+}
+
+const TONO_DESLIZAR = { cancelada: 'danger', no_asistio: 'neutro' }
+
+// Que deslizar o mantener una tarjeta no dispare también «tirar para refrescar».
+const aislarToque = {
+  onTouchStart: (event) => event.stopPropagation(),
+}
+
+/** Tarjeta de la sala de espera en el celular: datos arriba, acción grande abajo. */
+function TarjetaSalaMovil({ cita, ahoraMinutos, cruce, puedeGestionarEstado, isPending, onAccion, onSeleccionar, onOpciones, resaltada }) {
+  const atrasada = esCitaAtrasada(cita, ahoraMinutos)
+  const tiempo = tiempoDeFila(cita, ahoraMinutos)
+  const transiciones = puedeGestionarEstado ? TRANSICIONES[cita.estado] || [] : []
+  const primaria = puedeGestionarEstado ? ACCION_PRIMARIA[cita.estado] : undefined
+  const resuelta = ESTADOS_RESUELTOS.includes(cita.estado)
+  const presion = useMantenerPresionado(() => onOpciones(cita))
+
+  // Atajos al deslizar: la acción principal, «no vino» y cancelar (las que existan).
+  const atajos = [primaria, 'no_asistio', 'cancelada']
+    .filter((estado, index, lista) => estado && transiciones.includes(estado) && lista.indexOf(estado) === index)
+    .map((estado) => ({
+      key: estado,
+      label: ETIQUETA_CORTA[estado],
+      icon: ICONO_ACCION[estado],
+      tono: TONO_DESLIZAR[estado] || 'primary',
+      onClick: () => onAccion(cita, estado),
+    }))
+
+  return (
+    <FilaDeslizable acciones={atajos} redondeo="rounded-2xl">
+      <div
+        role="button"
+        tabIndex={0}
+        {...presion.props}
+        onClick={() => {
+          if (presion.consumido()) return
+          onSeleccionar(cita)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onSeleccionar(cita)
+          }
+        }}
+        data-resaltar-id={cita.id}
+        className={`flex select-none flex-col gap-3 rounded-2xl p-3.5 text-left [-webkit-touch-callout:none] ${TRANSICION_RESALTADO} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          resaltada ? CLASE_RESALTADO : 'bg-card'
+        } ${resuelta ? 'opacity-60' : ''} ${atrasada ? 'shadow-[inset_3px_0_0_hsl(var(--danger))]' : ''}`}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-bold ${
+              AVATAR_TONE[cita.estado] || 'bg-muted text-muted-foreground'
+            }`}
+            aria-hidden="true"
+          >
+            {(cita.mascota?.nombre || '?').charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <p className="truncate text-base font-semibold leading-6 text-foreground">{cita.mascota?.nombre || 'Paciente'}</p>
+              {cruce ? <TriangleAlert className="h-4 w-4 shrink-0 text-warning" aria-label={cruce} /> : null}
+            </div>
+            <p className="truncate text-[13px] text-muted-foreground">
+              {[cita.propietario?.nombre || 'Sin tutor', nombreAutor(cita.veterinario, '')].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="text-[15px] font-semibold tabular-nums text-foreground">
+              {formatTime(cita.horaLlegada || cita.horaInicio)}
+            </span>
+            {cita.origen === 'walk_in' ? (
+              <span className="rounded-md bg-brand-muted px-1.5 py-0.5 text-[11px] font-semibold text-brand-foreground">
+                {ORIGEN_LABELS.walk_in}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <p className={`min-w-0 flex-1 truncate text-[13px] font-semibold ${tiempo?.tone || 'text-muted-foreground'}`}>
+            {atrasada ? <StatusBadge variant="atrasada" size="sm" /> : resuelta ? <StatusBadge variant={cita.estado} size="sm" /> : tiempo?.texto || ''}
+          </p>
+          <div className="flex shrink-0 items-center gap-2" onClick={(event) => event.stopPropagation()} {...aislarToque}>
+            {primaria ? (
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => onAccion(cita, primaria)}
+                className={`inline-flex h-11 items-center rounded-xl px-4 text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${ACTION_TONE[primaria]}`}
+              >
+                {ACCION_LABELS[primaria]}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              aria-label={`Opciones de ${cita.mascota?.nombre || 'la cita'}`}
+              onClick={() => onOpciones(cita)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </FilaDeslizable>
+  )
+}
+
 export function SalaEsperaPanel({
   citas,
   resumen,
@@ -277,7 +401,10 @@ export function SalaEsperaPanel({
   lastUpdatedAt,
   headerActions,
   citaInicialId = null,
+  onRefrescar,
 }) {
+  const esCelular = useEsCelular()
+  const [citaOpciones, setCitaOpciones] = useState(null)
   const [search, setSearch] = useState('')
   const [cancelTarget, setCancelTarget] = useState(null)
   const [motivoCancelacion, setMotivoCancelacion] = useState('')
@@ -353,6 +480,179 @@ export function SalaEsperaPanel({
     )
   }
 
+  // Opciones de la tarjeta (mantener presionada o «⋯») en el celular.
+  const opcionesDe = (cita) => {
+    if (!cita) return []
+    const transiciones = puedeGestionarEstado ? TRANSICIONES[cita.estado] || [] : []
+    return [
+      { key: 'detalle', label: 'Ver detalle', icon: Info, onClick: () => setCitaSeleccionadaId(cita.id) },
+      ...transiciones.map((estado) => ({
+        key: estado,
+        label: ACCION_LABELS[estado],
+        icon: ICONO_ACCION[estado],
+        tono: estado === 'cancelada' ? 'danger' : estado === ACCION_PRIMARIA[cita.estado] ? 'primary' : 'neutro',
+        disabled: actualizarEstadoMutation.isPending,
+        onClick: () => handleAction(cita, estado),
+      })),
+      cita.mascotaId
+        ? { key: 'historia', label: 'Abrir historia clínica', icon: FileText, to: `/pacientes/${cita.mascotaId}/historial?citaId=${cita.id}` }
+        : null,
+      cita.propietario?.telefono
+        ? { key: 'llamar', label: `Llamar a ${cita.propietario.nombre || 'el tutor'}`, icon: Phone, href: `tel:${cita.propietario.telefono}` }
+        : null,
+    ].filter(Boolean)
+  }
+
+  const dialogos = (
+    <>
+      <DetalleCitaDrawer
+        cita={citaSeleccionada}
+        onClose={() => setCitaSeleccionadaId(null)}
+        puedeGestionarEstado={puedeGestionarEstado}
+        onAccion={handleAction}
+        isPending={actualizarEstadoMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={Boolean(cancelTarget)}
+        onOpenChange={(open) => !open && setCancelTarget(null)}
+        title="Cancelar cita"
+        description={`Indica el motivo de cancelación para ${cancelTarget?.mascota?.nombre || 'este paciente'}.`}
+        confirmLabel="Cancelar cita"
+        variant="destructive"
+        loading={actualizarEstadoMutation.isPending}
+        onConfirm={confirmCancelacion}
+      >
+        <textarea
+          value={motivoCancelacion}
+          onChange={(event) => setMotivoCancelacion(event.target.value)}
+          placeholder="Motivo de cancelación"
+          aria-label="Motivo de cancelación"
+          className="min-h-[90px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground outline-none lg:text-[15px] transition focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </ConfirmDialog>
+    </>
+  )
+
+  if (esCelular) {
+    return (
+      <TirarParaRefrescar onRefrescar={onRefrescar}>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { valor: resumen.enAtencion, label: 'En atención', tono: 'text-primary' },
+              { valor: resumen.enEspera, label: 'En espera', tono: 'text-brand-foreground' },
+              { valor: resumen.programadas, label: 'Por llegar', tono: 'text-foreground' },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col gap-1 rounded-2xl bg-card px-3 py-2.5">
+                <span className={`text-2xl font-semibold leading-none tracking-[-0.03em] tabular-nums ${item.tono}`}>{item.valor}</span>
+                <span className="truncate text-xs text-muted-foreground">{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {headerActions}
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar paciente o tutor"
+              aria-label="Buscar paciente o tutor"
+              className="h-11 w-full rounded-xl border border-input bg-card pl-9 pr-3 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+
+          {isError ? (
+            <div className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium leading-6 text-danger">{errorMessage}</div>
+          ) : null}
+
+          {isLoading ? (
+            <div className="flex flex-col gap-2" aria-hidden="true">
+              {[0, 1, 2].map((fila) => (
+                <div key={fila} className="h-[118px] animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          ) : null}
+
+          {!isLoading && citasFiltradas.length === 0 ? (
+            <div className="rounded-2xl bg-card px-5 py-9 text-center">
+              <p className="text-[15px] font-semibold text-foreground">
+                {citas.length === 0 ? 'Sala de espera vacía' : 'Sin resultados para esa búsqueda'}
+              </p>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                {citas.length === 0
+                  ? 'Las citas programadas y los ingresos directos aparecerán aquí.'
+                  : 'Prueba con otro nombre de paciente, tutor o veterinario.'}
+              </p>
+            </div>
+          ) : null}
+
+          {!isLoading &&
+            grupos.map((grupo) => (
+              <section key={grupo.estado} aria-label={grupo.label} className="flex flex-col gap-2">
+                <h3 className="flex items-center gap-2 px-1 pt-1">
+                  <span className={`h-2.5 w-2.5 rounded-[3px] ${grupo.dot}`} aria-hidden="true" />
+                  <span className={`text-[13px] font-semibold ${grupo.text}`}>{grupo.label}</span>
+                  <span className="text-[13px] tabular-nums text-muted-foreground">{grupo.citas.length}</span>
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {grupo.citas.map((cita) => (
+                    <li key={cita.id}>
+                      <TarjetaSalaMovil
+                        cita={cita}
+                        ahoraMinutos={ahoraMinutos}
+                        cruce={cruces.get(cita.id)}
+                        puedeGestionarEstado={puedeGestionarEstado}
+                        isPending={actualizarEstadoMutation.isPending}
+                        onAccion={handleAction}
+                        onSeleccionar={(seleccionada) => setCitaSeleccionadaId(seleccionada.id)}
+                        onOpciones={setCitaOpciones}
+                        resaltada={cita.id === citaResaltadaId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+
+          <div className="flex items-center justify-between gap-3 px-1">
+            <p className="min-w-0 text-[13px] text-muted-foreground">
+              {resumen.completadas ?? 0} completadas
+              {lastUpdatedAt
+                ? ` · act. ${lastUpdatedAt.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`
+                : ''}
+            </p>
+            <button
+              type="button"
+              onClick={() => setMostrarResueltas((current) => !current)}
+              className="inline-flex h-11 shrink-0 items-center rounded-xl bg-secondary px-3.5 text-[13px] font-semibold text-secondary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {mostrarResueltas ? 'Ocultar resueltas' : `Ver resueltas (${resueltasOcultas})`}
+            </button>
+          </div>
+        </div>
+
+        {dialogos}
+
+        <HojaOpcionesCita
+          abierta={Boolean(citaOpciones)}
+          onCambiar={(abierta) => !abierta && setCitaOpciones(null)}
+          titulo={citaOpciones?.mascota?.nombre || 'Paciente'}
+          descripcion={
+            citaOpciones
+              ? [formatTime(citaOpciones.horaLlegada || citaOpciones.horaInicio), citaOpciones.propietario?.nombre].filter(Boolean).join(' · ')
+              : undefined
+          }
+          opciones={opcionesDe(citaOpciones)}
+        />
+      </TirarParaRefrescar>
+    )
+  }
+
+
   return (
     <DashboardPanel
       title="Sala de espera del día"
@@ -366,7 +666,7 @@ export function SalaEsperaPanel({
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar paciente o tutor"
               aria-label="Buscar paciente o tutor"
-              className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-base text-foreground outline-none lg:text-[15px] transition focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           {headerActions}
@@ -471,32 +771,7 @@ export function SalaEsperaPanel({
         </div>
       </div>
 
-      <DetalleCitaDrawer
-        cita={citaSeleccionada}
-        onClose={() => setCitaSeleccionadaId(null)}
-        puedeGestionarEstado={puedeGestionarEstado}
-        onAccion={handleAction}
-        isPending={actualizarEstadoMutation.isPending}
-      />
-
-      <ConfirmDialog
-        open={Boolean(cancelTarget)}
-        onOpenChange={(open) => !open && setCancelTarget(null)}
-        title="Cancelar cita"
-        description={`Indica el motivo de cancelación para ${cancelTarget?.mascota?.nombre || 'este paciente'}.`}
-        confirmLabel="Cancelar cita"
-        variant="destructive"
-        loading={actualizarEstadoMutation.isPending}
-        onConfirm={confirmCancelacion}
-      >
-        <textarea
-          value={motivoCancelacion}
-          onChange={(event) => setMotivoCancelacion(event.target.value)}
-          placeholder="Motivo de cancelación"
-          aria-label="Motivo de cancelación"
-          className="min-h-[90px] w-full rounded-lg border border-input bg-card px-3 py-3 text-[15px] text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </ConfirmDialog>
+      {dialogos}
     </DashboardPanel>
   )
 }
