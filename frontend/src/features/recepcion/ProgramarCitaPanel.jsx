@@ -11,9 +11,10 @@ import { TutorPetSelector } from './TutorPetSelector'
 import { TYPE_OPTIONS } from './recepcionConstants'
 import { Select } from '@/components/ui/select'
 import { HoraPicker } from '@/components/shared/HoraPicker'
-import { formatFranja12, moverFin } from '@/lib/hora'
+import { formatFranja12, formatHora12, moverFin } from '@/lib/hora'
 import { agendaApi } from '@/features/agenda/agendaApi'
-import { evaluarIntervalo } from '@/features/agenda/calendarConstants'
+import { evaluarIntervalo, esSlotHabil, generarSlots } from '@/features/agenda/calendarConstants'
+import { useEsCelular } from '@/lib/useEsCelular'
 import { hasAnyRole } from '@/lib/permissions'
 import { hoyLocal } from '@/lib/fecha'
 
@@ -43,7 +44,13 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 rounded-lg border border-input bg-card px-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+  'h-12 rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:text-[15px]'
+
+const DURACIONES = [15, 30, 45, 60, 90]
+
+// Pegada al borde inferior del panel a pantalla completa (celular); inline desde sm.
+const BARRA_ENVIO =
+  'sticky bottom-0 z-10 -mx-4 -mb-4 border-t border-border bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:static sm:z-auto sm:m-0 sm:border-0 sm:bg-transparent sm:p-0'
 
 /**
  * Panel izquierdo de Recepción: programa una cita nueva. Evolución del
@@ -108,6 +115,33 @@ export function ProgramarCitaPanel({
   // Solo la administracion puede forzar una cita fuera de horario (urgencias);
   // el backend aplica la misma regla.
   const puedeForzar = hasAnyRole(usuario, ['admin', 'superadmin'])
+
+  // Grilla de horarios (celular): solo con el horario de atención de la clínica.
+  const esCelular = useEsCelular()
+  const [horaExacta, setHoraExacta] = useState(false)
+  const horarioAtencion = disponibilidadQuery.data?.horarioAtencion || null
+  const hayGrilla = esCelular && Boolean(horarioAtencion)
+  const slotsDia = hayGrilla
+    ? generarSlots().filter((slot) =>
+        esSlotHabil(fechaWatch, slot, { horarioAtencion, bloqueos: disponibilidadQuery.data?.bloqueos || [] })
+      )
+    : []
+  const aMin = (hhmm) => {
+    const [h, m] = (hhmm || '00:00').split(':').map(Number)
+    return h * 60 + m
+  }
+  const duracionActual = aMin(horaFinWatch) - aMin(horaInicioWatch)
+  const aHora = (total) => {
+    const t = Math.min(total, 23 * 60 + 45)
+    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+  }
+  const elegirInicio = (slot) => {
+    setValue('horaFin', moverFin(horaInicioWatch, horaFinWatch, slot), { shouldValidate: true })
+    setValue('horaInicio', slot, { shouldValidate: true })
+  }
+  const elegirDuracion = (minutos) => {
+    setValue('horaFin', aHora(aMin(horaInicioWatch) + minutos), { shouldValidate: true })
+  }
   const [forzar, setForzar] = useState(false)
 
   useEffect(() => {
@@ -185,6 +219,7 @@ export function ProgramarCitaPanel({
               render={({ field }) => (
                 <Select
                   variant="field"
+                  className="h-12 lg:h-11"
                   aria-label="Tipo de cita"
                   value={field.value}
                   onValueChange={field.onChange}
@@ -194,9 +229,84 @@ export function ProgramarCitaPanel({
             />
           </div>
 
+          {/* Celular: horarios disponibles del día como botones tocables + duración.
+              Solo si la clínica tiene horario de atención cargado; si no, queda el selector. */}
+          {hayGrilla ? (
+            <div className="grid gap-3 lg:hidden">
+              <div>
+                <p className="mb-2 text-[13px] font-semibold text-muted-foreground">
+                  Hora de inicio
+                </p>
+                {slotsDia.length > 0 ? (
+                  <div role="radiogroup" aria-label="Horarios disponibles" className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto overscroll-contain">
+                    {slotsDia.map((slot) => {
+                      const activo = slot === horaInicioWatch
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          role="radio"
+                          aria-checked={activo}
+                          onClick={() => elegirInicio(slot)}
+                          className={`h-11 rounded-lg border text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            activo
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-input bg-card text-foreground'
+                          }`}
+                        >
+                          {formatHora12(slot)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+                    No hay horarios de atención ese día.
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 text-[13px] font-semibold text-muted-foreground">Duración</p>
+                <div role="radiogroup" aria-label="Duración de la cita" className="grid grid-cols-5 gap-2">
+                  {DURACIONES.map((minutos) => {
+                    const activo = duracionActual === minutos
+                    return (
+                      <button
+                        key={minutos}
+                        type="button"
+                        role="radio"
+                        aria-checked={activo}
+                        onClick={() => elegirDuracion(minutos)}
+                        className={`h-11 rounded-lg border text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          activo
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-input bg-card text-foreground'
+                        }`}
+                      >
+                        {minutos} min
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4 py-2.5 text-sm">
+                <span className="font-semibold tabular-nums text-foreground">
+                  {formatFranja12(horaInicioWatch, horaFinWatch)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setHoraExacta((valor) => !valor)}
+                  className="inline-flex min-h-11 items-center rounded px-1 text-[13px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {horaExacta ? 'Ocultar' : 'Hora exacta'}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {/* Una hora por fila: el drawer tiene ancho fijo y en dos columnas el
               selector a. m./p. m. se salia del borde. */}
-          <div className="grid gap-4">
+          <div className={`grid gap-4 ${hayGrilla && !horaExacta ? 'max-lg:hidden' : ''}`}>
             <div>
               <p className="mb-1 text-[13px] font-semibold text-muted-foreground">
                 Desde
@@ -256,7 +366,7 @@ export function ProgramarCitaPanel({
                     type="checkbox"
                     checked={forzar}
                     onChange={(event) => setForzar(event.target.checked)}
-                    className="h-4 w-4 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-5 w-5 rounded border-input accent-primary lg:h-4 lg:w-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   Agendar de todos modos (urgencia)
                 </label>
@@ -270,6 +380,7 @@ export function ProgramarCitaPanel({
             render={({ field }) => (
               <Select
                 variant="field"
+                className="h-12 lg:h-11"
                 aria-label="Consultorio"
                 placeholder="Sin consultorio asignado"
                 value={field.value}
@@ -286,6 +397,7 @@ export function ProgramarCitaPanel({
               render={({ field }) => (
                 <Select
                   variant="field"
+                  className="h-12 lg:h-11"
                   aria-label="Profesional"
                   placeholder="Selecciona el profesional"
                   value={field.value}
@@ -325,22 +437,26 @@ export function ProgramarCitaPanel({
           <textarea
             {...register('observaciones')}
             placeholder="Observaciones operativas para recepción o consulta"
-            className="min-h-[100px] rounded-lg border border-input bg-card px-3 py-3 text-[15px] text-foreground outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            rows={2}
+            className="min-h-[72px] rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:min-h-[100px] lg:text-[15px] outline-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
 
-          <button
-            type="submit"
-            disabled={
-              crearCitaMutation.isPending ||
-              !selectedOwner ||
-              !mascotaId ||
-              veterinarios.length === 0 ||
-              (!ventana.valido && !forzar)
-            }
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
-          </button>
+          {/* Celular: botón fijo abajo, siempre a la vista del pulgar. */}
+          <div className={bare ? BARRA_ENVIO : ''}>
+            <button
+              type="submit"
+              disabled={
+                crearCitaMutation.isPending ||
+                !selectedOwner ||
+                !mascotaId ||
+                veterinarios.length === 0 ||
+                (!ventana.valido && !forzar)
+              }
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 lg:h-11 lg:rounded-lg"
+            >
+              {crearCitaMutation.isPending ? 'Guardando...' : 'Guardar cita'}
+            </button>
+          </div>
         </form>
       )}
     </>

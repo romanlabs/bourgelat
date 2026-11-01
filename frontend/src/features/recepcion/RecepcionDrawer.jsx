@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { ChevronLeft, X } from 'lucide-react'
+import HojaInferior from '@/components/movil/HojaInferior'
+import { useEsCelular } from '@/lib/useEsCelular'
 
 /**
  * Panel lateral de Recepción. Un solo contenedor para los tres flujos que
@@ -10,7 +12,9 @@ import { X } from 'lucide-react'
  * Mismo patron que features/pacientes/TutorDrawer.jsx (portal + overlay +
  * Escape), extraido aqui como componente generico para no repetirlo tres veces.
  */
-export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-[460px]', children, footer }) {
+export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-[460px]', children, footer, hoja = false }) {
+  const esCelular = useEsCelular()
+
   useEffect(() => {
     if (!open) return
     const handler = (event) => {
@@ -21,6 +25,25 @@ export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-
   }, [open, onClose])
 
   if (typeof document === 'undefined') return null
+
+  // Contenido corto (detalle): en celular sube como hoja y se cierra arrastrando.
+  // Los formularios largos siguen a pantalla completa porque abren otros paneles
+  // encima (crear tutor) que una hoja modal bloquearía.
+  if (hoja && esCelular) {
+    return (
+      <HojaInferior
+        abierta={open}
+        onCambiar={(valor) => {
+          if (!valor) onClose()
+        }}
+        titulo={title}
+        descripcion={subtitle}
+        pie={footer}
+      >
+        {open ? children : null}
+      </HojaInferior>
+    )
+  }
 
   return createPortal(
     <>
@@ -39,24 +62,36 @@ export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-start justify-between gap-3 px-6 pb-2 pt-6">
-          <div>
-            <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
-            {subtitle ? <p className="mt-1.5 text-[15px] leading-6 text-muted-foreground">{subtitle}</p> : null}
+        {/* Celular: cabecera compacta (volver + título); el subtítulo se oculta
+            para dejar sitio al formulario. Desde sm: la cabecera de siempre. */}
+        <div className="flex items-center justify-between gap-2 border-b border-border px-2 py-1 sm:items-start sm:gap-3 sm:border-b-0 sm:px-6 sm:pb-2 sm:pt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Volver"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-foreground transition active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg font-semibold tracking-[-0.02em] text-foreground sm:text-[22px]">{title}</h2>
+            {subtitle ? <p className="mt-1.5 hidden text-[15px] leading-6 text-muted-foreground sm:block">{subtitle}</p> : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">{open ? children : null}</div>
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">{open ? children : null}</div>
 
-        {footer ? <div className="border-t border-border px-6 py-4">{footer}</div> : null}
+        {footer ? (
+          <div className="border-t border-border px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:py-4">{footer}</div>
+        ) : null}
       </div>
     </>,
     document.body
