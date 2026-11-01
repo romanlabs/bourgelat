@@ -209,10 +209,10 @@ export default function MiPlanPage() {
 
   return (
     <AdminShell currentKey="planes" title="Mi plan" hidePageHeader hideSearch>
-      <div className="flex flex-col gap-5 lg:gap-7 lg:pt-6">
+      <div className="flex flex-col gap-4 lg:gap-7 lg:pt-6">
         <section
           aria-labelledby="pl-actual"
-          className={cn('flex flex-wrap items-end justify-between gap-5 rounded-2xl px-5 py-6 sm:gap-7 sm:px-9 sm:py-7', vencido ? 'bg-danger text-primary-foreground' : 'bg-primary text-primary-foreground')}
+          className={cn('flex flex-wrap items-end justify-between gap-3.5 rounded-2xl px-4 py-4 sm:gap-7 sm:px-9 sm:py-7', vencido ? 'bg-danger text-primary-foreground' : 'bg-primary text-primary-foreground')}
         >
           <div className="flex flex-col gap-2.5">
             <h1 id="pl-actual" className="text-3xl font-semibold leading-none tracking-[-0.04em] sm:text-5xl">
@@ -235,7 +235,7 @@ export default function MiPlanPage() {
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <h2 className="text-2xl font-semibold sm:text-[28px] tracking-[-0.03em] text-foreground">Cambiar de plan</h2>
+          <h2 className="text-xl font-semibold sm:text-[28px] tracking-[-0.03em] text-foreground">Cambiar de plan</h2>
           <div role="group" aria-label="Forma de pago" className="grid w-full grid-cols-2 gap-1 rounded-[10px] bg-secondary p-1 sm:flex sm:w-auto">
             {[
               { valor: false, texto: 'Mensual' },
@@ -259,7 +259,8 @@ export default function MiPlanPage() {
         </div>
 
         {esencial && clinicaPlan ? (
-          <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+          // Celular: tarjetas que se deslizan de lado con el dedo y se acomodan solas (scroll-snap).
+          <div className="-mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0 [&>*]:w-[86%] [&>*]:shrink-0 [&>*]:snap-center lg:[&>*]:w-auto [&::-webkit-scrollbar]:hidden">
             <TarjetaPlan
               nombre="Esencial"
               lema="Para el consultorio que atiende solo"

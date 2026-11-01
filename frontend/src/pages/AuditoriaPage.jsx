@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { SlidersHorizontal, X } from 'lucide-react'
+import HojaInferior from '@/components/movil/HojaInferior'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import AdminShell from '@/components/layout/AdminShell'
 import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
@@ -327,6 +330,7 @@ export default function AuditoriaPage() {
   const [rango, setRango] = useState('7dias')
   const [pagina, setPagina] = useState(1)
   const [seleccionId, setSeleccionId] = useState(null)
+  const [hojaAbierta, setHojaAbierta] = useState(false)
   const esEscritorio = useMediaQuery('(min-width: 1024px)')
 
   const rolPermitido = canAccessModule(usuario, 'auditoria')
@@ -391,13 +395,25 @@ export default function AuditoriaPage() {
     )
   }
 
-  return (
-    <AdminShell
-      currentKey="auditoria"
-      title="Quién cambió qué"
-      description="Cada cambio en la clínica queda registrado con la persona, la hora y lo que había antes"
-    >
-      <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
+  const opcionesTipo = [
+    { value: 'todas', label: 'Todas' },
+    { value: 'crear', label: 'Nuevos' },
+    { value: 'editar', label: 'Cambios' },
+    { value: 'anular', label: 'Anulados o borrados' },
+    { value: 'sesion', label: 'Inicio de sesión' },
+    { value: 'fallido', label: 'Fallidos' },
+  ]
+
+  // Chips de los filtros activos (el rango de fechas por defecto no cuenta).
+  const activos = [
+    persona !== 'todas' && { key: 'persona', label: personas.find((p) => p.id === persona)?.nombre || 'Persona', quitar: () => cambiarFiltro(setPersona)('todas') },
+    modulo !== 'todos' && { key: 'modulo', label: MODULOS[modulo] || modulo, quitar: () => cambiarFiltro(setModulo)('todos') },
+    tipo !== 'todas' && { key: 'tipo', label: opcionesTipo.find((o) => o.value === tipo)?.label || tipo, quitar: () => cambiarFiltro(setTipo)('todas') },
+    rango !== '7dias' && { key: 'rango', label: RANGOS.find((r) => r.value === rango)?.label || rango, quitar: () => cambiarFiltro(setRango)('7dias') },
+  ].filter(Boolean)
+
+  const selectoresFiltro = (
+    <>
         <Filtro label="Persona">
           <Select
             variant="field"
@@ -425,14 +441,7 @@ export default function AuditoriaPage() {
             aria-label="Acción"
             value={tipo}
             onValueChange={cambiarFiltro(setTipo)}
-            options={[
-              { value: 'todas', label: 'Todas' },
-              { value: 'crear', label: 'Nuevos' },
-              { value: 'editar', label: 'Cambios' },
-              { value: 'anular', label: 'Anulados o borrados' },
-              { value: 'sesion', label: 'Inicio de sesión' },
-              { value: 'fallido', label: 'Fallidos' },
-            ]}
+            options={opcionesTipo}
           />
         </Filtro>
         <Filtro label="Fechas">
@@ -445,6 +454,45 @@ export default function AuditoriaPage() {
             options={RANGOS}
           />
         </Filtro>
+    </>
+  )
+
+  return (
+    <AdminShell
+      currentKey="auditoria"
+      title="Quién cambió qué"
+      description={esEscritorio ? 'Cada cambio en la clínica queda registrado con la persona, la hora y lo que había antes' : undefined}
+    >
+      <TirarParaRefrescar onRefrescar={() => auditoriaQuery.refetch()} className="flex flex-col gap-4 lg:gap-6">
+      {/* Escritorio: los cuatro filtros a la vista. */}
+      <div className="hidden flex-wrap gap-2.5 lg:flex">{selectoresFiltro}</div>
+
+      {/* Celular: un botón «Filtros» y chips de lo activo, en una sola línea. */}
+      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setHojaAbierta(true)}
+          className={cn('inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-foreground', FOCO)}
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          Filtros{activos.length ? ` (${activos.length})` : ''}
+        </button>
+        {activos.length === 0 ? (
+          <span className="shrink-0 text-sm text-muted-foreground">Últimos 7 días</span>
+        ) : (
+          activos.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.quitar}
+              aria-label={`Quitar filtro ${chip.label}`}
+              className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-primary/10 pl-3.5 pr-3 text-sm font-medium text-primary', FOCO)}
+            >
+              {chip.label}
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          ))
+        )}
       </div>
 
       {auditoriaQuery.isError ? (
@@ -540,6 +588,25 @@ export default function AuditoriaPage() {
 
         <Detalle log={seleccionado} />
       </div>
+      </TirarParaRefrescar>
+
+      {/* Fuera del wrapper de «tirar»: los eventos táctiles de la hoja no deben disparar el refresco. */}
+      <HojaInferior
+        abierta={hojaAbierta}
+        onCambiar={setHojaAbierta}
+        titulo="Filtros"
+        pie={
+          <button
+            type="button"
+            onClick={() => setHojaAbierta(false)}
+            className={cn('h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground', FOCO)}
+          >
+            Ver {total.toLocaleString('es-CO')} {total === 1 ? 'cambio' : 'cambios'}
+          </button>
+        }
+      >
+        <div className="flex flex-col gap-3 pb-2">{selectoresFiltro}</div>
+      </HojaInferior>
     </AdminShell>
   )
 }

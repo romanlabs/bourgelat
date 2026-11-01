@@ -14,6 +14,8 @@ import {
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { HoraPicker } from '@/components/shared/HoraPicker'
@@ -195,6 +197,7 @@ function ConfiguracionContent({
 }) {
   const queryClient = useQueryClient()
   const [activeSection, setActiveSection] = useState('ficha')
+  const esCelular = useEsCelular()
   const [clinicForm, setClinicForm] = useState(() => buildClinicForm(initialClinica))
   const [factusForm, setFactusForm] = useState(() => buildFactusForm(initialFactus))
 
@@ -405,6 +408,19 @@ function ConfiguracionContent({
     },
   ]
 
+  // Celular: deslizar el dedo a los lados pasa a la sección vecina (atajo; los chips siguen).
+  const navegables = sectionOptions.filter((s) => !s.proximamente)
+  const indiceActual = navegables.findIndex((s) => s.id === activeSection)
+  const irASeccion = (paso) => {
+    const destino = navegables[indiceActual + paso]
+    if (destino) setActiveSection(destino.id)
+  }
+  const gestosSeccion = useDeslizarHorizontal({
+    onIzquierda: () => irASeccion(1),
+    onDerecha: () => irASeccion(-1),
+    activo: esCelular,
+  })
+
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
       <nav aria-label="Secciones de la configuración" className="flex gap-1.5 overflow-x-auto rounded-2xl bg-card p-1.5 [scrollbar-width:none] lg:sticky lg:top-6 lg:flex-col lg:gap-1 lg:overflow-visible lg:p-2 [&::-webkit-scrollbar]:hidden">
@@ -435,7 +451,7 @@ function ConfiguracionContent({
         })}
       </nav>
 
-      <div className="min-w-0 space-y-5">
+      <div className="min-w-0 space-y-4 lg:space-y-5" {...gestosSeccion}>
       {activeSection === 'ficha' ? (
         <DashboardPanel
           title="Ficha de la clínica"

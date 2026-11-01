@@ -2,7 +2,12 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Check, CircleAlert, MoreHorizontal, Search, Sparkles, UserPlus, X } from 'lucide-react'
+import { Check, ChevronDown, CircleAlert, MoreHorizontal, Pencil, Search, Sparkles, UserCheck, UserPlus, UserX, X } from 'lucide-react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import HojaInferior from '@/components/movil/HojaInferior'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useMantenerPresionado } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
@@ -225,6 +230,54 @@ function AccionesUsuario({ nombre, onEditar, onReenviar, onCambiarEstado, onElim
   )
 }
 
+// Celular: deslizar la tarjeta deja ver Editar y Desactivar; mantenerla
+// presionada abre todas las opciones. Ambas existen también en el menú «⋯».
+function ItemGestos({ acciones, onMantener, children }) {
+  const { props, consumido } = useMantenerPresionado(onMantener)
+  return (
+    <div
+      {...props}
+      onClickCapture={(event) => {
+        // El toque largo no debe abrir además la edición.
+        if (consumido()) {
+          event.stopPropagation()
+          event.preventDefault()
+        }
+      }}
+    >
+      <FilaDeslizable acciones={acciones}>{children}</FilaDeslizable>
+    </div>
+  )
+}
+
+// Opciones de una persona en una hoja inferior (toque largo en celular).
+function OpcionesUsuarioHoja({ usuario, esActual, onCerrar, onEditar, onReenviar, onCambiarEstado, onEliminar }) {
+  const activo = usuario?.activo !== false
+  const opcion = 'flex h-12 w-full items-center rounded-xl px-3 text-left text-base font-medium transition hover:bg-muted active:bg-muted'
+  const correr = (fn) => () => {
+    onCerrar()
+    fn()
+  }
+  return (
+    <HojaInferior abierta={Boolean(usuario)} onCambiar={(abierta) => { if (!abierta) onCerrar() }} titulo={usuario?.nombre || 'Opciones'}>
+      <div className="flex flex-col gap-1 pb-3">
+        <button type="button" className={cn(opcion, 'text-foreground')} onClick={correr(onEditar)}>Editar</button>
+        {activo && usuario?.invitacionPendiente ? (
+          <button type="button" className={cn(opcion, 'text-foreground')} onClick={correr(onReenviar)}>Reenviar invitación</button>
+        ) : null}
+        {esActual ? null : (
+          <>
+            <button type="button" className={cn(opcion, activo ? 'text-danger' : 'text-foreground')} onClick={correr(onCambiarEstado)}>
+              {activo ? 'Desactivar' : 'Activar'}
+            </button>
+            <button type="button" className={cn(opcion, 'text-danger')} onClick={correr(onEliminar)}>Eliminar</button>
+          </>
+        )}
+      </div>
+    </HojaInferior>
+  )
+}
+
 // Panel lateral para crear o editar sin perder de vista la lista.
 function PanelLateral({ abierto, titulo, subtitulo, onCerrar, children }) {
   return (
@@ -271,13 +324,33 @@ const MODULOS_MATRIZ = [
 const ROLES_MATRIZ = ROLE_OPTIONS.filter((rol) => rol.value !== 'admin')
 
 function MatrizRoles() {
+  // Celular: plegada por defecto (son diez módulos que empujan el contenido).
+  const esCelular = useEsCelular()
+  const [abierta, setAbierta] = useState(false)
+  const plegada = esCelular && !abierta
   return (
     <section aria-labelledby="matriz-roles" className="rounded-2xl bg-card p-4 sm:p-6">
-      <h2 id="matriz-roles" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Qué puede abrir cada rol</h2>
-      <p className="mt-1 text-sm leading-6 text-muted-foreground">
-        El administrador entra a todo. Una persona puede tener más de un rol y suma lo que abre cada uno.
-      </p>
-      <ul className="mt-4 flex flex-col sm:hidden">
+      <h2 id="matriz-roles" className="text-lg font-semibold tracking-[-0.02em] text-foreground">
+        {esCelular ? (
+          <button
+            type="button"
+            aria-expanded={abierta}
+            onClick={() => setAbierta((v) => !v)}
+            className={cn('-my-2 flex min-h-11 w-full items-center justify-between gap-3 text-left', FOCO)}
+          >
+            Qué puede abrir cada rol
+            <ChevronDown className={cn('h-5 w-5 shrink-0 text-muted-foreground transition-transform', abierta && 'rotate-180')} aria-hidden="true" />
+          </button>
+        ) : (
+          'Qué puede abrir cada rol'
+        )}
+      </h2>
+      {plegada ? null : (
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          El administrador entra a todo. Una persona puede tener más de un rol y suma lo que abre cada uno.
+        </p>
+      )}
+      <ul className={cn('mt-4 flex-col sm:hidden', plegada ? 'hidden' : 'flex')}>
         {MODULOS_MATRIZ.map((modulo) => {
           const roles = ROLES_MATRIZ.filter((rol) => (MODULE_ACCESS[modulo.key] || []).includes(rol.value))
           return (
@@ -399,6 +472,8 @@ export default function UsuariosPage() {
   const [panel, setPanel] = useState(null)
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [porEliminar, setPorEliminar] = useState(null)
+  const [opcionesDe, setOpcionesDe] = useState(null)
+  const esCelular = useEsCelular()
   const [createForm, setCreateForm] = useState(DEFAULT_CREATE_FORM)
   const [editForm, setEditForm] = useState(DEFAULT_EDIT_FORM)
 
@@ -658,7 +733,7 @@ export default function UsuariosPage() {
     <AdminShell
       currentKey="usuarios"
       title={titulo}
-      description={descripcion}
+      description={esCelular ? undefined : descripcion}
       hideSearch
       actions={
         <div className="flex flex-wrap items-center gap-2">
@@ -679,7 +754,9 @@ export default function UsuariosPage() {
         </div>
       }
     >
-      <div className="space-y-5">
+      <TirarParaRefrescar onRefrescar={() => usuariosQuery.refetch()}>
+      <div className="space-y-4 lg:space-y-5">
+        {esCelular ? <p className="px-1 text-[13px] text-muted-foreground">{descripcion}</p> : null}
         {usuariosQuery.isError ? (
           <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
             {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
@@ -740,7 +817,23 @@ export default function UsuariosPage() {
               {tableRows.map((row) => {
                 const esActual = row.raw.id === usuario?.id
                 return (
-                  <li key={row.id} className="flex items-start gap-1 rounded-xl bg-muted/50 p-2">
+                  <li key={row.id}>
+                  <ItemGestos
+                    acciones={[
+                      { key: 'editar', label: 'Editar', icon: Pencil, tono: 'info', onClick: () => abrirEditar(row.raw) },
+                      ...(esActual
+                        ? []
+                        : [{
+                            key: 'estado',
+                            label: row.activo ? 'Desactivar' : 'Activar',
+                            icon: row.activo ? UserX : UserCheck,
+                            tono: row.activo ? 'danger' : 'primary',
+                            onClick: () => toggleUsuarioMutation.mutate({ id: row.raw.id }),
+                          }]),
+                    ]}
+                    onMantener={() => setOpcionesDe(row.raw)}
+                  >
+                  <div className="flex items-start gap-1 rounded-xl bg-muted/50 p-2">
                     <button
                       type="button"
                       onClick={() => abrirEditar(row.raw)}
@@ -789,6 +882,8 @@ export default function UsuariosPage() {
                       onEliminar={esActual ? null : () => setPorEliminar(row.raw)}
                       activo={row.activo}
                     />
+                  </div>
+                  </ItemGestos>
                   </li>
                 )
               })}
@@ -869,6 +964,17 @@ export default function UsuariosPage() {
 
         <MatrizRoles />
       </div>
+      </TirarParaRefrescar>
+
+      <OpcionesUsuarioHoja
+        usuario={opcionesDe}
+        esActual={opcionesDe?.id === usuario?.id}
+        onCerrar={() => setOpcionesDe(null)}
+        onEditar={() => abrirEditar(opcionesDe)}
+        onReenviar={() => reenviarInvitacionMutation.mutate({ id: opcionesDe.id })}
+        onCambiarEstado={() => toggleUsuarioMutation.mutate({ id: opcionesDe.id })}
+        onEliminar={() => setPorEliminar(opcionesDe)}
+      />
 
       <PanelLateral
         abierto={panel === 'crear'}
