@@ -72,7 +72,7 @@ function Interruptor({ titulo, detalle, activo, onCambiar, deshabilitado = false
 const CATEGORIAS_AJUSTES = [
   { id: 'clinica', titulo: 'Clínica', detalle: 'Llegadas, citas, historias, exámenes y vacunas por vencer.' },
   { id: 'inventario', titulo: 'Inventario', detalle: 'Agotados, bajo el mínimo y vencimientos.' },
-  { id: 'caja', titulo: 'Caja y facturación', detalle: 'Cierres de turno, créditos vencidos, pagos a proveedores y DIAN.' },
+  { id: 'caja', titulo: 'Caja y ventas', detalle: 'Cierres de turno, créditos vencidos y pagos a proveedores.' },
   { id: 'sistema', titulo: 'Soporte y plan', detalle: 'Respuestas de soporte y vencimiento del plan.' },
 ]
 
