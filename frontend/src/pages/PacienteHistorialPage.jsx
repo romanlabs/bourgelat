@@ -30,6 +30,9 @@ import { etiquetaEspecie } from '@/lib/especies'
 import { formatearEdad } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
 import { formatearCelular } from '@/lib/celular'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
 
 const TABS = [
   { id: 'historia', label: 'Consultas', titulo: 'Historia clínica' },
@@ -98,7 +101,11 @@ export default function PacienteHistorialPage() {
   const [activeTab, setActiveTab] = useState(() =>
     location.state?.resaltar?.tipo === 'examen' ? 'examenes' : 'historia'
   )
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const esCelular = useEsCelular()
+  // «Nueva consulta» desde la lista de pacientes llega con ?nueva=consulta y abre el formulario al montar.
+  const [drawerOpen, setDrawerOpen] = useState(
+    () => searchParams.get('nueva') === 'consulta' && tieneHistorias && puedeEditarHistorias
+  )
   const [historiaToEdit, setHistoriaToEdit] = useState(null)
   const [estiloDrawerOpen, setEstiloDrawerOpen] = useState(false)
   const [registroEstiloToEdit, setRegistroEstiloToEdit] = useState(null)
@@ -236,6 +243,43 @@ export default function PacienteHistorialPage() {
     setDrawerOpen(true)
   }, [historiaIdParam, historiasQuery.data, historiasQuery.isPending, setSearchParams])
 
+  // Limpia ?nueva=consulta para no reabrir el formulario al volver.
+  const pideNuevaConsulta = searchParams.get('nueva') === 'consulta'
+  useEffect(() => {
+    if (pideNuevaConsulta) setSearchParams({}, { replace: true })
+  }, [pideNuevaConsulta, setSearchParams])
+
+  // Deslizar con el dedo cambia de pestaña (Consultas, Exámenes, Estilos).
+  // No cuenta dentro de tablas o bloques con scroll horizontal.
+  const irPestana = (delta) => {
+    const siguiente = TABS[TABS.findIndex((tab) => tab.id === activeTab) + delta]
+    if (siguiente) setActiveTab(siguiente.id)
+  }
+  const deslizar = useDeslizarHorizontal({
+    onIzquierda: () => irPestana(1),
+    onDerecha: () => irPestana(-1),
+    activo: esCelular,
+  })
+  const propsDeslizar = esCelular
+    ? {
+        ...deslizar,
+        onTouchStart: (event) => {
+          if (event.target.closest?.('.overflow-x-auto, table, [data-no-deslizar-pestana]')) return
+          deslizar.onTouchStart?.(event)
+        },
+      }
+    : {}
+
+  const refrescar = async () => {
+    await Promise.all([
+      mascotaQuery.refetch(),
+      historiasQuery.refetch(),
+      antecedentesQuery.refetch(),
+      registrosQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: ['examenes-laboratorio'] }),
+    ])
+  }
+
   const handleNuevaConsulta = () => {
     setHistoriaToEdit(null)
     setDrawerOpen(true)
@@ -335,7 +379,8 @@ export default function PacienteHistorialPage() {
       hidePageHeader
       hideSearch
     >
-      <div className="flex flex-col gap-6">
+      <TirarParaRefrescar onRefrescar={refrescar}>
+      <div className="flex flex-col gap-4 lg:gap-6">
         <div className="flex items-center justify-between gap-3 lg:pt-6">
           <Link
             to="/pacientes"
@@ -362,7 +407,7 @@ export default function PacienteHistorialPage() {
             <div
               role="img"
               aria-label={`Foto de ${mascota.nombre}`}
-              className="relative flex h-[200px] shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
+              className="relative flex h-36 shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
             >
               {mascota.fotoPerfil ? (
                 <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -394,7 +439,7 @@ export default function PacienteHistorialPage() {
               ) : null}
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col justify-between gap-5 px-5 py-6 sm:px-9 sm:py-7">
+            <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 px-4 py-4 sm:gap-5 sm:px-9 sm:py-7">
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div className="min-w-0">
                   <h1
@@ -459,8 +504,8 @@ export default function PacienteHistorialPage() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Historia, estilos y exámenes */}
-          <section aria-labelledby="ficha-secciones" className="min-w-0 rounded-2xl bg-card p-5 sm:p-6">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <section aria-labelledby="ficha-secciones" className="min-w-0 rounded-2xl bg-card p-3 sm:p-6" {...propsDeslizar}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-5 sm:gap-4">
               <div>
                 <h2 id="ficha-secciones" className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
                   {TABS.find((tab) => tab.id === activeTab)?.titulo}
@@ -546,7 +591,7 @@ export default function PacienteHistorialPage() {
           {/* Columna lateral: tutor y accesos */}
           <div className="flex min-w-0 flex-col gap-6">
             {mascota?.Propietario ? (
-              <section aria-labelledby="ficha-tutor" className="flex flex-col gap-2.5 rounded-2xl bg-secondary p-6 text-secondary-foreground">
+              <section aria-labelledby="ficha-tutor" className="flex flex-col gap-2.5 rounded-2xl bg-secondary p-4 text-secondary-foreground sm:p-6">
                 <p className="text-[13px] text-muted-foreground">Tutor</p>
                 <h2 id="ficha-tutor" className="-mt-1.5 text-lg font-semibold">{mascota.Propietario.nombre}</h2>
                 <div className="flex flex-col gap-1 text-[15px] leading-6">
@@ -569,7 +614,7 @@ export default function PacienteHistorialPage() {
             ) : null}
 
             {mascota?.observaciones ? (
-              <section aria-labelledby="ficha-notas" className="flex flex-col gap-2 rounded-2xl bg-card p-6">
+              <section aria-labelledby="ficha-notas" className="flex flex-col gap-2 rounded-2xl bg-card p-4 sm:p-6">
                 <h2 id="ficha-notas" className="text-lg font-semibold text-foreground">Notas del paciente</h2>
                 <p className="whitespace-pre-line text-[15px] leading-6 text-foreground">{mascota.observaciones}</p>
               </section>
@@ -589,6 +634,7 @@ export default function PacienteHistorialPage() {
           </div>
         </div>
       </div>
+      </TirarParaRefrescar>
 
       {/* Drawer de historia clínica */}
       {mascotaParaDrawer && (

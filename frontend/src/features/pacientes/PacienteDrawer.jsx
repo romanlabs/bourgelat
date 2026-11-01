@@ -49,7 +49,7 @@ const DEFAULT_VALUES = {
 }
 
 const fieldClass =
-  'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+  'h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 export default function PacienteDrawer({
   open,
@@ -189,21 +189,21 @@ export default function PacienteDrawer({
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[520px] ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
+        <div className="flex items-start justify-between gap-4 px-4 pb-2 pt-4 lg:px-6 lg:pb-3 lg:pt-6">
           <div>
             <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{modoEdicion ? 'Editar paciente' : 'Nuevo paciente'}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 hidden text-sm text-muted-foreground lg:block">
               {modoEdicion
                 ? 'Corrige la ficha del paciente.'
                 : 'Selecciona el tutor y completa la ficha del paciente.'}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-11 w-11 lg:h-10 lg:w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 lg:px-6 lg:py-4">
           <form id="paciente-drawer-form" className="grid gap-5" onSubmit={handleSubmit(handleFormSubmit)}>
 
             {/* Seccion: Tutor */}
@@ -249,7 +249,7 @@ export default function PacienteDrawer({
                       value={ownerSearch}
                       onChange={(e) => onOwnerSearch(e.target.value)}
                       placeholder="Nombre, teléfono o documento"
-                      className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                      className="h-12 lg:h-11 w-full rounded-lg border border-input bg-card pl-10 pr-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
 
@@ -274,7 +274,7 @@ export default function PacienteDrawer({
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground">{owner.nombre}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{formatearCelular(owner.telefono) || 'Sin teléfono'}</p>
+                        <p className="mt-1 hidden text-sm text-muted-foreground lg:block">{formatearCelular(owner.telefono) || 'Sin teléfono'}</p>
                       </div>
                       <span className="shrink-0 text-[13px] font-semibold text-primary">Seleccionar</span>
                     </button>
@@ -287,14 +287,14 @@ export default function PacienteDrawer({
             <div className="grid gap-3">
               <p className="text-[15px] font-semibold text-foreground">Foto del paciente</p>
               <div className="flex items-start gap-4">
-                <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-muted">
+                <div className="flex h-20 w-20 lg:h-28 lg:w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-muted">
                   {photoPreview
                     ? <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
                     : <PawPrint className="h-9 w-9 text-brand-foreground" />
                   }
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-within:ring-2 focus-within:ring-ring">
+                  <label htmlFor={`photo-${photoInputKey}`} className="inline-flex h-11 lg:h-10 cursor-pointer items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-within:ring-2 focus-within:ring-ring">
                     <Upload className="h-3.5 w-3.5" />
                     {photoFile ? 'Cambiar foto' : 'Seleccionar foto'}
                   </label>
@@ -349,7 +349,7 @@ export default function PacienteDrawer({
                         variant="field"
                         id="p-especie"
                         aria-label="Especie"
-                        className="h-11"
+                        className="h-12 lg:h-11"
                         value={field.value}
                         onValueChange={field.onChange}
                         options={ESPECIE_OPCIONES_FORM}
@@ -377,7 +377,7 @@ export default function PacienteDrawer({
                         variant="field"
                         id="p-sexo"
                         aria-label="Sexo"
-                        className="h-11"
+                        className="h-12 lg:h-11"
                         value={field.value}
                         onValueChange={field.onChange}
                         options={SEX_OPTIONS}
@@ -401,29 +401,29 @@ export default function PacienteDrawer({
                 </div>
               </div>
 
-              <label className="flex h-11 cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground transition hover:bg-accent">
-                <input type="checkbox" className="h-4 w-4 accent-primary" {...register('esterilizado')} />
+              <label className="flex h-12 lg:h-11 cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground transition hover:bg-accent">
+                <input type="checkbox" className="h-5 w-5 lg:h-4 lg:w-4 accent-primary" {...register('esterilizado')} />
                 Paciente esterilizado
               </label>
 
               <div className="grid gap-1.5">
                 <label htmlFor="p-obs" className="text-[13px] font-medium text-muted-foreground">Observaciones</label>
-                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" {...register('observaciones')} />
+                <textarea id="p-obs" rows={3} placeholder="Notas utiles para recepción y consulta" className="rounded-lg border border-input bg-card px-3 py-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" {...register('observaciones')} />
               </div>
             </div>
           </form>
         </div>
 
-        <div className="flex gap-2.5 bg-card px-6 pb-6 pt-3">
+        <div className="flex gap-2.5 border-t border-border bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:border-t-0 lg:px-6 lg:pb-6">
           <button
             type="submit"
             form="paciente-drawer-form"
             disabled={isPending}
-            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? 'Guardando...' : modoEdicion ? 'Actualizar paciente' : 'Guardar paciente'}
           </button>
-          <button type="button" onClick={onClose} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <button type="button" onClick={onClose} className="inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             Cancelar
           </button>
         </div>
