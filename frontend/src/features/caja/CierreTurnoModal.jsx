@@ -99,7 +99,8 @@ export default function CierreTurnoModal({
             </span>
             <MoneyInput
               value={form.montoFinalContado}
-              onChange={(value) => setForm((curr) => ({ ...curr, montoFinalContado: value === 0 ? '' : String(value) }))}
+              // $0 contado es un cierre válido (turno sin efectivo), no se convierte en vacío
+              onChange={(value) => setForm((curr) => ({ ...curr, montoFinalContado: String(value) }))}
               placeholder="$ 0"
               autoFocus
               className="h-14 w-full rounded-lg border border-input bg-card px-4 text-right text-2xl font-semibold tracking-[-0.02em] tabular-nums text-foreground placeholder:font-normal placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
