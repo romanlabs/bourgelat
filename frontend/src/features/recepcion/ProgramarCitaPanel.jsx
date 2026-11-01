@@ -152,6 +152,29 @@ export function ProgramarCitaPanel({
     veterinarios.find((item) => item.id === usuario?.id)?.id || veterinarios[0]?.id || ''
   const veterinarioIdWatch = watch('veterinarioId')
 
+  // Citas del profesional ese día: la grilla marca las horas ocupadas con la
+  // misma regla del backend (solo citas programadas y activas bloquean).
+  const citasDiaQuery = useQuery({
+    queryKey: ['agenda-citas', 'grilla', fechaWatch, veterinarioIdWatch],
+    queryFn: () => agendaApi.obtenerCitas({ fecha: fechaWatch, veterinarioId: veterinarioIdWatch, limite: 100 }),
+    enabled: hayGrilla && Boolean(fechaWatch) && Boolean(veterinarioIdWatch),
+  })
+  const ocupadas = (citasDiaQuery.data?.citas || [])
+    .filter((cita) => cita.origen === 'programada' && !['cancelada', 'no_asistio'].includes(cita.estado))
+    .map((cita) => ({ inicio: aMin(cita.horaInicio?.slice(0, 5)), fin: aMin(cita.horaFin?.slice(0, 5)) }))
+  const slotOcupado = (slot) => {
+    const minuto = aMin(slot)
+    return ocupadas.some((cita) => minuto >= cita.inicio && minuto < cita.fin)
+  }
+  const chocaElegida =
+    hayGrilla &&
+    ocupadas.some((cita) => aMin(horaInicioWatch) < cita.fin && aMin(horaFinWatch) > cita.inicio)
+
+  // Hoy: las horas que ya pasaron no se ofrecen.
+  const ahora = new Date()
+  const minutoAhora = fechaWatch === hoyLocal() ? ahora.getHours() * 60 + ahora.getMinutes() : -1
+  const slotsVisibles = slotsDia.filter((slot) => aMin(slot) > minutoAhora)
+
   useEffect(() => {
     if (!veterinarioIdWatch && preferredVeterinarioId) {
       setValue('veterinarioId', preferredVeterinarioId)
@@ -237,21 +260,26 @@ export function ProgramarCitaPanel({
                 <p className="mb-2 text-[13px] font-semibold text-muted-foreground">
                   Hora de inicio
                 </p>
-                {slotsDia.length > 0 ? (
+                {slotsVisibles.length > 0 ? (
                   <div role="radiogroup" aria-label="Horarios disponibles" className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto overscroll-contain">
-                    {slotsDia.map((slot) => {
+                    {slotsVisibles.map((slot) => {
                       const activo = slot === horaInicioWatch
+                      const ocupado = slotOcupado(slot)
                       return (
                         <button
                           key={slot}
                           type="button"
                           role="radio"
                           aria-checked={activo}
+                          aria-label={ocupado ? `${formatHora12(slot)}, ocupado` : undefined}
+                          disabled={ocupado}
                           onClick={() => elegirInicio(slot)}
                           className={`h-11 rounded-lg border text-[13px] font-semibold tabular-nums transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                             activo
                               ? 'border-primary bg-primary text-primary-foreground'
-                              : 'border-input bg-card text-foreground'
+                              : ocupado
+                                ? 'border-border bg-muted text-muted-foreground line-through'
+                                : 'border-input bg-card text-foreground'
                           }`}
                         >
                           {formatHora12(slot)}
@@ -261,9 +289,17 @@ export function ProgramarCitaPanel({
                   </div>
                 ) : (
                   <p className="rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
-                    No hay horarios de atención ese día.
+                    {slotsDia.length > 0
+                      ? 'Ya pasaron los horarios de atención de hoy.'
+                      : 'No hay horarios de atención ese día.'}
                   </p>
                 )}
+                {chocaElegida ? (
+                  <p className="mt-2 flex items-start gap-2 text-[13px] font-medium text-warning">
+                    <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    Ese horario choca con otra cita del profesional. Elige otra hora o una duración menor.
+                  </p>
+                ) : null}
               </div>
               <div>
                 <p className="mb-2 text-[13px] font-semibold text-muted-foreground">Duración</p>
