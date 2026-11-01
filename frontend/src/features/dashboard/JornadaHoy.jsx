@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { canAccessModule } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
@@ -76,6 +76,22 @@ function Avatar({ mascota, className }) {
   )
 }
 
+// true desde 1024px (lg). En celular la fila se expande en sitio; en escritorio
+// sigue abriendo Recepción y mostrando el panel lateral.
+function useEsEscritorio() {
+  const consulta = '(min-width: 1024px)'
+  const [esEscritorio, setEsEscritorio] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(consulta).matches
+  )
+  useEffect(() => {
+    const mql = window.matchMedia(consulta)
+    const alCambiar = (e) => setEsEscritorio(e.matches)
+    mql.addEventListener('change', alCambiar)
+    return () => mql.removeEventListener('change', alCambiar)
+  }, [])
+  return esEscritorio
+}
+
 function LineaAhora({ etiqueta }) {
   return (
     <div className="flex items-center gap-2.5 px-3 py-1" aria-hidden="true">
@@ -85,12 +101,62 @@ function LineaAhora({ etiqueta }) {
   )
 }
 
+// Detalle de una cita en celular: datos del paciente y accesos de 44px.
+function DetalleCita({ cita, puedeAtender, puedeCobrar, veRecepcion }) {
+  const especie = etiquetaEspecie(cita.mascota?.especie)
+  const base = 'inline-flex h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition active:translate-y-px'
+  const botones = [
+    puedeAtender && cita.mascota?.id ? (
+      <Link key="historia" to={historiaHref(cita)} className={cn(base, 'bg-primary text-primary-foreground')}>
+        <Stethoscope className="h-4 w-4" />
+        Abrir historia
+      </Link>
+    ) : null,
+    puedeCobrar ? (
+      <Link key="cobrar" to="/caja" state={cobroEstado(cita)} className={cn(base, 'bg-secondary text-secondary-foreground')}>
+        <Receipt className="h-4 w-4" />
+        Cobrar
+      </Link>
+    ) : null,
+    veRecepcion ? (
+      <Link
+        key="recepcion"
+        to={`/agenda?tab=recepcion&cita=${cita.id}`}
+        className={cn(base, 'bg-secondary text-secondary-foreground')}
+      >
+        Cambiar estado
+      </Link>
+    ) : null,
+  ].filter(Boolean)
+
+  return (
+    <div className="flex flex-col gap-3 px-3 pb-4 pt-1 lg:hidden">
+      <p className="text-[13px] text-muted-foreground">
+        {[especie, cita.propietario?.nombre, cita.veterinario?.nombre ? `Atiende ${cita.veterinario.nombre}` : null]
+          .filter(Boolean)
+          .join(' · ') || 'Sin datos del paciente'}
+      </p>
+      {cita.propietario?.telefono ? (
+        <a
+          href={`tel:${cita.propietario.telefono}`}
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium tabular-nums text-primary"
+        >
+          <Phone className="h-4 w-4" />
+          {formatearCelular(cita.propietario.telefono)}
+        </a>
+      ) : null}
+      <p className="text-sm leading-6">{cita.observaciones || cita.motivo || 'Sin notas de recepción'}</p>
+      {botones.length ? <div className="grid grid-cols-2 gap-2">{botones}</div> : null}
+    </div>
+  )
+}
+
 function PanelPaciente({ cita, puedeAtender, puedeCobrar }) {
   if (!cita) return null
   const especie = etiquetaEspecie(cita.mascota?.especie)
 
   return (
-    <section aria-labelledby="hoy-seleccion" className="flex flex-col gap-5 rounded-2xl bg-card p-6">
+    <section aria-labelledby="hoy-seleccion" className="flex flex-col gap-5 rounded-2xl bg-card p-6 max-lg:hidden">
       <div className="flex items-center gap-4">
         <Avatar mascota={cita.mascota} className="h-16 w-16 rounded-2xl text-2xl" />
         <div className="min-w-0">
@@ -182,6 +248,8 @@ export default function JornadaHoy({
   const [consultorio, setConsultorio] = useState('todos')
   const [soloMios, setSoloMios] = useState(false)
   const [seleccionId, setSeleccionId] = useState(null)
+  const [abiertaId, setAbiertaId] = useState(null)
+  const esEscritorio = useEsEscritorio()
   const navigate = useNavigate()
   const usuario = useAuthStore((state) => state.usuario)
   // Tocar una cita lleva a Recepción con esa cita abierta, donde se cambia su
@@ -189,6 +257,10 @@ export default function JornadaHoy({
   const veRecepcion = canAccessModule(usuario, 'agenda')
   // Una atendida sin historia ya no cambia de estado: abre su consulta.
   const abrirCita = (cita) => {
+    if (!esEscritorio) {
+      setAbiertaId((actual) => (actual === cita.id ? null : cita.id))
+      return
+    }
     if (puedeAtender && faltaHistoria(cita) && cita.mascota?.id) navigate(historiaHref(cita))
     else if (veRecepcion) navigate(`/agenda?tab=recepcion&cita=${cita.id}`)
     else setSeleccionId(cita.id)
@@ -231,10 +303,10 @@ export default function JornadaHoy({
   const indiceAhora = visibles.findIndex((c) => minutosDelDia(c.horaInicio) > minutosAhora)
 
   return (
-    <div className="flex flex-wrap items-start gap-6">
-      <section aria-labelledby="hoy-jornada" className="min-w-0 flex-[999_1_460px] rounded-2xl bg-card px-3 pb-4 pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 px-3 pb-4">
-          <h2 id="hoy-jornada" className="text-[22px] font-semibold tracking-[-0.02em]">
+    <div className="flex flex-wrap items-start gap-4 lg:gap-6">
+      <section aria-labelledby="hoy-jornada" className="min-w-0 flex-[999_1_460px] rounded-2xl bg-card px-3 pb-4 pt-6 max-lg:basis-full max-lg:bg-transparent max-lg:p-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 pb-4 max-lg:px-1 max-lg:pb-3 lg:gap-4">
+          <h2 id="hoy-jornada" className="text-lg font-semibold tracking-[-0.02em] lg:text-[22px]">
             La jornada
           </h2>
           <div className="flex flex-wrap items-center gap-2">
@@ -285,13 +357,13 @@ export default function JornadaHoy({
         </div>
 
         {loading ? (
-          <div className="space-y-2 px-3" aria-label="Cargando la agenda de hoy">
+          <div className="space-y-2 px-3 max-lg:px-0" aria-label="Cargando la agenda de hoy">
             {[0, 1, 2, 3, 4].map((fila) => (
               <div key={fila} className="h-16 animate-pulse rounded-xl bg-muted" />
             ))}
           </div>
         ) : visibles.length === 0 ? (
-          <div className="mx-3 flex flex-col items-start gap-3 rounded-xl bg-muted px-5 py-8">
+          <div className="mx-3 flex flex-col items-start gap-3 rounded-xl bg-muted px-5 py-8 max-lg:mx-0 max-lg:bg-card">
             <p className="text-lg font-semibold">No hay citas para hoy</p>
             <p className="max-w-md text-[15px] leading-6 text-muted-foreground">
               Cuando recepción agende pacientes, aparecerán aquí en orden de llegada, con el que sigue resaltado.
@@ -305,13 +377,14 @@ export default function JornadaHoy({
             </Link>
           </div>
         ) : (
-          <ol className="flex flex-col gap-0.5">
+          <ol className="flex flex-col gap-0.5 max-lg:gap-2">
             {visibles.map((cita, indice) => {
               const { hora, sufijo } = partirHora(cita.horaInicio)
               const activa = seleccionada?.id === cita.id
+              const abierta = !esEscritorio && abiertaId === cita.id
               const terminada = ['completada', 'cancelada', 'no_asistio'].includes(cita.estado)
               return (
-                <li key={cita.id}>
+                <li key={cita.id} className="max-lg:overflow-hidden max-lg:rounded-xl max-lg:bg-card">
                   {indice === indiceAhora ? <LineaAhora etiqueta={etiquetaAhora} /> : null}
                   <button
                     type="button"
@@ -323,10 +396,11 @@ export default function JornadaHoy({
                           ? 'Abrir en Recepción para cambiar su estado'
                           : undefined
                     }
-                    aria-pressed={activa}
+                    aria-pressed={esEscritorio ? activa : undefined}
+                    aria-expanded={esEscritorio ? undefined : abierta}
                     className={cn(
-                      'grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors',
-                      activa ? 'bg-accent' : 'hover:bg-muted'
+                      'grid min-h-[64px] w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-3 py-3.5 text-left transition-colors max-lg:grid-cols-[56px_minmax(0,1fr)_auto] max-lg:gap-3 max-lg:active:bg-muted',
+                      activa ? 'lg:bg-accent' : 'lg:hover:bg-muted'
                     )}
                   >
                     <span className={cn('flex flex-col leading-tight', terminada && 'opacity-60')}>
@@ -347,6 +421,9 @@ export default function JornadaHoy({
                     </span>
                     <ChipEstado estado={cita.estado} sinHistoria={faltaHistoria(cita)} />
                   </button>
+                  {abierta ? (
+                    <DetalleCita cita={cita} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} veRecepcion={veRecepcion} />
+                  ) : null}
                 </li>
               )
             })}
@@ -355,13 +432,13 @@ export default function JornadaHoy({
         )}
       </section>
 
-      <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
+      <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6 max-lg:basis-full">
         <PanelPaciente cita={seleccionada} puedeAtender={puedeAtender} puedeCobrar={puedeCobrar} />
 
         {puedeVerCaja ? (
           <section
             aria-labelledby="hoy-caja"
-            className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground dark:bg-secondary dark:text-foreground"
+            className="flex flex-col gap-4 rounded-2xl bg-primary p-5 text-primary-foreground dark:bg-secondary dark:text-foreground lg:p-6"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -370,12 +447,12 @@ export default function JornadaHoy({
                   {cajaHoy?.turnoApertura ? `Turno abierto ${cajaHoy.turnoApertura}` : 'Sin turno abierto'}
                 </p>
               </div>
-              <Link to="/caja" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100">
+              <Link to="/caja" className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-85 hover:opacity-100 max-lg:min-h-11">
                 Ir a caja
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <p className="text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums">
+            <p className="text-4xl font-semibold lg:text-[44px] leading-none tracking-[-0.03em] tabular-nums">
               {formatCurrency(cajaHoy?.total ?? 0)}
             </p>
             {cajaHoy?.porMetodo?.length ? (

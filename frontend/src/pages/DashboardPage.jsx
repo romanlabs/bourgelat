@@ -254,14 +254,14 @@ export default function DashboardPage() {
           ) : null}
           <Link
             to="/caja"
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px"
+            className="hidden h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px lg:inline-flex"
           >
             <Receipt className="h-4 w-4" />
             Cobrar
           </Link>
           <Link
             to="/agenda?nueva=1"
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px"
+            className="hidden h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px lg:inline-flex"
           >
             <CalendarPlus className="h-4 w-4" />
             Nueva cita
@@ -269,6 +269,23 @@ export default function DashboardPage() {
         </>
       }
     >
+      <div className="grid grid-cols-2 gap-2 lg:hidden">
+        <Link
+          to="/agenda?nueva=1"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground active:translate-y-px"
+        >
+          <CalendarPlus className="h-4 w-4" />
+          Nueva cita
+        </Link>
+        <Link
+          to="/caja"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-secondary text-[15px] font-semibold text-secondary-foreground active:translate-y-px"
+        >
+          <Receipt className="h-4 w-4" />
+          Cobrar
+        </Link>
+      </div>
+
       {queryErrors.length > 0 ? (
         <div className="space-y-3">
           {queryErrors.map((message) => (
