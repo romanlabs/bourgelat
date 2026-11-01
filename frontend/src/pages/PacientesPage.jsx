@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import {
+  Archive,
   ChevronDown,
+  ClipboardPlus,
+  HeartPulse,
   ListFilter,
   Loader2,
   MoreHorizontal,
+  Pencil,
+  Phone,
   Plus,
+  Power,
   Search,
   Sparkles,
   UserRound,
   X,
 } from 'lucide-react'
+import HojaInferior from '@/components/movil/HojaInferior'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useDeslizarHorizontal, useMantenerPresionado } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
 import AdminShell from '@/components/layout/AdminShell'
 import { FiltroDesactivados } from '@/components/shared/FiltroDesactivados'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -34,7 +45,7 @@ const TABS = [
 ]
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const BTN_PRIMARIO = `inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+const BTN_PRIMARIO = `inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary sm:h-11 sm:w-auto px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
 const ITEM_MENU = 'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 
 // Antecedentes, editar y desactivar en un menú «⋯»; «Abrir ficha» queda a la vista.
@@ -46,7 +57,7 @@ function AccionesPaciente({ nombre, antecedentesTo, onEditar, onCambiarEstado, r
         <button
           type="button"
           aria-label={`Acciones de ${nombre}`}
-          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
+          className={cn('inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground lg:h-9 lg:w-9 transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
         >
           <MoreHorizontal className="h-[18px] w-[18px]" />
         </button>
@@ -114,9 +125,9 @@ function PetAvatar({ name, photo, especie, className = 'h-12 w-12 rounded-xl tex
 }
 
 // Control segmentado: la opción activa en blanco sobre fondo suave.
-function Segmentado({ label, options, value, onChange, size = 'h-9' }) {
+function Segmentado({ label, options, value, onChange, size = 'h-11 sm:h-9' }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
+    <div role="group" aria-label={label} className="flex w-full gap-1 rounded-[10px] bg-secondary p-1 sm:w-auto sm:flex-wrap">
       {options.map((option) => {
         const activa = option.value === value
         return (
@@ -127,7 +138,7 @@ function Segmentado({ label, options, value, onChange, size = 'h-9' }) {
             onClick={() => onChange(option.value)}
             className={cn(
               size,
-              'rounded-[7px] px-3.5 text-[13px] transition',
+              'flex-1 rounded-[7px] px-3.5 text-sm transition sm:flex-none sm:text-[13px]',
               FOCO,
               activa
                 ? 'bg-card font-semibold text-foreground'
@@ -144,7 +155,7 @@ function Segmentado({ label, options, value, onChange, size = 'h-9' }) {
 
 function Buscador({ value, onChange, placeholder, ariaLabel, cargando }) {
   return (
-    <label className="flex h-12 min-w-0 flex-1 basis-80 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
+    <label className="flex h-12 min-w-0 flex-1 basis-0 sm:basis-80 items-center gap-2.5 rounded-[10px] border border-input bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
       <Search className="h-[18px] w-[18px] shrink-0" />
       <input
         type="search"
@@ -153,7 +164,7 @@ function Buscador({ value, onChange, placeholder, ariaLabel, cargando }) {
         placeholder={placeholder}
         aria-label={ariaLabel}
         maxLength={120}
-        className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:appearance-none"
+        className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground lg:text-[15px] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {cargando ? (
         <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin" />
@@ -187,7 +198,7 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
           type="button"
           aria-label="Filtrar por especie"
           className={cn(
-            'flex h-12 items-center gap-2 rounded-[10px] px-4 text-sm font-semibold transition active:translate-y-px data-[state=open]:bg-accent',
+            'hidden h-12 sm:flex items-center gap-2 rounded-[10px] px-4 text-sm font-semibold transition active:translate-y-px data-[state=open]:bg-accent',
             FOCO,
             activa ? 'bg-accent text-primary' : 'bg-secondary text-secondary-foreground hover:brightness-95'
           )}
@@ -226,9 +237,60 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
   )
 }
 
+// Chips de especie con scroll horizontal (solo celular).
+function ChipsEspecie({ value, onChange, porEspecie, total, desactivados }) {
+  const opciones = SPECIES_OPTIONS.filter(
+    (option) => option.value === 'todas' || option.value === value || porEspecie[option.value] > 0
+  )
+  return (
+    <div role="group" aria-label="Filtrar por especie" className="-mx-4 flex w-[calc(100%+2rem)] gap-2 overflow-x-auto px-4 sm:hidden">
+      {opciones.map((option) => {
+        const activa = option.value === value
+        const conteo = option.value === 'todas' ? total : porEspecie[option.value] || 0
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={activa}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition',
+              FOCO,
+              activa ? 'bg-accent text-primary' : 'bg-secondary text-secondary-foreground'
+            )}
+          >
+            {option.value === 'todas' ? 'Todas' : option.label}
+            <span className="text-[13px] font-medium tabular-nums text-muted-foreground">{formatNumber(conteo)}</span>
+          </button>
+        )
+      })}
+      {desactivados ? <ChipDesactivados {...desactivados} /> : null}
+    </div>
+  )
+}
+
+// Chip «Desactivados» (celular): reemplaza al botón «Ver desactivados» de escritorio.
+function ChipDesactivados({ checked, onChange }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition',
+        FOCO,
+        checked ? 'bg-warning-soft text-warning' : 'bg-secondary text-secondary-foreground'
+      )}
+    >
+      <Archive className="h-4 w-4" aria-hidden="true" />
+      Desactivados
+    </button>
+  )
+}
+
 function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-muted px-5 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted px-4 py-3 mt-2 lg:mt-0 lg:rounded-none lg:px-5 lg:py-4">
       <span className="text-sm text-muted-foreground">
         {typeof total === 'number' ? `${formatNumber(total)} ${etiqueta}` : ''}
         {paginas > 1 ? ` · página ${pagina} de ${paginas}` : ''}
@@ -239,7 +301,7 @@ function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
             type="button"
             onClick={() => onChange(Math.max(pagina - 1, 1))}
             disabled={pagina <= 1}
-            className={`h-10 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
+            className={`h-11 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
           >
             Anterior
           </button>
@@ -247,7 +309,7 @@ function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
             type="button"
             onClick={() => onChange(Math.min(pagina + 1, paginas))}
             disabled={pagina >= paginas}
-            className={`h-10 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
+            className={`h-11 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
           >
             Siguiente
           </button>
@@ -259,7 +321,7 @@ function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
 
 function ListaVacia({ titulo, cuerpo }) {
   return (
-    <div className="px-5 py-10 text-center">
+    <div className="rounded-2xl bg-card px-5 py-10 text-center lg:rounded-none lg:bg-transparent">
       <p className="text-base font-semibold text-foreground">{titulo}</p>
       <p className="mt-1.5 text-sm text-muted-foreground">{cuerpo}</p>
     </div>
@@ -268,7 +330,7 @@ function ListaVacia({ titulo, cuerpo }) {
 
 function FilasSkeleton({ rows = 6 }) {
   return (
-    <div className="flex flex-col gap-1 p-3">
+    <div className="flex flex-col gap-1 rounded-2xl bg-card p-3 lg:rounded-none lg:bg-transparent">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex animate-pulse items-center gap-3 rounded-xl px-3 py-3">
           <div className="h-12 w-12 rounded-xl bg-muted" />
@@ -280,6 +342,84 @@ function FilasSkeleton({ rows = 6 }) {
         </div>
       ))}
     </div>
+  )
+}
+
+// Opciones de una fila (se abre al mantenerla presionada): mismas acciones del «⋯».
+function MenuOpciones({ menu, onCambiar }) {
+  return (
+    <HojaInferior abierta={Boolean(menu)} onCambiar={onCambiar} titulo={menu?.titulo || 'Opciones'} descripcion={menu?.descripcion}>
+      <ul className="flex flex-col gap-1 pb-2">
+        {(menu?.items || []).map((item) => {
+          const Icono = item.icon
+          const clase = cn(
+            'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium transition active:bg-muted',
+            item.tono === 'danger' ? 'text-danger' : 'text-foreground',
+            FOCO
+          )
+          const contenido = (
+            <>
+              {Icono ? <Icono className="h-5 w-5 shrink-0" aria-hidden="true" /> : null}
+              {item.label}
+            </>
+          )
+          return (
+            <li key={item.key}>
+              {item.to ? (
+                <Link to={item.to} onClick={() => onCambiar(false)} className={clase}>{contenido}</Link>
+              ) : item.href ? (
+                <a href={item.href} onClick={() => onCambiar(false)} className={clase}>{contenido}</a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCambiar(false)
+                    item.onClick?.()
+                  }}
+                  className={clase}
+                >
+                  {contenido}
+                </button>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </HojaInferior>
+  )
+}
+
+// Tarjeta de paciente (celular): toque abre la ficha, deslizar a la izquierda
+// da atajos y mantener presionado abre las opciones. Todo existe también en «⋯».
+function TarjetaPaciente({ row, acciones, onOpciones, menuAcciones }) {
+  const { props: presionar, consumido } = useMantenerPresionado(onOpciones)
+  return (
+    <li data-no-deslizar-pestana>
+      <FilaDeslizable acciones={acciones} redondeo="rounded-xl">
+        <div className="flex items-center rounded-xl bg-card">
+          <Link
+            to={row.historiasTo || '#'}
+            {...presionar}
+            onClick={(event) => {
+              if (consumido()) event.preventDefault()
+            }}
+            className={`flex min-h-[64px] min-w-0 flex-1 select-none items-center gap-3 rounded-xl py-2 pl-2.5 pr-1 text-foreground [-webkit-touch-callout:none] ${FOCO}`}
+          >
+            <PetAvatar name={row.paciente} photo={row.fotoPerfil} especie={row.raw?.especie} className="h-12 w-12 rounded-xl text-lg" />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-base font-semibold leading-tight">{row.paciente}</span>
+              <span className="truncate text-[13px] leading-snug text-muted-foreground">
+                {[row.raza || row.especie, SEXO[row.raw?.sexo], row.edad !== 'Sin edad' ? row.edad : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+              <span className="truncate text-[13px] leading-snug text-muted-foreground">Tutor: {row.tutor}</span>
+            </span>
+          </Link>
+          {menuAcciones}
+        </div>
+      </FilaDeslizable>
+    </li>
   )
 }
 
@@ -313,12 +453,51 @@ export default function PacientesPage() {
   // Tutor abierto en el panel de detalle (solo presentación).
   const [tutorSeleccionadoId, setTutorSeleccionadoId] = useState(null)
   const { propsAccion } = useSoloLectura()
+  const navigate = useNavigate()
+  const esCelular = useEsCelular()
+  const puedeEditarHistorias = hasAnyRole(usuario, ['admin', 'superadmin', 'veterinario'])
+  // Menú de opciones de una fila (mantener presionado) y detalle del tutor (celular).
+  const [menu, setMenu] = useState(null)
+  const [tutorHojaId, setTutorHojaId] = useState(null)
 
   const enabled = rolPermitido && puedeVerModulo
 
   const resumenHook = usePacientesResumen({ enabled })
   const mascotasHook = usePacientesMascotas({ enabled })
   const tutoresHook = useTutores({ enabled })
+
+  // Deslizar a los lados cambia entre Pacientes y Tutores. Las filas con atajos
+  // (data-no-deslizar-pestana) usan ese gesto para sus propias acciones.
+  const irPestana = (delta) => {
+    const siguiente = TABS[TABS.findIndex((tab) => tab.id === activeTab) + delta]
+    if (siguiente) setActiveTab(siguiente.id)
+  }
+  const deslizar = useDeslizarHorizontal({
+    onIzquierda: () => irPestana(1),
+    onDerecha: () => irPestana(-1),
+    activo: esCelular,
+  })
+  const propsDeslizar = esCelular
+    ? {
+        ...deslizar,
+        onTouchStart: (event) => {
+          if (event.target.closest?.('[data-no-deslizar-pestana]')) return
+          deslizar.onTouchStart?.(event)
+        },
+      }
+    : {}
+
+  const refrescar = async () => {
+    const consultas =
+      activeTab === 'tutores'
+        ? [tutoresHook.tutoresQuery]
+        : [mascotasHook.mascotasQuery]
+    await Promise.all([
+      ...consultas.map((consulta) => consulta.refetch()),
+      resumenHook.mascotasResumenQuery.refetch(),
+      resumenHook.propietariosResumenQuery.refetch(),
+    ])
+  }
 
   // "Nuevo paciente" del menu rapido llega con ?nuevo=paciente: abre el
   // formulario directo y limpia el parametro para no reabrirlo al volver.
@@ -365,21 +544,53 @@ export default function PacientesPage() {
         }`
 
   const tutoresRows = tutoresHook.tutoresRows
+  // En celular el detalle queda bajo la lista: al elegir un tutor se baja hasta él.
+  const seleccionarTutor = (id) => {
+    setTutorSeleccionadoId(id)
+    if (esCelular) setTutorHojaId(id)
+  }
+  const tutorHoja = tutoresRows.find((row) => row.id === tutorHojaId) || null
   const tutorSeleccionado =
     tutoresRows.find((row) => row.id === tutorSeleccionadoId) || tutoresRows[0] || null
 
   const botonNuevo =
     activeTab === 'tutores' ? (
       puedeGestionarTutor ? (
-        <button type="button" onClick={tutoresHook.openCreateDrawer} {...propsAccion} className={BTN_PRIMARIO}>
+        <button type="button" onClick={tutoresHook.openCreateDrawer} {...propsAccion} className={cn(BTN_PRIMARIO, 'max-sm:hidden')}>
           <UserRound className="h-4 w-4" />
           Nuevo tutor
         </button>
       ) : null
     ) : puedeGestionarPaciente ? (
-      <button type="button" onClick={mascotasHook.openCreateDrawer} {...propsAccion} className={BTN_PRIMARIO}>
+      <button type="button" onClick={mascotasHook.openCreateDrawer} {...propsAccion} className={cn(BTN_PRIMARIO, 'max-sm:hidden')}>
         <Plus className="h-4 w-4" />
         Nuevo paciente
+      </button>
+    ) : null
+
+  // En celular «Nuevo» va al lado del buscador (no ocupa una fila propia).
+  const nuevoCompacto =
+    activeTab === 'tutores' ? (
+      puedeGestionarTutor ? (
+        <button
+          type="button"
+          onClick={tutoresHook.openCreateDrawer}
+          aria-label="Nuevo tutor"
+          {...propsAccion}
+          className={cn('inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground transition active:translate-y-px disabled:opacity-60 sm:hidden', FOCO)}
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      ) : null
+    ) : puedeGestionarPaciente ? (
+      <button
+        type="button"
+        onClick={mascotasHook.openCreateDrawer}
+        aria-label="Nuevo paciente"
+        {...propsAccion}
+        className={cn('inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground transition active:translate-y-px disabled:opacity-60 sm:hidden', FOCO)}
+      >
+        <Plus className="h-5 w-5" />
       </button>
     ) : null
 
@@ -387,10 +598,10 @@ export default function PacientesPage() {
     <AdminShell
       currentKey="pacientes"
       title={titulo}
-      description={descripcion}
+      description={esCelular ? undefined : descripcion}
       hideSearch
       actions={
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex w-full flex-wrap items-center gap-2.5 sm:w-auto">
           <Segmentado
             label="Ver"
             options={TABS.map((tab) => ({ value: tab.id, label: tab.label }))}
@@ -409,11 +620,12 @@ export default function PacientesPage() {
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
-        <div className="flex flex-col gap-6">
+        <TirarParaRefrescar onRefrescar={refrescar}>
+        <div className="flex min-h-[55vh] flex-col gap-4 lg:min-h-0 lg:gap-6" {...propsDeslizar}>
           {/* Vista: Pacientes */}
           {activeTab === 'pacientes' && (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-3 lg:gap-4">
+              <div className="flex items-center gap-2 lg:flex-wrap lg:gap-3">
                 <Buscador
                   value={mascotasHook.buscar}
                   onChange={mascotasHook.setBuscar}
@@ -421,6 +633,7 @@ export default function PacientesPage() {
                   ariaLabel="Buscar paciente"
                   cargando={mascotasHook.mascotasQuery.isFetching}
                 />
+                {nuevoCompacto}
                 <FiltroEspecie
                   value={mascotasHook.especie}
                   onChange={mascotasHook.setEspecie}
@@ -428,14 +641,29 @@ export default function PacientesPage() {
                   total={totalMascotas}
                 />
                 {puedeDesactivarPaciente && (
-                  <FiltroDesactivados
-                    checked={mascotasHook.verDesactivados}
-                    onChange={mascotasHook.setVerDesactivados}
-                  />
+                  <div className="max-sm:hidden">
+                    <FiltroDesactivados
+                      checked={mascotasHook.verDesactivados}
+                      onChange={mascotasHook.setVerDesactivados}
+                    />
+                  </div>
                 )}
               </div>
+              <div data-no-deslizar-pestana className="contents sm:hidden">
+                <ChipsEspecie
+                  value={mascotasHook.especie}
+                  onChange={mascotasHook.setEspecie}
+                  porEspecie={resumenHook.porEspecie}
+                  total={totalMascotas}
+                  desactivados={
+                    puedeDesactivarPaciente
+                      ? { checked: mascotasHook.verDesactivados, onChange: mascotasHook.setVerDesactivados }
+                      : null
+                  }
+                />
+              </div>
 
-              <section aria-label="Lista de pacientes" className="overflow-hidden rounded-2xl bg-card">
+              <section aria-label="Lista de pacientes" className="lg:overflow-hidden lg:rounded-2xl lg:bg-card">
                 {mascotasHook.mascotasQuery.isLoading ? (
                   <FilasSkeleton rows={6} />
                 ) : mascotasHook.mascotasRows.length === 0 ? (
@@ -452,7 +680,68 @@ export default function PacientesPage() {
                     }
                   />
                 ) : (
-                  <div className="overflow-x-auto">
+                  <>
+                  <ul className="flex flex-col gap-2 lg:hidden">
+                    {mascotasHook.mascotasRows.map((row) => {
+                      const onEditar =
+                        puedeGestionarPaciente && !propsAccion.disabled ? () => mascotasHook.openEditDrawer(row.raw) : null
+                      const onCambiarEstado = !puedeDesactivarPaciente
+                        ? null
+                        : mascotasHook.verDesactivados
+                          ? () => mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
+                          : () => setPacienteADesactivar(row)
+                      const nuevaConsultaTo =
+                        row.historiasTo && puedeEditarHistorias ? `${row.historiasTo}?nueva=consulta` : ''
+                      const acciones = [
+                        nuevaConsultaTo && {
+                          key: 'consulta',
+                          label: 'Consulta',
+                          icon: ClipboardPlus,
+                          tono: 'primary',
+                          onClick: () => navigate(nuevaConsultaTo),
+                        },
+                        row.antecedentesTo && {
+                          key: 'antecedentes',
+                          label: 'Salud',
+                          icon: HeartPulse,
+                          tono: 'info',
+                          onClick: () => navigate(row.antecedentesTo),
+                        },
+                        onEditar && { key: 'editar', label: 'Editar', icon: Pencil, tono: 'neutro', onClick: onEditar },
+                      ].filter(Boolean)
+                      const items = [
+                        row.historiasTo && { key: 'ficha', label: 'Abrir ficha', icon: UserRound, to: row.historiasTo },
+                        nuevaConsultaTo && { key: 'consulta', label: 'Nueva consulta', icon: ClipboardPlus, to: nuevaConsultaTo },
+                        row.antecedentesTo && { key: 'antecedentes', label: 'Antecedentes', icon: HeartPulse, to: row.antecedentesTo },
+                        onEditar && { key: 'editar', label: 'Editar', icon: Pencil, onClick: onEditar },
+                        onCambiarEstado && {
+                          key: 'estado',
+                          label: mascotasHook.verDesactivados ? 'Reactivar' : 'Desactivar',
+                          icon: Power,
+                          tono: mascotasHook.verDesactivados ? undefined : 'danger',
+                          onClick: onCambiarEstado,
+                        },
+                      ].filter(Boolean)
+                      return (
+                        <TarjetaPaciente
+                          key={row.id}
+                          row={row}
+                          acciones={acciones}
+                          onOpciones={() => setMenu({ titulo: row.paciente, descripcion: `Tutor: ${row.tutor}`, items })}
+                          menuAcciones={
+                            <AccionesPaciente
+                              nombre={row.paciente}
+                              antecedentesTo={row.antecedentesTo}
+                              onEditar={onEditar}
+                              onCambiarEstado={onCambiarEstado}
+                              reactivar={mascotasHook.verDesactivados}
+                            />
+                          }
+                        />
+                      )
+                    })}
+                  </ul>
+                  <div className="hidden overflow-x-auto lg:block">
                     <table className="w-full min-w-[820px] text-sm">
                       <thead>
                         <tr className="text-left text-[13px] text-muted-foreground">
@@ -529,6 +818,7 @@ export default function PacientesPage() {
                       </tbody>
                     </table>
                   </div>
+                  </>
                 )}
                 <PiePaginacion
                   pagina={mascotasHook.mascotasQuery.data?.paginaActual || 1}
@@ -543,8 +833,8 @@ export default function PacientesPage() {
 
           {/* Vista: Tutores */}
           {activeTab === 'tutores' && (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-3 lg:gap-4">
+              <div className="flex items-center gap-2 lg:flex-wrap lg:gap-3">
                 <Buscador
                   value={tutoresHook.buscar}
                   onChange={tutoresHook.setBuscar}
@@ -552,16 +842,24 @@ export default function PacientesPage() {
                   ariaLabel="Buscar tutor"
                   cargando={tutoresHook.tutoresQuery.isFetching}
                 />
+                {nuevoCompacto}
                 {puedeDesactivarPaciente && (
-                  <FiltroDesactivados
-                    checked={tutoresHook.verDesactivados}
-                    onChange={tutoresHook.setVerDesactivados}
-                  />
+                  <div className="max-sm:hidden">
+                    <FiltroDesactivados
+                      checked={tutoresHook.verDesactivados}
+                      onChange={tutoresHook.setVerDesactivados}
+                    />
+                  </div>
                 )}
               </div>
+              {puedeDesactivarPaciente && (
+                <div data-no-deslizar-pestana className="-mx-4 flex gap-2 overflow-x-auto px-4 sm:hidden">
+                  <ChipDesactivados checked={tutoresHook.verDesactivados} onChange={tutoresHook.setVerDesactivados} />
+                </div>
+              )}
 
               <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-                <section aria-label="Lista de tutores" className="overflow-hidden rounded-2xl bg-card">
+                <section aria-label="Lista de tutores" className="lg:overflow-hidden lg:rounded-2xl lg:bg-card">
                   {tutoresHook.tutoresQuery.isLoading ? (
                     <FilasSkeleton rows={6} />
                   ) : tutoresRows.length === 0 ? (
@@ -578,35 +876,53 @@ export default function PacientesPage() {
                       }
                     />
                   ) : (
-                    <div className="flex flex-col gap-0.5 p-2">
+                    <div className="flex flex-col gap-2 lg:gap-0.5 lg:p-2">
                       {tutoresRows.map((row) => {
                         const seleccionado = tutorSeleccionado?.id === row.id
                         const numMascotas = row.raw?.Mascota?.length ?? row.raw?.Mascotas?.length ?? 0
+                        const onEditar =
+                          puedeGestionarTutor && !propsAccion.disabled ? () => tutoresHook.openEditDrawer(row.raw) : null
+                        const onCambiarEstado = !puedeDesactivarPaciente
+                          ? null
+                          : tutoresHook.verDesactivados
+                            ? () => tutoresHook.cambiarEstadoTutorMutation.mutate({ propietarioId: row.raw.id, activar: true })
+                            : () => setTutorADesactivar(row)
+                        const llamarHref = row.raw?.telefono ? `tel:${row.raw.telefono}` : ''
+                        const acciones = [
+                          llamarHref && {
+                            key: 'llamar',
+                            label: 'Llamar',
+                            icon: Phone,
+                            tono: 'primary',
+                            onClick: () => {
+                              window.location.href = llamarHref
+                            },
+                          },
+                          onEditar && { key: 'editar', label: 'Editar', icon: Pencil, tono: 'neutro', onClick: onEditar },
+                        ].filter(Boolean)
+                        const items = [
+                          { key: 'detalle', label: 'Ver detalle', icon: UserRound, onClick: () => setTutorHojaId(row.id) },
+                          llamarHref && { key: 'llamar', label: 'Llamar', icon: Phone, href: llamarHref },
+                          onEditar && { key: 'editar', label: 'Editar', icon: Pencil, onClick: onEditar },
+                          onCambiarEstado && {
+                            key: 'estado',
+                            label: tutoresHook.verDesactivados ? 'Reactivar' : 'Desactivar',
+                            icon: Power,
+                            tono: tutoresHook.verDesactivados ? undefined : 'danger',
+                            onClick: onCambiarEstado,
+                          },
+                        ].filter(Boolean)
                         return (
-                          <button
+                          <FilaTutor
                             key={row.id}
-                            type="button"
-                            aria-pressed={seleccionado}
-                            onClick={() => setTutorSeleccionadoId(row.id)}
-                            className={cn(
-                              'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition',
-                              FOCO,
-                              seleccionado ? 'bg-accent' : 'hover:bg-muted'
-                            )}
-                          >
-                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-[15px] font-bold text-secondary-foreground">
-                              {iniciales(row.nombre)}
-                            </span>
-                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                              <span className="truncate text-[15px] font-semibold text-foreground">{row.nombre}</span>
-                              <span className="truncate text-[13px] text-muted-foreground">
-                                {numMascotas === 1 ? '1 mascota' : `${numMascotas} mascotas`} · {row.telefono}
-                              </span>
-                            </span>
-                            <span className="hidden shrink-0 text-[13px] text-muted-foreground sm:block">
-                              {row.ciudad !== '—' ? row.ciudad : ''}
-                            </span>
-                          </button>
+                            row={row}
+                            seleccionado={seleccionado}
+                            numMascotas={numMascotas}
+                            acciones={acciones}
+                            llamarHref={llamarHref}
+                            onElegir={() => seleccionarTutor(row.id)}
+                            onOpciones={() => setMenu({ titulo: row.nombre, descripcion: row.telefono, items })}
+                          />
                         )
                       })}
                     </div>
@@ -620,7 +936,7 @@ export default function PacientesPage() {
                   />
                 </section>
 
-                {tutorSeleccionado ? (
+                {!esCelular && tutorSeleccionado ? (
                   <TutorDetalle
                     tutor={tutorSeleccionado}
                     puedeGestionarTutor={puedeGestionarTutor}
@@ -639,7 +955,40 @@ export default function PacientesPage() {
             </div>
           )}
         </div>
+        </TirarParaRefrescar>
       )}
+
+      <MenuOpciones menu={menu} onCambiar={(abierta) => { if (!abierta) setMenu(null) }} />
+
+      {/* Detalle del tutor en celular: hoja inferior en vez de un panel bajo la lista. */}
+      <HojaInferior
+        abierta={esCelular && Boolean(tutorHoja)}
+        onCambiar={(abierta) => { if (!abierta) setTutorHojaId(null) }}
+        titulo="Tutor"
+      >
+        {tutorHoja ? (
+          <TutorDetalle
+            tutor={tutorHoja}
+            puedeGestionarTutor={puedeGestionarTutor}
+            puedeDesactivar={puedeDesactivarPaciente}
+            verDesactivados={tutoresHook.verDesactivados}
+            propsAccion={propsAccion}
+            onEditar={() => {
+              setTutorHojaId(null)
+              tutoresHook.openEditDrawer(tutorHoja.raw)
+            }}
+            onDesactivar={() => {
+              setTutorHojaId(null)
+              setTutorADesactivar(tutorHoja)
+            }}
+            onReactivar={() => {
+              setTutorHojaId(null)
+              tutoresHook.cambiarEstadoTutorMutation.mutate({ propietarioId: tutorHoja.raw.id, activar: true })
+            }}
+            reactivando={tutoresHook.cambiarEstadoTutorMutation.isPending}
+          />
+        ) : null}
+      </HojaInferior>
 
       <ConfirmDialog
         open={Boolean(pacienteADesactivar)}
@@ -698,6 +1047,58 @@ export default function PacientesPage() {
   )
 }
 
+// Fila de tutor: en celular se desliza (Llamar, Editar) y al mantenerla presionada
+// abre las opciones; en escritorio es el botón de siempre que elige al tutor.
+function FilaTutor({ row, seleccionado, numMascotas, acciones, llamarHref, onElegir, onOpciones }) {
+  const { props: presionar, consumido } = useMantenerPresionado(onOpciones)
+  return (
+    <div data-no-deslizar-pestana>
+      <FilaDeslizable acciones={acciones} redondeo="rounded-xl">
+        <div className={cn('flex items-center gap-1 rounded-xl bg-card transition lg:bg-transparent', seleccionado ? 'lg:bg-accent' : 'lg:hover:bg-muted')}>
+          <button
+            type="button"
+            aria-pressed={seleccionado}
+            {...presionar}
+            onClick={(event) => {
+              if (consumido()) {
+                event.preventDefault()
+                return
+              }
+              onElegir()
+            }}
+            className={cn(
+              'flex min-h-[64px] min-w-0 flex-1 select-none items-center gap-3 rounded-xl py-2.5 pl-2.5 pr-1 text-left transition [-webkit-touch-callout:none] lg:px-3 lg:py-3',
+              FOCO
+            )}
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-[15px] font-bold text-secondary-foreground">
+              {iniciales(row.nombre)}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="truncate text-[15px] font-semibold text-foreground">{row.nombre}</span>
+              <span className="truncate text-[13px] text-muted-foreground">
+                {numMascotas === 1 ? '1 mascota' : `${numMascotas} mascotas`} · {row.telefono}
+              </span>
+            </span>
+            <span className="hidden shrink-0 text-[13px] text-muted-foreground sm:block">
+              {row.ciudad !== '—' ? row.ciudad : ''}
+            </span>
+          </button>
+          {llamarHref ? (
+            <a
+              href={llamarHref}
+              aria-label={`Llamar a ${row.nombre}`}
+              className={`mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-card lg:hidden ${FOCO}`}
+            >
+              <Phone className="h-[18px] w-[18px]" />
+            </a>
+          ) : null}
+        </div>
+      </FilaDeslizable>
+    </div>
+  )
+}
+
 // Panel con los datos del tutor elegido y sus mascotas.
 function TutorDetalle({
   tutor,
@@ -711,10 +1112,10 @@ function TutorDetalle({
   reactivando,
 }) {
   const mascotas = tutor.raw?.Mascota || tutor.raw?.Mascotas || []
-  const botonClaro = `inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+  const botonClaro = `inline-flex h-11 items-center rounded-lg px-4 text-sm font-semibold transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
 
   return (
-    <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+    <div id="tutor-detalle-panel" className="flex scroll-mt-20 flex-col gap-4 lg:sticky lg:top-6">
       <section aria-labelledby="tutor-detalle" className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground">
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[18px] bg-brand text-2xl font-bold text-foreground">

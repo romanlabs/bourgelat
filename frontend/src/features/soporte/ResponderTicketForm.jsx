@@ -21,6 +21,8 @@ export default function ResponderTicketForm({
   placeholder = 'Escribe tu respuesta…',
   submitLabel = 'Enviar',
   accionSecundaria = null,
+  // Estilo app de mensajería (celular): una línea que crece y botón redondo de enviar.
+  chat = false,
 }) {
   const {
     register,
@@ -38,6 +40,40 @@ export default function ResponderTicketForm({
     }
   })
 
+  if (chat) {
+    const { onChange, ref, ...resto } = register('mensaje')
+    return (
+      <form onSubmit={enviar} className="grid gap-2">
+        {accionSecundaria}
+        <div className="flex items-end gap-2">
+          <label htmlFor="respuesta-ticket" className="sr-only">
+            Respuesta
+          </label>
+          <textarea
+            id="respuesta-ticket"
+            rows={1}
+            placeholder={placeholder}
+            ref={ref}
+            onChange={(event) => {
+              onChange(event)
+              event.target.style.height = 'auto'
+              event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`
+            }}
+            className={cn(
+              'max-h-32 min-h-11 w-full min-w-0 flex-1 resize-none rounded-3xl border-0 bg-muted px-4 py-[11px] text-base leading-snug text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring',
+              errors.mensaje && 'ring-2 ring-danger'
+            )}
+            {...resto}
+          />
+          <LoadingButton type="submit" loading={isPending} aria-label={submitLabel} className="h-11 w-11 shrink-0 rounded-full p-0">
+            <SendHorizontal />
+          </LoadingButton>
+        </div>
+        <FieldError message={errors.mensaje?.message} className="mt-0" />
+      </form>
+    )
+  }
+
   return (
     <form onSubmit={enviar} className="grid gap-2">
       <label htmlFor="respuesta-ticket" className="sr-only">
@@ -54,7 +90,7 @@ export default function ResponderTicketForm({
           }
         }}
         className={cn(
-          'w-full resize-y rounded-[10px] border-0 bg-muted px-3.5 py-3 text-[15px] text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring',
+          'w-full resize-y rounded-[10px] border-0 bg-muted px-3.5 py-3 text-base text-foreground lg:text-[15px] outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring',
           errors.mensaje && 'border-danger'
         )}
         {...register('mensaje')}
@@ -62,9 +98,9 @@ export default function ResponderTicketForm({
       <FieldError message={errors.mensaje?.message} className="mt-0" />
       <div className="flex items-center justify-between gap-3">
         <p className="hidden text-[13px] text-muted-foreground sm:block">Ctrl + Enter para enviar</p>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {accionSecundaria}
-          <LoadingButton type="submit" loading={isPending}>
+          <LoadingButton type="submit" loading={isPending} className="h-12 lg:h-10">
             <SendHorizontal />
             {submitLabel}
           </LoadingButton>

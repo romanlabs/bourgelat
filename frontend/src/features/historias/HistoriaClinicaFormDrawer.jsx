@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Activity, CalendarCheck, ChevronDown, ClipboardCheck, FileText, FlaskConical,
-  HeartPulse, Link2, MessageSquare, Pill, Plus, Printer, Search, Syringe, X,
+  HeartPulse, Link2, MessageSquare, MoreHorizontal, Pill, Plus, Printer, Search, Syringe, X,
 } from 'lucide-react'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { HYDRATION_OPTIONS, MEDICATION_ROUTE_OPTIONS } from '@/features/historias/historiaConstants'
@@ -25,6 +25,7 @@ import { medicionesDe, soloDia } from '@/features/pacientes/fichaSaludUtils'
 import { Select } from '@/components/ui/select'
 import { etiquetaEspecie } from '@/lib/especies'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import HojaInferior from '@/components/movil/HojaInferior'
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -41,6 +42,16 @@ const PROGRESS_STEPS = [
   { id: 'diagnostico', label: 'Dx / Tto' },
   { id: 'plan', label: 'Plan' },
 ]
+
+const ORDEN_SECCIONES = ['contexto', 'anamnesis', 'examen', 'diagnostico', 'intrahospitalario', 'plan']
+const ETIQUETA_SECCION = {
+  contexto: 'Contexto',
+  anamnesis: 'Anamnesis',
+  examen: 'Examen físico',
+  diagnostico: 'Diagnóstico',
+  intrahospitalario: 'Intrahospitalario',
+  plan: 'Plan y cierre',
+}
 
 // Al abrir, solo las secciones obligatorias vienen desplegadas.
 const SECCIONES_REQUERIDAS = ['contexto', 'anamnesis', 'diagnostico']
@@ -238,15 +249,16 @@ function Bombillo({ encendido, className }) {
 
 // ─── FormSection (acordeón) ───────────────────────────────────────────────────
 
-function FormSection({ icon, title, filled, required, open, onToggle, children }) {
+function FormSection({ id, icon, title, filled, required, open, onToggle, onSiguiente, siguienteLabel, children }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-card">
+    <div id={id ? `hc-sec-${id}` : undefined} className="scroll-mt-2 overflow-hidden rounded-2xl bg-card">
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={open}
         onClick={onToggle}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggle()}
-        className="flex cursor-pointer select-none items-center gap-3 rounded-2xl px-5 py-4 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-h-12 cursor-pointer select-none items-center gap-2.5 rounded-2xl px-4 py-3 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:gap-3 sm:px-5 sm:py-4"
       >
         <span className="flex-shrink-0 text-muted-foreground">{icon}</span>
         <span className="flex-1 text-base font-semibold tracking-[-0.01em] text-foreground">{title}</span>
@@ -258,7 +270,19 @@ function FormSection({ icon, title, filled, required, open, onToggle, children }
       </div>
       <div style={{ display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 200ms ease' }}>
         <div className="overflow-hidden">
-          <div className="grid gap-3 px-5 pb-5 pt-1">{children}</div>
+          <div className="grid gap-3 px-4 pb-4 pt-1 sm:px-5 sm:pb-5">
+            {children}
+            {onSiguiente ? (
+              <button
+                type="button"
+                onClick={onSiguiente}
+                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-accent text-sm font-semibold text-primary outline-none transition active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+              >
+                {siguienteLabel || 'Siguiente'}
+                <ChevronDown className="h-4 w-4 -rotate-90" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
@@ -293,6 +317,7 @@ export default function HistoriaClinicaFormDrawer({
   const [antecedentesOpen, setAntecedentesOpen] = useState(false)
   const [examenesOpen, setExamenesOpen] = useState(false)
   const [localHistoria, setLocalHistoria] = useState(null)
+  const [masAcciones, setMasAcciones] = useState(false)
 
   const medicationSearchDeferred = useDeferredValue(medicationSearch.trim())
   const insumoSearchDeferred = useDeferredValue(insumoSearch.trim())
@@ -329,11 +354,29 @@ export default function HistoriaClinicaFormDrawer({
 
   // Cerrar con Escape (con el diálogo de confirmación abierto, Escape lo cierra a él)
   useEffect(() => {
-    if (!open || confirmarCierre) return
+    if (!open || confirmarCierre || masAcciones) return
     const handler = (e) => { if (e.key === 'Escape') solicitarCierre() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   })
+
+  // En celular: abrir una sección y llevarla a la vista (indicador de avance y «Siguiente»).
+  const irASeccion = (id, { cerrarOtras = false } = {}) => {
+    setFormSections((prev) => (cerrarOtras ? new Set([id]) : new Set([...prev, id])))
+    requestAnimationFrame(() => {
+      document.getElementById(`hc-sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+  const siguienteDe = (id) => {
+    const i = ORDEN_SECCIONES.indexOf(id)
+    return i >= 0 && i < ORDEN_SECCIONES.length - 1 ? ORDEN_SECCIONES[i + 1] : null
+  }
+  const propsSiguiente = (id) => {
+    const sig = siguienteDe(id)
+    return sig
+      ? { onSiguiente: () => irASeccion(sig, { cerrarOtras: true }), siguienteLabel: `Siguiente: ${ETIQUETA_SECCION[sig]}` }
+      : {}
+  }
 
   const toggleFormSection = (id) =>
     setFormSections((prev) => {
@@ -711,13 +754,13 @@ export default function HistoriaClinicaFormDrawer({
         className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-background shadow-2xl transition-transform duration-300 sm:w-[680px] xl:w-[calc(100vw-248px)] ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="bg-card px-5 py-4">
+        <div className="bg-card px-4 pb-1 pt-3 sm:px-5 sm:py-4">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[24px] font-semibold leading-tight tracking-[-0.03em] text-foreground">
+            <div className="min-w-0">
+              <p className="max-sm:truncate text-lg font-semibold leading-tight tracking-[-0.02em] text-foreground sm:text-[24px] sm:tracking-[-0.03em]">
                 {mascota ? `${historiaActual ? 'Consulta' : 'Nueva consulta'} de ${mascota.nombre}` : 'Historia clínica'}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-0.5 max-sm:truncate text-[13px] text-muted-foreground sm:mt-1 sm:text-sm">
                 {mascota
                   ? [
                       mascota.raza || etiquetaEspecie(mascota.especie),
@@ -732,7 +775,7 @@ export default function HistoriaClinicaFormDrawer({
                 <button
                   type="button"
                   onClick={() => { setForm(createDefaultForm()); setFormSections(new Set(SECCIONES_REQUERIDAS)) }}
-                  className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Limpiar
                 </button>
@@ -741,7 +784,7 @@ export default function HistoriaClinicaFormDrawer({
                 type="button"
                 onClick={solicitarCierre}
                 aria-label="Cerrar"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -749,17 +792,17 @@ export default function HistoriaClinicaFormDrawer({
           </div>
 
           {/* Indicador de progreso */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <div className="mt-1 grid grid-cols-5 gap-1 sm:mt-3 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-1">
             {PROGRESS_STEPS.map((step) => (
               <button
                 key={step.id}
                 type="button"
-                onClick={() => setFormSections((prev) => new Set([...prev, step.id]))}
-                className="group flex items-center gap-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => irASeccion(step.id)}
+                className="group flex h-11 flex-col items-center justify-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-auto sm:flex-row sm:gap-1.5"
                 title={`Ir a ${step.label}`}
               >
                 <Bombillo encendido={sectionFilled[step.id]} className="h-2 w-2" />
-                <span className="hidden text-[13px] text-muted-foreground transition-colors group-hover:text-foreground sm:inline">
+                <span className="text-xs text-muted-foreground transition-colors group-hover:text-foreground sm:text-[13px]">
                   {step.label}
                 </span>
               </button>
@@ -779,7 +822,7 @@ export default function HistoriaClinicaFormDrawer({
 
         {/* Body scrollable */}
         {/* En pantallas grandes cada columna se desplaza por su cuenta y usa todo el alto */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 xl:overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 xl:overflow-hidden">
           <div className="xl:grid xl:h-full xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-4">
           <div className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-1">
             {/* Antecedentes colapsables */}
@@ -846,11 +889,13 @@ export default function HistoriaClinicaFormDrawer({
               Tu rol actual puede consultar historias, pero no crear ni modificar consultas clínicas.
             </div>
           ) : (
-            <form id="historia-drawer-form" className="space-y-3" onSubmit={handleSubmit}>
+            <form id="historia-drawer-form" className="space-y-2.5 sm:space-y-3" onSubmit={handleSubmit}>
 
               {/* ── Contexto ── */}
               <FormSection
                 icon={<CalendarCheck className="h-4 w-4" />}
+                id="contexto"
+                {...propsSiguiente('contexto')}
                 title="Contexto"
                 filled={sectionFilled.contexto}
                 required
@@ -860,7 +905,7 @@ export default function HistoriaClinicaFormDrawer({
                 <Select
                   variant="field"
                   aria-label="Profesional"
-                  className="h-11"
+                  className="h-12 text-base lg:h-11 lg:text-sm"
                   placeholder="Selecciona el profesional ⭐"
                   value={form.veterinarioId || preferredVetId}
                   onValueChange={(value) => setForm((c) => ({ ...c, veterinarioId: value }))}
@@ -895,7 +940,7 @@ export default function HistoriaClinicaFormDrawer({
                   <Select
                     variant="field"
                     aria-label="Cita relacionada"
-                    className="h-11"
+                    className="h-12 text-base lg:h-11 lg:text-sm"
                     placeholder="Sin cita relacionada"
                     value={form.citaId}
                     onValueChange={(value) => setForm((c) => ({ ...c, citaId: value }))}
@@ -910,6 +955,8 @@ export default function HistoriaClinicaFormDrawer({
               {/* ── Anamnesis ── */}
               <FormSection
                 icon={<MessageSquare className="h-4 w-4" />}
+                id="anamnesis"
+                {...propsSiguiente('anamnesis')}
                 title="Anamnesis"
                 filled={sectionFilled.anamnesis}
                 required
@@ -920,45 +967,51 @@ export default function HistoriaClinicaFormDrawer({
                   value={form.motivoConsulta}
                   onChange={(e) => setForm((c) => ({ ...c, motivoConsulta: e.target.value }))}
                   placeholder="Motivo principal de consulta"
-                  className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <textarea
                   value={form.anamnesis}
                   onChange={(e) => setForm((c) => ({ ...c, anamnesis: e.target.value }))}
                   placeholder="Anamnesis y relato del tutor"
-                  className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </FormSection>
 
               {/* ── Examen físico ── */}
               <FormSection
                 icon={<Activity className="h-4 w-4" />}
+                id="examen"
+                {...propsSiguiente('examen')}
                 title="Signos vitales y examen físico"
                 filled={sectionFilled.examen}
                 open={formSections.has('examen')}
                 onToggle={() => toggleFormSection('examen')}
               >
                 <SignosVitales form={form} setForm={setForm} pesoAnterior={pesoAnterior} />
-                <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Hallazgos del examen físico" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea value={form.examenFisicoDetalle} onChange={(e) => setForm((c) => ({ ...c, examenFisicoDetalle: e.target.value }))} placeholder="Hallazgos del examen físico" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
               </FormSection>
 
               {/* ── Diagnóstico y tratamiento ── */}
               <FormSection
                 icon={<ClipboardCheck className="h-4 w-4" />}
+                id="diagnostico"
+                {...propsSiguiente('diagnostico')}
                 title="Diagnóstico y tratamiento"
                 filled={sectionFilled.diagnostico}
                 required
                 open={formSections.has('diagnostico')}
                 onToggle={() => toggleFormSection('diagnostico')}
               >
-                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal (obligatorio)" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-                <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnóstico presuntivo o diferencial" className="min-h-[70px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado (obligatorio)" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea value={form.diagnostico} onChange={(e) => setForm((c) => ({ ...c, diagnostico: e.target.value }))} placeholder="Diagnóstico principal (obligatorio)" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea value={form.diagnosticoPresuntivo} onChange={(e) => setForm((c) => ({ ...c, diagnosticoPresuntivo: e.target.value }))} placeholder="Diagnóstico presuntivo o diferencial" className="min-h-[70px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea value={form.tratamiento} onChange={(e) => setForm((c) => ({ ...c, tratamiento: e.target.value }))} placeholder="Tratamiento instaurado (obligatorio)" className="min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
               </FormSection>
 
               {/* ── Tratamiento intrahospitalario ── */}
               <FormSection
                 icon={<Syringe className="h-4 w-4" />}
+                id="intrahospitalario"
+                {...propsSiguiente('intrahospitalario')}
                 title="Tratamiento intrahospitalario"
                 filled={form.tratamientoIntrahospitalario.length > 0}
                 open={formSections.has('intrahospitalario')}
@@ -982,7 +1035,7 @@ export default function HistoriaClinicaFormDrawer({
                         value={insumoSearch}
                         onChange={(e) => setInsumoSearch(e.target.value)}
                         placeholder="Insumo, laboratorio o lote"
-                        className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                        className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                       />
                     </label>
                     <div className="grid gap-1.5 sm:grid-cols-2">
@@ -994,7 +1047,7 @@ export default function HistoriaClinicaFormDrawer({
                               Disponible {formatNumber(i.stock)} {i.unidadBase}
                             </p>
                           </div>
-                          <button type="button" onClick={() => addInsumoAlTratamiento(i)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
+                          <button type="button" aria-label={`Agregar ${i.nombre}`} onClick={() => addInsumoAlTratamiento(i)} className="flex h-11 w-11 shrink-0 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-accent text-primary outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -1016,7 +1069,7 @@ export default function HistoriaClinicaFormDrawer({
                             Aplicación {index + 1}
                             <span className="ml-2 text-success">· {item.nombre}</span>
                           </p>
-                          <button type="button" onClick={() => removeTratamientoDraft(item.id)} className="text-[13px] font-semibold text-danger hover:text-danger">Quitar</button>
+                          <button type="button" onClick={() => removeTratamientoDraft(item.id)} className="-my-2 -mr-2 min-h-11 px-2 text-[13px] font-semibold text-danger hover:text-danger sm:m-0 sm:min-h-0 sm:p-0">Quitar</button>
                         </div>
 
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -1028,7 +1081,7 @@ export default function HistoriaClinicaFormDrawer({
                               value={item.cantidad}
                               onChange={(e) => updateTratamientoDraft(item.id, 'cantidad', e.target.value)}
                               placeholder={item.unidadBase ? `Cantidad aplicada (${item.unidadBase})` : 'Cantidad aplicada'}
-                              className={cn('h-11 rounded-lg border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring', excedeStock(item) ? 'border-danger' : 'border-input')}
+                              className={cn('h-12 lg:h-11 rounded-lg border bg-card px-3 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring lg:text-sm', excedeStock(item) ? 'border-danger' : 'border-input')}
                             />
                             {item.stockDisponible !== null && (
                               <p className={cn('text-[13px] font-medium', excedeStock(item) ? 'text-danger' : 'text-muted-foreground')}>
@@ -1041,7 +1094,7 @@ export default function HistoriaClinicaFormDrawer({
                           <Select
                             variant="field"
                             aria-label="Vía de administración"
-                            className="h-11"
+                            className="h-12 text-base lg:h-11 lg:text-sm"
                             value={item.via}
                             onValueChange={(value) => updateTratamientoDraft(item.id, 'via', value)}
                             options={MEDICATION_ROUTE_OPTIONS}
@@ -1054,7 +1107,7 @@ export default function HistoriaClinicaFormDrawer({
                             <Select
                               variant="field"
                               aria-label="Aplicado por"
-                              className="h-11"
+                              className="h-12 text-base lg:h-11 lg:text-sm"
                               placeholder="Sin especificar"
                               value={item.responsableId}
                               onValueChange={(value) => updateTratamientoDraft(item.id, 'responsableId', value)}
@@ -1067,7 +1120,7 @@ export default function HistoriaClinicaFormDrawer({
                               type="datetime-local"
                               value={item.aplicadoEn}
                               onChange={(e) => updateTratamientoDraft(item.id, 'aplicadoEn', e.target.value)}
-                              className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                              className="h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                             />
                           </div>
                         </div>
@@ -1080,6 +1133,7 @@ export default function HistoriaClinicaFormDrawer({
               {/* ── Plan farmacológico y cierre ── */}
               <FormSection
                 icon={<Pill className="h-4 w-4" />}
+                id="plan"
                 title="Plan farmacológico y cierre"
                 filled={sectionFilled.plan}
                 open={formSections.has('plan')}
@@ -1100,7 +1154,7 @@ export default function HistoriaClinicaFormDrawer({
                         value={medicationSearch}
                         onChange={(e) => setMedicationSearch(e.target.value)}
                         placeholder="Medicamento o laboratorio"
-                        className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                        className="h-11 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                       />
                     </label>
                     <div className="grid gap-1.5 sm:grid-cols-2">
@@ -1110,7 +1164,7 @@ export default function HistoriaClinicaFormDrawer({
                             <p className="truncate text-sm font-semibold text-foreground">{p.nombre}</p>
                             <p className="text-[13px] text-muted-foreground">Cantidad {formatNumber(p.stock)}</p>
                           </div>
-                          <button type="button" onClick={() => addMedicationFromInventory(p)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-primary outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
+                          <button type="button" aria-label={`Agregar ${p.nombre}`} onClick={() => addMedicationFromInventory(p)} className="flex h-11 w-11 shrink-0 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-accent text-primary outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -1121,7 +1175,7 @@ export default function HistoriaClinicaFormDrawer({
 
                 <div className="flex items-center justify-between">
                   <p className="text-[13px] font-semibold text-muted-foreground">Formulación</p>
-                  <button type="button" onClick={addMedicationDraft} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
+                  <button type="button" onClick={addMedicationDraft} className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring">
                     <Plus className="h-3.5 w-3.5" /> Agregar medicamento
                   </button>
                 </div>
@@ -1134,16 +1188,16 @@ export default function HistoriaClinicaFormDrawer({
                           Medicamento {index + 1}
                           {item.fuente === 'inventario' && <span className="ml-2 text-info">· inventario</span>}
                         </p>
-                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="text-[13px] font-semibold text-danger hover:text-danger">Quitar</button>
+                        <button type="button" onClick={() => removeMedicationDraft(item.id)} className="-my-2 -mr-2 min-h-11 px-2 text-[13px] font-semibold text-danger hover:text-danger sm:m-0 sm:min-h-0 sm:p-0">Quitar</button>
                       </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-                        <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentración / presentación" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-                        <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="text" value={item.nombre} onChange={(e) => updateMedicationDraft(item.id, 'nombre', e.target.value)} placeholder="Medicamento" className="col-span-2 h-12 sm:col-span-1 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                        <input type="text" value={item.concentracion} onChange={(e) => updateMedicationDraft(item.id, 'concentracion', e.target.value)} placeholder="Concentración / presentación" className="col-span-2 h-12 sm:col-span-1 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                        <input type="text" value={item.dosis} onChange={(e) => updateMedicationDraft(item.id, 'dosis', e.target.value)} placeholder="Dosis" className="h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                         <Select
                           variant="field"
                           aria-label="Vía de administración"
-                          className="h-11"
+                          className="h-12 text-base lg:h-11 lg:text-sm"
                           value={item.via}
                           onValueChange={(value) => updateMedicationDraft(item.id, 'via', value)}
                           options={MEDICATION_ROUTE_OPTIONS}
@@ -1151,34 +1205,34 @@ export default function HistoriaClinicaFormDrawer({
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div className="grid gap-1">
-                          <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                          <input type="text" value={item.frecuencia} onChange={(e) => updateMedicationDraft(item.id, 'frecuencia', e.target.value)} placeholder="Frecuencia" className="h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                           <div className="flex flex-wrap gap-1">
                             {MEDICATION_FREQUENCY_SUGGESTIONS.map((s) => (
-                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'frecuencia', s)} className={cn('rounded-md px-2 py-0.5 text-[13px] font-medium transition', item.frecuencia === s ? 'bg-accent text-primary' : 'bg-card text-muted-foreground hover:text-foreground')}>{s}</button>
+                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'frecuencia', s)} className={cn('rounded-md px-3 py-2 text-[13px] font-medium transition sm:px-2 sm:py-0.5', item.frecuencia === s ? 'bg-accent text-primary' : 'bg-card text-muted-foreground hover:text-foreground')}>{s}</button>
                             ))}
                           </div>
                         </div>
                         <div className="grid gap-1">
-                          <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duración" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                          <input type="text" value={item.duracion} onChange={(e) => updateMedicationDraft(item.id, 'duracion', e.target.value)} placeholder="Duración" className="h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                           <div className="flex flex-wrap gap-1">
                             {MEDICATION_DURATION_SUGGESTIONS.map((s) => (
-                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'duracion', s)} className={cn('rounded-md px-2 py-0.5 text-[13px] font-medium transition', item.duracion === s ? 'bg-accent text-primary' : 'bg-card text-muted-foreground hover:text-foreground')}>{s}</button>
+                              <button key={s} type="button" onClick={() => updateMedicationDraft(item.id, 'duracion', s)} className={cn('rounded-md px-3 py-2 text-[13px] font-medium transition sm:px-2 sm:py-0.5', item.duracion === s ? 'bg-accent text-primary' : 'bg-card text-muted-foreground hover:text-foreground')}>{s}</button>
                             ))}
                           </div>
                         </div>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-[100px_1fr]">
-                        <input type="number" min="0" step="1" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-                        <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[56px] rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                        <input type="number" min="0" step="1" value={item.cantidad} onChange={(e) => updateMedicationDraft(item.id, 'cantidad', e.target.value)} placeholder="Cantidad" className="h-12 lg:h-11 rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                        <textarea value={item.indicacion} onChange={(e) => updateMedicationDraft(item.id, 'indicacion', e.target.value)} placeholder="Instrucciones para el tutor" className="min-h-[56px] rounded-lg border border-input bg-card px-3 py-2 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[70px] w-full rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                <textarea value={form.indicaciones} onChange={(e) => setForm((c) => ({ ...c, indicaciones: e.target.value }))} placeholder="Indicaciones generales para el tutor" className="min-h-[70px] w-full rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                 <div>
                   <p className="mb-1 text-[13px] text-muted-foreground">Próxima consulta / control</p>
-                  <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+                  <input type="date" value={form.proximaConsulta} onChange={(e) => setForm((c) => ({ ...c, proximaConsulta: e.target.value }))} className="h-12 lg:h-11 w-full rounded-lg border border-input bg-card px-3 text-base lg:text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
                 </div>
               </FormSection>
 
@@ -1231,13 +1285,13 @@ export default function HistoriaClinicaFormDrawer({
 
         {/* Footer: quien solo consulta historias (auxiliar) igual puede imprimir la formula y la historia */}
         {(puedeEditarHistorias || historiaActual?.id) && (
-          <div className="flex flex-wrap gap-2 bg-card px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap gap-2 bg-card px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-5">
             {puedeEditarHistorias && (
               <button
                 type="submit"
                 form="historia-drawer-form"
                 disabled={isSaving || historiaActual?.bloqueada}
-                className={BOTON_PRIMARIO}
+                className={cn(BOTON_PRIMARIO, 'max-sm:flex-1')}
               >
                 {historiaActual?.id
                   ? isSaving ? 'Guardando...' : 'Guardar cambios'
@@ -1249,7 +1303,7 @@ export default function HistoriaClinicaFormDrawer({
                 type="button"
                 onClick={handleBloquearHistoria}
                 disabled={bloquearHistoriaMutation.isPending || historiaActual.bloqueada || hayInsumoSobreStock}
-                className={BOTON_SECUNDARIO}
+                className={cn(BOTON_SECUNDARIO, 'max-sm:hidden')}
               >
                 {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
               </button>
@@ -1258,7 +1312,7 @@ export default function HistoriaClinicaFormDrawer({
               <button
                 type="button"
                 onClick={() => navigate('/caja', { state: { facturarHistoriaId: historiaActual.id } })}
-                className={BOTON_SECUNDARIO}
+                className={cn(BOTON_SECUNDARIO, 'max-sm:hidden')}
               >
                 Facturar consulta
               </button>
@@ -1269,7 +1323,7 @@ export default function HistoriaClinicaFormDrawer({
                 onClick={handleImprimirFormula}
                 disabled={imprimirFormula.isPending}
                 title="Imprimir fórmula"
-                className={BOTON_SECUNDARIO}
+                className={cn(BOTON_SECUNDARIO, 'max-sm:hidden')}
               >
                 <Printer className="h-4 w-4" />
                 {imprimirFormula.isPending ? 'Generando...' : 'Fórmula'}
@@ -1281,18 +1335,78 @@ export default function HistoriaClinicaFormDrawer({
                 onClick={handleImprimirHistoria}
                 disabled={imprimirHistoria.isPending}
                 title="Imprimir historia"
-                className={BOTON_SECUNDARIO}
+                className={cn(BOTON_SECUNDARIO, 'max-sm:hidden')}
               >
                 <FileText className="h-4 w-4" />
                 {imprimirHistoria.isPending ? 'Generando...' : 'Historia'}
               </button>
             )}
-            <button type="button" onClick={solicitarCierre} className={BOTON_SECUNDARIO}>
+            <button type="button" onClick={solicitarCierre} className={cn(BOTON_SECUNDARIO, 'max-sm:hidden')}>
               Cancelar
+            </button>
+            {/* Celular: lo secundario se junta en una hoja para no apretar el pie. */}
+            <button
+              type="button"
+              onClick={() => setMasAcciones(true)}
+              aria-label="Más acciones"
+              className={cn(BOTON_SECUNDARIO, 'w-11 shrink-0 px-0 sm:hidden')}
+            >
+              <MoreHorizontal className="h-5 w-5" />
             </button>
           </div>
         )}
       </div>
+
+      <HojaInferior abierta={masAcciones} onCambiar={setMasAcciones} titulo="Más acciones">
+        <div className="grid gap-2 pb-2">
+          {puedeEditarHistorias && historiaActual?.id && (
+            <button
+              type="button"
+              disabled={bloquearHistoriaMutation.isPending || historiaActual.bloqueada || hayInsumoSobreStock}
+              onClick={() => { setMasAcciones(false); handleBloquearHistoria() }}
+              className={cn(BOTON_SECUNDARIO, 'w-full justify-start')}
+            >
+              {bloquearHistoriaMutation.isPending ? 'Bloqueando...' : 'Bloquear historia'}
+            </button>
+          )}
+          {puedeEditarHistorias && historiaActual?.id && historiaActual.bloqueada && !historiaActual.facturaId && (
+            <button
+              type="button"
+              onClick={() => { setMasAcciones(false); navigate('/caja', { state: { facturarHistoriaId: historiaActual.id } }) }}
+              className={cn(BOTON_SECUNDARIO, 'w-full justify-start')}
+            >
+              Facturar consulta
+            </button>
+          )}
+          {historiaActual?.id && (
+            <button
+              type="button"
+              disabled={imprimirFormula.isPending}
+              onClick={() => { setMasAcciones(false); handleImprimirFormula() }}
+              className={cn(BOTON_SECUNDARIO, 'w-full justify-start')}
+            >
+              <Printer className="h-4 w-4" /> {imprimirFormula.isPending ? 'Generando...' : 'Imprimir fórmula'}
+            </button>
+          )}
+          {historiaActual?.id && (
+            <button
+              type="button"
+              disabled={imprimirHistoria.isPending}
+              onClick={() => { setMasAcciones(false); handleImprimirHistoria() }}
+              className={cn(BOTON_SECUNDARIO, 'w-full justify-start')}
+            >
+              <FileText className="h-4 w-4" /> {imprimirHistoria.isPending ? 'Generando...' : 'Imprimir historia'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { setMasAcciones(false); solicitarCierre() }}
+            className={cn(BOTON_SECUNDARIO, 'w-full justify-start')}
+          >
+            Cancelar
+          </button>
+        </div>
+      </HojaInferior>
 
       <ConfirmDialog
         open={confirmarCierre}

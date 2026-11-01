@@ -96,7 +96,7 @@ export default function CuentasRecaudoSection() {
                     aria-label={`Usar ${cuenta.nombre} al cobrar`}
                     disabled={actualizarMutation.isPending}
                     onClick={() => actualizarMutation.mutate({ id: cuenta.id, payload: { activo: !cuenta.activo } })}
-                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
+                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition before:absolute before:-inset-x-1 before:-inset-y-2.5 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
                       cuenta.activo ? 'bg-primary' : 'bg-muted-foreground/25'
                     }`}
                   >
@@ -107,7 +107,7 @@ export default function CuentasRecaudoSection() {
                     onClick={() => setPorBorrar(cuenta)}
                     aria-label={`Borrar ${cuenta.nombre}`}
                     title="Borrar"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-danger-soft text-danger outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-danger-soft lg:h-9 lg:w-9 text-danger outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -131,14 +131,14 @@ export default function CuentasRecaudoSection() {
               aria-label="Nombre de la cuenta"
               aria-invalid={errors.nombre ? 'true' : 'false'}
               maxLength={60}
-              className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-12 rounded-lg border border-input bg-card px-3 text-base text-foreground lg:h-11 lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             />
             {errors.nombre ? <p className="text-[13px] text-danger">{errors.nombre.message}</p> : null}
           </div>
           <button
             type="submit"
             disabled={crearMutation.isPending}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary lg:h-11 px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearMutation.isPending ? 'Guardando...' : 'Agregar cuenta'}
           </button>

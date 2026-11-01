@@ -105,7 +105,7 @@ export default function CampoCelular({
       placeholder={placeholder ?? ejemploDe(pais)}
       autoComplete="tel"
       aria-invalid={invalido ? 'true' : undefined}
-      className={`campo-celular flex h-11 w-full items-center gap-2 rounded-lg border bg-card px-3 text-[15px] text-foreground transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary ${
+      className={`campo-celular flex h-11 w-full items-center gap-2 rounded-lg border bg-card px-3 text-base text-foreground lg:text-[15px] transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary ${
         invalido ? 'border-danger' : 'border-input'
       } ${className}`}
       numberInputProps={{

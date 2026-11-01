@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
 import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacion'
+import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
 import { estadoVencimiento, fechaCortaVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { Select } from '@/components/ui/select'
 import ClientInlinePicker from './ClientInlinePicker'
@@ -35,6 +37,9 @@ export default function CartSidebar({
   removeInvoiceItem,
   onOpenPaymentModal,
   onRevisarVencimiento,
+  // Celular: la cuenta vive dentro de una hoja inferior (el cobro queda pegado
+  // abajo de la hoja y cada ítem se quita deslizándolo).
+  enHoja = false,
 }) {
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [obsOpen, setObsOpen] = useState(false)
@@ -69,11 +74,16 @@ export default function CartSidebar({
     updateInvoiceItem(id, 'cantidad', String(next))
   }
 
+  // En la hoja el cobro queda pegado abajo: el pie deja de ser un bloque propio
+  // para que su contenedor sea toda la cuenta (si no, el «sticky» no se ancla).
+  const Cuerpo = enHoja ? 'div' : Fragment
+  const propsCuerpo = enHoja ? { className: 'space-y-4 border-t border-border px-5 pb-2 pt-4' } : {}
+
   return (
-    <div className="flex h-full min-h-0 flex-col bg-card">
+    <div className={enHoja ? '-mx-5 flex flex-col' : 'flex h-full min-h-0 flex-col rounded-2xl bg-card lg:rounded-none'}>
       {/* ── Encabezado y cliente ── */}
-      <div className="relative shrink-0 space-y-3 px-5 pt-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className={`relative shrink-0 space-y-3 ${enHoja ? 'px-5 pt-1' : 'px-4 pt-4 lg:px-5 lg:pt-5'}`}>
+        <div className={`items-center justify-between gap-3 ${enHoja ? 'hidden' : 'flex'}`}>
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cuenta</h2>
           {hasItems ? (
             <span className="rounded-md bg-secondary px-2.5 py-1 text-[13px] font-semibold tabular-nums text-secondary-foreground">
@@ -129,7 +139,7 @@ export default function CartSidebar({
       </div>
 
       {/* ── Items: única zona con scroll ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-2">
+      <div className={enHoja ? 'pt-2' : 'min-h-0 flex-1 overflow-y-auto px-4 pt-2 lg:px-5'}>
         {!hasItems ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
             <ShoppingCart className="h-7 w-7 text-muted-foreground/40" />
@@ -156,8 +166,13 @@ export default function CartSidebar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 16 }}
                   transition={{ duration: 0.12 }}
-                  className="border-b border-border/60 py-3 last:border-b-0"
+                  className="border-b border-border/60 last:border-b-0"
                 >
+                  <FilaDeslizable
+                    redondeo="rounded-none"
+                    acciones={[{ key: 'quitar', label: 'Quitar', icon: Trash2, tono: 'danger', onClick: () => removeInvoiceItem(item.id) }]}
+                  >
+                  <div className={`py-3 ${enHoja ? 'px-5' : ''}`}>
                   {/* Fila 1: nombre + subtotal */}
                   <div className="flex items-baseline justify-between gap-3">
                     {item.tipo === 'servicio' && !item.descripcion ? (
@@ -186,7 +201,7 @@ export default function CartSidebar({
                       type="button"
                       onClick={() => decrementQty(item.id, item.cantidad)}
                       aria-label="Restar una unidad"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-8 lg:w-8"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -197,13 +212,13 @@ export default function CartSidebar({
                       type="button"
                       onClick={() => incrementQty(item.id, item.cantidad)}
                       aria-label="Sumar una unidad"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-8 lg:w-8"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
 
                     <label className="ml-1 flex items-center gap-1 text-[13px] text-muted-foreground">
-                      ×
+                      <span aria-hidden className="hidden lg:inline">×</span>
                       <span className="sr-only">Precio unitario</span>
                       <span aria-hidden>$</span>
                       <input
@@ -211,7 +226,7 @@ export default function CartSidebar({
                         value={item.precioUnitario}
                         min={precioMinimo || undefined}
                         onChange={(e) => updateInvoiceItem(item.id, 'precioUnitario', e.target.value)}
-                        className={`h-8 w-24 rounded-lg border bg-card px-2 text-[13px] font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        className={`h-11 w-[84px] rounded-lg border bg-card px-2 text-base font-semibold tabular-nums lg:h-8 lg:w-24 lg:text-[13px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                           bajoCosto ? 'border-danger text-danger' : 'border-input text-foreground'
                         }`}
                         placeholder="0"
@@ -222,7 +237,7 @@ export default function CartSidebar({
                       type="button"
                       onClick={() => removeInvoiceItem(item.id)}
                       aria-label="Quitar del carrito"
-                      className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-danger-soft hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-danger-soft lg:h-8 lg:w-8 hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -253,6 +268,8 @@ export default function CartSidebar({
                       {textoVencimiento(item.fechaVencimiento)}
                     </p>
                   )}
+                  </div>
+                  </FilaDeslizable>
                 </MotionDiv>
               )
             })}
@@ -261,15 +278,20 @@ export default function CartSidebar({
       </div>
 
       {/* ── Pie fijo: método, total y cobro ── */}
-      <div className="shrink-0 space-y-4 border-t border-border px-5 pb-5 pt-4">
+      <div className={enHoja ? 'contents' : 'shrink-0 space-y-4 border-t border-border px-4 pb-5 pt-4 lg:px-5'}>
+        <Cuerpo {...propsCuerpo}>
         {/* Método de pago en una lista: siete opciones no merecen siete botones
-            en el pie. Cuando entre una pasarela (Wompi) será una opción más. */}
+            en el pie. Cuando entre una pasarela (Wompi) será una opción más.
+            En celular sí van como botones grandes: se eligen con el pulgar. */}
         <div className="flex items-center gap-2">
-          <span className="shrink-0 text-sm font-semibold text-foreground">Pago</span>
+          <span className="shrink-0 text-sm font-semibold text-foreground">
+            <span className="lg:hidden">Medio de pago</span>
+            <span className="hidden lg:inline">Pago</span>
+          </span>
           <Select
             variant="field"
             aria-label="Método de pago"
-            className="h-10 min-w-0 flex-1"
+            className="hidden h-10 min-w-0 flex-1 lg:flex"
             value={metodoPago}
             onValueChange={setMetodoPago}
             options={PAYMENT_METHOD_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
@@ -280,7 +302,7 @@ export default function CartSidebar({
             aria-label="Observaciones"
             title="Observaciones"
             aria-pressed={obsOpen || hasObs}
-            className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`ml-auto inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold transition lg:ml-0 lg:h-10 lg:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               obsOpen || hasObs
                 ? 'bg-accent text-accent-foreground'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -289,6 +311,27 @@ export default function CartSidebar({
             <StickyNote className="h-3.5 w-3.5" />
             Nota
           </button>
+        </div>
+        <div role="radiogroup" aria-label="Método de pago" className="!mt-2 grid grid-cols-2 gap-2 lg:hidden">
+          {PAYMENT_METHOD_OPTIONS.map((opt) => {
+            const Icono = PAYMENT_METHOD_ICONS[opt.value]
+            const activo = metodoPago === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={activo}
+                onClick={() => activo || setMetodoPago(opt.value)}
+                className={`flex h-12 min-w-0 items-center gap-2 rounded-lg px-3 text-left text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  activo ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:brightness-95'
+                }`}
+              >
+                {Icono ? <Icono aria-hidden className="h-4 w-4 shrink-0" /> : null}
+                <span className="truncate">{opt.label}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* A qué cuenta de la clínica entró la transferencia (Configuración) */}
@@ -309,7 +352,7 @@ export default function CartSidebar({
             maxLength={80}
             aria-label={detalle.label}
             placeholder={`${detalle.label}${detalle.requerido ? '' : ' (opcional)'}: ${detalle.placeholder}`}
-            className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground placeholder:text-muted-foreground lg:h-10 lg:text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         ) : null}
 
@@ -323,20 +366,24 @@ export default function CartSidebar({
               autoFocus
               aria-label="Observaciones de la venta"
               placeholder="Notas internas sobre esta venta"
-              className="w-full resize-none rounded-lg border border-input bg-card px-3 py-2 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full resize-none rounded-lg border border-input bg-card px-3 py-2 pr-11 text-base text-foreground lg:pr-9 lg:text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
               type="button"
               onClick={() => setObsOpen(false)}
               aria-label="Cerrar observaciones"
-              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="absolute right-1 top-1 flex h-10 w-10 items-center lg:right-2 lg:top-2 lg:h-7 lg:w-7 justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
-        {/* Total + cobrar: la única acción primaria del carrito */}
+        </Cuerpo>
+
+        {/* Total + cobrar: la única acción primaria del carrito. En celular
+            queda fija encima de la barra inferior para no perderla al bajar. */}
+        <div className={`space-y-2 border-t border-border bg-card py-3 ${enHoja ? 'sticky bottom-0 z-10 -mx-5 px-5' : 'fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 px-4'} lg:static lg:z-auto lg:space-y-4 lg:border-0 lg:bg-transparent lg:p-0`}>
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[17px] font-semibold text-foreground">
             Total
@@ -344,7 +391,7 @@ export default function CartSidebar({
               <span className="ml-1.5 text-sm font-normal text-muted-foreground">· mostrador</span>
             )}
           </span>
-          <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
+          <span className="text-[26px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground lg:text-[34px]">
             {formatCOP(total)}
           </span>
         </div>
@@ -352,10 +399,13 @@ export default function CartSidebar({
           type="button"
           onClick={onOpenPaymentModal}
           disabled={!hasItems || Boolean(falta)}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:brightness-100"
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-primary text-base lg:h-14 font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:brightness-100"
         >
           {!hasItems ? 'Agrega productos para cobrar' : falta ? falta : <span className="tabular-nums">Cobrar {formatCOP(total)}</span>}
         </button>
+        </div>
+        {/* Lo que ocupa el cobro fijo, para que no tape los campos de arriba. */}
+        {enHoja ? null : <div aria-hidden className="!mt-0 h-24 lg:hidden" />}
       </div>
     </div>
   )

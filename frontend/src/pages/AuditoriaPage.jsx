@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { SlidersHorizontal, X } from 'lucide-react'
+import HojaInferior from '@/components/movil/HojaInferior'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import AdminShell from '@/components/layout/AdminShell'
 import { Select } from '@/components/ui/select'
 import { auditoriaApi } from '@/features/auditoria/auditoriaApi'
 import { useAuthStore } from '@/store/authStore'
 import { canAccessModule } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const LIMITE = 30
@@ -234,7 +238,7 @@ const cambiosDe = (log) => {
 
 function Filtro({ label, children }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <span className="text-[13px] text-muted-foreground">{label}</span>
       {children}
     </div>
@@ -246,7 +250,7 @@ function Chip({ tipo }) {
   return <span className={cn('whitespace-nowrap rounded-[5px] px-2 py-1 text-[13px] font-semibold', t.clase)}>{t.label}</span>
 }
 
-function Detalle({ log }) {
+function Detalle({ log, enLinea = false }) {
   if (!log) return null
   const quien = log.responsable?.nombre || 'Alguien'
   const cambios = cambiosDe(log)
@@ -254,11 +258,22 @@ function Detalle({ log }) {
   const fallido = log.resultado === 'fallido'
 
   return (
-    <section aria-labelledby="au-det" className="flex flex-col gap-4 rounded-2xl bg-card p-6 lg:sticky lg:top-6 lg:mt-8">
-      <span className="self-start"><Chip tipo={log.tipo} /></span>
-      <h2 id="au-det" className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
-        {quien} {verbo(log)}
-      </h2>
+    <section
+      aria-labelledby={enLinea ? undefined : 'au-det'}
+      aria-label={enLinea ? 'Detalle del cambio' : undefined}
+      className={cn(
+        'flex-col gap-4',
+        enLinea ? 'mt-3 flex border-t border-border pt-3 lg:hidden' : 'hidden rounded-2xl bg-card p-6 lg:sticky lg:top-6 lg:mt-8 lg:flex'
+      )}
+    >
+      {enLinea ? null : (
+        <>
+          <span className="self-start"><Chip tipo={log.tipo} /></span>
+          <h2 id="au-det" className="text-2xl font-semibold leading-tight tracking-[-0.02em] text-foreground">
+            {quien} {verbo(log)}
+          </h2>
+        </>
+      )}
       <dl className="grid grid-cols-2 gap-x-5 gap-y-3.5 text-sm">
         <div><dt className="text-[13px] text-muted-foreground">Cuándo</dt><dd className="mt-1 font-medium">{cuandoLargo(log.createdAt)}</dd></div>
         <div><dt className="text-[13px] text-muted-foreground">Desde</dt><dd className="mt-1 break-words font-medium">{desde}</dd></div>
@@ -315,6 +330,8 @@ export default function AuditoriaPage() {
   const [rango, setRango] = useState('7dias')
   const [pagina, setPagina] = useState(1)
   const [seleccionId, setSeleccionId] = useState(null)
+  const [hojaAbierta, setHojaAbierta] = useState(false)
+  const esEscritorio = useMediaQuery('(min-width: 1024px)')
 
   const rolPermitido = canAccessModule(usuario, 'auditoria')
   const { desde, hasta } = useMemo(() => rangoFechas(rango), [rango])
@@ -378,17 +395,29 @@ export default function AuditoriaPage() {
     )
   }
 
-  return (
-    <AdminShell
-      currentKey="auditoria"
-      title="Quién cambió qué"
-      description="Cada cambio en la clínica queda registrado con la persona, la hora y lo que había antes"
-    >
-      <div className="flex flex-wrap gap-2.5">
+  const opcionesTipo = [
+    { value: 'todas', label: 'Todas' },
+    { value: 'crear', label: 'Nuevos' },
+    { value: 'editar', label: 'Cambios' },
+    { value: 'anular', label: 'Anulados o borrados' },
+    { value: 'sesion', label: 'Inicio de sesión' },
+    { value: 'fallido', label: 'Fallidos' },
+  ]
+
+  // Chips de los filtros activos (el rango de fechas por defecto no cuenta).
+  const activos = [
+    persona !== 'todas' && { key: 'persona', label: personas.find((p) => p.id === persona)?.nombre || 'Persona', quitar: () => cambiarFiltro(setPersona)('todas') },
+    modulo !== 'todos' && { key: 'modulo', label: MODULOS[modulo] || modulo, quitar: () => cambiarFiltro(setModulo)('todos') },
+    tipo !== 'todas' && { key: 'tipo', label: opcionesTipo.find((o) => o.value === tipo)?.label || tipo, quitar: () => cambiarFiltro(setTipo)('todas') },
+    rango !== '7dias' && { key: 'rango', label: RANGOS.find((r) => r.value === rango)?.label || rango, quitar: () => cambiarFiltro(setRango)('7dias') },
+  ].filter(Boolean)
+
+  const selectoresFiltro = (
+    <>
         <Filtro label="Persona">
           <Select
             variant="field"
-            className="min-w-[180px] border-0"
+            className="border-0 sm:min-w-[180px]"
             aria-label="Persona"
             value={persona}
             onValueChange={cambiarFiltro(setPersona)}
@@ -398,7 +427,7 @@ export default function AuditoriaPage() {
         <Filtro label="Módulo">
           <Select
             variant="field"
-            className="min-w-[180px] border-0"
+            className="border-0 sm:min-w-[180px]"
             aria-label="Módulo"
             value={modulo}
             onValueChange={cambiarFiltro(setModulo)}
@@ -408,30 +437,62 @@ export default function AuditoriaPage() {
         <Filtro label="Acción">
           <Select
             variant="field"
-            className="min-w-[160px] border-0"
+            className="border-0 sm:min-w-[160px]"
             aria-label="Acción"
             value={tipo}
             onValueChange={cambiarFiltro(setTipo)}
-            options={[
-              { value: 'todas', label: 'Todas' },
-              { value: 'crear', label: 'Nuevos' },
-              { value: 'editar', label: 'Cambios' },
-              { value: 'anular', label: 'Anulados o borrados' },
-              { value: 'sesion', label: 'Inicio de sesión' },
-              { value: 'fallido', label: 'Fallidos' },
-            ]}
+            options={opcionesTipo}
           />
         </Filtro>
         <Filtro label="Fechas">
           <Select
             variant="field"
-            className="min-w-[160px] border-0"
+            className="border-0 sm:min-w-[160px]"
             aria-label="Fechas"
             value={rango}
             onValueChange={cambiarFiltro(setRango)}
             options={RANGOS}
           />
         </Filtro>
+    </>
+  )
+
+  return (
+    <AdminShell
+      currentKey="auditoria"
+      title="Quién cambió qué"
+      description={esEscritorio ? 'Cada cambio en la clínica queda registrado con la persona, la hora y lo que había antes' : undefined}
+    >
+      <TirarParaRefrescar onRefrescar={() => auditoriaQuery.refetch()} className="flex flex-col gap-4 lg:gap-6">
+      {/* Escritorio: los cuatro filtros a la vista. */}
+      <div className="hidden flex-wrap gap-2.5 lg:flex">{selectoresFiltro}</div>
+
+      {/* Celular: un botón «Filtros» y chips de lo activo, en una sola línea. */}
+      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-0.5 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setHojaAbierta(true)}
+          className={cn('inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-foreground', FOCO)}
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          Filtros{activos.length ? ` (${activos.length})` : ''}
+        </button>
+        {activos.length === 0 ? (
+          <span className="shrink-0 text-sm text-muted-foreground">Últimos 7 días</span>
+        ) : (
+          activos.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.quitar}
+              aria-label={`Quitar filtro ${chip.label}`}
+              className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-primary/10 pl-3.5 pr-3 text-sm font-medium text-primary', FOCO)}
+            >
+              {chip.label}
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          ))
+        )}
       </div>
 
       {auditoriaQuery.isError ? (
@@ -452,37 +513,45 @@ export default function AuditoriaPage() {
           ) : (
             grupos.map((grupo) => (
               <div key={grupo.clave} className="flex flex-col gap-2">
-                <h2 className="text-base font-semibold text-muted-foreground">{grupo.titulo}</h2>
-                <div className="rounded-2xl bg-card p-1.5">
+                <h2 className="px-1.5 text-sm font-semibold text-muted-foreground lg:px-0 lg:text-base">{grupo.titulo}</h2>
+                <div className="flex flex-col gap-2 lg:block lg:rounded-2xl lg:bg-card lg:p-1.5">
                   {grupo.eventos.map((log) => {
                     const activo = seleccionado?.id === log.id
                     const nombre = log.responsable?.nombre || 'Alguien'
+                    const abierto = !esEscritorio && seleccionId === log.id
                     return (
-                      <button
-                        key={log.id}
-                        type="button"
-                        onClick={() => setSeleccionId(log.id)}
-                        aria-pressed={activo}
-                        className={cn(
-                          'grid w-full grid-cols-[64px_36px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-xl px-3.5 py-3 text-left transition-colors sm:grid-cols-[76px_36px_minmax(0,1fr)_auto]',
-                          activo ? 'bg-primary/10' : 'hover:bg-muted/60',
-                          FOCO
-                        )}
-                      >
-                        <span className="whitespace-nowrap text-sm font-semibold text-muted-foreground">{hora(log.createdAt)}</span>
-                        <span className={cn('flex h-9 w-9 items-center justify-center rounded-[11px] text-[13px] font-bold', colorAvatar(log.usuarioId))}>
-                          {log.responsable ? iniciales(nombre) : '?'}
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-[15px] text-foreground">
-                            <span className="font-semibold">{nombre}</span> {verbo(log)}
+                      <div key={log.id} className="rounded-xl bg-card p-3 lg:rounded-none lg:bg-transparent lg:p-0">
+                        <button
+                          type="button"
+                          onClick={() => setSeleccionId(!esEscritorio && seleccionId === log.id ? null : log.id)}
+                          aria-pressed={esEscritorio ? activo : undefined}
+                          aria-expanded={esEscritorio ? undefined : abierto}
+                          className={cn(
+                            'grid min-h-[44px] w-full grid-cols-[66px_36px_minmax(0,1fr)] items-start gap-2.5 rounded-xl text-left transition-colors lg:grid-cols-[76px_36px_minmax(0,1fr)_auto] lg:items-center lg:gap-3.5 lg:px-3.5 lg:py-3',
+                            activo ? 'lg:bg-primary/10' : 'lg:hover:bg-muted/60',
+                            FOCO
+                          )}
+                        >
+                          <span className="whitespace-nowrap pt-2 text-sm font-semibold text-muted-foreground lg:pt-0">{hora(log.createdAt)}</span>
+                          <span className={cn('flex h-9 w-9 items-center justify-center rounded-[11px] text-[13px] font-bold', colorAvatar(log.usuarioId))}>
+                            {log.responsable ? iniciales(nombre) : '?'}
                           </span>
-                          <span className="truncate text-[13px] text-muted-foreground">
-                            {[MODULOS[log.entidad] || log.entidad, formatoPesos(log.descripcion)].filter(Boolean).join(' · ')}
+                          <span className="flex min-w-0 flex-col gap-1.5 lg:gap-0.5">
+                            <span className="text-[15px] leading-snug text-foreground">
+                              <span className="font-semibold">{nombre}</span> {verbo(log)}
+                            </span>
+                            <span className="flex flex-wrap items-center gap-1.5 lg:hidden">
+                              <Chip tipo={log.tipo} />
+                              <span className="text-[13px] text-muted-foreground">{MODULOS[log.entidad] || log.entidad}</span>
+                            </span>
+                            <span className="hidden truncate text-[13px] text-muted-foreground lg:block">
+                              {[MODULOS[log.entidad] || log.entidad, formatoPesos(log.descripcion)].filter(Boolean).join(' · ')}
+                            </span>
                           </span>
-                        </span>
-                        <Chip tipo={log.tipo} />
-                      </button>
+                          <span className="hidden lg:block"><Chip tipo={log.tipo} /></span>
+                        </button>
+                        {abierto ? <Detalle log={log} enLinea /> : null}
+                      </div>
                     )
                   })}
                 </div>
@@ -500,7 +569,7 @@ export default function AuditoriaPage() {
                   type="button"
                   onClick={() => irAPagina(Math.max(paginaActual - 1, 1))}
                   disabled={paginaActual <= 1}
-                  className={cn('h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
+                  className={cn('h-11 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
                 >
                   Anterior
                 </button>
@@ -508,7 +577,7 @@ export default function AuditoriaPage() {
                   type="button"
                   onClick={() => irAPagina(Math.min(paginaActual + 1, paginas))}
                   disabled={paginaActual >= paginas}
-                  className={cn('h-10 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
+                  className={cn('h-11 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50', FOCO)}
                 >
                   Siguiente
                 </button>
@@ -519,6 +588,25 @@ export default function AuditoriaPage() {
 
         <Detalle log={seleccionado} />
       </div>
+      </TirarParaRefrescar>
+
+      {/* Fuera del wrapper de «tirar»: los eventos táctiles de la hoja no deben disparar el refresco. */}
+      <HojaInferior
+        abierta={hojaAbierta}
+        onCambiar={setHojaAbierta}
+        titulo="Filtros"
+        pie={
+          <button
+            type="button"
+            onClick={() => setHojaAbierta(false)}
+            className={cn('h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground', FOCO)}
+          >
+            Ver {total.toLocaleString('es-CO')} {total === 1 ? 'cambio' : 'cambios'}
+          </button>
+        }
+      >
+        <div className="flex flex-col gap-3 pb-2">{selectoresFiltro}</div>
+      </HojaInferior>
     </AdminShell>
   )
 }

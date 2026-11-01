@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CircleCheck } from 'lucide-react'
+import { ArrowLeft, CircleCheck, Plus } from 'lucide-react'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import HojaInferior from '@/components/movil/HojaInferior'
 import AdminShell from '@/components/layout/AdminShell'
 import { Select } from '@/components/ui/select'
 import { ConfirmDialog } from '@/components/shared'
@@ -8,6 +10,7 @@ import Paginacion from '@/components/shared/Paginacion'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import EstadoTicketBadge from '@/features/soporte/EstadoTicketBadge'
 import NuevaSolicitudForm from '@/features/soporte/NuevaSolicitudForm'
 import ResponderTicketForm from '@/features/soporte/ResponderTicketForm'
@@ -51,6 +54,10 @@ export default function SoportePage() {
   const [enfocarForm, setEnfocarForm] = useState(false)
   const [confirmarCierre, setConfirmarCierre] = useState(false)
   const [solicitudAtendida, setSolicitudAtendida] = useState(null)
+  // En celular el formulario se abre bajo demanda; en escritorio siempre está visible.
+  const [formAbierto, setFormAbierto] = useState(false)
+  const esEscritorio = useMediaQuery('(min-width: 1024px)')
+  const detalleRef = useRef(null)
 
   const ticketId = searchParams.get('ticket')
 
@@ -65,6 +72,7 @@ export default function SoportePage() {
     setAsuntoInicial(searchParams.get('asunto') || '')
     setCategoriaInicial(searchParams.get('categoria') || 'error')
     setEnfocarForm(true)
+    setFormAbierto(true)
     setFormKey((key) => key + 1)
   } else if (!solicitudNueva && solicitudAtendida) {
     setSolicitudAtendida(null)
@@ -105,6 +113,7 @@ export default function SoportePage() {
     setAsuntoInicial('')
     setCategoriaInicial('error')
     setEnfocarForm(false)
+    setFormAbierto(false)
     setFormKey((key) => key + 1)
     setFiltro('activos')
     setPagina(1)
@@ -115,12 +124,27 @@ export default function SoportePage() {
     <AdminShell
       currentKey="soporte"
       title="¿En qué te ayudamos?"
-      description="Te respondemos aquí y a tu correo, normalmente el mismo día hábil"
+      description={esEscritorio ? 'Te respondemos aquí y a tu correo, normalmente el mismo día hábil' : undefined}
     >
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
-        <div className="flex min-w-0 flex-col gap-5">
+      <TirarParaRefrescar onRefrescar={() => listaQuery.refetch()}>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] lg:gap-6">
+        {!esEscritorio ? (
+          <button
+            type="button"
+            onClick={() => {
+              setEnfocarForm(false)
+              setFormAbierto(true)
+            }}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-semibold text-primary-foreground transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Plus className="h-5 w-5" aria-hidden />
+            Nueva solicitud
+          </button>
+        ) : null}
+
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
           <section aria-labelledby="s-mis" className="rounded-2xl bg-card p-2">
-            <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
+            <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-3 lg:px-4 lg:pt-4">
               <h2 id="s-mis" className="text-lg font-semibold text-foreground">
                 {esAdmin ? 'Solicitudes de la clínica' : 'Tus solicitudes'}
               </h2>
@@ -132,7 +156,7 @@ export default function SoportePage() {
                 }}
                 options={FILTROS_ESTADO}
                 aria-label="Filtrar por estado"
-                className="h-9 border-0 bg-muted pl-3.5 pr-3"
+                className="h-11 border-0 bg-muted pl-3.5 pr-3 lg:h-9"
               />
             </div>
 
@@ -176,7 +200,8 @@ export default function SoportePage() {
             </div>
           </section>
 
-          {ticketId ? (
+          {ticketId && esEscritorio ? (
+            <div ref={detalleRef} className="scroll-mt-20">
             <DetalleTicket
               query={detalleQuery}
               esAdmin={esAdmin}
@@ -184,19 +209,64 @@ export default function SoportePage() {
               respondiendo={responderMutation.isPending}
               onCerrar={() => setConfirmarCierre(true)}
             />
+            </div>
           ) : null}
         </div>
 
-        <NuevaSolicitudForm
-          key={formKey}
-          moduloInicial={moduloInicial}
-          asuntoInicial={asuntoInicial}
-          categoriaInicial={categoriaInicial}
-          enfocar={enfocarForm}
-          onSubmit={crearTicket}
-          isPending={crearMutation.isPending}
-        />
+        {esEscritorio ? (
+          <NuevaSolicitudForm
+            key={formKey}
+            moduloInicial={moduloInicial}
+            asuntoInicial={asuntoInicial}
+            categoriaInicial={categoriaInicial}
+            enfocar={enfocarForm}
+            onSubmit={crearTicket}
+            isPending={crearMutation.isPending}
+          />
+        ) : null}
       </div>
+      </TirarParaRefrescar>
+
+      {!esEscritorio ? (
+        <HojaInferior
+          abierta={formAbierto}
+          onCambiar={setFormAbierto}
+          titulo="Nueva solicitud"
+          pie={
+            <button
+              type="submit"
+              form="nueva-solicitud"
+              disabled={crearMutation.isPending}
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
+            >
+              {crearMutation.isPending ? 'Enviando…' : 'Enviar solicitud'}
+            </button>
+          }
+        >
+          <NuevaSolicitudForm
+            key={formKey}
+            idForm="nueva-solicitud"
+            enHoja
+            moduloInicial={moduloInicial}
+            asuntoInicial={asuntoInicial}
+            categoriaInicial={categoriaInicial}
+            enfocar={enfocarForm}
+            onSubmit={crearTicket}
+            isPending={crearMutation.isPending}
+          />
+        </HojaInferior>
+      ) : null}
+
+      {ticketId && !esEscritorio ? (
+        <ChatTicket
+          query={detalleQuery}
+          esAdmin={esAdmin}
+          onVolver={() => seleccionarTicket(null)}
+          onResponder={(mensaje) => responderMutation.mutateAsync({ ticketId, mensaje })}
+          respondiendo={responderMutation.isPending}
+          onCerrar={() => setConfirmarCierre(true)}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={confirmarCierre}
@@ -211,6 +281,92 @@ export default function SoportePage() {
         }
       />
     </AdminShell>
+  )
+}
+
+// Celular: el caso se abre a pantalla completa como un chat. Mensajes que
+// deslizan, y la respuesta fija abajo junto al teclado.
+function ChatTicket({ query, esAdmin, onVolver, onResponder, respondiendo, onCerrar }) {
+  const ticket = query.data?.ticket
+  const finRef = useRef(null)
+  const total = ticket?.mensajes?.length || 0
+
+  useEffect(() => {
+    finRef.current?.scrollIntoView({ block: 'end' })
+  }, [total])
+
+  const aviso = ticket ? AVISOS_ESTADO[ticket.estado] : null
+  const admiteMensajes = ticket && ticket.estado !== 'cerrado'
+
+  return (
+    <div role="dialog" aria-label="Conversación de la solicitud" className="fixed inset-0 z-50 flex flex-col bg-background">
+      <header className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-2 pt-[env(safe-area-inset-top)]">
+        <button
+          type="button"
+          onClick={onVolver}
+          aria-label="Volver a las solicitudes"
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowLeft className="h-5 w-5" aria-hidden />
+        </button>
+        <div className="min-w-0 flex-1 py-2">
+          <h2 className="truncate text-base font-semibold text-foreground">{ticket?.asunto || 'Solicitud'}</h2>
+          {ticket ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {[ticket.codigo, etiquetaCategoria(ticket.categoria), esAdmin && ticket.creadoPor ? ticket.creadoPor.nombre : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          ) : null}
+        </div>
+        {ticket ? <EstadoTicketBadge estado={ticket.estado} /> : null}
+        <span className="w-1 shrink-0" aria-hidden />
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        {query.isLoading ? (
+          <div className="space-y-3" aria-busy="true">
+            <div className="h-16 w-3/4 animate-pulse rounded-2xl bg-muted" />
+            <div className="ml-auto h-12 w-2/3 animate-pulse rounded-2xl bg-muted" />
+          </div>
+        ) : query.isError || !ticket ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">No encontramos esta solicitud o no tienes acceso a ella.</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {aviso ? <p className={cn('rounded-xl px-4 py-3 text-sm leading-6', aviso.tone)}>{aviso.texto}</p> : null}
+            {ticket.capturaUrl ? (
+              <a href={ticket.capturaUrl} target="_blank" rel="noreferrer" className="block w-fit overflow-hidden rounded-xl bg-muted">
+                <img src={ticket.capturaUrl} alt="Captura adjunta" loading="lazy" className="max-h-40 w-auto object-contain" />
+              </a>
+            ) : null}
+            <TicketHilo mensajes={ticket.mensajes} />
+          </div>
+        )}
+        <div ref={finRef} />
+      </div>
+
+      {admiteMensajes ? (
+        <div className="shrink-0 border-t border-border bg-card px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+          <ResponderTicketForm
+            chat
+            onSubmit={onResponder}
+            isPending={respondiendo}
+            submitLabel="Enviar"
+            placeholder="Escribe tu respuesta"
+            accionSecundaria={
+              <button
+                type="button"
+                onClick={onCerrar}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-success-soft px-4 text-sm font-semibold text-success focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <CircleCheck className="h-4 w-4" aria-hidden />
+                Ya quedó resuelto
+              </button>
+            }
+          />
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -248,7 +404,7 @@ function DetalleTicket({ query, esAdmin, onResponder, respondiendo, onCerrar }) 
   ].filter(Boolean)
 
   return (
-    <section aria-labelledby="s-hilo" className="flex flex-col gap-4 rounded-2xl bg-card p-6">
+    <section aria-labelledby="s-hilo" className="flex flex-col gap-4 rounded-2xl bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 id="s-hilo" className="break-words text-xl font-semibold tracking-[-0.02em] text-foreground">
@@ -285,7 +441,7 @@ function DetalleTicket({ query, esAdmin, onResponder, respondiendo, onCerrar }) 
             <button
               type="button"
               onClick={onCerrar}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-success-soft px-4 text-sm font-semibold text-success transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-success-soft px-4 lg:h-10 text-sm font-semibold text-success transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <CircleCheck className="h-4 w-4" />
               Ya quedó resuelto

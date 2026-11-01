@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FileText, Phone } from 'lucide-react'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { RecepcionDrawer } from './RecepcionDrawer'
 import { ACCION_LABELS, ORIGEN_LABELS, TRANSICIONES, TYPE_OPTIONS } from './recepcionConstants'
@@ -44,6 +45,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
       title="Detalle del paciente"
       subtitle={cita ? `${tipoLabel(cita.tipoCita)} · ${ORIGEN_LABELS[cita.origen] || cita.origen}` : undefined}
       width="sm:w-[400px]"
+      hoja
       footer={
         cita && puedeGestionarEstado && transiciones.length > 0 ? (
           <div className="grid gap-2">
@@ -53,7 +55,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
                 type="button"
                 disabled={isPending}
                 onClick={() => onAccion(cita, estado)}
-                className={`h-11 rounded-lg px-4 text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                className={`h-12 rounded-xl px-4 lg:h-11 lg:rounded-lg text-sm font-semibold transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
                   ACTION_TONE[estado] || 'bg-muted text-foreground'
                 }`}
               >
@@ -65,17 +67,42 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
       }
     >
       {cita ? (
-        <div className="grid gap-5">
-          <div>
-            <p className="text-[28px] font-semibold leading-none tracking-[-0.03em] text-foreground">
-              {cita.mascota?.nombre || 'Paciente'}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">{etiquetaEspecie(cita.mascota?.especie) || 'Especie sin registrar'}</p>
+        <div className="grid gap-3 lg:gap-5">
+          <div className="flex items-start justify-between gap-3 lg:block">
+            <div className="min-w-0">
+              <p className="truncate text-2xl font-semibold leading-none tracking-[-0.03em] text-foreground lg:text-[28px]">
+                {cita.mascota?.nombre || 'Paciente'}
+              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground">{etiquetaEspecie(cita.mascota?.especie) || 'Especie sin registrar'}</p>
+            </div>
+            <StatusBadge variant={cita.estado} showDot size="sm" className="shrink-0 justify-self-start lg:mt-5" />
           </div>
 
-          <StatusBadge variant={cita.estado} showDot size="sm" className="justify-self-start" />
+          {/* Acciones grandes para el pulgar: llamar al tutor y abrir la ficha. */}
+          {cita.propietario?.telefono || cita.mascotaId ? (
+            <div className="grid grid-cols-2 gap-2 lg:hidden">
+              {cita.propietario?.telefono ? (
+                <a
+                  href={`tel:${cita.propietario.telefono}`}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Phone className="h-4 w-4" />
+                  Llamar
+                </a>
+              ) : null}
+              {cita.mascotaId ? (
+                <Link
+                  to={`/pacientes/${cita.mascotaId}/historial?citaId=${cita.id}`}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <FileText className="h-4 w-4" />
+                  Historia clínica
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
 
-          <div className="grid gap-2.5 rounded-xl bg-muted px-4 py-3.5">
+          <div className="grid gap-2 rounded-xl bg-muted px-4 py-3 lg:gap-2.5 lg:py-3.5">
             <Dato label="Tutor">{cita.propietario?.nombre || 'Sin tutor'}</Dato>
             <Dato label="Telefono">
               {cita.propietario?.telefono ? (
@@ -90,7 +117,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
             <Dato label="Consultorio">{cita.consultorio?.nombre || 'Sin asignar'}</Dato>
           </div>
 
-          <div className="grid gap-2.5 rounded-xl bg-muted px-4 py-3.5">
+          <div className="grid gap-2 rounded-xl bg-muted px-4 py-3 lg:gap-2.5 lg:py-3.5">
             <Dato label="Horario">
               <span className="tabular-nums">
                 {formatTime(cita.horaInicio)} – {formatTime(cita.horaFin)}
@@ -136,7 +163,7 @@ export function DetalleCitaDrawer({ cita, onClose, puedeGestionarEstado, onAccio
           {cita.mascotaId ? (
             <Link
               to={`/pacientes/${cita.mascotaId}/historial?citaId=${cita.id}`}
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="hidden h-11 items-center justify-center rounded-lg bg-secondary px-4 text-sm lg:inline-flex font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Abrir historia clínica
             </Link>

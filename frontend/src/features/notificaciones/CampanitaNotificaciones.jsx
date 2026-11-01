@@ -160,7 +160,7 @@ export default function CampanitaNotificaciones({ notificaciones, className }) {
           aria-label={sinLeer > 0 ? `Notificaciones, ${sinLeer} sin leer` : 'Notificaciones'}
           title="Notificaciones"
           className={cn(
-            'relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'relative inline-flex h-11 w-11 shrink-0 lg:h-10 lg:w-10 items-center justify-center rounded-lg bg-card text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             className
           )}
         >

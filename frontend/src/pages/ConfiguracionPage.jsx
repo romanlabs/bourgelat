@@ -14,6 +14,9 @@ import {
   Users,
 } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import { useEsCelular } from '@/lib/useEsCelular'
+import HojaInferior from '@/components/movil/HojaInferior'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { HoraPicker } from '@/components/shared/HoraPicker'
@@ -79,7 +82,7 @@ const FISCAL_FIELD_LABELS = {
 }
 
 const INPUT_CLASS =
-  'h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+  'h-12 rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:text-sm'
 const LABEL_CLASS = 'text-sm font-medium text-foreground'
 
 const normalizeEmail = (value) => value.trim().toLowerCase()
@@ -195,6 +198,7 @@ function ConfiguracionContent({
 }) {
   const queryClient = useQueryClient()
   const [activeSection, setActiveSection] = useState('ficha')
+  const esCelular = useEsCelular()
   const [clinicForm, setClinicForm] = useState(() => buildClinicForm(initialClinica))
   const [factusForm, setFactusForm] = useState(() => buildFactusForm(initialFactus))
 
@@ -405,9 +409,22 @@ function ConfiguracionContent({
     },
   ]
 
+  // Celular: deslizar el dedo a los lados pasa a la sección vecina (atajo; los chips siguen).
+  const navegables = sectionOptions.filter((s) => !s.proximamente)
+  const indiceActual = navegables.findIndex((s) => s.id === activeSection)
+  const irASeccion = (paso) => {
+    const destino = navegables[indiceActual + paso]
+    if (destino) setActiveSection(destino.id)
+  }
+  const gestosSeccion = useDeslizarHorizontal({
+    onIzquierda: () => irASeccion(1),
+    onDerecha: () => irASeccion(-1),
+    activo: esCelular,
+  })
+
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-      <nav aria-label="Secciones de la configuración" className="flex flex-col gap-1 rounded-2xl bg-card p-2 lg:sticky lg:top-6">
+      <nav aria-label="Secciones de la configuración" className="flex gap-1.5 overflow-x-auto rounded-2xl bg-card p-1.5 [scrollbar-width:none] lg:sticky lg:top-6 lg:flex-col lg:gap-1 lg:overflow-visible lg:p-2 [&::-webkit-scrollbar]:hidden">
         {sectionOptions.map((section) => {
           const activa = activeSection === section.id
           return (
@@ -417,7 +434,7 @@ function ConfiguracionContent({
               disabled={section.proximamente}
               onClick={() => setActiveSection(section.id)}
               aria-current={activa ? 'page' : undefined}
-              className={`rounded-xl px-3.5 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default ${
+              className={`min-h-11 shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default lg:shrink lg:whitespace-normal lg:py-3 ${
                 activa ? 'bg-accent' : section.proximamente ? '' : 'hover:bg-muted'
               }`}
             >
@@ -429,13 +446,13 @@ function ConfiguracionContent({
                   <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">Próximamente</span>
                 ) : null}
               </span>
-              <span className="mt-0.5 block text-[13px] text-muted-foreground">{section.helper}</span>
+              <span className="mt-0.5 hidden text-[13px] text-muted-foreground lg:block">{section.helper}</span>
             </button>
           )
         })}
       </nav>
 
-      <div className="min-w-0 space-y-5">
+      <div className="min-w-0 space-y-4 lg:space-y-5" {...gestosSeccion}>
       {activeSection === 'ficha' ? (
         <DashboardPanel
           title="Ficha de la clínica"
@@ -590,7 +607,7 @@ function ConfiguracionContent({
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
                       disabled={subirLogoMutation.isPending}
-                      className="inline-flex h-10 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex h-11 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 lg:h-10"
                     >
                       {subirLogoMutation.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -604,7 +621,7 @@ function ConfiguracionContent({
                         type="button"
                         onClick={quitarLogo}
                         disabled={actualizarClinicaMutation.isPending}
-                        className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition hover:text-destructive disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center gap-1 text-[13px] text-muted-foreground transition hover:text-destructive disabled:opacity-60 lg:min-h-0"
                       >
                         <Trash2 className="h-3 w-3" /> Quitar logo
                       </button>
@@ -711,11 +728,11 @@ function ConfiguracionContent({
               </>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-1 flex flex-wrap items-center gap-3 bg-card px-1 pb-1 pt-2 lg:static lg:mx-0 lg:bg-transparent lg:p-0 lg:pt-2">
               <button
                 type="submit"
                 disabled={actualizarClinicaMutation.isPending}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 w-full items-center lg:w-auto lg:h-11 justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actualizarClinicaMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
               </button>
@@ -921,11 +938,11 @@ function ConfiguracionContent({
                   Enviar correo al emitir documentos desde la integración
                 </label>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-1 flex flex-wrap items-center gap-3 bg-card px-1 pb-1 pt-2 lg:static lg:mx-0 lg:bg-transparent lg:p-0 lg:pt-2">
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 lg:h-11 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {guardarFactusMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
                   </button>
@@ -933,7 +950,7 @@ function ConfiguracionContent({
                     type="button"
                     onClick={() => probarFactusMutation.mutate()}
                     disabled={probarFactusMutation.isPending}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-secondary px-4 lg:h-11 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {probarFactusMutation.isPending ? 'Probando...' : 'Probar conexión'}
                   </button>
@@ -941,7 +958,7 @@ function ConfiguracionContent({
                     type="button"
                     onClick={() => sincronizarFactusMutation.mutate()}
                     disabled={sincronizarFactusMutation.isPending}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-secondary px-4 lg:h-11 text-sm font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {sincronizarFactusMutation.isPending ? 'Sincronizando...' : 'Sincronizar catálogos'}
                   </button>
@@ -1200,7 +1217,7 @@ function HoraChip({ value, onChange, ...props }) {
     ? OPCIONES_HORA
     : [...OPCIONES_HORA, { value, label: formatHora12(value) }].sort((x, y) => x.value.localeCompare(y.value))
   return (
-    <Select variant="field" className="h-9 w-[112px] text-[13px]" value={value} onValueChange={onChange} options={opciones} {...props} />
+    <Select variant="field" className="h-11 w-[112px] text-[13px] lg:h-9" value={value} onValueChange={onChange} options={opciones} {...props} />
   )
 }
 
@@ -1212,7 +1229,7 @@ function Interruptor({ activo, onChange, etiqueta }) {
       aria-checked={activo}
       aria-label={etiqueta}
       onClick={onChange}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full outline-none transition before:absolute before:-inset-x-1 before:-inset-y-2.5 focus-visible:ring-2 focus-visible:ring-ring ${
         activo ? 'bg-primary' : 'bg-muted-foreground/25'
       }`}
     >
@@ -1233,7 +1250,7 @@ function PausaDia({ label, pausa, onCambiar }) {
         <button
           type="button"
           onClick={() => onCambiar({ ...PAUSA_POR_DEFECTO })}
-          className="inline-flex items-center gap-0.5 rounded-md px-1 font-semibold text-primary outline-none transition hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-h-11 items-center gap-0.5 rounded-md px-1 font-semibold text-primary outline-none transition hover:underline focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
         >
           <Plus className="h-3.5 w-3.5" />
           Pausa
@@ -1248,7 +1265,7 @@ function PausaDia({ label, pausa, onCambiar }) {
         <button
           type="button"
           aria-label={`Editar la pausa del ${label.toLowerCase()}`}
-          className="rounded-md px-1 text-[13px] text-muted-foreground underline decoration-dotted underline-offset-4 outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-11 rounded-md px-1 text-[13px] text-muted-foreground underline decoration-dotted lg:min-h-0 underline-offset-4 outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           Pausa de {formatFranja12(pausa.inicio, pausa.fin)}
         </button>
@@ -1269,7 +1286,7 @@ function PausaDia({ label, pausa, onCambiar }) {
             <button
               type="button"
               onClick={() => onCambiar(null)}
-              className="self-start rounded-md text-[13px] font-semibold text-danger outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-11 self-start rounded-md text-[13px] font-semibold text-danger outline-none hover:underline lg:min-h-0 focus-visible:ring-2 focus-visible:ring-ring"
             >
               Quitar pausa
             </button>
@@ -1281,17 +1298,20 @@ function PausaDia({ label, pausa, onCambiar }) {
 }
 
 function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigurar = false }) {
+  const esCelular = useEsCelular()
+  const [diaAbierto, setDiaAbierto] = useState(null)
+
   const actualizarDia = (clave, vista) =>
     setHorario((current) => ({ ...current, [clave]: vista ? franjasDesdeVista(vista) : [] }))
 
   const alternarDia = (clave) =>
     actualizarDia(clave, horario[clave]?.length ? null : { abre: '08:00', cierra: '18:00', pausa: null })
 
-  // Copiar el primer dia abierto al resto ahorra configurar siete veces lo mismo.
-  const copiarATodaLaSemana = () => {
-    const origen = DIAS_SEMANA.find(({ clave }) => horario[clave]?.length)
+  // Copiar el primer dia abierto (o el que se indique) al resto ahorra configurar siete veces lo mismo.
+  const copiarATodaLaSemana = (claveOrigen) => {
+    const origen = DIAS_SEMANA.find(({ clave }) => (claveOrigen ? clave === claveOrigen : horario[clave]?.length))
 
-    if (!origen) {
+    if (!origen || !horario[origen.clave]?.length) {
       toast.error('Configura primero un día para poder copiarlo.')
       return
     }
@@ -1309,18 +1329,163 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigur
     )
   }
 
+  if (esCelular) {
+    const claveEditando = diaAbierto
+    const etiquetaEditando = DIAS_SEMANA.find((d) => d.clave === claveEditando)?.label || ''
+    const vistaEditando = claveEditando ? vistaDia(horario[claveEditando]) : null
+    const cambiarEditando = (cambios) => actualizarDia(claveEditando, { ...vistaEditando, ...cambios })
+
+    return (
+      <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-3">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="min-w-0">
+            <h2 id="horario-atencion" className="text-base font-semibold tracking-[-0.02em] text-foreground">Horario de atención</h2>
+            <p className="text-xs text-muted-foreground">La agenda solo ofrece cupos dentro de este horario.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => copiarATodaLaSemana()}
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Copiar a todos
+          </button>
+        </div>
+
+        {sinConfigurar ? (
+          <p className="mt-2 rounded-xl bg-info-soft px-3 py-2 text-xs leading-5 text-info">
+            Aún no has configurado el horario: la agenda acepta citas a cualquier hora. Enciende los días en que atiendes y guarda.
+          </p>
+        ) : null}
+
+        <ul className="mt-1 flex flex-col divide-y divide-border">
+          {DIAS_SEMANA.map(({ clave, label }) => {
+            const vista = vistaDia(horario[clave])
+            return (
+              <li key={clave} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setDiaAbierto(clave)}
+                  aria-label={`Editar el horario del ${label.toLowerCase()}`}
+                  className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg px-1 text-left outline-none transition active:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="w-[84px] shrink-0 text-sm font-semibold text-foreground">{label}</span>
+                  {vista ? (
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm text-foreground">{formatFranja12(vista.abre, vista.cierra)}</span>
+                      {vista.pausa ? (
+                        <span className="truncate text-xs text-muted-foreground">Pausa {formatFranja12(vista.pausa.inicio, vista.pausa.fin)}</span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  )}
+                </button>
+                <Interruptor
+                  activo={Boolean(vista)}
+                  onChange={() => alternarDia(clave)}
+                  etiqueta={`${label}: ${vista ? 'abierto' : 'cerrado'}`}
+                />
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-3 -mb-3 mt-2 rounded-b-2xl bg-card px-3 pb-3 pt-2">
+          <button
+            type="button"
+            onClick={onGuardar}
+            disabled={guardando}
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {guardando ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        </div>
+
+        <HojaInferior
+          abierta={Boolean(claveEditando)}
+          onCambiar={(a) => { if (!a) setDiaAbierto(null) }}
+          titulo={etiquetaEditando}
+          pie={
+            <Button type="button" className="h-12 w-full" onClick={() => setDiaAbierto(null)}>Listo</Button>
+          }
+        >
+          {claveEditando ? (
+            <div className="flex flex-col gap-4 pt-1">
+              <div className="flex min-h-12 items-center justify-between gap-3">
+                <span className="text-[15px] font-semibold text-foreground">{vistaEditando ? 'Abierto' : 'Cerrado'}</span>
+                <Interruptor
+                  activo={Boolean(vistaEditando)}
+                  onChange={() => alternarDia(claveEditando)}
+                  etiqueta={`${etiquetaEditando}: ${vistaEditando ? 'abierto' : 'cerrado'}`}
+                />
+              </div>
+              {vistaEditando ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                      Abre
+                      <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, abre`} value={vistaEditando.abre} onChange={(valor) => cambiarEditando({ abre: valor })} />
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                      Cierra
+                      <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, cierra`} value={vistaEditando.cierra} onChange={(valor) => cambiarEditando({ cierra: valor })} />
+                    </label>
+                  </div>
+                  {vistaEditando.pausa ? (
+                    <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
+                      <span className="text-sm font-semibold text-foreground">Pausa</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, pausa desde`} value={vistaEditando.pausa.inicio} onChange={(valor) => cambiarEditando({ pausa: { ...vistaEditando.pausa, inicio: valor } })} />
+                        <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, pausa hasta`} value={vistaEditando.pausa.fin} onChange={(valor) => cambiarEditando({ pausa: { ...vistaEditando.pausa, fin: valor } })} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => cambiarEditando({ pausa: null })}
+                        className="min-h-11 self-start rounded-md text-sm font-semibold text-danger outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Quitar pausa
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => cambiarEditando({ pausa: { ...PAUSA_POR_DEFECTO } })}
+                      className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-secondary text-sm font-semibold text-secondary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Plus className="h-4 w-4" /> Agregar pausa
+                    </button>
+                  )}
+                  {vistaEditando.variasFranjas ? (
+                    <p className="text-[13px] text-warning">Este día tiene más de dos franjas; al editarlo queda con una sola pausa.</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => { copiarATodaLaSemana(claveEditando); setDiaAbierto(null) }}
+                    className="min-h-11 self-start rounded-md text-sm font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Copiar este día a toda la semana
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </HojaInferior>
+      </section>
+    )
+  }
+
   return (
-    <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-5">
+    <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 id="horario-atencion" className="text-lg font-semibold tracking-[-0.02em] text-foreground">Horario de atención</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">La agenda solo ofrece cupos dentro de este horario.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <button
             type="button"
-            onClick={copiarATodaLaSemana}
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-secondary px-3.5 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => copiarATodaLaSemana()}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-secondary px-3.5 text-center text-[13px] leading-tight lg:h-9 font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
           >
             Copiar a toda la semana
           </button>
@@ -1328,7 +1493,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigur
             type="button"
             onClick={onGuardar}
             disabled={guardando}
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-3.5 text-[13px] lg:h-9 font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {guardando ? 'Guardando…' : 'Guardar cambios'}
           </button>
@@ -1349,7 +1514,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigur
           const cambiar = (cambios) => actualizarDia(clave, { ...vista, ...cambios })
 
           return (
-            <li key={clave} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+            <li key={clave} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 lg:gap-y-1 lg:py-2">
               <span className="w-[88px] shrink-0 text-sm font-semibold text-foreground">{label}</span>
               <Interruptor
                 activo={abierto}
@@ -1571,7 +1736,7 @@ function HorariosSection({ horarioAtencion }) {
   const bloqueos = bloqueosQuery.data?.bloqueos || []
 
   return (
-    <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">
+    <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.2fr)_400px] lg:gap-5">
       <HorarioSemanal
         horario={horario}
         setHorario={setHorario}
@@ -1636,8 +1801,8 @@ function HorariosSection({ horarioAtencion }) {
           ) : (
             <div className="divide-y divide-border overflow-hidden rounded-xl bg-muted">
               {bloqueos.map((bloqueo) => (
-                <div key={bloqueo.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                  <div>
+                <div key={bloqueo.id} className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">
                       {formatRangoFechas(bloqueo.fechaInicio, bloqueo.fechaFin)}
                     </p>
@@ -1654,7 +1819,7 @@ function HorariosSection({ horarioAtencion }) {
                     aria-label="Eliminar bloqueo"
                     disabled={eliminarBloqueoMutation.isPending}
                     onClick={() => eliminarBloqueoMutation.mutate(bloqueo.id)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground outline-none transition hover:bg-danger-soft hover:text-danger active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground lg:h-10 lg:w-10 outline-none transition hover:bg-danger-soft hover:text-danger active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1741,7 +1906,7 @@ function HorariosSection({ horarioAtencion }) {
             <button
               type="submit"
               disabled={impactoMutation.isPending || crearBloqueoMutation.isPending}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 lg:h-11 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
             >
               {impactoMutation.isPending
                 ? 'Revisando citas...'
@@ -1832,8 +1997,8 @@ function ConsultoriosSection() {
         ) : (
           <div className="divide-y divide-border overflow-hidden rounded-xl bg-muted">
             {consultorios.map((consultorio) => (
-              <div key={consultorio.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                <div>
+              <div key={consultorio.id} className="flex items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-4">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">{consultorio.nombre}</p>
                   {consultorio.descripcion ? (
                     <p className="mt-0.5 text-sm text-muted-foreground">{consultorio.descripcion}</p>
@@ -1848,7 +2013,7 @@ function ConsultoriosSection() {
                       payload: { activo: !consultorio.activo },
                     })
                   }
-                  className={`inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-[13px] font-semibold outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+                  className={`inline-flex h-11 shrink-0 items-center rounded-lg px-3 text-[13px] lg:h-9 font-semibold outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
                     consultorio.activo
                       ? 'bg-danger-soft text-danger'
                       : 'bg-success-soft text-success'
@@ -1872,18 +2037,18 @@ function ConsultoriosSection() {
             value={nombre}
             onChange={(event) => setNombre(event.target.value)}
             placeholder="Nombre, ej. Consultorio 1"
-            className="h-11 rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-12 rounded-lg border border-input bg-card px-3 text-base text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:text-sm"
           />
           <textarea
             value={descripcion}
             onChange={(event) => setDescripcion(event.target.value)}
             placeholder="Descripción (opcional)"
-            className="min-h-[90px] rounded-lg border border-input bg-card px-3 py-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-[90px] rounded-lg border border-input bg-card px-3 py-3 text-base text-foreground lg:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           />
           <button
             type="submit"
             disabled={crearMutation.isPending}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-4 lg:h-11 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {crearMutation.isPending ? 'Guardando...' : 'Crear consultorio'}
           </button>
