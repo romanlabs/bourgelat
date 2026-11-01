@@ -123,6 +123,12 @@ export default function AgendaPage() {
   const [veterinarioId, setVeterinarioId] = useState('todos')
   const [pagina, setPagina] = useState(1)
   const [selectedAppointment, setSelectedAppointment] = useState(null)
+  // Atajos del celular: abrir el detalle ya en «Reprogramar» o con «Cancelada» elegida.
+  const [modoDetalle, setModoDetalle] = useState({})
+  const abrirDetalle = useCallback((cita, modo = {}) => {
+    setModoDetalle(modo)
+    setSelectedAppointment(cita)
+  }, [])
   // «Nueva cita» desde otras pantallas llega con ?nueva=1 y abre el formulario.
   const [recepcionPrefill, setRecepcionPrefill] = useState(() =>
     new URLSearchParams(window.location.search).get('nueva') ? { fecha: hoyLocal() } : null
@@ -289,6 +295,8 @@ export default function AgendaPage() {
     <AdminShell
       currentKey="agenda"
       compactHeader
+      // En el celular el encabezado es solo la fila de pestañas (más abajo): gana alto.
+      hidePageHeader={!esEscritorio}
       titleAside={activeTab === 'agenda' && vistaAgenda === 'calendario' && !agendaMovil ? calendarToolbar : null}
       title={tituloAgenda}
       description={descripcionAgenda}
@@ -318,6 +326,12 @@ export default function AgendaPage() {
         />
       ) : (
         <div className="space-y-0">
+          {!esEscritorio ? (
+            <div className="mb-3">
+              <h1 className="sr-only">{tituloAgenda}</h1>
+              <AgendaTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            </div>
+          ) : null}
           {/* ── Banners de error — siempre visibles ── */}
           {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
@@ -350,7 +364,13 @@ export default function AgendaPage() {
               estado={estado}
               enabled={rolPermitido && puedeVerAgenda}
               puedeProgramar={puedeProgramar}
-              onCitaClick={setSelectedAppointment}
+              puedeGestionarEstado={puedeGestionarEstado}
+              puedeReprogramar={puedeReprogramar}
+              onCitaClick={abrirDetalle}
+              onAbrirDetalle={abrirDetalle}
+              onAccionEstado={(cita, nuevoEstado) =>
+                actualizarEstadoMutation.mutate({ citaId: cita.id, payload: { estado: nuevoEstado }, cita })
+              }
               onNuevaCita={(fechaCita) => setRecepcionPrefill({ fecha: fechaCita })}
               onResumenChange={setResumenCalendario}
             />
@@ -544,7 +564,7 @@ export default function AgendaPage() {
                           render: (row) => (
                             <button
                               type="button"
-                              onClick={() => setSelectedAppointment(row.raw)}
+                              onClick={() => abrirDetalle(row.raw)}
                               className="inline-flex h-9 items-center rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                               Gestionar
@@ -627,7 +647,7 @@ export default function AgendaPage() {
             (incluyeAnalitica ? (
               <AgendaAnaliticaPanel puedeVerAnalitica={puedeVerAnalitica} />
             ) : (
-              <div className="pt-5">
+              <div className="lg:pt-5">
                 <FuncionNoIncluida
                   titulo="La analítica de agenda es del plan Clínica"
                   descripcion="Tu plan Esencial incluye la agenda completa. La analítica con tendencias, franjas horarias y carga del equipo está en el plan Clínica."
@@ -639,6 +659,8 @@ export default function AgendaPage() {
 
       <CitaDetailDialog
         cita={selectedAppointment}
+        seccionInicial={modoDetalle.seccion}
+        estadoInicial={modoDetalle.estado}
         open={Boolean(selectedAppointment)}
         onClose={() => setSelectedAppointment(null)}
         puedeGestionarEstado={puedeGestionarEstado}
