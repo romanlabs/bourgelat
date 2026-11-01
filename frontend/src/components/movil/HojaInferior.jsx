@@ -57,7 +57,7 @@ export default function HojaInferior({ abierta, onCambiar, titulo, descripcion, 
                 </Dialog.Close>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-4">{children}</div>
             {pie ? (
               <div className="shrink-0 border-t border-border px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{pie}</div>
             ) : (
