@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { MessageCircle, Phone, Search, Wallet } from 'lucide-react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber, formatShortDate } from '@/features/dashboard/dashboardUtils'
 import { useCuentasPorCobrar } from '@/features/finanzas/useAdministracion'
@@ -79,6 +80,28 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
       data-resaltar-id={claveCliente(cliente)}
       className={cn('border-t border-border first:border-t-0', TRANSICION_RESALTADO, resaltado && CLASE_RESALTADO)}
     >
+      {/* Atajos con el dedo; Llamar, WhatsApp y Registrar abono están también al abrir el cliente. */}
+      <FilaDeslizable
+        redondeo="rounded-none"
+        acciones={[
+          ...(cliente.telefono
+            ? [{ key: 'llamar', label: 'Llamar', icon: Phone, tono: 'info', onClick: () => { window.location.href = `tel:${cliente.telefono}` } }]
+            : []),
+          ...(whatsapp
+            ? [{ key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, tono: 'primary', onClick: () => window.open(whatsapp, '_blank', 'noopener,noreferrer') }]
+            : []),
+          {
+            key: 'abonar',
+            label: 'Abonar',
+            icon: Wallet,
+            tono: 'neutro',
+            onClick: () => {
+              setAbierto(true)
+              if (cliente.facturas.length === 1) setAbonando(cliente.facturas[0].id)
+            },
+          },
+        ]}
+      >
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
@@ -104,6 +127,7 @@ function Cliente({ cliente, hoy, nombreClinica, orden, abiertoAlInicio = false, 
           <span aria-hidden className={`text-muted-foreground transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
         </span>
       </button>
+      </FilaDeslizable>
 
       {abierto ? (
         <div className="flex flex-col gap-3 bg-muted/50 px-5 pb-5 pt-1 sm:px-6">

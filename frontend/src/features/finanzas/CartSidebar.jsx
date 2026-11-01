@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import { Minus, Plus, ShoppingCart, StickyNote, Trash2, UserRound, X } from 'lucide-react'
 import { PAYMENT_METHOD_OPTIONS, faltaParaCobrar } from './useFinanzasFacturacion'
 import { PAYMENT_METHOD_ICONS } from './finanzasConstants'
@@ -36,6 +37,9 @@ export default function CartSidebar({
   removeInvoiceItem,
   onOpenPaymentModal,
   onRevisarVencimiento,
+  // Celular: la cuenta vive dentro de una hoja inferior (el cobro queda pegado
+  // abajo de la hoja y cada ítem se quita deslizándolo).
+  enHoja = false,
 }) {
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
   const [obsOpen, setObsOpen] = useState(false)
@@ -70,11 +74,16 @@ export default function CartSidebar({
     updateInvoiceItem(id, 'cantidad', String(next))
   }
 
+  // En la hoja el cobro queda pegado abajo: el pie deja de ser un bloque propio
+  // para que su contenedor sea toda la cuenta (si no, el «sticky» no se ancla).
+  const Cuerpo = enHoja ? 'div' : Fragment
+  const propsCuerpo = enHoja ? { className: 'space-y-4 border-t border-border px-5 pb-2 pt-4' } : {}
+
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-2xl bg-card lg:rounded-none">
+    <div className={enHoja ? '-mx-5 flex flex-col' : 'flex h-full min-h-0 flex-col rounded-2xl bg-card lg:rounded-none'}>
       {/* ── Encabezado y cliente ── */}
-      <div className="relative shrink-0 space-y-3 px-4 pt-4 lg:px-5 lg:pt-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className={`relative shrink-0 space-y-3 ${enHoja ? 'px-5 pt-1' : 'px-4 pt-4 lg:px-5 lg:pt-5'}`}>
+        <div className={`items-center justify-between gap-3 ${enHoja ? 'hidden' : 'flex'}`}>
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cuenta</h2>
           {hasItems ? (
             <span className="rounded-md bg-secondary px-2.5 py-1 text-[13px] font-semibold tabular-nums text-secondary-foreground">
@@ -130,7 +139,7 @@ export default function CartSidebar({
       </div>
 
       {/* ── Items: única zona con scroll ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2 lg:px-5">
+      <div className={enHoja ? 'pt-2' : 'min-h-0 flex-1 overflow-y-auto px-4 pt-2 lg:px-5'}>
         {!hasItems ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
             <ShoppingCart className="h-7 w-7 text-muted-foreground/40" />
@@ -157,8 +166,13 @@ export default function CartSidebar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 16 }}
                   transition={{ duration: 0.12 }}
-                  className="border-b border-border/60 py-3 last:border-b-0"
+                  className="border-b border-border/60 last:border-b-0"
                 >
+                  <FilaDeslizable
+                    redondeo="rounded-none"
+                    acciones={[{ key: 'quitar', label: 'Quitar', icon: Trash2, tono: 'danger', onClick: () => removeInvoiceItem(item.id) }]}
+                  >
+                  <div className={`py-3 ${enHoja ? 'px-5' : ''}`}>
                   {/* Fila 1: nombre + subtotal */}
                   <div className="flex items-baseline justify-between gap-3">
                     {item.tipo === 'servicio' && !item.descripcion ? (
@@ -254,6 +268,8 @@ export default function CartSidebar({
                       {textoVencimiento(item.fechaVencimiento)}
                     </p>
                   )}
+                  </div>
+                  </FilaDeslizable>
                 </MotionDiv>
               )
             })}
@@ -262,7 +278,8 @@ export default function CartSidebar({
       </div>
 
       {/* ── Pie fijo: método, total y cobro ── */}
-      <div className="shrink-0 space-y-4 border-t border-border px-4 pb-5 pt-4 lg:px-5">
+      <div className={enHoja ? 'contents' : 'shrink-0 space-y-4 border-t border-border px-4 pb-5 pt-4 lg:px-5'}>
+        <Cuerpo {...propsCuerpo}>
         {/* Método de pago en una lista: siete opciones no merecen siete botones
             en el pie. Cuando entre una pasarela (Wompi) será una opción más.
             En celular sí van como botones grandes: se eligen con el pulgar. */}
@@ -362,9 +379,11 @@ export default function CartSidebar({
           </div>
         )}
 
+        </Cuerpo>
+
         {/* Total + cobrar: la única acción primaria del carrito. En celular
             queda fija encima de la barra inferior para no perderla al bajar. */}
-        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 space-y-2 border-t border-border bg-card px-4 py-3 lg:static lg:z-auto lg:space-y-4 lg:border-0 lg:bg-transparent lg:p-0">
+        <div className={`space-y-2 border-t border-border bg-card py-3 ${enHoja ? 'sticky bottom-0 z-10 -mx-5 px-5' : 'fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 px-4'} lg:static lg:z-auto lg:space-y-4 lg:border-0 lg:bg-transparent lg:p-0`}>
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[17px] font-semibold text-foreground">
             Total
@@ -386,7 +405,7 @@ export default function CartSidebar({
         </button>
         </div>
         {/* Lo que ocupa el cobro fijo, para que no tape los campos de arriba. */}
-        <div aria-hidden className="!mt-0 h-24 lg:hidden" />
+        {enHoja ? null : <div aria-hidden className="!mt-0 h-24 lg:hidden" />}
       </div>
     </div>
   )

@@ -4,7 +4,9 @@ import { Barcode, Check, ClipboardList, Filter, ImageOff, Minus, Package, Plus, 
 import { cn } from '@/lib/utils'
 import { estadoVencimiento, textoVencimiento } from '@/features/inventario/inventarioUtils'
 import { PRODUCT_CATEGORIES } from './finanzasConstants'
-import { useEsCelular } from './finanzasUi'
+import { useEsCelular } from '@/lib/useEsCelular'
+import { useMantenerPresionado, vibrar } from '@/lib/gestos'
+import HojaInferior from '@/components/movil/HojaInferior'
 
 const formatCOP = (value) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
@@ -20,13 +22,19 @@ function FiltroCategoriaMenu({ categoriaFiltro, setCategoriaFiltro }) {
           type="button"
           aria-label="Filtrar por categoría"
           className={cn(
-            'relative flex h-12 w-12 shrink-0 lg:h-14 lg:w-14 items-center justify-center rounded-xl bg-card text-muted-foreground transition hover:text-foreground active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent',
-            categoriaFiltro && 'bg-accent text-accent-foreground'
+            'relative flex h-11 min-w-[2.75rem] shrink-0 gap-1.5 lg:h-14 lg:w-14 lg:min-w-0 items-center justify-center rounded-xl bg-card text-muted-foreground transition hover:text-foreground active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent',
+            categoriaFiltro && 'bg-accent px-3 text-accent-foreground lg:px-0'
           )}
         >
           <Filter className="h-4 w-4" />
+          {/* En celular el filtro activo se lee en el mismo botón (sin chip aparte). */}
           {categoriaFiltro && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand" />
+            <span className="max-w-[7rem] truncate px-1 text-[13px] font-semibold lg:hidden">
+              {PRODUCT_CATEGORIES.find((c) => c.value === categoriaFiltro)?.label}
+            </span>
+          )}
+          {categoriaFiltro && (
+            <span className="absolute right-2 top-2 hidden h-2 w-2 rounded-full bg-brand lg:block" />
           )}
         </button>
       </DropdownMenu.Trigger>
@@ -80,11 +88,17 @@ function FilaCatalogoMovil({
   onResaltar,
 }) {
   const conStepper = Boolean(enCuenta && updateInvoiceItem && removeInvoiceItem)
+  const [editando, setEditando] = useState(false)
+  // Mantener presionada una fila que ya está en la cuenta abre la edición rápida.
+  const presion = useMantenerPresionado(() => {
+    if (conStepper && !deshabilitado) setEditando(true)
+  })
   const cantidad = enCuenta ? Math.max(Number(enCuenta.cantidad) || 0, 0) : 0
   const sumar = () => {
     // No más unidades de las que hay en inventario (los servicios no tienen stock).
     if (enCuenta.stock != null && cantidad >= Number(enCuenta.stock)) return
     updateInvoiceItem(enCuenta.id, 'cantidad', String(cantidad + 1))
+    vibrar()
     onResaltar?.(clave)
   }
   const restar = () => {
@@ -92,12 +106,13 @@ function FilaCatalogoMovil({
     else updateInvoiceItem(enCuenta.id, 'cantidad', String(cantidad - 1))
   }
   const agregar = () => {
-    if (deshabilitado) return
+    if (deshabilitado || presion.consumido()) return
     if (conStepper) {
       sumar()
       return
     }
     onAgregar()
+    vibrar()
     onResaltar?.(clave)
   }
   const botonRedondo =
@@ -115,7 +130,8 @@ function FilaCatalogoMovil({
         type="button"
         onClick={agregar}
         disabled={deshabilitado}
-        className="flex min-w-0 flex-1 items-center gap-3 self-stretch rounded-lg py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
+        {...presion.props}
+        className="flex min-w-0 flex-1 select-none items-center gap-3 self-stretch rounded-lg py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed"
       >
         {conImagen ? (
           <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
@@ -158,6 +174,58 @@ function FilaCatalogoMovil({
           <Plus aria-hidden className="h-5 w-5" />
         </button>
       )}
+      {conStepper ? (
+        <HojaInferior
+          abierta={editando}
+          onCambiar={setEditando}
+          titulo={nombre}
+          descripcion="Ajusta la cantidad y el precio de esta línea."
+          pie={
+            <button
+              type="button"
+              onClick={() => setEditando(false)}
+              className="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Listo
+            </button>
+          }
+        >
+          <div className="flex flex-col gap-4 py-1">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-foreground">Cantidad</span>
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={restar} aria-label={cantidad <= 1 ? 'Quitar de la cuenta' : 'Restar una unidad'} className={`${botonRedondo} bg-secondary text-secondary-foreground`}>
+                  <Minus aria-hidden className="h-4 w-4" />
+                </button>
+                <span className="min-w-[2.5rem] text-center text-lg font-semibold tabular-nums text-foreground">{cantidad}</span>
+                <button type="button" onClick={sumar} aria-label="Sumar una unidad" className={`${botonRedondo} bg-primary text-primary-foreground`}>
+                  <Plus aria-hidden className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <label className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-foreground">Precio unitario</span>
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <span aria-hidden>$</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={enCuenta.precioUnitario}
+                  min={Number(enCuenta.precioMinimo) || undefined}
+                  onChange={(e) => updateInvoiceItem(enCuenta.id, 'precioUnitario', e.target.value)}
+                  className={cn(
+                    'h-11 w-32 rounded-lg border bg-card px-3 text-right text-base font-semibold tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    Number(enCuenta.precioMinimo) > 0 && Number(enCuenta.precioUnitario) < Number(enCuenta.precioMinimo) ? 'border-danger text-danger' : 'border-input text-foreground'
+                  )}
+                />
+              </span>
+            </label>
+            {Number(enCuenta.precioMinimo) > 0 && Number(enCuenta.precioUnitario) < Number(enCuenta.precioMinimo) ? (
+              <p className="text-[13px] font-semibold text-danger">Mínimo {formatCOP(Number(enCuenta.precioMinimo))} (costo)</p>
+            ) : null}
+          </div>
+        </HojaInferior>
+      ) : null}
     </li>
   )
 }
@@ -260,6 +328,7 @@ export default function ProductCommandSearch({
 
   return (
     <div className="flex h-full flex-col">
+      <div className="sticky top-14 z-30 -mx-4 bg-background px-4 pb-2 sm:-mx-6 sm:px-6 lg:static lg:z-auto lg:mx-0 lg:bg-transparent lg:p-0 lg:contents">
       {/* Header: tabs + escáner */}
       {/* En celular: el catálogo va a ancho completo (sin marco propio), las
           pestañas son chips desplazables y el escáner (lector USB) no aparece. */}
@@ -339,8 +408,8 @@ export default function ProductCommandSearch({
       {activeTab === 'productos' ? (
         <>
           {/* Barra de búsqueda + filtro */}
-          <div className="flex items-center gap-2 pt-3 lg:px-5">
-            <div className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-xl bg-card px-4 lg:h-14 focus-within:ring-2 focus-within:ring-ring">
+          <div className="flex items-center gap-2 pt-2 lg:px-5 lg:pt-3">
+            <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl bg-card px-4 lg:h-14 focus-within:ring-2 focus-within:ring-ring">
               <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
@@ -366,9 +435,40 @@ export default function ProductCommandSearch({
             />
           </div>
 
+        </>
+      ) : activeTab === 'servicios' ? (
+        <>
+          {/* Barra de búsqueda del catalogo de servicios */}
+          <div className="pt-2 lg:px-5 lg:pt-3">
+            <div className="flex h-11 items-center gap-3 rounded-xl bg-card px-4 lg:h-14 focus-within:ring-2 focus-within:ring-ring">
+              <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={servicioSearch}
+                onChange={(e) => setServicioSearch(e.target.value)}
+                placeholder="Buscar servicio del catálogo"
+                aria-label="Buscar servicio"
+                className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              {servicioSearch && (
+                <button type="button" onClick={() => setServicioSearch('')} aria-label="Limpiar búsqueda" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground lg:h-8 lg:w-8">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+        </>
+      ) : null}
+      </div>
+
+      {activeTab === 'productos' ? (
+        <>
           {/* Chip de la categoría activa: sin él, el filtro queda invisible */}
           {categoriaActiva && (
-            <div className="pt-3 lg:px-5">
+            <div className="hidden pt-3 lg:block lg:px-5">
               <button
                 type="button"
                 onClick={() => setCategoriaFiltro('')}
@@ -515,28 +615,6 @@ export default function ProductCommandSearch({
         </>
       ) : activeTab === 'servicios' ? (
         <>
-          {/* Barra de búsqueda del catalogo de servicios */}
-          <div className="pt-3 lg:px-5">
-            <div className="flex h-12 items-center gap-3 rounded-xl bg-card px-4 lg:h-14 focus-within:ring-2 focus-within:ring-ring">
-              <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                value={servicioSearch}
-                onChange={(e) => setServicioSearch(e.target.value)}
-                placeholder="Buscar servicio del catálogo"
-                aria-label="Buscar servicio"
-                className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-              />
-              {servicioSearch && (
-                <button type="button" onClick={() => setServicioSearch('')} aria-label="Limpiar búsqueda" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground lg:h-8 lg:w-8">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
           <div className="flex-1 overflow-y-auto py-3 lg:p-5">
             {serviciosQuery?.isLoading ? (
               <div className="grid grid-cols-1 gap-2 lg:grid-cols-3 lg:gap-3">

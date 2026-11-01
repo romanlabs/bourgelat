@@ -3,13 +3,19 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { estilosApi } from '@/features/estilos/estilosApi'
+import { useQueryClient } from '@tanstack/react-query'
 import {
+  Ban,
+  Eye,
   FileText,
   Plus,
   Search,
   Sparkles,
   Wallet,
 } from 'lucide-react'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useDeslizarHorizontal } from '@/lib/gestos'
 import AdminShell from '@/components/layout/AdminShell'
 import { NavCta } from '@/components/shared/NavCta'
 import {
@@ -111,6 +117,35 @@ export default function FinanzasPage({ modo = 'caja' }) {
   // allá. Sin turno abierto, esa pestaña muestra cómo abrirlo.
   const abrirPos = () => {
     setActiveTab('facturacion')
+  }
+
+  const queryClient = useQueryClient()
+  // Tirar para refrescar (celular): vuelve a pedir lo que la pestaña muestra.
+  const refrescar = () => queryClient.refetchQueries({ type: 'active' })
+
+  // Deslizar el dedo cambia de pestaña, solo donde no choca con otros gestos:
+  // Venta (filas con stepper) e Historial/Por cobrar (filas deslizables) no lo usan.
+  const pestanaDeslizable = !['facturacion', 'historial', 'cobrar'].includes(activeTab)
+  const irAPestana = (paso) => {
+    const indice = TABS.findIndex((tab) => tab.id === activeTab)
+    const destino = TABS[indice + paso]
+    if (destino) setActiveTab(destino.id)
+  }
+  const deslizar = useDeslizarHorizontal({
+    onIzquierda: () => irAPestana(1),
+    onDerecha: () => irAPestana(-1),
+    activo: pestanaDeslizable,
+  })
+  const deslizarProps = {
+    ...deslizar,
+    onTouchStart: (event) => {
+      // No robar el gesto a campos ni a listas que ya se desplazan de lado.
+      if (event.target.closest?.('input, select, textarea, [role="slider"], .overflow-x-auto')) {
+        deslizar.onTouchEnd?.({ changedTouches: [], touches: [] })
+        return
+      }
+      deslizar.onTouchStart?.(event)
+    },
   }
 
   useEffect(() => {
@@ -304,12 +339,21 @@ export default function FinanzasPage({ modo = 'caja' }) {
             }`}
           >
             {tab.label}
+            {/* Celular: el turno abierto se ve como un punto en su pestaña (el
+                chip con montos ocupaba una fila entera). */}
+            {esCaja && tab.id === 'turnos' && cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido ? (
+              <span
+                role="img"
+                aria-label="Turno abierto"
+                className="ml-1.5 h-2 w-2 rounded-full bg-success lg:hidden"
+              />
+            ) : null}
           </button>
         ))}
       </div>
       }
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={`flex-wrap items-center gap-2 ${esCaja && activeTab !== 'facturacion' ? 'flex' : 'hidden lg:flex'}`}>
         {/* En Venta el turno se ve como etiqueta en el encabezado: el punto de
             venta gana el alto y la pestaña Turno de caja ya lleva al detalle. */}
         {esCaja && activeTab === 'facturacion' && cajaHook.turnoActivo && !cajaHook.turnoActivo.vencido ? (
@@ -317,7 +361,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
             type="button"
             onClick={() => setActiveTab('turnos')}
             title="Ver el turno de caja"
-            className="inline-flex h-11 max-w-full items-center gap-x-3 whitespace-nowrap rounded-lg bg-card px-3.5 text-[13px] text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10"
+            className="hidden h-11 max-w-full items-center gap-x-3 whitespace-nowrap rounded-lg bg-card px-3.5 text-[13px] text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:inline-flex lg:h-10"
           >
             <span className="flex items-center gap-1.5 font-semibold text-success">
               <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
@@ -354,7 +398,11 @@ export default function FinanzasPage({ modo = 'caja' }) {
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
-        <div className="space-y-5">
+        <TirarParaRefrescar
+          onRefrescar={activeTab === 'facturacion' ? undefined : refrescar}
+          className="space-y-5"
+        >
+        <div className="space-y-5" {...deslizarProps}>
           {/* ── Tab: Resumen ── */}
           {activeTab === 'resumen' && (
             <ResumenFinanzasPanel onVerCuentas={() => setActiveTab('cobrar')} onVerMedios={() => setActiveTab('medios')} />
@@ -503,6 +551,16 @@ export default function FinanzasPage({ modo = 'caja' }) {
                   <ul className="divide-y divide-border">
                     {historialHook.facturasRows.map((row) => (
                       <li key={row.id}>
+                        {/* Atajo con el dedo; el detalle (y la anulación con motivo) se abre también tocando la fila. */}
+                        <FilaDeslizable
+                          redondeo="rounded-none"
+                          acciones={[
+                            { key: 'ver', label: 'Ver', icon: Eye, tono: 'neutro', onClick: () => historialHook.seleccionarFactura(row.id) },
+                            ...(puedeAnular && row.estado !== 'anulada'
+                              ? [{ key: 'anular', label: 'Anular', icon: Ban, tono: 'danger', onClick: () => historialHook.seleccionarFactura(row.id) }]
+                              : []),
+                          ]}
+                        >
                         <button
                           type="button"
                           onClick={() => historialHook.seleccionarFactura(row.id)}
@@ -522,6 +580,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
                           </span>
                           <span className="shrink-0 text-[15px] font-semibold tabular-nums text-foreground">{row.total}</span>
                         </button>
+                        </FilaDeslizable>
                       </li>
                     ))}
                   </ul>
@@ -593,6 +652,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           )}
 
         </div>
+        </TirarParaRefrescar>
       )}
 
     </AdminShell>

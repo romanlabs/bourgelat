@@ -13,6 +13,7 @@ import { finanzasApi } from './finanzasApi'
 import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import { descargarFacturaPdf } from './facturaPdf'
 import MoneyInput from '@/components/shared/MoneyInput'
+import HojaInferior from '@/components/movil/HojaInferior'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { formatShortDate } from '@/features/dashboard/dashboardUtils'
@@ -103,7 +104,8 @@ export default function PosModal({
   embedded = false,
 }) {
   const [view, setView] = useState('cart')          // cart | pago | exito | factura
-  const [mobilePane, setMobilePane] = useState('productos')
+  // Celular: la cuenta sube como hoja inferior sobre el catálogo.
+  const [cuentaAbierta, setCuentaAbierta] = useState(false)
   const [montoRecibido, setMontoRecibido] = useState('')
   const [snapshot, setSnapshot] = useState(null)     // { total, recibido, vuelto, metodo }
   const [generandoPdf, setGenerandoPdf] = useState(false)
@@ -171,7 +173,7 @@ export default function PosModal({
   useEffect(() => {
     if (open) {
       setView('cart')
-      setMobilePane('productos')
+      setCuentaAbierta(false)
       setMontoRecibido('')
     }
   }, [open])
@@ -181,7 +183,7 @@ export default function PosModal({
   useEffect(() => {
     if (!embedded || typeof window === 'undefined') return
     if (window.matchMedia?.('(max-width: 1023px)').matches) window.scrollTo?.({ top: 0 })
-  }, [embedded, view, mobilePane])
+  }, [embedded, view])
 
   // La página avisa el éxito de la venta (onFacturaCreada) → paso de vuelto.
   useEffect(() => {
@@ -193,6 +195,7 @@ export default function PosModal({
   }
 
   const irACobrar = () => {
+    setCuentaAbierta(false)
     setMontoRecibido('')
     setView('pago')
   }
@@ -207,7 +210,7 @@ export default function PosModal({
     setSnapshot(null)
     setMontoRecibido('')
     setView('cart')
-    setMobilePane('productos')
+    setCuentaAbierta(false)
     onNuevaVenta?.()
     crearFacturaMutation?.reset?.()
   }
@@ -235,7 +238,7 @@ export default function PosModal({
   const puedeConfirmar = itemCount > 0 && (!esEfectivo || (montoRecibido !== '' && vueltoOk))
 
   const contenido = (
-        <div className={embedded ? 'flex h-full flex-col overflow-hidden rounded-2xl bg-background' : 'flex h-[min(92dvh,780px)] flex-col bg-background'}>
+        <div className={embedded ? 'flex h-full flex-col overflow-visible rounded-2xl bg-background lg:overflow-hidden' : 'flex h-[min(92dvh,780px)] flex-col bg-background'}>
           {/* ── Cabecera (solo en la ventana: en la página ya hay título) ── */}
           {embedded ? null : (
           <header className="flex shrink-0 items-center gap-3 bg-card px-6 py-4 pr-14">
@@ -264,7 +267,7 @@ export default function PosModal({
           )}
 
           {/* ── Cuerpo ── */}
-          <div className="min-h-0 flex-1 overflow-hidden">
+          <div className={embedded ? 'min-h-0 flex-1 lg:overflow-hidden' : 'min-h-0 flex-1 overflow-hidden'}>
             {/* Paso 1: carrito */}
             {view === 'cart' && (
               <>
@@ -315,7 +318,7 @@ export default function PosModal({
                     medio de pago) y de ahí sigue el paso de cobro. */}
                 <div className="flex flex-col lg:hidden">
                   <div className="min-w-0">
-                    {mobilePane === 'productos' ? (
+                    {(
                       <>
                       <ProductCommandSearch
                         productSearch={productSearch}
@@ -349,7 +352,7 @@ export default function PosModal({
                           // Todo el resumen abre la cuenta: cliente, cantidades y medio de pago.
                           <button
                             type="button"
-                            onClick={() => setMobilePane('carrito')}
+                            onClick={() => setCuentaAbierta(true)}
                             aria-label={`Cobrar ${unidades} ${unidades === 1 ? 'ítem' : 'ítems'} por ${formatCOP(total)}`}
                             className="flex h-[52px] w-full items-center gap-3 rounded-xl bg-primary pl-4 pr-1.5 text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
@@ -369,18 +372,13 @@ export default function PosModal({
                           </div>
                         )}
                       </div>
-                      </>
-                    ) : (
-                      <>
-                      <button
-                        type="button"
-                        onClick={() => setMobilePane('productos')}
-                        className="mb-3 inline-flex h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      <HojaInferior
+                        abierta={cuentaAbierta}
+                        onCambiar={setCuentaAbierta}
+                        titulo={`Cuenta · ${unidades} ${unidades === 1 ? 'ítem' : 'ítems'}`}
                       >
-                        <ArrowLeft aria-hidden className="h-4 w-4" />
-                        Agregar más productos
-                      </button>
                       <CartSidebar
+                        enHoja
                         invoiceForm={invoiceForm}
                         setInvoiceForm={setInvoiceForm}
                         invoiceTotals={invoiceTotals}
@@ -390,10 +388,15 @@ export default function PosModal({
                         ownerSearch={ownerSearch}
                         setOwnerSearch={setOwnerSearch}
                         updateInvoiceItem={updateInvoiceItem}
-                        removeInvoiceItem={removeInvoiceItem}
+                        removeInvoiceItem={(id) => {
+                          // Al quitar el último ítem la hoja no tiene qué mostrar.
+                          if (itemCount <= 1) setCuentaAbierta(false)
+                          removeInvoiceItem(id)
+                        }}
                         onOpenPaymentModal={irACobrar}
                         onRevisarVencimiento={abrirVencimientoItem}
                       />
+                      </HojaInferior>
                       </>
                     )}
                   </div>

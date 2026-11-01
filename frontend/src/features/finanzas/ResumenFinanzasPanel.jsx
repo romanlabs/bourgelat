@@ -210,15 +210,15 @@ function CobradoAcumulado({ serie, serieAnterior, nombreAnterior, ticketPromedio
         </ChartContainer>
       )}
 
-      <dl className="grid grid-cols-1 gap-3 border-t border-border pt-4 sm:grid-cols-3">
+      <dl className="grid grid-cols-3 gap-2 border-t border-border pt-4 sm:gap-3">
         {[
           ['Promedio por día con ventas', formatCurrency(lectura.promedioDiaConVentas)],
           ['Venta promedio', formatCurrency(ticketPromedio)],
           ['Días con ventas', formatNumber(lectura.diasConVentas)],
         ].map(([dt, dd]) => (
           <div key={dt} className="flex flex-col gap-0.5">
-            <dt className="text-[13px] text-muted-foreground">{dt}</dt>
-            <dd className="text-lg font-semibold text-card-foreground">{dd}</dd>
+            <dt className="text-[12px] leading-tight text-muted-foreground sm:text-[13px]">{dt}</dt>
+            <dd className="text-base font-semibold tabular-nums text-card-foreground sm:text-lg">{dd}</dd>
           </div>
         ))}
       </dl>

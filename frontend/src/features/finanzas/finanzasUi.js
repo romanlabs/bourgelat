@@ -1,7 +1,7 @@
 // Piezas compartidas por los paneles de lectura de Finanzas (Resumen, Medios de
 // pago): el estado del periodo y las clases de tarjeta y segmentado. El selector
 // del periodo está en SelectorPeriodo.jsx.
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState } from 'react'
 import { mesLocal } from '@/lib/fecha'
 import {
   rangoDelAnio,
@@ -21,17 +21,9 @@ export const botonSegmento = (activo) =>
     activo ? 'bg-card font-semibold text-foreground' : 'font-medium text-muted-foreground hover:text-foreground'
   }`
 
-// ¿Pantalla de celular (por debajo de lg)? Para lo que no se resuelve con clases:
-// el placeholder corto del buscador del punto de venta o las cifras sobre las
-// barras de las gráficas, que a 360px se pisan.
-const MEDIA_CELULAR = '(max-width: 1023px)'
-const suscribirCelular = (avisar) => {
-  const consulta = typeof window !== 'undefined' ? window.matchMedia?.(MEDIA_CELULAR) : null
-  consulta?.addEventListener?.('change', avisar)
-  return () => consulta?.removeEventListener?.('change', avisar)
-}
-const leerCelular = () => typeof window !== 'undefined' && Boolean(window.matchMedia?.(MEDIA_CELULAR)?.matches)
-export const useEsCelular = () => useSyncExternalStore(suscribirCelular, leerCelular, () => false)
+// ¿Pantalla de celular (por debajo de lg)? Hook compartido; se reexporta aquí para
+// los paneles que ya lo importan de este archivo.
+export { useEsCelular } from '@/lib/useEsCelular'
 
 // Estado del periodo elegido: el atajo y sus valores, el rango que piden los
 // reportes y cómo se nombra en el titular.
