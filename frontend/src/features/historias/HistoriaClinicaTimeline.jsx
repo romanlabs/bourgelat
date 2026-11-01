@@ -67,7 +67,7 @@ function TimelineCard({
         />
       </div>
 
-      <div className="rounded-2xl bg-card px-5 py-4">
+      <div className="rounded-2xl bg-card px-3.5 py-3 sm:px-5 sm:py-4">
         {/* Header row */}
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -115,13 +115,13 @@ function TimelineCard({
         </div>
 
         {/* Action */}
-        <div className="mt-3 flex flex-wrap items-center justify-end gap-4">
+        <div className="mt-2.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:mt-3 sm:gap-4">
           {onImprimirFormula && tienePlanFarmacologico(historia) && (
             <button
               type="button"
               onClick={() => onImprimirFormula(historia.id)}
               disabled={imprimiendo}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-11 sm:h-9items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               <Printer className="h-3.5 w-3.5" />
               {imprimiendo ? 'Generando...' : 'Imprimir fórmula'}
@@ -132,7 +132,7 @@ function TimelineCard({
               type="button"
               onClick={() => onImprimirHistoria(historia.id)}
               disabled={imprimiendoHistoria}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-11 sm:h-9items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-muted-foreground outline-none transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               <FileText className="h-3.5 w-3.5" />
               {imprimiendoHistoria ? 'Generando...' : 'Imprimir historia'}
@@ -141,7 +141,7 @@ function TimelineCard({
           <button
             type="button"
             onClick={() => onEdit(historia)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-11 sm:h-9items-center gap-1.5 rounded-lg bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
           >
             {bloqueada ? 'Ver detalle' : 'Ver / Editar'}
             <span aria-hidden>→</span>

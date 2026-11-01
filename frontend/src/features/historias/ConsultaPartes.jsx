@@ -5,7 +5,7 @@ import { nombreAutor } from '@/lib/equipo'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const CAMPO =
-  'h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
+  'h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground sm:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
 
 // La escala que guarda el backend es de 1 a 5.
 const CONDICION_CORPORAL = [
@@ -60,7 +60,7 @@ function Opciones({ label, opciones, value, onChange }) {
             aria-checked={activa}
             onClick={() => onChange(activa ? '' : opcion.value)}
             className={cn(
-              'h-9 rounded-lg px-3 text-[13px] transition active:translate-y-px',
+              'h-11 rounded-lg px-3.5 text-sm transition active:translate-y-px sm:h-9 sm:px-3 sm:text-[13px]',
               FOCO,
               activa ? 'bg-primary font-semibold text-primary-foreground' : 'bg-muted font-medium text-foreground hover:brightness-95'
             )}
@@ -81,8 +81,8 @@ export function SignosVitales({ form, setForm, pesoAnterior }) {
   const mucosaRapida = MUCOSAS.find((m) => m.toLowerCase() === String(form.mucosas).trim().toLowerCase())
 
   return (
-    <div className="grid gap-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
         <CampoUnidad id="hc-peso" label="Peso" unidad="kg" min="0" step="0.1" value={form.peso} onChange={set('peso')} />
         <CampoUnidad id="hc-temp" label="Temperatura" unidad="°C" min="30" max="45" step="0.1" value={form.temperatura} onChange={set('temperatura')} />
         <CampoUnidad id="hc-fc" label="Frec. cardiaca" unidad="lpm" min="0" value={form.frecuenciaCardiaca} onChange={set('frecuenciaCardiaca')} />
@@ -209,7 +209,7 @@ export function AntecedentesConsulta({ antecedentes }) {
 
 export function ConsultaAnterior({ historia }) {
   return (
-    <section aria-labelledby="hc-anterior" className="flex flex-col gap-2 rounded-2xl bg-card p-5">
+    <section aria-labelledby="hc-anterior" className="flex flex-col gap-2 rounded-2xl bg-card p-4 sm:p-5">
       <h3 id="hc-anterior" className="text-[15px] font-semibold text-foreground">
         {historia ? `Consulta anterior · ${fechaCorta(soloDia(historia.fechaConsulta || historia.createdAt))}` : 'Consulta anterior'}
       </h3>

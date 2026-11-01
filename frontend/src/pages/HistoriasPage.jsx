@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { ExternalLink, FolderOpen, Search } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, formatShortDate, toLocalDate } from '@/features/dashboard/dashboardUtils'
@@ -13,6 +13,9 @@ import { useHistoriasResumen } from '@/features/historias/useHistoriasResumen'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useDeslizarHorizontal } from '@/lib/gestos'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 
 // Cada chip es una pregunta operativa, no una metrica: al tocarlo filtra la
 // tabla de abajo. 'pendientes' es el default porque una historia sin cerrar es
@@ -83,6 +86,7 @@ const fechaCorta = (value) => {
 export default function HistoriasPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   // El Dashboard entra aqui con ?estado=pendientes desde sus alertas.
   const estadoInicial = FILTROS[searchParams.get('estado')] ? searchParams.get('estado') : 'pendientes'
@@ -180,6 +184,19 @@ export default function HistoriasPage() {
     [historiasQuery.data]
   )
 
+  const moverFiltro = (paso) => {
+    const orden = ['pendientes', 'controles', 'mes', 'todas']
+    const i = orden.indexOf(filtro) + paso
+    if (i >= 0 && i < orden.length) aplicarFiltro(orden[i])
+  }
+  // Deslizar la lista cambia de pestaña (Sin cerrar, Controles, Este mes, Todas).
+  const gestoFiltros = useDeslizarHorizontal({
+    onIzquierda: () => moverFiltro(1),
+    onDerecha: () => moverFiltro(-1),
+  })
+
+  const refrescar = () => Promise.all([historiasQuery.refetch(), resumen.resumenQuery.refetch()])
+
   if (!rolPermitido) {
     return <RestrictedHistoriasPage />
   }
@@ -204,7 +221,8 @@ export default function HistoriasPage() {
       title="Historias clínicas"
       description={descripcion}
     >
-      <div className="flex flex-col gap-4">
+      <TirarParaRefrescar onRefrescar={refrescar}>
+      <div className="flex flex-col gap-3 lg:gap-4">
         <div role="tablist" aria-label="Qué historias ver" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:w-fit lg:max-w-full lg:flex-wrap lg:gap-1 lg:overflow-visible lg:rounded-[10px] lg:bg-secondary lg:p-1 lg:pb-1">
           {pestanas.map((pestana) => {
             const activa = filtro === pestana.id
@@ -288,7 +306,7 @@ export default function HistoriasPage() {
           </div>
         ) : null}
 
-        <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card">
+        <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card" {...gestoFiltros}>
           {historiasQuery.isLoading ? (
             <div className="flex flex-col gap-1 p-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -314,7 +332,7 @@ export default function HistoriasPage() {
             </div>
           ) : (
             <>
-            <ul className="flex flex-col gap-2.5 p-3 lg:hidden">
+            <ul className="flex flex-col gap-2 p-2.5 lg:hidden">
               {historiasRows.map((row) => {
                 const destino = row.mascotaId ? `/pacientes/${row.mascotaId}/historial?historiaId=${row.id}` : null
                 const contenido = (
@@ -350,15 +368,23 @@ export default function HistoriasPage() {
                     ) : null}
                   </>
                 )
+                const acciones = destino
+                  ? [
+                      { key: 'abrir', label: row.bloqueada ? 'Ver' : 'Continuar', icon: ExternalLink, tono: 'primary', onClick: () => navigate(destino) },
+                      { key: 'ficha', label: 'Ficha', icon: FolderOpen, tono: 'neutro', onClick: () => navigate(`/pacientes/${row.mascotaId}/historial`) },
+                    ]
+                  : []
                 return (
                   <li key={row.id}>
-                    {destino ? (
-                      <Link to={destino} className={cn('block rounded-xl border border-border bg-background p-3.5 active:translate-y-px', FOCO)}>
-                        {contenido}
-                      </Link>
-                    ) : (
-                      <div className="rounded-xl border border-border bg-background p-3.5">{contenido}</div>
-                    )}
+                    <FilaDeslizable acciones={acciones} className="rounded-xl border border-border bg-background">
+                      {destino ? (
+                        <Link to={destino} className={cn('block rounded-xl bg-background p-3 active:translate-y-px', FOCO)}>
+                          {contenido}
+                        </Link>
+                      ) : (
+                        <div className="rounded-xl bg-background p-3">{contenido}</div>
+                      )}
+                    </FilaDeslizable>
                   </li>
                 )
               })}
@@ -452,6 +478,7 @@ export default function HistoriasPage() {
           </div>
         </section>
       </div>
+      </TirarParaRefrescar>
     </AdminShell>
   )
 }
