@@ -429,7 +429,7 @@ export default function AdminShell({
       <div className="min-w-0 flex-1">
         <header
           className={cn(
-            'sticky top-0 z-40 flex h-16 items-center justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
+            'sticky top-0 z-40 flex h-14 items-center lg:h-16 justify-between gap-3 bg-background/90 px-4 text-foreground backdrop-blur-sm sm:px-6 lg:px-10',
             // En escritorio la barra solo queda si la página no trae título
             // ni buscador propio (la ficha pone el suyo junto a «Volver»).
             !headerCenter && (!hidePageHeader || hideSearch) && 'lg:hidden'
@@ -662,7 +662,7 @@ export default function AdminShell({
         </Dialog.Root>
 
         {/* pb-28 en celular: que la barra inferior no tape el final de la página. */}
-        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-28 pt-2 lg:pb-14 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 lg:pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
+        <main className={cn('mx-auto max-w-[1600px] space-y-4 px-4 pb-28 pt-1 lg:space-y-6 lg:pb-14 lg:pt-2 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 lg:pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
@@ -675,7 +675,7 @@ export default function AdminShell({
                       'font-semibold leading-none text-foreground',
                       compactHeader
                         ? 'text-2xl tracking-[-0.03em]'
-                        : 'text-3xl tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
+                        : 'text-[28px] tracking-[-0.035em] sm:text-[40px] bajo:sm:text-[34px]'
                     )}
                   >
                     {title}
@@ -683,7 +683,7 @@ export default function AdminShell({
                   {headerBadge ? <div className="flex shrink-0">{headerBadge}</div> : null}
                 </div>
                 {description ? (
-                  <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-2.5 text-base leading-6')}>{description}</p>
+                  <p className={cn('max-w-3xl text-muted-foreground', compactHeader ? 'mt-1 text-sm' : 'mt-1.5 text-sm leading-5 sm:mt-2.5 sm:text-base sm:leading-6')}>{description}</p>
                 ) : null}
                 </div>
                 {titleAside}
