@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CircleCheck, Plus, X } from 'lucide-react'
+import { ArrowLeft, CircleCheck, Plus } from 'lucide-react'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import HojaInferior from '@/components/movil/HojaInferior'
 import AdminShell from '@/components/layout/AdminShell'
 import { Select } from '@/components/ui/select'
 import { ConfirmDialog } from '@/components/shared'
@@ -127,7 +128,7 @@ export default function SoportePage() {
     >
       <TirarParaRefrescar onRefrescar={() => listaQuery.refetch()}>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)] lg:gap-6">
-        {!esEscritorio && !formAbierto ? (
+        {!esEscritorio ? (
           <button
             type="button"
             onClick={() => {
@@ -139,28 +140,6 @@ export default function SoportePage() {
             <Plus className="h-5 w-5" aria-hidden />
             Nueva solicitud
           </button>
-        ) : null}
-
-        {!esEscritorio && formAbierto ? (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setFormAbierto(false)}
-              aria-label="Cerrar formulario"
-              className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              <X className="h-5 w-5" aria-hidden />
-            </button>
-            <NuevaSolicitudForm
-              key={formKey}
-              moduloInicial={moduloInicial}
-              asuntoInicial={asuntoInicial}
-              categoriaInicial={categoriaInicial}
-              enfocar={enfocarForm}
-              onSubmit={crearTicket}
-              isPending={crearMutation.isPending}
-            />
-          </div>
         ) : null}
 
         <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
@@ -247,6 +226,36 @@ export default function SoportePage() {
         ) : null}
       </div>
       </TirarParaRefrescar>
+
+      {!esEscritorio ? (
+        <HojaInferior
+          abierta={formAbierto}
+          onCambiar={setFormAbierto}
+          titulo="Nueva solicitud"
+          pie={
+            <button
+              type="submit"
+              form="nueva-solicitud"
+              disabled={crearMutation.isPending}
+              className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-semibold text-primary-foreground transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
+            >
+              {crearMutation.isPending ? 'Enviando…' : 'Enviar solicitud'}
+            </button>
+          }
+        >
+          <NuevaSolicitudForm
+            key={formKey}
+            idForm="nueva-solicitud"
+            enHoja
+            moduloInicial={moduloInicial}
+            asuntoInicial={asuntoInicial}
+            categoriaInicial={categoriaInicial}
+            enfocar={enfocarForm}
+            onSubmit={crearTicket}
+            isPending={crearMutation.isPending}
+          />
+        </HojaInferior>
+      ) : null}
 
       {ticketId && !esEscritorio ? (
         <ChatTicket

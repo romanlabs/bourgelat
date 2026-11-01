@@ -114,7 +114,7 @@ export default function RecordatoriosCitaSection({ clinica }) {
           Si la cita se agenda con menos tiempo, el aviso sale enseguida.
         </p>
 
-        <div>
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-1 bg-card px-1 pb-1 pt-2 max-lg:[&>button]:h-12 max-lg:[&>button]:w-full lg:static lg:mx-0 lg:bg-transparent lg:p-0">
           <Button type="submit" disabled={guardar.isPending || !isDirty}>
             {guardar.isPending ? 'Guardando...' : 'Guardar recordatorios'}
           </Button>

@@ -85,6 +85,9 @@ export default function NuevaSolicitudForm({
   enfocar = false,
   onSubmit,
   isPending,
+  // En la hoja del celular: sin tarjeta verde ni botón propio (lo pone el pie de la hoja con form={idForm}).
+  enHoja = false,
+  idForm,
 }) {
   const usuario = useAuthStore((state) => state.usuario)
   const [captura, setCaptura] = useState(null)
@@ -169,12 +172,14 @@ export default function NuevaSolicitudForm({
 
   return (
     <form
-      aria-labelledby="s-nuevo"
+      id={idForm}
+      aria-labelledby={enHoja ? undefined : 's-nuevo'}
+      aria-label={enHoja ? 'Nueva solicitud' : undefined}
       onSubmit={enviar}
       onPaste={onPaste}
-      className="flex flex-col gap-4 rounded-2xl bg-primary p-4 text-primary-foreground sm:p-6 lg:sticky lg:top-6"
+      className={cn('flex flex-col gap-4', !enHoja && 'rounded-2xl bg-primary p-4 text-primary-foreground sm:p-6 lg:sticky lg:top-6')}
     >
-      <h2 id="s-nuevo" className="text-xl font-semibold tracking-[-0.02em]">Nueva solicitud</h2>
+      {enHoja ? null : <h2 id="s-nuevo" className="text-xl font-semibold tracking-[-0.02em]">Nueva solicitud</h2>}
 
       <Controller
         name="categoria"
@@ -193,7 +198,9 @@ export default function NuevaSolicitudForm({
                     onClick={() => cambiarTipo(opcion.value, field.onChange)}
                     className={cn(
                       'h-11 rounded-lg px-3 text-[13px] transition lg:h-[38px]',
-                      activo ? 'bg-primary-foreground font-semibold text-primary' : 'bg-primary-foreground/15 hover:bg-primary-foreground/25',
+                      enHoja
+                        ? activo ? 'bg-primary font-semibold text-primary-foreground' : 'bg-muted text-foreground'
+                        : activo ? 'bg-primary-foreground font-semibold text-primary' : 'bg-primary-foreground/15 hover:bg-primary-foreground/25',
                       FOCO
                     )}
                   >
@@ -213,7 +220,7 @@ export default function NuevaSolicitudForm({
         render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold">Qué tan urgente</span>
-            <div role="group" aria-label="Urgencia" className="grid grid-cols-3 gap-1 rounded-[10px] bg-primary-foreground/10 p-1">
+            <div role="group" aria-label="Urgencia" className={cn('grid grid-cols-3 gap-1 rounded-[10px] p-1', enHoja ? 'bg-muted' : 'bg-primary-foreground/10')}>
               {PRIORIDADES_TICKET.map((opcion) => {
                 const activo = field.value === opcion.value
                 return (
@@ -224,7 +231,9 @@ export default function NuevaSolicitudForm({
                     onClick={() => field.onChange(opcion.value)}
                     className={cn(
                       'h-11 rounded-[7px] px-1 text-[13px] leading-tight transition lg:h-[38px]',
-                      activo ? 'bg-primary-foreground font-semibold text-primary' : 'hover:bg-primary-foreground/10',
+                      enHoja
+                        ? activo ? 'bg-primary font-semibold text-primary-foreground' : 'text-foreground'
+                        : activo ? 'bg-primary-foreground font-semibold text-primary' : 'hover:bg-primary-foreground/10',
                       FOCO
                     )}
                   >
@@ -245,14 +254,14 @@ export default function NuevaSolicitudForm({
           type="text"
           autoComplete="off"
           placeholder={textos.asunto}
-          className={cn(campo, 'h-12 lg:h-[46px]')}
+          className={cn(campo, 'h-12 lg:h-[46px]', enHoja && 'bg-muted')}
           ref={(el) => {
             asuntoRegisterRef(el)
             asuntoRef.current = el
           }}
           {...asuntoProps}
         />
-        <FieldError message={errors.asunto?.message} className="mt-0 text-primary-foreground" />
+        <FieldError message={errors.asunto?.message} className={cn('mt-0', enHoja ? 'text-danger' : 'text-primary-foreground')} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -261,10 +270,10 @@ export default function NuevaSolicitudForm({
           id="ticket-descripcion"
           rows={5}
           placeholder={textos.ayuda}
-          className={cn(campo, 'resize-y py-3')}
+          className={cn(campo, 'resize-y py-3', enHoja && 'bg-muted')}
           {...register('descripcion')}
         />
-        <FieldError message={errors.descripcion?.message} className="mt-0 text-primary-foreground" />
+        <FieldError message={errors.descripcion?.message} className={cn('mt-0', enHoja ? 'text-danger' : 'text-primary-foreground')} />
       </div>
 
       {captura && previewUrl ? (
@@ -282,7 +291,10 @@ export default function NuevaSolicitudForm({
       ) : (
         <label
           htmlFor="ticket-captura"
-          className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-foreground/15 text-sm font-semibold transition hover:bg-primary-foreground/25 focus-within:ring-2 focus-within:ring-brand"
+          className={cn(
+            'flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg text-sm font-semibold transition focus-within:ring-2 focus-within:ring-brand',
+            enHoja ? 'bg-muted text-foreground' : 'bg-primary-foreground/15 hover:bg-primary-foreground/25'
+          )}
         >
           <ImagePlus className="h-[18px] w-[18px]" />
           {textos.adjuntar}
@@ -298,9 +310,9 @@ export default function NuevaSolicitudForm({
           event.target.value = ''
         }}
       />
-      <FieldError message={errorCaptura} className="mt-0 text-primary-foreground" />
+      <FieldError message={errorCaptura} className={cn('mt-0', enHoja ? 'text-danger' : 'text-primary-foreground')} />
 
-      <button
+      {enHoja ? null : <button
         type="submit"
         disabled={isPending}
         className={cn(
@@ -310,7 +322,7 @@ export default function NuevaSolicitudForm({
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         {isPending ? 'Enviando…' : 'Enviar solicitud'}
-      </button>
+      </button>}
     </form>
   )
 }

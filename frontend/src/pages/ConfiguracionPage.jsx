@@ -16,6 +16,7 @@ import {
 import AdminShell from '@/components/layout/AdminShell'
 import { useDeslizarHorizontal } from '@/lib/gestos'
 import { useEsCelular } from '@/lib/useEsCelular'
+import HojaInferior from '@/components/movil/HojaInferior'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { HoraPicker } from '@/components/shared/HoraPicker'
@@ -937,7 +938,7 @@ function ConfiguracionContent({
                   Enviar correo al emitir documentos desde la integración
                 </label>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-1 flex flex-wrap items-center gap-3 bg-card px-1 pb-1 pt-2 lg:static lg:mx-0 lg:bg-transparent lg:p-0 lg:pt-2">
                   <button
                     type="submit"
                     disabled={guardarFactusMutation.isPending}
@@ -1297,17 +1298,20 @@ function PausaDia({ label, pausa, onCambiar }) {
 }
 
 function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigurar = false }) {
+  const esCelular = useEsCelular()
+  const [diaAbierto, setDiaAbierto] = useState(null)
+
   const actualizarDia = (clave, vista) =>
     setHorario((current) => ({ ...current, [clave]: vista ? franjasDesdeVista(vista) : [] }))
 
   const alternarDia = (clave) =>
     actualizarDia(clave, horario[clave]?.length ? null : { abre: '08:00', cierra: '18:00', pausa: null })
 
-  // Copiar el primer dia abierto al resto ahorra configurar siete veces lo mismo.
-  const copiarATodaLaSemana = () => {
-    const origen = DIAS_SEMANA.find(({ clave }) => horario[clave]?.length)
+  // Copiar el primer dia abierto (o el que se indique) al resto ahorra configurar siete veces lo mismo.
+  const copiarATodaLaSemana = (claveOrigen) => {
+    const origen = DIAS_SEMANA.find(({ clave }) => (claveOrigen ? clave === claveOrigen : horario[clave]?.length))
 
-    if (!origen) {
+    if (!origen || !horario[origen.clave]?.length) {
       toast.error('Configura primero un día para poder copiarlo.')
       return
     }
@@ -1325,6 +1329,151 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigur
     )
   }
 
+  if (esCelular) {
+    const claveEditando = diaAbierto
+    const etiquetaEditando = DIAS_SEMANA.find((d) => d.clave === claveEditando)?.label || ''
+    const vistaEditando = claveEditando ? vistaDia(horario[claveEditando]) : null
+    const cambiarEditando = (cambios) => actualizarDia(claveEditando, { ...vistaEditando, ...cambios })
+
+    return (
+      <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-3">
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="min-w-0">
+            <h2 id="horario-atencion" className="text-base font-semibold tracking-[-0.02em] text-foreground">Horario de atención</h2>
+            <p className="text-xs text-muted-foreground">La agenda solo ofrece cupos dentro de este horario.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => copiarATodaLaSemana()}
+            className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-xs font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Copiar a todos
+          </button>
+        </div>
+
+        {sinConfigurar ? (
+          <p className="mt-2 rounded-xl bg-info-soft px-3 py-2 text-xs leading-5 text-info">
+            Aún no has configurado el horario: la agenda acepta citas a cualquier hora. Enciende los días en que atiendes y guarda.
+          </p>
+        ) : null}
+
+        <ul className="mt-1 flex flex-col divide-y divide-border">
+          {DIAS_SEMANA.map(({ clave, label }) => {
+            const vista = vistaDia(horario[clave])
+            return (
+              <li key={clave} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setDiaAbierto(clave)}
+                  aria-label={`Editar el horario del ${label.toLowerCase()}`}
+                  className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg px-1 text-left outline-none transition active:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="w-[84px] shrink-0 text-sm font-semibold text-foreground">{label}</span>
+                  {vista ? (
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm text-foreground">{formatFranja12(vista.abre, vista.cierra)}</span>
+                      {vista.pausa ? (
+                        <span className="truncate text-xs text-muted-foreground">Pausa {formatFranja12(vista.pausa.inicio, vista.pausa.fin)}</span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  )}
+                </button>
+                <Interruptor
+                  activo={Boolean(vista)}
+                  onChange={() => alternarDia(clave)}
+                  etiqueta={`${label}: ${vista ? 'abierto' : 'cerrado'}`}
+                />
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 -mx-3 -mb-3 mt-2 rounded-b-2xl bg-card px-3 pb-3 pt-2">
+          <button
+            type="button"
+            onClick={onGuardar}
+            disabled={guardando}
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground outline-none transition hover:brightness-110 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {guardando ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+        </div>
+
+        <HojaInferior
+          abierta={Boolean(claveEditando)}
+          onCambiar={(a) => { if (!a) setDiaAbierto(null) }}
+          titulo={etiquetaEditando}
+          pie={
+            <Button type="button" className="h-12 w-full" onClick={() => setDiaAbierto(null)}>Listo</Button>
+          }
+        >
+          {claveEditando ? (
+            <div className="flex flex-col gap-4 pt-1">
+              <div className="flex min-h-12 items-center justify-between gap-3">
+                <span className="text-[15px] font-semibold text-foreground">{vistaEditando ? 'Abierto' : 'Cerrado'}</span>
+                <Interruptor
+                  activo={Boolean(vistaEditando)}
+                  onChange={() => alternarDia(claveEditando)}
+                  etiqueta={`${etiquetaEditando}: ${vistaEditando ? 'abierto' : 'cerrado'}`}
+                />
+              </div>
+              {vistaEditando ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                      Abre
+                      <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, abre`} value={vistaEditando.abre} onChange={(valor) => cambiarEditando({ abre: valor })} />
+                    </label>
+                    <label className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
+                      Cierra
+                      <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, cierra`} value={vistaEditando.cierra} onChange={(valor) => cambiarEditando({ cierra: valor })} />
+                    </label>
+                  </div>
+                  {vistaEditando.pausa ? (
+                    <div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-3">
+                      <span className="text-sm font-semibold text-foreground">Pausa</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, pausa desde`} value={vistaEditando.pausa.inicio} onChange={(valor) => cambiarEditando({ pausa: { ...vistaEditando.pausa, inicio: valor } })} />
+                        <HoraChip className="h-12 w-full text-base" aria-label={`${etiquetaEditando}, pausa hasta`} value={vistaEditando.pausa.fin} onChange={(valor) => cambiarEditando({ pausa: { ...vistaEditando.pausa, fin: valor } })} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => cambiarEditando({ pausa: null })}
+                        className="min-h-11 self-start rounded-md text-sm font-semibold text-danger outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Quitar pausa
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => cambiarEditando({ pausa: { ...PAUSA_POR_DEFECTO } })}
+                      className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-secondary text-sm font-semibold text-secondary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Plus className="h-4 w-4" /> Agregar pausa
+                    </button>
+                  )}
+                  {vistaEditando.variasFranjas ? (
+                    <p className="text-[13px] text-warning">Este día tiene más de dos franjas; al editarlo queda con una sola pausa.</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => { copiarATodaLaSemana(claveEditando); setDiaAbierto(null) }}
+                    className="min-h-11 self-start rounded-md text-sm font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Copiar este día a toda la semana
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </HojaInferior>
+      </section>
+    )
+  }
+
   return (
     <section aria-labelledby="horario-atencion" className="rounded-2xl bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1335,7 +1484,7 @@ function HorarioSemanal({ horario, setHorario, onGuardar, guardando, sinConfigur
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <button
             type="button"
-            onClick={copiarATodaLaSemana}
+            onClick={() => copiarATodaLaSemana()}
             className="inline-flex h-11 items-center justify-center rounded-lg bg-secondary px-3.5 text-center text-[13px] leading-tight lg:h-9 font-semibold text-secondary-foreground outline-none transition hover:brightness-95 active:translate-y-px focus-visible:ring-2 focus-visible:ring-ring"
           >
             Copiar a toda la semana
