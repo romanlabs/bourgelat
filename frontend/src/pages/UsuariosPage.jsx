@@ -641,20 +641,20 @@ export default function UsuariosPage() {
       hideSearch
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <NavCta to="/planes" icon={Sparkles}>
-            Ver planes
-          </NavCta>
-          <button
-            type="button"
-            onClick={() => {
-              setCreateForm(DEFAULT_CREATE_FORM)
-              setPanel('crear')
-            }}
-            className={`inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px ${FOCO}`}
-          >
-            <UserPlus className="h-4 w-4" />
-            Invitar a alguien
-          </button>
+          {/* Sin cupos no hay a quién invitar; los cupos se amplían desde Mi plan. */}
+          {cupoDisponible === 0 ? null : (
+            <button
+              type="button"
+              onClick={() => {
+                setCreateForm(DEFAULT_CREATE_FORM)
+                setPanel('crear')
+              }}
+              className={`inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px ${FOCO}`}
+            >
+              <UserPlus className="h-4 w-4" />
+              Invitar a alguien
+            </button>
+          )}
         </div>
       }
     >
