@@ -450,7 +450,7 @@ export default function AdminShell({
               onClick={openSearch}
               aria-label="Buscar"
               className={cn(
-                'flex h-10 items-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground',
+                'flex h-11 min-w-11 items-center justify-center gap-2.5 rounded-lg bg-card px-3 text-sm text-muted-foreground transition hover:text-foreground sm:h-10 sm:justify-start',
                 // Si la página usa el centro del encabezado (Agenda), el buscador
                 // se reduce al icono para no apretar su barra.
                 headerCenter ? '2xl:w-64' : 'sm:w-64'
@@ -512,25 +512,36 @@ export default function AdminShell({
                 event.preventDefault()
                 searchInputRef.current?.focus()
               }}
-              className="fixed left-1/2 top-[12vh] z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 overflow-hidden rounded-2xl bg-card text-card-foreground shadow-modal"
+              // Celular: pantalla completa, como la búsqueda de una app.
+              className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-card text-card-foreground sm:inset-auto sm:left-1/2 sm:top-[12vh] sm:block sm:w-[calc(100%-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:rounded-2xl sm:shadow-modal"
               aria-describedby={undefined}
             >
               <Dialog.Title className="sr-only">Buscar en Bourgelat</Dialog.Title>
 
-              <div className="flex h-16 items-center gap-3 border-b border-border px-5">
+              <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border pl-5 pr-2 pt-[env(safe-area-inset-top)] sm:pr-5 sm:pt-0">
                 <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <input
                   ref={searchInputRef}
-                  type="text"
+                  type="search"
+                  enterKeyHint="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Busca un paciente, tutor o sección"
-                  className="flex-1 bg-transparent text-lg text-foreground outline-none placeholder:text-muted-foreground"
+                  aria-label="Buscar en Bourgelat"
+                  className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground sm:text-lg [&::-webkit-search-cancel-button]:hidden"
                 />
-                <kbd className="rounded-md bg-muted px-2 py-1 font-sans text-xs font-semibold text-muted-foreground">Esc</kbd>
+                <kbd className="hidden rounded-md bg-muted px-2 py-1 font-sans text-xs font-semibold text-muted-foreground sm:inline">Esc</kbd>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="h-11 shrink-0 rounded-lg px-3 text-[15px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden"
+                  >
+                    Cancelar
+                  </button>
+                </Dialog.Close>
               </div>
 
-              <div className="max-h-[60vh] space-y-3 overflow-y-auto p-2">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-2 sm:max-h-[60vh] sm:flex-none">
                 {buscandoContenido ? (
                   <p className="px-3 py-2 text-sm text-muted-foreground">Buscando...</p>
                 ) : null}
@@ -639,7 +650,7 @@ export default function AdminShell({
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 bg-muted px-5 py-3 text-[13px] text-muted-foreground">
+              <div className="hidden flex-wrap items-center gap-x-5 gap-y-1 bg-muted px-5 py-3 text-[13px] text-muted-foreground sm:flex">
                 <span>Escribe el nombre de un paciente o tutor</span>
                 <span>
                   <span className="font-semibold text-foreground">Ctrl K</span> o{' '}
@@ -651,7 +662,7 @@ export default function AdminShell({
         </Dialog.Root>
 
         {/* pb-28 en celular: que la barra inferior no tape el final de la página. */}
-        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-28 pt-2 lg:pb-14 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
+        <main className={cn('mx-auto max-w-[1600px] space-y-6 px-4 pb-28 pt-2 lg:pb-14 sm:px-6 lg:px-10 bajo:space-y-4', !headerCenter && !hidePageHeader && (compactHeader ? 'space-y-4 lg:pb-4 lg:pt-5' : 'lg:pt-8 bajo:lg:pt-5'))}>
           <SuscripcionBanner soloLecturaOnly={currentKey !== 'dashboard'} />
 
           {!hidePageHeader && (
