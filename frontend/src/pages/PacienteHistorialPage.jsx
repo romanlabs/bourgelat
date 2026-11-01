@@ -339,7 +339,7 @@ export default function PacienteHistorialPage() {
         <div className="flex items-center justify-between gap-3 lg:pt-6">
           <Link
             to="/pacientes"
-            className={`inline-flex min-h-8 items-center gap-1.5 rounded text-sm font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded text-sm lg:min-h-8 font-medium text-muted-foreground transition hover:text-foreground ${FOCO}`}
           >
             <ChevronLeft className="h-4 w-4" />
             Volver a pacientes
@@ -362,7 +362,7 @@ export default function PacienteHistorialPage() {
             <div
               role="img"
               aria-label={`Foto de ${mascota.nombre}`}
-              className="relative flex h-[250px] shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
+              className="relative flex h-[200px] shrink-0 items-center justify-center overflow-hidden bg-brand-muted sm:h-[320px] lg:h-auto lg:min-h-[380px] lg:w-[42%] lg:max-w-[460px]"
             >
               {mascota.fotoPerfil ? (
                 <img src={mascota.fotoPerfil} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -385,7 +385,7 @@ export default function PacienteHistorialPage() {
                     onClick={() => fotoInputRef.current?.click()}
                     disabled={subiendoFoto || propsAccion.disabled}
                     title={propsAccion.title}
-                    className={`absolute bottom-4 left-4 inline-flex h-10 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 ${FOCO}`}
+                    className={`absolute bottom-4 left-4 inline-flex h-11 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground transition hover:brightness-95 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 ${FOCO}`}
                   >
                     {subiendoFoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                     {subiendoFoto ? 'Subiendo…' : mascota.fotoPerfil ? 'Cambiar foto' : 'Agregar foto'}
@@ -399,19 +399,19 @@ export default function PacienteHistorialPage() {
                 <div className="min-w-0">
                   <h1
                     id="ficha-nombre"
-                    className="text-5xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[64px]"
+                    className="text-4xl font-semibold leading-[0.95] tracking-[-0.05em] [overflow-wrap:anywhere] sm:text-[64px]"
                   >
                     {mascota.nombre}
                   </h1>
                   {subtitulo ? <p className="mt-2 text-base opacity-85">{subtitulo}</p> : null}
                 </div>
 
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex w-full flex-wrap gap-2.5 sm:w-auto">
                   {tieneHistorias && puedeEditarHistorias && (
                     <button
                       type="button"
                       onClick={handleNuevaConsulta}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:brightness-95 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground px-5 text-sm font-semibold text-primary transition hover:brightness-95 active:translate-y-px ${FOCO}`}
                     >
                       <Plus className="h-4 w-4" />
                       Nueva consulta
@@ -421,7 +421,7 @@ export default function PacienteHistorialPage() {
                     <button
                       type="button"
                       onClick={handleNuevoRegistroEstilo}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
                     >
                       <Scissors className="h-4 w-4" />
                       Nuevo servicio de estilos
@@ -431,7 +431,7 @@ export default function PacienteHistorialPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/antecedentes?mascotaId=${mascotaId}`)}
-                      className={`inline-flex h-[46px] items-center gap-2 rounded-lg bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
+                      className={`inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg sm:h-[46px] sm:flex-none bg-primary-foreground/15 px-[18px] text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/25 active:translate-y-px ${FOCO}`}
                     >
                       <HeartPulse className="h-4 w-4" />
                       Antecedentes
@@ -473,7 +473,7 @@ export default function PacienteHistorialPage() {
                   </p>
                 ) : null}
               </div>
-              <div role="tablist" aria-label="Secciones de la ficha" className="flex flex-wrap gap-1 rounded-[10px] bg-muted p-1">
+              <div role="tablist" aria-label="Secciones de la ficha" className="-mx-1 flex w-full gap-1 overflow-x-auto rounded-[10px] bg-muted p-1 sm:mx-0 sm:w-auto">
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
@@ -481,7 +481,7 @@ export default function PacienteHistorialPage() {
                     role="tab"
                     aria-selected={activeTab === tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`h-9 rounded-[7px] px-3.5 text-[13px] transition ${FOCO} ${
+                    className={`h-11 shrink-0 whitespace-nowrap rounded-[7px] px-4 text-sm transition sm:h-9 sm:px-3.5 sm:text-[13px] ${FOCO} ${
                       activeTab === tab.id
                         ? 'bg-card font-semibold text-foreground'
                         : 'font-medium text-muted-foreground hover:text-foreground'
@@ -551,7 +551,7 @@ export default function PacienteHistorialPage() {
                 <h2 id="ficha-tutor" className="-mt-1.5 text-lg font-semibold">{mascota.Propietario.nombre}</h2>
                 <div className="flex flex-col gap-1 text-[15px] leading-6">
                   {mascota.Propietario.telefono ? (
-                    <a href={`tel:${mascota.Propietario.telefono}`} className={`inline-flex items-center gap-2 self-start rounded hover:text-primary ${FOCO}`}>
+                    <a href={`tel:${mascota.Propietario.telefono}`} className={`inline-flex min-h-11 items-center gap-2 self-start rounded hover:text-primary lg:min-h-0 ${FOCO}`}>
                       <Phone className="h-4 w-4" />
                       {formatearCelular(mascota.Propietario.telefono)}
                     </a>

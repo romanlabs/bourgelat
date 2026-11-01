@@ -6,6 +6,7 @@ import {
   ListFilter,
   Loader2,
   MoreHorizontal,
+  Phone,
   Plus,
   Search,
   Sparkles,
@@ -34,7 +35,7 @@ const TABS = [
 ]
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-const BTN_PRIMARIO = `inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+const BTN_PRIMARIO = `inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary sm:h-11 sm:w-auto px-[18px] text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
 const ITEM_MENU = 'flex cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition hover:bg-muted focus:bg-muted'
 
 // Antecedentes, editar y desactivar en un menú «⋯»; «Abrir ficha» queda a la vista.
@@ -46,7 +47,7 @@ function AccionesPaciente({ nombre, antecedentesTo, onEditar, onCambiarEstado, r
         <button
           type="button"
           aria-label={`Acciones de ${nombre}`}
-          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
+          className={cn('inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground lg:h-9 lg:w-9 transition hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary', FOCO)}
         >
           <MoreHorizontal className="h-[18px] w-[18px]" />
         </button>
@@ -114,9 +115,9 @@ function PetAvatar({ name, photo, especie, className = 'h-12 w-12 rounded-xl tex
 }
 
 // Control segmentado: la opción activa en blanco sobre fondo suave.
-function Segmentado({ label, options, value, onChange, size = 'h-9' }) {
+function Segmentado({ label, options, value, onChange, size = 'h-11 sm:h-9' }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-1 rounded-[10px] bg-secondary p-1">
+    <div role="group" aria-label={label} className="flex w-full gap-1 rounded-[10px] bg-secondary p-1 sm:w-auto sm:flex-wrap">
       {options.map((option) => {
         const activa = option.value === value
         return (
@@ -127,7 +128,7 @@ function Segmentado({ label, options, value, onChange, size = 'h-9' }) {
             onClick={() => onChange(option.value)}
             className={cn(
               size,
-              'rounded-[7px] px-3.5 text-[13px] transition',
+              'flex-1 rounded-[7px] px-3.5 text-sm transition sm:flex-none sm:text-[13px]',
               FOCO,
               activa
                 ? 'bg-card font-semibold text-foreground'
@@ -187,7 +188,7 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
           type="button"
           aria-label="Filtrar por especie"
           className={cn(
-            'flex h-12 items-center gap-2 rounded-[10px] px-4 text-sm font-semibold transition active:translate-y-px data-[state=open]:bg-accent',
+            'hidden h-12 sm:flex items-center gap-2 rounded-[10px] px-4 text-sm font-semibold transition active:translate-y-px data-[state=open]:bg-accent',
             FOCO,
             activa ? 'bg-accent text-primary' : 'bg-secondary text-secondary-foreground hover:brightness-95'
           )}
@@ -226,6 +227,37 @@ function FiltroEspecie({ value, onChange, porEspecie, total }) {
   )
 }
 
+// Chips de especie con scroll horizontal (solo celular).
+function ChipsEspecie({ value, onChange, porEspecie, total }) {
+  const opciones = SPECIES_OPTIONS.filter(
+    (option) => option.value === 'todas' || option.value === value || porEspecie[option.value] > 0
+  )
+  return (
+    <div role="group" aria-label="Filtrar por especie" className="flex w-full gap-2 overflow-x-auto pb-0.5 sm:hidden">
+      {opciones.map((option) => {
+        const activa = option.value === value
+        const conteo = option.value === 'todas' ? total : porEspecie[option.value] || 0
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={activa}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition',
+              FOCO,
+              activa ? 'bg-accent text-primary' : 'bg-secondary text-secondary-foreground'
+            )}
+          >
+            {option.value === 'todas' ? 'Todas' : option.label}
+            <span className="text-[13px] font-medium tabular-nums text-muted-foreground">{formatNumber(conteo)}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 bg-muted px-5 py-4">
@@ -239,7 +271,7 @@ function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
             type="button"
             onClick={() => onChange(Math.max(pagina - 1, 1))}
             disabled={pagina <= 1}
-            className={`h-10 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
+            className={`h-11 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
           >
             Anterior
           </button>
@@ -247,7 +279,7 @@ function PiePaginacion({ pagina, paginas, onChange, total, etiqueta }) {
             type="button"
             onClick={() => onChange(Math.min(pagina + 1, paginas))}
             disabled={pagina >= paginas}
-            className={`h-10 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
+            className={`h-11 rounded-lg bg-card px-3.5 text-sm font-semibold text-foreground transition hover:bg-accent active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${FOCO}`}
           >
             Siguiente
           </button>
@@ -365,6 +397,15 @@ export default function PacientesPage() {
         }`
 
   const tutoresRows = tutoresHook.tutoresRows
+  // En celular el detalle queda bajo la lista: al elegir un tutor se baja hasta él.
+  const seleccionarTutor = (id) => {
+    setTutorSeleccionadoId(id)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches) {
+      requestAnimationFrame(() =>
+        document.getElementById('tutor-detalle-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      )
+    }
+  }
   const tutorSeleccionado =
     tutoresRows.find((row) => row.id === tutorSeleccionadoId) || tutoresRows[0] || null
 
@@ -390,7 +431,7 @@ export default function PacientesPage() {
       description={descripcion}
       hideSearch
       actions={
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex w-full flex-wrap items-center gap-2.5 sm:w-auto">
           <Segmentado
             label="Ver"
             options={TABS.map((tab) => ({ value: tab.id, label: tab.label }))}
@@ -427,6 +468,12 @@ export default function PacientesPage() {
                   porEspecie={resumenHook.porEspecie}
                   total={totalMascotas}
                 />
+                <ChipsEspecie
+                  value={mascotasHook.especie}
+                  onChange={mascotasHook.setEspecie}
+                  porEspecie={resumenHook.porEspecie}
+                  total={totalMascotas}
+                />
                 {puedeDesactivarPaciente && (
                   <FiltroDesactivados
                     checked={mascotasHook.verDesactivados}
@@ -452,7 +499,47 @@ export default function PacientesPage() {
                     }
                   />
                 ) : (
-                  <div className="overflow-x-auto">
+                  <>
+                  <ul className="flex flex-col gap-2 p-3 lg:hidden">
+                    {mascotasHook.mascotasRows.map((row) => (
+                      <li key={row.id} className="flex items-center gap-1 rounded-xl bg-muted pr-1">
+                        <Link
+                          to={row.historiasTo || '#'}
+                          className={`flex min-h-[72px] min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-foreground ${FOCO}`}
+                        >
+                          <PetAvatar name={row.paciente} photo={row.fotoPerfil} especie={row.raw?.especie} />
+                          <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="truncate text-base font-semibold">{row.paciente}</span>
+                            <span className="truncate text-[13px] text-muted-foreground">
+                              {[row.raza || row.especie, SEXO[row.raw?.sexo], row.edad !== 'Sin edad' ? row.edad : null]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                            <span className="truncate text-[13px] text-muted-foreground">Tutor: {row.tutor}</span>
+                          </span>
+                        </Link>
+                        <AccionesPaciente
+                          nombre={row.paciente}
+                          antecedentesTo={row.antecedentesTo}
+                          onEditar={
+                            puedeGestionarPaciente && !propsAccion.disabled
+                              ? () => mascotasHook.openEditDrawer(row.raw)
+                              : null
+                          }
+                          onCambiarEstado={
+                            !puedeDesactivarPaciente
+                              ? null
+                              : mascotasHook.verDesactivados
+                                ? () =>
+                                    mascotasHook.cambiarEstadoMascotaMutation.mutate({ mascotaId: row.id, activar: true })
+                                : () => setPacienteADesactivar(row)
+                          }
+                          reactivar={mascotasHook.verDesactivados}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden overflow-x-auto lg:block">
                     <table className="w-full min-w-[820px] text-sm">
                       <thead>
                         <tr className="text-left text-[13px] text-muted-foreground">
@@ -529,6 +616,7 @@ export default function PacientesPage() {
                       </tbody>
                     </table>
                   </div>
+                  </>
                 )}
                 <PiePaginacion
                   pagina={mascotasHook.mascotasQuery.data?.paginaActual || 1}
@@ -583,15 +671,14 @@ export default function PacientesPage() {
                         const seleccionado = tutorSeleccionado?.id === row.id
                         const numMascotas = row.raw?.Mascota?.length ?? row.raw?.Mascotas?.length ?? 0
                         return (
+                          <div key={row.id} className={cn('flex items-center gap-1 rounded-xl transition', seleccionado ? 'bg-accent' : 'hover:bg-muted')}>
                           <button
-                            key={row.id}
                             type="button"
                             aria-pressed={seleccionado}
-                            onClick={() => setTutorSeleccionadoId(row.id)}
+                            onClick={() => seleccionarTutor(row.id)}
                             className={cn(
-                              'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition',
-                              FOCO,
-                              seleccionado ? 'bg-accent' : 'hover:bg-muted'
+                              'flex min-h-[64px] min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-3 text-left transition',
+                              FOCO
                             )}
                           >
                             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-[15px] font-bold text-secondary-foreground">
@@ -607,6 +694,16 @@ export default function PacientesPage() {
                               {row.ciudad !== '—' ? row.ciudad : ''}
                             </span>
                           </button>
+                          {row.raw?.telefono ? (
+                            <a
+                              href={`tel:${row.raw.telefono}`}
+                              aria-label={`Llamar a ${row.nombre}`}
+                              className={`mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-card lg:hidden ${FOCO}`}
+                            >
+                              <Phone className="h-[18px] w-[18px]" />
+                            </a>
+                          ) : null}
+                          </div>
                         )
                       })}
                     </div>
@@ -711,10 +808,10 @@ function TutorDetalle({
   reactivando,
 }) {
   const mascotas = tutor.raw?.Mascota || tutor.raw?.Mascotas || []
-  const botonClaro = `inline-flex h-10 items-center rounded-lg px-4 text-sm font-semibold transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
+  const botonClaro = `inline-flex h-11 items-center rounded-lg px-4 text-sm font-semibold transition active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 ${FOCO}`
 
   return (
-    <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+    <div id="tutor-detalle-panel" className="flex scroll-mt-20 flex-col gap-4 lg:sticky lg:top-6">
       <section aria-labelledby="tutor-detalle" className="flex flex-col gap-4 rounded-2xl bg-primary p-6 text-primary-foreground">
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[18px] bg-brand text-2xl font-bold text-foreground">
