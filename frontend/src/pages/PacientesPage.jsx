@@ -164,7 +164,7 @@ function Buscador({ value, onChange, placeholder, ariaLabel, cargando }) {
         placeholder={placeholder}
         aria-label={ariaLabel}
         maxLength={120}
-        className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:appearance-none"
+        className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground lg:text-[15px] [&::-webkit-search-cancel-button]:appearance-none"
       />
       {cargando ? (
         <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin" />

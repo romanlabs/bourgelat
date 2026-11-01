@@ -197,6 +197,17 @@ input:-webkit-autofill:focus {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* El iPhone amplía la pantalla al tocar un campo con letra menor a 16px y
+     a veces no vuelve a su tamaño. En celular ningún campo baja de 16px;
+     el !important gana a utilidades como text-sm o text-[15px]. */
+  @media (max-width: 1023.98px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
