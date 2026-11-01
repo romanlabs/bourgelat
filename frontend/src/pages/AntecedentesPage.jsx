@@ -4,8 +4,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { invalidarDominios } from '@/lib/queryKeys'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AlertTriangle, ArrowRight, ChevronLeft, Mail, Plus, Search, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ChevronDown, ChevronLeft, Mail, Plus, Search, Sparkles, X } from 'lucide-react'
 import AdminShell from '@/components/layout/AdminShell'
+import FilaDeslizable from '@/components/movil/FilaDeslizable'
+import HojaInferior from '@/components/movil/HojaInferior'
+import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { useEsCelular } from '@/lib/useEsCelular'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
@@ -126,26 +130,153 @@ function Campo({ label, children }) {
 }
 
 // Tarjeta de una sección clínica: título con conteo y botón para agregar.
+// En celular el título plega la sección (toque) y el botón queda compacto.
 function SeccionCard({ id, title, count, actionLabel = 'Agregar', onAction, primaria = false, className, children }) {
+  const esCelular = useEsCelular()
+  const [plegada, setPlegada] = useState(false)
+  const plegable = esCelular
+  const oculta = plegable && plegada
+  const titulo = (
+    <>
+      {title}
+      {typeof count === 'number' ? (
+        <span className="text-sm font-medium tabular-nums text-muted-foreground">{count}</span>
+      ) : null}
+    </>
+  )
   return (
-    <section aria-labelledby={id} className={cn('flex flex-col gap-3 rounded-2xl bg-card p-4 sm:p-6', className)}>
-      <div className="flex items-center justify-between gap-3">
-        <h2 id={id} className="flex items-baseline gap-2 text-lg font-semibold tracking-[-0.02em] text-foreground">
-          {title}
-          {typeof count === 'number' ? (
-            <span className="text-sm font-medium tabular-nums text-muted-foreground">{count}</span>
-          ) : null}
-        </h2>
+    <section
+      aria-labelledby={id}
+      className={cn('flex flex-col gap-2 rounded-2xl bg-card p-3.5 sm:p-6 lg:gap-3', className)}
+    >
+      <div className="flex items-center justify-between gap-2 lg:gap-3">
+        {plegable ? (
+          <button
+            type="button"
+            onClick={() => setPlegada((v) => !v)}
+            aria-expanded={!plegada}
+            className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg text-left ${FOCO}`}
+          >
+            <h2 id={id} className="flex items-baseline gap-2 text-base font-semibold tracking-[-0.02em] text-foreground">
+              {titulo}
+            </h2>
+            <ChevronDown
+              className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', plegada && '-rotate-90')}
+              aria-hidden="true"
+            />
+          </button>
+        ) : (
+          <h2 id={id} className="flex items-baseline gap-2 text-lg font-semibold tracking-[-0.02em] text-foreground">
+            {titulo}
+          </h2>
+        )}
         {onAction ? (
-          <button type="button" onClick={onAction} className={primaria ? BTN_PRIMARIO : BTN_SECUNDARIO}>
-            {actionLabel === 'Agregar' ? <Plus className="h-4 w-4" /> : null}
-            {actionLabel}
+          <button
+            type="button"
+            onClick={onAction}
+            className={cn(primaria ? BTN_PRIMARIO : BTN_SECUNDARIO, 'px-3 lg:px-4')}
+          >
+            {actionLabel === 'Agregar' ? <Plus className="h-4 w-4" /> : primaria ? <Plus className="h-4 w-4 lg:hidden" /> : null}
+            {actionLabel === 'Registrar vacuna' ? (
+              <>
+                <span className="lg:hidden">Vacuna</span>
+                <span className="hidden lg:inline">{actionLabel}</span>
+              </>
+            ) : (
+              actionLabel
+            )}
           </button>
         ) : null}
       </div>
-      {children}
+      {oculta ? null : children}
     </section>
   )
+}
+
+// Hoja inferior en celular; panel lateral en escritorio (igual que antes).
+function CascaronFormulario({ esCelular, abierta, onCambiar, titulo, descripcion, guardando, children }) {
+  if (esCelular) {
+    return (
+      <HojaInferior
+        abierta={abierta}
+        onCambiar={onCambiar}
+        titulo={titulo}
+        descripcion={descripcion}
+        pie={
+          <button type="submit" form="ant-drawer-form" disabled={guardando} className={cn(BTN_PRIMARIO, 'h-12 w-full text-base')}>
+            {guardando ? 'Guardando...' : 'Guardar'}
+          </button>
+        }
+      >
+        {children}
+      </HojaInferior>
+    )
+  }
+  return createPortal(
+    <>
+      <div
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${abierta ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => onCambiar(false)}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] ${abierta ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
+          <div>
+            <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{titulo}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{descripcion}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onCambiar(false)}
+            aria-label="Cerrar"
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px ${FOCO}`}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="flex gap-2.5 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
+          <button type="submit" form="ant-drawer-form" disabled={guardando} className={cn(BTN_PRIMARIO, 'h-11 flex-1')}>
+            Guardar
+          </button>
+          <button type="button" onClick={() => onCambiar(false)} className={cn(BTN_SECUNDARIO, 'h-11 px-5')}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  )
+}
+
+// Acción de deslizar «Recordar» (misma condición que BotonRecordar, que sigue visible).
+const accionesRecordar = (item, tutor, mascotaNombre, clinica) => {
+  if (!item.proximaRaw || diasDesde(item.proximaRaw) < -30 || !tutor?.email) return []
+  return [
+    {
+      key: 'recordar',
+      label: 'Recordar',
+      icon: Mail,
+      tono: 'primary',
+      onClick: () =>
+        window.open(
+          urlGmailRecordatorio({
+            tutorEmail: tutor.email,
+            tutorNombre: tutor.nombre,
+            mascotaNombre,
+            tratamiento: item.tratamiento,
+            proxima: item.proximaRaw,
+            clinica,
+          }),
+          '_blank',
+          'noopener,noreferrer'
+        ),
+    },
+  ]
 }
 
 // Enlace que abre Gmail con el recordatorio listo para el tutor. Solo aparece
@@ -189,7 +320,7 @@ function Vacio({ children }) {
 
 function Item({ titulo, detalle, extra, className, chip }) {
   return (
-    <div className={cn('flex items-start justify-between gap-3 rounded-xl px-3 py-3', className)}>
+    <div className={cn('flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 lg:py-3', className)}>
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[15px] font-semibold">{titulo}</span>
         {detalle ? <span className="text-sm opacity-80">{detalle}</span> : null}
@@ -220,6 +351,7 @@ export default function AntecedentesPage() {
   const usuario = useAuthStore((state) => state.usuario)
   const clinica = useAuthStore((state) => state.clinica)
   const queryClient = useQueryClient()
+  const esCelular = useEsCelular()
   const [searchParams, setSearchParams] = useSearchParams()
   const prefillAppliedRef = useRef(false)
   const mascotaIdPrefill = searchParams.get('mascotaId') || ''
@@ -672,6 +804,21 @@ export default function AntecedentesPage() {
         .filter(Boolean)
         .join(' · ')
     : 'Alergias, vacunas, cirugías y condiciones del paciente, a mano antes de consultar.'
+  const refrescar = () =>
+    Promise.all(
+      selectedPet?.id
+        ? [antecedentesQuery.refetch(), perfilQuery.refetch(), historiasQuery.refetch()]
+        : [mascotasQuery.refetch()]
+    )
+  const tituloFormulario = {
+    alergia: 'Agregar alergia',
+    vacuna: 'Registrar vacuna',
+    desparasitacion: 'Agregar desparasitación',
+    planificacion: 'Agregar planificación',
+    cirugia: 'Agregar cirugía',
+    condicion: 'Agregar condición crónica',
+    generales: 'Datos generales',
+  }[antDrawerType]
   const mostrarResultados = selectedPet ? Boolean(petSearch.trim()) : true
   const cargandoAntecedentes = Boolean(selectedPet) && antecedentesQuery.isPending
   const medicamentosTexto = mapMedicamentosToText(selectedAntecedentes?.medicamentosActuales)
@@ -733,7 +880,8 @@ export default function AntecedentesPage() {
           action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
-        <div className="flex flex-col gap-6">
+<TirarParaRefrescar onRefrescar={refrescar}>
+        <div className="flex flex-col gap-3 lg:gap-6">
           {selectedPet ? (
             <button
               type="button"
@@ -746,10 +894,10 @@ export default function AntecedentesPage() {
           ) : null}
 
           {/* Encabezado: paciente y buscador */}
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex min-w-0 flex-1 items-center gap-5">
+          <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between lg:gap-5">
+            <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-5">
               {selectedPet ? (
-                <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-accent text-[28px] font-bold text-primary">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accent text-xl font-bold text-primary lg:h-16 lg:w-16 lg:rounded-[20px] lg:text-[28px]">
                   {selectedPet.fotoPerfil ? (
                     <img src={selectedPet.fotoPerfil} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -758,13 +906,13 @@ export default function AntecedentesPage() {
                 </span>
               ) : null}
               <div className="min-w-0">
-                <h1 className="text-3xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[38px]">
+                <h1 className="truncate text-2xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[38px] lg:overflow-visible lg:whitespace-normal">
                   {selectedPet ? `Antecedentes de ${selectedPet.nombre}` : 'Antecedentes'}
                 </h1>
-                <p className="mt-2.5 text-base text-muted-foreground">{subtitulo}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground lg:mt-2.5 lg:text-base">{subtitulo}</p>
               </div>
             </div>
-            <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center lg:gap-2.5">
               {selectedPet ? (
                 <Link
                   to={`/pacientes/${selectedPet.id}/historial`}
@@ -786,14 +934,14 @@ export default function AntecedentesPage() {
 
           {!selectedPet ? (
             /* Sin paciente: lista para elegir */
-            <section aria-labelledby="ant-elegir" className="rounded-2xl bg-card p-4 sm:p-6">
-              <h2 id="ant-elegir" className="text-lg font-semibold tracking-[-0.02em] text-foreground">
+            <section aria-labelledby="ant-elegir" className="rounded-2xl bg-card p-3.5 sm:p-6">
+              <h2 id="ant-elegir" className="text-base font-semibold tracking-[-0.02em] text-foreground lg:text-lg">
                 {petSearch.trim() ? 'Resultados' : 'Elige un paciente'}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
                 Busca por nombre o elige uno de la lista para ver y registrar sus antecedentes.
               </p>
-              <div className="mt-4 flex flex-col gap-0.5">
+              <div className="mt-2 flex flex-col gap-0.5 lg:mt-4">
                 {mascotas.length === 0 ? (
                   <Vacio>
                     {mascotasQuery.isPending ? 'Cargando pacientes...' : 'No encontramos pacientes con ese nombre.'}
@@ -828,9 +976,9 @@ export default function AntecedentesPage() {
               </div>
             </section>
           ) : cargandoAntecedentes ? (
-            <div className="flex flex-col gap-6">
-              <div className="h-44 animate-pulse rounded-2xl bg-card" />
-              <div className="h-56 animate-pulse rounded-2xl bg-card" />
+            <div className="flex flex-col gap-3 lg:gap-6">
+              <div className="h-32 animate-pulse rounded-2xl bg-card lg:h-44" />
+              <div className="h-40 animate-pulse rounded-2xl bg-card lg:h-56" />
             </div>
           ) : (
             <>
@@ -838,7 +986,7 @@ export default function AntecedentesPage() {
               {alergiasRows.length > 0 ? (
                 <section
                   aria-labelledby="ant-alerta"
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-danger-soft px-4 py-4 text-danger sm:px-6 sm:py-[18px]"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-danger-soft px-3.5 py-3 text-danger sm:px-6 sm:py-[18px] lg:gap-4"
                 >
                   <div className="flex items-center gap-3.5">
                     <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -866,7 +1014,7 @@ export default function AntecedentesPage() {
                 </section>
               ) : null}
 
-              <div className="flex min-w-0 flex-col gap-6">
+              <div className="flex min-w-0 flex-col gap-3 lg:gap-6">
                   {/* Datos generales */}
                   <SeccionCard
                     id="ant-generales"
@@ -910,30 +1058,43 @@ export default function AntecedentesPage() {
                       <Vacio>Aún no hay vacunas registradas.</Vacio>
                     ) : (
                       <>
-                      <ul className="flex flex-col gap-2.5 lg:hidden">
+                      <ul className="flex flex-col divide-y divide-border lg:hidden">
                         {vacunasRows.map((row) => (
-                          <li key={row.id} className="rounded-xl border border-border bg-background p-3.5">
-                            <div className="flex items-start justify-between gap-3">
-                              <p className="min-w-0 text-base font-semibold text-foreground">{row.nombre}</p>
-                              {row.diasVencida > 0 ? (
-                                <Chip className="bg-danger-soft text-danger">
-                                  {row.diasVencida === 1 ? 'Vencida hace 1 día' : `Vencida hace ${row.diasVencida} días`}
-                                </Chip>
-                              ) : !row.proximaDosis ? (
-                                <Chip className="bg-muted text-muted-foreground">Sin refuerzo</Chip>
-                              ) : (
-                                <Chip className="bg-success-soft text-success">Al día</Chip>
-                              )}
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              Aplicada {row.fecha} · Próxima dosis {row.proximaDosis || '—'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Lote {row.lote} · {row.laboratorio}
-                            </p>
-                            <div className="mt-1">
-                              <BotonRecordar item={row} tutor={tutor} mascotaNombre={selectedPet.nombre} clinica={clinica} />
-                            </div>
+                          <li key={row.id}>
+                            <FilaDeslizable
+                              redondeo="rounded-none"
+                              acciones={accionesRecordar(row, tutor, selectedPet.nombre, clinica)}
+                            >
+                              <div className="bg-card py-2.5">
+                                <div className="flex items-start justify-between gap-3">
+                                  <p className="min-w-0 text-[15px] font-semibold text-foreground">{row.nombre}</p>
+                                  {row.diasVencida > 0 ? (
+                                    <Chip className="bg-danger-soft text-danger">
+                                      {row.diasVencida === 1 ? 'Vencida hace 1 día' : `Vencida hace ${row.diasVencida} días`}
+                                    </Chip>
+                                  ) : !row.proximaDosis ? (
+                                    <Chip className="bg-muted text-muted-foreground">Sin refuerzo</Chip>
+                                  ) : row.diasVencida >= -30 ? (
+                                    <Chip className="bg-warning-soft text-warning">
+                                      {row.diasVencida === 0 ? 'Próxima hoy' : `Próxima en ${-row.diasVencida} d`}
+                                    </Chip>
+                                  ) : (
+                                    <Chip className="bg-success-soft text-success">Al día</Chip>
+                                  )}
+                                </div>
+                                <p className="mt-0.5 text-[13px] text-muted-foreground">
+                                  Aplicada {row.fecha} · Próxima {row.proximaDosis || '—'}
+                                </p>
+                                {row.lote !== '—' || row.laboratorio !== '—' ? (
+                                  <p className="text-[13px] text-muted-foreground">
+                                    {[row.lote !== '—' ? `Lote ${row.lote}` : null, row.laboratorio !== '—' ? row.laboratorio : null]
+                                      .filter(Boolean)
+                                      .join(' · ')}
+                                  </p>
+                                ) : null}
+                                <BotonRecordar item={row} tutor={tutor} mascotaNombre={selectedPet.nombre} clinica={clinica} bloque />
+                              </div>
+                            </FilaDeslizable>
                           </li>
                         ))}
                       </ul>
@@ -986,7 +1147,7 @@ export default function AntecedentesPage() {
                     )}
                   </SeccionCard>
 
-                  <div className="grid gap-6 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-2 lg:gap-6">
                     {/* Alergias */}
                     <SeccionCard
                       id="ant-alergias"
@@ -1047,8 +1208,12 @@ export default function AntecedentesPage() {
                       ) : (
                         <div className="flex flex-col">
                           {desparasitacionesRows.map((row) => (
-                            <Item
+                            <FilaDeslizable
                               key={row.id}
+                              redondeo="rounded-none"
+                              acciones={accionesRecordar(row, tutor, selectedPet.nombre, clinica)}
+                            >
+                            <Item
                               className="px-0 text-foreground"
                               titulo={<span className="capitalize">{row.tipo}{row.producto !== 'Sin producto' ? ` · ${row.producto}` : ''}</span>}
                               detalle={`Aplicada el ${row.fecha}`}
@@ -1060,6 +1225,7 @@ export default function AntecedentesPage() {
                               }
                               chip={row.vencida ? <Chip className="bg-warning-soft text-warning">Vencida</Chip> : null}
                             />
+                            </FilaDeslizable>
                           ))}
                         </div>
                       )}
@@ -1124,47 +1290,19 @@ export default function AntecedentesPage() {
             </>
           )}
         </div>
+        </TirarParaRefrescar>
       )}
 
-      {/* ── Drawer: Antecedentes ── */}
-      {createPortal(
-        <>
-      <div
-        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ${antDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setAntDrawerOpen(false)}
-        aria-hidden="true"
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] ${antDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      {/* ── Formulario: hoja inferior en celular, panel lateral en escritorio ── */}
+      <CascaronFormulario
+        esCelular={esCelular}
+        abierta={antDrawerOpen}
+        onCambiar={setAntDrawerOpen}
+        titulo={tituloFormulario}
+        descripcion={`${selectedPet?.nombre || 'Paciente'} · ${etiquetaEspecie(selectedPet?.especie)}`}
+        guardando={guardando}
       >
-        <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
-          <div>
-            <p className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
-              {antDrawerType === 'alergia' && 'Agregar alergia'}
-              {antDrawerType === 'vacuna' && 'Registrar vacuna'}
-              {antDrawerType === 'desparasitacion' && 'Agregar desparasitación'}
-              {antDrawerType === 'planificacion' && 'Agregar planificación'}
-              {antDrawerType === 'cirugia' && 'Agregar cirugía'}
-              {antDrawerType === 'condicion' && 'Agregar condición crónica'}
-              {antDrawerType === 'generales' && 'Datos generales'}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {selectedPet?.nombre || 'Paciente'} · {etiquetaEspecie(selectedPet?.especie)}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setAntDrawerOpen(false)}
-            aria-label="Cerrar"
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground transition hover:brightness-95 active:translate-y-px ${FOCO}`}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <>
           {/* Generales */}
           {antDrawerType === 'generales' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleGuardarGenerales}>
@@ -1244,7 +1382,7 @@ export default function AntecedentesPage() {
                       aria-pressed={desparasitacionForm.tipo === option.value}
                       onClick={() => setDesparasitacionForm((c) => ({ ...c, tipo: option.value }))}
                       className={cn(
-                        'h-10 flex-1 rounded-md text-sm font-semibold transition',
+                        'h-12 flex-1 rounded-md lg:h-10 text-sm font-semibold transition',
                         FOCO,
                         desparasitacionForm.tipo === option.value
                           ? 'bg-card text-foreground'
@@ -1319,20 +1457,8 @@ export default function AntecedentesPage() {
               </Campo>
             </form>
           )}
-        </div>
-
-        <div className="flex gap-2.5 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
-          <button type="submit" form="ant-drawer-form" disabled={guardando} className={cn(BTN_PRIMARIO, 'h-11 flex-1')}>
-            Guardar
-          </button>
-          <button type="button" onClick={() => setAntDrawerOpen(false)} className={cn(BTN_SECUNDARIO, 'h-11 px-5')}>
-            Cancelar
-          </button>
-        </div>
-      </div>
-        </>,
-        document.body
-      )}
+        </>
+      </CascaronFormulario>
     </AdminShell>
   )
 }
