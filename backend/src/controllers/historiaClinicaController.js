@@ -952,7 +952,8 @@ const obtenerPreliquidacion = async (req, res) => {
     // que todavia no salio de inventario.
     if (!historia.bloqueada) {
       return res.status(400).json({
-        message: 'Cierra la historia clinica antes de facturarla',
+        message: 'Cierra la historia clínica antes de cobrarla',
+        mascotaId: historia.mascotaId,
       })
     }
 
