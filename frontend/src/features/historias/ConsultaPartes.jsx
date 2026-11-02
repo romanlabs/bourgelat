@@ -3,6 +3,7 @@ import { aFechaLocal, fechaCorta, formatoNumero, soloDia } from '@/features/paci
 import { hoyLocal } from '@/lib/fecha'
 import { nombreAutor } from '@/lib/equipo'
 
+import { SIN_ALERGIAS, SIN_MEDICACION, textoEsterilizado, textoRegistrado } from '@/features/antecedentes/textoAntecedentes'
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const CAMPO =
   'h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground sm:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
@@ -184,21 +185,21 @@ export function AntecedentesConsulta({ antecedentes }) {
     <dl className="flex flex-col divide-y divide-border">
       <FilaAntecedente
         label="Alergias"
-        valor={alergias.length ? alergias.join(', ') : 'Ninguna registrada'}
+        valor={textoRegistrado(alergias, antecedentes?.sinAlergias, SIN_ALERGIAS)}
         tono={alergias.length ? 'danger' : 'muted'}
       />
       {condiciones.length ? <FilaAntecedente label="Condiciones" valor={condiciones.join(', ')} tono="warning" /> : null}
       <FilaAntecedente
         label="Esterilizado"
         valor={
-          antecedentes?.esterilizado
-            ? `Sí${antecedentes.fechaEsterilizacion ? `, ${fechaCorta(antecedentes.fechaEsterilizacion)}` : ''}`
-            : 'No'
+          antecedentes?.esterilizado === true && antecedentes.fechaEsterilizacion
+            ? `Sí, ${fechaCorta(antecedentes.fechaEsterilizacion)}`
+            : textoEsterilizado(antecedentes?.esterilizado)
         }
       />
       <FilaAntecedente
         label="Medicación actual"
-        valor={medicamentos.length ? medicamentos.join(', ') : 'Ninguna'}
+        valor={textoRegistrado(medicamentos, antecedentes?.sinMedicacion, SIN_MEDICACION)}
         tono={medicamentos.length ? 'normal' : 'muted'}
       />
       <FilaAntecedente label="Vacunas" valor={vacunas.texto} tono={vacunas.tono} />

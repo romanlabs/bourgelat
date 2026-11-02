@@ -25,12 +25,6 @@ export default function NoEncontradaPage() {
           Ir al inicio
           <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link
-          to="/planes"
-          className="inline-flex items-center justify-center rounded-full border border-papel-300 bg-papel-50 px-6 py-3 text-sm font-semibold text-tinta-800 no-underline transition hover:border-papel-400"
-        >
-          Ver planes
-        </Link>
       </div>
     </PublicPageShell>
   )

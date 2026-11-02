@@ -63,43 +63,6 @@ export function DashboardPanel({ title, subtitle, action, children, className = 
   )
 }
 
-export function SidebarTabButton({ icon, label, active = false, onClick, badge }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-[18px] border px-3 py-3 text-left text-sm transition ${
-        active
-          ? 'border-sidebar-primary/60 bg-sidebar-primary/15 text-sidebar-foreground'
-          : 'border-sidebar-border bg-sidebar/80 text-sidebar-foreground hover:border-sidebar-border hover:bg-sidebar-accent'
-      }`}
-    >
-      <span className="flex items-center gap-3">
-        <span
-          className={`flex h-9 w-9 items-center justify-center border ${
-            active
-              ? 'border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary'
-              : 'border-sidebar-border bg-sidebar text-sidebar-foreground/70'
-          }`}
-        >
-          {createElement(icon, { className: 'h-4 w-4' })}
-        </span>
-        <span className="min-w-0 break-words text-left font-medium [overflow-wrap:anywhere]">{label}</span>
-      </span>
-      {badge ? (
-        <span
-          className={`shrink-0 border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-            active
-              ? 'border-sidebar-primary/40 text-sidebar-foreground'
-              : 'border-sidebar-border text-sidebar-foreground/60'
-          }`}
-        >
-          {badge}
-        </span>
-      ) : null}
-    </button>
-  )
-}
 
 export function KpiCard({
   icon,
@@ -147,56 +110,6 @@ export function StatusPill({ children, tone = 'border-border bg-muted text-foreg
   )
 }
 
-export function MiniDonutChart({
-  data,
-  centerLabel,
-  centerValue,
-  size = 92,
-  thickness = 14,
-  className = '',
-}) {
-  const hasData = data.some((item) => item.value > 0)
-  const outerRadius = size / 2
-  const innerRadius = outerRadius - thickness
-
-  return (
-    <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
-      {hasData ? (
-        <>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={innerRadius}
-                outerRadius={outerRadius}
-                paddingAngle={2}
-                stroke="none"
-              >
-                {data.map((item) => (
-                  <Cell key={item.key || item.name} fill={item.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-[13px] font-semibold text-muted-foreground">
-              {centerLabel}
-            </span>
-            <span className="mt-1 text-[13px] font-semibold leading-none text-card-foreground">
-              {centerValue}
-            </span>
-          </div>
-        </>
-      ) : (
-        <div className="flex h-full w-full items-center justify-center rounded-full border border-dashed border-border bg-muted text-[13px] font-semibold text-muted-foreground">
-          Sin
-        </div>
-      )}
-    </div>
-  )
-}
 
 export function LinePanel({
   title,

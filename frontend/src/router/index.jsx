@@ -83,8 +83,6 @@ const MiPlanPage = paginaApp(() => import('@/pages/MiPlanPage'))
 const InventarioPage = paginaApp(() => import('@/pages/InventarioPage'))
 const FinanzasPage = paginaApp(() => import('@/pages/FinanzasPage'))
 const LandingPage   = lazy(() => import('@/pages/LandingPage'))
-const PlanesPage    = lazy(() => import('@/pages/PlanesPage'))
-const PagarPage     = lazy(() => import('@/pages/PagarPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
 const NoEncontradaPage = lazy(() => import('@/pages/NoEncontradaPage'))
 
@@ -103,6 +101,11 @@ const ScrollManager = () => {
   }, [location.pathname])
 
   return <Outlet />
+}
+
+const RedirigirPlanes = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  return <Navigate to={isAuthenticated ? '/plan' : '/'} replace />
 }
 
 const HostAwareHome = () => {
@@ -177,8 +180,10 @@ const router = createBrowserRouter([
       // Fuera de PublicOnlyRoute: si el enlace se abre en un equipo con otra
       // sesión iniciada (el del administrador), igual debe mostrarse.
       { path: '/aceptar-invitacion', element: <Suspense fallback={<Loader />}><AceptarInvitacionPage /></Suspense> },
-      { path: '/planes', element: <Suspense fallback={<Loader />}><PlanesPage /></Suspense> },
-      { path: '/pagar', element: <Suspense fallback={<Loader />}><PagarPage /></Suspense> },
+      // Los planes y el pago solo se ven en Mi plan. Estas rutas quedan por los
+      // enlaces viejos: los correos de cobro enviados y los Términos las citan.
+      { path: '/planes', element: <RedirigirPlanes /> },
+      { path: '/pagar', element: <Navigate to="/plan" replace /> },
       { path: '/nosotros', element: <Suspense fallback={<Loader />}><NosotrosPage /></Suspense> },
       // Los documentos legales son solo el PDF; las rutas viejas llevan a él
       // (las cookies son una sección de la política de datos).

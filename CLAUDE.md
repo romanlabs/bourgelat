@@ -69,7 +69,7 @@ bourgelat/
 │       ├── assets/          # Imágenes (auth/, landing/)
 │       ├── components/
 │       │   ├── layout/      # AdminShell, QuickCreateMenu
-│       │   ├── shared/      # DataTable, EmptyState, ConfirmDialog, ECGHeartbeatCanvas...
+│       │   ├── shared/      # DataTable, EmptyState, ConfirmDialog...
 │       │   └── ui/          # Shadcn components
 │       ├── content/         # publicSiteContent.js (copy del sitio público)
 │       ├── data/            # colombia.js (departamentos y municipios)
@@ -138,7 +138,7 @@ Es la misma marca de noche: los mismos roles con valores más claros.
   `tinta-*`, `caramel-*`, `clinical-*`. Siempre en claro, como la landing.
 - **Gráficas**: `chartColors` de `@/lib/theme` (hex fijos de `theme.tokens.cjs`,
   porque Recharts los pone como atributos SVG).
-- **Landing y `/planes`**: todavía con hex propios (en la paleta, pero sin tokens).
+- **Landing**: todavía con hex propios (en la paleta, pero sin tokens).
 
 `npm run lint:colores` (frontend) falla con colores sueltos fuera de los archivos
 exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
@@ -169,7 +169,7 @@ exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
 | Auditoría | `/auditoria` | `/api/auditoria` |
 | Soporte (tickets de clínicas) | `/soporte` | `/api/soporte` (el equipo responde con `npm run soporte:*`, ver `docs/soporte.md`) |
 | Auth (incl. OAuth Google) | `/login`, `/registro` | `/api/auth` |
-| Público | `/`, `/planes`, `/nosotros` | — |
+| Público | `/`, `/nosotros` (`/planes` y `/pagar` redirigen: precios y pago solo en Mi plan, `/plan`) | — |
 
 ---
 

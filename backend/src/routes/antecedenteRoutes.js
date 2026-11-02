@@ -176,7 +176,9 @@ const validateMedicamentosActuales = (value) => {
 
 const validarGenerales = [
   param('mascotaId').isUUID().withMessage('Mascota no valida'),
-  body('esterilizado').optional().isBoolean().withMessage('esterilizado debe ser booleano'),
+  body('esterilizado').optional({ nullable: true }).isBoolean().withMessage('esterilizado debe ser booleano'),
+  body('sinAlergias').optional().isBoolean().withMessage('sinAlergias debe ser booleano'),
+  body('sinMedicacion').optional().isBoolean().withMessage('sinMedicacion debe ser booleano'),
   body('fechaEsterilizacion').optional({ values: 'falsy' }).custom(validateDateOnly),
   body('observacionesGenerales')
     .optional({ values: 'falsy' })

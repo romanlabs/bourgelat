@@ -48,8 +48,11 @@ const historiaHref = (cita) => {
 }
 
 // Se cobra en Caja. Con historia, Caja precarga sus insumos (igual que el botón
-// de cobrar dentro de la historia clínica).
-const cobroEstado = (cita) => (cita?.historia?.id ? { facturarHistoriaId: cita.historia.id } : undefined)
+// de cobrar dentro de la historia clínica); sin ella, al menos el tutor de la cita.
+const cobroEstado = (cita) => {
+  if (cita?.historia?.id) return { facturarHistoriaId: cita.historia.id }
+  return cita?.propietario?.id ? { cobrarTutor: cita.propietario } : undefined
+}
 
 const FALTA_HISTORIA = { label: 'Falta historia', className: 'bg-warning-soft text-warning' }
 

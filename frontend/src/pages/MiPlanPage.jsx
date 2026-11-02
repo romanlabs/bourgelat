@@ -78,7 +78,7 @@ function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
         <span className="font-semibold">{formato(usados)} de {formato(limite)}</span>
       </span>
       <span className="flex h-2 rounded bg-primary-foreground/20" role="progressbar" aria-label={etiqueta} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <span className={cn('h-2 rounded', pct >= 90 ? 'bg-brand' : 'bg-primary-foreground')} style={{ width: `${pct}%` }} />
+        <span className="h-2 rounded bg-brand transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
       </span>
     </div>
   )
@@ -325,26 +325,29 @@ export default function MiPlanPage() {
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <section aria-labelledby="pl-pago" className="flex flex-wrap items-center justify-center gap-5 rounded-2xl bg-card p-5 sm:justify-start sm:gap-7 sm:p-7">
-            <img src={qrBourgelat} alt="Código QR de pago Bre-B de Bourgelat" className="h-[148px] w-[148px] shrink-0 rounded-[14px] bg-white p-2" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:min-w-[240px]">
+            <img src={qrBourgelat} alt="Código QR de pago Bre-B de Bourgelat" className="h-[200px] w-[200px] shrink-0 rounded-[14px] bg-white p-2" />
+            <div className="flex min-w-0 flex-1 basis-[280px] flex-col gap-3">
               <h2 id="pl-pago" className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cómo pagar</h2>
               <p className="text-[15px] leading-relaxed text-foreground/85">
-                Escanea el código con tu banco o paga por Bre-B a la llave{' '}
-                <button
-                  type="button"
-                  onClick={copiarLlave}
-                  title="Copiar la llave"
-                  className={cn('inline-flex min-h-11 items-center gap-1 rounded font-semibold text-primary underline-offset-2 hover:underline', FOCO)}
-                >
-                  {pagoManual.llaveBreB}
-                  {copiada ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-                . Sube el comprobante y activamos el plan el mismo día hábil.
+                Escanea el código con tu banco o paga por Bre-B a esta llave:
               </p>
-              <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={copiarLlave}
+                title="Copiar la llave"
+                aria-label={`Copiar la llave ${pagoManual.llaveBreB}`}
+                className={cn('flex min-h-11 items-center justify-between gap-3 rounded-lg bg-muted px-3.5 text-base font-semibold tabular-nums text-foreground transition hover:brightness-95', FOCO)}
+              >
+                {pagoManual.llaveBreB}
+                {copiada ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+              </button>
+              <p className="text-[15px] leading-relaxed text-foreground/85">
+                Sube el comprobante y activamos el plan el mismo día hábil.
+              </p>
+              <div className="flex flex-wrap gap-2.5 pt-1">
                 <Link
                   to={enlaceSolicitud('Comprobante de pago')}
-                  className={cn('flex h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px', FOCO)}
+                  className={cn('flex h-12 flex-1 basis-[170px] items-center justify-center whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px', FOCO)}
                 >
                   Subir comprobante
                 </Link>
@@ -353,7 +356,7 @@ export default function MiPlanPage() {
                     href={`https://wa.me/${pagoManual.whatsapp}?text=${mensajeComprobante}`}
                     target="_blank"
                     rel="noreferrer"
-                    className={cn('flex h-12 items-center justify-center rounded-lg bg-secondary px-4 text-sm font-semibold text-secondary-foreground transition hover:brightness-95', FOCO)}
+                    className={cn('flex h-12 flex-1 basis-[170px] items-center justify-center whitespace-nowrap rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition hover:brightness-95', FOCO)}
                   >
                     Escribir por WhatsApp
                   </a>

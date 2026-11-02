@@ -35,6 +35,7 @@ import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { useDeslizarHorizontal } from '@/lib/gestos'
 import { useEsCelular } from '@/lib/useEsCelular'
 
+import { SIN_ALERGIAS, textoRegistrado } from '@/features/antecedentes/textoAntecedentes'
 const TABS = [
   { id: 'historia', label: 'Consultas', titulo: 'Historia clínica' },
   { id: 'examenes', label: 'Exámenes', titulo: 'Exámenes de laboratorio' },
@@ -344,7 +345,7 @@ export default function PacienteHistorialPage() {
   const subtitulo = mascota
     ? [
         mascota.raza || etiquetaEspecie(mascota.especie),
-        [sexoTexto, mascota.esterilizado ? (mascota.sexo === 'hembra' ? 'esterilizada' : 'esterilizado') : '']
+        [sexoTexto, mascota.esterilizado === true ? (mascota.sexo === 'hembra' ? 'esterilizada' : 'esterilizado') : '']
           .filter(Boolean)
           .join(' '),
         edadTexto,
@@ -366,7 +367,7 @@ export default function PacienteHistorialPage() {
         { label: 'Temperatura', value: ultimaTemperatura ? `${formatoNumero(ultimaTemperatura)} °C` : '—' },
         {
           label: 'Alergias',
-          value: antecedentesQuery.isPending ? '…' : alergias.length ? alergias.join(', ') : 'Ninguna',
+          value: antecedentesQuery.isPending ? '…' : textoRegistrado(alergias, antecedentes?.sinAlergias, SIN_ALERGIAS),
           alerta: alergias.length > 0,
         },
         { label: 'Historia N.º', value: numeroHistoria || 'Sin número' },

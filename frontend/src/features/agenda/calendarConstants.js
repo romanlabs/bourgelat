@@ -3,7 +3,6 @@
 export const HORA_INICIO = 0   // 00:00 — dia completo, como Google Calendar
 export const HORA_FIN = 24     // 24:00 (exclusive — ultimo slot es 23:30)
 export const SLOT_MINUTOS = 30
-export const TOTAL_SLOTS = (HORA_FIN - HORA_INICIO) * 2
 export const SLOT_HEIGHT_MAX = 48 // px por slot de 30 min: una cita de media hora muestra paciente y motivo
 export const SLOT_HEIGHT_MIN = 44 // por debajo, la cita de media hora solo cabe en una línea
 

@@ -5,8 +5,6 @@ import { legalLinks } from '@/components/landing/data'
 
 const footerLinks = [
   { label: 'Nosotros', to: '/nosotros' },
-  { label: 'Planes', to: '/planes' },
-  { label: 'Pagar', to: '/pagar' },
 ]
 
 export default function PublicPageShell({

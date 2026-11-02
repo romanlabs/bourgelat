@@ -93,7 +93,7 @@ const procesarRecordatorios = async ({
     })
 
     const urlFrontend = resolverUrlFrontend()
-    const urlPagar = `${urlFrontend}/pagar`
+    const urlPagar = `${urlFrontend}/plan`
 
     for (const suscripcion of candidatas) {
       // Un fallo en una candidata no corta la corrida: se registra y se sigue.

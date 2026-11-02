@@ -35,7 +35,7 @@ export const VERSIONES_LEGALES = {
   terminos: {
     titulo: 'Términos y condiciones de uso',
     version: '1.0',
-    vigencia: '2026-10-31',
+    vigencia: '2026-11-02',
     archivo: 'terminos-y-condiciones-v1.0.pdf',
   },
 }

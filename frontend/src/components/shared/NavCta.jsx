@@ -112,7 +112,7 @@ export function NavCta({
  * sin pill ni fondo, ícono opcional más pequeño, subrayado que aparece al hover.
  *
  * Uso:
- *   <NavCtaLink to="/planes">Ver planes y renovación</NavCtaLink>
+ *   <NavCtaLink to="/plan">Ver planes y renovación</NavCtaLink>
  *   <NavCtaLink to="/agenda" icon={ArrowRight} tone="destructive">Documentar urgencias</NavCtaLink>
  */
 export function NavCtaLink({

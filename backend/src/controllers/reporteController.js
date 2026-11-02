@@ -31,53 +31,6 @@ const {
 const AbonoFactura = require('../models/AbonoFactura');
 const CuentaRecaudo = require('../models/CuentaRecaudo');
 
-const reporteIngresos = async (req, res) => {
-  try {
-    const { clinicaId } = req.usuario;
-    const { fechaInicio, fechaFin } = req.query;
-
-    if (!fechaInicio || !fechaFin) {
-      return res.status(400).json({ message: 'fechaInicio y fechaFin son obligatorios' });
-    }
-
-    const facturas = await Factura.findAll({
-      where: {
-        clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
-        fecha: { [Op.between]: [fechaInicio, fechaFin] },
-      },
-      attributes: ['id', 'numero', 'fecha', 'total', 'metodoPago'],
-      order: [['fecha', 'ASC']],
-    });
-
-    const totalIngresos = facturas.reduce((sum, f) => sum + parseFloat(f.total), 0);
-
-    const ingresosPorMetodoPago = facturas.reduce((acc, f) => {
-      const metodo = f.metodoPago || 'otro';
-      acc[metodo] = (acc[metodo] || 0) + parseFloat(f.total);
-      return acc;
-    }, {});
-
-    // Ingresos por dia
-    const ingresosPorDia = facturas.reduce((acc, f) => {
-      const dia = f.fecha;
-      acc[dia] = (acc[dia] || 0) + parseFloat(f.total);
-      return acc;
-    }, {});
-
-    res.json({
-      periodo: { fechaInicio, fechaFin },
-      totalFacturas: facturas.length,
-      totalIngresos,
-      ingresosPorMetodoPago,
-      ingresosPorDia,
-      facturas,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
-  }
-};
-
 const reporteCitas = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
@@ -175,8 +128,6 @@ const dashboardGeneral = async (req, res) => {
   try {
     const { clinicaId } = req.usuario;
     const hoy = new Date();
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
     const fechaHoy = formatDateOnlyLocal(hoy);
 
     // Citas de hoy
@@ -186,15 +137,6 @@ const dashboardGeneral = async (req, res) => {
 
     const citasPendientesHoy = await Cita.count({
       where: { clinicaId, fecha: fechaHoy, estado: 'programada' },
-    });
-
-    // Ingresos del mes
-    const ingresosMes = await Factura.sum('total', {
-      where: {
-        clinicaId,
-        estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
-        fecha: { [Op.between]: [inicioMes, finMes] },
-      },
     });
 
     // Totales generales
@@ -227,9 +169,6 @@ const dashboardGeneral = async (req, res) => {
         citasTotales: citasHoy,
         citasPendientes: citasPendientesHoy,
       },
-      mes: {
-        ingresos: ingresosMes || 0,
-      },
       totales: {
         propietarios: totalPropietarios,
         mascotas: totalMascotas,
@@ -239,71 +178,6 @@ const dashboardGeneral = async (req, res) => {
         productosbajoStock,
         insumosBajoStock,
       },
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor', error: error.message });
-  }
-};
-
-// El corazón del ciclo administrativo: ¿la clínica ganó o perdió en el periodo?
-// Ganancia = ingresos por facturas (emitidas/pagadas) − gastos no anulados.
-const reporteRentabilidad = async (req, res) => {
-  try {
-    const { clinicaId } = req.usuario;
-    const { fechaInicio, fechaFin } = req.query;
-
-    if (!fechaInicio || !fechaFin) {
-      return res.status(400).json({ message: 'fechaInicio y fechaFin son obligatorios' });
-    }
-
-    const [facturas, gastos] = await Promise.all([
-      Factura.findAll({
-        where: {
-          clinicaId,
-          estado: { [Op.in]: ['emitida', 'pagada', 'parcial'] },
-          fecha: { [Op.between]: [fechaInicio, fechaFin] },
-        },
-        attributes: ['fecha', 'total'],
-      }),
-      Gasto.findAll({
-        where: {
-          clinicaId,
-          anulado: false,
-          fecha: { [Op.between]: [fechaInicio, fechaFin] },
-        },
-        attributes: ['fecha', 'monto', 'categoria'],
-      }),
-    ]);
-
-    const totalIngresos = facturas.reduce((sum, f) => sum + parseFloat(f.total), 0);
-    const totalGastos = gastos.reduce((sum, g) => sum + parseFloat(g.monto), 0);
-    const ganancia = totalIngresos - totalGastos;
-    const margen = totalIngresos > 0 ? ((ganancia / totalIngresos) * 100).toFixed(1) : null;
-
-    const gastosPorCategoria = gastos.reduce((acc, g) => {
-      acc[g.categoria] = (acc[g.categoria] || 0) + parseFloat(g.monto);
-      return acc;
-    }, {});
-
-    // Serie diaria para graficar ingresos vs gastos en el mismo eje.
-    const porDia = {};
-    for (const f of facturas) {
-      if (!porDia[f.fecha]) porDia[f.fecha] = { ingresos: 0, gastos: 0 };
-      porDia[f.fecha].ingresos += parseFloat(f.total);
-    }
-    for (const g of gastos) {
-      if (!porDia[g.fecha]) porDia[g.fecha] = { ingresos: 0, gastos: 0 };
-      porDia[g.fecha].gastos += parseFloat(g.monto);
-    }
-
-    res.json({
-      periodo: { fechaInicio, fechaFin },
-      totalIngresos,
-      totalGastos,
-      ganancia,
-      margen: margen !== null ? `${margen}%` : null,
-      gastosPorCategoria,
-      porDia,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
@@ -505,10 +379,9 @@ const reporteAgenda = async (req, res) => {
 };
 
 // ── Análisis financiero del periodo ──────────────────────────────────────────
-// La lectura larga de Finanzas (un año, un trimestre, un rango libre). Usa los
-// mismos criterios que `reporteRentabilidad` —ingreso = facturas emitidas,
-// parciales o pagadas; gasto = gastos no anulados— pero agrega en Postgres en
-// vez de traer filas: un año de una clínica grande son miles de facturas.
+// La lectura larga de Finanzas (un año, un trimestre, un rango libre). Ingreso es
+// la plata que entró (contado + abonos); gasto, los gastos no anulados. Agrega en
+// Postgres en vez de traer filas: un año de una clínica grande son miles de facturas.
 // Los métodos de pago no van aquí: `metodoPago` está cifrado y no se agrupa en SQL.
 const ESTADOS_INGRESO = ['emitida', 'pagada', 'parcial'];
 const TOP_LINEAS = 5;
@@ -779,6 +652,70 @@ const ABONADO_DE_LA_FACTURA = sequelize.literal(
   `(SELECT COALESCE(SUM(a."monto"), 0) FROM "abonos_factura" a WHERE a."facturaId" = "Factura"."id")`
 );
 
+const leerFacturasCobro = (req, inicio, fin) =>
+  Factura.findAll({
+    attributes: ['id', 'fecha', 'total', 'saldoPendiente', 'metodoPago', 'cuentaRecaudoId', [ABONADO_DE_LA_FACTURA, 'abonado']],
+    where: tenantWhere(req, {
+      estado: { [Op.in]: ESTADOS_INGRESO },
+      fecha: { [Op.between]: [inicio, fin] },
+    }),
+  });
+
+const leerAbonosCobro = (req, inicio, fin) => {
+  const { desde, hasta } = limitesBogota(inicio, fin);
+  return AbonoFactura.findAll({
+    attributes: ['monto', 'metodoPago', 'cuentaRecaudoId', 'createdAt'],
+    where: tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } }),
+  });
+};
+
+const entradaCobro = (filasFacturas, filasAbonos) => ({
+  facturas: filasFacturas.map((f) => ({
+    id: f.id,
+    fecha: f.fecha,
+    total: f.total,
+    saldoPendiente: f.saldoPendiente,
+    metodoPago: f.metodoPago,
+    cuentaRecaudoId: f.cuentaRecaudoId,
+  })),
+  abonosPorFactura: Object.fromEntries(filasFacturas.map((f) => [f.id, f.get('abonado')])),
+  abonos: filasAbonos.map((a) => ({
+    fecha: fechaBogota(a.createdAt),
+    monto: a.monto,
+    metodoPago: a.metodoPago,
+    cuentaRecaudoId: a.cuentaRecaudoId,
+  })),
+});
+
+// Lo que entró en el periodo, por medio: lo mismo que Ingresos en el Resumen de
+// Finanzas. Lo vendido a crédito no suma hasta que se cobra.
+const reporteIngresos = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    const errorRango = validarRango(fechaInicio, fechaFin);
+    if (errorRango) return res.status(400).json({ message: errorRango });
+
+    const [facturas, abonos] = await Promise.all([
+      leerFacturasCobro(req, fechaInicio, fechaFin),
+      leerAbonosCobro(req, fechaInicio, fechaFin),
+    ]);
+    const cobro = agregarPorMedio(entradaCobro(facturas, abonos));
+
+    res.json({
+      periodo: { fechaInicio, fechaFin },
+      totalVentas: facturas.length,
+      totalVendido: redondearPesos(facturas.reduce((suma, f) => suma + Number(f.total || 0), 0)),
+      totalIngresos: cobro.total,
+      ingresosPorMetodoPago: Object.fromEntries(
+        cobro.medios.filter((medio) => medio.cobrado > 0).map((medio) => [medio.id, medio.cobrado])
+      ),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor', error: error.message });
+  }
+};
+
 const reporteMediosPago = async (req, res) => {
   try {
     const { fechaInicio, fechaFin } = req.query;
@@ -790,28 +727,11 @@ const reporteMediosPago = async (req, res) => {
     const anterior = periodoAnterior(fechaInicio, fechaFin);
     const completo = req.analisisCompleto === true;
 
-    const leerFacturas = (inicio, fin) =>
-      Factura.findAll({
-        attributes: ['id', 'fecha', 'total', 'saldoPendiente', 'metodoPago', 'cuentaRecaudoId', [ABONADO_DE_LA_FACTURA, 'abonado']],
-        where: tenantWhere(req, {
-          estado: { [Op.in]: ESTADOS_INGRESO },
-          fecha: { [Op.between]: [inicio, fin] },
-        }),
-      });
-
-    const leerAbonos = (inicio, fin) => {
-      const { desde, hasta } = limitesBogota(inicio, fin);
-      return AbonoFactura.findAll({
-        attributes: ['monto', 'metodoPago', 'cuentaRecaudoId', 'createdAt'],
-        where: tenantWhere(req, { createdAt: { [Op.gte]: desde, [Op.lt]: hasta } }),
-      });
-    };
-
     const [facturas, abonos, facturasAnterior, abonosAnterior, gastosPorMetodo, cuentas] = await Promise.all([
-      leerFacturas(fechaInicio, fechaFin),
-      leerAbonos(fechaInicio, fechaFin),
-      leerFacturas(anterior.fechaInicio, anterior.fechaFin),
-      leerAbonos(anterior.fechaInicio, anterior.fechaFin),
+      leerFacturasCobro(req, fechaInicio, fechaFin),
+      leerAbonosCobro(req, fechaInicio, fechaFin),
+      leerFacturasCobro(req, anterior.fechaInicio, anterior.fechaFin),
+      leerAbonosCobro(req, anterior.fechaInicio, anterior.fechaFin),
       // Los gastos (metodoPago plano) solo van en el análisis completo, como la rentabilidad.
       // Solo los manuales: el consumo de insumos de una historia no saca plata
       // por ningún medio (se pagó al comprar el insumo).
@@ -833,30 +753,12 @@ const reporteMediosPago = async (req, res) => {
     ]);
     const nombreCuenta = Object.fromEntries(cuentas.map((c) => [c.id, c.nombre]));
 
-    const entrada = (filasFacturas, filasAbonos) => ({
-      facturas: filasFacturas.map((f) => ({
-        id: f.id,
-        fecha: f.fecha,
-        total: f.total,
-        saldoPendiente: f.saldoPendiente,
-        metodoPago: f.metodoPago,
-        cuentaRecaudoId: f.cuentaRecaudoId,
-      })),
-      abonosPorFactura: Object.fromEntries(filasFacturas.map((f) => [f.id, f.get('abonado')])),
-      abonos: filasAbonos.map((a) => ({
-        fecha: fechaBogota(a.createdAt),
-        monto: a.monto,
-        metodoPago: a.metodoPago,
-        cuentaRecaudoId: a.cuentaRecaudoId,
-      })),
-    });
-
     const actual = agregarPorMedio({
-      ...entrada(facturas, abonos),
+      ...entradaCobro(facturas, abonos),
       claves: clavesDelPeriodo(fechaInicio, fechaFin, granularidad),
       granularidad,
     });
-    const previo = agregarPorMedio(entrada(facturasAnterior, abonosAnterior));
+    const previo = agregarPorMedio(entradaCobro(facturasAnterior, abonosAnterior));
     const previoPorMedio = Object.fromEntries(previo.medios.map((m) => [m.id, m.cobrado]));
     const gastosPorMedio = aRecord(gastosPorMetodo, 'metodoPago');
 
@@ -893,7 +795,6 @@ module.exports = {
   reporteAgenda,
   reporteInventario,
   dashboardGeneral,
-  reporteRentabilidad,
   reporteFinanzasPeriodo,
   reporteMediosPago,
 };

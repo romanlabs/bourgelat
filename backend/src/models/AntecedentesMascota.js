@@ -57,11 +57,18 @@ const AntecedentesMascota = sequelize.define('AntecedentesMascota', {
     defaultValue: [],
     comment: 'Medicamentos en curso: [{nombre, dosis, frecuencia, desde}]',
   },
-  // Informacion reproductiva
-  esterilizado: {
+  // Lista vacia no es lo mismo que "ninguna": estas dos confirman que se pregunto.
+  sinAlergias: {
     type: DataTypes.BOOLEAN,
+    allowNull: false,
     defaultValue: false,
   },
+  sinMedicacion: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  // Informacion reproductiva. Si esta esterilizado o no se guarda en Mascota.
   fechaEsterilizacion: {
     type: DataTypes.DATEONLY,
     allowNull: true,

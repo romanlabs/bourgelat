@@ -72,10 +72,6 @@ export const CITA_TIPO_COLORS = {
   otro: tintaSuave,
 }
 
-export const CITA_ORIGEN_LABELS = {
-  programada: 'Programadas',
-  walk_in: 'Llegada espontánea',
-}
 
 export const formatCurrency = (value) =>
   new Intl.NumberFormat('es-CO', {
