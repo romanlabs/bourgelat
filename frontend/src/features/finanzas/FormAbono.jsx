@@ -5,6 +5,7 @@ import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { useRegistrarAbono } from '@/features/finanzas/useAdministracion'
 import { useCuentasRecaudo } from '@/features/finanzas/useCuentasRecaudo'
 import { cuentaDelCobro, faltaCuenta, MENSAJE_FALTA_CUENTA } from '@/features/finanzas/cuentaCobro'
+import { crearGestorClaveAbono } from '@/features/finanzas/claveIdempotenciaAbono'
 import SelectorCuenta from '@/features/finanzas/SelectorCuenta'
 import { mensajeDeError } from '@/lib/errores'
 
@@ -30,6 +31,7 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
   const [cuentaRecaudoId, setCuentaRecaudoId] = useState('')
   const [error, setError] = useState(null)
   const registrarAbono = useRegistrarAbono()
+  const [claveAbono] = useState(() => crearGestorClaveAbono())
   const { data: cuentas = [] } = useCuentasRecaudo({ soloActivas: true })
   const cobro = { metodoPago, cuentaRecaudoId, cuentas }
 
@@ -39,13 +41,16 @@ export default function FormAbono({ factura, autoFocus = false, onListo, onCance
       setError(MENSAJE_FALTA_CUENTA)
       return
     }
+    const cuentaRecaudoIdCobro = cuentaDelCobro(cobro) || undefined
     try {
       await registrarAbono.mutateAsync({
         facturaId: factura.id,
         monto: valor,
         metodoPago,
-        cuentaRecaudoId: cuentaDelCobro(cobro) || undefined,
+        cuentaRecaudoId: cuentaRecaudoIdCobro,
+        claveIdempotencia: claveAbono.obtener({ monto: valor, metodoPago, cuentaRecaudoId: cuentaRecaudoIdCobro }),
       })
+      claveAbono.reiniciar()
       setMonto('')
       onListo?.()
     } catch (err) {

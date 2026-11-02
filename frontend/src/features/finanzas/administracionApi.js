@@ -30,8 +30,10 @@ export const administracionApi = {
     return data
   },
 
-  async registrarAbono(facturaId, payload) {
-    const { data } = await api.post(`/facturas/${facturaId}/abonos`, payload)
+  async registrarAbono(facturaId, payload, claveIdempotencia) {
+    const { data } = await api.post(`/facturas/${facturaId}/abonos`, payload, {
+      headers: claveIdempotencia ? { 'Idempotency-Key': claveIdempotencia } : undefined,
+    })
     return data
   },
 
