@@ -36,17 +36,6 @@ export const PAYMENT_METHOD_ICONS = {
   otro: MoreHorizontal,
 }
 
-// Etiquetas cortas del selector del carrito. Ya no se abrevian: la grilla de
-// dos columnas les da ancho suficiente y "Transfer." se leia cortado.
-export const PAYMENT_METHOD_SHORT = {
-  efectivo: 'Efectivo',
-  tarjeta_debito: 'Débito',
-  tarjeta_credito: 'Crédito',
-  transferencia: 'Transferencia',
-  nequi: 'Nequi',
-  daviplata: 'Daviplata',
-  otro: 'Otro',
-}
 
 // Medios por los que entra la plata, en el mismo orden que el backend
 // (reportes/medios-pago) y que los gastos. 'credito' no está: el fiado entra por

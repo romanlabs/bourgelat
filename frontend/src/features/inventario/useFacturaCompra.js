@@ -15,12 +15,6 @@ import { invalidarDominios } from '@/lib/queryKeys'
 import { getErrorMessage, requiereVencimiento } from './inventarioUtils'
 import { hoyLocal } from '@/lib/fecha'
 
-export const ESTADO_FACTURA_COMPRA = [
-  { value: '', label: 'Todos' },
-  { value: 'borrador', label: 'Borrador' },
-  { value: 'confirmada', label: 'Confirmada' },
-  { value: 'anulada', label: 'Anulada' },
-]
 
 export const ESTADO_COLORS = {
   borrador: 'bg-warning-soft text-warning ',

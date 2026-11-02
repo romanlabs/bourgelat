@@ -114,7 +114,7 @@ export default function LandingPage() {
             </p>
 
             {/* Firma: línea de signo vital. El barrido recorre el trazo como el
-                monitor de un paciente — guiño al ECGHeartbeatCanvas de la marca. */}
+                monitor de un paciente — guiño al pulso de la marca. */}
             <div className="hero-ecg mt-4 short:hidden" aria-hidden="true">
               <svg viewBox="0 0 320 24" preserveAspectRatio="xMinYMid meet">
                 <path className="hero-ecg__base" d="M0 12 H94 l6 0 l5 -7 l4 15 l5 -19 l5 23 l5 -12 l4 0 H320" />

@@ -75,7 +75,7 @@ export default function RouteErrorPage() {
           </div>
           <h1
             className="mt-5 text-[2.7rem] leading-[0.92] tracking-[-0.05em] sm:text-5xl"
-            style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+            style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
           >
             No pudimos abrir esta pantalla todavía.
           </h1>
