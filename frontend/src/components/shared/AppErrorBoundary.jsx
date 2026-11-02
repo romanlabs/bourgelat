@@ -1,6 +1,7 @@
 import { Component } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, RefreshCw, Stethoscope } from 'lucide-react'
+import { reportarErrorDePantalla } from '@/lib/reportarError'
 
 const getErrorMessage = (error) => {
   if (!error) return 'Ocurrió un problema inesperado al renderizar esta pantalla.'
@@ -20,6 +21,7 @@ export default class AppErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('AppErrorBoundary capturo un error de render', error, info)
+    reportarErrorDePantalla(error)
   }
 
   handleReload = () => {

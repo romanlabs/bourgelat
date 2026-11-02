@@ -365,6 +365,33 @@ ${filas.map((f) => [
 const enviarEmailResumenCobro = ({ filas, fecha }) =>
   enviarEmail({ para: 'soporte@bourgelat.co', ...armarEmailResumenCobro({ filas, fecha }) })
 
+// Aviso al equipo de que algo falló en producción. Va sin datos de pacientes ni
+// de tutores: ruta, motivo ya limpio y cuántas clínicas lo vieron.
+const armarEmailAlertaErrores = ({ filas }) => {
+  const total = filas.reduce((suma, fila) => suma + fila.veces, 0)
+  const describir = (fila) => {
+    const lugar = fila.origen === 'pantalla' ? `Pantalla ${fila.ruta}` : `${fila.metodo} ${fila.ruta}`.trim()
+    const clinicas = fila.clinicas.size ? `, ${fila.clinicas.size} clínica(s)` : ''
+    return { lugar, detalle: `${fila.veces} ${fila.veces === 1 ? 'vez' : 'veces'}${clinicas}`, mensaje: fila.mensaje }
+  }
+  const lineas = filas.map(describir)
+  const asunto = `[Bourgelat] ${total} error(es) en producción`
+  const texto = `${lineas.map((l) => `${l.lugar} (${l.detalle})\n${l.mensaje}`).join('\n\n')}
+
+Más detalle en los logs de bourgelat-api en Render (buscar error-interno). Guía: docs/alertas.md.`
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; color: #112739;">
+      <h2 style="color: #112739;">${escaparHtml(asunto)}</h2>
+      ${lineas.map((l) => `<p><strong>${escaparHtml(l.lugar)}</strong> (${escaparHtml(l.detalle)})<br>${escaparHtml(l.mensaje)}</p>`).join('')}
+      <p style="font-size: 13px; color: #51697d;">Más detalle en los logs de bourgelat-api en Render (buscar error-interno). Guía: docs/alertas.md.</p>
+    </div>
+  `
+  return { asunto, html, texto }
+}
+
+const enviarEmailAlertaErrores = ({ filas }) =>
+  enviarEmail({ para: process.env.SOPORTE_EMAIL || 'soporte@bourgelat.co', ...armarEmailAlertaErrores({ filas }) })
+
 // Lo urgente de la campanita (descuadre de caja, caja sin cerrar) para quien
 // pidió recibirlo también por correo en sus ajustes de avisos.
 const armarEmailAvisoUrgente = ({ nombre, aviso, urlFrontend }) => {
@@ -398,6 +425,8 @@ Puedes dejar de recibir estos correos en la campanita de Bourgelat, en Ajustes.`
 const enviarEmailAvisoUrgente = ({ para, ...datos }) => enviarEmail({ para, ...armarEmailAvisoUrgente(datos) })
 
 module.exports = {
+  armarEmailAlertaErrores,
+  enviarEmailAlertaErrores,
   armarEmailAvisoUrgente,
   enviarEmailAvisoUrgente,
   armarEmailRecordatorioCobro,

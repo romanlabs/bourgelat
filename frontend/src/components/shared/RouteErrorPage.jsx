@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Link, useLocation, useRouteError } from 'react-router-dom'
 import { AlertTriangle, RefreshCw, Stethoscope } from 'lucide-react'
+import { reportarErrorDePantalla } from '@/lib/reportarError'
 
 const CHUNK_RELOAD_KEY = 'bourgelat-chunk-reload-attempted'
 
@@ -27,6 +28,10 @@ export default function RouteErrorPage() {
   const message = getErrorMessage(error)
 
   const isImportError = useMemo(() => isChunkLoadError(message), [message])
+
+  useEffect(() => {
+    reportarErrorDePantalla(error)
+  }, [error])
 
   useEffect(() => {
     if (!isImportError || typeof window === 'undefined') return
