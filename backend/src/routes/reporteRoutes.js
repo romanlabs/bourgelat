@@ -7,7 +7,6 @@ const {
   reporteAgenda,
   reporteInventario,
   dashboardGeneral,
-  reporteRentabilidad,
   reporteFinanzasPeriodo,
   reporteMediosPago,
 } = require('../controllers/reporteController')
@@ -27,16 +26,12 @@ router.get(
   '/ingresos',
   verificarToken,
   verificarRol('admin', 'superadmin', 'facturador'),
+  [
+    query('fechaInicio').isDate().withMessage('fechaInicio debe ser una fecha válida (YYYY-MM-DD)'),
+    query('fechaFin').isDate().withMessage('fechaFin debe ser una fecha válida (YYYY-MM-DD)'),
+    validar,
+  ],
   reporteIngresos
-)
-
-// Rentabilidad: solo el dueño/admin ve la ganancia del negocio.
-router.get(
-  '/rentabilidad',
-  verificarToken,
-  verificarRol('admin', 'superadmin'),
-  requiereReportesCompletos,
-  reporteRentabilidad
 )
 
 // El resumen de un mes lo ve todo el que entra a Finanzas (sin gastos ni

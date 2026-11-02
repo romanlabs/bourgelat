@@ -5,7 +5,7 @@
 // lo que el usuario ve publicado. Al cambiar un texto de forma sustancial se
 // sube la versión en ambos lados.
 const VERSIONES_LEGALES = {
-  terminos: '1.0',
+  terminos: '1.1',
   privacidad: '1.0',
 }
 
