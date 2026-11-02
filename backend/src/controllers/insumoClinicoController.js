@@ -480,7 +480,7 @@ const eliminarInsumo = async (req, res) => {
     }
 
     const recetaActiva = await ServicioClinicoInsumo.findOne({
-      where: { insumoClinicoId: id },
+      where: tenantWhere(req, { insumoClinicoId: id }),
       include: [{
         association: 'servicio',
         where: { activo: true },
