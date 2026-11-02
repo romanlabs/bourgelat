@@ -17,6 +17,8 @@ const { limitadorGeneral } = require('./middlewares/rateLimitMiddleware')
 const { idempotencia } = require('./middlewares/idempotenciaMiddleware')
 const { protegerOrigenCookieAuth } = require('./middlewares/originProtectionMiddleware')
 const { sanitizarRespuestasErrorInterno } = require('./middlewares/sanitizeErrorResponseMiddleware')
+const { capturarErroresInternos } = require('./middlewares/alertaErroresMiddleware')
+const { avisarCaidaDelProceso } = require('./services/alertaErroresService')
 const { limpiarTokensVencidos, limpiarLogsAntiguos, limpiarIdempotencia } = require('./jobs/limpiezaTokens')
 const { enviarRecordatoriosCita, INTERVALO_MS: INTERVALO_RECORDATORIOS_CITA } = require('./jobs/recordatoriosCita')
 const { ejecutarRecordatoriosCobro, INTERVALO_MS: INTERVALO_RECORDATORIOS_COBRO } = require('./jobs/recordatoriosCobro')
@@ -130,6 +132,7 @@ app.use(
 
 // ── Idempotencia ───────────────────────────────────────────
 app.use(sanitizarRespuestasErrorInterno)
+app.use(capturarErroresInternos)
 app.use(idempotencia)
 app.use(protegerOrigenCookieAuth)
 
@@ -198,6 +201,7 @@ app.use('/api/integraciones/facturacion', integracionFacturacionRoutes)
 // (montado arriba, antes del body parsing; ver docs/soporte.md).
 app.use('/api/soporte', soporteRoutes)
 app.use('/api/notificaciones', require('./routes/notificacionRoutes'))
+app.use('/api/errores-pantalla', require('./routes/errorPantallaRoutes'))
 
 // Falla el arranque en desarrollo si alguien agrego una ruta de mutacion sin
 // el guard de escritura. En produccion no se ejecuta: el despliegue no es el
@@ -223,7 +227,18 @@ app.use((err, req, res, next) => {
     stack: err.stack,
     ruta: rutaSinQuery(req),
   })
+  // Lo que Express marca como culpa de la petición (JSON roto, cuerpo muy grande)
+  // no es una falla nuestra: no debe despertar a nadie.
+  if (err.status >= 400 && err.status < 500) res.locals.errorDeCliente = true
+  else res.locals.errorInterno = err
   res.status(500).json({ message: 'Error interno del servidor' })
+})
+
+// Una falla sin atrapar (incluye promesas rechazadas) tumba el proceso: se avisa
+// antes de salir y Render lo levanta de nuevo.
+process.on('uncaughtException', (error) => {
+  logger.error({ mensaje: error.message, stack: error.stack, contexto: 'proceso' })
+  avisarCaidaDelProceso(error).finally(() => process.exit(1))
 })
 
 // ── Conexión DB y arranque ─────────────────────────────────

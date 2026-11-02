@@ -265,5 +265,6 @@ npm run cifrado:rotar
 ```
 
 El plan gratuito de Brevo (300 correos/día) lo comparten los códigos de verificación,
-la recuperación de clave, los recordatorios de citas (tope de 150/día) y los
-recordatorios de cobro de suscripción (tope de 30 por ejecución, más el resumen a soporte@).
+la recuperación de clave, los recordatorios de citas (tope de 150/día), los
+recordatorios de cobro de suscripción (tope de 30 por ejecución, más el resumen a soporte@)
+y las alertas de errores (tope de 10/día). Alertas y vigilancia: ver `docs/alertas.md`.
