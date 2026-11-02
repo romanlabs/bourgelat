@@ -32,6 +32,7 @@ import {
   texto,
 } from './historiaPdfComun'
 
+import { estaEsterilizado } from '@/features/antecedentes/textoAntecedentes'
 // La historia clinica de una consulta, para el archivo de la clinica, una
 // remision o cuando el tutor la pide. Sigue el orden de una historia clinica
 // humana (Resolucion 1995 de 1999): identificacion, registro de la atencion,
@@ -116,7 +117,7 @@ export const buildHistoriaPdf = async ({ historia, clinica, usuario }) => {
     ['Fecha de nacimiento', fechaNacimiento && formatFechaCorta(fechaNacimiento), 'No registrada'],
     ['Edad a la atención', edad, 'No registrada'],
     ['Color', capitalizar(mascota.color)],
-    ['Esterilizado', mascota.esterilizado === true ? 'Sí' : mascota.esterilizado === false ? 'No' : ''],
+    ['Esterilizado', estaEsterilizado(mascota, mascota.antecedentes) ? 'Sí' : ''],
   ])
 
   // ── Propietario o responsable ──

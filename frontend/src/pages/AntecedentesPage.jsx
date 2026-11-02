@@ -26,6 +26,7 @@ import { etiquetaEspecie } from '@/lib/especies'
 import { hoyLocal } from '@/lib/fecha'
 
 
+import { SIN_REGISTRAR, estaEsterilizado } from '@/features/antecedentes/textoAntecedentes'
 const DEFAULT_GENERAL_VALUES = {
   esterilizado: false,
   fechaEsterilizacion: '',
@@ -1026,15 +1027,15 @@ export default function AntecedentesPage() {
                       <div>
                         <dt className="text-[13px] text-muted-foreground">Esterilizado</dt>
                         <dd className="mt-1 text-base font-medium text-foreground">
-                          {selectedAntecedentes?.esterilizado
-                            ? `Sí${selectedAntecedentes.fechaEsterilizacion ? ` · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}` : ''}`
-                            : 'No'}
+                          {estaEsterilizado(selectedPet, selectedAntecedentes)
+                            ? `Sí${selectedAntecedentes?.fechaEsterilizacion ? ` · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}` : ''}`
+                            : SIN_REGISTRAR}
                         </dd>
                       </div>
                       <div>
                         <dt className="text-[13px] text-muted-foreground">Medicación actual</dt>
                         <dd className="mt-1 whitespace-pre-line text-base font-medium text-foreground">
-                          {medicamentosTexto || 'Ninguna registrada'}
+                          {medicamentosTexto || SIN_REGISTRAR}
                         </dd>
                       </div>
                     </dl>
