@@ -84,7 +84,11 @@ Bandeja: `npm run soporte:listar` (activos por defecto; `--estado todos`,
 El aviso de cada ticket nuevo o respuesta de la clínica llega con un `Reply-To`
 propio del ticket: `respuestas+t42.<token>@bourgelat.co`. Basta con **contestar
 el correo desde Gmail**: la respuesta entra al hilo firmada como
-"Equipo Bourgelat (Roman)" y la clínica recibe su correo de siempre.
+"Equipo Bourgelat (Soporte)" y la clínica recibe su correo de siempre.
+
+El buzón del equipo es `bourgelatsoftware@gmail.com`: Cloudflare le reenvía lo que
+llega a `soporte@bourgelat.co`, que es la dirección pública. Solo se puede responder
+desde ese Gmail, porque es el único en `SOPORTE_RESPONDEDORES`.
 
 **Primera línea opcional** para cambiar el estado (se quita del mensaje):
 
@@ -120,7 +124,7 @@ El `From` de un correo se falsifica fácil, así que se exigen **cuatro** cosas:
    avisos que recibe el equipo; el de un ticket no sirve para otro.
 3. **Remitente** en `SOPORTE_RESPONDEDORES`, que además define la firma.
 4. **DKIM válido del dominio del remitente** (`mailauth`), así un `From:
-   roman…@gmail.com` falsificado no pasa.
+   bourgelatsoftware@gmail.com` falsificado no pasa.
 
 Un mismo correo (mismo `Message-ID`) no se aplica dos veces. Toda la lógica
 pura está en `services/soporteCorreoReglas.js` con sus tests.
@@ -128,7 +132,7 @@ pura está en `services/soporteCorreoReglas.js` con sus tests.
 ### Puesta en marcha (una sola vez)
 
 1. Render → `bourgelat-api` → Environment: `SOPORTE_CORREO_RESPUESTAS=respuestas@bourgelat.co`,
-   `SOPORTE_CORREO_SECRETO=<32+ caracteres>`, `SOPORTE_RESPONDEDORES=roman.bolanos.va@gmail.com=Roman`.
+   `SOPORTE_CORREO_SECRETO=<32+ caracteres>`, `SOPORTE_RESPONDEDORES=bourgelatsoftware@gmail.com=Soporte`.
 2. Worker: `cd cloudflare/soporte-correo-worker && npx wrangler deploy` y
    `npx wrangler secret put SOPORTE_CORREO_SECRETO` (el mismo valor).
 3. Cloudflare → Email Routing: activar **subaddressing** y crear la ruta
