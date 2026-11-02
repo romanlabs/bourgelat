@@ -14,7 +14,7 @@ import { TIPO_DOCUMENTO_LABELS } from '@/features/historias/historiaPdfComun'
 import { formatDateTime } from './reciboTermico'
 import { documentoVenta, esFacturaElectronica } from './documentoVenta'
 
-// Segundo formato de salida de una venta, al lado de la tirilla termica de 80mm:
+// Segundo formato de salida de una venta, al lado de la tirilla termica:
 // una factura tamano carta como archivo PDF descargable, pensada para entregarle
 // al cliente o enviarsela por correo/WhatsApp. La tirilla sigue siendo la del
 // mostrador; esta es la copia presentable, con el mismo estilo formal de la
