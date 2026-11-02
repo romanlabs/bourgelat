@@ -68,7 +68,18 @@ const limitadorMensajesSoporte = rateLimit({
   handler: crearHandlerBloqueo('Enviaste muchos mensajes en poco tiempo. Intenta de nuevo en unos minutos.'),
 })
 
+// Una pantalla rota puede repetirse en bucle: se le pone techo por usuario.
+const limitadorErroresPantalla = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: clavePorUsuario,
+  handler: crearHandlerBloqueo('Demasiados reportes de error.'),
+})
+
 module.exports = {
+  limitadorErroresPantalla,
   limitadorSesion,
   limitadorGeneral,
   limitadorAuth,
