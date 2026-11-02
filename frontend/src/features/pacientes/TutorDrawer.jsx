@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,6 +38,10 @@ const fieldClass =
 // editingTutor es opcional: el drawer tambien se usa en alta rapida desde recepcion.
 export default function TutorDrawer({ open, onClose, onSubmit, isPending, editingTutor = null }) {
   const modoEdicion = Boolean(editingTutor)
+  // En Pacientes hay dos montados a la vez (el de la pestaña Tutores y el del alta
+  // de paciente): con ids fijos, «Guardar» enviaría el formulario del otro.
+  const idBase = useId()
+  const formId = `${idBase}-form`
 
   const {
     register,
@@ -66,9 +70,15 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
 
   useEffect(() => {
     if (!open) return
-    const handler = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    // En captura y sin propagar: abierto encima de otro panel, Escape cierra solo
+    // este. Si no, también cerraría el de abajo y se perdería lo escrito allí.
+    const handler = (e) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      onClose()
+    }
+    document.addEventListener('keydown', handler, true)
+    return () => document.removeEventListener('keydown', handler, true)
   }, [open, onClose])
 
   if (typeof document === 'undefined') return null
@@ -110,7 +120,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
               de componentes: abierto desde "Programar cita" o "Ingreso directo",
               tambien enviaria ese formulario y mostraria sus errores. */}
           <form
-            id="tutor-drawer-form"
+            id={formId}
             className="grid gap-4"
             onSubmit={(event) => {
               event.stopPropagation()
@@ -118,16 +128,16 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
             }}
           >
             <div className="grid gap-1.5">
-              <label htmlFor="t-nombre" className="text-[13px] font-medium text-muted-foreground">
+              <label htmlFor={`${idBase}-nombre`} className="text-[13px] font-medium text-muted-foreground">
                 Nombre completo *
               </label>
-              <input id="t-nombre" type="text" placeholder="Nombre del tutor" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
+              <input id={`${idBase}-nombre`} type="text" placeholder="Nombre del tutor" className={`${fieldClass} ${errors.nombre ? 'border-danger' : ''}`} {...register('nombre')} />
               {errors.nombre && <p className="text-[13px] text-danger">{errors.nombre.message}</p>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <label htmlFor="t-tipo-doc" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-tipo-doc`} className="text-[13px] font-medium text-muted-foreground">
                   Tipo de documento *
                 </label>
                 <Controller
@@ -136,7 +146,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                   render={({ field }) => (
                     <Select
                       variant="field"
-                      id="t-tipo-doc"
+                      id={`${idBase}-tipo-doc`}
                       aria-label="Tipo de documento"
                       className="h-12 lg:h-11"
                       value={field.value}
@@ -147,17 +157,17 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 />
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="t-num-doc" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-num-doc`} className="text-[13px] font-medium text-muted-foreground">
                   Numero de documento *
                 </label>
-                <input id="t-num-doc" type="text" placeholder="Documento principal" className={`${fieldClass} ${errors.numeroDocumento ? 'border-danger' : ''}`} {...register('numeroDocumento')} />
+                <input id={`${idBase}-num-doc`} type="text" placeholder="Documento principal" className={`${fieldClass} ${errors.numeroDocumento ? 'border-danger' : ''}`} {...register('numeroDocumento')} />
                 {errors.numeroDocumento && <p className="text-[13px] text-danger">{errors.numeroDocumento.message}</p>}
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex min-w-0 flex-col gap-1.5">
-                <label htmlFor="t-tel" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-tel`} className="text-[13px] font-medium text-muted-foreground">
                   Teléfono o celular *
                 </label>
                 <Controller
@@ -165,7 +175,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                   control={control}
                   render={({ field }) => (
                     <CampoCelular
-                      id="t-tel"
+                      id={`${idBase}-tel`}
                       value={field.value}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
@@ -177,26 +187,26 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
                 {errors.telefono && <p className="text-[13px] text-danger">{errors.telefono.message}</p>}
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="t-email" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-email`} className="text-[13px] font-medium text-muted-foreground">
                   Correo <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
-                <input id="t-email" type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-danger' : ''}`} {...register('email')} />
+                <input id={`${idBase}-email`} type="email" placeholder="correo@ejemplo.com" className={`${fieldClass} ${errors.email ? 'border-danger' : ''}`} {...register('email')} />
                 {errors.email && <p className="text-[13px] text-danger">{errors.email.message}</p>}
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <label htmlFor="t-ciudad" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-ciudad`} className="text-[13px] font-medium text-muted-foreground">
                   Ciudad o municipio <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
-                <input id="t-ciudad" type="text" placeholder="Ciudad principal" className={fieldClass} {...register('ciudad')} />
+                <input id={`${idBase}-ciudad`} type="text" placeholder="Ciudad principal" className={fieldClass} {...register('ciudad')} />
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="t-barrio" className="text-[13px] font-medium text-muted-foreground">
+                <label htmlFor={`${idBase}-barrio`} className="text-[13px] font-medium text-muted-foreground">
                   Barrio <span className="font-normal text-muted-foreground">(opcional)</span>
                 </label>
-                <input id="t-barrio" type="text" placeholder="Barrio" className={`${fieldClass} ${errors.barrio ? 'border-danger' : ''}`} {...register('barrio')} />
+                <input id={`${idBase}-barrio`} type="text" placeholder="Barrio" className={`${fieldClass} ${errors.barrio ? 'border-danger' : ''}`} {...register('barrio')} />
                 {errors.barrio && <p className="text-[13px] text-danger">{errors.barrio.message}</p>}
               </div>
             </div>
@@ -206,7 +216,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
         <div className="flex gap-2.5 border-t border-border bg-card px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:border-t-0 lg:px-6 lg:pb-6">
           <button
             type="submit"
-            form="tutor-drawer-form"
+            form={formId}
             disabled={isPending}
             className="flex-1 inline-flex h-12 lg:h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >

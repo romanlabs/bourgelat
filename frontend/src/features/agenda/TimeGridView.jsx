@@ -7,6 +7,7 @@ import {
   HORA_FIN,
   SLOT_HEIGHT_MAX,
   SLOT_HEIGHT_MIN,
+  horaAlAbrirGrilla,
   timeToTop,
 } from './calendarConstants'
 import { CitaChip } from './CitaChip'
@@ -114,6 +115,7 @@ export function TimeGridView({
   showTimezoneLabel = true,
   gridInicio = HORA_INICIO,
   gridFin = HORA_FIN,
+  horarioAtencion = null,
   esHabil,
   getBloqueoDelDia,
 }) {
@@ -124,15 +126,15 @@ export function TimeGridView({
   const esDia = days.length === 1
   const gridCols = `64px repeat(${days.length}, minmax(0, 1fr))`
 
-  // Auto-scroll inicial a la hora actual cuando la grilla no cabe completa
+  // Scroll inicial a la hora de trabajo cuando la grilla no cabe completa
   useEffect(() => {
     const el = scrollRef.current
     if (!el || el.scrollHeight <= el.clientHeight) return
-    const now = new Date()
-    const str = `${String(now.getHours()).padStart(2, '0')}:00`
+    const hora = horaAlAbrirGrilla(new Date().getHours(), horarioAtencion)
+    const str = `${String(hora).padStart(2, '0')}:00`
     el.scrollTop = Math.max(0, timeToTop(str, slotHeight, gridInicio) - 80)
-    // Solo al montar / cambiar densidad — no perseguir el reloj
-  }, [slotHeight, gridInicio])
+    // Solo al montar / cambiar densidad u horario — no perseguir el reloj
+  }, [slotHeight, gridInicio, horarioAtencion])
 
   return (
     <div

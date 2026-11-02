@@ -1033,6 +1033,7 @@ export default function PacientesPage() {
         onClose={mascotasHook.closeDrawer}
         onSubmit={mascotasHook.handleDrawerSubmit}
         isPending={mascotasHook.isPending}
+        puedeCrearTutor={puedeGestionarTutor}
       />
 
       {/* Drawer: alta y edicion de tutor */}
