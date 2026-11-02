@@ -1,5 +1,36 @@
 import { describe, expect, it } from 'vitest'
-import { ajustarPaginaAlContenido, buildThermalReceiptHtml, esperarImagenes } from './reciboTermico'
+import { ajustarPaginaAlContenido, buildThermalReceiptHtml, esperarImagenes, logoEnGrises } from './reciboTermico'
+
+describe('logoEnGrises', () => {
+  // Imagen de 3 x 3: fondo casi blanco con un punto amarillo en el centro.
+  const imagen = () => {
+    const pixeles = new Uint8ClampedArray(9 * 4)
+    for (let i = 0; i < 9; i += 1) pixeles.set([252, 252, 252, 255], i * 4)
+    pixeles.set([250, 210, 20, 255], 4 * 4)
+    return pixeles
+  }
+
+  it('recorta el margen y deja el fondo en blanco puro', () => {
+    const pixeles = imagen()
+    expect(logoEnGrises(pixeles, 3, 3)).toEqual({ x: 1, y: 1, ancho: 1, alto: 1 })
+    expect(Array.from(pixeles.slice(0, 4))).toEqual([255, 255, 255, 255])
+  })
+
+  it('convierte el color en un gris más oscuro que su luz original', () => {
+    const pixeles = imagen()
+    logoEnGrises(pixeles, 3, 3)
+    const [r, g, b] = pixeles.slice(4 * 4, 4 * 4 + 3)
+    expect(r).toBe(g)
+    expect(g).toBe(b)
+    expect(r).toBeLessThan(0.299 * 250 + 0.587 * 210 + 0.114 * 20)
+  })
+
+  it('trata lo transparente como fondo', () => {
+    const pixeles = new Uint8ClampedArray([0, 0, 0, 0])
+    expect(logoEnGrises(pixeles, 1, 1)).toBeNull()
+    expect(Array.from(pixeles)).toEqual([255, 255, 255, 255])
+  })
+})
 
 describe('buildThermalReceiptHtml', () => {
   it('muestra el logo de la clínica y sus datos de contacto', () => {

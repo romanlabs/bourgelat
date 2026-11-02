@@ -49,9 +49,9 @@ const telefonoLegible = (telefono) =>
  * @param pago Opcional: `{ recibido, vuelto }` en efectivo. No se guarda con la
  * factura, así que solo lo conoce el POS justo después de cobrar.
  */
-export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
+export const buildThermalReceiptHtml = ({ factura, clinica, pago, logoPreparado }) => {
   const nombreClinica = escaparHtml(clinica?.nombreComercial || clinica?.nombre || 'Bourgelat')
-  const logo = urlLogo(clinica)
+  const logo = logoPreparado || urlLogo(clinica)
   const identificacion = clinica?.nit ? `NIT ${escaparHtml(clinica.nit)}` : ''
   const direccion = escaparHtml(clinica?.direccion || '')
   const contacto = escaparHtml([clinica?.ciudad, telefonoLegible(clinica?.telefono)].filter(Boolean).join(' · '))
@@ -101,9 +101,6 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
             max-height: 18mm;
             margin-bottom: 5px;
             object-fit: contain;
-            filter: grayscale(1) contrast(1.2);
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
           .clinic-name { font-size: 14px; font-weight: 700; text-transform: uppercase; }
           .doc-title { text-align: center; font-weight: 700; }
@@ -188,6 +185,90 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
 }
 
 const ESPERA_LOGO_MS = 3000
+// Muchos logos traen un fondo casi blanco (251 de 255) que en papel se nota como
+// un recuadro: de aquí para arriba se trata como blanco puro.
+const UMBRAL_BLANCO = 240
+// Los colores claros, como el amarillo, casi desaparecen en una impresora térmica.
+const OSCURECER = 0.85
+
+/**
+ * Pasa los píxeles a grises sobre blanco puro (modifica el arreglo) y devuelve
+ * el recuadro del dibujo, sin márgenes. `null` si la imagen es toda blanca.
+ */
+export const logoEnGrises = (pixeles, ancho, alto) => {
+  let minX = ancho
+  let minY = alto
+  let maxX = -1
+  let maxY = -1
+
+  for (let y = 0; y < alto; y += 1) {
+    for (let x = 0; x < ancho; x += 1) {
+      const i = (y * ancho + x) * 4
+      const opacidad = pixeles[i + 3] / 255
+      const luz = 0.299 * pixeles[i] + 0.587 * pixeles[i + 1] + 0.114 * pixeles[i + 2]
+      const gris = luz * opacidad + 255 * (1 - opacidad)
+      const esFondo = gris >= UMBRAL_BLANCO
+      const valor = esFondo ? 255 : gris * OSCURECER
+      pixeles[i] = valor
+      pixeles[i + 1] = valor
+      pixeles[i + 2] = valor
+      pixeles[i + 3] = 255
+      if (!esFondo) {
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x)
+        maxY = Math.max(maxY, y)
+      }
+    }
+  }
+
+  return maxX < 0 ? null : { x: minX, y: minY, ancho: maxX - minX + 1, alto: maxY - minY + 1 }
+}
+
+const cargarImagen = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    const limite = setTimeout(() => reject(new Error('El logo tardó demasiado')), ESPERA_LOGO_MS)
+    img.onload = () => {
+      clearTimeout(limite)
+      resolve(img)
+    }
+    img.onerror = () => {
+      clearTimeout(limite)
+      reject(new Error('No cargó el logo'))
+    }
+    img.src = url
+  })
+
+/**
+ * Deja el logo listo para el papel. Leer los píxeles exige cabeceras CORS: si no
+ * se puede (una URL externa antigua), la tirilla usa la imagen tal como está.
+ */
+const prepararLogo = async (clinica) => {
+  const url = urlLogo(clinica)
+  if (!url) return ''
+  try {
+    const img = await cargarImagen(url)
+    const lienzo = document.createElement('canvas')
+    lienzo.width = img.naturalWidth
+    lienzo.height = img.naturalHeight
+    const contexto = lienzo.getContext('2d')
+    contexto.drawImage(img, 0, 0)
+    const imagen = contexto.getImageData(0, 0, lienzo.width, lienzo.height)
+    const recuadro = logoEnGrises(imagen.data, lienzo.width, lienzo.height)
+    if (!recuadro) return ''
+    contexto.putImageData(imagen, 0, 0)
+
+    const recorte = document.createElement('canvas')
+    recorte.width = recuadro.ancho
+    recorte.height = recuadro.alto
+    recorte.getContext('2d').drawImage(lienzo, -recuadro.x, -recuadro.y)
+    return recorte.toDataURL('image/png')
+  } catch {
+    return ''
+  }
+}
 
 /**
  * El navegador no espera las imágenes antes de imprimir: sin esto, el logo sale
@@ -243,7 +324,8 @@ export const imprimirTirilla = async ({ factura, clinica, pago }) => {
     return
   }
 
-  const html = buildThermalReceiptHtml({ factura, clinica, pago })
+  const logoPreparado = await prepararLogo(clinica)
+  const html = buildThermalReceiptHtml({ factura, clinica, pago, logoPreparado })
   const iframe = document.createElement('iframe')
   // Lleva el ancho de impresión, sin altura: con ancho 0 no se podría medir el contenido.
   iframe.style.cssText = `position:fixed;width:${ANCHO_ROLLO_MM - MARGEN_MM * 2}mm;height:0;border:0;opacity:0;pointer-events:none`
