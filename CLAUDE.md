@@ -69,7 +69,7 @@ bourgelat/
 │       ├── assets/          # Imágenes (auth/, landing/)
 │       ├── components/
 │       │   ├── layout/      # AdminShell, QuickCreateMenu
-│       │   ├── shared/      # DataTable, EmptyState, ConfirmDialog, ECGHeartbeatCanvas...
+│       │   ├── shared/      # DataTable, EmptyState, ConfirmDialog...
 │       │   └── ui/          # Shadcn components
 │       ├── content/         # publicSiteContent.js (copy del sitio público)
 │       ├── data/            # colombia.js (departamentos y municipios)

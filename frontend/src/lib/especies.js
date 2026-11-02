@@ -22,7 +22,6 @@ export const ESPECIE_VALORES = ESPECIES.map((e) => e.value)
 
 export const ESPECIE_LABELS = Object.fromEntries(ESPECIES.map((e) => [e.value, e.label]))
 
-export const ESPECIE_LABELS_PLURAL = Object.fromEntries(ESPECIES.map((e) => [e.value, e.plural]))
 
 // En el formulario se aclara el nombre comun para quien no usa el termino clinico.
 export const ESPECIE_OPCIONES_FORM = ESPECIES.map((e) => ({

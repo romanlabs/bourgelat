@@ -59,7 +59,7 @@ export default class AppErrorBoundary extends Component {
             </div>
             <h1
               className="mt-5 text-[2.7rem] leading-[0.92] tracking-[-0.05em] sm:text-5xl"
-              style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700 }}
+              style={{ fontFamily: '"Spectral", Georgia, serif', fontWeight: 700 }}
             >
               Esta pantalla no se pudo mostrar.
             </h1>
