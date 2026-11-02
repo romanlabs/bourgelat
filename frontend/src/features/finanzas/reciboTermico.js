@@ -118,11 +118,8 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago, logoPreparado 
             justify-content: space-between;
             align-items: baseline;
             gap: 8px;
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
-            margin: 6px 0;
-            padding: 4px 0;
-            font-size: 17px;
+            margin: 1px 0 3px;
+            font-size: 16px;
             font-weight: 700;
           }
           .saldo { font-weight: 700; }
@@ -160,7 +157,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago, logoPreparado 
         </div>
         <div class="divider"></div>
         ${lineas || '<div>Sin ítems registrados.</div>'}
-        ${descuento > 0 || impuesto > 0 ? '<div class="divider"></div>' : ''}
+        <div class="divider"></div>
         <div class="rows">
           ${descuento > 0 || impuesto > 0 ? fila('Subtotal', `<span class="num">${formatNumber(factura?.subtotal)}</span>`) : ''}
           ${descuento > 0 ? fila('Descuento', `<span class="num">-${formatNumber(descuento)}</span>`) : ''}
