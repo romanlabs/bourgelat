@@ -22,12 +22,12 @@ const TooltipContent = React.forwardRef(({ className, sideOffset = 6, ...props }
 TooltipContent.displayName = 'TooltipContent'
 
 /** Envoltura simple: <SimpleTooltip label="..."><button/></SimpleTooltip> */
-function SimpleTooltip({ label, children, delayDuration = 500 }) {
+function SimpleTooltip({ label, children, delayDuration = 500, side }) {
   return (
     <TooltipProvider delayDuration={delayDuration}>
       <TooltipRoot>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent side={side}>{label}</TooltipContent>
       </TooltipRoot>
     </TooltipProvider>
   )

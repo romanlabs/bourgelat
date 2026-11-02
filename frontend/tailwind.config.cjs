@@ -18,6 +18,8 @@ module.exports = {
         // El menú lateral mide 794px holgado y 711px compacto: se compacta antes.
         'menu-bajo': { raw: '(max-height: 820px)' },
         'menu-muy-bajo': { raw: '(max-height: 730px)' },
+        // Por debajo de esto ya no caben la clínica ni la «B» sin hacer scroll.
+        'menu-minimo': { raw: '(max-height: 575px)' },
       },
 
       colors: {
