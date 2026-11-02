@@ -1,0 +1,25 @@
+# Vigila producción desde fuera de Render. Si falla, GitHub avisa por correo a quien
+# editó este archivo por última vez. Ver docs/alertas.md.
+name: Vigilancia
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vigilancia
+  cancel-in-progress: false
+
+jobs:
+  produccion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Comprobar API, sitio y aplicación
+        run: bash .github/scripts/vigilar-produccion.sh
