@@ -163,7 +163,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
         </div>
         <div class="divider"></div>
         ${lineas || '<div>Sin ítems registrados.</div>'}
-        <div class="divider"></div>
+        ${descuento > 0 || impuesto > 0 ? '<div class="divider"></div>' : ''}
         <div class="rows">
           ${descuento > 0 || impuesto > 0 ? fila('Subtotal', `<span class="num">${formatNumber(factura?.subtotal)}</span>`) : ''}
           ${descuento > 0 ? fila('Descuento', `<span class="num">-${formatNumber(descuento)}</span>`) : ''}
