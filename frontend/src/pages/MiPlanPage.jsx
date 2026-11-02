@@ -70,7 +70,9 @@ function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
       </div>
     )
   }
-  const pct = Math.min(100, Math.round((usados / limite) * 100))
+  // Un uso muy pequeño redondea a 0 %: se ve como un punto, no como una barra vacía.
+  const hayUso = usados > 0
+  const pct = Math.min(100, Math.max(hayUso ? 1 : 0, Math.round((usados / limite) * 100)))
   return (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[200px]">
       <span className="flex justify-between gap-4 text-sm">
@@ -78,7 +80,7 @@ function BarraUso({ etiqueta, usados, limite, formato = (v) => v }) {
         <span className="font-semibold">{formato(usados)} de {formato(limite)}</span>
       </span>
       <span className="flex h-2 rounded bg-primary-foreground/20" role="progressbar" aria-label={etiqueta} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <span className="h-2 rounded bg-brand transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
+        <span className="h-2 rounded bg-brand transition-[width] duration-500 ease-out" style={{ width: `${pct}%`, minWidth: hayUso ? '0.5rem' : 0 }} />
       </span>
     </div>
   )
