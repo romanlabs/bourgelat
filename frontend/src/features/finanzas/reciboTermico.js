@@ -31,22 +31,45 @@ export const escaparHtml = (valor) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
-export const buildThermalReceiptHtml = ({ factura, clinica }) => {
+// Las cantidades pueden ser fraccionadas (0,5 ml): no se redondean a entero.
+const formatCantidad = (value) =>
+  new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(value || 0))
+
+const fila = (etiqueta, valor) =>
+  `<div class="row"><span>${etiqueta}</span><span class="value">${valor}</span></div>`
+
+// Solo direcciones web: el valor del logo se guarda como texto libre en la clínica.
+const urlLogo = (clinica) => (/^https?:\/\//i.test(clinica?.logo || '') ? clinica.logo : '')
+
+// El celular se guarda como +573218943533; en papel se lee mejor 321 894 3533.
+const telefonoLegible = (telefono) =>
+  String(telefono || '').replace(/^\+57(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3')
+
+/**
+ * @param pago Opcional: `{ recibido, vuelto }` en efectivo. No se guarda con la
+ * factura, así que solo lo conoce el POS justo después de cobrar.
+ */
+export const buildThermalReceiptHtml = ({ factura, clinica, pago, logoPreparado }) => {
   const nombreClinica = escaparHtml(clinica?.nombreComercial || clinica?.nombre || 'Bourgelat')
+  const logo = logoPreparado || urlLogo(clinica)
   const identificacion = clinica?.nit ? `NIT ${escaparHtml(clinica.nit)}` : ''
-  const ubicacion = escaparHtml([clinica?.ciudad, clinica?.departamento].filter(Boolean).join(', '))
+  const direccion = escaparHtml(clinica?.direccion || '')
+  const contacto = escaparHtml([clinica?.ciudad, telefonoLegible(clinica?.telefono)].filter(Boolean).join(' · '))
   const numero = escaparHtml(factura?.numero || '')
   const descuento = Number(factura?.descuento || 0)
+  const impuesto = Number(factura?.impuesto || 0)
+  const saldo = Number(factura?.saldoPendiente || 0)
   const anulada = factura?.estado === 'anulada'
+  const electronica = esFacturaElectronica(factura)
   const lineas = (factura?.items || [])
     .map((item) => {
-      const cantidad = formatNumber(item.cantidad || 0)
-      const unitario = formatCurrency(item.precioUnitario || 0)
-      const subtotal = formatCurrency(item.subtotal || 0)
+      const cantidad = formatCantidad(item.cantidad)
+      const unitario = formatNumber(item.precioUnitario)
+      const subtotal = formatNumber(item.subtotal)
       return `
         <div class="item">
           <div class="item-name">${escaparHtml(item.descripcion || 'Concepto')}</div>
-          <div class="row"><span class="muted">${cantidad} x ${unitario}</span><span class="num">${subtotal}</span></div>
+          <div class="row"><span>${cantidad} × ${unitario}</span><span class="num">${subtotal}</span></div>
         </div>
       `
     })
@@ -59,101 +82,250 @@ export const buildThermalReceiptHtml = ({ factura, clinica }) => {
         <meta charset="utf-8" />
         <title>Tirilla ${numero}</title>
         <style>
-          @page { size: 80mm auto; margin: 4mm; }
+          * { box-sizing: border-box; }
           body {
-            font-family: "Courier New", monospace;
-            width: 72mm;
+            font-family: Arial, Helvetica, sans-serif;
+            width: 100%;
+            max-width: 72mm;
             margin: 0 auto;
-            color: #111827;
+            /* Solo negro: la impresora térmica convierte los grises en puntos. */
+            color: #000;
             font-size: 12px;
-            line-height: 1.45;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
           }
-          .center { text-align: center; }
-          .muted { color: #4b5563; }
-          .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-          .clinic-name {
-            font-size: 15px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+          .header { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; }
+          .logo {
+            display: block;
+            max-width: 60%;
+            max-height: 18mm;
+            margin-bottom: 5px;
+            object-fit: contain;
           }
-          .doc-number { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
-          .section { margin-top: 10px; }
-          .divider { border-top: 1px dashed #94a3b8; margin: 10px 0; }
+          .clinic-name { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+          .doc-title { text-align: center; font-weight: 700; }
+          .doc-number { text-align: center; font-size: 14px; font-weight: 700; }
+          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          .rows { display: flex; flex-direction: column; gap: 2px; }
           .row { display: flex; justify-content: space-between; gap: 8px; }
-          .row span:last-child { text-align: right; }
-          .item { margin-bottom: 7px; }
-          .item-name { font-weight: 700; }
+          .row > span:first-child { flex-shrink: 0; }
+          .row .value { text-align: right; }
+          .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+          .item { margin-bottom: 6px; }
+          .item:last-child { margin-bottom: 0; }
           .total-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            border-top: 2px solid #111827;
-            margin-top: 8px;
-            padding-top: 6px;
+            gap: 8px;
+            margin: 1px 0 3px;
+            font-size: 16px;
             font-weight: 700;
           }
-          .total-row .amount { font-size: 16px; }
+          .saldo { font-weight: 700; }
           .stamp {
-            border: 2px solid #111827;
+            border: 2px solid #000;
             text-align: center;
             font-weight: 700;
-            letter-spacing: 4px;
-            padding: 4px 0;
-            margin: 10px 0;
+            letter-spacing: 3px;
+            padding: 3px 0;
+            margin-bottom: 8px;
           }
-          .footer { margin-top: 14px; text-align: center; font-size: 11px; }
+          .cufe { font-size: 10px; word-break: break-all; }
+          .footer { display: flex; flex-direction: column; gap: 2px; text-align: center; }
+          .thanks { font-weight: 700; }
+          .legal { padding-top: 3px; font-size: 10px; line-height: 1.25; }
+          .made-with { font-size: 9px; }
         </style>
       </head>
       <body>
-        <div class="center">
+        <div class="header">
+          ${logo ? `<img class="logo" src="${escaparHtml(logo)}" alt="" />` : ''}
           <div class="clinic-name">${nombreClinica}</div>
-          ${identificacion ? `<div class="muted">${identificacion}</div>` : ''}
-          ${ubicacion ? `<div class="muted">${ubicacion}</div>` : ''}
+          ${identificacion ? `<div>${identificacion}</div>` : ''}
+          ${direccion ? `<div>${direccion}</div>` : ''}
+          ${contacto ? `<div>${contacto}</div>` : ''}
         </div>
         <div class="divider"></div>
         ${anulada ? '<div class="stamp">ANULADA</div>' : ''}
-        <div class="center doc-number">${documentoVenta(factura).titulo}<br />${numero || '-'}</div>
-        <div class="section">
-          <div class="row"><span class="muted">Fecha</span><span>${formatDateTime(factura?.createdAt || factura?.fecha)}</span></div>
-          <div class="row"><span class="muted">Cliente</span><span>${escaparHtml(factura?.propietario?.nombre || 'Consumidor final')}</span></div>
-          <div class="row"><span class="muted">Pago</span><span>${escaparHtml(formaDePago(factura) || '-')}</span></div>
-          <div class="row"><span class="muted">Atendio</span><span>${escaparHtml(factura?.usuario?.nombre || '-')}</span></div>
+        <div class="doc-title">${documentoVenta(factura).titulo}</div>
+        <div class="doc-number">${numero || '-'}</div>
+        <div class="rows" style="margin-top: 6px">
+          ${fila('Fecha', formatDateTime(factura?.createdAt || factura?.fecha))}
+          ${fila('Atendió', escaparHtml(factura?.usuario?.nombre || '-'))}
+          ${fila('Cliente', escaparHtml(factura?.propietario?.nombre || 'Consumidor final'))}
         </div>
         <div class="divider"></div>
-        <div class="section">
-          ${lineas || '<div class="muted">Sin items registrados.</div>'}
+        ${lineas || '<div>Sin ítems registrados.</div>'}
+        <div class="divider"></div>
+        <div class="rows">
+          ${descuento > 0 || impuesto > 0 ? fila('Subtotal', `<span class="num">${formatNumber(factura?.subtotal)}</span>`) : ''}
+          ${descuento > 0 ? fila('Descuento', `<span class="num">-${formatNumber(descuento)}</span>`) : ''}
+          ${impuesto > 0 ? fila('Impuesto', `<span class="num">${formatNumber(impuesto)}</span>`) : ''}
+          <div class="total-row"><span>TOTAL</span><span class="num">${formatCurrency(factura?.total)}</span></div>
+          ${fila('Pago', escaparHtml(formaDePago(factura) || '-'))}
+          ${pago ? fila('Recibido', `<span class="num">${formatNumber(pago.recibido)}</span>`) : ''}
+          ${pago ? fila('Cambio', `<span class="num">${formatNumber(pago.vuelto)}</span>`) : ''}
+          ${!anulada && saldo > 0 ? `<div class="saldo">${fila('Saldo pendiente', `<span class="num">${formatCurrency(saldo)}</span>`)}</div>` : ''}
         </div>
-        <div class="section">
-          <div class="row"><span class="muted">Subtotal</span><span class="num">${formatCurrency(factura?.subtotal || 0)}</span></div>
-          ${descuento > 0 ? `<div class="row"><span class="muted">Descuento</span><span class="num">-${formatCurrency(descuento)}</span></div>` : ''}
-          <div class="total-row"><span>TOTAL</span><span class="amount num">${formatCurrency(factura?.total || 0)}</span></div>
-        </div>
-        ${esFacturaElectronica(factura)
-          ? `<div class="section"><div class="muted" style="word-break: break-all; font-size: 10px;">CUFE: ${escaparHtml(factura.cufe)}</div></div>`
-          : ''}
+        <div class="divider"></div>
         <div class="footer">
-          <div>Gracias por confiar en nosotros</div>
-          <div class="muted">${nombreClinica} · Bourgelat</div>
+          <div class="thanks">Gracias por confiar en nosotros</div>
+          ${electronica
+            ? `<div class="cufe">CUFE: ${escaparHtml(factura.cufe)}</div>`
+            : '<div class="legal">Este documento no es factura electrónica.</div>'}
+          <div class="made-with">Hecho con Bourgelat</div>
         </div>
       </body>
     </html>
   `
 }
 
+const ESPERA_LOGO_MS = 3000
+// Muchos logos traen un fondo casi blanco (251 de 255) que en papel se nota como
+// un recuadro: de aquí para arriba se trata como blanco puro.
+const UMBRAL_BLANCO = 240
+// Los colores claros, como el amarillo, casi desaparecen en una impresora térmica.
+const OSCURECER = 0.85
+
+/**
+ * Pasa los píxeles a grises sobre blanco puro (modifica el arreglo) y devuelve
+ * el recuadro del dibujo, sin márgenes. `null` si la imagen es toda blanca.
+ */
+export const logoEnGrises = (pixeles, ancho, alto) => {
+  let minX = ancho
+  let minY = alto
+  let maxX = -1
+  let maxY = -1
+
+  for (let y = 0; y < alto; y += 1) {
+    for (let x = 0; x < ancho; x += 1) {
+      const i = (y * ancho + x) * 4
+      const opacidad = pixeles[i + 3] / 255
+      const luz = 0.299 * pixeles[i] + 0.587 * pixeles[i + 1] + 0.114 * pixeles[i + 2]
+      const gris = luz * opacidad + 255 * (1 - opacidad)
+      const esFondo = gris >= UMBRAL_BLANCO
+      const valor = esFondo ? 255 : gris * OSCURECER
+      pixeles[i] = valor
+      pixeles[i + 1] = valor
+      pixeles[i + 2] = valor
+      pixeles[i + 3] = 255
+      if (!esFondo) {
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x)
+        maxY = Math.max(maxY, y)
+      }
+    }
+  }
+
+  return maxX < 0 ? null : { x: minX, y: minY, ancho: maxX - minX + 1, alto: maxY - minY + 1 }
+}
+
+const cargarImagen = (url) =>
+  new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    const limite = setTimeout(() => reject(new Error('El logo tardó demasiado')), ESPERA_LOGO_MS)
+    img.onload = () => {
+      clearTimeout(limite)
+      resolve(img)
+    }
+    img.onerror = () => {
+      clearTimeout(limite)
+      reject(new Error('No cargó el logo'))
+    }
+    img.src = url
+  })
+
+/**
+ * Deja el logo listo para el papel. Leer los píxeles exige cabeceras CORS: si no
+ * se puede (una URL externa antigua), la tirilla usa la imagen tal como está.
+ */
+const prepararLogo = async (clinica) => {
+  const url = urlLogo(clinica)
+  if (!url) return ''
+  try {
+    const img = await cargarImagen(url)
+    const lienzo = document.createElement('canvas')
+    lienzo.width = img.naturalWidth
+    lienzo.height = img.naturalHeight
+    const contexto = lienzo.getContext('2d')
+    contexto.drawImage(img, 0, 0)
+    const imagen = contexto.getImageData(0, 0, lienzo.width, lienzo.height)
+    const recuadro = logoEnGrises(imagen.data, lienzo.width, lienzo.height)
+    if (!recuadro) return ''
+    contexto.putImageData(imagen, 0, 0)
+
+    const recorte = document.createElement('canvas')
+    recorte.width = recuadro.ancho
+    recorte.height = recuadro.alto
+    recorte.getContext('2d').drawImage(lienzo, -recuadro.x, -recuadro.y)
+    return recorte.toDataURL('image/png')
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * El navegador no espera las imágenes antes de imprimir: sin esto, el logo sale
+ * en blanco la primera vez. Un logo que falla o tarda se quita, porque es
+ * decorativo y la venta no puede quedarse sin su tirilla.
+ */
+export const esperarImagenes = (doc, esperaMs = ESPERA_LOGO_MS) =>
+  Promise.all(
+    Array.from(doc.images).map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete && img.naturalWidth > 0) {
+            resolve()
+            return
+          }
+          const terminar = (cargo) => {
+            clearTimeout(limite)
+            if (!cargo) img.remove()
+            resolve()
+          }
+          const limite = setTimeout(() => terminar(false), esperaMs)
+          img.addEventListener('load', () => terminar(true), { once: true })
+          img.addEventListener('error', () => terminar(false), { once: true })
+        })
+    )
+  )
+
+const ANCHO_ROLLO_MM = 80
+const MARGEN_MM = 3
+// Holgura para que una diferencia de redondeo no parta la tirilla en dos hojas.
+const HOLGURA_MM = 3
+const MM_POR_PX = 25.4 / 96
+
+/**
+ * Pide una hoja delgada del largo exacto del contenido: así el PDF y la vista
+ * previa salen como tirilla y no en una hoja carta. Se mide después de cargar
+ * el logo, porque el logo cambia el alto.
+ */
+export const ajustarPaginaAlContenido = (doc) => {
+  const altoContenido = Math.ceil(doc.body.getBoundingClientRect().height * MM_POR_PX)
+  const estilo = doc.createElement('style')
+  estilo.textContent = `@page { size: ${ANCHO_ROLLO_MM}mm ${altoContenido + MARGEN_MM * 2 + HOLGURA_MM}mm; margin: ${MARGEN_MM}mm; }`
+  doc.head.appendChild(estilo)
+}
+
 /**
  * Imprime la tirilla en un iframe oculto para no sacar al cajero de la pantalla
  * donde está: el POS sigue abierto detrás del diálogo de impresión.
  */
-export const imprimirTirilla = ({ factura, clinica }) => {
+export const imprimirTirilla = async ({ factura, clinica, pago }) => {
   if (!factura) {
     toast.error('No hay factura para imprimir.')
     return
   }
 
-  const html = buildThermalReceiptHtml({ factura, clinica })
+  const logoPreparado = await prepararLogo(clinica)
+  const html = buildThermalReceiptHtml({ factura, clinica, pago, logoPreparado })
   const iframe = document.createElement('iframe')
-  iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none'
+  // Lleva el ancho de impresión, sin altura: con ancho 0 no se podría medir el contenido.
+  iframe.style.cssText = `position:fixed;width:${ANCHO_ROLLO_MM - MARGEN_MM * 2}mm;height:0;border:0;opacity:0;pointer-events:none`
   document.body.appendChild(iframe)
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document
@@ -166,7 +338,13 @@ export const imprimirTirilla = ({ factura, clinica }) => {
   doc.open()
   doc.write(html)
   doc.close()
+  await esperarImagenes(doc)
+  ajustarPaginaAlContenido(doc)
+
+  // No todos los navegadores detienen el código mientras está abierto el diálogo
+  // de impresión: el iframe se quita al cerrarlo, con un tope por si no avisan.
+  iframe.contentWindow.addEventListener('afterprint', () => iframe.remove(), { once: true })
+  setTimeout(() => iframe.remove(), 60000)
   iframe.contentWindow.focus()
   iframe.contentWindow.print()
-  setTimeout(() => document.body.removeChild(iframe), 1000)
 }
