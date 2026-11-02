@@ -42,22 +42,22 @@ Static Site), así que el `X-Robots-Tag` se pone en Cloudflare:
 2. Crear una regla «noindex app»:
    - Cuando: `Hostname` equals `app.bourgelat.co`.
    - Acción: **Set static**, header `X-Robots-Tag`, valor `noindex, nofollow`.
-3. Verificar: `curl -sI https://app.bourgelat.co/planes | grep -i x-robots-tag`.
-   `curl -sI https://bourgelat.co/planes` **no** debe traerlo.
+3. Verificar: `curl -sI https://app.bourgelat.co/nosotros | grep -i x-robots-tag`.
+   `curl -sI https://bourgelat.co/nosotros` **no** debe traerlo.
 
 ### Google Search Console
 
 1. Agregar la propiedad de dominio `bourgelat.co` (verificación por DNS TXT en
    Cloudflare).
 2. **Sitemaps** → enviar `https://bourgelat.co/sitemap.xml`.
-3. **Inspección de URL** → `https://bourgelat.co/` y `/planes` → «Probar URL
+3. **Inspección de URL** → `https://bourgelat.co/` y `/nosotros` → «Probar URL
    publicada» → «Ver página probada». Si la captura muestra el contenido de la
    landing, Google renderiza bien el SPA y el prerender del cuerpo no es urgente.
    Si sale vacía o incompleta, el prerender pasa a ser prioridad.
 
 ### Vista previa social
 
-Pasar `https://bourgelat.co/` y `/planes` por el
+Pasar `https://bourgelat.co/` y `/nosotros` por el
 [Sharing Debugger de Facebook](https://developers.facebook.com/tools/debug/)
 («Volver a extraer») para que WhatsApp y Facebook tomen `og-image.png`.
 

@@ -756,7 +756,7 @@ function ConfiguracionContent({
           icon={<Sparkles />}
           title="Facturación electrónica no incluida en el plan actual"
           description="La conexión de facturación electrónica se habilita cuando la clínica sube a un plan con facturación electrónica. Las ventas se imprimen como comprobante de venta, sin valor fiscal."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.2fr)_400px]">

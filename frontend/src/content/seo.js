@@ -16,13 +16,6 @@ export const RUTAS_PUBLICAS = {
     changefreq: 'weekly',
     priority: '1.0',
   },
-  '/planes': {
-    title: 'Planes y precios del software veterinario | Bourgelat',
-    description:
-      'Planes de Bourgelat para consultorios y clínicas veterinarias en Colombia: agenda, historia clínica, inventario y caja desde $89.000 al mes.',
-    changefreq: 'monthly',
-    priority: '0.8',
-  },
   '/nosotros': {
     title: 'Nosotros | Bourgelat, software para clínicas veterinarias',
     description:

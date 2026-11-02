@@ -20,20 +20,20 @@ describe('aplicarSeo', () => {
   })
 
   it('pone el head propio de cada ruta pública', () => {
-    aplicarSeo('/planes', 'bourgelat.co')
+    aplicarSeo('/nosotros', 'bourgelat.co')
 
-    expect(document.title).toBe(RUTAS_PUBLICAS['/planes'].title)
-    expect(meta('meta[name="description"]')).toBe(RUTAS_PUBLICAS['/planes'].description)
-    expect(meta('meta[property="og:title"]')).toBe(RUTAS_PUBLICAS['/planes'].title)
-    expect(canonical()).toBe('https://bourgelat.co/planes')
+    expect(document.title).toBe(RUTAS_PUBLICAS['/nosotros'].title)
+    expect(meta('meta[name="description"]')).toBe(RUTAS_PUBLICAS['/nosotros'].description)
+    expect(meta('meta[property="og:title"]')).toBe(RUTAS_PUBLICAS['/nosotros'].title)
+    expect(canonical()).toBe('https://bourgelat.co/nosotros')
     expect(meta('meta[name="robots"]')).toBe('index, follow')
   })
 
   it('no indexa el host de la app y apunta el canonical al sitio público', () => {
-    aplicarSeo('/planes', 'app.bourgelat.co')
+    aplicarSeo('/nosotros', 'app.bourgelat.co')
 
     expect(meta('meta[name="robots"]')).toBe('noindex, nofollow')
-    expect(canonical()).toBe('https://bourgelat.co/planes')
+    expect(canonical()).toBe('https://bourgelat.co/nosotros')
   })
 
   it('no indexa rutas fuera del mapa y respeta el título de su página', () => {

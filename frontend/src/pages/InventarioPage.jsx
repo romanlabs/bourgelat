@@ -967,7 +967,7 @@ export default function InventarioPage() {
           icon={<Sparkles />}
           title="Inventario no disponible en el plan actual"
           description="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripción."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <TirarParaRefrescar onRefrescar={refrescarInventario}>
