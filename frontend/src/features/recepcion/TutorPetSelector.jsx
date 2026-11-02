@@ -6,10 +6,13 @@ import { PawPrint, Search, UserPlus } from 'lucide-react'
 import { NavCtaLink } from '@/components/shared/NavCta'
 import TutorDrawer from '@/features/pacientes/TutorDrawer'
 import { pacientesApi } from '@/features/pacientes/pacientesApi'
+import { useAltaRapidaTutor } from '@/features/pacientes/useAltaRapidaTutor'
 import { useBuscarPropietarios } from './useRecepcion'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM, etiquetaEspecie } from '@/lib/especies'
 import { formatearCelular } from '@/lib/celular'
+import { hasAnyRole } from '@/lib/permissions'
+import { useAuthStore } from '@/store/authStore'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -39,7 +42,10 @@ export function TutorPetSelector({
   onSelectMascota,
 }) {
   const queryClient = useQueryClient()
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const usuario = useAuthStore((state) => state.usuario)
+  // Mismos roles que acepta el POST de tutores: el veterinario agenda, pero no los crea.
+  const puedeCrearTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
+  const altaTutor = useAltaRapidaTutor({ onCreado: onSelectOwner })
   const propietariosQuery = useBuscarPropietarios(ownerSearch)
   const propietarios = propietariosQuery.data?.propietarios || []
   // Mascotas creadas aqui mismo: el tutor seleccionado no las trae hasta recargar.
@@ -75,31 +81,6 @@ export function TutorPetSelector({
     crearMascotaMutation.mutate({ nombre, especie: nuevaMascota.especie, propietarioId: selectedOwner.id })
   }
 
-  const crearPropietarioMutation = useMutation({
-    mutationFn: pacientesApi.crearPropietario,
-    onSuccess: (data) => {
-      toast.success(data?.message || 'Tutor registrado exitosamente')
-      invalidarDominios(queryClient, 'pacientes')
-      setDrawerOpen(false)
-      if (data?.propietario) {
-        onSelectOwner(data.propietario)
-      }
-    },
-    onError: (error) => toast.error(getErrorMessage(error, 'No fue posible registrar el tutor.')),
-  })
-
-  const handleCreateTutor = (formData) => {
-    crearPropietarioMutation.mutate({
-      nombre: formData.nombre.trim(),
-      tipoDocumento: formData.tipoDocumento,
-      numeroDocumento: formData.numeroDocumento.trim(),
-      telefono: formData.telefono,
-      email: formData.email?.trim().toLowerCase() || undefined,
-      ciudad: formData.ciudad?.trim() || undefined,
-      barrio: formData.barrio?.trim() || undefined,
-    })
-  }
-
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-muted px-4 py-4">
@@ -108,14 +89,16 @@ export function TutorPetSelector({
             <Search className="h-3.5 w-3.5" />
             Buscar tutor
           </div>
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Crear tutor
-          </button>
+          {puedeCrearTutor ? (
+            <button
+              type="button"
+              onClick={altaTutor.abrir}
+              className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Crear tutor
+            </button>
+          ) : null}
         </div>
         <input
           type="text"
@@ -167,18 +150,24 @@ export function TutorPetSelector({
           {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
             <div className="rounded-xl bg-card px-3 py-3 text-sm leading-7 text-muted-foreground">
               No encontramos un tutor con esa búsqueda.
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(true)}
-                className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
-              >
-                Crearlo ahora
-              </button>
-              {' '}o desde la
-              <NavCtaLink to="/pacientes" size="sm" className="ml-1">
-                sección de pacientes
-              </NavCtaLink>
-              .
+              {puedeCrearTutor ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={altaTutor.abrir}
+                    className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
+                  >
+                    Crearlo ahora
+                  </button>
+                  {' '}o desde la
+                  <NavCtaLink to="/pacientes" size="sm" className="ml-1">
+                    sección de pacientes
+                  </NavCtaLink>
+                  .
+                </>
+              ) : (
+                ' Pide a recepción que lo registre.'
+              )}
             </div>
           ) : null}
         </div>
@@ -295,10 +284,10 @@ export function TutorPetSelector({
       ) : null}
 
       <TutorDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSubmit={handleCreateTutor}
-        isPending={crearPropietarioMutation.isPending}
+        open={altaTutor.abierto}
+        onClose={altaTutor.cerrar}
+        onSubmit={altaTutor.guardar}
+        isPending={altaTutor.isPending}
       />
     </div>
   )

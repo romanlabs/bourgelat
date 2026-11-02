@@ -5,8 +5,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { OPCIONES_ESTERILIZADO, campoAEsterilizado, esterilizadoACampo } from '@/features/antecedentes/textoAntecedentes'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { PawPrint, Search, Upload, X } from 'lucide-react'
+import { PawPrint, Search, Upload, UserPlus, X } from 'lucide-react'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
+import TutorDrawer from './TutorDrawer'
+import { useAltaRapidaTutor } from './useAltaRapidaTutor'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM, ESPECIE_VALORES, etiquetaEspecie } from '@/lib/especies'
 import { hoyLocal } from '@/lib/fecha'
@@ -62,9 +64,17 @@ export default function PacienteDrawer({
   onSubmit,
   isPending,
   editingPaciente = null,
+  puedeCrearTutor = false,
 }) {
   const modoEdicion = Boolean(editingPaciente)
   const [selectedOwner, setSelectedOwner] = useState(null)
+  // El tutor se crea aquí mismo: lo escrito del paciente se conserva y queda elegido.
+  const altaTutor = useAltaRapidaTutor({
+    onCreado: (tutor) => {
+      setSelectedOwner(tutor)
+      onOwnerSearch(tutor.nombre)
+    },
+  })
   const [photoFile, setPhotoFile] = useState(null)
   const [photoInputKey, setPhotoInputKey] = useState(0)
 
@@ -209,9 +219,21 @@ export default function PacienteDrawer({
 
             {/* Seccion: Tutor */}
             <div className="grid gap-3 rounded-2xl bg-muted p-4">
-              <div className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-[15px] font-semibold text-foreground">Tutor responsable *</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-[15px] font-semibold text-foreground">Tutor responsable *</p>
+                </div>
+                {!modoEdicion && !selectedOwner && puedeCrearTutor ? (
+                  <button
+                    type="button"
+                    onClick={altaTutor.abrir}
+                    className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Crear tutor
+                  </button>
+                ) : null}
               </div>
 
               {modoEdicion ? (
@@ -263,7 +285,20 @@ export default function PacienteDrawer({
                   )}
 
                   {ownerSearch.trim() && !isSearchingOwners && propietarios.length === 0 && (
-                    <p className="text-[13px] text-muted-foreground">Sin resultados. Crea el tutor primero en la vista Tutores.</p>
+                    <p className="text-[13px] text-muted-foreground">
+                      No encontramos un tutor con esa búsqueda.
+                      {puedeCrearTutor ? (
+                        <button
+                          type="button"
+                          onClick={altaTutor.abrir}
+                          className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
+                        >
+                          Crearlo ahora
+                        </button>
+                      ) : (
+                        ' Pide a recepción que lo registre.'
+                      )}
+                    </p>
                   )}
 
                   {ownerSearch.trim() && propietarios.map((owner) => (
@@ -443,6 +478,13 @@ export default function PacienteDrawer({
           </button>
         </div>
       </div>
+
+      <TutorDrawer
+        open={altaTutor.abierto}
+        onClose={altaTutor.cerrar}
+        onSubmit={altaTutor.guardar}
+        isPending={altaTutor.isPending}
+      />
     </>,
     document.body
   )

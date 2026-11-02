@@ -39,6 +39,20 @@ export function rangoVisibleDeHorario(horarioAtencion) {
   }
 }
 
+// Sin horario configurado la grilla muestra las 24 horas: para decidir dónde abrirla
+// se asume una jornada habitual. No limita nada: el resto del día sigue a un scroll.
+const JORNADA_HABITUAL = { horaInicio: 7, horaFin: 19 }
+
+/**
+ * Hora en la que abre la grilla: la actual si cae dentro de la jornada; si no (de
+ * noche o de madrugada), el inicio de la jornada, donde se va a trabajar.
+ */
+export function horaAlAbrirGrilla(horaActual, horarioAtencion) {
+  const sinHorario = !horarioAtencion || !Object.values(horarioAtencion).flat().length
+  const { horaInicio, horaFin } = sinHorario ? JORNADA_HABITUAL : rangoVisibleDeHorario(horarioAtencion)
+  return horaActual >= horaInicio && horaActual < horaFin ? horaActual : horaInicio
+}
+
 /** true si el bloqueo cubre el día entero (sin franja horaria). */
 const esBloqueoDiaCompleto = (bloqueo) => !bloqueo.horaInicio || !bloqueo.horaFin
 
