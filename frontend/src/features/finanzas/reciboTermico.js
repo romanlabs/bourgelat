@@ -41,6 +41,10 @@ const fila = (etiqueta, valor) =>
 // Solo direcciones web: el valor del logo se guarda como texto libre en la clínica.
 const urlLogo = (clinica) => (/^https?:\/\//i.test(clinica?.logo || '') ? clinica.logo : '')
 
+// El celular se guarda como +573218943533; en papel se lee mejor 321 894 3533.
+const telefonoLegible = (telefono) =>
+  String(telefono || '').replace(/^\+57(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3')
+
 /**
  * @param pago Opcional: `{ recibido, vuelto }` en efectivo. No se guarda con la
  * factura, así que solo lo conoce el POS justo después de cobrar.
@@ -50,7 +54,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
   const logo = urlLogo(clinica)
   const identificacion = clinica?.nit ? `NIT ${escaparHtml(clinica.nit)}` : ''
   const direccion = escaparHtml(clinica?.direccion || '')
-  const contacto = escaparHtml([clinica?.ciudad, clinica?.telefono].filter(Boolean).join(' · '))
+  const contacto = escaparHtml([clinica?.ciudad, telefonoLegible(clinica?.telefono)].filter(Boolean).join(' · '))
   const numero = escaparHtml(factura?.numero || '')
   const descuento = Number(factura?.descuento || 0)
   const impuesto = Number(factura?.impuesto || 0)
@@ -78,8 +82,6 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
         <meta charset="utf-8" />
         <title>Tirilla ${numero}</title>
         <style>
-          /* Sin tamaño de página: toma el del rollo elegido, de 58 u 80 mm. */
-          @page { margin: 3mm; }
           * { box-sizing: border-box; }
           body {
             font-family: Arial, Helvetica, sans-serif;
@@ -96,7 +98,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
           .logo {
             display: block;
             max-width: 60%;
-            max-height: 22mm;
+            max-height: 18mm;
             margin-bottom: 5px;
             object-fit: contain;
             filter: grayscale(1) contrast(1.2);
@@ -114,14 +116,16 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
           .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
           .item { margin-bottom: 6px; }
           .item:last-child { margin-bottom: 0; }
-          .item-name { font-weight: 700; }
           .total-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
             gap: 8px;
-            margin: 3px 0;
-            font-size: 16px;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            margin: 6px 0;
+            padding: 4px 0;
+            font-size: 17px;
             font-weight: 700;
           }
           .saldo { font-weight: 700; }
@@ -136,7 +140,8 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
           .cufe { font-size: 10px; word-break: break-all; }
           .footer { display: flex; flex-direction: column; gap: 2px; text-align: center; }
           .thanks { font-weight: 700; }
-          .made-with { padding-top: 3px; font-size: 10px; }
+          .legal { padding-top: 3px; font-size: 10px; line-height: 1.25; }
+          .made-with { font-size: 9px; }
         </style>
       </head>
       <body>
@@ -160,7 +165,7 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
         ${lineas || '<div>Sin ítems registrados.</div>'}
         <div class="divider"></div>
         <div class="rows">
-          ${fila('Subtotal', `<span class="num">${formatNumber(factura?.subtotal)}</span>`)}
+          ${descuento > 0 || impuesto > 0 ? fila('Subtotal', `<span class="num">${formatNumber(factura?.subtotal)}</span>`) : ''}
           ${descuento > 0 ? fila('Descuento', `<span class="num">-${formatNumber(descuento)}</span>`) : ''}
           ${impuesto > 0 ? fila('Impuesto', `<span class="num">${formatNumber(impuesto)}</span>`) : ''}
           <div class="total-row"><span>TOTAL</span><span class="num">${formatCurrency(factura?.total)}</span></div>
@@ -171,10 +176,10 @@ export const buildThermalReceiptHtml = ({ factura, clinica, pago }) => {
         </div>
         <div class="divider"></div>
         <div class="footer">
+          <div class="thanks">Gracias por confiar en nosotros</div>
           ${electronica
             ? `<div class="cufe">CUFE: ${escaparHtml(factura.cufe)}</div>`
-            : '<div>Este documento no es factura electrónica.</div>'}
-          <div class="thanks">Gracias por confiar en nosotros</div>
+            : '<div class="legal">Este documento no es factura electrónica.</div>'}
           <div class="made-with">Hecho con Bourgelat</div>
         </div>
       </body>
@@ -210,6 +215,24 @@ export const esperarImagenes = (doc, esperaMs = ESPERA_LOGO_MS) =>
     )
   )
 
+const ANCHO_ROLLO_MM = 80
+const MARGEN_MM = 3
+// Holgura para que una diferencia de redondeo no parta la tirilla en dos hojas.
+const HOLGURA_MM = 3
+const MM_POR_PX = 25.4 / 96
+
+/**
+ * Pide una hoja delgada del largo exacto del contenido: así el PDF y la vista
+ * previa salen como tirilla y no en una hoja carta. Se mide después de cargar
+ * el logo, porque el logo cambia el alto.
+ */
+export const ajustarPaginaAlContenido = (doc) => {
+  const altoContenido = Math.ceil(doc.body.getBoundingClientRect().height * MM_POR_PX)
+  const estilo = doc.createElement('style')
+  estilo.textContent = `@page { size: ${ANCHO_ROLLO_MM}mm ${altoContenido + MARGEN_MM * 2 + HOLGURA_MM}mm; margin: ${MARGEN_MM}mm; }`
+  doc.head.appendChild(estilo)
+}
+
 /**
  * Imprime la tirilla en un iframe oculto para no sacar al cajero de la pantalla
  * donde está: el POS sigue abierto detrás del diálogo de impresión.
@@ -222,7 +245,8 @@ export const imprimirTirilla = async ({ factura, clinica, pago }) => {
 
   const html = buildThermalReceiptHtml({ factura, clinica, pago })
   const iframe = document.createElement('iframe')
-  iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none'
+  // Lleva el ancho de impresión, sin altura: con ancho 0 no se podría medir el contenido.
+  iframe.style.cssText = `position:fixed;width:${ANCHO_ROLLO_MM - MARGEN_MM * 2}mm;height:0;border:0;opacity:0;pointer-events:none`
   document.body.appendChild(iframe)
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document
@@ -236,6 +260,7 @@ export const imprimirTirilla = async ({ factura, clinica, pago }) => {
   doc.write(html)
   doc.close()
   await esperarImagenes(doc)
+  ajustarPaginaAlContenido(doc)
 
   // No todos los navegadores detienen el código mientras está abierto el diálogo
   // de impresión: el iframe se quita al cerrarlo, con un tope por si no avisan.

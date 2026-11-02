@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildThermalReceiptHtml, esperarImagenes } from './reciboTermico'
+import { ajustarPaginaAlContenido, buildThermalReceiptHtml, esperarImagenes } from './reciboTermico'
 
 describe('buildThermalReceiptHtml', () => {
   it('muestra el logo de la clínica y sus datos de contacto', () => {
@@ -25,6 +25,22 @@ describe('buildThermalReceiptHtml', () => {
       expect(html).not.toContain('javascript:')
       expect(html).not.toContain('<script>')
     }
+  })
+
+  it('muestra el celular colombiano sin el +57 y agrupado', () => {
+    const html = buildThermalReceiptHtml({ clinica: { telefono: '+573218943533' }, factura: { items: [] } })
+    expect(html).toContain('321 894 3533')
+    expect(html).not.toContain('+57')
+  })
+
+  it('solo muestra el subtotal cuando difiere del total', () => {
+    const simple = buildThermalReceiptHtml({ clinica: {}, factura: { items: [], subtotal: 1000, total: 1000 } })
+    expect(simple).not.toContain('Subtotal')
+    const conDescuento = buildThermalReceiptHtml({
+      clinica: {},
+      factura: { items: [], subtotal: 1000, descuento: 100, total: 900 },
+    })
+    expect(conDescuento).toContain('Subtotal')
   })
 
   it('no redondea las cantidades fraccionadas', () => {
@@ -91,6 +107,16 @@ describe('buildThermalReceiptHtml', () => {
     expect(html).toContain('FACTURA ELECTRÓNICA DE VENTA')
     expect(html).toContain('CUFE: cufe123')
     expect(html).not.toContain('no es factura electrónica')
+  })
+})
+
+describe('ajustarPaginaAlContenido', () => {
+  it('pide una hoja de 80 mm con el largo del contenido, los márgenes y la holgura', () => {
+    const doc = document.implementation.createHTMLDocument()
+    doc.body.getBoundingClientRect = () => ({ height: 384 }) // 101,6 mm
+    ajustarPaginaAlContenido(doc)
+    expect(doc.head.textContent).toContain('size: 80mm 111mm')
+    expect(doc.head.textContent).toContain('margin: 3mm')
   })
 })
 
