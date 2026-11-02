@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { QueryClient } from '@tanstack/react-query'
-import { Toaster, toast } from 'sonner'
+import { toast } from 'sonner'
+import { Toaster } from '@/components/ui/sonner'
 import { iniciarVigilanciaSesion, leerAvisoSesion } from '@/lib/sesionPestanas'
 import { AppRouter } from '@/router'
 import { useEffect, useState } from 'react'
@@ -126,8 +127,6 @@ function ThemeSync() {
 }
 
 export default function App() {
-  const dark = useThemeStore((state) => state.dark)
-
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -136,14 +135,7 @@ export default function App() {
         <AuthBootstrap>
           <AppRouter />
         </AuthBootstrap>
-        <Toaster
-          // Arriba al centro: abajo a la derecha tapaban el boton principal de
-          // los drawers y del punto de venta justo despues de cada accion.
-          position="top-center"
-          richColors
-          closeButton
-          theme={dark ? 'dark' : 'light'}
-        />
+        <Toaster />
       </QueryClientProvider>
     </AppErrorBoundary>
   )

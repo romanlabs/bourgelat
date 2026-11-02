@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Dialog, DropdownMenu } from 'radix-ui'
 import {
+  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
   Ellipsis,
   LifeBuoy,
@@ -35,6 +37,25 @@ import { etiquetaEspecie } from '@/lib/especies'
 import { useModuleAccess } from '@/lib/useModuleAccess'
 import { canAccessModule, getUserRoles } from '@/lib/permissions'
 import { formatearCelular } from '@/lib/celular'
+
+// Menú lateral recogido (solo íconos): lo recuerda cada navegador.
+const CLAVE_MENU_COMPACTO = 'bourgelat:menu-compacto'
+
+function leerMenuCompacto() {
+  try {
+    return localStorage.getItem(CLAVE_MENU_COMPACTO) === '1'
+  } catch {
+    return false
+  }
+}
+
+function guardarMenuCompacto(compacto) {
+  try {
+    localStorage.setItem(CLAVE_MENU_COMPACTO, compacto ? '1' : '0')
+  } catch {
+    // Sin almacenamiento el menú igual funciona; solo no se recuerda.
+  }
+}
 
 const QUICK_ACTION_MODULE = {
   facturar: 'caja',
@@ -96,8 +117,32 @@ function BarraInferior({ usuario, currentKey }) {
   )
 }
 
-function NavItem({ item, active, onNavigate, bloqueado, onBloqueado }) {
+function NavItem({ item, active, onNavigate, bloqueado, onBloqueado, compacto }) {
   const Icon = item.icon
+
+  if (compacto) {
+    const clases = cn(
+      'flex h-11 w-full items-center justify-center rounded-lg transition-colors duration-150 menu-bajo:h-9 menu-muy-bajo:h-7',
+      bloqueado
+        ? 'text-sidebar-foreground/55 hover:bg-sidebar-accent'
+        : active
+          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+          : 'text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+    )
+    return (
+      <SimpleTooltip label={item.label} side="right" delayDuration={100}>
+        {bloqueado ? (
+          <button type="button" aria-disabled="true" aria-label={`${item.label} (sin acceso)`} onClick={onBloqueado} className={clases}>
+            {Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
+          </button>
+        ) : (
+          <Link to={item.to} onClick={onNavigate} aria-label={item.label} aria-current={active ? 'page' : undefined} className={clases}>
+            {Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
+          </Link>
+        )}
+      </SimpleTooltip>
+    )
+  }
 
   if (bloqueado) {
     return (
@@ -217,25 +262,66 @@ function MenuUsuario({ usuario, iniciales, pathname, dark, toggleDark, logout, a
   )
 }
 
-function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales, menuUsuario }) {
+function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales, menuUsuario, compacto, onAlternarCompacto }) {
   return (
-    <div className="flex h-full flex-col gap-6 px-4 py-6 menu-bajo:gap-4 menu-bajo:py-5 menu-muy-bajo:gap-3 menu-muy-bajo:py-4">
-      <Link to="/dashboard" onClick={onNavigate} className="flex flex-col gap-1 px-3">
-        <span className="text-[22px] font-bold leading-none tracking-[-0.03em] text-sidebar-accent-foreground">
-          Bourgelat
-        </span>
-        <span className="truncate text-[13px] text-sidebar-foreground/75 menu-muy-bajo:hidden">{nombreClinica}</span>
-      </Link>
+    <div className={cn('flex h-full flex-col gap-6 py-6 menu-bajo:gap-4 menu-bajo:py-5 menu-muy-bajo:gap-3 menu-muy-bajo:py-3', compacto ? 'px-3' : 'px-4')}>
+      {compacto ? (
+        // Recogido, la «B» es el botón: al pasar el mouse muestra la flecha.
+        <SimpleTooltip label="Desplegar menú" side="right" delayDuration={100}>
+          <button
+            type="button"
+            onClick={onAlternarCompacto}
+            aria-label="Desplegar menú"
+            aria-expanded="false"
+            className="group flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-lg text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          >
+            <span className="text-[22px] font-bold leading-none tracking-[-0.03em] group-hover:hidden group-focus-visible:hidden">B</span>
+            <ChevronRight className="hidden h-[18px] w-[18px] group-hover:block group-focus-visible:block" />
+          </button>
+        </SimpleTooltip>
+      ) : (
+        <div className="flex items-start gap-1">
+          <Link to="/dashboard" onClick={onNavigate} className="flex min-w-0 flex-1 flex-col gap-1 px-3">
+            <span className="text-[22px] font-bold leading-none tracking-[-0.03em] text-sidebar-accent-foreground">
+              Bourgelat
+            </span>
+            <span className="truncate text-[13px] text-sidebar-foreground/75 menu-minimo:hidden">{nombreClinica}</span>
+          </Link>
+          <SimpleTooltip label="Recoger menú" side="right" delayDuration={100}>
+            <button
+              type="button"
+              onClick={onAlternarCompacto}
+              aria-label="Recoger menú"
+              aria-expanded="true"
+              // -mt: centrada con la línea de «Bourgelat» (22 px de alto).
+              className="-mt-[5px] flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-colors hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            >
+              <ChevronLeft className="h-[18px] w-[18px]" />
+            </button>
+          </SimpleTooltip>
+        </div>
+      )}
 
-      <nav aria-label="Principal" className="flex flex-1 flex-col gap-5 overflow-y-auto menu-bajo:gap-3 [scrollbar-width:thin]">
+      <nav
+        aria-label="Principal"
+        className={cn(
+          'flex flex-1 flex-col gap-5 overflow-y-auto menu-bajo:gap-3',
+          // Recogido no cabe una barra de scroll sin descentrar los íconos.
+          compacto ? '[scrollbar-width:none]' : '[scrollbar-width:thin]'
+        )}
+      >
         {NAV_SECTIONS.map((section) => {
           const sectionItems = section.items.map((itemKey) => NAV_ITEMS_BY_KEY[itemKey]).filter(Boolean)
 
           return (
             <div key={section.key} className="flex flex-col gap-0.5">
-              {/* El primer grupo va sin título en el menú lateral. */}
+              {/* El primer grupo va sin título en el menú lateral; recogido, el título es una línea. */}
               {section.label && section.key !== 'operacion' ? (
-                <p className="px-3 pb-1.5 text-[13px] text-sidebar-foreground/70 menu-muy-bajo:pb-0.5">{section.label}</p>
+                compacto ? (
+                  <div className="mx-2 mb-2 h-px bg-sidebar-foreground/20 menu-muy-bajo:mb-1" aria-hidden="true" />
+                ) : (
+                  <p className="px-3 pb-1.5 text-[13px] text-sidebar-foreground/70 menu-muy-bajo:pb-0.5">{section.label}</p>
+                )
               ) : null}
               {sectionItems.map((item) => (
                 <NavItem
@@ -245,6 +331,7 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
                   onNavigate={onNavigate}
                   bloqueado={!canAccess(item.key)}
                   onBloqueado={() => guard(item.key, item.label)}
+                  compacto={compacto}
                 />
               ))}
             </div>
@@ -255,8 +342,10 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
       <MenuUsuario {...menuUsuario} align="start" side="top">
         <button
           type="button"
+          aria-label={compacto ? `Mi cuenta: ${usuario?.nombre || 'Mi perfil'}` : undefined}
           className={cn(
-            'flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring menu-muy-bajo:p-2',
+            'flex w-full items-center rounded-xl text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+            compacto ? 'justify-center p-1' : 'gap-3 p-3 menu-muy-bajo:p-2',
             currentKey === 'perfil'
               ? 'bg-sidebar-primary text-sidebar-primary-foreground'
               : 'bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent'
@@ -265,11 +354,15 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
           <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-bold text-foreground menu-muy-bajo:h-8 menu-muy-bajo:w-8">
             {usuario?.foto ? <img src={usuario.foto} alt="" className="h-full w-full object-cover" /> : iniciales}
           </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-semibold">{usuario?.nombre || 'Mi perfil'}</span>
-            <span className="truncate text-[13px] opacity-75">{etiquetaRoles(usuario)}</span>
-          </span>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+          {compacto ? null : (
+            <>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-semibold">{usuario?.nombre || 'Mi perfil'}</span>
+                <span className="truncate text-[13px] opacity-75">{etiquetaRoles(usuario)}</span>
+              </span>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+            </>
+          )}
         </button>
       </MenuUsuario>
     </div>
@@ -305,6 +398,12 @@ export default function AdminShell({
   const navigate = useNavigate()
   const location = useLocation()
   const [bannerVerificacionOculto, setBannerVerificacionOculto] = useState(false)
+  const [menuCompacto, setMenuCompacto] = useState(leerMenuCompacto)
+  const alternarMenuCompacto = () => {
+    const nuevo = !menuCompacto
+    setMenuCompacto(nuevo)
+    guardarMenuCompacto(nuevo)
+  }
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const openSearch = useCallback(() => setIsSearchOpen(true), [])
   const [searchQuery, setSearchQuery] = useState('')
@@ -416,13 +515,20 @@ export default function AdminShell({
     nombreClinica,
     usuario,
     iniciales: usuarioIniciales,
+    compacto: menuCompacto,
+    onAlternarCompacto: alternarMenuCompacto,
   }
 
   return (
     <AdminSearchContext.Provider value={openSearch}>
     <HeaderSlotContext.Provider value={setHeaderCenter}>
     <div className="admin-workspace min-h-screen bg-background text-foreground lg:flex">
-      <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 bg-sidebar text-sidebar-foreground lg:block">
+      <aside
+        className={cn(
+          'sticky top-0 hidden h-screen shrink-0 overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-out motion-reduce:transition-none lg:block',
+          menuCompacto ? 'w-[72px]' : 'w-[248px]'
+        )}
+      >
         <SidebarContent {...sidebarProps} />
       </aside>
 
