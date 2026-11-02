@@ -67,6 +67,7 @@ export default function AgendaCalendar({
     slots,
     gridInicio,
     gridFin,
+    horarioAtencion,
     esHabil,
     getBloqueoDelDia,
   } = useAgendaCalendar({ veterinarioId, estado, enabled, view: effectiveView, prefs })
@@ -207,6 +208,7 @@ export default function AgendaCalendar({
             showTimezoneLabel={sidebarOpen}
             gridInicio={gridInicio}
             gridFin={gridFin}
+            horarioAtencion={horarioAtencion}
             esHabil={esHabil}
             getBloqueoDelDia={getBloqueoDelDia}
           />
