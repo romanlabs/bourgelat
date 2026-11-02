@@ -11,6 +11,8 @@ import { useBuscarPropietarios } from './useRecepcion'
 import { Select } from '@/components/ui/select'
 import { ESPECIE_OPCIONES_FORM, etiquetaEspecie } from '@/lib/especies'
 import { formatearCelular } from '@/lib/celular'
+import { hasAnyRole } from '@/lib/permissions'
+import { useAuthStore } from '@/store/authStore'
 
 const getErrorMessage = (error, fallback) =>
   error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
@@ -40,6 +42,9 @@ export function TutorPetSelector({
   onSelectMascota,
 }) {
   const queryClient = useQueryClient()
+  const usuario = useAuthStore((state) => state.usuario)
+  // Mismos roles que acepta el POST de tutores: el veterinario agenda, pero no los crea.
+  const puedeCrearTutor = hasAnyRole(usuario, ['admin', 'superadmin', 'recepcionista', 'auxiliar'])
   const altaTutor = useAltaRapidaTutor({ onCreado: onSelectOwner })
   const propietariosQuery = useBuscarPropietarios(ownerSearch)
   const propietarios = propietariosQuery.data?.propietarios || []
@@ -84,14 +89,16 @@ export function TutorPetSelector({
             <Search className="h-3.5 w-3.5" />
             Buscar tutor
           </div>
-          <button
-            type="button"
-            onClick={altaTutor.abrir}
-            className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Crear tutor
-          </button>
+          {puedeCrearTutor ? (
+            <button
+              type="button"
+              onClick={altaTutor.abrir}
+              className="-my-2 inline-flex min-h-11 items-center gap-1.5 rounded px-1 text-[13px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:my-0 lg:min-h-0 lg:px-0"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Crear tutor
+            </button>
+          ) : null}
         </div>
         <input
           type="text"
@@ -143,18 +150,24 @@ export function TutorPetSelector({
           {!selectedOwner && ownerSearch.trim() && propietarios.length === 0 ? (
             <div className="rounded-xl bg-card px-3 py-3 text-sm leading-7 text-muted-foreground">
               No encontramos un tutor con esa búsqueda.
-              <button
-                type="button"
-                onClick={altaTutor.abrir}
-                className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
-              >
-                Crearlo ahora
-              </button>
-              {' '}o desde la
-              <NavCtaLink to="/pacientes" size="sm" className="ml-1">
-                sección de pacientes
-              </NavCtaLink>
-              .
+              {puedeCrearTutor ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={altaTutor.abrir}
+                    className="ml-1 inline-flex min-h-11 items-center rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-0"
+                  >
+                    Crearlo ahora
+                  </button>
+                  {' '}o desde la
+                  <NavCtaLink to="/pacientes" size="sm" className="ml-1">
+                    sección de pacientes
+                  </NavCtaLink>
+                  .
+                </>
+              ) : (
+                ' Pide a recepción que lo registre.'
+              )}
             </div>
           ) : null}
         </div>
