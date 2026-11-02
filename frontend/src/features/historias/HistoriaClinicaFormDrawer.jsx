@@ -851,7 +851,7 @@ export default function HistoriaClinicaFormDrawer({
                     ) : antecedentesQuery.isError ? (
                       <p className="text-[13px] text-danger">No fue posible cargar los antecedentes.</p>
                     ) : (
-                      <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} mascota={mascota} />
+                      <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} />
                     )}
                   </div>
                 )}
@@ -1265,7 +1265,7 @@ export default function HistoriaClinicaFormDrawer({
                 ) : antecedentesQuery.isError ? (
                   <p className="text-[13px] text-danger">No fue posible cargar los antecedentes.</p>
                 ) : (
-                  <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} mascota={mascota} />
+                  <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} />
                 )}
               </section>
 

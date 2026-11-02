@@ -1,3 +1,9 @@
+export const AVISO_TUTOR_PRECARGADO = {
+  titulo: 'Se cargó el tutor de la cita',
+  mensaje: 'No hay una consulta registrada para precargar los insumos: agrega lo que vas a cobrar.',
+  consultaHref: null,
+}
+
 // Por qué una consulta no se pudo precargar en la caja. Queda a la vista en vez de
 // un toast que se va: sin él, la caja solo se ve vacía y nadie sabe qué falta.
 export const avisoCobroConsulta = (error, historiaId) => {

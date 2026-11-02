@@ -3,7 +3,7 @@ import { aFechaLocal, fechaCorta, formatoNumero, soloDia } from '@/features/paci
 import { hoyLocal } from '@/lib/fecha'
 import { nombreAutor } from '@/lib/equipo'
 
-import { SIN_REGISTRAR, estaEsterilizado } from '@/features/antecedentes/textoAntecedentes'
+import { SIN_ALERGIAS, SIN_MEDICACION, textoEsterilizado, textoRegistrado } from '@/features/antecedentes/textoAntecedentes'
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const CAMPO =
   'h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground sm:text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring'
@@ -168,7 +168,7 @@ function FilaAntecedente({ label, valor, tono = 'normal' }) {
 }
 
 // Resumen de antecedentes para tener a mano durante la consulta.
-export function AntecedentesConsulta({ antecedentes, mascota }) {
+export function AntecedentesConsulta({ antecedentes }) {
   const alergias = (antecedentes?.alergias || []).map((a) => a.descripcion || a.tipo).filter(Boolean)
   const condiciones = (antecedentes?.condicionesCronicas || []).map((c) => c.nombre).filter(Boolean)
   const medicamentos = (antecedentes?.medicamentosActuales || [])
@@ -185,21 +185,21 @@ export function AntecedentesConsulta({ antecedentes, mascota }) {
     <dl className="flex flex-col divide-y divide-border">
       <FilaAntecedente
         label="Alergias"
-        valor={alergias.length ? alergias.join(', ') : SIN_REGISTRAR}
+        valor={textoRegistrado(alergias, antecedentes?.sinAlergias, SIN_ALERGIAS)}
         tono={alergias.length ? 'danger' : 'muted'}
       />
       {condiciones.length ? <FilaAntecedente label="Condiciones" valor={condiciones.join(', ')} tono="warning" /> : null}
       <FilaAntecedente
         label="Esterilizado"
         valor={
-          estaEsterilizado(mascota, antecedentes)
-            ? `Sí${antecedentes?.fechaEsterilizacion ? `, ${fechaCorta(antecedentes.fechaEsterilizacion)}` : ''}`
-            : SIN_REGISTRAR
+          antecedentes?.esterilizado === true && antecedentes.fechaEsterilizacion
+            ? `Sí, ${fechaCorta(antecedentes.fechaEsterilizacion)}`
+            : textoEsterilizado(antecedentes?.esterilizado)
         }
       />
       <FilaAntecedente
         label="Medicación actual"
-        valor={medicamentos.length ? medicamentos.join(', ') : SIN_REGISTRAR}
+        valor={textoRegistrado(medicamentos, antecedentes?.sinMedicacion, SIN_MEDICACION)}
         tono={medicamentos.length ? 'normal' : 'muted'}
       />
       <FilaAntecedente label="Vacunas" valor={vacunas.texto} tono={vacunas.tono} />

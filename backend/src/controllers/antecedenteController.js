@@ -1,5 +1,6 @@
 const AntecedentesMascota = require('../models/AntecedentesMascota');
 const Mascota = require('../models/Mascota');
+const sequelize = require('../config/database');
 const crypto = require('crypto');
 const { formatDateOnlyLocal } = require('../utils/dateOnly');
 const { listarSeguimientos } = require('../services/seguimientoService');
@@ -31,6 +32,12 @@ const obtenerOMaterializarAntecedentes = async ({ mascotaId, clinicaId }) => {
   return { mascota, antecedentes };
 };
 
+// La esterilizacion vive en Mascota; las pantallas la leen junto a los antecedentes.
+const vistaAntecedentes = (antecedentes, mascota) => ({
+  ...antecedentes.toJSON(),
+  esterilizado: mascota.esterilizado,
+});
+
 const obtenerOCrearAntecedentes = async (req, res) => {
   try {
     const { mascotaId } = req.params;
@@ -41,7 +48,7 @@ const obtenerOCrearAntecedentes = async (req, res) => {
       return res.status(404).json({ message: 'Mascota no encontrada' });
     }
 
-    res.json({ antecedentes });
+    res.json({ antecedentes: vistaAntecedentes(antecedentes, mascota) });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
@@ -74,7 +81,7 @@ const agregarAlergia = async (req, res) => {
     };
 
     const alergias = [...antecedentes.alergias, nuevaAlergia];
-    await antecedentes.update({ alergias });
+    await antecedentes.update({ alergias, sinAlergias: false });
 
     res.json({ message: 'Alergia agregada exitosamente', alergia: nuevaAlergia });
   } catch (error) {
@@ -260,7 +267,10 @@ const actualizarGenerales = async (req, res) => {
   try {
     const { mascotaId } = req.params;
     const { clinicaId } = req.usuario;
-    const { esterilizado, fechaEsterilizacion, observacionesGenerales, medicamentosActuales } = req.body;
+    const {
+      esterilizado, sinAlergias, sinMedicacion,
+      fechaEsterilizacion, observacionesGenerales, medicamentosActuales,
+    } = req.body;
 
     const { mascota, antecedentes } = await obtenerOMaterializarAntecedentes({ mascotaId, clinicaId });
     if (!mascota) {
@@ -270,14 +280,22 @@ const actualizarGenerales = async (req, res) => {
       return res.status(404).json({ message: 'Antecedentes no encontrados' });
     }
 
-    await antecedentes.update({
-      esterilizado,
-      fechaEsterilizacion,
-      observacionesGenerales,
-      medicamentosActuales,
+    // Una confirmacion de "ninguna" no puede contradecir lo registrado.
+    const medicamentos = medicamentosActuales ?? antecedentes.medicamentosActuales;
+    const cambios = { fechaEsterilizacion, observacionesGenerales, medicamentosActuales };
+    if (sinAlergias !== undefined) cambios.sinAlergias = sinAlergias && antecedentes.alergias.length === 0;
+    if (sinMedicacion !== undefined) cambios.sinMedicacion = sinMedicacion && medicamentos.length === 0;
+    else if (medicamentos.length > 0) cambios.sinMedicacion = false;
+
+    await sequelize.transaction(async (transaction) => {
+      if (esterilizado !== undefined) await mascota.update({ esterilizado }, { transaction });
+      await antecedentes.update(cambios, { transaction });
     });
 
-    res.json({ message: 'Antecedentes actualizados exitosamente', antecedentes });
+    res.json({
+      message: 'Antecedentes actualizados exitosamente',
+      antecedentes: vistaAntecedentes(antecedentes, mascota),
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }

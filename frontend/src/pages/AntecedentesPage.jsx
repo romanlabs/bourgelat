@@ -25,10 +25,20 @@ import { cn } from '@/lib/utils'
 import { etiquetaEspecie } from '@/lib/especies'
 import { hoyLocal } from '@/lib/fecha'
 
-
-import { SIN_REGISTRAR, estaEsterilizado } from '@/features/antecedentes/textoAntecedentes'
+import { Select } from '@/components/ui/select'
+import {
+  OPCIONES_ESTERILIZADO,
+  SIN_ALERGIAS,
+  SIN_MEDICACION,
+  campoAEsterilizado,
+  esterilizadoACampo,
+  textoEsterilizado,
+  textoRegistrado,
+} from '@/features/antecedentes/textoAntecedentes'
 const DEFAULT_GENERAL_VALUES = {
-  esterilizado: false,
+  esterilizado: '',
+  sinAlergias: false,
+  sinMedicacion: false,
   fechaEsterilizacion: '',
   observacionesGenerales: '',
   medicamentosActualesTexto: '',
@@ -466,7 +476,9 @@ export default function AntecedentesPage() {
     if (generalDraft) return generalDraft
 
     return {
-      esterilizado: selectedAntecedentes?.esterilizado || false,
+      esterilizado: esterilizadoACampo(selectedAntecedentes?.esterilizado),
+      sinAlergias: Boolean(selectedAntecedentes?.sinAlergias),
+      sinMedicacion: Boolean(selectedAntecedentes?.sinMedicacion),
       fechaEsterilizacion: selectedAntecedentes?.fechaEsterilizacion || '',
       observacionesGenerales: selectedAntecedentes?.observacionesGenerales || '',
       medicamentosActualesTexto: mapMedicamentosToText(selectedAntecedentes?.medicamentosActuales),
@@ -479,7 +491,7 @@ export default function AntecedentesPage() {
       toast.success(data?.message || 'Antecedentes generales actualizados exitosamente')
       setGeneralDraft(null)
       setAntDrawerOpen(false)
-      invalidarDominios(queryClient, 'historias')
+      invalidarDominios(queryClient, 'historias', 'pacientes')
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'No fue posible actualizar los antecedentes generales.'))
@@ -662,7 +674,9 @@ export default function AntecedentesPage() {
     actualizarGeneralesMutation.mutate({
       mascotaId: selectedPet.id,
       payload: {
-        esterilizado: generalValues.esterilizado,
+        esterilizado: campoAEsterilizado(generalValues.esterilizado),
+        sinAlergias: generalValues.sinAlergias,
+        sinMedicacion: generalValues.sinMedicacion,
         fechaEsterilizacion: generalValues.fechaEsterilizacion || undefined,
         observacionesGenerales: generalValues.observacionesGenerales.trim() || undefined,
         medicamentosActuales: buildMedicamentosPayload(generalValues.medicamentosActualesTexto),
@@ -1027,15 +1041,15 @@ export default function AntecedentesPage() {
                       <div>
                         <dt className="text-[13px] text-muted-foreground">Esterilizado</dt>
                         <dd className="mt-1 text-base font-medium text-foreground">
-                          {estaEsterilizado(selectedPet, selectedAntecedentes)
-                            ? `Sí${selectedAntecedentes?.fechaEsterilizacion ? ` · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}` : ''}`
-                            : SIN_REGISTRAR}
+                          {selectedAntecedentes?.esterilizado === true && selectedAntecedentes.fechaEsterilizacion
+                            ? `Sí · ${formatLongDate(selectedAntecedentes.fechaEsterilizacion)}`
+                            : textoEsterilizado(selectedAntecedentes?.esterilizado)}
                         </dd>
                       </div>
                       <div>
                         <dt className="text-[13px] text-muted-foreground">Medicación actual</dt>
                         <dd className="mt-1 whitespace-pre-line text-base font-medium text-foreground">
-                          {medicamentosTexto || SIN_REGISTRAR}
+                          {medicamentosTexto || textoRegistrado([], selectedAntecedentes?.sinMedicacion, SIN_MEDICACION)}
                         </dd>
                       </div>
                     </dl>
@@ -1157,7 +1171,7 @@ export default function AntecedentesPage() {
                       onAction={puedeEditar ? () => openAntDrawer('alergia') : null}
                     >
                       {alergiasRows.length === 0 ? (
-                        <Vacio>Aún no hay alergias registradas.</Vacio>
+                        <Vacio>{selectedAntecedentes?.sinAlergias ? `${SIN_ALERGIAS}.` : 'Aún no hay alergias registradas.'}</Vacio>
                       ) : (
                         <div className="flex flex-col gap-1.5">
                           {alergiasRows.map((row) => (
@@ -1307,13 +1321,20 @@ export default function AntecedentesPage() {
           {/* Generales */}
           {antDrawerType === 'generales' && (
             <form id="ant-drawer-form" className="grid gap-4" onSubmit={handleGuardarGenerales}>
-              <label className="flex h-11 cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground">
-                <input type="checkbox" className="h-4 w-4 accent-primary" checked={generalValues.esterilizado} onChange={(e) => updateGeneralDraft('esterilizado', e.target.checked)} />
-                Paciente esterilizado
-              </label>
+              <Campo label="Esterilizado">
+                <Select variant="field" aria-label="Esterilizado" value={generalValues.esterilizado} onValueChange={(valor) => updateGeneralDraft('esterilizado', valor)} options={OPCIONES_ESTERILIZADO} />
+              </Campo>
               <Campo label="Fecha de esterilización">
                 <input type="date" value={generalValues.fechaEsterilizacion} onChange={(e) => updateGeneralDraft('fechaEsterilizacion', e.target.value)} className={CAMPO} />
               </Campo>
+              <label className={`flex h-11 items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground ${alergiasRows.length ? 'opacity-60' : 'cursor-pointer'}`}>
+                <input type="checkbox" className="h-4 w-4 accent-primary" disabled={alergiasRows.length > 0} checked={generalValues.sinAlergias && !alergiasRows.length} onChange={(e) => updateGeneralDraft('sinAlergias', e.target.checked)} />
+                {SIN_ALERGIAS}
+              </label>
+              <label className={`flex h-11 items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground ${generalValues.medicamentosActualesTexto.trim() ? 'opacity-60' : 'cursor-pointer'}`}>
+                <input type="checkbox" className="h-4 w-4 accent-primary" disabled={Boolean(generalValues.medicamentosActualesTexto.trim())} checked={generalValues.sinMedicacion && !generalValues.medicamentosActualesTexto.trim()} onChange={(e) => updateGeneralDraft('sinMedicacion', e.target.checked)} />
+                {SIN_MEDICACION}
+              </label>
               <Campo label="Medicamentos actuales">
                 <textarea value={generalValues.medicamentosActualesTexto} onChange={(e) => updateGeneralDraft('medicamentosActualesTexto', e.target.value)} placeholder="Uno por línea" className={CAMPO_AREA} />
               </Campo>
