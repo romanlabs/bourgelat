@@ -617,7 +617,7 @@ export default function PacientesPage() {
           icon={<Sparkles />}
           title="Pacientes no disponibles en el plan actual"
           description="La base de tutores y pacientes hace parte del trabajo diario. Si esta sección no aparece activa, revisa el plan contratado por la clínica."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <TirarParaRefrescar onRefrescar={refrescar}>

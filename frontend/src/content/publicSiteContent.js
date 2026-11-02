@@ -49,15 +49,7 @@ export const brandProfile = {
 }
 
 // Cobro manual (sin pasarela): QR Bre-B de Bancolombia + comprobante + activación
-// manual con `npm run suscripcion:asignar`.
-// Precios de los planes pagos para las páginas públicas (landing, /planes, /pagar).
-// Deben coincidir con backend/src/config/planes.js; precioAnual es el valor por mes
-// pagando el año.
-export const PRECIOS_PLANES = {
-  esencial: { nombre: 'Esencial', precioMensual: 89000, precioAnual: 75000 },
-  activo: { nombre: 'Clínica', precioMensual: 120000, precioAnual: 100000 },
-}
-
+// manual con `npm run suscripcion:asignar`. Lo muestra Mi plan.
 export const pagoManual = {
   llaveBreB: '0093458902',
   destinatario: 'bourgelat',
