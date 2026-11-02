@@ -395,7 +395,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           icon={<Sparkles />}
           title="Finanzas no disponibles en el plan actual"
           description="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta sección de forma permanente para gerencia, conviene subir de plan."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <TirarParaRefrescar

@@ -1,13 +1,9 @@
 import { urlDocumentoLegal } from '@/content/legal'
 import { Calendar, HeartPulse, Package } from "lucide-react"
-import { PRECIOS_PLANES } from "@/content/publicSiteContent"
-
-const precioPorMes = (plan) => `COP ${plan.precioMensual.toLocaleString("es-CO")}/mes`
 
 export const NAV_ITEMS = [
   { label: 'Plataforma', href: '#plataforma' },
   { label: 'Flujo', href: '#flujo' },
-  { label: 'Planes', href: '#planes' },
   { label: 'Contacto', href: '#contacto' },
 ]
 
@@ -32,30 +28,6 @@ export const FLOW_STEPS = [
     body:
       'El cierre queda amarrado al caso: cobro, consumo, alerta de reposicion y siguiente contacto con el tutor.',
     image: '/images/flujo/slide-3.webp',
-  },
-]
-
-
-export const PLAN_PREVIEW = [
-  {
-    name: 'Esencial',
-    subtitle: 'Para empezar con orden',
-    price: precioPorMes(PRECIOS_PLANES.esencial),
-    note: 'Todo lo que un consultorio pequeño necesita: un usuario, 5 GB y reportes operativos.',
-  },
-  {
-    name: 'Clínica',
-    subtitle: 'Para el día completo',
-    price: precioPorMes(PRECIOS_PLANES.activo),
-    note: 'Para el equipo completo: tres usuarios incluidos, 20 GB, analítica de agenda y rentabilidad del mes.',
-    featured: true,
-  },
-  {
-    name: 'Clínica + DIAN',
-    subtitle: 'Con facturación electrónica',
-    price: null,
-    note: 'Todo lo de Clínica con cinco usuarios y emisión validada ante la DIAN. En desarrollo.',
-    comingSoon: true,
   },
 ]
 

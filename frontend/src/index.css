@@ -708,34 +708,6 @@ input:-webkit-autofill:focus {
 }
 
 /* ── Planes: al pasar el cursor por uno, los demás se difuminan ── */
-.plan-card {
-  transition: filter 320ms ease, opacity 320ms ease, transform 320ms ease;
-}
-
-/* El difuminado de los demás planes solo tiene sentido con mouse real. En touch,
-   el :hover se queda "pegado" tras tocar y deja tarjetas borrosas. */
-@media (hover: hover) and (pointer: fine) {
-  .plans-grid:hover .plan-card {
-    filter: blur(3px);
-    opacity: 0.5;
-  }
-
-  .plans-grid .plan-card:hover {
-    filter: none;
-    opacity: 1;
-    transform: translateY(-4px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .plan-card,
-  .plans-grid:hover .plan-card,
-  .plans-grid .plan-card:hover {
-    transition: none;
-    transform: none;
-  }
-}
-
 .flow-carousel__btn {
   position: absolute;
   top: 50%;

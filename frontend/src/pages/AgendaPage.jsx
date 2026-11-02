@@ -322,7 +322,7 @@ export default function AgendaPage() {
           icon={<Sparkles />}
           title="Agenda no disponible en el plan actual"
           description="La agenda de citas hace parte del producto base. Si esta clínica no la tiene activa, revisa la configuración comercial antes de continuar."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
         <div className="space-y-0">

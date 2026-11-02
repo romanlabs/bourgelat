@@ -877,7 +877,7 @@ export default function AntecedentesPage() {
           icon={<Sparkles />}
           title="Antecedentes no disponibles en el plan actual"
           description="El resumen de antecedentes hace parte del trabajo clínico diario. Si esta sección no aparece activa, revisa el plan de la clínica."
-          action={<NavCta to="/planes" icon={Sparkles}>Revisar planes</NavCta>}
+          action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
 <TirarParaRefrescar onRefrescar={refrescar}>

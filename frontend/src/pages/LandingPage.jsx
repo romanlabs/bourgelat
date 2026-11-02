@@ -12,19 +12,9 @@ import SectionHeading from "@/components/landing/SectionHeading"
 import BrandMark from "@/components/landing/BrandMark"
 import FooterPulse from "@/components/landing/FooterPulse"
 import WhatsAppFab from "@/components/landing/WhatsAppFab"
-import { PLAN_PREVIEW, legalLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
+import { legalLinks, WARM_BAND_BACKGROUND } from "@/components/landing/data"
 
 const FAQS = [
-  {
-    pregunta: '¿Puedo empezar con Esencial y subir a Clínica después?',
-    respuesta:
-      'Sí. Subes cuando tu equipo necesite más usuarios o almacenamiento, o cuando quieras la analítica de agenda y la rentabilidad del mes.',
-  },
-  {
-    pregunta: '¿Qué plan elige una clínica con varios usuarios?',
-    respuesta:
-      'Clínica: incluye tres usuarios, 20 GB, el flujo completo de agenda, consulta, inventario y caja, y la analítica con rentabilidad.',
-  },
   {
     pregunta: '¿La facturación electrónica DIAN está disponible?',
     respuesta:
@@ -33,7 +23,7 @@ const FAQS = [
   {
     pregunta: '¿Cuándo conviene hablar con el equipo?',
     respuesta:
-      'Cuando tienes dudas sobre el plan que mejor se ajusta a tu clínica, o quieres conocer la hoja de ruta del producto.',
+      'Cuando tienes dudas sobre cómo se ajusta Bourgelat a tu clínica, o quieres conocer la hoja de ruta del producto.',
   },
 ]
 
@@ -153,12 +143,6 @@ export default function LandingPage() {
                 Crear cuenta
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
               </Link>
-              <Link
-                to="/planes"
-                className="pointer-events-auto inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#2b2018]/25 bg-transparent px-7 py-3.5 text-sm font-semibold text-[#2b2018] no-underline transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto short:w-auto short:px-5 short:py-2.5"
-              >
-                Ver planes
-              </Link>
             </div>
           </div>
         </div>
@@ -195,96 +179,6 @@ export default function LandingPage() {
         </div>
       </section>
       </div>
-
-      <section id="planes" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
-        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <SectionHeading
-            eyebrow="Planes"
-            title="Dos planes. Elige según el tamaño de tu equipo."
-            body="Esencial para un consultorio que quiere empezar a mejorar su flujo de trabajo, Clínica para un equipo completo. Prueba 30 días gratis, sin costos ocultos ni configuraciones complejas."
-            center
-          />
-
-          <div className="plans-grid mt-10 grid gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-3">
-            {PLAN_PREVIEW.map((plan) => (
-              <article
-                key={plan.name}
-                className={`plan-card relative rounded-2xl p-5 sm:p-6 ${
-                  plan.featured
-                    ? 'border border-[#b07645] bg-white shadow-[0_24px_60px_rgba(43,32,24,0.12)]'
-                    : plan.comingSoon
-                    ? 'border-2 border-dashed border-[#e0cdb4]'
-                    : 'border border-[#2b2018]/10 bg-white shadow-[0_12px_30px_rgba(43,32,24,0.06)]'
-                }`}
-                style={plan.comingSoon ? { background: 'linear-gradient(165deg, #fdf8f0 0%, #f5ecdd 100%)', filter: 'blur(0.6px) brightness(0.98) saturate(0.9)' } : undefined}
-              >
-                {plan.featured && (
-                  <span className="absolute -top-3 right-5 rounded-full bg-[#b07645] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
-                    Más elegido
-                  </span>
-                )}
-                {plan.comingSoon && (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-4 top-4 -rotate-[6deg] select-none rounded-[6px] px-3 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.22em]"
-                    style={{
-                      color: '#b07645',
-                      border: '1.5px solid #b07645',
-                      backgroundColor: 'rgba(176,118,69,0.06)',
-                      boxShadow: 'inset 0 0 0 2px #fdf8f0, inset 0 0 0 3px rgba(176,118,69,0.45)',
-                    }}
-                  >
-                    Próximamente
-                  </span>
-                )}
-                <p
-                  className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                    plan.featured ? 'text-[#b07645]' : 'text-[#2b2018]/55'
-                  }`}
-                >
-                  {plan.subtitle}
-                </p>
-                <div className="mt-3 flex items-baseline justify-between gap-3 sm:mt-4 sm:block">
-                  <h3
-                    className="text-[1.7rem] leading-none tracking-[-0.04em] sm:text-4xl"
-                    style={{ fontFamily: '"Spectral", "Spectral Fallback", Georgia, serif', fontWeight: 700 }}
-                  >
-                    {plan.name}
-                  </h3>
-                  {plan.price && (
-                    <p className="shrink-0 text-base font-semibold text-[#2b2018] sm:mt-4 sm:text-lg">
-                      {plan.price}
-                    </p>
-                  )}
-                </div>
-                <p
-                  className={`mt-3 text-sm leading-6 sm:mt-4 sm:leading-7 ${
-                    plan.featured ? 'text-[#2b2018]/80' : 'text-[#2b2018]/65'
-                  }`}
-                >
-                  {plan.note}
-                </p>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-            <Link
-              to="/planes"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#2b2018] px-6 py-3.5 text-sm font-semibold text-white no-underline transition-colors hover:bg-[#b07645] sm:w-auto"
-            >
-              Ver comparativa completa
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-[3px]" />
-            </Link>
-            <Link
-              to="/registro"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[rgba(43,32,24,0.25)] px-6 py-3.5 text-sm font-semibold text-[#2b2018] transition-colors hover:border-[#b07645] hover:text-[#b07645] sm:w-auto"
-            >
-              Crear cuenta
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <section id="preguntas" className="-mt-px scroll-mt-40 bg-[#f8f4ee] text-[#2b2018]">
         <div className="mx-auto max-w-3xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
@@ -400,7 +294,6 @@ export default function LandingPage() {
                 {[
                   { label: 'Plataforma', href: '#plataforma' },
                   { label: 'Flujo diario', href: '#flujo' },
-                  { label: 'Planes', to: '/planes' },
                   { label: 'Empezar', href: '#contacto' },
                 ].map((item) => (
                   <li key={item.label}>
@@ -433,11 +326,6 @@ export default function LandingPage() {
                 <li>
                   <Link to="/nosotros" className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0">
                     Nosotros
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/planes" className="inline-block py-3 text-sm text-[#fdf6ee]/65 no-underline transition-colors hover:text-white lg:py-0">
-                    Comparar planes
                   </Link>
                 </li>
                 <li>

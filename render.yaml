@@ -212,9 +212,6 @@ services:
     # Al agregar una ruta publica en seo.js, agregar aqui su rewrite.
     routes:
       - type: rewrite
-        source: /planes
-        destination: /planes/index.html
-      - type: rewrite
         source: /nosotros
         destination: /nosotros/index.html
       # Los documentos legales son solo el PDF (las cookies son una sección de
