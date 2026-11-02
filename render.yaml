@@ -222,7 +222,7 @@ services:
         destination: /legal/politica-tratamiento-datos-v1.0.pdf
       - type: redirect
         source: /terminos
-        destination: /legal/terminos-y-condiciones-v1.1.pdf
+        destination: /legal/terminos-y-condiciones-v1.0.pdf
       - type: redirect
         source: /cookies
         destination: /legal/politica-tratamiento-datos-v1.0.pdf
