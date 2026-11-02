@@ -25,7 +25,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturacion'
-import { avisoCobroConsulta } from '@/features/finanzas/avisoCobroConsulta'
+import { AVISO_TUTOR_PRECARGADO, avisoCobroConsulta } from '@/features/finanzas/avisoCobroConsulta'
 import {
   useFinanzasHistorial,
   STATUS_OPTIONS,
@@ -183,7 +183,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
   // Llegada desde una historia clínica cerrada: precargamos el carrito con los
   // insumos que ya se le aplicaron al paciente y abrimos el POS.
   const historiaAFacturar = location.state?.facturarHistoriaId || null
-  const [avisoCobro, setAvisoCobro] = useState(null)
+  const [avisoCobro, setAvisoCobro] = useState(() => (location.state?.cobrarTutor ? AVISO_TUTOR_PRECARGADO : null))
 
   useEffect(() => {
     if (!historiaAFacturar || !puedeVerFinanzas || !esCaja) return
@@ -214,6 +214,16 @@ export default function FinanzasPage({ modo = 'caja' }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historiaAFacturar, puedeVerFinanzas])
+
+  // Llegada desde una cita sin consulta registrada: solo se conoce al tutor.
+  const tutorACobrar = location.state?.cobrarTutor || null
+
+  useEffect(() => {
+    if (!tutorACobrar || !puedeVerFinanzas || !esCaja) return
+    facturacionHook.selectOwner(tutorACobrar)
+    navigate(location.pathname, { replace: true, state: {} })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorACobrar, puedeVerFinanzas])
 
   // Llegada desde un registro de estilos ya editable (no bloqueado): igual
   // que la historia clinica, pero aqui no hay insumos que precargar — el

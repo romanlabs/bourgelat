@@ -336,6 +336,7 @@ export function useFinanzasFacturacion({
       historiaClinicaId: preliquidacion?.historiaClinicaId || '',
       items,
     }))
+    setSelectedOwnerData(preliquidacion?.propietario || null)
 
     if (preliquidacion?.medicamentosOmitidos?.length) {
       toast.warning(
@@ -363,6 +364,7 @@ export function useFinanzasFacturacion({
       propietarioId: preliquidacion?.propietario?.id || '',
       registroEstiloId: preliquidacion?.registroEstiloId || '',
     }))
+    setSelectedOwnerData(preliquidacion?.propietario || null)
 
     if (preliquidacion?.tipoCorte) {
       toast.info(`Agrega el servicio de estilos al carrito: ${preliquidacion.tipoCorte}.`)

@@ -45,9 +45,11 @@ const Mascota = sequelize.define('Mascota', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  // Tres estados: null es sin registrar, no «no».
   esterilizado: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    allowNull: true,
+    defaultValue: null,
   },
   observaciones: {
     type: DataTypes.TEXT,

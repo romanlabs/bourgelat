@@ -98,7 +98,7 @@ export function usePacientesMascotas({ enabled }) {
   function invalidarMascotas() {
     // Todo el dominio: perfil del paciente, selectores de agenda y busqueda global
     // muestran la misma mascota con claves propias.
-    invalidarDominios(queryClient, 'pacientes')
+    invalidarDominios(queryClient, 'pacientes', 'historias')
   }
 
   const crearMascotaMutation = useMutation({

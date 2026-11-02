@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { Controller, useForm } from 'react-hook-form'
+import { OPCIONES_ESTERILIZADO, campoAEsterilizado, esterilizadoACampo } from '@/features/antecedentes/textoAntecedentes'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PawPrint, Search, Upload, X } from 'lucide-react'
@@ -33,7 +34,7 @@ const pacienteSchema = z.object({
   peso: z.coerce.number().positive('El peso debe ser positivo').optional().or(z.literal('')),
   color: z.string().optional(),
   observaciones: z.string().optional(),
-  esterilizado: z.boolean().default(false),
+  esterilizado: z.enum(['', 'si', 'no']),
 })
 
 const DEFAULT_VALUES = {
@@ -45,7 +46,7 @@ const DEFAULT_VALUES = {
   peso: '',
   color: '',
   observaciones: '',
-  esterilizado: false,
+  esterilizado: '',
 }
 
 const fieldClass =
@@ -107,7 +108,7 @@ export default function PacienteDrawer({
             peso: editingPaciente.peso ?? '',
             color: editingPaciente.color || '',
             observaciones: editingPaciente.observaciones || '',
-            esterilizado: Boolean(editingPaciente.esterilizado),
+            esterilizado: esterilizadoACampo(editingPaciente.esterilizado),
           }
         : DEFAULT_VALUES
     )
@@ -158,7 +159,7 @@ export default function PacienteDrawer({
       peso: formData.peso ? Number(formData.peso) : vacio,
       color: formData.color?.trim() || vacio,
       observaciones: formData.observaciones?.trim() || vacio,
-      esterilizado: formData.esterilizado,
+      esterilizado: campoAEsterilizado(formData.esterilizado),
     }
     onSubmit({
       payload,
@@ -401,10 +402,24 @@ export default function PacienteDrawer({
                 </div>
               </div>
 
-              <label className="flex h-12 lg:h-11 cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 text-sm text-foreground transition hover:bg-accent">
-                <input type="checkbox" className="h-5 w-5 lg:h-4 lg:w-4 accent-primary" {...register('esterilizado')} />
-                Paciente esterilizado
-              </label>
+              <div className="grid gap-1.5">
+                <label htmlFor="p-esterilizado" className="text-[13px] font-medium text-muted-foreground">Esterilizado</label>
+                <Controller
+                  name="esterilizado"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      variant="field"
+                      id="p-esterilizado"
+                      aria-label="Esterilizado"
+                      className="h-12 lg:h-11"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={OPCIONES_ESTERILIZADO}
+                    />
+                  )}
+                />
+              </div>
 
               <div className="grid gap-1.5">
                 <label htmlFor="p-obs" className="text-[13px] font-medium text-muted-foreground">Observaciones</label>

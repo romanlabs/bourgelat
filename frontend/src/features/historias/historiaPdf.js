@@ -32,7 +32,7 @@ import {
   texto,
 } from './historiaPdfComun'
 
-import { estaEsterilizado } from '@/features/antecedentes/textoAntecedentes'
+import { SIN_ALERGIAS, SIN_MEDICACION } from '@/features/antecedentes/textoAntecedentes'
 // La historia clinica de una consulta, para el archivo de la clinica, una
 // remision o cuando el tutor la pide. Sigue el orden de una historia clinica
 // humana (Resolucion 1995 de 1999): identificacion, registro de la atencion,
@@ -61,13 +61,19 @@ const ANTECEDENTES = [
   ['Medicamentos actuales', 'medicamentosActuales', (m) => [texto(m.nombre), texto(m.dosis), texto(m.frecuencia)]],
 ]
 
+const confirmadoSin = (antecedentes, campo) => {
+  if (campo === 'alergias' && antecedentes?.sinAlergias) return SIN_ALERGIAS
+  if (campo === 'medicamentosActuales' && antecedentes?.sinMedicacion) return SIN_MEDICACION
+  return ''
+}
+
 const describirAntecedentes = (antecedentes) =>
   ANTECEDENTES.map(([etiqueta, campo, describir]) => [
     etiqueta,
     lista(antecedentes?.[campo])
       .map((item) => describir(item).filter(Boolean).join(', '))
       .filter(Boolean)
-      .join('; '),
+      .join('; ') || confirmadoSin(antecedentes, campo),
   ])
 
 const describirTratamientoIntrahospitalario = (item) => {
@@ -117,7 +123,7 @@ export const buildHistoriaPdf = async ({ historia, clinica, usuario }) => {
     ['Fecha de nacimiento', fechaNacimiento && formatFechaCorta(fechaNacimiento), 'No registrada'],
     ['Edad a la atención', edad, 'No registrada'],
     ['Color', capitalizar(mascota.color)],
-    ['Esterilizado', estaEsterilizado(mascota, mascota.antecedentes) ? 'Sí' : ''],
+    ['Esterilizado', mascota.esterilizado === true ? 'Sí' : mascota.esterilizado === false ? 'No' : ''],
   ])
 
   // ── Propietario o responsable ──

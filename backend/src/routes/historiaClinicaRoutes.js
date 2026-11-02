@@ -277,7 +277,7 @@ router.get(
 router.get(
   '/:id/preliquidacion',
   verificarToken,
-  verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'facturador'),
+  verificarRol('veterinario', 'admin', 'superadmin', 'auxiliar', 'facturador', 'recepcionista'),
   [
     param('id').isUUID().withMessage('Historia clinica no valida'),
     validar,
