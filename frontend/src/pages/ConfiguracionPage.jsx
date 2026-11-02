@@ -588,7 +588,7 @@ function ConfiguracionContent({
             <div className="grid gap-4 xl:grid-cols-2">
               <FormField
                 label="Logo"
-                helper="Aparecerá en el encabezado de los comprobantes que descargues o imprimas. JPG, PNG o WEBP, máximo 4 MB."
+                helper="Aparece en el menú lateral, en la tirilla y en los documentos que descargues o imprimas. JPG, PNG o WEBP, máximo 4 MB."
               >
                 <div className="flex items-center gap-4">
                   {clinicForm.logo ? (

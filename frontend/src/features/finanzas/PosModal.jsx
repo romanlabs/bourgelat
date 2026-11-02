@@ -652,7 +652,13 @@ export default function PosModal({
                         <div className="flex shrink-0 flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => imprimirTirilla({ factura: facturaEmitida, clinica })}
+                            onClick={() =>
+                              imprimirTirilla({
+                                factura: facturaEmitida,
+                                clinica,
+                                pago: facturaEmitida.metodoPago === 'efectivo' ? snapshot : undefined,
+                              })
+                            }
                             className="inline-flex h-11 items-center gap-2 px-3 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-10"
                           >
                             <Printer className="h-4 w-4" />

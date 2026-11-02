@@ -262,7 +262,7 @@ function MenuUsuario({ usuario, iniciales, pathname, dark, toggleDark, logout, a
   )
 }
 
-function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, usuario, iniciales, menuUsuario, compacto, onAlternarCompacto }) {
+function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinica, logoClinica, usuario, iniciales, menuUsuario, compacto, onAlternarCompacto }) {
   return (
     <div className={cn('flex h-full flex-col gap-6 py-6 menu-bajo:gap-4 menu-bajo:py-5 menu-muy-bajo:gap-3 menu-muy-bajo:py-3', compacto ? 'px-3' : 'px-4')}>
       {compacto ? (
@@ -285,7 +285,18 @@ function SidebarContent({ currentKey, canAccess, guard, onNavigate, nombreClinic
             <span className="text-[22px] font-bold leading-none tracking-[-0.03em] text-sidebar-accent-foreground">
               Bourgelat
             </span>
-            <span className="truncate text-[13px] text-sidebar-foreground/75 menu-minimo:hidden">{nombreClinica}</span>
+            <span className="flex min-w-0 items-center gap-2 menu-minimo:hidden">
+              {logoClinica ? (
+                // Fondo blanco fijo: un logo oscuro y transparente no se vería sobre el menú.
+                <img
+                  src={logoClinica}
+                  alt=""
+                  onError={(event) => { event.currentTarget.hidden = true }}
+                  className="h-6 w-6 shrink-0 rounded-md bg-white object-contain p-0.5"
+                />
+              ) : null}
+              <span className="truncate text-[13px] text-sidebar-foreground/75">{nombreClinica}</span>
+            </span>
           </Link>
           <SimpleTooltip label="Recoger menú" side="right" delayDuration={100}>
             <button
@@ -513,6 +524,7 @@ export default function AdminShell({
     canAccess,
     guard,
     nombreClinica,
+    logoClinica: clinica?.logo,
     usuario,
     iniciales: usuarioIniciales,
     compacto: menuCompacto,
