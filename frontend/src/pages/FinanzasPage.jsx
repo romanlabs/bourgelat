@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { historiasApi } from '@/features/historias/historiasApi'
 import { estilosApi } from '@/features/estilos/estilosApi'
@@ -25,6 +25,7 @@ import {
 } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency } from '@/features/dashboard/dashboardUtils'
 import { useFinanzasFacturacion } from '@/features/finanzas/useFinanzasFacturacion'
+import { avisoCobroConsulta } from '@/features/finanzas/avisoCobroConsulta'
 import {
   useFinanzasHistorial,
   STATUS_OPTIONS,
@@ -182,6 +183,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
   // Llegada desde una historia clínica cerrada: precargamos el carrito con los
   // insumos que ya se le aplicaron al paciente y abrimos el POS.
   const historiaAFacturar = location.state?.facturarHistoriaId || null
+  const [avisoCobro, setAvisoCobro] = useState(null)
 
   useEffect(() => {
     if (!historiaAFacturar || !puedeVerFinanzas || !esCaja) return
@@ -192,15 +194,15 @@ export default function FinanzasPage({ modo = 'caja' }) {
       .obtenerPreliquidacion(historiaAFacturar)
       .then((preliquidacion) => {
         if (cancelado) return
+        setAvisoCobro(null)
         facturacionHook.loadPreliquidacionHistoria(preliquidacion)
         setVentaExitosa(false)
         setActiveTab('facturacion')
       })
       .catch((error) => {
         if (cancelado) return
-        toast.error(
-          error?.response?.data?.message || 'No fue posible cargar los insumos de la consulta.'
-        )
+        setAvisoCobro(avisoCobroConsulta(error, historiaAFacturar))
+        setActiveTab('facturacion')
       })
       .finally(() => {
         // Limpiar el state evita recargar la preliquidación al volver atrás.
@@ -412,6 +414,24 @@ export default function FinanzasPage({ modo = 'caja' }) {
           {activeTab === 'medios' && esAdmin && <MediosPagoPanel />}
 
           {/* ── Tab: Facturacion ── */}
+          {activeTab === 'facturacion' && avisoCobro ? (
+            <div role="alert" className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-warning-soft px-4 py-3 text-sm text-warning">
+              <div className="min-w-0 flex-1 basis-64">
+                <p className="font-semibold">{avisoCobro.titulo}</p>
+                <p className="mt-0.5">{avisoCobro.mensaje}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {avisoCobro.consultaHref && canAccessModule(usuario, 'historias') ? (
+                  <Link to={avisoCobro.consultaHref} className="inline-flex h-10 items-center rounded-lg bg-card px-3 font-semibold text-foreground transition hover:brightness-95">
+                    Abrir la consulta
+                  </Link>
+                ) : null}
+                <button type="button" onClick={() => setAvisoCobro(null)} className="inline-flex h-10 items-center rounded-lg px-3 font-semibold transition hover:bg-warning/10">
+                  Entendido
+                </button>
+              </div>
+            </div>
+          ) : null}
           {activeTab === 'facturacion' && (
             cajaHook.turnoActivoQuery.isLoading ? (
               <div className="h-40 animate-pulse rounded-2xl bg-card" />
