@@ -325,7 +325,7 @@ export default function MiPlanPage() {
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <section aria-labelledby="pl-pago" className="flex flex-wrap items-center justify-center gap-5 rounded-2xl bg-card p-5 sm:justify-start sm:gap-7 sm:p-7">
-            <img src={qrBourgelat} alt="Código QR de pago Bre-B de Bourgelat" className="h-[148px] w-[148px] shrink-0 rounded-[14px] bg-white p-2" />
+            <img src={qrBourgelat} alt="Código QR de pago Bre-B de Bourgelat" className="h-[200px] w-[200px] shrink-0 rounded-[14px] bg-white p-2" />
             <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:min-w-[240px]">
               <h2 id="pl-pago" className="text-xl font-semibold tracking-[-0.02em] text-foreground">Cómo pagar</h2>
               <p className="text-[15px] leading-relaxed text-foreground/85">
