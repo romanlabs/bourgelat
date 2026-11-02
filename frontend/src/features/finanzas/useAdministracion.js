@@ -50,8 +50,8 @@ export function useCuentasPorCobrar() {
 export function useRegistrarAbono() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ facturaId, ...payload }) =>
-      administracionApi.registrarAbono(facturaId, payload),
+    mutationFn: ({ facturaId, claveIdempotencia, ...payload }) =>
+      administracionApi.registrarAbono(facturaId, payload, claveIdempotencia),
     onSuccess: () => {
       // El abono cambia estado/saldo de la factura y puede tocar la caja.
       invalidarDominios(queryClient, 'facturacion', 'caja')
