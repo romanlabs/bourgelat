@@ -142,12 +142,12 @@ describe('buildThermalReceiptHtml', () => {
 })
 
 describe('ajustarPaginaAlContenido', () => {
-  it('pide una hoja de 58 mm con el largo del contenido, los márgenes y la holgura', () => {
+  it('pide una hoja de 80 mm con el largo del contenido, los márgenes y la holgura', () => {
     const doc = document.implementation.createHTMLDocument()
     doc.body.getBoundingClientRect = () => ({ height: 384 }) // 101,6 mm
     ajustarPaginaAlContenido(doc)
-    expect(doc.head.textContent).toContain('size: 58mm 111mm')
-    expect(doc.head.textContent).toContain('margin: 3mm 5mm')
+    expect(doc.head.textContent).toContain('size: 80mm 111mm')
+    expect(doc.head.textContent).toContain('margin: 3mm')
   })
 })
 

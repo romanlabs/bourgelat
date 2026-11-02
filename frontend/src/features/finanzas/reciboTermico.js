@@ -293,10 +293,8 @@ export const esperarImagenes = (doc, esperaMs = ESPERA_LOGO_MS) =>
     )
   )
 
-const ANCHO_ROLLO_MM = 58
+const ANCHO_ROLLO_MM = 80
 const MARGEN_MM = 3
-// Una impresora de 58 mm solo alcanza a imprimir unos 48 mm centrados.
-const MARGEN_LATERAL_MM = 5
 // Holgura para que una diferencia de redondeo no parta la tirilla en dos hojas.
 const HOLGURA_MM = 3
 const MM_POR_PX = 25.4 / 96
@@ -309,7 +307,7 @@ const MM_POR_PX = 25.4 / 96
 export const ajustarPaginaAlContenido = (doc) => {
   const altoContenido = Math.ceil(doc.body.getBoundingClientRect().height * MM_POR_PX)
   const estilo = doc.createElement('style')
-  estilo.textContent = `@page { size: ${ANCHO_ROLLO_MM}mm ${altoContenido + MARGEN_MM * 2 + HOLGURA_MM}mm; margin: ${MARGEN_MM}mm ${MARGEN_LATERAL_MM}mm; }`
+  estilo.textContent = `@page { size: ${ANCHO_ROLLO_MM}mm ${altoContenido + MARGEN_MM * 2 + HOLGURA_MM}mm; margin: ${MARGEN_MM}mm; }`
   doc.head.appendChild(estilo)
 }
 
@@ -327,7 +325,7 @@ export const imprimirTirilla = async ({ factura, clinica, pago }) => {
   const html = buildThermalReceiptHtml({ factura, clinica, pago, logoPreparado })
   const iframe = document.createElement('iframe')
   // Lleva el ancho de impresión, sin altura: con ancho 0 no se podría medir el contenido.
-  iframe.style.cssText = `position:fixed;width:${ANCHO_ROLLO_MM - MARGEN_LATERAL_MM * 2}mm;height:0;border:0;opacity:0;pointer-events:none`
+  iframe.style.cssText = `position:fixed;width:${ANCHO_ROLLO_MM - MARGEN_MM * 2}mm;height:0;border:0;opacity:0;pointer-events:none`
   document.body.appendChild(iframe)
 
   const doc = iframe.contentDocument || iframe.contentWindow?.document
