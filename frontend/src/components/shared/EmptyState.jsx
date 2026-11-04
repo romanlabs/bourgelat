@@ -64,6 +64,7 @@ export function EmptyState({ icon, title, description, action, size = 'md', vari
     <div
       className={cn(
         wrapperVariants({ size }),
+        'estado-aparece',
         bordered && 'rounded-xl bg-muted',
         className
       )}

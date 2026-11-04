@@ -10,6 +10,8 @@ import { useEsCelular } from '@/lib/useEsCelular'
 import { examenesLaboratorioApi } from '@/features/examenesLaboratorio/examenesLaboratorioApi'
 import { cn } from '@/lib/utils'
 import { CLASE_RESALTADO, TRANSICION_RESALTADO, useResaltado } from '@/lib/useResaltado'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { nombreAutor } from '@/lib/equipo'
 
@@ -293,9 +295,18 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
       </div>
 
       {examenesQuery.isPending ? (
-        <p className="text-sm text-muted-foreground">Cargando exámenes...</p>
+        <div role="status" aria-label="Cargando exámenes" className="flex flex-col gap-1.5">
+          {[0, 1].map((fila) => (
+            <Skeleton key={fila} className="h-14 rounded-xl" />
+          ))}
+        </div>
       ) : examenesQuery.isError ? (
-        <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">No fue posible cargar los exámenes.</p>
+        <AvisoError
+          titulo="Los exámenes no cargaron"
+          error={examenesQuery.error}
+          alReintentar={examenesQuery.refetch}
+          reintentando={examenesQuery.isFetching}
+        />
       ) : examenes.length === 0 ? (
         <div className="rounded-xl bg-muted px-4 py-5 text-center">
           <FlaskConical className="mx-auto mb-1.5 h-5 w-5 text-muted-foreground" />
@@ -460,9 +471,9 @@ export default function ExamenesLaboratorioSection({ mascotaId, puedeEditar = fa
       <ConfirmDialog
         open={Boolean(examenAEliminar)}
         onOpenChange={(open) => { if (!open) setExamenAEliminar(null) }}
-        title="Eliminar examen"
-        description={`¿Eliminar el examen "${examenAEliminar?.tipo ?? ''}"? Esta acción no se puede deshacer.`}
-        confirmLabel="Eliminar"
+        title={`¿Eliminar el examen «${examenAEliminar?.tipo ?? ''}»?`}
+        description="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar examen"
         loading={eliminarMutation.isPending}
         onConfirm={() => {
           eliminarMutation.mutate(examenAEliminar.id)

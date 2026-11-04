@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { authApi } from '@/features/auth/authApi'
 import { useAuthStore } from '@/store/authStore'
 import AppErrorBoundary from '@/components/shared/AppErrorBoundary'
+import { PantallaCarga } from '@/components/shared/IlustracionEstado'
 import { useThemeStore } from '@/store/themeStore'
 
 const queryClient = new QueryClient({
@@ -96,11 +97,7 @@ function AuthBootstrap({ children }) {
   }, [clearAuth, isAuthenticated, setAuth])
 
   if (checking) {
-    return (
-      <div className="min-h-screen bg-[var(--color-sidebar)] flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-info border-t-transparent animate-spin" />
-      </div>
-    )
+    return <PantallaCarga etiqueta="Abriendo tu clínica" />
   }
 
   return children

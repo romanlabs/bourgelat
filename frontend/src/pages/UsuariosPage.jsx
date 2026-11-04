@@ -9,6 +9,7 @@ import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { useMantenerPresionado } from '@/lib/gestos'
 import { useEsCelular } from '@/lib/useEsCelular'
 import AdminShell from '@/components/layout/AdminShell'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import { DashboardPanel, StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatNumber, toNumber } from '@/features/dashboard/dashboardUtils'
@@ -758,9 +759,7 @@ export default function UsuariosPage() {
       <div className="space-y-4 lg:space-y-5">
         {esCelular ? <p className="px-1 text-[13px] text-muted-foreground">{descripcion}</p> : null}
         {usuariosQuery.isError ? (
-          <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
-            {getErrorMessage(usuariosQuery.error, 'No fue posible cargar el equipo de la clínica.')}
-          </div>
+          <AvisoError titulo="El equipo de la clínica no cargó" error={usuariosQuery.error} alReintentar={usuariosQuery.refetch} reintentando={usuariosQuery.isFetching} />
         ) : null}
 
         {!usuariosQuery.isPending && totalVeterinarios === 0 ? (

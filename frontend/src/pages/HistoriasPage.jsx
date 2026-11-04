@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { useDeslizarHorizontal } from '@/lib/gestos'
 import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 // Cada chip es una pregunta operativa, no una metrica: al tocarlo filtra la
 // tabla de abajo. 'pendientes' es el default porque una historia sin cerrar es
@@ -26,9 +27,6 @@ const FILTROS = {
   mes: {},
   todas: {},
 }
-
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
@@ -296,14 +294,10 @@ export default function HistoriasPage() {
         </div>
 
         {historiasQuery.isError ? (
-          <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
-            {getErrorMessage(historiasQuery.error, 'No fue posible cargar el listado de historias clínicas.')}
-          </div>
+          <AvisoError titulo="Las historias clínicas no cargaron" error={historiasQuery.error} alReintentar={historiasQuery.refetch} reintentando={historiasQuery.isFetching} />
         ) : null}
         {veterinariosQuery.isError ? (
-          <div role="alert" className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
-            {getErrorMessage(veterinariosQuery.error, 'No fue posible cargar el equipo veterinario.')}
-          </div>
+          <AvisoError titulo="El equipo veterinario no cargó" error={veterinariosQuery.error} alReintentar={veterinariosQuery.refetch} reintentando={veterinariosQuery.isFetching} />
         ) : null}
 
         <section aria-label="Historias clínicas" className="overflow-hidden rounded-2xl bg-card" {...gestoFiltros}>

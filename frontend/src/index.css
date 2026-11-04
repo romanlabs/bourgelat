@@ -1067,3 +1067,60 @@ input:-webkit-autofill:focus {
     animation: none;
   }
 }
+
+/* Estados de pantalla: ilustraciones de IlustracionEstado.jsx. */
+.estado-escena {
+  --escena-acento: hsl(var(--brand));
+  --escena-suave: hsl(var(--muted));
+}
+/* Las pantallas completas son siempre en claro: toman los valores de PantallaEstado. */
+.pantalla-estado .estado-escena {
+  --escena-acento: inherit;
+  --escena-suave: inherit;
+}
+.estado-acento-lleno { fill: var(--escena-acento); stroke: none; }
+.estado-pulso-base { stroke: var(--escena-suave); }
+.estado-pulso-fijo { stroke: var(--escena-acento); }
+.estado-rastro {
+  stroke: var(--escena-acento);
+  stroke-dasharray: 1 11;
+  animation: estado-rastro 1.6s linear infinite;
+}
+.estado-pulso {
+  stroke: var(--escena-acento);
+  stroke-dasharray: 100;
+  animation: estado-pulso 1.8s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+
+.estado-chispa { animation: estado-chispa 1.8s ease-in-out infinite; }
+.pantalla-estado__texto,
+.estado-aparece { animation: estado-entrada .45s cubic-bezier(.2, .7, .2, 1) both; }
+.estado-aparece-tarde { animation: estado-entrada .3s ease-out .25s both; }
+
+@keyframes estado-rastro { to { stroke-dashoffset: -24; } }
+@keyframes estado-pulso {
+  0% { stroke-dashoffset: 100; opacity: 1; }
+  65%, 80% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes estado-chispa {
+  0%, 100% { opacity: .25; }
+  50% { opacity: 1; }
+}
+@keyframes estado-entrada {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .estado-rastro,
+  .estado-chispa,
+  .estado-aparece,
+  .estado-aparece-tarde,
+  .pantalla-estado__texto {
+    animation: none;
+  }
+  /* Sin movimiento el pulso queda dibujado completo. */
+  .estado-pulso {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

@@ -26,6 +26,7 @@ import EstilosTimeline from '@/features/estilos/EstilosTimeline'
 import ExamenesLaboratorioSection from '@/features/examenesLaboratorio/ExamenesLaboratorioSection'
 import RegistroEstiloFormDrawer from '@/features/estilos/RegistroEstiloFormDrawer'
 import { useEstilosMascota } from '@/features/estilos/useEstilos'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { SkeletonBlock } from '@/components/shared/SkeletonBlock'
 import { etiquetaEspecie } from '@/lib/especies'
 import { formatearEdad } from '@/lib/utils'
@@ -399,9 +400,7 @@ export default function PacienteHistorialPage() {
         {/* Encabezado del paciente: foto grande y datos clave */}
         {mascotaQuery.isPending && <PatientHeaderSkeleton />}
         {mascotaQuery.isError && (
-          <div className="rounded-2xl bg-danger-soft px-5 py-4 text-sm text-danger">
-            No fue posible cargar los datos del paciente.
-          </div>
+          <AvisoError titulo="Los datos del paciente no cargaron" error={mascotaQuery.error} alReintentar={mascotaQuery.refetch} reintentando={mascotaQuery.isFetching} />
         )}
         {mascota?.fotoPerfil ? (
           <Dialog.Root open={verFoto} onOpenChange={setVerFoto}>
@@ -589,7 +588,7 @@ export default function PacienteHistorialPage() {
             {activeTab === 'historia' && (
               <>
                 {historiasQuery.isError && (
-                  <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">No fue posible cargar el historial clínico.</p>
+                  <AvisoError titulo="El historial clínico no cargó" error={historiasQuery.error} alReintentar={historiasQuery.refetch} reintentando={historiasQuery.isFetching} />
                 )}
 
                 {!historiasQuery.isError && (
@@ -610,7 +609,7 @@ export default function PacienteHistorialPage() {
             {activeTab === 'estilos' && (
               <>
                 {registrosQuery.isError && (
-                  <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">No fue posible cargar los registros de estilos.</p>
+                  <AvisoError titulo="Los registros de estilos no cargaron" error={registrosQuery.error} alReintentar={registrosQuery.refetch} reintentando={registrosQuery.isFetching} />
                 )}
 
                 {!registrosQuery.isError && (

@@ -18,6 +18,7 @@ import { AvisoSinVeterinarios } from '@/features/agenda/AvisoSinVeterinarios'
 import { AgendaMovil } from '@/features/agenda/AgendaMovil'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import AdminShell from '@/components/layout/AdminShell'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -321,7 +322,7 @@ export default function AgendaPage() {
         <EmptyState
           icon={<Sparkles />}
           title="Agenda no disponible en el plan actual"
-          description="La agenda de citas hace parte del producto base. Si esta clínica no la tiene activa, revisa la configuración comercial antes de continuar."
+          description="Tu plan actual no incluye la agenda de citas. Revisa los planes para activarla."
           action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
@@ -336,17 +337,10 @@ export default function AgendaPage() {
           {(citasQuery.isError || veterinariosQuery.isError) && (
             <div className="mb-5 grid gap-4">
               {citasQuery.isError && (
-                <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm font-medium leading-6 text-danger">
-                  {getErrorMessage(citasQuery.error, 'No fue posible cargar la agenda seleccionada.')}
-                </div>
+                <AvisoError titulo="La agenda no cargó" error={citasQuery.error} alReintentar={citasQuery.refetch} reintentando={citasQuery.isFetching} />
               )}
               {veterinariosQuery.isError && (
-                <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm font-medium leading-6 text-warning">
-                  {getErrorMessage(
-                    veterinariosQuery.error,
-                    'No fue posible cargar el equipo veterinario disponible.'
-                  )}
-                </div>
+                <AvisoError titulo="El equipo veterinario no cargó" error={veterinariosQuery.error} alReintentar={veterinariosQuery.refetch} reintentando={veterinariosQuery.isFetching} />
               )}
             </div>
           )}
@@ -572,8 +566,8 @@ export default function AgendaPage() {
                           ),
                         },
                       ]}
-                      emptyTitle="No hay citas para este filtro"
-                      emptyBody="Ajusta la fecha o los filtros, o crea la primera cita desde la pestaña Recepción."
+                      emptyTitle="No hay citas con estos filtros"
+                      emptyBody="Prueba con otra fecha o quita los filtros. Para agendar una cita, ve a la pestaña Recepción."
                       action={
                         <StatusPill tone="bg-muted text-foreground">
                           {formatLongDate(fecha)}

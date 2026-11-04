@@ -6,6 +6,7 @@ import HojaInferior from '@/components/movil/HojaInferior'
 import AdminShell from '@/components/layout/AdminShell'
 import { Select } from '@/components/ui/select'
 import { ConfirmDialog } from '@/components/shared'
+import { AvisoError } from '@/components/shared/AvisoError'
 import Paginacion from '@/components/shared/Paginacion'
 import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
@@ -167,9 +168,9 @@ export default function SoportePage() {
                 ))}
               </div>
             ) : listaQuery.isError ? (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No pudimos cargar tus solicitudes. Intenta de nuevo en un momento.
-              </p>
+              <div className="p-2">
+                <AvisoError titulo="Tus solicitudes no cargaron" error={listaQuery.error} alReintentar={listaQuery.refetch} reintentando={listaQuery.isFetching} />
+              </div>
             ) : tickets.length === 0 ? (
               <p className="px-4 pb-6 pt-2 text-sm text-muted-foreground">
                 {filtro === 'activos'

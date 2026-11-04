@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import FormAbono from './FormAbono'
 import { formatearCelular } from '@/lib/celular'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const tarjeta = 'rounded-2xl bg-card p-5 sm:p-6'
 const TONOS = {
@@ -249,7 +250,7 @@ function Antiguedad({ tramos, total, filtro, onFiltrar }) {
 // Cuentas por cobrar: la misma vista en Caja (recepción recibe los abonos) y en
 // Finanzas (administración revisa cuánto le deben).
 export default function PorCobrarPanel() {
-  const { data, isLoading, isError, error } = useCuentasPorCobrar()
+  const { data, isLoading, isError, error, refetch, isFetching } = useCuentasPorCobrar()
   const clinica = useAuthStore((state) => state.clinica)
   const nombreClinica = clinica?.nombreComercial || clinica?.nombre || 'la clínica'
   const [buscar, setBuscar] = useState('')
@@ -322,9 +323,7 @@ export default function PorCobrarPanel() {
       )}
 
       {isError ? (
-        <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm text-danger">
-          {error?.response?.data?.message || 'No fue posible cargar las cuentas por cobrar.'}
-        </div>
+        <AvisoError titulo="Las cuentas por cobrar no cargaron" error={error} alReintentar={refetch} reintentando={isFetching} />
       ) : null}
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">

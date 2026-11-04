@@ -1,5 +1,6 @@
-import { Loader2, TriangleAlert } from 'lucide-react'
+import { CircleHelp, Loader2, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   DialogRoot,
   DialogContent,
@@ -36,12 +37,29 @@ export function ConfirmDialog({
   onConfirm,
   children,
 }) {
+  const destructiva = variant === 'destructive'
+  // Mientras se guarda no se cierra: el resultado quedaría sin nadie que lo vea.
+  const alCambiar = (abierto) => {
+    if (!abierto && loading) return
+    onOpenChange(abierto)
+  }
+
   return (
-    <DialogRoot open={open} onOpenChange={onOpenChange}>
+    <DialogRoot open={open} onOpenChange={alCambiar}>
       <DialogContent className="max-w-[440px]">
         <DialogHeader>
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-[14px] bg-danger-soft">
-            <TriangleAlert className="h-6 w-6 text-danger" />
+          {/* El triángulo rojo es solo para lo que no se deshace fácil. */}
+          <div
+            className={cn(
+              'mb-2 flex h-12 w-12 items-center justify-center rounded-[14px]',
+              destructiva ? 'bg-danger-soft' : 'bg-success-soft',
+            )}
+          >
+            {destructiva ? (
+              <TriangleAlert className="h-6 w-6 text-danger" />
+            ) : (
+              <CircleHelp className="h-6 w-6 text-success" />
+            )}
           </div>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}

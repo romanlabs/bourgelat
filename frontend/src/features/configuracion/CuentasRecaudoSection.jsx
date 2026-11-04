@@ -75,7 +75,7 @@ export default function CuentasRecaudoSection() {
         ) : cuentas.length === 0 ? (
           <EmptyState
             icon={<Landmark />}
-            title="Sin cuentas"
+            title="Todavía no hay cuentas de recaudo"
             description="Agrega las cuentas o billeteras donde te pagan, por ejemplo «Nequi» o «Bancolombia ahorros»."
             bordered
           />
