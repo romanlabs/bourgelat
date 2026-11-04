@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import { hasAnyRole } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import qrBourgelat from '@/assets/pagos/qr-bourgelat.svg'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
@@ -231,9 +232,15 @@ export default function MiPlanPage() {
         </section>
 
         {activaQuery.isError || planesQuery.isError ? (
-          <p className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm text-danger">
-            No pudimos cargar la información del plan. Intenta de nuevo en un momento.
-          </p>
+          <AvisoError
+            titulo="La información del plan no cargó"
+            error={activaQuery.isError ? activaQuery.error : planesQuery.error}
+            alReintentar={() => {
+              if (activaQuery.isError) activaQuery.refetch()
+              if (planesQuery.isError) planesQuery.refetch()
+            }}
+            reintentando={activaQuery.isFetching || planesQuery.isFetching}
+          />
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">

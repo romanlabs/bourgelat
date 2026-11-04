@@ -8,9 +8,7 @@ import { BarPanel, DashboardPanel, LinePanel } from '@/features/dashboard/dashbo
 import { PERIODO_PRESETS, formatNumber } from '@/features/dashboard/dashboardUtils'
 import { EmptyState, SkeletonPanel } from '@/components/shared'
 import { useAgendaAnalitica } from './useAgendaAnalitica'
-
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.errores?.[0]?.mensaje || error?.response?.data?.message || fallback
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const formatPercent = (value) => `${Number(value || 0).toFixed(1).replace('.', ',')}%`
 // 0 es una espera real de menos de un minuto (llegada y atención casi juntas),
@@ -173,9 +171,7 @@ function AnaliticaMovil({
         </div>
 
         {query.isError && (
-          <div className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium leading-6 text-warning">
-            {getErrorMessage(query.error, 'No fue posible cargar la analítica de la agenda.')}
-          </div>
+          <AvisoError titulo="Las estadísticas de la agenda no cargaron" error={query.error} alReintentar={query.refetch} reintentando={query.isFetching} />
         )}
 
         {query.isLoading ? (
@@ -472,9 +468,7 @@ export function AgendaAnaliticaPanel({ puedeVerAnalitica }) {
       </div>
 
       {query.isError && (
-        <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm font-medium leading-6 text-warning">
-          {getErrorMessage(query.error, 'No fue posible cargar la analítica de la agenda.')}
-        </div>
+        <AvisoError titulo="Las estadísticas de la agenda no cargaron" error={query.error} alReintentar={query.refetch} reintentando={query.isFetching} />
       )}
 
       {cargando ? (

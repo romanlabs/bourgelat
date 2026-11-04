@@ -24,6 +24,7 @@ import {
 } from './useFinanzasHistorial'
 import FormAbono from './FormAbono'
 import { nombreAutor } from '@/lib/equipo'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 // Al anular, cada producto vuelve a la bodega salvo que se diga lo contrario.
 const DESTINOS_PRODUCTO = [
@@ -102,9 +103,7 @@ export default function FacturaDetalleModal({ historialHook }) {
 
         <div className="mt-4 max-h-[75vh] overflow-y-auto pr-1">
           {facturaDetalleQuery.isError ? (
-            <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-              No fue posible cargar el detalle de la factura seleccionada.
-            </div>
+            <AvisoError titulo="La factura no cargó" error={facturaDetalleQuery.error} alReintentar={facturaDetalleQuery.refetch} reintentando={facturaDetalleQuery.isFetching} />
           ) : facturaDetalleQuery.isLoading || facturaDetalleQuery.isPlaceholderData ? (
             <div className="space-y-3">
               {[0, 1, 2].map((item) => (

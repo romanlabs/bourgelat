@@ -24,6 +24,8 @@ import { AntecedentesConsulta, ConsultaAnterior, SignosVitales } from '@/feature
 import { medicionesDe, soloDia } from '@/features/pacientes/fichaSaludUtils'
 import { Select } from '@/components/ui/select'
 import { etiquetaEspecie } from '@/lib/especies'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import HojaInferior from '@/components/movil/HojaInferior'
 
@@ -847,9 +849,17 @@ export default function HistoriaClinicaFormDrawer({
                 {antecedentesOpen && (
                   <div className="px-4 pb-4 pt-1">
                     {antecedentesQuery.isPending ? (
-                      <p className="text-[13px] text-muted-foreground">Cargando antecedentes...</p>
+                      <div role="status" aria-label="Cargando antecedentes" className="space-y-2">
+                        <Skeleton className="h-4 w-2/3" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
                     ) : antecedentesQuery.isError ? (
-                      <p className="text-[13px] text-danger">No fue posible cargar los antecedentes.</p>
+                      <AvisoError
+                        titulo="Los antecedentes no cargaron"
+                        error={antecedentesQuery.error}
+                        alReintentar={antecedentesQuery.refetch}
+                        reintentando={antecedentesQuery.isFetching}
+                      />
                     ) : (
                       <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} />
                     )}
@@ -1261,9 +1271,17 @@ export default function HistoriaClinicaFormDrawer({
                   </a>
                 </div>
                 {antecedentesQuery.isPending ? (
-                  <p className="text-[13px] text-muted-foreground">Cargando antecedentes...</p>
+                  <div role="status" aria-label="Cargando antecedentes" className="space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
                 ) : antecedentesQuery.isError ? (
-                  <p className="text-[13px] text-danger">No fue posible cargar los antecedentes.</p>
+                  <AvisoError
+                    titulo="Los antecedentes no cargaron"
+                    error={antecedentesQuery.error}
+                    alReintentar={antecedentesQuery.refetch}
+                    reintentando={antecedentesQuery.isFetching}
+                  />
                 ) : (
                   <AntecedentesConsulta antecedentes={antecedentesQuery.data?.antecedentes} />
                 )}

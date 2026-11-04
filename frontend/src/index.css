@@ -1067,3 +1067,35 @@ input:-webkit-autofill:focus {
     animation: none;
   }
 }
+
+/* Estados de pantalla. */
+.estado-pulso {
+  stroke: hsl(var(--brand));
+  stroke-dasharray: 100;
+  animation: estado-pulso 1.8s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+.estado-aparece { animation: estado-entrada .3s ease-out both; }
+.estado-aparece-tarde { animation: estado-entrada .3s ease-out .5s both; }
+/* Mismo petróleo y crema del favicon. */
+.huella__fondo { fill: hsl(192 72% 21%); }
+.huella__forma { fill: hsl(40 63% 90%); }
+
+@keyframes estado-pulso {
+  0% { stroke-dashoffset: 100; opacity: 1; }
+  65%, 80% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes estado-entrada {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .estado-aparece,
+  .estado-aparece-tarde {
+    animation: none;
+  }
+  /* Sin movimiento el pulso queda dibujado completo. */
+  .estado-pulso {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

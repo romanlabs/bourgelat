@@ -12,6 +12,7 @@ import { useCuentasRecaudo } from './useCuentasRecaudo'
 import { finanzasApi } from './finanzasApi'
 import { imprimirTirilla, formatDateTime } from './reciboTermico'
 import { descargarFacturaPdf } from './facturaPdf'
+import { AvisoError } from '@/components/shared/AvisoError'
 import MoneyInput from '@/components/shared/MoneyInput'
 import HojaInferior from '@/components/movil/HojaInferior'
 import { useAuthStore } from '@/store/authStore'
@@ -630,10 +631,7 @@ export default function PosModal({
               <div className="h-full overflow-y-auto p-5">
                 <div className="mx-auto max-w-lg">
                   {facturaQuery.isError ? (
-                    <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-                      No fue posible cargar la factura. Quedó registrada y puedes verla en el
-                      historial.
-                    </div>
+                    <AvisoError titulo="La factura no cargó, pero la venta quedó registrada. Búscala en el historial." error={facturaQuery.error} alReintentar={facturaQuery.refetch} reintentando={facturaQuery.isFetching} />
                   ) : facturaQuery.isLoading ? (
                     <div className="space-y-3">
                       {[0, 1, 2].map((i) => (
