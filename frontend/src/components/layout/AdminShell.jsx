@@ -82,8 +82,9 @@ const etiquetaRoles = (usuario) =>
     .join(' · ') || 'Mi perfil'
 
 // Barra inferior del celular: las pestañas del rol y «Más» con el resto. Si la
-// pantalla actual no es una pestaña, se marca «Más» (de ahí se llegó).
-function BarraInferior({ usuario, currentKey }) {
+// pantalla actual no es una pestaña, se marca «Más» (de ahí se llegó), salvo en
+// una pantalla sin sección como el 404: ahí no se llegó desde ningún menú.
+function BarraInferior({ usuario, currentKey, sinSeccion }) {
   const pestanas = pestanasMovil(usuario).map((key) => NAV_ITEMS_BY_KEY[key])
   const enPestana = pestanas.some((item) => item.key === currentKey)
   const items = [...pestanas, { key: 'mas', label: 'Más', to: '/mas', icon: Ellipsis }]
@@ -96,7 +97,7 @@ function BarraInferior({ usuario, currentKey }) {
       <div className="mx-auto grid max-w-xl px-2 pb-2 pt-1.5" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => {
           const Icon = item.icon
-          const activo = item.key === currentKey || (item.key === 'mas' && !enPestana)
+          const activo = item.key === currentKey || (item.key === 'mas' && !enPestana && !sinSeccion)
           return (
             <Link
               key={item.key}
@@ -398,6 +399,8 @@ export default function AdminShell({
   // Páginas con buscador propio (Pacientes, ficha): sin el botón del buscador
   // global del encabezado; Ctrl K sigue funcionando.
   hideSearch = false,
+  // Pantalla que no pertenece a ningún menú (404): nada queda marcado en la barra.
+  sinSeccion = false,
 }) {
   const clinica = useAuthStore((state) => state.clinica)
   const usuario = useAuthStore((state) => state.usuario)
@@ -839,7 +842,7 @@ export default function AdminShell({
           {children}
         </main>
       </div>
-      <BarraInferior usuario={usuario} currentKey={currentKey} />
+      <BarraInferior usuario={usuario} currentKey={currentKey} sinSeccion={sinSeccion} />
     </div>
     </HeaderSlotContext.Provider>
     </AdminSearchContext.Provider>
