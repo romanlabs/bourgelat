@@ -126,8 +126,8 @@ export default function RegistroPage() {
         <p className="mt-1.5 text-base text-muted-foreground">Registra tu clínica; tú quedas como administrador.</p>
 
         <p className="mt-6 rounded-lg bg-accent px-4 py-3 text-sm text-accent-foreground">
-          <span className="font-semibold">30 días con todo abierto, sin tarjeta.</span> Si te gusta, eliges
-          un plan al final de la prueba.
+          <span className="font-semibold">30 días para probar todo, sin tarjeta.</span> Incluye 2 usuarios y
+          2 GB. Si te gusta, eliges un plan al final de la prueba.
         </p>
 
         {oauthHabilitado ? (
