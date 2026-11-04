@@ -822,7 +822,7 @@ function ConfiguracionContent({
                     onChange={(event) =>
                       setFactusForm((current) => ({ ...current, baseUrl: event.target.value }))
                     }
-                    placeholder="https://api-sandbox.factus.com.co"
+                    placeholder="https://"
                     className={INPUT_CLASS}
                   />
                 </FormField>
@@ -860,7 +860,7 @@ function ConfiguracionContent({
                       onChange={(event) =>
                         setFactusForm((current) => ({ ...current, username: event.target.value }))
                       }
-                      placeholder="usuario@factus.co"
+                      placeholder="usuario@clinica.com"
                       className={INPUT_CLASS}
                     />
                   </FormField>

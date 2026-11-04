@@ -91,62 +91,73 @@ bourgelat/
 
 ## Paleta de colores y tokens de diseño
 
-Identidad **«Papel y pulso»**: la calidez de la ficha de papel con la precisión
-de la historia clínica. Los valores reales están en `frontend/src/index.css`
-(`:root` y `.dark`) como variables HSL; Tailwind las expone en
-`tailwind.config.cjs` y las escalas fijas viven en `theme.tokens.cjs`.
+Paleta **«Petróleo y blanco»**. Los valores reales están en `frontend/src/index.css`
+(`:root` y `.dark`) como variables HSL, y ese archivo manda; Tailwind las expone en
+`tailwind.config.cjs`. La marca es petróleo y crema (favicon); la identidad definitiva
+y el logo siguen pendientes.
 
 ### Roles (no mezclarlos)
-- **Tinta** (`foreground`, `sidebar`): estructura, es decir, texto, sidebar y botón secundario
-- **Caramelo** (`brand`): la firma de marca. Pulso ECG, eyebrows, ítem activo del sidebar y foco. **Nunca un botón de acción**
-- **Pino** (`primary`): acción y estado «saludable / confirmada»
+- **Petróleo** (`primary`, `sidebar`): estructura y acción, es decir, menú, botones y encabezados
+- **Blanco** (`card`): superficies de contenido, sobre el lienzo (`background`)
+- **Ámbar** (`brand`): lo que pasa ahora, foco y detalles. **Nunca texto sobre blanco**; para texto, `brand-foreground`
 - **Estados**: `success` · `warning` · `danger` · `info`, cada uno con su fondo `-soft`
-  (`bg-danger-soft text-danger`, `border-warning/30`…). Usarlos en vez de las paletas
-  crudas de Tailwind (`red-*`, `amber-*`, `emerald-*`, `cyan-*`…)
+  (`bg-danger-soft text-danger`). Usarlos en vez de las paletas crudas de Tailwind
+  (`red-*`, `amber-*`, `emerald-*`, `cyan-*`…)
+- Las superficies se separan por tono, no por bordes ni sombras
 
 ### Modo claro
 | Token | Valor HSL | Uso |
 |-------|-----------|-----|
-| `--background` | `36 42% 95%` | Papel (`#f8f4ee`) |
-| `--card` / `--popover` | `40 100% 99%` | Hoja (`#fffdf9`) |
-| `--foreground` | `209 57% 15%` | Tinta (`#10263a`) |
-| `--muted` / `--secondary` | `36 30% 91%` | Fondos apagados |
-| `--muted-foreground` | `206 14% 41%` | Texto secundario (`#5a6b78`, 5:1) |
-| `--border` / `--input` | `37 28% 85%` / `36 23% 79%` | Líneas |
-| `--primary` | `160 60% 30%` | Pino (`#1f7a5c`, 5,3:1 con blanco) |
-| `--brand` / `--brand-foreground` | `27 44% 48%` / `28 48% 36%` | Caramelo / caramelo para texto pequeño |
-| `--ring` | `27 44% 48%` | Foco en caramelo |
-| `--success` · `-soft` | `160 60% 30%` · `149 32% 93%` | Pino |
-| `--warning` · `-soft` | `37 87% 30%` · `38 80% 92%` | Miel |
-| `--danger` · `-soft` (= `--destructive`) | `8 59% 45%` · `13 63% 93%` | Ladrillo |
-| `--info` · `-soft` | `200 51% 37%` · `199 42% 93%` | Petróleo |
-| `--sidebar` | `207 55% 10%` | Noche (`#0b1a26`), activo en caramelo claro |
+| `--background` | `195 18% 96%` | Lienzo (`#f2f5f6`) |
+| `--card` / `--popover` | `0 0% 100%` | Blanco |
+| `--foreground` | `196 48% 12%` | Tinta (`#10262e`) |
+| `--muted-foreground` | `196 15% 34%` | Texto secundario (`#4a5d64`) |
+| `--secondary` | `194 28% 91%` | Botón secundario (`#e1ebee`) |
+| `--accent` | `190 31% 93%` | Fila seleccionada (`#e6f0f2`) |
+| `--border` / `--input` | `193 15% 89%` / `195 16% 85%` | Líneas |
+| `--primary` / `--sidebar` | `192 72% 21%` | Petróleo (`#0f4c5c`, 9,5:1 con blanco) |
+| `--brand` / `--ring` | `36 88% 59%` | Ámbar (`#f2a93b`) y foco |
+| `--brand-foreground` | `37 88% 25%` | Ámbar para texto (`#7a4f08`) |
+| `--success` · `-soft` | `154 46% 33%` · `149 37% 92%` | |
+| `--warning` · `-soft` | `37 88% 27%` · `38 89% 92%` | |
+| `--danger` · `-soft` (= `--destructive`) | `8 59% 44%` · `10 72% 94%` | |
+| `--info` · `-soft` | `256 27% 33%` · `263 26% 92%` | |
 
 ### Modo oscuro
-Es la misma marca de noche: los mismos roles con valores más claros.
+Los mismos roles con valores más claros.
 | Token | Valor HSL |
 |-------|-----------|
-| `--background` / `--card` | `207 48% 9%` / `206 42% 13%` |
-| `--foreground` | `38 29% 89%` |
-| `--primary` | `156 47% 57%` |
-| `--brand` | `29 59% 64%` |
-| `--success` · `--warning` · `--danger` · `--info` | `156 47% 57%` · `38 80% 62%` · `8 75% 68%` · `200 55% 65%` |
+| `--background` / `--card` | `195 55% 9%` / `196 47% 13%` |
+| `--foreground` | `195 22% 92%` |
+| `--primary` | `190 44% 56%` |
+| `--brand` | `37 86% 64%` |
+| `--sidebar` | `192 56% 6%` |
+| `--success` · `--warning` · `--danger` · `--info` | `150 52% 70%` · `38 86% 74%` · `9 80% 71%` · `252 50% 78%` |
 
 ### Dónde se usa cada cosa
 - **App y páginas de cuenta**: tokens del tema (siguen el modo oscuro).
-- **Páginas públicas y de error** (legales, `/nosotros`): escalas fijas `papel-*`,
-  `tinta-*`, `caramel-*`, `clinical-*`. Siempre en claro, como la landing.
+- **Páginas públicas** (`/nosotros`, vía `PublicPageShell`): todavía con escalas fijas
+  `papel-*`, `tinta-*`, `caramel-*`, `clinical-*` de la identidad anterior.
 - **Gráficas**: `chartColors` de `@/lib/theme` (hex fijos de `theme.tokens.cjs`,
   porque Recharts los pone como atributos SVG).
-- **Landing**: todavía con hex propios (en la paleta, pero sin tokens).
+- **Landing**: todavía con hex propios.
 
 `npm run lint:colores` (frontend) falla con colores sueltos fuera de los archivos
 exentos; el workflow `Frontend` lo corre en cada PR. Código nuevo: solo tokens.
 
+### Estados de pantalla
+Sobrios, sin personajes ni decoración: la marca, una frase y una salida.
+- **Pantalla completa**: `PantallaEstado`; errores que rompen la vista, `PantallaError`
+  (nunca muestra el texto técnico; lo reporta aparte).
+- **Consulta que falla**: `AvisoError` con Reintentar. **Lista vacía**: `EmptyState`,
+  separando «todavía no hay» de «sin resultados». **Carga**: `Skeleton`; pantalla
+  completa, `PantallaCarga`. **Confirmar**: `ConfirmDialog`, `destructive` solo si se
+  pierde algo.
+- Los textos cuentan lo que hacemos, pero solo lo que es cierto.
+
 ### Tipografía
-- **Sans**: `Geist Variable` — UI y cuerpo
-- **Display**: `Spectral` (serif, Google Fonts) — headings de impacto
-- Los headings grandes usan `fontFamily: '"Spectral", Georgia, serif'` inline
+- **Sans**: `Geist Variable`: toda la app
+- **Display**: `Spectral` (serif, Google Fonts): solo landing y páginas públicas
 
 ---
 

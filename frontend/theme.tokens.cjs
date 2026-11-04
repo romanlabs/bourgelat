@@ -5,13 +5,14 @@
  *   - tailwind.config.cjs  → genera clases utilitarias
  *   - src/lib/theme.js     → disponible en componentes React
  *
- * Identidad «Papel y pulso». Los colores de tema viven como variables HSL en
- * src/index.css (:root y .dark); aquí están las escalas fijas y la referencia.
+ * La paleta vigente de la app es «Petróleo y blanco»: vive como variables HSL en
+ * src/index.css (:root y .dark), que manda sobre este archivo. Aquí quedan escalas
+ * fijas, algunas de la identidad anterior que aún usan las páginas públicas.
  *
  * Roles (no mezclarlos):
- *   tinta     → estructura: texto, sidebar, botón secundario
- *   brand     → firma (caramelo): pulso, eyebrows, foco. Nunca un botón
- *   primary   → acción (pino) y estado "saludable / confirmada"
+ *   primary   → estructura y acción (petróleo): menú, botones, encabezados
+ *   card      → superficies de contenido (blanco)
+ *   brand     → lo que pasa ahora, foco y detalles (ámbar). Nunca texto sobre blanco
  *   success · warning · danger · info → estados, con su fondo -soft
  *
  * Convención de uso en JSX:
