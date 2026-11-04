@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore'
 import { canAccessModule } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const LIMITE = 30
@@ -496,9 +497,7 @@ export default function AuditoriaPage() {
       </div>
 
       {auditoriaQuery.isError ? (
-        <p className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm text-danger">
-          No fue posible cargar el registro de cambios. Intenta de nuevo en un momento.
-        </p>
+        <AvisoError titulo="El registro de cambios no cargó" error={auditoriaQuery.error} alReintentar={auditoriaQuery.refetch} reintentando={auditoriaQuery.isFetching} />
       ) : null}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">

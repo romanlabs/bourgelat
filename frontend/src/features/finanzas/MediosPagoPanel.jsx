@@ -28,6 +28,7 @@ import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/susc
 import { hoyLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const MotionDiv = motion.div
 const MotionSpan = motion.span
@@ -588,9 +589,7 @@ export default function MediosPagoPanel() {
       {data ? <SelectorMedio medios={enSelector} seleccionado={medio ? medio.id : 'todos'} onSeleccionar={seleccionar} oscuro={oscuro} /> : null}
 
       {consulta.isError ? (
-        <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-          {consulta.error?.response?.data?.message || 'No fue posible cargar los medios de pago del periodo.'}
-        </div>
+        <AvisoError titulo="Los medios de pago no cargaron" error={consulta.error} alReintentar={consulta.refetch} reintentando={consulta.isFetching} />
       ) : null}
       {!data && consulta.isLoading ? <div className="h-72 animate-pulse rounded-2xl bg-card" /> : null}
 

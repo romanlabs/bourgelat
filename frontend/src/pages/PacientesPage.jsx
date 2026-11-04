@@ -995,8 +995,8 @@ export default function PacientesPage() {
         onOpenChange={(abierto) => { if (!abierto) setPacienteADesactivar(null) }}
         title={`¿Desactivar a ${pacienteADesactivar?.paciente || 'este paciente'}?`}
         description="Dejará de aparecer en las listas y al agendar. Su historia clínica se conserva y puedes reactivarlo desde «Ver desactivados»."
-        confirmLabel="Desactivar"
-        variant="destructive"
+        confirmLabel="Desactivar paciente"
+        variant="default"
         loading={mascotasHook.cambiarEstadoMascotaMutation.isPending}
         onConfirm={() =>
           mascotasHook.cambiarEstadoMascotaMutation.mutate(
@@ -1011,8 +1011,8 @@ export default function PacientesPage() {
         onOpenChange={(abierto) => { if (!abierto) setTutorADesactivar(null) }}
         title={`¿Desactivar a ${tutorADesactivar?.nombre || 'este tutor'}?`}
         description="Dejará de aparecer en las listas y al buscar tutores. Sus pacientes, historias y ventas se conservan, y puedes reactivarlo desde «Ver desactivados»."
-        confirmLabel="Desactivar"
-        variant="destructive"
+        confirmLabel="Desactivar tutor"
+        variant="default"
         loading={tutoresHook.cambiarEstadoTutorMutation.isPending}
         onConfirm={() =>
           tutoresHook.cambiarEstadoTutorMutation.mutate(

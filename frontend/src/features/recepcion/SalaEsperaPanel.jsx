@@ -8,6 +8,8 @@ import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { ICONO_ACCION } from '@/features/agenda/accionesCita'
 import { HojaOpcionesCita } from '@/features/agenda/HojaOpcionesCita'
 import { DashboardPanel } from '@/features/dashboard/dashboardComponents'
+import { Button } from '@/components/ui/button'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -395,7 +397,8 @@ export function SalaEsperaPanel({
   resumen,
   isLoading,
   isError,
-  errorMessage,
+  error,
+  isFetching = false,
   puedeGestionarEstado,
   actualizarEstadoMutation,
   lastUpdatedAt,
@@ -516,9 +519,10 @@ export function SalaEsperaPanel({
       <ConfirmDialog
         open={Boolean(cancelTarget)}
         onOpenChange={(open) => !open && setCancelTarget(null)}
-        title="Cancelar cita"
-        description={`Indica el motivo de cancelación para ${cancelTarget?.mascota?.nombre || 'este paciente'}.`}
+        title={`¿Cancelar la cita de ${cancelTarget?.mascota?.nombre || 'este paciente'}?`}
+        description="Escribe el motivo de la cancelación."
         confirmLabel="Cancelar cita"
+        cancelLabel="Volver"
         variant="destructive"
         loading={actualizarEstadoMutation.isPending}
         onConfirm={confirmCancelacion}
@@ -566,7 +570,7 @@ export function SalaEsperaPanel({
           </div>
 
           {isError ? (
-            <div className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium leading-6 text-danger">{errorMessage}</div>
+            <AvisoError titulo="La sala de espera no cargó" error={error} alReintentar={onRefrescar} reintentando={isFetching} />
           ) : null}
 
           {isLoading ? (
@@ -695,9 +699,13 @@ export function SalaEsperaPanel({
         </div>
 
         {isError ? (
-          <div className="mx-3 mb-3 rounded-xl bg-danger-soft px-4 py-3.5 text-sm font-medium leading-6 text-danger">
-            {errorMessage}
-          </div>
+          <AvisoError
+            titulo="La sala de espera no cargó"
+            error={error}
+            alReintentar={onRefrescar}
+            reintentando={isFetching}
+            className="mx-3 mb-3"
+          />
         ) : null}
 
         {isLoading ? (
@@ -720,11 +728,18 @@ export function SalaEsperaPanel({
           <div className="px-3 pb-3">
             <EmptyState
               icon={<Users />}
-              title={citas.length === 0 ? 'Sala de espera vacía' : 'Sin resultados para esa búsqueda'}
+              title={citas.length === 0 ? 'No hay pacientes en la sala de espera' : 'Sin resultados para esa búsqueda'}
               description={
                 citas.length === 0
                   ? 'Las citas programadas y los ingresos directos aparecerán aquí.'
                   : 'Prueba con otro nombre de paciente, tutor o veterinario.'
+              }
+              action={
+                citas.length > 0 ? (
+                  <Button variant="secondary" size="sm" onClick={() => setSearch('')}>
+                    Quitar la búsqueda
+                  </Button>
+                ) : null
               }
               bordered
             />

@@ -1,4 +1,4 @@
-import { Loader2, TriangleAlert } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DialogRoot,
@@ -36,13 +36,16 @@ export function ConfirmDialog({
   onConfirm,
   children,
 }) {
+  // Mientras se guarda no se cierra: el resultado quedaría sin nadie que lo vea.
+  const alCambiar = (abierto) => {
+    if (!abierto && loading) return
+    onOpenChange(abierto)
+  }
+
   return (
-    <DialogRoot open={open} onOpenChange={onOpenChange}>
+    <DialogRoot open={open} onOpenChange={alCambiar}>
       <DialogContent className="max-w-[440px]">
         <DialogHeader>
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-[14px] bg-danger-soft">
-            <TriangleAlert className="h-6 w-6 text-danger" />
-          </div>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
@@ -55,12 +58,7 @@ export function ConfirmDialog({
               {cancelLabel}
             </Button>
           </DialogClose>
-          <Button
-            variant={variant}
-            size="lg"
-            disabled={loading}
-            onClick={onConfirm}
-          >
+          <Button variant={variant} size="lg" disabled={loading} onClick={onConfirm}>
             {loading ? <Loader2 className="animate-spin" /> : null}
             {confirmLabel}
           </Button>

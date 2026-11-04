@@ -10,6 +10,7 @@ import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import HojaInferior from '@/components/movil/HojaInferior'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { useEsCelular } from '@/lib/useEsCelular'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatLongDate } from '@/features/dashboard/dashboardUtils'
@@ -942,9 +943,7 @@ export default function AntecedentesPage() {
           </header>
 
           {antecedentesQuery.isError ? (
-            <div className="rounded-2xl bg-danger-soft px-5 py-4 text-sm leading-6 text-danger">
-              {getErrorMessage(antecedentesQuery.error, 'No fue posible cargar los antecedentes del paciente.')}
-            </div>
+            <AvisoError titulo="Los antecedentes del paciente no cargaron" error={antecedentesQuery.error} alReintentar={antecedentesQuery.refetch} reintentando={antecedentesQuery.isFetching} />
           ) : null}
 
           {!selectedPet ? (
