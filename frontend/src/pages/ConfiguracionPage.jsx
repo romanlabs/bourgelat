@@ -17,8 +17,10 @@ import AdminShell from '@/components/layout/AdminShell'
 import { useDeslizarHorizontal } from '@/lib/gestos'
 import { useEsCelular } from '@/lib/useEsCelular'
 import HojaInferior from '@/components/movil/HojaInferior'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { Skeleton } from '@/components/shared/Skeleton'
 import { HoraPicker } from '@/components/shared/HoraPicker'
 import {
   DialogRoot,
@@ -1794,7 +1796,7 @@ function HorariosSection({ horarioAtencion }) {
           ) : bloqueos.length === 0 ? (
             <EmptyState
               icon={<CalendarOff />}
-              title="Sin bloqueos"
+              title="No hay bloqueos programados"
               description="No hay cierres programados. Agrega uno cuando tengas un imprevisto."
               bordered
             />
@@ -1990,7 +1992,7 @@ function ConsultoriosSection() {
         ) : consultorios.length === 0 ? (
           <EmptyState
             icon={<Building2 />}
-            title="Sin consultorios"
+            title="Todavía no hay consultorios"
             description="Crea el primer consultorio para poder asignarlo a las citas y a la sala de espera."
             bordered
           />
@@ -2140,32 +2142,22 @@ export default function ConfiguracionPage() {
       {clinicaQuery.isError || factusQuery.isError ? (
         <div className="grid gap-4">
           {clinicaQuery.isError ? (
-            <div className="rounded-xl bg-danger-soft px-4 py-3.5 text-sm leading-6 text-danger">
-              {getErrorMessage(
-                clinicaQuery.error,
-                'No fue posible cargar la ficha institucional de la clínica.'
-              )}
-            </div>
+            <AvisoError titulo="Los datos de la clínica no cargaron" error={clinicaQuery.error} alReintentar={clinicaQuery.refetch} reintentando={clinicaQuery.isFetching} />
           ) : null}
           {factusQuery.isError ? (
-            <div className="rounded-xl bg-warning-soft px-4 py-3.5 text-sm leading-6 text-warning">
-              {getErrorMessage(
-                factusQuery.error,
-                'No fue posible cargar el estado de la facturación electrónica.'
-              )}
-            </div>
+            <AvisoError titulo="El estado de la facturación electrónica no cargó" error={factusQuery.error} alReintentar={factusQuery.refetch} reintentando={factusQuery.isFetching} />
           ) : null}
         </div>
       ) : null}
 
-      {clinicaQuery.isLoading || !clinicaActual ? (
+      {clinicaQuery.isError && !clinicaActual ? null : clinicaQuery.isLoading || !clinicaActual ? (
         <DashboardPanel
           title="Cargando configuración"
-          subtitle="Estamos reuniendo la ficha institucional y el estado fiscal de la clínica."
+          subtitle="Estamos reuniendo los datos de la clínica."
         >
-          <div className="grid gap-4 xl:grid-cols-4">
+          <div role="status" aria-label="Cargando configuración" className="grid gap-4 xl:grid-cols-4">
             {[0, 1, 2, 3].map((item) => (
-              <div key={item} className="h-40 animate-pulse rounded-xl bg-muted" />
+              <Skeleton key={item} className="h-40 rounded-xl" />
             ))}
           </div>
         </DashboardPanel>

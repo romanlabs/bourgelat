@@ -2,6 +2,11 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { StatusPill } from '@/features/dashboard/dashboardComponents'
 import { formatCurrency, formatNumber, formatShortDate } from '@/features/dashboard/dashboardUtils'
+import { Receipt } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { AvisoError } from '@/components/shared/AvisoError'
 import MoneyInput from '@/components/shared/MoneyInput'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Select } from '@/components/ui/select'
@@ -290,7 +295,7 @@ function AnularGasto({ gasto, onCerrar }) {
     <ConfirmDialog
       open={Boolean(gasto)}
       onOpenChange={(abierto) => !abierto && cerrar()}
-      title="Anular gasto"
+      title="¿Anular este gasto?"
       description={gasto ? `${gasto.descripcion || etiquetaCategoria(gasto.categoria)} por ${formatCurrency(gasto.monto)}. Queda en el historial como anulado.` : ''}
       confirmLabel="Anular gasto"
       loading={anularGasto.isPending}
@@ -411,9 +416,32 @@ function HistorialGastos({ data, cargando, filtro, onFiltrar, onVerMas, limite }
         </div>
         </>
       ) : (
-        <p className="px-5 pb-6 text-sm text-muted-foreground sm:px-6">
-          {cargando ? 'Cargando gastos…' : 'No hay gastos registrados en este periodo.'}
-        </p>
+        cargando ? (
+          <div role="status" aria-label="Cargando gastos" className="space-y-2 px-5 pb-6 sm:px-6">
+            {[0, 1, 2].map((fila) => (
+              <Skeleton key={fila} className="h-12 rounded-xl" />
+            ))}
+          </div>
+        ) : filtro ? (
+          <EmptyState
+            size="sm"
+            icon={<Receipt />}
+            title="Sin gastos en esta categoría"
+            description="No hay gastos de esta categoría en el periodo. Prueba con otro mes o mira todas las categorías."
+            action={
+              <Button variant="secondary" size="sm" onClick={() => onFiltrar(null)}>
+                Ver todas las categorías
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            size="sm"
+            icon={<Receipt />}
+            title="Sin gastos en este periodo"
+            description="Cuando se registre un gasto, aparecerá aquí. Cambia de mes para ver otros periodos."
+          />
+        )
       )}
       {faltan ? (
         <div className="border-t border-border px-5 py-3 text-sm sm:px-6">
@@ -525,9 +553,7 @@ export default function GastosRentabilidadPanel() {
       </div>
 
       {gastosQuery.isError ? (
-        <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm text-danger">
-          {gastosQuery.error?.response?.data?.message || 'No fue posible cargar los gastos.'}
-        </div>
+        <AvisoError titulo="Los gastos no cargaron" error={gastosQuery.error} alReintentar={gastosQuery.refetch} reintentando={gastosQuery.isFetching} />
       ) : null}
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">

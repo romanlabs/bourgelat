@@ -1,31 +1,27 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
-import PublicPageShell from '@/components/shared/PublicPageShell'
+import { ACCION_PRINCIPAL, PantallaEstado } from '@/components/shared/PantallaEstado'
+import { useAuthStore } from '@/store/authStore'
 
 // Render responde 200 a toda ruta (rewrite al SPA): el noindex lo pone
 // aplicarSeo para cualquier ruta fuera de content/seo.js, así Google no la
 // indexa como duplicado de la landing (soft 404).
 export default function NoEncontradaPage() {
+  const conSesion = useAuthStore((estado) => estado.isAuthenticated)
+
   useEffect(() => {
     document.title = 'Página no encontrada | Bourgelat'
   }, [])
 
   return (
-    <PublicPageShell
-      eyebrow="Error 404"
-      title="Esta página no existe."
-      description="Puede que el enlace esté mal escrito o que la página se haya movido."
-    >
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Link
-          to="/"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-tinta-800 px-6 py-3 text-sm font-semibold text-white no-underline transition hover:bg-tinta-700"
-        >
-          Ir al inicio
-          <ArrowRight className="h-4 w-4" />
+    <PantallaEstado
+      titulo="Esta página no existe."
+      descripcion="Puede que el enlace esté mal escrito o que la página ya no exista."
+      acciones={
+        <Link to={conSesion ? '/dashboard' : '/'} className={ACCION_PRINCIPAL}>
+          {conSesion ? 'Ir al panel' : 'Ir al inicio'}
         </Link>
-      </div>
-    </PublicPageShell>
+      }
+    />
   )
 }

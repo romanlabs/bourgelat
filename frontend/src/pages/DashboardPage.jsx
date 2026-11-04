@@ -15,6 +15,7 @@ import JornadaHoy from '@/features/dashboard/JornadaHoy'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { canAccessModule, hasAnyRole } from '@/lib/permissions'
 import { useAuthStore } from '@/store/authStore'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const EMPTY_LIST = []
 
@@ -24,9 +25,6 @@ const serializeDate = (date) => {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
-
-const getErrorMessage = (error, fallback) =>
-  error?.response?.data?.message || error?.message || fallback
 
 // Dentro de AdminShell como el resto de la app: sin él, los roles no admin
 // entraban a una página sin menú, sin buscador y sin forma de cerrar sesión.
@@ -231,24 +229,9 @@ export default function DashboardPage() {
     .join(' · ')
 
   const queryErrors = [
-    suscripcionQuery.isError
-      ? getErrorMessage(
-          suscripcionQuery.error,
-          'No fue posible cargar la suscripción activa de la clínica.'
-        )
-      : null,
-    dashboardQuery.isError
-      ? getErrorMessage(
-          dashboardQuery.error,
-          'No fue posible cargar el resumen del panel de control.'
-        )
-      : null,
-    agendaHoyQuery.isError
-      ? getErrorMessage(
-          agendaHoyQuery.error,
-          'No fue posible cargar el detalle de la agenda de hoy.'
-        )
-      : null,
+    suscripcionQuery.isError ? { clave: 'suscripcion', titulo: 'El estado del plan no cargó', query: suscripcionQuery } : null,
+    dashboardQuery.isError ? { clave: 'resumen', titulo: 'El resumen del día no cargó', query: dashboardQuery } : null,
+    agendaHoyQuery.isError ? { clave: 'agenda', titulo: 'La agenda de hoy no cargó', query: agendaHoyQuery } : null,
   ].filter(Boolean)
 
   return (
@@ -300,13 +283,14 @@ export default function DashboardPage() {
 
       {queryErrors.length > 0 ? (
         <div className="space-y-3">
-          {queryErrors.map((message) => (
-            <div
-              key={message}
-              className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-4 text-sm leading-7 text-danger shadow-sm"
-            >
-              {message}
-            </div>
+          {queryErrors.map(({ clave, titulo, query }) => (
+            <AvisoError
+              key={clave}
+              titulo={titulo}
+              error={query.error}
+              alReintentar={query.refetch}
+              reintentando={query.isFetching}
+            />
           ))}
         </div>
       ) : null}

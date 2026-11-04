@@ -42,6 +42,10 @@ import { tieneFuncionalidad, FUNCIONALIDAD_REPORTES_COMPLETOS } from '@/lib/susc
 import { hoyLocal } from '@/lib/fecha'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
+import { CreditCard, ReceiptText } from 'lucide-react'
+import { Skeleton } from '@/components/shared/Skeleton'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { AvisoError } from '@/components/shared/AvisoError'
 
 const ETIQUETAS_CATEGORIA = Object.fromEntries(CATEGORIAS_GASTO.map((c) => [c.value, c.label]))
 const TOP_CATEGORIAS = 5
@@ -516,7 +520,20 @@ function ComoPagan({ grupos, cargando, onVerMedios }) {
           </ul>
         </>
       ) : (
-        <p className="text-sm text-muted-foreground">{cargando ? 'Cargando…' : 'Sin ventas en el periodo.'}</p>
+        cargando ? (
+          <div role="status" aria-label="Cargando medios de pago" className="space-y-3">
+            {[0, 1, 2].map((fila) => (
+              <Skeleton key={fila} className="h-4 w-full" />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            size="sm"
+            icon={<CreditCard />}
+            title="Sin ventas en este periodo"
+            description="Cuando cobres, verás aquí cómo pagan tus clientes."
+          />
+        )
       )}
     </section>
   )
@@ -615,9 +632,20 @@ function VentasRecientes({ facturas, cargando, onVerHistorial }) {
         </div>
         </>
       ) : (
-        <p className="px-5 pb-6 pt-2 text-sm text-muted-foreground sm:px-6">
-          {cargando ? 'Cargando…' : 'Aún no hay ventas en este periodo.'}
-        </p>
+        cargando ? (
+          <div role="status" aria-label="Cargando ventas" className="space-y-2 px-5 pb-6 pt-2 sm:px-6">
+            {[0, 1, 2].map((fila) => (
+              <Skeleton key={fila} className="h-12 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            size="sm"
+            icon={<ReceiptText />}
+            title="Aún no hay ventas en este periodo"
+            description="Las ventas que cobres aparecerán aquí, de la más reciente a la más antigua."
+          />
+        )
       )}
     </section>
   )
@@ -759,9 +787,7 @@ export default function ResumenFinanzasPanel({ onVerCuentas, onVerMedios }) {
       </div>
 
       {analisis.isError ? (
-        <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-          {analisis.error?.response?.data?.message || 'No fue posible cargar el resumen del periodo.'}
-        </div>
+        <AvisoError titulo="El resumen del periodo no cargó" error={analisis.error} alReintentar={analisis.refetch} reintentando={analisis.isFetching} />
       ) : null}
       {!data && analisis.isLoading ? <div className="h-72 animate-pulse rounded-2xl bg-card" /> : null}
 

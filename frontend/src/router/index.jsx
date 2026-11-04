@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute, PublicOnlyRoute } from './ProtectedRoute'
 import ModuleAccessRoute from './ModuleAccessRoute'
 import RouteErrorPage from '@/components/shared/RouteErrorPage'
+import { PantallaCarga } from '@/components/shared/IlustracionEstado'
 import { APP_HOSTS } from '@/content/seo'
 import { aplicarSeo } from '@/lib/seo'
 import { urlDocumentoLegal } from '@/content/legal'
@@ -86,11 +87,7 @@ const LandingPage   = lazy(() => import('@/pages/LandingPage'))
 const NosotrosPage  = lazy(() => import('@/pages/NosotrosPage'))
 const NoEncontradaPage = lazy(() => import('@/pages/NoEncontradaPage'))
 
-const Loader = () => (
-  <div className="min-h-screen bg-[var(--color-sidebar)] flex items-center justify-center">
-    <div className="w-8 h-8 rounded-full border-2 border-info border-t-transparent animate-spin" />
-  </div>
-)
+const Loader = () => <PantallaCarga />
 
 const ScrollManager = () => {
   const location = useLocation()

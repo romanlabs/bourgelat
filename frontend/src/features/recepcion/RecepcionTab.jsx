@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CalendarPlus, UserPlus } from 'lucide-react'
-import { useRecepcion, getErrorMessage } from './useRecepcion'
+import { useRecepcion } from './useRecepcion'
 import { ProgramarCitaPanel } from './ProgramarCitaPanel'
 import { SalaEsperaPanel } from './SalaEsperaPanel'
 import { WalkInPanel } from './WalkInPanel'
@@ -59,7 +59,8 @@ export function RecepcionTab({
         resumen={resumen}
         isLoading={salaEsperaQuery.isLoading}
         isError={salaEsperaQuery.isError}
-        errorMessage={getErrorMessage(salaEsperaQuery.error, 'No fue posible cargar la sala de espera.')}
+        error={salaEsperaQuery.error}
+        isFetching={salaEsperaQuery.isFetching}
         puedeGestionarEstado={puedeGestionarEstado}
         actualizarEstadoMutation={actualizarEstadoMutation}
         citaInicialId={citaInicialId}

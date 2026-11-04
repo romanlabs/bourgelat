@@ -60,19 +60,36 @@ const iconWrapperVariants = cva(
  *   <EmptyState icon={<Search />} title="Sin resultados" bordered />
  */
 export function EmptyState({ icon, title, description, action, size = 'md', variant = 'default', bordered = false, className }) {
+  // En tablas y búsquedas va compacto: una línea con ícono, sin ocupar media pantalla.
+  if (size === 'sm') {
+    return (
+      <div
+        className={cn(
+          'estado-aparece flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-5 text-left',
+          bordered && 'rounded-xl bg-muted',
+          className
+        )}
+      >
+        {icon && <div className={cn(iconWrapperVariants({ size, variant }))}>{icon}</div>}
+        <div className="min-w-[12rem] flex-1 space-y-0.5">
+          <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">{title}</p>
+          {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
+        </div>
+        {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(
         wrapperVariants({ size }),
+        'estado-aparece',
         bordered && 'rounded-xl bg-muted',
         className
       )}
     >
-      {icon && (
-        <div className={cn(iconWrapperVariants({ size, variant }))}>
-          {icon}
-        </div>
-      )}
+      {icon && <div className={cn(iconWrapperVariants({ size, variant }))}>{icon}</div>}
 
       <div className="max-w-sm space-y-1.5">
         <p className="text-lg font-semibold tracking-[-0.02em] text-foreground">{title}</p>

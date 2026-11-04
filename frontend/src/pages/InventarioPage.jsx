@@ -11,6 +11,7 @@ import HojaInferior from '@/components/movil/HojaInferior'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { cn } from '@/lib/utils'
 import AdminShell from '@/components/layout/AdminShell'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { DataTable } from '@/components/shared/DataTable'
@@ -966,7 +967,7 @@ export default function InventarioPage() {
         <EmptyState
           icon={<Sparkles />}
           title="Inventario no disponible en el plan actual"
-          description="Para administrar productos, movimientos y alertas necesitas inventario y reportes operativos activos dentro de la suscripción."
+          description="Tu plan actual no incluye el inventario de productos, movimientos y alertas. Revisa los planes para activarlo."
           action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
@@ -976,14 +977,10 @@ export default function InventarioPage() {
           {(reporteQuery.isError || productosQuery.isError) && (
             <div className="grid gap-3">
               {reporteQuery.isError && (
-                <div role="alert" className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium leading-6 text-warning">
-                  No fue posible cargar el resumen de inventario.
-                </div>
+                <AvisoError titulo="El resumen del inventario no cargó" error={reporteQuery.error} alReintentar={reporteQuery.refetch} reintentando={reporteQuery.isFetching} />
               )}
               {productosQuery.isError && (
-                <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium leading-6 text-danger">
-                  No fue posible cargar la tabla de productos.
-                </div>
+                <AvisoError titulo="Los productos no cargaron" error={productosQuery.error} alReintentar={productosQuery.refetch} reintentando={productosQuery.isFetching} />
               )}
             </div>
           )}
@@ -1120,10 +1117,16 @@ export default function InventarioPage() {
                     productosHook.verDesactivados
                       ? 'No hay productos desactivados'
                       : buscar.trim() || categoria !== 'todas' || bajoStock
-                      ? 'No hay productos para este filtro'
-                      : 'Aún no hay productos'
+                      ? 'Sin resultados para esa búsqueda'
+                      : 'Todavía no hay productos'
                   }
-                  emptyBody="Ajusta la búsqueda o crea el primer producto con el botón Nuevo producto."
+                  emptyBody={
+                    !productosHook.verDesactivados && !(buscar.trim() || categoria !== 'todas' || bajoStock)
+                      ? 'Crea el primer producto con el botón Nuevo producto.'
+                      : productosHook.verDesactivados
+                      ? 'Los productos que desactives quedarán guardados aquí.'
+                      : 'Prueba con otro nombre o quita los filtros.'
+                  }
                 />
               )}
 
@@ -1290,8 +1293,20 @@ export default function InventarioPage() {
                     },
                   ]}
                   opcionesFila={opcionesInsumo}
-                  emptyTitle={insumosClinicosHook.verDesactivados ? 'No hay insumos clínicos desactivados' : 'No hay insumos clínicos para este filtro'}
-                  emptyBody="Ajusta la búsqueda o crea el primer insumo clínico con el botón Nuevo insumo clínico."
+                  emptyTitle={
+                    insumosClinicosHook.verDesactivados
+                      ? 'No hay insumos clínicos desactivados'
+                      : insumosClinicosHook.buscar.trim() || insumosClinicosHook.categoria !== 'todas' || insumosClinicosHook.bajoStock
+                      ? 'Sin resultados para esa búsqueda'
+                      : 'Todavía no hay insumos clínicos'
+                  }
+                  emptyBody={
+                    insumosClinicosHook.verDesactivados
+                      ? 'Los insumos que desactives quedarán guardados aquí.'
+                      : insumosClinicosHook.buscar.trim() || insumosClinicosHook.categoria !== 'todas' || insumosClinicosHook.bajoStock
+                      ? 'Prueba con otro nombre, lote o laboratorio, o quita los filtros.'
+                      : 'Crea el primer insumo clínico con el botón Nuevo insumo clínico.'
+                  }
                 />
               )}
 
@@ -1398,8 +1413,20 @@ export default function InventarioPage() {
                     ),
                   },
                 ]}
-                emptyTitle={serviciosHook.verDesactivados ? 'No hay servicios desactivados' : 'No hay servicios en el catálogo'}
-                emptyBody="Crea el primer servicio y define qué insumos clínicos consume."
+                emptyTitle={
+                  serviciosHook.verDesactivados
+                    ? 'No hay servicios desactivados'
+                    : serviciosHook.buscar.trim()
+                    ? 'Sin resultados para esa búsqueda'
+                    : 'Todavía no hay servicios en el catálogo'
+                }
+                emptyBody={
+                  serviciosHook.verDesactivados
+                    ? 'Los servicios que desactives quedarán guardados aquí.'
+                    : serviciosHook.buscar.trim()
+                    ? 'Prueba con otro nombre.'
+                    : 'Crea el primer servicio y define qué insumos clínicos consume.'
+                }
                 opcionesFila={opcionesServicio}
               />
 
@@ -1843,8 +1870,8 @@ export default function InventarioPage() {
                       ),
                     },
                   ]}
-                  emptyTitle="No hay facturas de compra"
-                  emptyBody="Crea una nueva factura de compra para registrar el ingreso de mercancía al inventario."
+                  emptyTitle="Todavía no hay facturas de compra"
+                  emptyBody="Registra una factura de compra para dar entrada a la mercancía en el inventario."
                   opcionesFila={opcionesCompra}
                   tituloFila={(row) => row.proveedor || 'Factura de compra'}
                 />
@@ -1940,9 +1967,10 @@ export default function InventarioPage() {
         onOpenChange={(abierto) => {
           if (!abierto && !serviciosHook.isPendingDelete) serviciosHook.setConfirmDialog({ open: false, servicio: null })
         }}
-        title={`Desactivar «${serviciosHook.confirmDialog.servicio?.nombre ?? ''}»`}
+        title={`¿Desactivar «${serviciosHook.confirmDialog.servicio?.nombre ?? ''}»?`}
         description="El servicio sale del catálogo activo. Las facturas ya emitidas no cambian."
-        confirmLabel={serviciosHook.isPendingDelete ? 'Desactivando…' : 'Desactivar'}
+        confirmLabel={serviciosHook.isPendingDelete ? 'Desactivando…' : 'Desactivar servicio'}
+        variant="default"
         loading={serviciosHook.isPendingDelete}
         onConfirm={serviciosHook.confirmDelete}
       />
@@ -2012,9 +2040,10 @@ export default function InventarioPage() {
         onOpenChange={(abierto) => {
           if (!abierto && !insumosClinicosHook.isPendingDelete) insumosClinicosHook.setConfirmDialog({ open: false, insumo: null })
         }}
-        title={`Desactivar «${insumosClinicosHook.confirmDialog.insumo?.nombre ?? ''}»`}
+        title={`¿Desactivar «${insumosClinicosHook.confirmDialog.insumo?.nombre ?? ''}»?`}
         description="El insumo sale del inventario clínico activo. Los movimientos anteriores se conservan."
-        confirmLabel={insumosClinicosHook.isPendingDelete ? 'Desactivando…' : 'Desactivar'}
+        confirmLabel={insumosClinicosHook.isPendingDelete ? 'Desactivando…' : 'Desactivar insumo'}
+        variant="default"
         loading={insumosClinicosHook.isPendingDelete}
         onConfirm={insumosClinicosHook.confirmDelete}
       />
@@ -2025,9 +2054,10 @@ export default function InventarioPage() {
         onOpenChange={(abierto) => {
           if (!abierto && !isPendingDelete) setConfirmDialog({ open: false, producto: null })
         }}
-        title={`Desactivar «${confirmDialog.producto?.nombre ?? ''}»`}
+        title={`¿Desactivar «${confirmDialog.producto?.nombre ?? ''}»?`}
         description="El producto sale del inventario activo. Los movimientos anteriores se conservan."
-        confirmLabel={isPendingDelete ? 'Desactivando…' : 'Desactivar'}
+        confirmLabel={isPendingDelete ? 'Desactivando…' : 'Desactivar producto'}
+        variant="default"
         loading={isPendingDelete}
         onConfirm={confirmDelete}
       />

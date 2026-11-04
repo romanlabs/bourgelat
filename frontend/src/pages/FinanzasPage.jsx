@@ -17,6 +17,7 @@ import FilaDeslizable from '@/components/movil/FilaDeslizable'
 import TirarParaRefrescar from '@/components/movil/TirarParaRefrescar'
 import { useDeslizarHorizontal } from '@/lib/gestos'
 import AdminShell from '@/components/layout/AdminShell'
+import { AvisoError } from '@/components/shared/AvisoError'
 import { NavCta } from '@/components/shared/NavCta'
 import {
   DashboardPanel,
@@ -406,7 +407,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
         <EmptyState
           icon={<Sparkles />}
           title="Finanzas no disponibles en el plan actual"
-          description="La lectura de ingresos y facturas necesita caja activa y reportes operativos. Si quieres usar esta sección de forma permanente para gerencia, conviene subir de plan."
+          description="Tu plan actual no incluye ingresos, facturas ni caja. Revisa los planes para activarlos."
           action={<NavCta to="/plan" icon={Sparkles}>Revisar planes</NavCta>}
         />
       ) : (
@@ -523,9 +524,7 @@ export default function FinanzasPage({ modo = 'caja' }) {
           {activeTab === 'historial' && (
             <div className="space-y-5">
               {historialHook.facturasQuery.isError ? (
-                <div className="rounded-xl bg-danger-soft px-4 py-4 text-sm leading-6 text-danger">
-                  No fue posible cargar la lista de facturas.
-                </div>
+                <AvisoError titulo="Las facturas no cargaron" error={historialHook.facturasQuery.error} alReintentar={historialHook.facturasQuery.refetch} reintentando={historialHook.facturasQuery.isFetching} />
               ) : null}
 
               <div className="hidden lg:block">
@@ -562,8 +561,8 @@ export default function FinanzasPage({ modo = 'caja' }) {
                     ),
                   },
                 ]}
-                emptyTitle="Aún no hay facturas para este filtro"
-                emptyBody="Cuando haya movimiento en el estado elegido, la tabla se llenará automáticamente."
+                emptyTitle="No hay facturas con estos filtros"
+                emptyBody="Prueba con otro estado, otras fechas o otra búsqueda."
                 action={filtrosHistorial}
               />
               </div>
