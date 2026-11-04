@@ -21,7 +21,7 @@ export default function NoEncontradaPage() {
   // Con sesión se queda en la app: el menú ya ofrece el camino de vuelta.
   if (conSesion) {
     return (
-      <AdminShell title={TITULO} description={DESCRIPCION}>
+      <AdminShell sinSeccion title={TITULO} description={DESCRIPCION}>
         <Button asChild>
           <Link to="/dashboard">Ir al panel</Link>
         </Button>
