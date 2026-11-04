@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw } from 'lucide-react'
 import { CORREO_LEGAL as CORREO_SOPORTE } from '@/content/legal'
 import { clasificarError, debeReintentarCarga } from '@/lib/estadoError'
 import { reportarErrorDePantalla } from '@/lib/reportarError'
@@ -55,7 +54,6 @@ export function PantallaError({ error }) {
 
   const botonRecargar = (
     <button type="button" onClick={recargar} className={ACCION_PRINCIPAL}>
-      <RefreshCw className="h-4 w-4" />
       Cargar de nuevo
     </button>
   )
@@ -67,7 +65,7 @@ export function PantallaError({ error }) {
   const notaSoporte = (
     <>
       ¿Sigue igual? Escríbenos a{' '}
-      <a href={`mailto:${CORREO_SOPORTE}`} className="font-medium text-tinta-800 underline underline-offset-2">
+      <a href={`mailto:${CORREO_SOPORTE}`} className="font-medium underline underline-offset-2">
         {CORREO_SOPORTE}
       </a>
     </>
@@ -76,9 +74,8 @@ export function PantallaError({ error }) {
   if (tipo === 'conexion') {
     return (
       <PantallaEstado
-        escena="conexion"
         titulo="Se fue el internet en este equipo."
-        descripcion="En cuanto vuelva la conexión, esta pantalla se abre sola. No tienes que hacer nada."
+        descripcion="En cuanto vuelva la conexión, esta pantalla se abre sola."
         acciones={botonRecargar}
       />
     )
@@ -86,19 +83,12 @@ export function PantallaError({ error }) {
 
   if (tipo === 'actualizacion') {
     return recargando ? (
-      <PantallaEstado
-        escena="pulso"
-        antetitulo="Bourgelat tiene mejoras"
-        titulo="Estamos abriendo la versión más reciente."
-        descripcion="Solo toma un momento y no tienes que hacer nada."
-      />
+      <PantallaEstado cargando titulo="Estamos abriendo la versión más reciente." />
     ) : (
       <PantallaEstado
-        escena="pulso"
-        antetitulo="Bourgelat tiene mejoras"
-        titulo="Tu pantalla necesita ponerse al día."
-        descripcion="Publicamos una versión más reciente. Carga de nuevo para seguir trabajando con ella."
-        acciones={<>{botonRecargar}{botonInicio}</>}
+        titulo="Hay una versión nueva de Bourgelat."
+        descripcion="Carga de nuevo para seguir trabajando con ella."
+        acciones={botonRecargar}
         nota={notaSoporte}
       />
     )
@@ -106,18 +96,17 @@ export function PantallaError({ error }) {
 
   return (
     <PantallaEstado
-      escena="pulso"
       titulo={conSesion ? 'Estamos revisando esta pantalla.' : 'Esta pantalla no abrió como debía.'}
       descripcion={
         conSesion
-          ? 'Algo no salió bien al abrirla y ya le estamos avisando al equipo de Bourgelat. Lo que ya guardaste sigue guardado.'
+          ? 'Ya le estamos avisando al equipo de Bourgelat. Lo que ya guardaste sigue guardado.'
           : 'Prueba cargarla de nuevo o sigue desde el inicio.'
       }
       acciones={<>{botonRecargar}{botonInicio}</>}
       nota={notaSoporte}
     >
       {import.meta.env.DEV && error ? (
-        <details className="mt-5 text-sm text-tinta-500">
+        <details className="mt-4 text-sm text-muted-foreground">
           <summary className="cursor-pointer">Detalle (solo en desarrollo)</summary>
           <pre className="mt-2 whitespace-pre-wrap break-words">{String(error?.message || error)}</pre>
         </details>

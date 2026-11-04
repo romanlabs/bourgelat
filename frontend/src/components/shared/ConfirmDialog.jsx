@@ -1,6 +1,5 @@
-import { CircleHelp, Loader2, TriangleAlert } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import {
   DialogRoot,
   DialogContent,
@@ -37,7 +36,6 @@ export function ConfirmDialog({
   onConfirm,
   children,
 }) {
-  const destructiva = variant === 'destructive'
   // Mientras se guarda no se cierra: el resultado quedaría sin nadie que lo vea.
   const alCambiar = (abierto) => {
     if (!abierto && loading) return
@@ -48,19 +46,6 @@ export function ConfirmDialog({
     <DialogRoot open={open} onOpenChange={alCambiar}>
       <DialogContent className="max-w-[440px]">
         <DialogHeader>
-          {/* El triángulo rojo es solo para lo que no se deshace fácil. */}
-          <div
-            className={cn(
-              'mb-2 flex h-12 w-12 items-center justify-center rounded-[14px]',
-              destructiva ? 'bg-danger-soft' : 'bg-success-soft',
-            )}
-          >
-            {destructiva ? (
-              <TriangleAlert className="h-6 w-6 text-danger" />
-            ) : (
-              <CircleHelp className="h-6 w-6 text-success" />
-            )}
-          </div>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
@@ -73,12 +58,7 @@ export function ConfirmDialog({
               {cancelLabel}
             </Button>
           </DialogClose>
-          <Button
-            variant={variant}
-            size="lg"
-            disabled={loading}
-            onClick={onConfirm}
-          >
+          <Button variant={variant} size="lg" disabled={loading} onClick={onConfirm}>
             {loading ? <Loader2 className="animate-spin" /> : null}
             {confirmLabel}
           </Button>
