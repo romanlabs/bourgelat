@@ -203,7 +203,13 @@ export default function PosModal({
 
   const confirmarVenta = () => {
     // Capturamos antes de emitir: el hook limpia el carrito al tener éxito.
-    setSnapshot({ total, recibido: esEfectivo ? monto : esCredito ? 0 : total, vuelto: esEfectivo ? vuelto : 0, metodo: metodoLabel })
+    setSnapshot({
+      total,
+      recibido: esEfectivo ? monto : esCredito ? 0 : total,
+      vuelto: esEfectivo ? vuelto : 0,
+      metodo: metodoLabel,
+      conProductos: items.some((item) => item.productoId),
+    })
     handleCrearFactura()
   }
 
@@ -216,7 +222,7 @@ export default function PosModal({
     crearFacturaMutation?.reset?.()
   }
 
-  // Se carga solo al pedir "Ver factura": el paso de vuelto no necesita el detalle.
+  // Se carga solo al pedir "Ver comprobante": el paso de vuelto no necesita el detalle.
   const facturaQuery = useQuery({
     queryKey: ['pos-factura-emitida', facturaCreadaId],
     queryFn: () => finanzasApi.obtenerFactura(facturaCreadaId),
@@ -564,7 +570,9 @@ export default function PosModal({
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
                 <p className="mt-4 text-[22px] font-semibold tracking-[-0.02em] text-foreground">Venta registrada</p>
-                <p className="text-sm text-muted-foreground">Se descontó el inventario y quedó en el historial.</p>
+                <p className="text-sm text-muted-foreground">
+                  {snapshot.conProductos ? 'Se descontó el inventario y quedó en el historial.' : 'Quedó en el historial.'}
+                </p>
 
                 {/* El vuelto es lo unico que el cajero necesita leer de lejos;
                     total y recibido quedan de respaldo, en letra menor. */}
@@ -601,7 +609,7 @@ export default function PosModal({
                     className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-secondary text-sm font-semibold text-secondary-foreground transition hover:brightness-95 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <FileText className="h-4 w-4" />
-                    Ver factura
+                    Ver comprobante
                   </button>
                 ) : null}
 
@@ -631,7 +639,7 @@ export default function PosModal({
               <div className="h-full overflow-y-auto p-5">
                 <div className="mx-auto max-w-lg">
                   {facturaQuery.isError ? (
-                    <AvisoError titulo="La factura no cargó, pero la venta quedó registrada. Búscala en el historial." error={facturaQuery.error} alReintentar={facturaQuery.refetch} reintentando={facturaQuery.isFetching} />
+                    <AvisoError titulo="El comprobante no cargó, pero la venta quedó en el historial" error={facturaQuery.error} alReintentar={facturaQuery.refetch} reintentando={facturaQuery.isFetching} />
                   ) : facturaQuery.isLoading ? (
                     <div className="space-y-3">
                       {[0, 1, 2].map((i) => (
