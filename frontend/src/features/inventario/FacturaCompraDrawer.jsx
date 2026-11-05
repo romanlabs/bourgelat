@@ -171,8 +171,8 @@ export default function FacturaCompraDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card transition-transform duration-300 sm:w-[560px] ${
+          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
         {/* Header */}

@@ -58,8 +58,8 @@ export function RecepcionDrawer({ open, onClose, title, subtitle, width = 'sm:w-
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:rounded-l-2xl ${width} ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card transition-transform duration-300 sm:rounded-l-2xl ${width} ${
+          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
         {/* Celular: cabecera compacta (volver + título); el subtítulo se oculta

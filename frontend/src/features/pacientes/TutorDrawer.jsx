@@ -94,7 +94,7 @@ export default function TutorDrawer({ open, onClose, onSubmit, isPending, editin
         role="dialog"
         aria-modal="true"
         aria-label={modoEdicion ? 'Editar tutor' : 'Nuevo tutor'}
-        className={`fixed right-0 top-0 z-[60] flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[460px] ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-[60] flex h-[100dvh] w-full flex-col bg-card transition-transform duration-300 sm:w-[460px] ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         <div className="flex items-start justify-between gap-4 px-4 pb-2 pt-4 lg:px-6 lg:pb-3 lg:pt-6">
           <div>
