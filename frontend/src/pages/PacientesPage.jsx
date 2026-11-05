@@ -858,7 +858,9 @@ export default function PacientesPage() {
                 </div>
               )}
 
-              <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+              {/* La columna del detalle solo existe si hay un tutor que mostrar; si no,
+                  la lista vacía quedaba en dos tercios del ancho. */}
+              <div className={`grid items-start gap-6 ${tutorSeleccionado ? 'lg:grid-cols-[minmax(0,1fr)_380px]' : ''}`}>
                 <section aria-label="Lista de tutores" className="lg:overflow-hidden lg:rounded-2xl lg:bg-card">
                   {tutoresHook.tutoresQuery.isLoading ? (
                     <FilasSkeleton rows={6} />

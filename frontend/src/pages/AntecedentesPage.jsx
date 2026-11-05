@@ -234,7 +234,7 @@ function CascaronFormulario({ esCelular, abierta, onCambiar, titulo, descripcion
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[480px] ${abierta ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card transition-transform duration-300 sm:w-[480px] ${abierta ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-6">
           <div>
