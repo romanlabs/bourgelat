@@ -127,8 +127,8 @@ export default function ServicioDrawer({ open, editingServicio, onClose, onSubmi
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card shadow-2xl transition-transform duration-300 sm:w-[560px] ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-card transition-transform duration-300 sm:w-[560px] ${
+          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
         <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3 lg:gap-4 lg:px-6 lg:pb-3 lg:pt-5">

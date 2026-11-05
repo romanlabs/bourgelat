@@ -753,7 +753,7 @@ export default function HistoriaClinicaFormDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={historiaActual ? 'Editar historia clínica' : 'Nueva historia clínica'}
-        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-background shadow-2xl transition-transform duration-300 sm:w-[680px] xl:w-[calc(100vw-248px)] ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-50 flex h-[100dvh] w-full flex-col bg-background transition-transform duration-300 sm:w-[680px] xl:w-[calc(100vw-248px)] ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         {/* Header */}
         <div className="bg-card px-4 pb-1 pt-3 sm:px-5 sm:py-4">
