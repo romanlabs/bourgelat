@@ -313,7 +313,7 @@ const ventasBase = [
 ]
 
 const turnoCaja = {
-  usuarioKey: 'recep',
+  usuarioKey: 'admin',
   horaApertura: '07:45',
   montoInicial: 200000,
 }
@@ -369,7 +369,7 @@ const construirDatosDemo = (fechaHoy) => {
       ...venta,
       numero: `FAC-${String(indice + 1).padStart(4, '0')}`,
       fecha: fechaHoy,
-      usuarioKey: 'recep',
+      usuarioKey: 'admin',
       items,
       total,
     }
