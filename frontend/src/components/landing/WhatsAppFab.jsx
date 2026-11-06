@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
-import { pagoManual } from "@/content/publicSiteContent"
+import { WHATSAPP } from "./contenido"
 
 // Botón flotante de soporte por WhatsApp. Fijo abajo a la derecha, pero se
 // oculta donde estorbaría: sobre el hero (en móvil taparía sus CTAs) y desde
-// Contacto hasta el final, que ya tienen sus propios botones y el correo.
-// Solo vive en la landing, que siempre tiene #hero y #contacto.
-const WHATSAPP_NUMBER = pagoManual.whatsapp
+// el cierre hasta el final, que ya tienen sus propios botones.
+// Solo vive en la landing, que siempre tiene #inicio y #cierre.
+const WHATSAPP_NUMBER = WHATSAPP
 const WHATSAPP_MESSAGE = 'Hola, quiero saber más sobre Bourgelat.'
 
 export default function WhatsAppFab() {
@@ -14,8 +14,8 @@ export default function WhatsAppFab() {
   const [enCierre, setEnCierre] = useState(false)
 
   useEffect(() => {
-    const hero = document.getElementById('hero')
-    const contacto = document.getElementById('contacto')
+    const hero = document.getElementById('inicio')
+    const contacto = document.getElementById('cierre')
     // El hero "tapa" mientras ocupe la mitad superior de la pantalla.
     const heroObserver = hero
       ? new IntersectionObserver(([entry]) => setSobreHero(entry.isIntersecting), {
@@ -46,17 +46,12 @@ export default function WhatsAppFab() {
       aria-label="Escríbenos por WhatsApp"
       aria-hidden={oculto || undefined}
       tabIndex={oculto ? -1 : undefined}
-      className={`group fixed right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.45)] transition-[opacity,transform] duration-300 ease-out hover:scale-105 sm:right-6 sm:h-14 sm:w-14 ${
+      className={`group fixed right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-success text-primary-foreground shadow-lg transition-[opacity,transform] duration-300 ease-out hover:scale-105 sm:right-6 sm:h-14 sm:w-14 ${
         oculto ? 'pointer-events-none translate-y-3 opacity-0' : 'opacity-100'
       }`}
       // El área segura del iPhone (barra de inicio) se suma al margen inferior.
       style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
     >
-      <span
-        className="absolute inset-0 rounded-full bg-[#25D366] opacity-20 motion-safe:animate-ping"
-        style={{ animationDuration: '2.8s' }}
-        aria-hidden="true"
-      />
       <svg
         viewBox="0 0 24 24"
         className="relative h-6 w-6 sm:h-7 sm:w-7"
