@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Stethoscope } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { legalLinks } from '@/components/landing/data'
+import { LEGAL } from '@/components/landing/contenido'
 
 const footerLinks = [
   { label: 'Nosotros', to: '/nosotros' },
@@ -103,7 +103,7 @@ export default function PublicPageShell({
                   {link.label}
                 </Link>
               ))}
-              {legalLinks.map((link) => (
+              {LEGAL.map((link) => (
                 <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className="transition hover:text-tinta-800">
                   {link.label}
                 </a>
