@@ -22,11 +22,11 @@ export default function HeroProducto() {
       id="inicio"
       ref={ref}
       data-campo="primary"
-      className="relative overflow-hidden bg-primary pt-28 text-primary-foreground sm:pt-36"
+      className="relative overflow-hidden bg-primary pt-28 text-primary-foreground sm:pt-32"
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8">
         <div className="grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-10">
-          <h1 className="text-[clamp(2.6rem,8vw,8rem)] font-semibold leading-[0.9] tracking-[-0.05em] lg:col-span-8">
+          <h1 className="text-[clamp(2.6rem,min(8vw,12vh),8rem)] font-semibold leading-[0.9] tracking-[-0.05em] lg:col-span-8">
             <span className="block text-brand">{HERO.titulo[0]}</span>
             <span className="block">{HERO.titulo[1]}</span>
           </h1>
@@ -49,10 +49,10 @@ export default function HeroProducto() {
 
         {/* La captura entera, dentro del campo y con aire abajo: nada se corta. */}
         <div
-          className="mx-auto mt-14 max-w-6xl pb-16 sm:mt-20 sm:pb-24"
+          className="mx-auto mt-10 max-w-6xl pb-16 sm:mt-12 sm:pb-24"
           style={amplio ? { perspective: '1800px' } : undefined}
         >
-          <Motion.div style={amplio ? { rotateX, scale, transformOrigin: '50% 100%' } : undefined}>
+          <Motion.div style={amplio ? { rotateX, scale, transformOrigin: '50% 0%' } : undefined}>
             {/* Marco en petróleo claro: la barra lateral del programa es del
                 mismo color del campo y sin él se pierde el borde. */}
             <div className="rounded-2xl bg-sidebar-accent p-1.5 sm:p-2.5">
