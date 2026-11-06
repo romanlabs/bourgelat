@@ -14,7 +14,7 @@ export default function HeroProducto() {
   const ref = useRef(null)
   const amplio = useMovimientoAmplio()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const rotateX = useTransform(scrollYProgress, [0, 0.5], [24, 0])
+  const rotateX = useTransform(scrollYProgress, [0, 0.45], [16, 0])
   const scale = useTransform(scrollYProgress, [0, 0.5], [0.9, 1])
 
   return (
@@ -26,7 +26,7 @@ export default function HeroProducto() {
     >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8">
         <div className="grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-10">
-          <h1 className="text-[clamp(3.4rem,10.5vw,10rem)] font-semibold leading-[0.9] tracking-[-0.05em] lg:col-span-8">
+          <h1 className="text-[clamp(2.6rem,8vw,8rem)] font-semibold leading-[0.9] tracking-[-0.05em] lg:col-span-8">
             <span className="block text-brand">{HERO.titulo[0]}</span>
             <span className="block">{HERO.titulo[1]}</span>
           </h1>
@@ -47,14 +47,17 @@ export default function HeroProducto() {
           </Aparecer>
         </div>
 
-        {/* Ventana de alto fijo: se ve la parte de arriba del programa y el
-            corte cae justo en el borde del campo, sin invadir la sección siguiente. */}
+        {/* La captura entera, dentro del campo y con aire abajo: nada se corta. */}
         <div
-          className="mx-auto mt-14 h-[clamp(220px,52vw,300px)] max-w-6xl overflow-hidden sm:mt-20 sm:h-[clamp(300px,46vh,560px)]"
+          className="mx-auto mt-14 max-w-6xl pb-16 sm:mt-20 sm:pb-24"
           style={amplio ? { perspective: '1800px' } : undefined}
         >
-          <Motion.div style={amplio ? { rotateX, scale, transformOrigin: '50% 0%' } : undefined}>
-            <Captura src={HERO.imagen} alt={HERO.alt} prioridad className="rounded-b-none" />
+          <Motion.div style={amplio ? { rotateX, scale, transformOrigin: '50% 100%' } : undefined}>
+            {/* Marco en petróleo claro: la barra lateral del programa es del
+                mismo color del campo y sin él se pierde el borde. */}
+            <div className="rounded-2xl bg-sidebar-accent p-1.5 sm:p-2.5">
+              <Captura src={HERO.imagen} alt={HERO.alt} prioridad />
+            </div>
           </Motion.div>
         </div>
       </div>

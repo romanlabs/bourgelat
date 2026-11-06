@@ -15,7 +15,7 @@ export const NAV = [
 ]
 
 export const HERO = {
-  titulo: ['Tu clínica,', 'en orden.'],
+  titulo: ['Tu clínica,', 'más conectada.'],
   frase:
     'Agenda, historias clínicas, caja e inventario de tu veterinaria en un solo programa.',
   nota: '30 días con todo abierto. Sin tarjeta.',
