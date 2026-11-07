@@ -223,7 +223,7 @@ const crear = async (datos, passwordHash, transaction) => {
   }
 
   const citas = {}
-  for (const c of datos.citas) {
+  for (const c of [...datos.citas, ...datos.citasPasadas]) {
     const mascotaDemo = datos.mascotas.find((m) => m.key === c.mascotaKey)
     citas[c.key] = await Cita.create(
       {

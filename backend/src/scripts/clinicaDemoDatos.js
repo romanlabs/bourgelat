@@ -117,7 +117,7 @@ const mascotasBase = [
   mascota('luna', 'p1', 'Luna', 'perro', 'French poodle', 'hembra', 36, 7.2, 'Blanco', true),
   mascota('toby', 'p2', 'Toby', 'perro', 'Criollo', 'macho', 72, 14.0, 'Café con blanco', true),
   mascota('mia', 'p3', 'Mía', 'gato', 'Doméstico de pelo corto', 'hembra', 24, 3.8, 'Carey', true),
-  mascota('rocky', 'p4', 'Rocky', 'perro', 'Labrador retriever', 'macho', 48, 31.5, 'Chocolate', false),
+  mascota('rocky', 'p4', 'Milo', 'gato', 'Doméstico de pelo corto', 'macho', 48, 4.6, 'Gris y blanco', true),
   mascota('bruno', 'p4', 'Bruno', 'perro', 'Schnauzer miniatura', 'macho', 60, 8.4, 'Sal y pimienta', true),
   mascota('canela', 'p5', 'Canela', 'perro', 'Criollo', 'hembra', 84, 18.0, 'Canela', true),
   mascota('frida', 'p5', 'Frida', 'gato', 'Siamés', 'hembra', 14, 3.1, 'Crema y marrón', false),
@@ -141,7 +141,7 @@ const citasBase = [
   cita('a1', '08:00', '08:30', 'c1', 'admin', 'luna', 'vacunacion', 'Vacunación anual (óctuple)', 'completada'),
   cita('a2', '08:30', '09:00', 'c1', 'admin', 'toby', 'control', 'Control de peso y revisión dental', 'completada'),
   cita('a3', '09:00', '09:30', 'c1', 'admin', 'mia', 'consulta_general', 'Vómito ocasional desde hace tres días', 'completada'),
-  cita('a4', '10:00', '10:30', 'c1', 'admin', 'rocky', 'consulta_general', 'Picazón y enrojecimiento en las patas', 'en_atencion', { horaLlegada: '09:50', horaInicioAtencion: '10:02' }),
+  cita('a4', '10:00', '10:30', 'c1', 'admin', 'rocky', 'consulta_general', 'Se lame en exceso y tiene la piel enrojecida', 'en_atencion', { horaLlegada: '09:50', horaInicioAtencion: '10:02' }),
   cita('a5', '10:30', '11:00', 'c1', 'admin', 'canela', 'control', 'Control postoperatorio, retiro de puntos', 'en_espera', { horaLlegada: '10:20' }),
   cita('a6', '11:30', '12:00', 'c1', 'admin', 'simon', 'vacunacion', 'Vacuna triple felina y refuerzo', 'programada'),
   cita('a7', '14:30', '15:00', 'c1', 'admin', 'bruno', 'desparasitacion', 'Desparasitación y antipulgas', 'programada'),
@@ -163,51 +163,51 @@ const historia = (key, mascotaKey, veterinarioKey, diasAtras, hora, datos) => ({
 const historiasBase = [
   historia('h-rocky-1', 'rocky', 'admin', 250, '10:15', {
     motivoConsulta: 'Sacude la cabeza y se rasca la oreja derecha desde hace una semana',
-    anamnesis: 'El tutor refiere mal olor y secreción oscura en el oído derecho. Baños frecuentes en el río los fines de semana.',
-    peso: 30.2, temperatura: 38.6, frecuenciaCardiaca: 96, frecuenciaRespiratoria: 24, condicionCorporal: 3,
+    anamnesis: 'El tutor refiere secreción oscura en el oído derecho. Sale al patio y convive con otro gato que no está desparasitado.',
+    peso: 4.3, temperatura: 38.6, frecuenciaCardiaca: 180, frecuenciaRespiratoria: 28, condicionCorporal: 3,
     mucosas: 'Rosadas, húmedas', estadoHidratacion: 'normal',
-    examenFisicoDetalle: 'Conducto auditivo derecho eritematoso con cerumen oscuro y olor fétido. Dolor a la palpación del pabellón.',
+    examenFisicoDetalle: 'Conducto auditivo derecho eritematoso con cerumen oscuro en grumos. Molestia a la palpación del pabellón.',
     diagnostico: 'Otitis externa derecha',
     tratamiento: 'Limpieza del conducto y gotas óticas por 10 días.',
     medicamentos: [
       { nombre: 'Gotas óticas con antibiótico y antimicótico', dosis: '5 gotas', via: 'otica', frecuencia: 'Cada 12 horas', duracion: '10 días', cantidad: 1, indicacion: 'Aplicar en el oído derecho tras limpiar' },
     ],
-    indicaciones: 'Secar bien el oído después de cada baño. Volver a control en 14 días.',
+    indicaciones: 'Desparasitar también al otro gato de la casa. Volver a control en 14 días.',
     proximaEnDias: 14,
   }),
   historia('h-rocky-2', 'rocky', 'admin', 236, '09:40', {
     motivoConsulta: 'Control de otitis externa derecha',
     anamnesis: 'Completó el tratamiento. Ya no se rasca ni sacude la cabeza.',
-    peso: 30.4, temperatura: 38.4, frecuenciaCardiaca: 92, frecuenciaRespiratoria: 22, condicionCorporal: 3,
+    peso: 4.4, temperatura: 38.4, frecuenciaCardiaca: 176, frecuenciaRespiratoria: 26, condicionCorporal: 3,
     mucosas: 'Rosadas, húmedas', estadoHidratacion: 'normal',
     examenFisicoDetalle: 'Conducto auditivo limpio, sin eritema ni secreción.',
     diagnostico: 'Otitis externa resuelta',
     tratamiento: 'Sin tratamiento adicional. Limpieza preventiva mensual.',
     medicamentos: [],
-    indicaciones: 'Limpiador ótico una vez al mes y después de baños en el río.',
+    indicaciones: 'Limpiador ótico una vez al mes y desparasitación cada tres meses.',
     proximaEnDias: null,
   }),
   historia('h-rocky-3', 'rocky', 'admin', 95, '11:00', {
-    motivoConsulta: 'Lame y muerde las patas, enrojecimiento entre los dedos',
+    motivoConsulta: 'Se lame en exceso el abdomen y se rasca el cuello',
     anamnesis: 'Empezó hace un mes, coincide con el cambio de alimento. Se lame sobre todo de noche.',
-    peso: 31.0, temperatura: 38.5, frecuenciaCardiaca: 94, frecuenciaRespiratoria: 24, condicionCorporal: 4,
+    peso: 4.5, temperatura: 38.5, frecuenciaCardiaca: 178, frecuenciaRespiratoria: 28, condicionCorporal: 4,
     mucosas: 'Rosadas, húmedas', estadoHidratacion: 'normal',
-    examenFisicoDetalle: 'Eritema interdigital en las cuatro patas, pelo manchado por saliva. Sin lesiones abiertas.',
+    examenFisicoDetalle: 'Alopecia por lamido en el abdomen y costras pequeñas en el cuello. Sin lesiones abiertas.',
     diagnosticoPresuntivo: 'Alergia alimentaria',
     diagnostico: 'Dermatitis alérgica',
     tratamiento: 'Antiinflamatorio corto, baño con clorhexidina y dieta de eliminación por 8 semanas.',
     medicamentos: [
-      { nombre: 'Prednisolona', concentracion: '20 mg', dosis: '1/2 tableta', via: 'oral', frecuencia: 'Cada 24 horas', duracion: '7 días', cantidad: 4, indicacion: 'Con la comida' },
+      { nombre: 'Prednisolona', concentracion: '5 mg', dosis: '1 tableta', via: 'oral', frecuencia: 'Cada 24 horas', duracion: '7 días', cantidad: 4, indicacion: 'Con la comida' },
     ],
     indicaciones: 'Dieta hipoalergénica estricta, sin premios ni sobras. Control en 8 semanas.',
     proximaEnDias: 56,
   }),
   historia('h-rocky-4', 'rocky', 'admin', 40, '10:30', {
     motivoConsulta: 'Control de dermatitis alérgica tras dieta de eliminación',
-    anamnesis: 'Cumplió la dieta. Casi no se lame las patas; mejoró el pelaje.',
-    peso: 31.5, temperatura: 38.4, frecuenciaCardiaca: 90, frecuenciaRespiratoria: 22, condicionCorporal: 4,
+    anamnesis: 'Cumplió la dieta. Ya casi no se lame; el pelo del abdomen volvió a crecer.',
+    peso: 4.6, temperatura: 38.4, frecuenciaCardiaca: 174, frecuenciaRespiratoria: 26, condicionCorporal: 4,
     mucosas: 'Rosadas, húmedas', estadoHidratacion: 'normal',
-    examenFisicoDetalle: 'Sin eritema interdigital. Piel sin lesiones.',
+    examenFisicoDetalle: 'Sin alopecia ni costras. Piel sin lesiones.',
     diagnostico: 'Dermatitis alérgica controlada',
     tratamiento: 'Mantener el alimento actual. Suplemento de omega 3 por 3 meses.',
     medicamentos: [
@@ -324,6 +324,80 @@ const movimientosCajaBase = [
   { tipo: 'egreso', monto: 60000, motivo: 'pago_proveedor', observaciones: 'Pago al domiciliario de insumos', hora: '12:10' },
 ]
 
+// Historial de citas de los días anteriores, para que la analítica de agenda
+// tenga volumen real. Determinista: el "azar" sale de una función fija del
+// índice, así el mismo día produce siempre las mismas citas.
+const pseudo = (n) => {
+  const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453
+  return x - Math.floor(x)
+}
+
+const hhmm = (total) => `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+
+const MOTIVOS_PASADOS = [
+  ['vacunacion', 'Vacunación anual'],
+  ['control', 'Control de peso'],
+  ['consulta_general', 'Revisión general'],
+  ['desparasitacion', 'Desparasitación y antipulgas'],
+  ['consulta_general', 'Picazón y caída de pelo'],
+  ['peluqueria', 'Baño medicado'],
+  ['control', 'Control postoperatorio'],
+  ['urgencia', 'Vómito y decaimiento'],
+  ['laboratorio', 'Toma de muestras de sangre'],
+  ['consulta_general', 'Revisión de oídos'],
+]
+
+const CONSULTORIOS_PASADOS = [
+  { consultorioKey: 'c1', veterinarioKey: 'admin' },
+  { consultorioKey: 'c2', veterinarioKey: 'vet' },
+]
+
+const generarCitasPasadas = (fechaHoy, dias = 35) => {
+  const citas = []
+  const claves = mascotasBase.map((m) => m.key)
+  let n = 0
+  for (let d = 1; d <= dias; d++) {
+    const fecha = sumarDias(fechaHoy, -d)
+    const diaSemana = new Date(`${fecha}T12:00:00Z`).getUTCDay()
+    if (diaSemana === 0) continue // domingo cerrado
+    const cantidad = (diaSemana === 6 ? 4 : 7) + Math.floor(pseudo(d) * 5)
+    const libre = [minutos('08:00'), minutos('08:00')]
+    for (let i = 0; i < cantidad; i++) {
+      n += 1
+      const lado = i % 2
+      if (pseudo(n * 3) < 0.25) libre[lado] += 30 // huecos en la agenda
+      const inicio = libre[lado]
+      const fin = inicio + 30
+      if (fin > minutos('18:00')) break
+      libre[lado] = fin
+
+      const azar = pseudo(n * 7)
+      const estado = azar < 0.06 ? 'no_asistio' : azar < 0.11 ? 'cancelada' : 'completada'
+      const [tipoCita, motivo] = MOTIVOS_PASADOS[Math.floor(pseudo(n * 11) * MOTIVOS_PASADOS.length)]
+      const extra = {}
+      if (estado === 'completada') {
+        extra.horaLlegada = hhmm(inicio - 5 - Math.floor(pseudo(n * 13) * 8))
+        extra.horaInicioAtencion = hhmm(inicio + 2 + Math.floor(pseudo(n * 17) * 22))
+      }
+      if (estado === 'cancelada') extra.motivoCancelacion = 'El tutor pidió reprogramar'
+      citas.push({
+        key: `pasada-${d}-${i}`,
+        fecha,
+        horaInicio: hhmm(inicio),
+        horaFin: hhmm(fin),
+        ...CONSULTORIOS_PASADOS[lado],
+        mascotaKey: claves[Math.floor(pseudo(n * 5) * claves.length)],
+        tipoCita,
+        motivo,
+        estado,
+        origen: pseudo(n * 19) < 0.1 ? 'walk_in' : 'programada',
+        ...extra,
+      })
+    }
+  }
+  return citas
+}
+
 const construirDatosDemo = (fechaHoy) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaHoy || '')) {
     throw new Error('fechaHoy debe tener formato YYYY-MM-DD')
@@ -401,6 +475,7 @@ const construirDatosDemo = (fechaHoy) => {
     propietarios,
     mascotas,
     citas,
+    citasPasadas: generarCitasPasadas(fechaHoy),
     historias,
     productos,
     ventas,
