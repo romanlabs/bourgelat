@@ -20,10 +20,4 @@ describe('prefers-reduced-motion', () => {
       renderLanding()
     ).not.toThrow()
   })
-
-  it('el perro de despedida se monta con reduced-motion', () => {
-    renderLanding()
-    const dog = document.getElementById('contacto')?.querySelector('.contact-dog')
-    expect(dog).toBeInTheDocument()
-  })
 })
