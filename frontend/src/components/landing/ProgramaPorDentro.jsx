@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { motion as Motion, useScroll, useTransform } from 'motion/react'
 
 import Aparecer from './Aparecer'
-import Captura from './Captura'
+import Tablet from './Tablet'
 import { campo } from './campos'
 import { MODULOS } from './contenido'
 import { useMovimientoAmplio } from './useMovimiento'
@@ -49,11 +49,11 @@ function Capitulo({ modulo, indice }) {
         </div>
 
         <div
-          className={`lg:col-span-7 ${aLaDerecha ? 'lg:-mr-24' : 'lg:order-1 lg:-ml-24'}`}
+          className={`mx-auto w-full max-w-2xl lg:col-span-7 ${aLaDerecha ? '' : 'lg:order-1'}`}
           style={amplio ? { perspective: '1600px' } : undefined}
         >
           <Motion.div style={amplio ? { rotateY, x, opacity } : undefined}>
-            <Captura src={modulo.imagen} alt={modulo.alt} />
+            <Tablet src={modulo.imagen} alt={modulo.alt} />
           </Motion.div>
         </div>
       </div>

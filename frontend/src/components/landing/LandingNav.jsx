@@ -60,9 +60,16 @@ export default function LandingNav() {
           <Link to={LOGIN} className={`hidden text-[15px] font-medium no-underline transition-colors sm:inline ${c.enlace}`}>
             Iniciar sesión
           </Link>
+          {/* En celular el héroe ya trae «Crear cuenta»: la barra ofrece entrar. */}
+          <Link
+            to={LOGIN}
+            className={`inline-flex h-11 items-center rounded-full px-5 text-[15px] font-semibold no-underline ring-1 ring-inset ring-current transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:hidden ${c.tinta}`}
+          >
+            Iniciar sesión
+          </Link>
           <Link
             to={REGISTRO}
-            className={`inline-flex h-11 items-center rounded-full px-5 text-[15px] font-semibold no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${c.boton}`}
+            className={`hidden h-11 items-center rounded-full px-5 text-[15px] font-semibold no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex ${c.boton}`}
           >
             Crear cuenta
           </Link>
@@ -94,8 +101,8 @@ export default function LandingNav() {
               </li>
             ))}
             <li>
-              <Link to={LOGIN} className={`block py-3 text-lg font-medium no-underline ${c.tinta}`}>
-                Iniciar sesión
+              <Link to={REGISTRO} className={`block py-3 text-lg font-medium no-underline ${c.tinta}`}>
+                Crear cuenta
               </Link>
             </li>
           </ul>

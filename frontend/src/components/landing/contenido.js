@@ -21,6 +21,8 @@ export const HERO = {
   nota: '30 días con todo abierto. Sin tarjeta.',
   imagen: '/images/landing/inicio.webp',
   alt: 'Pantalla de inicio de Bourgelat con el resumen del día de la clínica',
+  imagenMovil: '/images/landing/movil.webp',
+  altMovil: 'Analítica de agenda de Bourgelat en un celular: citas, asistencia y espera media',
 }
 
 // Cada módulo es un capítulo con su propio color de fondo (`campo`).

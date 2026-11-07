@@ -4,7 +4,8 @@ import { ArrowRight } from 'lucide-react'
 import { motion as Motion, useScroll, useTransform } from 'motion/react'
 
 import Aparecer from './Aparecer'
-import Captura from './Captura'
+import Tablet from './Tablet'
+import Telefono from './Telefono'
 import { HERO, REGISTRO } from './contenido'
 import { useMovimientoAmplio } from './useMovimiento'
 
@@ -49,15 +50,18 @@ export default function HeroProducto() {
 
         {/* La captura entera, dentro del campo y con aire abajo: nada se corta. */}
         <div
-          className="mx-auto mt-10 max-w-6xl pb-16 sm:mt-12 sm:pb-24"
+          className="mx-auto mt-10 max-w-4xl pb-20 sm:mt-12 sm:pb-28"
           style={amplio ? { perspective: '1800px' } : undefined}
         >
-          <Motion.div style={amplio ? { rotateX, scale, transformOrigin: '50% 0%' } : undefined}>
-            {/* Marco en petróleo claro: la barra lateral del programa es del
-                mismo color del campo y sin él se pierde el borde. */}
-            <div className="rounded-2xl bg-sidebar-accent p-1.5 sm:p-2.5">
-              <Captura src={HERO.imagen} alt={HERO.alt} prioridad />
-            </div>
+          {/* La tablet a la izquierda y el celular montado sobre su esquina:
+              el mismo programa en los dos tamaños. */}
+          <Motion.div className="relative" style={amplio ? { rotateX, scale, transformOrigin: '50% 0%' } : undefined}>
+            <Tablet src={HERO.imagen} alt={HERO.alt} prioridad className="w-[84%]" />
+            <Telefono
+              src={HERO.imagenMovil}
+              alt={HERO.altMovil}
+              className="absolute -bottom-[8%] right-0 w-[25%] sm:w-[22%]"
+            />
           </Motion.div>
         </div>
       </div>

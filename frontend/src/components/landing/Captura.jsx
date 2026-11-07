@@ -2,7 +2,24 @@
 // salte mientras carga. `prioridad` solo para la del primer pantallazo.
 // En pantallas pequeñas se amplía y se recorta la barra lateral del programa
 // (≈19 % del ancho), para que se lea el contenido y no una miniatura.
-export default function Captura({ src, alt, prioridad = false, className = '' }) {
+// `entera` la muestra completa en todo tamaño (dentro de la tablet).
+export default function Captura({ src, alt, prioridad = false, entera = false, className = '' }) {
+  if (entera) {
+    return (
+      <div data-ui className={`overflow-hidden bg-card ${className}`}>
+        <img
+          src={src}
+          alt={alt}
+          width={1600}
+          height={1000}
+          loading={prioridad ? 'eager' : 'lazy'}
+          fetchPriority={prioridad ? 'high' : 'auto'}
+          decoding="async"
+          className="block h-auto w-full"
+        />
+      </div>
+    )
+  }
   return (
     <div data-ui className={`aspect-[4/3] overflow-hidden rounded-xl bg-card lg:aspect-auto ${className}`}>
       <img
