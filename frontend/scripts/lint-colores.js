@@ -22,8 +22,6 @@ const SRC = fileURLToPath(new URL('../src', import.meta.url))
 
 // Archivos que pueden tener colores propios, con el motivo.
 const EXENTOS = [
-  ['components/landing/', 'landing: pendiente de pasar sus hex a variables'],
-  ['pages/LandingPage.jsx', 'landing'],
   ['features/auth/BotonesSociales.jsx', 'colores oficiales de los logos de Google y Microsoft'],
   ['features/finanzas/reciboTermico.js', 'recibo para impresora térmica: blanco y negro'],
   ['lib/pdfComun.js', 'PDF generado: no usa el CSS de la app'],
